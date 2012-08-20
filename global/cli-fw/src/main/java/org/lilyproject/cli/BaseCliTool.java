@@ -15,18 +15,26 @@
  */
 package org.lilyproject.cli;
 
-import org.apache.commons.cli.*;
-import org.apache.commons.io.IOUtils;
-import org.apache.log4j.*;
-import org.apache.log4j.xml.DOMConfigurator;
-import org.lilyproject.util.exception.StackTracePrinter;
-import org.lilyproject.util.io.Closer;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
+import org.apache.commons.io.IOUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.xml.DOMConfigurator;
+import org.lilyproject.util.exception.StackTracePrinter;
 
 /**
  * Base framework for Lily CLI tools. Purpose is to have some uniformity in the CLI tools and to avoid
@@ -91,12 +99,12 @@ public abstract class BaseCliTool {
                 .hasArg()
                 .withDescription("log4j config file (.properties or .xml)")
                 .create("log");
-        cliOptions.addOption(logConfOption);
+        options.add(logConfOption);
 
         dumpLogConfOption = OptionBuilder
                 .withDescription("Dump default log4j configuration")
                 .create("dumplog");
-        cliOptions.addOption(dumpLogConfOption);
+        options.add(dumpLogConfOption);
 
         return options;
     }
@@ -111,7 +119,7 @@ public abstract class BaseCliTool {
      * an exception occurred (= called from a finally block).
      */
     protected void cleanup() {
-        
+
     }
 
     /**
@@ -124,12 +132,12 @@ public abstract class BaseCliTool {
             printHelp();
             return 1;
         }
-        
+
         if (cmd.hasOption(versionOption.getOpt())) {
             System.out.println(getVersion());
             return 1;
         }
-        
+
         if (cmd.hasOption(dumpLogConfOption.getOpt())) {
             IOUtils.copy(BaseCliTool.class.getResourceAsStream("log4j.properties"), System.out);
             return 1;
@@ -155,7 +163,7 @@ public abstract class BaseCliTool {
     public int run(CommandLine cmd) throws Exception {
         return 0;
     }
-    
+
     private void setupLogging(File logConfFile) {
         // Reset any configuration log4j might already have loaded (from classpath, cwd, ...).
         LogManager.resetConfiguration();
@@ -247,6 +255,6 @@ public abstract class BaseCliTool {
             System.out.println();
         }
     }
-    
+
     protected abstract String getVersion();
 }

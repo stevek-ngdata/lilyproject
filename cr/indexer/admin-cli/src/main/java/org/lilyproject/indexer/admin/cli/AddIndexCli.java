@@ -76,7 +76,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         if (solrZk != null) {
             index.setZkConnectionString(solrZk);
         } else if (solrShards == null) {
-            index.setZkConnectionString(this.zkConnectionString + "/solr/");
+            index.setZkConnectionString(this.zkConnectionString + "/solr");
         }
 
         if (solrCollection != null) {

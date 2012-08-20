@@ -178,7 +178,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withLongOpt("collection")
                 .create("sc");
 
-        solrCollectionOption =  OptionBuilder
+        solrZkOption =  OptionBuilder
                 .withArgName("Zookeeper connection string")
                 .hasArg()
                 .withDescription("Zookeeper connection string for Solr")
