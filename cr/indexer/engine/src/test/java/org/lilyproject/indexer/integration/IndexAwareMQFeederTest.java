@@ -15,11 +15,17 @@
  */
 package org.lilyproject.indexer.integration;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import com.google.common.collect.Lists;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.NamedList;
 import org.apache.tika.io.IOUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -58,11 +64,6 @@ import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -586,7 +587,13 @@ public class IndexAwareMQFeederTest {
         @Override
         public UpdateResponse add(SolrInputDocument doc) throws SolrClientException, InterruptedException {
             addCount++;
-            return null;
+            return dummyResponse(); // Indexer expects a non-null response
+        }
+
+        private UpdateResponse dummyResponse() {
+            UpdateResponse r = new UpdateResponse();
+            r.setResponse(new NamedList<Object>());
+            return r;
         }
 
         @Override
@@ -607,7 +614,7 @@ public class IndexAwareMQFeederTest {
         @Override
         public UpdateResponse deleteByQuery(String query) throws SolrClientException, InterruptedException {
             deleteCount++;
-            return null;
+            return dummyResponse(); // Indexer expects a non-null response
         }
 
         @Override
