@@ -22,7 +22,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import net.iharder.Base64;
-
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;

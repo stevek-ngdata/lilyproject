@@ -15,22 +15,31 @@
  */
 package org.lilyproject.indexer.model.test;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.indexer.model.api.*;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.IndexGeneralState;
+import org.lilyproject.indexer.model.api.IndexUpdateException;
+import org.lilyproject.indexer.model.api.IndexerModelEvent;
+import org.lilyproject.indexer.model.api.IndexerModelEventType;
+import org.lilyproject.indexer.model.api.IndexerModelListener;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.net.NetUtils;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import java.io.File;
-import java.util.*;
-
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class IndexerModelTest {
@@ -71,7 +80,9 @@ public class IndexerModelTest {
             // Create an index
             IndexDefinition index1 = model1.newIndex("index1");
             index1.setConfiguration("<indexer/>".getBytes("UTF-8"));
-            index1.setSolrShards(Collections.singletonMap("shard1", "http://localhost:8983/solr"));
+            assertEquals("<indexer/>", new String(index1.getConfiguration()));
+            index1.setSolrCollection("collection1");
+            index1.setZkConnectionString("localhost:" + ZK_CLIENT_PORT + "/solr");
             model1.addIndex(index1);
 
             listener.waitForEvents(1);
@@ -120,6 +131,7 @@ public class IndexerModelTest {
 
             listener.waitForEvents(9);
             listener.verifyEvents(expectedEvents);
+
         } finally {
             Closer.close(model1);
             Closer.close(model2);
