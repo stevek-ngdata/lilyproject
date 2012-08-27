@@ -2,7 +2,10 @@
 <indexer xmlns:t="org.lilyproject.tools.tester">
   <recordFilter>
     <includes>
-      <include recordType="t:TesterRecordType" vtags="last"/>
+      <include recordType="t:RT1" vtags="last"/>
+      <include recordType="t:RT2" vtags="last"/>
+      <include recordType="t:RT3" vtags="last"/>
+      <include recordType="t:RTSub" vtags="last"/>
     </includes>
   </recordFilter>
 

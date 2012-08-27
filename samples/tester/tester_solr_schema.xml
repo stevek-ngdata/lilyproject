@@ -115,6 +115,7 @@
    <field name="t$field8" type="tdate" indexed="true" stored="true" required="false"/>
    <field name="t$field9" type="text" indexed="true" stored="true" required="false"/>
    <field name="t$field10" type="text" indexed="true" stored="true" required="false"/>
+   <field name="text" type="text" indexed="true" stored="true" required="false"/>
  </fields>
 
  <!-- Field to use to determine and enforce document uniqueness.
