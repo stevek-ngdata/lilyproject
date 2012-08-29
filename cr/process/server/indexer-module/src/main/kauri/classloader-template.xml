@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classloader>
+  <classpath>
+    <artifact groupId="org.lilyproject" artifactId="lily-mapreduce" version="2.0-SNAPSHOT" share="required"/>
+  </classpath>
+</classloader>
