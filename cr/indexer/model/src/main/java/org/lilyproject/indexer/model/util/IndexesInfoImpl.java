@@ -15,6 +15,19 @@
  */
 package org.lilyproject.indexer.model.util;
 
+import java.io.ByteArrayInputStream;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PreDestroy;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.model.api.IndexDefinition;
@@ -27,25 +40,20 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Repository;
 
-import javax.annotation.PreDestroy;
-import java.io.ByteArrayInputStream;
-import java.util.*;
-import java.util.concurrent.*;
-
 /**
  * See {@link IndexesInfo}.
  */
 public class IndexesInfoImpl implements IndexesInfo {
-    private IndexerModel indexerModel;
-    private Repository repository;
+    private final IndexerModel indexerModel;
+    private final Repository repository;
 
     private Map<String, IndexInfo> indexInfos;
     private Set<QName> recordFilterFieldDependencies;
     private boolean recordFilterDependsOnRecordType;
 
-    private Listener listener = new Listener();
-    private Log log = LogFactory.getLog(getClass());
-    private ExecutorService executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
+    private final Listener listener = new Listener();
+    private final Log log = LogFactory.getLog(getClass());
+    private final ExecutorService executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<Runnable>(1), new ThreadPoolExecutor.DiscardPolicy());
 
     public IndexesInfoImpl(IndexerModel indexerModel, Repository repository) {
@@ -53,7 +61,12 @@ public class IndexesInfoImpl implements IndexesInfo {
         this.repository = repository;
 
         indexerModel.registerListener(listener);
-        refresh();
+
+        // do refresh in a separate thread since building indexes depends on the repository being up and running
+        // which might not be the case. Doing a refresh in another thread will give the repository a chance to
+        // start up. We do this by calling the listener
+        this.listener.process(null);
+
     }
 
     @PreDestroy
@@ -101,10 +114,12 @@ public class IndexesInfoImpl implements IndexesInfo {
         return indexInfos.values();
     }
 
+    @Override
     public Set<QName> getRecordFilterFieldDependencies() {
         return recordFilterFieldDependencies;
     }
 
+    @Override
     public boolean getRecordFilterDependsOnRecordType() {
         return recordFilterDependsOnRecordType;
     }
