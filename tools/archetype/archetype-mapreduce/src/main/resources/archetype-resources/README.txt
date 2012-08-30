@@ -31,3 +31,15 @@ To run this example:
  - if the job has run correctly, you can run lily-scan-records to
    check the output produced by the reducer:
    lily-scan-records -p --record-type {mrsample}Summary
+
+Setting up Hadoop with CHD4: 
+  - Download hadoop-2.0.0-mr1 for the MRv1 variant
+  
+  - Delete the avro libs under $HADOOP_HOME/lib/avro*
+  
+  - Set HADOOP_CLASSPATH 
+    To do this grap the classpath found in a lily application startup script e.g. lily-scan-records
+    
+  - Now you are ready to run the mapreduce jar under CDH4
+
+   
