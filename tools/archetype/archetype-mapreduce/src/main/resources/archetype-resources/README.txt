@@ -38,7 +38,7 @@ Setting up Hadoop with CHD4:
   - Delete the avro libs under $HADOOP_HOME/lib/avro*
   
   - Set HADOOP_CLASSPATH 
-    To do this grap the classpath found in a lily application startup script e.g. lily-scan-records
+    To do this grab the classpath found in a lily application startup script e.g. lily-scan-records
     
   - Now you are ready to run the mapreduce jar under CDH4
 
