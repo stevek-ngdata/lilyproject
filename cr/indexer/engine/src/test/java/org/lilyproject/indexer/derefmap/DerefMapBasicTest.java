@@ -50,7 +50,7 @@ public class DerefMapBasicTest {
         repository = repoSetup.getRepository();
         ids = repository.getIdGenerator();
 
-        derefMap = (DerefMapHbaseImpl) DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), ids);
+        derefMap = (DerefMapHbaseImpl) DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), null, ids);
     }
 
     @AfterClass

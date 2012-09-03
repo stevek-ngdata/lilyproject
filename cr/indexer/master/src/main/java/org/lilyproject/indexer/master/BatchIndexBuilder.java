@@ -33,11 +33,14 @@ import org.lilyproject.indexer.batchbuild.IndexingMapper;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.indexerconf.IndexerConf;
+import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.tools.import_.json.RecordScanReader;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.json.JsonFormat;
 
 public class BatchIndexBuilder {
@@ -45,9 +48,8 @@ public class BatchIndexBuilder {
      * @return the ID of the started job
      */
     public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf, Configuration hbaseConf,
-                                         Repository repository, String zkConnectString, int zkSessionTimeout,
-                                         SolrClientConfig solrConfig,
-                                         byte[] batchIndexConfiguration, boolean enableLocking) throws Exception {
+            Repository repository, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig,
+            byte[] batchIndexConfiguration, boolean enableLocking, HBaseTableFactory tableFactory) throws Exception {
 
         Configuration conf = new Configuration(mapReduceConf);
         Job job = new Job(conf, "BatchIndexBuild Job");
@@ -110,6 +112,16 @@ public class BatchIndexBuilder {
             } catch (IndexNotFoundException e) {
                 // If there is no index to delete, keep calm and carry on.
             }
+        }
+
+        // Create derefmap table, but only if there are deref expressions.
+        // We create the derefmap table already here, because here we have knowledge of the table
+        // creation preferences (otherwise would need to serialize that config towards the mappers).
+        // This also requires to parse the indexerconf, to know if we actually need a derefmap.
+        IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
+                repository);
+        if (indexerConf.containsDerefExpressions()) {
+            DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory, repository.getIdGenerator());
         }
 
         job.getConfiguration().set("hbase.zookeeper.quorum", hbaseConf.get("hbase.zookeeper.quorum"));

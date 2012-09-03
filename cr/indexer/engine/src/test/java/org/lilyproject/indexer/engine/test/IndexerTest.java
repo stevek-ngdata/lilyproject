@@ -40,6 +40,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
@@ -51,6 +52,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.hadooptestfw.CleanupUtil;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
@@ -112,6 +114,7 @@ import org.lilyproject.util.repo.VersionTag;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -235,9 +238,17 @@ public class IndexerTest {
 
         Configuration hbaseConf = repoSetup.getHadoopConf();
         if (derefMap != null) {
-            DerefMapHbaseImpl.delete("test", hbaseConf);
+            // We don't call the following:
+            //    DerefMapHbaseImpl.delete("test", hbaseConf);
+            // because deleting / creating the tables during the test is very slow.
+            // Instead we just delete all rows within the table.
+            for (String tableName : ImmutableList.of("deref-forward-test", "deref-backward-test")) {
+                HTable htable = new HTable(hbaseConf, tableName);
+                CleanupUtil.clearTable(htable);
+                htable.close();
+            }
         }
-        derefMap = DerefMapHbaseImpl.create("test", hbaseConf, repository.getIdGenerator());
+        derefMap = DerefMapHbaseImpl.create("test", hbaseConf, null, repository.getIdGenerator());
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics("test"), derefMap);
 

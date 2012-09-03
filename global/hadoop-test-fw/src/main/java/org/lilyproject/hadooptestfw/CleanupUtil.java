@@ -156,27 +156,12 @@ public class CleanupUtil {
                 exploitTimestampTables.add(table.getNameAsString());
             }
 
-            Scan scan = new Scan();
-            scan.setCaching(1000);
-            scan.setCacheBlocks(false);
-            ResultScanner scanner = htable.getScanner(scan);
-            Result[] results;
-            int totalCount = 0;
-
-            while ((results = scanner.next(1000)).length > 0) {
-                List<Delete> deletes = new ArrayList<Delete>(results.length);
-                for (Result result : results) {
-                    deletes.add(new Delete(result.getRow()));
-                }
-                totalCount += deletes.size();
-                htable.delete(deletes);
-            }
+            int totalCount = clearTable(htable);
 
             if (truncateReport.length() > 0)
                 truncateReport.append(", ");
             truncateReport.append(table.getNameAsString()).append(" (").append(totalCount).append(")");
 
-            scanner.close();
             htable.close();
 
             if (timestampReusingTables.containsKey(table.getNameAsString())) {
@@ -195,6 +180,26 @@ public class CleanupUtil {
 
         System.out.println("------------------------------------------------------------------------");
 
+    }
+
+    public static int clearTable(HTable htable) throws IOException {
+        Scan scan = new Scan();
+        scan.setCaching(1000);
+        scan.setCacheBlocks(false);
+        ResultScanner scanner = htable.getScanner(scan);
+        Result[] results;
+        int totalCount = 0;
+
+        while ((results = scanner.next(1000)).length > 0) {
+            List<Delete> deletes = new ArrayList<Delete>(results.length);
+            for (Result result : results) {
+                deletes.add(new Delete(result.getRow()));
+            }
+            totalCount += deletes.size();
+            htable.delete(deletes);
+        }
+        scanner.close();
+        return totalCount;
     }
 
     private void insertTimestampTableTestRecord(String tableName, HTable htable, byte[] family) throws IOException {

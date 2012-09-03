@@ -61,6 +61,7 @@ import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.Logs;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.LeaderElection;
 import org.lilyproject.util.zookeeper.LeaderElectionCallback;
@@ -112,6 +113,8 @@ public class IndexerMaster {
 
     private Repository repository;
 
+    private HBaseTableFactory tableFactory;
+
     private final Log log = LogFactory.getLog(getClass());
 
     private final String nodes;
@@ -120,10 +123,10 @@ public class IndexerMaster {
     private byte[] fullTableScanConf;
 
     public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Repository repository,
-                         Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
-                         String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr,
-                         LilyInfo lilyInfo,
-                         SolrClientConfig solrClientConfig, boolean enableLocking, String hostName, String nodes) {
+            Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
+            String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr,
+            LilyInfo lilyInfo, SolrClientConfig solrClientConfig, boolean enableLocking,
+            String hostName, HBaseTableFactory tableFactory, String nodes) {
 
         this.zk = zk;
         this.indexerModel = indexerModel;
@@ -138,6 +141,7 @@ public class IndexerMaster {
         this.solrClientConfig = solrClientConfig;
         this.enableLocking = enableLocking;
         this.hostName = hostName;
+        this.tableFactory = tableFactory;
         this.nodes = nodes;
     }
 
@@ -299,7 +303,7 @@ public class IndexerMaster {
                     try {
                         job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf, repository,
                                 zkConnectString, zkSessionTimeout, solrClientConfig, batchIndexConfiguration,
-                                enableLocking);
+                                enableLocking, tableFactory);
                         jobStarted = true;
                     } catch (Throwable t) {
                         jobStarted = false;

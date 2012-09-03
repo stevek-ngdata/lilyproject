@@ -31,7 +31,7 @@ public class VariantFollow implements Follow {
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
 
         Set<String> currentDimensions = Sets.newHashSet(ctx.dep.id.getVariantProperties().keySet());
-        currentDimensions.addAll(ctx.dep.vprops);
+        currentDimensions.addAll(ctx.dep.moreDimensionedVariants);
 
         if (!currentDimensions.containsAll(dimensions)) {
             // the current dimension doesn't contain all the dimensions we need to subtract -> stop here

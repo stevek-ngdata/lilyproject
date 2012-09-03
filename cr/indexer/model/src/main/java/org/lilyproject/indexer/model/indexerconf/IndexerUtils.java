@@ -24,10 +24,10 @@ public class IndexerUtils {
 
     public static ArrayList<Record> getVariantsAsRecords(IndexUpdateBuilder indexUpdateBuilder, Dep newDep) throws RepositoryException, InterruptedException {
 
-        // build a variant properties map which is a combination of dep.id.variantProperties + dep.vprops
+        // build a variant properties map which is a combination of dep.id.variantProperties + dep.moreDimensionedVariants
         final Map<String, String> varProps = new HashMap<String, String>(newDep.id.getVariantProperties());
         varProps.putAll(newDep.id.getVariantProperties());
-        for (String vprop: newDep.vprops) {
+        for (String vprop: newDep.moreDimensionedVariants) {
             varProps.put(vprop, null);
         }
 

@@ -32,6 +32,7 @@ import org.lilyproject.util.MavenUtil;
 public class LilyLauncherService implements LauncherService {
     private LilyServerTestUtility lilyServerTestUtility;
     private File testHome;
+    private File userConfDir = null;
     private File defaultConfDir = null;
     private ArtifactRepository artifactRepository;
 
@@ -42,16 +43,20 @@ public class LilyLauncherService implements LauncherService {
     @Override
     public int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception {
         this.testHome = new File(testHome, TemplateDir.LILYSERVER_DIR);
-        String defaultConfDirPath = System.getProperty("lily.conf.dir");
-        if (defaultConfDirPath != null) {
-            defaultConfDir = new File(defaultConfDirPath);
-        } else {
-            // This is just to be sure. The LilyLauncher script should actually always set the system property
-            defaultConfDir = new File(testHome, "lilyconf");
-            FileUtils.forceMkdir(defaultConfDir);
-            URL confUrl = getClass().getClassLoader().getResource(ConfUtil.CONF_RESOURCE_PATH);
-            ConfUtil.copyConfResources(confUrl, ConfUtil.CONF_RESOURCE_PATH, defaultConfDir);
+        String confDirPath = System.getProperty("lily.conf.dir");
+        if (confDirPath != null) {
+            userConfDir = new File(confDirPath);
         }
+
+        if (!userConfDir.exists()) {
+            System.err.println("Lily conf dir does not exist: " + userConfDir);
+            return 1;
+        }
+
+        defaultConfDir = new File(testHome, "lilyconf");
+        FileUtils.forceMkdir(defaultConfDir);
+        URL confUrl = getClass().getClassLoader().getResource(ConfUtil.CONF_RESOURCE_PATH);
+        ConfUtil.copyConfResources(confUrl, ConfUtil.CONF_RESOURCE_PATH, defaultConfDir);
 
         String repository = System.getProperty("lily.testlauncher.repository");
         if (repository != null) {
@@ -65,7 +70,8 @@ public class LilyLauncherService implements LauncherService {
 
     @Override
     public int start(List<String> postStartupInfo) throws Exception {
-        lilyServerTestUtility = new LilyServerTestUtility(defaultConfDir.getAbsolutePath(), null, testHome);
+        lilyServerTestUtility = new LilyServerTestUtility(defaultConfDir.getAbsolutePath(),
+                userConfDir.getAbsolutePath(), testHome);
         lilyServerTestUtility.setArtifactRepository(artifactRepository);
         lilyServerTestUtility.start();
 

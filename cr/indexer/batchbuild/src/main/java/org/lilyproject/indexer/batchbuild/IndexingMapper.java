@@ -97,8 +97,9 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
             indexLocker = new IndexLocker(zk, enableLocking);
 
-            final DerefMap derefMap = DerefMapHbaseImpl.create(indexName, LilyClient.getHBaseConfiguration(zk),
-                    repository.getIdGenerator());
+            final DerefMap derefMap = indexerConf.containsDerefExpressions() ?
+                    DerefMapHbaseImpl.create(indexName, LilyClient.getHBaseConfiguration(zk), null,
+                            repository.getIdGenerator()) : null;
             indexer = new Indexer(indexName, indexerConf, repository, solrShardMgr, indexLocker,
                     new IndexerMetrics(indexName), derefMap);
 
@@ -148,8 +149,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             solrConfig.setRequestWriter(jobConf.get("org.lilyproject.indexer.batchbuild.requestwriter", null));
             solrConfig.setResponseParser(jobConf.get("org.lilyproject.indexer.batchbuild.responseparser", null));
 
-            return new SolrShardManagerImpl(indexName, solrShards, shardSelector, httpClient,
-                    solrConfig);
+            return new SolrShardManagerImpl(indexName, solrShards, shardSelector, httpClient, solrConfig);
         }
     }
 

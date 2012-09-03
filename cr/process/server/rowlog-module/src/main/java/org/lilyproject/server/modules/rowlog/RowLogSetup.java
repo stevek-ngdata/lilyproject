@@ -100,11 +100,11 @@ public class RowLogSetup {
     @PostConstruct
     public void start() throws InterruptedException, KeeperException, IOException, LeaderElectionSetupException, RowLogException {
         if (!confMgr.rowLogExists("wal")) {
-            confMgr.addRowLog("wal", createRowLogConfig(rowLogConf.getChild("mqConfig")));
+            confMgr.addRowLog("wal", createRowLogConfig(rowLogConf.getChild("walConfig")));
         }
 
         if (!confMgr.rowLogExists("mq")) {
-            confMgr.addRowLog("mq", createRowLogConfig(rowLogConf.getChild("walConfig")));
+            confMgr.addRowLog("mq", createRowLogConfig(rowLogConf.getChild("mqConfig")));
         } else {
             // Before Lily 1.0.4, the respectOrder parameter for the MQ was true. Change it if necessary.
             for (Map.Entry<String, RowLogConfig> entry : confMgr.getRowLogs().entrySet()) {

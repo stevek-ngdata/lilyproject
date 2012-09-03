@@ -106,6 +106,11 @@ cd $CWD
 # This is handy because some of our test tools can read out HBase metrics this way
 LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
 LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=true"
+
+# User can specify an alternate conf dir using TEST_LILY_CONF_DIR
+if [ -z "$TEST_LILY_CONF_DIR" ] ; then
+  TEST_LILY_CONF_DIR="${basedir}/../../cr/process/server/conf"
+fi
               ]]></value>
             </parameter>
             <parameter>
@@ -125,6 +130,11 @@ cd $CWD
 # This is handy because some of our test tools can read out HBase metrics this way
 LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
 LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=true"
+
+# User can specify an alternate conf dir using TEST_LILY_CONF_DIR
+if [ -z "$TEST_LILY_CONF_DIR" ] ; then
+  TEST_LILY_CONF_DIR="$LILY_HOME/conf"
+fi
               ]]></value>
             </parameter>
             <parameter>
@@ -192,12 +202,12 @@ set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloader
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$LILY_HOME/conf -Dlily.plugin.dir=$LILY_HOME/plugins -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr/${version.solr}/solr-${version.solr}.war</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR -Dlily.plugin.dir=$LILY_HOME/plugins -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
             </parameter>
             <parameter>
               <platform>unix</platform>
               <mode>dev</mode>
-              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=${basedir}/../../cr/process/server/conf -Dlily.plugin.dir=${basedir}/../../cr/process/server/plugins</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR -Dlily.plugin.dir=${basedir}/../../cr/process/server/plugins</value>
             </parameter>
             <parameter>
               <platform>windows</platform>

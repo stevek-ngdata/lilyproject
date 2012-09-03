@@ -407,6 +407,9 @@ public class IndexUpdater implements RowLogMessageListener {
             log.debug("Updating denormalized data for " + recordId + ", vtags: " + changedVTagFields);
         }
 
+        // The reason to iterate over all vtags is because a field from a record without versions might be
+        // dereferenced into multiple vtagged versions of another record, and we don't know what the [indexed]
+        // vtags of that other record are.
         for (SchemaId vtag : allVTags) {
             if ((changedVTagFields != null && changedVTagFields.contains(vtag)) || updatedFieldsByScope == null) {
                 // changed vtags or delete: reindex regardless of fields
@@ -420,12 +423,13 @@ public class IndexUpdater implements RowLogMessageListener {
                 }
             } else {
                 // vtag didn't change, but some fields did change:
+                Set<SchemaId> fields = new HashSet<SchemaId>();
                 for (Scope scope : updatedFieldsByScope.keySet()) {
-                    final Set<SchemaId> fields = toFields(updatedFieldsByScope.get(scope));
-                    final DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId, fields, vtag);
-                    while (dependants.hasNext()) {
-                        referrersAndVTags.put(dependants.next(), vtag);
-                    }
+                    fields.addAll(toSchemaIds(updatedFieldsByScope.get(scope)));
+                }
+                final DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId, fields, vtag);
+                while (dependants.hasNext()) {
+                    referrersAndVTags.put(dependants.next(), vtag);
                 }
             }
         }
@@ -462,7 +466,7 @@ public class IndexUpdater implements RowLogMessageListener {
         }
     }
 
-    private Set<SchemaId> toFields(Set<FieldType> fieldTypes) {
+    private Set<SchemaId> toSchemaIds(Set<FieldType> fieldTypes) {
         return new HashSet<SchemaId>(Collections2.transform(fieldTypes, new Function<FieldType, SchemaId>() {
             @Override
             public SchemaId apply(FieldType input) {

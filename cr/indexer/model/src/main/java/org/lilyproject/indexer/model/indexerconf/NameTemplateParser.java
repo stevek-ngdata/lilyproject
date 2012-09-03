@@ -16,7 +16,7 @@ public class NameTemplateParser {
 
     private static Pattern varPattern = Pattern.compile("\\$\\{([^\\}]+)\\}");
     private static Pattern exprPattern = Pattern.compile("([^\\?]+)\\?([^:]+)(?::(.+))?");
-    private static Pattern variantPropertyPattern = Pattern.compile("@vprop:([^:]+)");
+    private static Pattern variantPropertyPattern = Pattern.compile("vprop:([^:]+)");
     private static Pattern fieldPattern = Pattern.compile("([^:]+):([^:]+)?");
 
     // used for parsing qnames

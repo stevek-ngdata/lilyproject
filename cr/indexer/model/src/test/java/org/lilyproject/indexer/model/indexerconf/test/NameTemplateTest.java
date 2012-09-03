@@ -142,7 +142,7 @@ public class NameTemplateTest {
 
     @Test(expected = NameTemplateException.class)
     public void testInvalidExpressionNoSuchVariantProperty() throws Exception {
-        new NameTemplateParser().parse("${@vprop:foo}",
+        new NameTemplateParser().parse("${vprop:foo}",
                 new FieldNameTemplateValidator(Sets.newHashSet("bar"), Collections.<QName>emptySet()));
     }
 

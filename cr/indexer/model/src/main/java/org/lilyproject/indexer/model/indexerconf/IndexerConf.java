@@ -44,7 +44,6 @@ import org.lilyproject.util.repo.VTaggedRecord;
 public class IndexerConf {
     private IndexRecordFilter recordFilter;
     private IndexFields indexFields;
-    private Set<SchemaId> repoFieldDependencies = new HashSet<SchemaId>();
     private List<DynamicIndexField> dynamicFields = new ArrayList<DynamicIndexField>();
     private Set<SchemaId> vtags = new HashSet<SchemaId>();
     private Formatters formatters = new Formatters();
@@ -76,18 +75,11 @@ public class IndexerConf {
     public void setIndexFields(IndexFields indexFields) {
         this.indexFields = indexFields;
 
-        // update information about repository field dependencies
-        repoFieldDependencies.clear();
-
         indexFields.visitAll(new Predicate<MappingNode>() {
             @Override
             public boolean apply(MappingNode node) {
                 if (node instanceof IndexField) {
                     IndexField indexField = (IndexField) node;
-                    SchemaId fieldDep = indexField.getValue().getFieldDependency();
-                    if (fieldDep != null)
-                        repoFieldDependencies.add(fieldDep);
-
                     if (indexField.getValue() instanceof DerefValue) {
                         containsDerefExpression = true;
                     }
@@ -134,12 +126,13 @@ public class IndexerConf {
             throws InterruptedException, RepositoryException {
         Set<FieldType> changedFields = vtRecord.getRecordEventHelper().getUpdatedFieldsByScope().get(scope);
 
-        // Check static fields and dynamic fields
-        for (FieldType fieldType : changedFields) {
-            if (repoFieldDependencies.contains(fieldType.getId())) {
-                return true;
-            }
+        // Check <fields>
+        boolean affects = indexFields.isIndexAffectedByUpdate(vtRecord, scope);
+        if (affects)
+            return true;
 
+        // Check dynamic fields
+        for (FieldType fieldType : changedFields) {
             // If there are lots of dynamic index fields, or lots of fields which are not indexed at all (thus
             // leading to lots of invocations of this method), than maybe we need to review this for performance.
             for (DynamicIndexField field : dynamicFields) {
@@ -147,12 +140,9 @@ public class IndexerConf {
                     return true;
                 }
             }
-
         }
 
-        // Check <fields>
-        return indexFields.isIndexAffectedByUpdate(vtRecord, scope);
-
+        return false;
     }
 
 }
