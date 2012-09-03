@@ -64,11 +64,6 @@ public class IndexesInfoImpl implements IndexesInfo {
         this.repository = repository;
 
         indexerModel.registerListener(listener);
-
-        // do refresh in a separate thread since building indexes depends on the repository being up and running
-        // which might not be the case. Doing a refresh in another thread will give the repository a chance to
-        // start up. We do this by calling the listener
-        this.listener.process(null);
     }
 
     @PreDestroy
