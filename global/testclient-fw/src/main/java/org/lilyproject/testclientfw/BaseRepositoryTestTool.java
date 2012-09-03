@@ -69,7 +69,7 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
         solrOption = OptionBuilder
                 .withArgName("URL")
                 .hasArg()
-                .withDescription("URL of Solr. If using cloud mode then use the zookeeper connection string for solr")
+                .withDescription("URL of Solr. If using cloud mode then use the zookeeper connection string for Solr")
                 .withLongOpt("solr")
                 .create("s");
 
@@ -116,7 +116,7 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
 
     public void setupSolr() throws MalformedURLException {
         if (useSolrCloud) {
-            System.out.println("Using Solr cloud instance with zk " + solrUrl);
+            System.out.println("Using SolrCloud instance with ZooKeeper " + solrUrl);
             solrServer = new CloudSolrServer(solrUrl);
         } else {
             System.out.println("Using Solr instance at " + solrUrl);
