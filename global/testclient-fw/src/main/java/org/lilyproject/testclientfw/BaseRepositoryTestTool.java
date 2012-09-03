@@ -26,6 +26,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.impl.CloudSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
@@ -39,10 +40,13 @@ import org.lilyproject.util.zookeeper.ZkConnectException;
 
 public abstract class BaseRepositoryTestTool extends BaseTestTool {
     private static final String DEFAULT_SOLR_URL = "http://localhost:8983/solr";
+    private static final String DEFAULT_SOLRCLOUD_URL = "localhost:2181/solr";
 
     protected String solrUrl;
 
     private Option solrOption;
+
+    private Option solrCloudOption;
 
     protected SolrServer solrServer;
 
@@ -56,6 +60,8 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
 
     protected String NS = "tests";
 
+    protected boolean useSolrCloud;
+
     @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
@@ -63,11 +69,17 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
         solrOption = OptionBuilder
                 .withArgName("URL")
                 .hasArg()
-                .withDescription("URL of Solr")
+                .withDescription("URL of Solr. If using cloud mode then use the zookeeper connection string for solr")
                 .withLongOpt("solr")
                 .create("s");
 
+        solrCloudOption = OptionBuilder
+                .withDescription("Connect to a Solr cloud server")
+                .withLongOpt("solrcloud")
+                .create("sc");
+
         options.add(solrOption);
+        options.add(solrCloudOption);
 
         return options;
     }
@@ -78,10 +90,11 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
         if (result != 0)
             return result;
 
+        useSolrCloud = cmd.hasOption(solrCloudOption.getOpt());
         if (!cmd.hasOption(solrOption.getOpt())) {
-            solrUrl = DEFAULT_SOLR_URL;
+            solrUrl = useSolrCloud ? DEFAULT_SOLRCLOUD_URL : DEFAULT_SOLR_URL;
         } else {
-            solrUrl = cmd.getOptionValue(solrOption.getOpt());
+            solrUrl = useSolrCloud ? zkConnectionString + "/solr": cmd.getOptionValue(solrOption.getOpt());
         }
 
         return 0;
@@ -102,13 +115,18 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
     }
 
     public void setupSolr() throws MalformedURLException {
-        System.out.println("Using Solr instance at " + solrUrl);
+        if (useSolrCloud) {
+            System.out.println("Using Solr cloud instance with zk " + solrUrl);
+            solrServer = new CloudSolrServer(solrUrl);
+        } else {
+            System.out.println("Using Solr instance at " + solrUrl);
 
-        ThreadSafeClientConnManager connectionManager = new ThreadSafeClientConnManager();
-        connectionManager.setDefaultMaxPerRoute(5);
-        connectionManager.setMaxTotal(50);
-        HttpClient httpClient = new DefaultHttpClient(connectionManager);
+            ThreadSafeClientConnManager connectionManager = new ThreadSafeClientConnManager();
+            connectionManager.setDefaultMaxPerRoute(5);
+            connectionManager.setMaxTotal(50);
+            HttpClient httpClient = new DefaultHttpClient(connectionManager);
 
-        solrServer = new HttpSolrServer(solrUrl, httpClient);
+            solrServer = new HttpSolrServer(solrUrl, httpClient);
+        }
     }
 }
