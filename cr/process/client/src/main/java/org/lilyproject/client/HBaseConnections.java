@@ -80,7 +80,7 @@ public class HBaseConnections {
     }
 
     /**
-     * Workaround for the problem that zookeeper connections from hBase are not all closed. HBase (HConnection) does
+     * Workaround for the problem that zookeeper connections from HBase are not all closed. HBase (HConnection) does
      * reference counting to keep track of clients of connections, and apparently somewhere a close doesn't happen
      * while it should (thus the refCount is 1 at the end, in stead of 0).
      *
