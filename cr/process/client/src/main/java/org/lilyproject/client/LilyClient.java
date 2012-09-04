@@ -230,11 +230,10 @@ public class LilyClient implements Closeable {
         RemoteTypeManager typeManager = new RemoteTypeManager(parseAddressAndPort(server.lilyAddressAndPort),
                 remoteConverter, idGenerator, zk, schemaCache);
 
-        // TODO BlobManager can probably be shared across all repositories
-        BlobManager blobManager = getBlobManager(zk, hbaseConnections);
+        final Configuration hbaseConf = getNewOrExistingConfiguration(zk);
 
-        Configuration hbaseConf = getHBaseConfiguration(zk);
-        hbaseConf = hbaseConnections.getExisting(hbaseConf);
+        // TODO BlobManager can probably be shared across all repositories
+        BlobManager blobManager = getBlobManager(zk, hbaseConf);
 
         Repository repository = new RemoteRepository(parseAddressAndPort(server.lilyAddressAndPort),
                 remoteConverter, typeManager, idGenerator, blobManager, hbaseConf);
@@ -249,10 +248,7 @@ public class LilyClient implements Closeable {
         server.repository = repository;
     }
 
-    public static BlobManager getBlobManager(ZooKeeperItf zk, HBaseConnections hbaseConns) throws IOException {
-        Configuration configuration = getHBaseConfiguration(zk);
-        // Avoid HBase(Admin)/ZooKeeper connection leaks when using new Configuration objects each time.
-        configuration = hbaseConns.getExisting(configuration);
+    public static BlobManager getBlobManager(ZooKeeperItf zk, Configuration configuration) throws IOException {
         HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
 
         URI dfsUri = getDfsUri(zk);
@@ -302,6 +298,10 @@ public class LilyClient implements Closeable {
         } catch (Exception e) {
             throw new RuntimeException("Failed to get HBase configuration from ZooKeeper", e);
         }
+    }
+
+    private Configuration getNewOrExistingConfiguration(ZooKeeperItf zk) {
+        return hbaseConnections.getExisting(getHBaseConfiguration(zk));
     }
 
     private void constructIndexer(ServerNode server) throws IOException, InterruptedException, KeeperException,
