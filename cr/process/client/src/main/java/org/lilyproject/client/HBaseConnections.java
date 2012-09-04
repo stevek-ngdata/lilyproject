@@ -15,11 +15,18 @@
  */
 package org.lilyproject.client;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
-
-import java.util.*;
 
 public class HBaseConnections {
     private List<Configuration> configurations = new ArrayList<Configuration>();
@@ -65,9 +72,27 @@ public class HBaseConnections {
     public synchronized void close() {
         for (Configuration conf : configurations) {
             HConnectionManager.deleteConnection(conf, true);
+            forceClose(conf);
             // Close the corresponding HBaseAdmin connection (which uses a cloned conf object)
             HBaseAdminFactory.close(conf);
         }
         configurations.clear();
+    }
+
+    /**
+     * Workaround for the problem that zookeeper connections from hBase are not all closed. HBase (HConnection) does
+     * reference counting to keep track of clients of connections, and apparently somewhere a close doesn't happen
+     * while it should (thus the refCount is 1 at the end, in stead of 0).
+     *
+     * @param conf hbase configuration
+     */
+    private void forceClose(Configuration conf) {
+        final HConnection connection;
+        try {
+            connection = HConnectionManager.getConnection(conf);
+            HConnectionManager.deleteStaleConnection(connection);
+        } catch (ZooKeeperConnectionException e) {
+            throw new RuntimeException("failed to close stale connection", e);
+        }
     }
 }
