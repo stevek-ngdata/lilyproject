@@ -223,7 +223,9 @@ public class IndexDefinitionConverter {
             for (Map.Entry<String, Long> counter : buildInfo.getCounters().entrySet()) {
                 countersNode.put(counter.getKey(), counter.getValue());
             }
-            buildNode.put("batchIndexConfiguration", deserializeByteArray(buildInfo.getBatchIndexConfiguration()));
+            if (buildInfo.getBatchIndexConfiguration() != null) {
+              buildNode.put("batchIndexConfiguration", deserializeByteArray(buildInfo.getBatchIndexConfiguration()));
+            }
         }
         if (index.getBatchIndexConfiguration() != null) {
             node.put("batchIndexConfiguration", this.deserializeByteArray(index.getBatchIndexConfiguration()));

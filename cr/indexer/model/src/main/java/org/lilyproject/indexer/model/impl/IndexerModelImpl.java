@@ -310,7 +310,8 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         }
 
         if (index.getBatchBuildState() == IndexBatchBuildState.BUILD_REQUESTED &&
-                currentIndex.getBatchBuildState() != IndexBatchBuildState.INACTIVE) {
+                currentIndex.getBatchBuildState() != IndexBatchBuildState.INACTIVE &&
+                currentIndex.getBatchBuildState() != IndexBatchBuildState.BUILD_REQUESTED) {
             throw new IndexUpdateException("Cannot move index build state from " + currentIndex.getBatchBuildState() +
                     " to " + index.getBatchBuildState());
         }
