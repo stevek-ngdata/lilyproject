@@ -17,7 +17,10 @@ package org.lilyproject.repository.impl;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import com.google.common.primitives.Ints;
 import org.apache.commons.logging.Log;
@@ -25,8 +28,21 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.valuetype.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobAccess;
+import org.lilyproject.repository.api.BlobException;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.BlobNotFoundException;
+import org.lilyproject.repository.api.BlobReference;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.BlobStoreAccessFactory;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorCf;
@@ -34,26 +50,23 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorColumn;
 
 public class BlobManagerImpl implements BlobManager {
     private Log log = LogFactory.getLog(getClass());
-    
+
     protected static final byte[] INCUBATE = new byte[]{(byte)-1};
     private HTableInterface blobIncubatorTable;
-
-    private final BlobStoreAccessFactory factory;
 
     private BlobStoreAccessRegistry registry;
 
     public BlobManagerImpl(HBaseTableFactory hbaseTableFactory, BlobStoreAccessFactory blobStoreAccessFactory, boolean clientMode) throws IOException {
-        this.factory = blobStoreAccessFactory;
         blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(hbaseTableFactory, clientMode);
         registry = new BlobStoreAccessRegistry(this);
         registry.setBlobStoreAccessFactory(blobStoreAccessFactory);
     }
-    
+
     @Override
     public void register(BlobStoreAccess blobStoreAccess) {
         registry.register(blobStoreAccess);
     }
-    
+
     @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         return registry.getOutputStream(blob);
@@ -73,24 +86,31 @@ public class BlobManagerImpl implements BlobManager {
     @Override
     public void incubateBlob(byte[] blobKey) throws IOException {
         Put put = new Put(blobKey);
-        // We put a byte[] because we need to put at least one column 
+        // We put a byte[] because we need to put at least one column
         // and that column needs to be non-empty for the checkAndPut in reserveBlob() to work
-        put.add(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.RECORD.bytes, INCUBATE); 
+        put.add(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.RECORD.bytes, INCUBATE);
         blobIncubatorTable.put(put);
     }
-    
+
     @Override
     public Set<BlobReference> reserveBlobs(Set<BlobReference> blobs) throws IOException {
         Set<BlobReference> failedBlobs = new HashSet<BlobReference>();
         for (BlobReference referencedBlob : blobs) {
+            try {
                 if (!reserveBlob(referencedBlob))
                     failedBlobs.add(referencedBlob);
+            } catch (BlobNotFoundException bnfe) {
+                failedBlobs.add(referencedBlob);
+            } catch (BlobException be) {
+                failedBlobs.add(referencedBlob);
+            }
         }
         return failedBlobs;
     }
-    
-    private boolean reserveBlob(BlobReference referencedBlob) throws IOException {
-        BlobStoreAccess blobStoreAccess = factory.get(referencedBlob.getBlob());
+
+    private boolean reserveBlob(BlobReference referencedBlob)  throws BlobNotFoundException, BlobException, IOException {
+        BlobStoreAccess blobStoreAccess = registry.getBlobStoreAccess(referencedBlob.getBlob());
+
         // Inline blobs are not incubated and therefore reserving them always succeeds
         if (!blobStoreAccess.incubate()) {
             return true;
@@ -104,14 +124,24 @@ public class BlobManagerImpl implements BlobManager {
         put.add(family, fieldQualifier, referencedBlob.getFieldType().getId().getBytes());
         return blobIncubatorTable.checkAndPut(row, family, recordQualifier, INCUBATE, put);
     }
-    
+
     @Override
     public void handleBlobReferences(RecordId recordId, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs) {
         // Remove references from the blobIncubator for the blobs that are still referenced.
         if (referencedBlobs != null) {
             try {
                 for (BlobReference blobReference : referencedBlobs) {
-                    blobIncubatorTable.delete(new Delete(blobReference.getBlob().getValue()));
+                    try {
+                        BlobStoreAccess blobStoreAccess = registry.getBlobStoreAccess(blobReference.getBlob());
+                        // Only delete from the blobIncubatorTable if incubation applies
+                        if (blobStoreAccess.incubate()) {
+                            blobIncubatorTable.delete(new Delete(blobReference.getBlob().getValue()));
+                        }
+                    } catch (BlobNotFoundException bnfe) {
+                        // TODO
+                    } catch (BlobException be) {
+                        // TODO
+                    }
                 }
             } catch (IOException e) {
                 // We do a best effort to remove the blobs from the blobIncubator
@@ -119,7 +149,7 @@ public class BlobManagerImpl implements BlobManager {
                 log.info("Failed to remove blobs from the blobIncubator for record '" + recordId + "'", e);
             }
         }
-        
+
         // Remove blobs that are no longer referenced.
         if (unReferencedBlobs != null) {
             Set<Blob> blobsToDelete = new HashSet<Blob>();
@@ -137,7 +167,7 @@ public class BlobManagerImpl implements BlobManager {
             }
         }
     }
-    
+
     private Blob getBlobFromRecord(Record record, QName fieldName, FieldType fieldType, int... indexes)
             throws BlobNotFoundException {
         Object value = record.getField(fieldName);
@@ -158,7 +188,7 @@ public class BlobManagerImpl implements BlobManager {
                     value = ((List<Object>) value).get(index);
                     valueType = valueType.getNestedValueType();
                     continue;
-                } 
+                }
                 if (valueType.getBaseName().equals("PATH")) {
                     value = ((HierarchyPath)value).getElements()[index];
                     valueType = valueType.getNestedValueType();
@@ -177,7 +207,7 @@ public class BlobManagerImpl implements BlobManager {
         }
         return (Blob)value;
     }
-    
+
     @Override
     public void delete(byte[] blobKey) throws BlobException {
         registry.delete(blobKey);

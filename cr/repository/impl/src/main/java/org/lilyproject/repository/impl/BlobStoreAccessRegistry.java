@@ -22,7 +22,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobAccess;
+import org.lilyproject.repository.api.BlobException;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.BlobNotFoundException;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.BlobStoreAccessFactory;
 import org.lilyproject.util.Pair;
 
 public class BlobStoreAccessRegistry {
@@ -30,15 +36,15 @@ public class BlobStoreAccessRegistry {
     Map<String, BlobStoreAccess> registry = new HashMap<String, BlobStoreAccess>();
     private BlobStoreAccessFactory blobStoreAccessFactory;
     private final BlobManager blobManager;
-    
+
     public BlobStoreAccessRegistry(BlobManager blobManager) {
         this.blobManager = blobManager;
     }
-    
+
     public void register(BlobStoreAccess blobStoreAccess) {
         registry.put(blobStoreAccess.getId(), blobStoreAccess);
     }
-    
+
     public void setBlobStoreAccessFactory(BlobStoreAccessFactory blobStoreAccessFactory) {
         this.blobStoreAccessFactory = blobStoreAccessFactory;
         for (BlobStoreAccess blobStoreAccess : blobStoreAccessFactory.getAll()) {
@@ -57,6 +63,11 @@ public class BlobStoreAccessRegistry {
         return new BlobAccessImpl(blob, blobStoreAccess, decodedKey.getV2());
     }
 
+    public BlobStoreAccess getBlobStoreAccess(Blob blob) throws BlobNotFoundException, BlobException {
+        Pair<String, byte[]> decodedKey = decodeKey(blob);
+        return registry.get(decodedKey.getV1());
+    }
+
     private Pair<String, byte[]> decodeKey(Blob blob) throws BlobNotFoundException, BlobException {
         if (blob.getValue() == null) {
             throw new BlobNotFoundException(blob, "Blob has no reference to a blob in the blobstore", null);
@@ -70,19 +81,19 @@ public class BlobStoreAccessRegistry {
         return decodedKey;
     }
 
-    
+
     public void delete(Blob blob) throws BlobNotFoundException, BlobException {
         Pair<String, byte[]> decodedKey = decodeKey(blob);
         BlobStoreAccess blobStoreAccess = registry.get(decodedKey.getV1());
         blobStoreAccess.delete(decodedKey.getV2());
     }
-    
+
     public void delete(byte[] blobKey) throws BlobException {
         Pair<String,byte[]> decodedKey = decode(blobKey);
         BlobStoreAccess blobStoreAccess = registry.get(decodedKey.getV1());
         blobStoreAccess.delete(decodedKey.getV2());
     }
-    
+
     static private byte[] encode(String id, byte[] blobKey) {
         byte[] bytes = new byte[0];
         bytes = Bytes.add(bytes, blobKey);
@@ -91,7 +102,7 @@ public class BlobStoreAccessRegistry {
         bytes = Bytes.add(bytes, Bytes.toBytes(idBytes.length));
         return bytes;
     }
-    
+
     static private Pair<String, byte[]>  decode(byte[] key) {
         int sizeofInt = Bytes.SIZEOF_INT;
         int idLength = Bytes.toInt(key, key.length - sizeofInt, sizeofInt);
@@ -99,7 +110,7 @@ public class BlobStoreAccessRegistry {
         byte[] blobKey = Bytes.head(key, key.length - sizeofInt - idLength);
         return new Pair<String, byte[]>(id, blobKey);
     }
-    
+
     private class BlobOutputStream extends FilterOutputStream {
 
         private final Blob blob;
@@ -126,19 +137,19 @@ public class BlobStoreAccessRegistry {
             blob.setValue(encodedBlobKey);
             blob.setSize(size);
         }
-        
+
         @Override
         public void write(byte[] b) throws IOException {
             super.out.write(b);
             size = size + b.length;
         }
-        
+
         @Override
         public void write(int b) throws IOException {
             super.out.write(b);
             size = size + 1;
         }
-        
+
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
             super.out.write(b, off, len);
