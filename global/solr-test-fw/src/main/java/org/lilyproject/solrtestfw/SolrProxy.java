@@ -150,9 +150,7 @@ public class SolrProxy {
                 break;
             case CONNECT:
                 this.uri = "http://localhost:8983/solr";
-                if (solrDef != null) {
-                    changeSolrDefinition(solrDef);
-                }
+                changeSolrDefinition(solrDef);
                 break;
             default:
                 throw new RuntimeException("Unexpected mode: " + mode);
@@ -275,7 +273,7 @@ public class SolrProxy {
         }
 
         // Reload default core
-        performCoreAction("RELOAD", "core0", null);
+        performCoreAction("RELOAD", SolrDefinition.DEFAULT_CORE_NAME, null);
 
         initSolrServers(solrDef);
     }
