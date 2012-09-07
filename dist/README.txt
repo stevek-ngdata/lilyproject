@@ -8,13 +8,13 @@ How to build a binary distribution
     avoid that uncommitted code or other files lingering around will be
     included.
 
- 2. The complete Lily project should be build: in the source tree root
+ 2. The complete Lily project should be built: in the source tree root
     execute:
      mvn install
 
     (or 'mvn -Pfast install' to skip the tests)
 
- 3. Then the dist can be build: in the 'dist' subdirectory execute:
+ 3. Then the dist can be built: in the 'dist' subdirectory execute:
       ./build-lily-dist.sh
 
 The resulting distributions can be found in the target directory.
