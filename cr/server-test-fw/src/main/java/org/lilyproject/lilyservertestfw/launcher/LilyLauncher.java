@@ -358,6 +358,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
 
     private void clearSolrState() throws Exception {
         for (String core : SolrProxy.getSolrCoreNames()) {
+            System.out.println("Clearing data from Solr core " + core);
             int response = sendSolrUpdateRequest("<update><delete><query>*:*</query></delete><commit/></update>", core);
             if (response != 200) {
                 throw new RuntimeException("Solr delete all docs on core " + core +
