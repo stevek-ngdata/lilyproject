@@ -132,7 +132,7 @@ public class SolrTestingUtility {
             // create path on zookeeper for solr cloud
             ZooKeeperItf zk = ZkUtil.connect("localhost:2181", 10000);
             ZkUtil.createPath(zk, "/solr");
-
+            zk.close();
         }
 
         Server server = new Server(solrPort);
@@ -177,12 +177,12 @@ public class SolrTestingUtility {
         System.setProperty("solr.solr.home", solrHomeDir.getAbsolutePath());
         if (this.useSolrCloud) {
             System.setProperty("zkHost", "localhost:2181/solr");
-            System.setProperty("bootstrap_confdir",solrHomeDir.getAbsolutePath() + "/core0/conf");
-            System.setProperty("collection.configName","core0");
+            System.setProperty("bootstrap_confdir", solrHomeDir.getAbsolutePath() + "/core0/conf");
+            System.setProperty("collection.configName", "core0");
         }
     }
 
-    public boolean isUseSolrCloud() {
+    public boolean isSolrCloudEnabled() {
         return useSolrCloud;
     }
 
