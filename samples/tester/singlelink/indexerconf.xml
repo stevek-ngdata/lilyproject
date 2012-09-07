@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<indexer xmlns:t="org.lilyproject.tools.tester">
+
+  <recordFilter>
+    <includes>
+      <include recordType="t:A" vtags="last"/>
+      <include recordType="t:B" vtags=""/>
+    </includes>
+  </recordFilter>
+
+  <fields>
+    <field name="field_string" value="t:linkToB=>t:field"/>
+  </fields>
+
+</indexer>

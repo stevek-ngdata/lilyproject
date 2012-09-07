@@ -1,0 +1,58 @@
+{
+  failuresFile: "failures.log",
+
+  namespaces: {
+    "org.lilyproject.tools.tester": "tester",
+    "org.lilyproject.vtag": "vtag"
+  },
+  
+  recordSpaces: [
+  ],
+
+  fieldTypes: [
+    {
+      name: "tester$field",
+      valueType: "STRING",
+      scope: "versioned",
+      properties: {wordCount: 2}
+    },
+    {
+      name: "tester$linkToB",
+      valueType: "LINK",
+      scope: "versioned",
+      properties: {recordType: "tester$B"}
+    }
+  ],
+
+  recordTypes: [
+    {
+      name: "tester$A",
+      fields: [
+        { name: "tester$linkToB" }
+      ]
+    },
+    {
+      name: "tester$B",
+      fields: [
+        { name: "tester$field" }
+      ]
+    }
+  ], 
+
+  scenario: [
+    /* Creating a record of type A will automatically create on of type B as well
+       and because of the linktoB field. */
+    {
+      name: "create1",
+      action: "create",
+      recordType: "tester$A",
+      count: 1
+    }
+  ],
+
+
+  stopConditions: {
+    maximumRunTime: 7,
+    maximumFailures: 1000
+  }
+}

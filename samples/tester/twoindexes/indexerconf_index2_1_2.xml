@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<indexer xmlns:t="org.lilyproject.tools.tester">
+
+  <records>
+    <record matchNamespace="t" matchName="RT2" vtags="last"/>
+  </records>
+
+  <fields>
+    <field name="field_string" value="t:field"/>
+  </fields>
+
+</indexer>

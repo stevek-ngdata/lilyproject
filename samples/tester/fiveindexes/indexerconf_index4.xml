@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<indexer xmlns:t="org.lilyproject.tools.tester">
+
+  <recordFilter>
+    <includes>
+      <include recordType="t:RT4" vtags="last"/>
+    </includes>
+  </recordFilter>
+
+  <fields>
+    <field name="field_string" value="t:field"/>
+  </fields>
+
+</indexer>
