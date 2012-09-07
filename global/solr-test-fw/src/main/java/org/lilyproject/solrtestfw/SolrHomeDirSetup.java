@@ -31,7 +31,11 @@ public class SolrHomeDirSetup {
         for (SolrDefinition.CoreDefinition core : solrDef.getCores()) {
             File solrCoreDir = new File(solrHomeDir, core.getName());
             File solrConfDir = new File(solrCoreDir, "conf");
-            FileUtils.deleteDirectory(solrCoreDir); // if it would have existed previously
+            // In case the core would have previously existed, delete its directory, except for the default
+            // core, since that one is never unloaded, and solr would fail if you delete the index below its feet
+            if (!core.getName().equals(SolrDefinition.DEFAULT_CORE_NAME)) {
+                FileUtils.deleteDirectory(solrCoreDir);
+            }
             FileUtils.forceMkdir(solrConfDir);
 
             copyDefaultConfigToSolrHome(solrConfDir);
