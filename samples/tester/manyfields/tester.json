@@ -15,9 +15,9 @@
       valueType: "STRING",
       scope: "versioned",
       properties: {wordCount: 2},
-      /* This creates 100 fields named field1, field2, ... 
+      /* This creates 80 fields named field0, field1, field2, ... 
          If you change this number, also change it below where the fields are added to the record type */
-      times: 100
+      times: 80
     }
   ],
 
@@ -27,7 +27,7 @@
       fields: [
         {
           name: "tester$field",
-          times: 100
+          times: 80
         }
       ]
     }

@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<indexer xmlns:t="org.lilyproject.tools.tester">
+  <recordFilter>
+    <includes>
+      <include vtags="last"/>
+    </includes>
+  </recordFilter>
+
+  <fields>
+    <field name="field0_string" value="t:field0"/>
+    <field name="field1_string" value="t:field1"/>
+    <field name="field2_string" value="t:field2"/>
+    <field name="field3_string" value="t:field3"/>
+    <field name="field4_string" value="t:field4"/>
+    <field name="field5_string" value="t:field5"/>
+    <field name="field6_string" value="t:field6"/>
+    <field name="field7_string" value="t:field7"/>
+    <field name="field8_string" value="t:field8"/>
+    <field name="field9_string" value="t:field9"/>
+    <field name="field10_string" value="t:field10"/>
+    <field name="field11_string" value="t:field11"/>
+    <field name="field12_string" value="t:field12"/>
+    <field name="field13_string" value="t:field13"/>
+    <field name="field14_string" value="t:field14"/>
+    <field name="field15_string" value="t:field15"/>
+    <field name="field16_string" value="t:field16"/>
+    <field name="field17_string" value="t:field17"/>
+    <field name="field18_string" value="t:field18"/>
+    <field name="field19_string" value="t:field19"/>
+    <field name="field20_string" value="t:field20"/>
+    <field name="field21_string" value="t:field21"/>
+    <field name="field22_string" value="t:field22"/>
+    <field name="field23_string" value="t:field23"/>
+    <field name="field24_string" value="t:field24"/>
+    <field name="field25_string" value="t:field25"/>
+    <field name="field26_string" value="t:field26"/>
+    <field name="field27_string" value="t:field27"/>
+    <field name="field28_string" value="t:field28"/>
+    <field name="field29_string" value="t:field29"/>
+    <field name="field30_string" value="t:field30"/>
+    <field name="field31_string" value="t:field31"/>
+    <field name="field32_string" value="t:field32"/>
+    <field name="field33_string" value="t:field33"/>
+    <field name="field34_string" value="t:field34"/>
+    <field name="field35_string" value="t:field35"/>
+    <field name="field36_string" value="t:field36"/>
+    <field name="field37_string" value="t:field37"/>
+    <field name="field38_string" value="t:field38"/>
+    <field name="field39_string" value="t:field39"/>
+    <field name="field40_string" value="t:field40"/>
+    <field name="field41_string" value="t:field41"/>
+    <field name="field42_string" value="t:field42"/>
+    <field name="field43_string" value="t:field43"/>
+    <field name="field44_string" value="t:field44"/>
+    <field name="field45_string" value="t:field45"/>
+    <field name="field46_string" value="t:field46"/>
+    <field name="field47_string" value="t:field47"/>
+    <field name="field48_string" value="t:field48"/>
+    <field name="field49_string" value="t:field49"/>
+    <field name="field50_string" value="t:field50"/>
+    <field name="field51_string" value="t:field51"/>
+    <field name="field52_string" value="t:field52"/>
+    <field name="field53_string" value="t:field53"/>
+    <field name="field54_string" value="t:field54"/>
+    <field name="field55_string" value="t:field55"/>
+    <field name="field56_string" value="t:field56"/>
+    <field name="field57_string" value="t:field57"/>
+    <field name="field58_string" value="t:field58"/>
+    <field name="field59_string" value="t:field59"/>
+    <field name="field60_string" value="t:field60"/>
+    <field name="field61_string" value="t:field61"/>
+    <field name="field62_string" value="t:field62"/>
+    <field name="field63_string" value="t:field63"/>
+    <field name="field64_string" value="t:field64"/>
+    <field name="field65_string" value="t:field65"/>
+    <field name="field66_string" value="t:field66"/>
+    <field name="field67_string" value="t:field67"/>
+    <field name="field68_string" value="t:field68"/>
+    <field name="field69_string" value="t:field69"/>
+    <field name="field70_string" value="t:field70"/>
+    <field name="field71_string" value="t:field71"/>
+    <field name="field72_string" value="t:field72"/>
+    <field name="field73_string" value="t:field73"/>
+    <field name="field74_string" value="t:field74"/>
+    <field name="field75_string" value="t:field75"/>
+    <field name="field76_string" value="t:field76"/>
+    <field name="field77_string" value="t:field77"/>
+    <field name="field78_string" value="t:field78"/>
+    <field name="field79_string" value="t:field79"/>
+  </fields>
+
+</indexer>

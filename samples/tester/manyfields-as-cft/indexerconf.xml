@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<indexer xmlns:t="org.lilyproject.tools.tester">
+  <recordFilter>
+    <includes>
+      <include recordType="t:RT1" vtags="last"/>
+    </includes>
+  </recordFilter>
+
+  <fields>
+    <field name="field0_string" value="t:field1=>t:fieldCFT0"/>
+    <field name="field1_string" value="t:field1=>t:fieldCFT1"/>
+    <field name="field2_string" value="t:field1=>t:fieldCFT2"/>
+    <field name="field3_string" value="t:field1=>t:fieldCFT3"/>
+    <field name="field4_string" value="t:field1=>t:fieldCFT4"/>
+    <field name="field5_string" value="t:field1=>t:fieldCFT5"/>
+    <field name="field6_string" value="t:field1=>t:fieldCFT6"/>
+    <field name="field7_string" value="t:field1=>t:fieldCFT7"/>
+    <field name="field8_string" value="t:field1=>t:fieldCFT8"/>
+    <field name="field9_string" value="t:field1=>t:fieldCFT9"/>
+    <field name="field10_string" value="t:field1=>t:fieldCFT10"/>
+    <field name="field11_string" value="t:field1=>t:fieldCFT11"/>
+    <field name="field12_string" value="t:field1=>t:fieldCFT12"/>
+    <field name="field13_string" value="t:field1=>t:fieldCFT13"/>
+    <field name="field14_string" value="t:field1=>t:fieldCFT14"/>
+    <field name="field15_string" value="t:field1=>t:fieldCFT15"/>
+    <field name="field16_string" value="t:field1=>t:fieldCFT16"/>
+    <field name="field17_string" value="t:field1=>t:fieldCFT17"/>
+    <field name="field18_string" value="t:field1=>t:fieldCFT18"/>
+    <field name="field19_string" value="t:field1=>t:fieldCFT19"/>
+    <field name="field20_string" value="t:field1=>t:fieldCFT20"/>
+    <field name="field21_string" value="t:field1=>t:fieldCFT21"/>
+    <field name="field22_string" value="t:field1=>t:fieldCFT22"/>
+    <field name="field23_string" value="t:field1=>t:fieldCFT23"/>
+    <field name="field24_string" value="t:field1=>t:fieldCFT24"/>
+    <field name="field25_string" value="t:field1=>t:fieldCFT25"/>
+    <field name="field26_string" value="t:field1=>t:fieldCFT26"/>
+    <field name="field27_string" value="t:field1=>t:fieldCFT27"/>
+    <field name="field28_string" value="t:field1=>t:fieldCFT28"/>
+    <field name="field29_string" value="t:field1=>t:fieldCFT29"/>
+    <field name="field30_string" value="t:field1=>t:fieldCFT30"/>
+    <field name="field31_string" value="t:field1=>t:fieldCFT31"/>
+    <field name="field32_string" value="t:field1=>t:fieldCFT32"/>
+    <field name="field33_string" value="t:field1=>t:fieldCFT33"/>
+    <field name="field34_string" value="t:field1=>t:fieldCFT34"/>
+    <field name="field35_string" value="t:field1=>t:fieldCFT35"/>
+    <field name="field36_string" value="t:field1=>t:fieldCFT36"/>
+    <field name="field37_string" value="t:field1=>t:fieldCFT37"/>
+    <field name="field38_string" value="t:field1=>t:fieldCFT38"/>
+    <field name="field39_string" value="t:field1=>t:fieldCFT39"/>
+    <field name="field40_string" value="t:field1=>t:fieldCFT40"/>
+    <field name="field41_string" value="t:field1=>t:fieldCFT41"/>
+    <field name="field42_string" value="t:field1=>t:fieldCFT42"/>
+    <field name="field43_string" value="t:field1=>t:fieldCFT43"/>
+    <field name="field44_string" value="t:field1=>t:fieldCFT44"/>
+    <field name="field45_string" value="t:field1=>t:fieldCFT45"/>
+    <field name="field46_string" value="t:field1=>t:fieldCFT46"/>
+    <field name="field47_string" value="t:field1=>t:fieldCFT47"/>
+    <field name="field48_string" value="t:field1=>t:fieldCFT48"/>
+    <field name="field49_string" value="t:field1=>t:fieldCFT49"/>
+    <field name="field50_string" value="t:field1=>t:fieldCFT50"/>
+    <field name="field51_string" value="t:field1=>t:fieldCFT51"/>
+    <field name="field52_string" value="t:field1=>t:fieldCFT52"/>
+    <field name="field53_string" value="t:field1=>t:fieldCFT53"/>
+    <field name="field54_string" value="t:field1=>t:fieldCFT54"/>
+    <field name="field55_string" value="t:field1=>t:fieldCFT55"/>
+    <field name="field56_string" value="t:field1=>t:fieldCFT56"/>
+    <field name="field57_string" value="t:field1=>t:fieldCFT57"/>
+    <field name="field58_string" value="t:field1=>t:fieldCFT58"/>
+    <field name="field59_string" value="t:field1=>t:fieldCFT59"/>
+    <field name="field60_string" value="t:field1=>t:fieldCFT60"/>
+    <field name="field61_string" value="t:field1=>t:fieldCFT61"/>
+    <field name="field62_string" value="t:field1=>t:fieldCFT62"/>
+    <field name="field63_string" value="t:field1=>t:fieldCFT63"/>
+    <field name="field64_string" value="t:field1=>t:fieldCFT64"/>
+    <field name="field65_string" value="t:field1=>t:fieldCFT65"/>
+    <field name="field66_string" value="t:field1=>t:fieldCFT66"/>
+    <field name="field67_string" value="t:field1=>t:fieldCFT67"/>
+    <field name="field68_string" value="t:field1=>t:fieldCFT68"/>
+    <field name="field69_string" value="t:field1=>t:fieldCFT69"/>
+    <field name="field70_string" value="t:field1=>t:fieldCFT70"/>
+    <field name="field71_string" value="t:field1=>t:fieldCFT71"/>
+    <field name="field72_string" value="t:field1=>t:fieldCFT72"/>
+    <field name="field73_string" value="t:field1=>t:fieldCFT73"/>
+    <field name="field74_string" value="t:field1=>t:fieldCFT74"/>
+    <field name="field75_string" value="t:field1=>t:fieldCFT75"/>
+    <field name="field76_string" value="t:field1=>t:fieldCFT76"/>
+    <field name="field77_string" value="t:field1=>t:fieldCFT77"/>
+    <field name="field78_string" value="t:field1=>t:fieldCFT78"/>
+    <field name="field79_string" value="t:field1=>t:fieldCFT79"/>
+  </fields>
+
+</indexer>

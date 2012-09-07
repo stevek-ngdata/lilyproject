@@ -1,6 +1,6 @@
 /*
   This test creates records having a RECORD-type field which in turn contains
-  100 fields.
+  80 fields.
   Because the fields are in an embedded record, this has the effect of
   storing them all in a single HBase column.
   Depending on access scenario's, this can be more efficient
@@ -23,7 +23,7 @@
       valueType: "STRING",
       scope: "versioned",
       properties: {wordCount: 2},
-      times: 100
+      times: 80
     },
     {
       name: "tester$field1",
@@ -37,7 +37,7 @@
       fields: [
         {
           name: "tester$fieldCFT",
-          times: 100
+          times: 80
         }
       ]
     },
