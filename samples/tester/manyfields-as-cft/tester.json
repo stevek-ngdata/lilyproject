@@ -1,0 +1,69 @@
+/*
+  This test creates records having a RECORD-type field which in turn contains
+  100 fields.
+  Because the fields are in an embedded record, this has the effect of
+  storing them all in a single HBase column.
+  Depending on access scenario's, this can be more efficient
+  (especially if you always access all fields and don't need versioning).
+*/
+{
+  failuresFile: "failures.log",
+
+  namespaces: {
+    "org.lilyproject.tools.tester": "tester",
+    "org.lilyproject.vtag": "vtag"
+  },
+  
+  recordSpaces: [
+  ],
+
+  fieldTypes: [
+    {
+      name: "tester$fieldCFT",
+      valueType: "STRING",
+      scope: "versioned",
+      properties: {wordCount: 2},
+      times: 100
+    },
+    {
+      name: "tester$field1",
+      valueType: "RECORD<tester$RT1CFT>"
+    }
+  ],
+
+  recordTypes: [
+    {
+      name: "tester$RT1CFT",
+      fields: [
+        {
+          name: "tester$fieldCFT",
+          times: 100
+        }
+      ]
+    },
+    {
+      name: "tester$RT1",
+      fields: [
+        {
+          name: "tester$field1"
+        }
+      ]
+    }
+  ], 
+
+  scenario: [
+    {
+      name: "create1",
+      action: "create",
+      recordType: "tester$RT1",
+      count: 1
+    }
+  ],
+
+
+  stopConditions: {
+    /* The time is in minutes */
+    maximumRunTime: 5,
+    maximumFailures: 1000
+  }
+}

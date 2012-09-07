@@ -1,0 +1,50 @@
+{
+  failuresFile: "failures.log",
+
+  namespaces: {
+    "org.lilyproject.tools.tester": "tester",
+    "org.lilyproject.vtag": "vtag"
+  },
+  
+  recordSpaces: [
+  ],
+
+  fieldTypes: [
+    {
+      name: "tester$field",
+      valueType: "STRING",
+      scope: "versioned",
+      properties: {wordCount: 2},
+      /* This creates 100 fields named field1, field2, ... 
+         If you change this number, also change it below where the fields are added to the record type */
+      times: 100
+    }
+  ],
+
+  recordTypes: [
+    {
+      name: "tester$RT1",
+      fields: [
+        {
+          name: "tester$field",
+          times: 100
+        }
+      ]
+    }
+  ], 
+
+  scenario: [
+    {
+      name: "create1",
+      action: "create",
+      recordType: "tester$RT1",
+      count: 1
+    }
+  ],
+
+
+  stopConditions: {
+    maximumRunTime: 7,
+    maximumFailures: 1000
+  }
+}
