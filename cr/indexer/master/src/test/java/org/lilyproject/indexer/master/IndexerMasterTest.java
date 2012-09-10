@@ -34,9 +34,6 @@ import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkLockException;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 public class IndexerMasterTest {
     private static final QName BOOK_RECORD_TYPE = new QName("org.lilyproject.test", "Book");
     private static final QName AUTHOR_RECORD_TYPE = new QName("org.lilyproject.test", "Author");
@@ -63,6 +60,7 @@ public class IndexerMasterTest {
 
     @After
     public void tearDown() throws IOException {
+        repository.close();
         hBaseAdmin.close();
     }
 
@@ -76,26 +74,27 @@ public class IndexerMasterTest {
         createSchema();
         final String indexName = addIndex();
 
-        waitUntilIndexUpdateProcessed();
-        assertTrue(verifyExistenceOfDerefMap(indexName));
+        verifyExistenceOfDerefMap(indexName, true);
 
         setDerefMapEnabled(indexName, false);
-        waitUntilIndexUpdateProcessed();
-        assertFalse(verifyExistenceOfDerefMap(indexName));
+        verifyExistenceOfDerefMap(indexName, false);
 
         setDerefMapEnabled(indexName, true);
-        waitUntilIndexUpdateProcessed();
-        assertTrue(verifyExistenceOfDerefMap(indexName));
+        verifyExistenceOfDerefMap(indexName, true);
     }
 
-    private void waitUntilIndexUpdateProcessed() throws InterruptedException {
-        // TODO: is there a more clever way to do this?
-        Thread.sleep(2500);
-    }
+    private boolean verifyExistenceOfDerefMap(String indexName, boolean shouldExist) throws IOException {
+        int MAX_TRIES = 100;
+        int SLEEP_BETWEEN_TRIES = 500;
 
-    private boolean verifyExistenceOfDerefMap(String indexName) throws IOException {
-        return checkHTableExistence(DerefMapHbaseImpl.backwardIndexName(indexName), hBaseAdmin) &&
-                checkHTableExistence(DerefMapHbaseImpl.forwardIndexName(indexName), hBaseAdmin);
+        for (int tries = 0; tries < MAX_TRIES; tries++) {
+            boolean tablesExist = checkHTableExistence(DerefMapHbaseImpl.backwardIndexName(indexName), hBaseAdmin) &&
+                    checkHTableExistence(DerefMapHbaseImpl.forwardIndexName(indexName), hBaseAdmin);
+            if (tablesExist == shouldExist)
+                return true; // tables existence as expected
+        }
+
+        return false; // condition not met after trying long enough
     }
 
     private void setDerefMapEnabled(String indexName, boolean enabled)
