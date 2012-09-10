@@ -67,6 +67,9 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
             System.out.println("  + Update state: " + index.getUpdateState());
             System.out.println("  + Batch build state: " + index.getBatchBuildState());
             System.out.println("  + Queue subscription ID: " + index.getQueueSubscriptionId());
+            if (!index.isEnableDerefMap()) {
+                System.out.println("  + Dereference Map: disabled");
+            }
             if (index.getSolrShards() != null && !index.getSolrShards().isEmpty()) {
                 System.out.println("  + Solr shards: ");
                 for (Map.Entry<String, String> shard : index.getSolrShards().entrySet()) {
@@ -74,11 +77,13 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                 }
             } else {
                 System.out.println("  + Solr zookeeper: " + index.getZkConnectionString());
-                System.out.println("  + Solr collection: " + (index.getSolrCollection() != null ? index.getSolrCollection() : "none (using solr default)"));
+                System.out.println("  + Solr collection: " +
+                        (index.getSolrCollection() != null ? index.getSolrCollection() : "none (using solr default)"));
             }
 
             if (this.printBatchConfiguration)
-                System.out.println("  + Default batch build config : " + prettyPrintBatchConf(index.getDefaultBatchIndexConfiguration(), 4));
+                System.out.println("  + Default batch build config : " +
+                        prettyPrintBatchConf(index.getDefaultBatchIndexConfiguration(), 4));
 
             ActiveBatchBuildInfo activeBatchBuild = index.getActiveBatchBuildInfo();
             if (activeBatchBuild != null) {
@@ -87,7 +92,8 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                 System.out.println("    + Submitted at: " + new DateTime(activeBatchBuild.getSubmitTime()).toString());
                 System.out.println("    + Tracking URL: " + activeBatchBuild.getTrackingUrl());
                 if (this.printBatchConfiguration)
-                    System.out.println("    + Batch build config : " + prettyPrintBatchConf(activeBatchBuild.getBatchIndexConfiguration(), 6));
+                    System.out.println("    + Batch build config : " +
+                            prettyPrintBatchConf(activeBatchBuild.getBatchIndexConfiguration(), 6));
             }
 
             BatchBuildInfo lastBatchBuild = index.getLastBatchBuildInfo();
@@ -103,8 +109,9 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                 System.out.println("    + Launched map tasks: " + counters.get(COUNTER_TOTAL_LAUNCHED_MAPS));
                 System.out.println("    + Failed map tasks: " + counters.get(COUNTER_NUM_FAILED_MAPS));
                 System.out.println("    + Index failures: " + counters.get(COUNTER_NUM_FAILED_RECORDS));
-                if (this.printBatchConfiguration )
-                    System.out.println("    + Batch build config : " + prettyPrintBatchConf(lastBatchBuild.getBatchIndexConfiguration(), 6));
+                if (this.printBatchConfiguration)
+                    System.out.println("    + Batch build config : " +
+                            prettyPrintBatchConf(lastBatchBuild.getBatchIndexConfiguration(), 6));
             }
         }
 
@@ -117,13 +124,14 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
 
         Long failedRecords = buildInfo.getCounters().get(COUNTER_NUM_FAILED_RECORDS);
         if (failedRecords != null && failedRecords > 0) {
-            result.append(", ").append(buildInfo.getSuccess() ? "but ": "").append(failedRecords).append(" index failures");
+            result.append(", ").append(buildInfo.getSuccess() ? "but " : "").append(failedRecords)
+                    .append(" index failures");
         }
 
         return result.toString();
     }
 
-    private String prettyPrintBatchConf (byte[] conf, int extraIndent) throws Exception{
+    private String prettyPrintBatchConf(byte[] conf, int extraIndent) throws Exception {
         if (conf == null) {
             return "null";
         }
@@ -138,7 +146,10 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
     }
 
     private static final String COUNTER_MAP_INPUT_RECORDS = "org.apache.hadoop.mapred.Task$Counter:MAP_INPUT_RECORDS";
-    private static final String COUNTER_TOTAL_LAUNCHED_MAPS = "org.apache.hadoop.mapred.JobInProgress$Counter:TOTAL_LAUNCHED_MAPS";
-    private static final String COUNTER_NUM_FAILED_MAPS = "org.apache.hadoop.mapred.JobInProgress$Counter:NUM_FAILED_MAPS";
-    private static final String COUNTER_NUM_FAILED_RECORDS = "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
+    private static final String COUNTER_TOTAL_LAUNCHED_MAPS =
+            "org.apache.hadoop.mapred.JobInProgress$Counter:TOTAL_LAUNCHED_MAPS";
+    private static final String COUNTER_NUM_FAILED_MAPS =
+            "org.apache.hadoop.mapred.JobInProgress$Counter:NUM_FAILED_MAPS";
+    private static final String COUNTER_NUM_FAILED_RECORDS =
+            "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
 }

@@ -68,6 +68,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected Option printBatchConfigurationOption;
     protected Option solrCollectionOption;
     protected Option solrZkOption;
+    protected Option enableDerefMapOption;
 
     protected String indexName;
     protected Map<String, String> solrShards;
@@ -84,6 +85,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected boolean printBatchConfiguration;
     protected String solrCollection;
     protected String solrZk;
+    protected Boolean enableDerefMap;
 
     public BaseIndexerAdminCli() {
         // Here we instantiate various options, but it is up to subclasses to decide which ones
@@ -184,6 +186,16 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withDescription("Zookeeper connection string for Solr")
                 .withLongOpt("solr-zk")
                 .create("sz");
+
+        enableDerefMapOption =  OptionBuilder
+                .withArgName("enable deref map")
+                .hasArg()
+                .withDescription("By default a deref map is maintained in HBase to resolve dependencies " +
+                        "between indexed records through dereference expressions. This is not used during batch " +
+                        "index building, hence setting this option to false it is a performance improvement if you " +
+                        "only ever plan to populate your index through batch index building.")
+                .withLongOpt("enable-derefmap")
+                .create("edm");
     }
 
     @Override
@@ -429,6 +441,10 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
         if (cmd.hasOption(solrZkOption.getOpt())) {
             solrZk = cmd.getOptionValue(solrZkOption.getOpt());
+        }
+
+        if (cmd.hasOption(enableDerefMapOption.getOpt())) {
+            enableDerefMap = Boolean.valueOf(cmd.getOptionValue(enableDerefMapOption.getOpt()));
         }
 
         printBatchConfiguration = cmd.hasOption(printBatchConfigurationOption.getOpt());

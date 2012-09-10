@@ -133,6 +133,8 @@ public class IndexDefinitionConverter {
             defaultBatchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "defaultBatchIndexConfiguration"));
         }
 
+        if (node.has("maintainDerefMap")) index.setEnableDerefMap(node.get("maintainDerefMap").asBoolean());
+
         index.setGeneralState(state);
         index.setUpdateState(updateState);
         index.setBatchBuildState(buildState);
@@ -233,6 +235,8 @@ public class IndexDefinitionConverter {
         if (index.getDefaultBatchIndexConfiguration() != null) {
             node.put("defaultBatchIndexConfiguration", this.deserializeByteArray(index.getDefaultBatchIndexConfiguration()));
         }
+
+        node.put("maintainDerefMap", index.isEnableDerefMap());
 
         return node;
     }

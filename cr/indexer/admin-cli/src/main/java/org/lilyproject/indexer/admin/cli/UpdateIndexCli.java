@@ -48,6 +48,7 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
         options.add(forceOption);
         options.add(defaultBatchIndexConfigurationOption);
         options.add(batchIndexConfigurationOption);
+        options.add(enableDerefMapOption);
 
         return options;
     }
@@ -131,6 +132,11 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
 
             if (batchIndexConfiguration != null) {
                 index.setBatchIndexConfiguration(batchIndexConfiguration);
+                changes = true;
+            }
+
+            if (enableDerefMap != null && enableDerefMap != index.isEnableDerefMap()) {
+                index.setEnableDerefMap(enableDerefMap);
                 changes = true;
             }
 

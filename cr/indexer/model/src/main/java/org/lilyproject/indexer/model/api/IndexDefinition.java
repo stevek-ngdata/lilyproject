@@ -87,4 +87,18 @@ public interface IndexDefinition {
 
     String getSolrCollection();
     void setSolrCollection(String collection);
+
+    /**
+     * Do we need to maintain a deref map for this index. Note that if this returns true (the default) but the index
+     * configuration doesn't have any dereference expressions, than no deref map will be maintained anyways (because
+     * there is no need).
+     *
+     * Setting this to false might be useful in the situation that you have an index with dereference expressions, but
+     * you plan to populate this index only through batch index building (which doesn't use the deref map anyways).
+     *
+     * @return true if a deref map should be maintained for this index (this is the default), false otherwise.
+     */
+    boolean isEnableDerefMap();
+
+    void setEnableDerefMap(boolean enableDerefMap);
 }

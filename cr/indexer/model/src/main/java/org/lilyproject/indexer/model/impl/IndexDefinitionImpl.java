@@ -43,6 +43,7 @@ public class IndexDefinitionImpl implements IndexDefinition {
     private boolean immutable;
     private String zkConnectionString;
     private String solrCollection;
+    private boolean enableDerefMap;
 
     public IndexDefinitionImpl(String name) {
         this.name = name;
@@ -214,5 +215,12 @@ public class IndexDefinitionImpl implements IndexDefinition {
         this.solrCollection = collection;
     }
 
+    @Override
+    public boolean isEnableDerefMap() {
+        return this.enableDerefMap;
+    }
 
+    public void setEnableDerefMap(boolean enableDerefMap) {
+        this.enableDerefMap = enableDerefMap;
+    }
 }

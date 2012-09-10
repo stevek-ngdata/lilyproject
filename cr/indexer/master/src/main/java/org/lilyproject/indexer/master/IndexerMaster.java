@@ -240,6 +240,10 @@ public class IndexerMaster {
                 index.getActiveBatchBuildInfo() == null;
     }
 
+    private boolean needsDerefMapDeletion(IndexDefinition index) {
+        return !index.isEnableDerefMap();
+    }
+
     private void assignSubscription(String indexName) {
         try {
             String lock = indexerModel.lockIndex(indexName);
@@ -437,6 +441,14 @@ public class IndexerMaster {
         }
     }
 
+    private void deleteDerefMap(IndexDefinition index) throws IOException {
+        try {
+            DerefMapHbaseImpl.delete(index.getName(), hbaseConf);
+        } catch (org.lilyproject.hbaseindex.IndexNotFoundException e) {
+            // nothing to do
+        }
+    }
+
     private class MyListener implements IndexerModelListener {
         @Override
         public void process(IndexerModelEvent event) {
@@ -548,6 +560,10 @@ public class IndexerMaster {
                             if (index.getActiveBatchBuildInfo() != null) {
                                 jobStatusWatcher
                                         .assureWatching(index.getName(), index.getActiveBatchBuildInfo().getJobId());
+                            }
+
+                            if (needsDerefMapDeletion(index)) {
+                                deleteDerefMap(index);
                             }
                         }
                     }

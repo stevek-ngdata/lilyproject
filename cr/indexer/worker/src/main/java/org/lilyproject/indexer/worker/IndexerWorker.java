@@ -15,10 +15,6 @@
  */
 package org.lilyproject.indexer.worker;
 
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
@@ -74,6 +69,10 @@ import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
 
 /**
  * IndexerWorker is responsible for the incremental indexing updating, thus for starting
@@ -200,8 +199,9 @@ public class IndexerWorker {
             IndexLocker indexLocker = new IndexLocker(zk, settings.getEnableLocking());
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
 
-            // create a deref map in case the indexer configuration contains deref fields
-            DerefMap derefMap = indexerConf.containsDerefExpressions() ?
+            // Create a deref map in case the indexer configuration contains deref fields and the index definition says
+            // we should maintain a deref map.
+            DerefMap derefMap = index.isEnableDerefMap() && indexerConf.containsDerefExpressions() ?
                     DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory,
                             repository.getIdGenerator()) : null;
 
@@ -287,7 +287,8 @@ public class IndexerWorker {
 
         boolean relevantChanges = !Arrays.equals(handle.indexDef.getConfiguration(), index.getConfiguration()) ||
                 !handle.indexDef.getSolrShards().equals(index.getSolrShards()) ||
-                !ObjectUtils.safeEquals(handle.indexDef.getShardingConfiguration(), index.getShardingConfiguration());
+                !ObjectUtils.safeEquals(handle.indexDef.getShardingConfiguration(), index.getShardingConfiguration()) ||
+                handle.indexDef.isEnableDerefMap() != index.isEnableDerefMap();
 
         if (!relevantChanges) {
             return;

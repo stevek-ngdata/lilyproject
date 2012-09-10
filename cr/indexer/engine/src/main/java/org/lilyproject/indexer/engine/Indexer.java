@@ -67,7 +67,8 @@ public class Indexer {
 
     /**
      * Deref map used to store dependencies introduced via dereference expressions. It is <code>null</code> in case the
-     * indexer configuration doesn't contain dereference expressions.
+     * indexer configuration doesn't contain dereference expressions or the index was configured not to maintain a deref
+     * map.
      */
     private final DerefMap derefMap;
 

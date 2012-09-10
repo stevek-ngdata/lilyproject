@@ -46,6 +46,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         options.add(defaultBatchIndexConfigurationOption);
         options.add(solrCollectionOption);
         options.add(solrZkOption);
+        options.add(enableDerefMapOption);
 
         return options;
     }
@@ -102,6 +103,11 @@ public class AddIndexCli extends BaseIndexerAdminCli {
 
         if (batchIndexConfiguration != null)
             index.setBatchIndexConfiguration(batchIndexConfiguration);
+
+        if (enableDerefMap != null)
+            index.setEnableDerefMap(enableDerefMap);
+        else
+            index.setEnableDerefMap(true); // default true
 
         model.addIndex(index);
 
