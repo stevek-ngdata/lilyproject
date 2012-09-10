@@ -85,8 +85,8 @@ public class IndexerMasterTest {
 
     private boolean verifyExistenceOfDerefMap(String indexName, boolean shouldExist)
             throws IOException, InterruptedException {
-        int MAX_TRIES = 100;
-        int SLEEP_BETWEEN_TRIES = 500;
+        final int MAX_TRIES = 100;
+        final int SLEEP_BETWEEN_TRIES = 500;
 
         for (int tries = 0; tries < MAX_TRIES; tries++) {
             boolean tablesExist = checkHTableExistence(DerefMapHbaseImpl.backwardIndexName(indexName), hBaseAdmin) &&
