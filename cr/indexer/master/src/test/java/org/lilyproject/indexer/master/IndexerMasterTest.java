@@ -21,7 +21,7 @@ import org.lilyproject.indexer.model.api.IndexModelException;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
 import org.lilyproject.indexer.model.api.IndexUpdateException;
 import org.lilyproject.indexer.model.api.IndexValidityException;
-import org.lilyproject.indexer.model.impl.IndexerModelImpl;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
@@ -31,7 +31,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
-import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
+import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkLockException;
 
 import static org.junit.Assert.assertFalse;
@@ -100,11 +100,10 @@ public class IndexerMasterTest {
 
     private void setDerefMapEnabled(String indexName, boolean enabled)
             throws IOException, InterruptedException, KeeperException, ZkLockException, IndexNotFoundException,
-            IndexModelException, IndexConcurrentModificationException, IndexUpdateException, IndexValidityException {
-        // TODO: ok to use localhost hardcoded here?
-        final StateWatchingZooKeeper zk = new StateWatchingZooKeeper("localhost:2181", 10000);
+            IndexModelException, IndexConcurrentModificationException, IndexUpdateException, IndexValidityException,
+            ZkConnectException {
 
-        final IndexerModelImpl model = new IndexerModelImpl(zk);
+        final WriteableIndexerModel model = lilyProxy.getLilyServerProxy().getIndexerModel();
 
         final String lock = model.lockIndex(indexName);
         try {
