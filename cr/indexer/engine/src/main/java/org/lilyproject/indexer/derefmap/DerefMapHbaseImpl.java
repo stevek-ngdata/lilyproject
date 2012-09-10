@@ -102,11 +102,11 @@ public class DerefMapHbaseImpl implements DerefMap {
         manager.deleteIndex(backwardIndexName(indexName));
     }
 
-    private static String forwardIndexName(String indexName) {
+    public static String forwardIndexName(String indexName) {
         return "deref-forward-" + indexName;
     }
 
-    private static String backwardIndexName(String indexName) {
+    public static String backwardIndexName(String indexName) {
         return "deref-backward-" + indexName;
     }
 

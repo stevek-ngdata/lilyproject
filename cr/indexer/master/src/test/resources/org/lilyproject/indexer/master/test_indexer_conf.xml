@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<indexer xmlns:t="org.lilyproject.test">
+  <recordFilter>
+    <includes>
+      <include recordType="t:Book" vtags="last"/>
+      <include recordType="t:Author" vtags=""/>
+    </includes>
+  </recordFilter>
+
+  <fields>
+    <field name="author" value="t:authorLink=>t:name"/>
+  </fields>
+
+</indexer>

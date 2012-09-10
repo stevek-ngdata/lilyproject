@@ -49,6 +49,12 @@
       <artifactId>lily-indexer-batchbuild</artifactId>
       <classifier>mapreduce-job</classifier>
     </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-server-test-fw</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>

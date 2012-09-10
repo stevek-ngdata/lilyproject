@@ -47,6 +47,7 @@ public class IndexDefinitionImpl implements IndexDefinition {
 
     public IndexDefinitionImpl(String name) {
         this.name = name;
+        this.enableDerefMap = true; // default true
     }
 
     @Override
