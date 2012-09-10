@@ -126,6 +126,12 @@ public class IndexerMasterTest {
         }
     }
 
+    /**
+     * Creates a simple schema with two record types and a link between them.
+     *
+     * @throws RepositoryException
+     * @throws InterruptedException
+     */
     private void createSchema() throws RepositoryException, InterruptedException {
         TypeManager typeManager = repository.getTypeManager();
 
@@ -144,6 +150,13 @@ public class IndexerMasterTest {
         typeManager.createRecordType(authorRecordType);
     }
 
+    /**
+     * Creates a simple index for the schema of this test. The index uses a dereference expression on the link field in
+     * the schema.
+     *
+     * @return the name of the index
+     * @throws Exception
+     */
     private String addIndex() throws Exception {
         final String indexName = "books";
         lilyProxy.getLilyServerProxy()
