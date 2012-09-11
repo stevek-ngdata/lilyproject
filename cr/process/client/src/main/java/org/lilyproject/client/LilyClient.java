@@ -19,14 +19,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,6 +28,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -81,6 +76,7 @@ public class LilyClient implements Closeable {
     private static final String hbaseConfigPath = "/lily/hbaseConfig";
     private static final String blobDfsUriPath = "/lily/blobStoresConfig/dfsUri";
     private static final String blobStoreAccessConfigPath = "/lily/blobStoresConfig/accessConfig";
+    private static AtomicInteger hbaseConfCounter = new AtomicInteger();
 
     private Log log = LogFactory.getLog(getClass());
 
@@ -287,6 +283,13 @@ public class LilyClient implements Closeable {
     public static Configuration getHBaseConfiguration(ZooKeeperItf zk) {
         try {
             Configuration configuration = HBaseConfiguration.create();
+
+            // Make this configuration object 'owned' by us: this way we can close the associated
+            // connection completely without worrying we close someone else's connection (e.g.
+            // when running two LilyClient's in one JVM, or when running LilyClient from within
+            // the lily-server JVM, which is the case when we launch a batch build job)
+            configuration.set(HConstants.HBASE_CLIENT_INSTANCE_ID, String.valueOf(hbaseConfCounter.incrementAndGet()));
+
             byte[] data = zk.getData(hbaseConfigPath, false, new Stat());
             ObjectNode propertiesNode = (ObjectNode) JsonFormat.deserializeSoft(data, "HBase configuration");
             Iterator<Map.Entry<String, JsonNode>> it = propertiesNode.getFields();

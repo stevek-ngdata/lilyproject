@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
@@ -32,7 +33,8 @@ public class HBaseConnections {
     private List<Configuration> configurations = new ArrayList<Configuration>();
     
     /**
-     * If there is an existing configuration which has all the same properties as this configuration, return it.
+     * If there is an existing configuration which has all the same properties as this configuration
+     * (except for HConstants.HBASE_CLIENT_INSTANCE_ID), return it.
      * Otherwise, returns the passed conf. This is an expensive method.
      */
     public Configuration getExisting(Configuration conf) {
@@ -42,9 +44,12 @@ public class HBaseConnections {
         }
 
         Map<String, String> confAsMap = toMap(conf);
+        confAsMap.remove(HConstants.HBASE_CLIENT_INSTANCE_ID);
 
         for (Configuration current : confs) {
-            if (toMap(current).equals(confAsMap)) {
+            Map<String, String> currentConfAsMap = toMap(current);
+            currentConfAsMap.remove(HConstants.HBASE_CLIENT_INSTANCE_ID);
+            if (currentConfAsMap.equals(confAsMap)) {
                 return current;
             }
         }
