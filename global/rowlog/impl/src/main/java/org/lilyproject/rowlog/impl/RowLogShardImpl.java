@@ -94,15 +94,22 @@ public class RowLogShardImpl implements RowLogShard {
      */
     @Override
     public void removeMessage(RowLogMessage message, String subscription) throws RowLogException {
+        Delete delete = new Delete(createRowKey(message, subscription));
+        // We can safely disable write to wal for these deletes for the same reason that we can buffer
+        // them: the local queue is the authoritative source. In case a delete would be lost, the
+        // RowLogProcessor will simply trigger processing of this message again, but we'll see in the
+        // local queue that it's already done (or gone) and this delete will be performed again.
+        delete.setWriteToWAL(false);
+
         if (deleteBufferSize <= 1) {
             try {
-                table.delete(new Delete(createRowKey(message, subscription)));
+                table.delete(delete);
             } catch (IOException e) {
                 throw new RowLogException("Failed deleting message from rowlog shard table", e);
             }
         } else {
             synchronized (messagesToDelete) {
-                messagesToDelete.add(new Delete(createRowKey(message, subscription)));
+                messagesToDelete.add(delete);
             }
             if (messagesToDelete.size() >= deleteBufferSize || (lastDelete + 300000 < System.currentTimeMillis())) {
                 flushMessageDeleteBuffer();
