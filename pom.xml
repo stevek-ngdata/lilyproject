@@ -931,7 +931,7 @@
           <version>2.9</version>
           <configuration>
             <forkMode>always</forkMode>
-            <argLine>-Xmx256m ${argLine}</argLine>
+            <argLine>-Xmx256m -XX:MaxPermSize=128m ${argLine}</argLine>
             <systemPropertyVariables>
               <lily.hbaseproxy.mode>${lily.hbaseproxy.mode}</lily.hbaseproxy.mode>
               <lily.lilyproxy.mode>${lily.lilyproxy.mode}</lily.lilyproxy.mode>
@@ -1009,7 +1009,7 @@
             <version>2.11</version>
             <configuration>
               <forkMode>always</forkMode>
-              <argLine>-Xmx256m ${argLine}</argLine>
+              <argLine>-Xmx256m -XX:MaxPermSize=128m ${argLine}</argLine>
               <includes>
                 <include>**/integration/*.java</include>
               </includes>
