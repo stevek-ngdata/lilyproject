@@ -45,6 +45,7 @@
     <module>admin-cli</module>
     <module>worker</module>
     <module>master</module>
+    <module>master-test</module>
     <module>batchbuild</module>
     <module>batchbuild-test</module>
   </modules>
