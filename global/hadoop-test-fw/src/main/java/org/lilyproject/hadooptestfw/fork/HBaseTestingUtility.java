@@ -8,6 +8,7 @@
 //   - Add getMRCluster()
 //   - Allow to keep data from previous runs (optional) (doesn't format hdfs)
 //   - Use custom version of MiniZooKeeperCluster that allows to keep data
+//   - Disable shutdown as it often hangs for a long time (bad thread interruptibility)
 //
 //  All changes are commented with "Lily change"
 //
@@ -1279,7 +1280,24 @@ public class HBaseTestingUtility {
     public void shutdownMiniMapReduceCluster() {
         LOG.info("Stopping mini mapreduce cluster...");
         if (mrCluster != null) {
-            mrCluster.shutdown();
+            // Lily change
+            // Disable the shutdown as it sometimes hangs for a longer while, until a timeout passed.
+            // This is not nice for launch-test-lily users.
+            // At the time of CDH4u0, this was the related stack:
+            //     at java.lang.Object.wait(Native Method)
+            //     - waiting on <0x00000007dddc1b90> (a org.apache.hadoop.ipc.Client$Call)
+            //     at java.lang.Object.wait(Object.java:485)
+            //     at org.apache.hadoop.ipc.Client.call(Client.java:1147)
+            //     - locked <0x00000007dddc1b90> (a org.apache.hadoop.ipc.Client$Call)
+            //     at org.apache.hadoop.ipc.WritableRpcEngine$Invoker.invoke(WritableRpcEngine.java:224)
+            //     at org.apache.hadoop.mapred.$Proxy21.heartbeat(Unknown Source)
+            //     at org.apache.hadoop.mapred.TaskTracker.transmitHeartBeat(TaskTracker.java:2030)
+            //     at org.apache.hadoop.mapred.TaskTracker.offerService(TaskTracker.java:1824)
+            //     at org.apache.hadoop.mapred.TaskTracker.run(TaskTracker.java:2698)
+            //     at org.apache.hadoop.mapred.MiniMRCluster$TaskTrackerRunner.run(MiniMRCluster.java:220)
+            //     at java.lang.Thread.run(Thread.java:662)
+
+            // mrCluster.shutdown();
             mrCluster = null;
         }
         // Restore configuration to point to local jobtracker
