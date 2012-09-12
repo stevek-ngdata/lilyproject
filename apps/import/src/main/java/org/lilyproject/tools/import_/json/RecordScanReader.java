@@ -42,16 +42,19 @@ public class RecordScanReader implements EntityReader<RecordScan> {
     public RecordScan fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
+        if (nodeNode == null || nodeNode.isNull()) {
+            return new RecordScan();
+        }
+
         if (!nodeNode.isObject()) {
             throw new JsonFormatException("Expected a json object for record scan, got: " +
                     nodeNode.getClass().getName());
         }
 
         ObjectNode node = (ObjectNode) nodeNode;
+        RecordScan scan = new RecordScan();
 
         namespaces = NamespacesConverter.fromContextJson(node, namespaces);
-
-        RecordScan scan = new RecordScan();
 
         String startRecordId = JsonUtil.getString(node, "startRecordId", null);
         if (startRecordId != null) {
