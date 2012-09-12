@@ -173,7 +173,8 @@ public abstract class BaseCliTool {
             File defaultConf = new File("log4j.properties");
             if (defaultConf.exists()) {
                 logConfFile = defaultConf;
-                System.out.println("Using log4j.properties from working directory: " + logConfFile.getAbsolutePath());
+                // printing to err so that this isn't included when stdout is redirected to a file
+                System.err.println("Using log4j.properties from working directory: " + logConfFile.getAbsolutePath());
             }
         }
 
