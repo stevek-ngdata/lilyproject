@@ -17,7 +17,7 @@ package org.lilyproject.util.hbase;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,22 +30,22 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
-import org.lilyproject.util.ByteArrayKey;
+import org.apache.hadoop.hbase.util.Bytes;
 
 public class HBaseTableFactoryImpl implements HBaseTableFactory {    
     private Log log = LogFactory.getLog(getClass());
     private final Configuration configuration;
-    private final Map<ByteArrayKey, TableConfig> tableConfigs;
+    private final List<TableConfigEntry> tableConfigs;
     private final ColumnFamilyConfig defaultCfConfig;
 
     public HBaseTableFactoryImpl(Configuration configuration) {
         this(configuration, null, new ColumnFamilyConfig());
     }
 
-    public HBaseTableFactoryImpl(Configuration configuration, Map<ByteArrayKey, TableConfig> tableConfigs,
+    public HBaseTableFactoryImpl(Configuration configuration, List<TableConfigEntry> tableConfigs,
             ColumnFamilyConfig defaultCfConfig) {
         this.configuration = configuration;
-        this.tableConfigs = tableConfigs == null ? Collections.<ByteArrayKey, TableConfig>emptyMap() : tableConfigs;
+        this.tableConfigs = tableConfigs == null ? Collections.<TableConfigEntry>emptyList() : tableConfigs;
         this.defaultCfConfig = defaultCfConfig;
     }
 
@@ -136,14 +136,20 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
 
     @Override
     public TableConfig getTableConfig(byte[] tableName) {
-        TableConfig config = tableConfigs.get(new ByteArrayKey(tableName));
-        return config != null ? config : new TableConfig();
+        String tableNameString = Bytes.toString(tableName);
+        for (TableConfigEntry entry : tableConfigs) {
+            if (entry.matches(tableNameString)) {
+                log.debug("Table configuration settings: table \"" + tableNameString + "\" matched regex \""
+                        + entry.getTableNamePattern().pattern() + "\"");
+                return entry.getTableConfig();
+            }
+        }
+        log.debug("Table configuration settings: table \"" + tableNameString + "\" has no matching settings.");
+        return new TableConfig();
     }
 
     @Override
     public byte[][] getSplitKeys(byte[] tableName) {
-        TableConfig config = tableConfigs.get(new ByteArrayKey(tableName));
-        byte[][] splitKeys = config != null ? config.getSplitKeys() : null;
-        return splitKeys;
+        return getTableConfig(tableName).getSplitKeys();
     }
 }

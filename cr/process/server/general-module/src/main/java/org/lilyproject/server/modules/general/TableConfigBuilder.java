@@ -19,19 +19,28 @@ import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.kauriproject.conf.Conf;
-import org.lilyproject.util.ByteArrayKey;
 import org.lilyproject.util.hbase.ColumnFamilyConfig;
 import org.lilyproject.util.hbase.TableConfig;
+import org.lilyproject.util.hbase.TableConfigEntry;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class TableConfigBuilder {
-    public static Map<ByteArrayKey, TableConfig> buildTableConfigs(Conf conf) {
-        Map<ByteArrayKey, TableConfig> result = new HashMap<ByteArrayKey, TableConfig>();
+    public static List<TableConfigEntry> buildTableConfigs(Conf conf) {
+        List<TableConfigEntry> result = new ArrayList<TableConfigEntry>();
 
         for (Conf table : conf.getChildren("table")) {
-            byte[] tableName = Bytes.toBytes(table.getAttribute("name"));
+            String tableName = table.getAttribute("name");
+            Pattern tableNamePattern;
+            try {
+                tableNamePattern = Pattern.compile(tableName);
+            } catch (PatternSyntaxException e) {
+                throw new RuntimeException("The table name should be a valid regular expression, " +
+                        "which the following is not: " + tableName + " at " + conf.getLocation());
+            }
 
             Integer regionCount = table.getChild("splits").getChild("regionCount").getValueAsInteger(-1);
             String splitKeys = table.getChild("splits").getChild("splitKeys").getValue(null);
@@ -51,7 +60,7 @@ public class TableConfigBuilder {
                 config.getColumnFamilies().put(familyName, family);
             }
 
-            result.put(new ByteArrayKey(tableName), config);
+            result.add(new TableConfigEntry(tableNamePattern, config));
         }
 
         return result;

@@ -30,12 +30,10 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.compat.Lily11RecordIdDecoder;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.server.modules.general.TableConfigBuilder;
-import org.lilyproject.util.ByteArrayKey;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.*;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
-import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 import java.io.File;
@@ -167,7 +165,7 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
         HBaseTableFactory tableFactory;
         if (tableConfFileName != null) {        
             Conf tableConf = XmlConfBuilder.build(new File(tableConfFileName));        
-            Map<ByteArrayKey, TableConfig> tableConfs = TableConfigBuilder.buildTableConfigs(tableConf);
+            List<TableConfigEntry> tableConfs = TableConfigBuilder.buildTableConfigs(tableConf);
             ColumnFamilyConfig defaultFamilyConf = TableConfigBuilder.buildCfConfig(tableConf.getChild("familyDefaults"));
             tableFactory = new HBaseTableFactoryImpl(conf, tableConfs, defaultFamilyConf);
         } else {

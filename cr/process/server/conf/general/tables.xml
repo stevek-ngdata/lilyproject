@@ -18,6 +18,12 @@
     <!--<blockSize>65536</blockSize>-->
   </familyDefaults>
 
+  <!--
+     | Table-specific settings.
+     |
+     | The name attribute on the table tag can contain a regular expression. The first matching
+     | <table> tag will be used.
+     -->
   <table name="record">
     <splits>
       <!--
@@ -97,26 +103,28 @@
     </splits>
   </table>
 
-  <!-- The tables for derefs depend on the names of the indexes. -->
-  <!--
-  <table name="deref-forward-INDEX_NAME">
+  <!-- The deref tables are used to store the dependencies of the documents in a
+       Solr index (this is only used when you use the dereferencing feature of the
+       indexer).
+       Such deref tables are made per index, and have as name "deref-forward-{indexname}"
+       and "deref-backward-{indexname}". Here we use regex'es to match the deref tables
+       of all indexes.
+  -->
+  <table name="deref-forward-.*">
     <splits>
       <regionCount>1</regionCount>
       <splitKeys></splitKeys>
       <splitKeyPrefix>\x01</splitKeyPrefix>
     </splits>
   </table>
-  -->
 
-  <!--
-  <table name="deref-backward-INDEX_NAME">
+  <table name="deref-backward-.*">
     <splits>
       <regionCount>1</regionCount>
       <splitKeys></splitKeys>
       <splitKeyPrefix>\x01</splitKeyPrefix>
     </splits>
   </table>
-  -->
 
   <table name="blobincubator">
     <splits>
