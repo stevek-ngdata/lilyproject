@@ -94,7 +94,7 @@ public class IndexDefinitionConverter {
             activeBatchBuild.setSubmitTime(JsonUtil.getLong(buildNode, "submitTime"));
             activeBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));
             // no likely that this attribute isn't available but check for it just in case
-            if (buildNode.has("batchIndexConfiguration")) {
+            if (buildNode.has("batchIndexConfiguration") && !buildNode.get("batchIndexConfiguration").isNull()) {
                 activeBatchBuild.setBatchIndexConfiguration(serializeJsonNode(
                         JsonUtil.getObject(buildNode, "batchIndexConfiguration")));
             }
@@ -102,7 +102,7 @@ public class IndexDefinitionConverter {
         }
 
         BatchBuildInfo lastBatchBuild = null;
-        if (node.get("lastBatchBuild") != null) {
+        if (node.has("lastBatchBuild") && ! node.get("lastBatchBuild").isNull()) {
             ObjectNode buildNode = JsonUtil.getObject(node, "lastBatchBuild");
             lastBatchBuild = new BatchBuildInfo();
             lastBatchBuild.setJobId(JsonUtil.getString(buildNode, "jobId"));
@@ -118,22 +118,22 @@ public class IndexDefinitionConverter {
                 lastBatchBuild.addCounter(key, value);
             }
             // this attribute isn't available after doing an upgrade so check
-            if (buildNode.has("batchIndexConfiguration")) {
+            if (buildNode.has("batchIndexConfiguration") && !buildNode.get("batchIndexConfiguration").isNull()) {
                 lastBatchBuild.setBatchIndexConfiguration(serializeJsonNode(
                         JsonUtil.getObject(buildNode, "batchIndexConfiguration")));
             }
 
         }
         byte[] batchIndexConfiguration = null;
-        if (node.get("batchIndexConfiguration") != null) {
+        if (node.has("batchIndexConfiguration") && !node.get("batchIndexConfiguration").isNull()) {
             batchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "batchIndexConfiguration"));
         }
         byte[] defaultBatchIndexConfiguration = null;
-        if (node.get("defaultBatchIndexConfiguration") != null) {
+        if (node.has("defaultBatchIndexConfiguration") && !node.get("defaultBatchIndexConfiguration").isNull()) {
             defaultBatchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "defaultBatchIndexConfiguration"));
         }
 
-        if (node.has("maintainDerefMap")) index.setEnableDerefMap(node.get("maintainDerefMap").asBoolean());
+        if (node.has("maintainDerefMap") && !node.get("maintainDerefMap").isNull()) index.setEnableDerefMap(node.get("maintainDerefMap").asBoolean());
 
         index.setGeneralState(state);
         index.setUpdateState(updateState);
