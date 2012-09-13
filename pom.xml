@@ -501,6 +501,10 @@
             <artifactId>avro</artifactId>
           </exclusion>
           <exclusion>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro-ipc</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>jsp-2.1</artifactId>
           </exclusion>
@@ -516,6 +520,22 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-jaxrs</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-xc</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -525,7 +545,7 @@
         <version>${version.hbase}</version>
         <scope>test</scope>
         <exclusions>
-          <!-- We use a more recent Avro in Lily (which has a different groupId). -->
+          <!-- ATTENTION: keep this list exactly the same as for the hbase dep without tests classifier -->
           <exclusion>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
