@@ -31,8 +31,9 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.util.ByteArrayKey;
 
-public class HBaseTableFactoryImpl implements HBaseTableFactory {    
+public class HBaseTableFactoryImpl implements HBaseTableFactory {
     private Log log = LogFactory.getLog(getClass());
     private final Configuration configuration;
     private final List<TableConfigEntry> tableConfigs;
@@ -50,21 +51,21 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
     }
 
     @Override
-    public HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException {
+    public HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException, InterruptedException {
         return getTable(tableDescriptor, true);
     }
 
     @Override
-    public HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException {
+    public HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException, InterruptedException {
         return getTable(tableDescriptor, splitKeys, true);
     }
 
     @Override
-    public HTableInterface getTable(HTableDescriptor tableDescriptor, boolean create) throws IOException {
+    public HTableInterface getTable(HTableDescriptor tableDescriptor, boolean create) throws IOException, InterruptedException {
         return getTable(tableDescriptor, getSplitKeys(tableDescriptor.getName()), create);
     }
 
-    private HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys, boolean create) throws IOException {
+    private HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys, boolean create) throws IOException, InterruptedException {
         HBaseAdmin admin = HBaseAdminFactory.get(configuration);
 
         try {
@@ -86,12 +87,27 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
             } catch (TableExistsException e2) {
                 // Table is meanwhile created by another process
                 log.info("Table already existed: '" + tableDescriptor.getNameAsString() + "'.");
+
             }
         }
 
-        // TODO we could check if the existing table matches the given table descriptor
+        try {
+            //In all cases we need to wait until the table is available
+            // https://issues.apache.org/jira/browse/HBASE-6576
+            long startWait = System.currentTimeMillis();
+            long timeoutMillis = 2 * 60 * 1000L; // two minutes
+            while (!admin.isTableAvailable(tableDescriptor.getName())) {
+                if (System.currentTimeMillis() - startWait > timeoutMillis) {
+                    throw new IOException("Timed out waiting for table " + Bytes.toStringBinary(tableDescriptor.getName()));
+                };
+                Thread.sleep(200);
+            }
 
-        return new LocalHTable(configuration, tableDescriptor.getName());
+            // TODO we could check if the existing table matches the given table descriptor
+            return new LocalHTable(configuration, tableDescriptor.getName());
+        } finally {
+            admin.close();
+        }
     }
 
     @Override

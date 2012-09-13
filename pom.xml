@@ -97,6 +97,7 @@
     <module>global/util</module>
     <module>global/hadoop-test-fw</module>
     <module>global/hbase-util</module>
+    <module>global/hadoop-test</module>
     <module>global/zk-util</module>
     <module>global/json-util</module>
     <module>global/hbase-client</module>

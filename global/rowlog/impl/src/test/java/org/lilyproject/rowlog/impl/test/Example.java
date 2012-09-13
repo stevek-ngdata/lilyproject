@@ -23,9 +23,19 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.rowlog.api.*;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfig;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogMessageListener;
+import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
+import org.lilyproject.rowlog.api.RowLogProcessor;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
-import org.lilyproject.rowlog.impl.*;
+import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
+import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
+import org.lilyproject.rowlog.impl.RowLogImpl;
+import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
+import org.lilyproject.rowlog.impl.RowLogShardSetup;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -40,13 +50,19 @@ public class Example {
         final String ROW_TABLE = "rowTable";
         final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("DataCF");
         final byte[] ROWLOG_COLUMN_FAMILY = Bytes.toBytes("RowLogCF");
-        
-        HBaseAdmin admin = new HBaseAdmin(configuration);
-        HTableDescriptor tableDescriptor = new HTableDescriptor(ROW_TABLE);
-        tableDescriptor.addFamily(new HColumnDescriptor(DATA_COLUMN_FAMILY));
-        tableDescriptor.addFamily(new HColumnDescriptor(ROWLOG_COLUMN_FAMILY));
-        admin.createTable(tableDescriptor);
-        HTable rowTable = new HTable(configuration, ROW_TABLE);
+
+        HBaseAdmin admin = null;
+        HTable rowTable = null;
+        try {
+            admin = new HBaseAdmin(configuration);
+            HTableDescriptor tableDescriptor = new HTableDescriptor(ROW_TABLE);
+            tableDescriptor.addFamily(new HColumnDescriptor(DATA_COLUMN_FAMILY));
+            tableDescriptor.addFamily(new HColumnDescriptor(ROWLOG_COLUMN_FAMILY));
+            admin.createTable(tableDescriptor);
+            rowTable = new HTable(configuration, ROW_TABLE);
+        } finally {
+            if (admin != null) admin.close();
+        }
 
         // Setup a zooKeeper connection
         String zkConnectionString = configuration.get("hbase.zookeeper.quorum") + ":" + configuration.get("hbase.zookeeper.property.clientPort");
@@ -60,16 +76,16 @@ public class Example {
         RowLog rowLog = new RowLogImpl("Example", rowTable, ROWLOG_COLUMN_FAMILY, (byte)1, configurationManager, null,
                 new RowLogHashShardRouter());
         RowLogShardSetup.setupShards(1, rowLog, new HBaseTableFactoryImpl(configuration));
-        
+
         // Register a listener class on the RowLogMessageListenerMapping
         RowLogMessageListenerMapping.INSTANCE.put("FooBar", new FooBarListener());
-        
+
         // Add a subscription and listener to the configuration manager for the example Rowlog
         configurationManager.addSubscription("Example", "FooBar", Type.VM, 0);
         configurationManager.addListener("Example", "FooBar", "listener1");
-        
-        // The WAL use case 
-        
+
+        // The WAL use case
+
         // Update a row with some user data
         // and put a message on the RowLog using the same put action
         byte[] row1 = Bytes.toBytes("row1");
@@ -79,15 +95,15 @@ public class Example {
         rowTable.put(put);
         // Explicitly request the RowLog to process the message
         rowLog.processMessage(message, null);
-        
+
         // The MQ use case
-        
+
         // Create a processor and start it
         RowLogProcessor processor = new RowLogProcessorImpl(rowLog, configurationManager, configuration);
         processor.start();
-        
+
         message  = rowLog.putMessage(row1, Bytes.toBytes("SomeMoreInfo"), Bytes.toBytes("Re-evaluate:AUserField"), null);
-        
+
         // Give the processor some time to process the message
         Thread.sleep(10000);
         processor.stop();
@@ -95,7 +111,7 @@ public class Example {
         zooKeeper.close();
         TEST_UTIL.shutdownMiniCluster();
     }
-    
+
     private static class FooBarListener implements RowLogMessageListener {
         @Override
         public boolean processMessage(RowLogMessage message) {
@@ -110,5 +126,5 @@ public class Example {
             return true;
         }
     }
-    
+
 }

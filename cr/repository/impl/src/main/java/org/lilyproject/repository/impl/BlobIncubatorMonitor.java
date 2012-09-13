@@ -21,23 +21,40 @@ import java.util.Arrays;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.*;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.hbaseext.ContainsValueComparator;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.BlobException;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorColumn;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.zookeeper.*;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorCf;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorColumn;
+import org.lilyproject.util.zookeeper.LeaderElection;
+import org.lilyproject.util.zookeeper.LeaderElectionCallback;
+import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
+import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class BlobIncubatorMonitor {
     private Log log = LogFactory.getLog(getClass());
@@ -54,7 +71,7 @@ public class BlobIncubatorMonitor {
     private final long runDelay;
 
     public BlobIncubatorMonitor(ZooKeeperItf zk, HBaseTableFactory tableFactory, BlobManager blobManager,
-            TypeManager typeManager, long minimalAge, long monitorDelay, long runDelay) throws IOException {
+            TypeManager typeManager, long minimalAge, long monitorDelay, long runDelay) throws IOException, InterruptedException {
         this.zk = zk;
         this.blobManager = blobManager;
         this.typeManager = typeManager;
@@ -65,7 +82,7 @@ public class BlobIncubatorMonitor {
         this.blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(tableFactory, false);
         this.recordTable = LilyHBaseSchema.getRecordTable(tableFactory);
     }
-    
+
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
         String electionPath = "/lily/repository/blobincubatormonitor";
         leaderElection = new LeaderElection(zk, "Blob Incubator Monitor",
@@ -82,12 +99,12 @@ public class BlobIncubatorMonitor {
             }
         }
     }
-    
+
     public synchronized void startMonitoring() throws InterruptedException, IOException {
         monitorThread = new MonitorThread();
         monitorThread.start();
     }
-    
+
     public synchronized void stopMonitoring() {
         if (monitorThread != null) {
             monitorThread.shutdown();
@@ -102,14 +119,14 @@ public class BlobIncubatorMonitor {
             monitorThread = null;
         }
     }
-    
+
     private class MyLeaderElectionCallback implements LeaderElectionCallback {
         private final BlobIncubatorMonitor blobIncubatorMonitor;
 
         public MyLeaderElectionCallback(BlobIncubatorMonitor blobIncubatorMonitor) {
             this.blobIncubatorMonitor = blobIncubatorMonitor;
         }
-        
+
         @Override
         public void activateAsLeader() throws Exception {
             blobIncubatorMonitor.startMonitoring();
@@ -120,7 +137,7 @@ public class BlobIncubatorMonitor {
             blobIncubatorMonitor.stopMonitoring();
         }
     }
- 
+
     private class MonitorThread extends Thread {
         private boolean stopRequested = false;
 
@@ -132,12 +149,12 @@ public class BlobIncubatorMonitor {
             stopRequested = false;
             super.start();
         }
-        
+
         public void shutdown() {
             stopRequested = true;
             interrupt();
         }
-        
+
         @Override
         public void run() {
             while (!stopRequested) {

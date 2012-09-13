@@ -15,19 +15,19 @@
  */
 package org.lilyproject.util.hbase;
 
+import java.io.IOException;
+
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.IOException;
-
 public class LilyHBaseSchema {
     public static final byte EXISTS_FLAG = (byte) 0;
     public static final byte DELETE_FLAG = (byte) 1;
     public static final byte[] DELETE_MARKER = new byte[] { DELETE_FLAG };
-    
+
 
     private static final HTableDescriptor recordTableDescriptor;
 
@@ -48,27 +48,27 @@ public class LilyHBaseSchema {
         typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.MIXIN.bytes, HConstants.ALL_VERSIONS, "none",
                 false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
     }
-    
+
     private static final HTableDescriptor blobIncubatorDescriptor;
-    
+
     static {
         blobIncubatorDescriptor = new HTableDescriptor(Table.BLOBINCUBATOR.bytes);
         blobIncubatorDescriptor.addFamily(new HColumnDescriptor(BlobIncubatorCf.REF.bytes));
     }
 
-    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory) throws IOException {
+    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory) throws IOException, InterruptedException {
         return tableFactory.getTable(recordTableDescriptor);
     }
 
-    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, boolean clientMode) throws IOException {
+    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, boolean clientMode) throws IOException, InterruptedException {
         return tableFactory.getTable(recordTableDescriptor, !clientMode);
     }
 
-    public static HTableInterface getTypeTable(HBaseTableFactory tableFactory) throws IOException {
+    public static HTableInterface getTypeTable(HBaseTableFactory tableFactory) throws IOException, InterruptedException {
         return tableFactory.getTable(typeTableDescriptor);
     }
-    
-    public static HTableInterface getBlobIncubatorTable(HBaseTableFactory tableFactory, boolean clientMode) throws IOException {
+
+    public static HTableInterface getBlobIncubatorTable(HBaseTableFactory tableFactory, boolean clientMode) throws IOException, InterruptedException {
         return tableFactory.getTable(blobIncubatorDescriptor, !clientMode);
     }
 
@@ -119,19 +119,19 @@ public class LilyHBaseSchema {
         public final byte[] bytes;
         public final String name;
         // The fields and system fields of records are stored in the same column family : DATA
-        public static final byte SYSTEM_PREFIX = (byte)1; // Prefix for the column-qualifiers of system fields 
+        public static final byte SYSTEM_PREFIX = (byte)1; // Prefix for the column-qualifiers of system fields
         public static final byte DATA_PREFIX = (byte)2; // Prefix for the column-qualifiers of actual data fields
-        
+
         // The payload and executionstat of the rowlogs are stored in the same column family : ROWLOG
-        public static final byte WAL_PREFIX = (byte)3; // Prefix for the column-qualifiers of the WAL rowlog  
+        public static final byte WAL_PREFIX = (byte)3; // Prefix for the column-qualifiers of the WAL rowlog
         public static final byte MQ_PREFIX = (byte)4; // Prefix for the column-qualifiers of the MQ rowlog
-        
+
         RecordColumn(String name) {
             this.name = name;
             this.bytes = Bytes.add(new byte[]{SYSTEM_PREFIX},Bytes.toBytes(name));
         }
     }
-    
+
     /**
      * Column families in the type table.
      */
@@ -169,13 +169,13 @@ public class LilyHBaseSchema {
             this.bytes = Bytes.toBytes(name);
         }
     }
-    
+
     /**
      * Column families in the blob incubator table.
      */
     public static enum BlobIncubatorCf {
         REF("ref");
-        
+
         public final byte[] bytes;
         public final String name;
 
@@ -184,16 +184,16 @@ public class LilyHBaseSchema {
             this.bytes = Bytes.toBytes(name);
         }
     }
-    
+
     /**
      * Columns in the blob incubator table.
      */
     public static enum BlobIncubatorColumn {
         RECORD("record"), FIELD("field");
-        
+
         public final byte[] bytes;
         public final String name;
-        
+
         BlobIncubatorColumn(String name) {
             this.name = name;
             this.bytes = Bytes.toBytes(name);

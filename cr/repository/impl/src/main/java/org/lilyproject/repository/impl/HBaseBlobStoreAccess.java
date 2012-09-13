@@ -26,7 +26,11 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobException;
@@ -45,30 +49,30 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
     private boolean clientMode = false;
     private HTableInterface table;
 
-    public HBaseBlobStoreAccess(Configuration hbaseConf) throws IOException {
+    public HBaseBlobStoreAccess(Configuration hbaseConf) throws IOException, InterruptedException {
         this(hbaseConf, false);
     }
 
-    public HBaseBlobStoreAccess(Configuration hbaseConf, boolean clientMode) throws IOException {
+    public HBaseBlobStoreAccess(Configuration hbaseConf, boolean clientMode) throws IOException, InterruptedException {
         this(new HBaseTableFactoryImpl(hbaseConf), clientMode);
     }
 
-    public HBaseBlobStoreAccess(HBaseTableFactory tableFactory) throws IOException {
+    public HBaseBlobStoreAccess(HBaseTableFactory tableFactory) throws IOException, InterruptedException {
         this(tableFactory, false);
     }
 
-    public HBaseBlobStoreAccess(HBaseTableFactory tableFactory, boolean clientMode) throws IOException {
+    public HBaseBlobStoreAccess(HBaseTableFactory tableFactory, boolean clientMode) throws IOException, InterruptedException {
         HTableDescriptor tableDescriptor = new HTableDescriptor(BLOB_TABLE);
         tableDescriptor.addFamily(new HColumnDescriptor(BLOBS_COLUMN_FAMILY));
 
         table = tableFactory.getTable(tableDescriptor, !clientMode);
     }
-    
+
     @Override
     public String getId() {
         return ID;
     }
-        
+
     @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         UUID uuid = UUID.randomUUID();
@@ -93,7 +97,7 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         }
         return new ByteArrayInputStream(value);
     }
-    
+
     @Override
     public void delete(byte[] blobKey) throws BlobException {
         Delete delete = new Delete(blobKey);
@@ -103,14 +107,14 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
             throw new BlobException("Failed to delete blob with key '" + Hex.encodeHexString(blobKey) + "' from the DFS blobstore", e);
         }
     }
-    
+
     @Override
     public boolean incubate() {
         return true;
     }
 
     private class HBaseBlobOutputStream extends ByteArrayOutputStream {
-        
+
         private final HTableInterface blobTable;
         private final byte[] blobKey;
         private final Blob blob;

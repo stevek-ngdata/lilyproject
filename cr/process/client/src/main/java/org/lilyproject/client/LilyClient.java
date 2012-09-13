@@ -19,7 +19,14 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
@@ -244,7 +251,7 @@ public class LilyClient implements Closeable {
         server.repository = repository;
     }
 
-    public static BlobManager getBlobManager(ZooKeeperItf zk, Configuration configuration) throws IOException {
+    public static BlobManager getBlobManager(ZooKeeperItf zk, Configuration configuration) throws IOException, InterruptedException {
         HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
 
         URI dfsUri = getDfsUri(zk);

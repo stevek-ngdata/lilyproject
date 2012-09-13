@@ -56,7 +56,7 @@ public class BlobManagerImpl implements BlobManager {
 
     private BlobStoreAccessRegistry registry;
 
-    public BlobManagerImpl(HBaseTableFactory hbaseTableFactory, BlobStoreAccessFactory blobStoreAccessFactory, boolean clientMode) throws IOException {
+    public BlobManagerImpl(HBaseTableFactory hbaseTableFactory, BlobStoreAccessFactory blobStoreAccessFactory, boolean clientMode) throws IOException, InterruptedException {
         blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(hbaseTableFactory, clientMode);
         registry = new BlobStoreAccessRegistry(this);
         registry.setBlobStoreAccessFactory(blobStoreAccessFactory);

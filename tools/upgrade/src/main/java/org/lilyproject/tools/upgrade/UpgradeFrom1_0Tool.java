@@ -25,7 +25,10 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
@@ -137,7 +140,7 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
         }
 
         convertNamespace();
-        
+
         upgradeValueTypes();
 
         return 0;
@@ -236,7 +239,7 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
         }
     }
 
-    private HTableInterface getTypeTable() throws IOException {
+    private HTableInterface getTypeTable() throws IOException, InterruptedException {
         HTableInterface typeTable;
         Configuration conf = HBaseConfiguration.create();
         conf.set("hbase.zookeeper.quorum", zkConnectionString);
@@ -244,7 +247,7 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
         typeTable = LilyHBaseSchema.getTypeTable(tableFactory);
         return typeTable;
     }
-    
+
     private List<RecordTypeContext> collectRecordTypes(HTableInterface typeTable) throws IOException {
         List<RecordTypeContext> recordTypes = new ArrayList<RecordTypeContext>();
 
@@ -289,7 +292,7 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
             DataInput dataInput = new DataInputImpl(nonVersionableColumnFamily.get(TypeColumn.FIELDTYPE_NAME.bytes));
             String namespace = dataInput.readUTF();
             String name = dataInput.readUTF();
-            
+
             // Decode scope
             Scope scope = Scope.valueOf(Bytes
                     .toString(nonVersionableColumnFamily.get(TypeColumn.FIELDTYPE_SCOPE.bytes)));
@@ -410,12 +413,12 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
 
 
     }
-    
+
     private class RecordTypeContext {
         private byte[] id;
         private String namespace;
         private String name;
-        
+
         RecordTypeContext(byte[] id, String namespace, String name) {
             this.id = id;
             this.namespace = namespace;

@@ -15,24 +15,36 @@
  */
 package org.lilyproject.hadooptestfw;
 
-import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
-
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.*;
-import org.apache.hadoop.hbase.catalog.CatalogTracker;
-import org.apache.hadoop.hbase.catalog.MetaReader;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.ipc.HRegionInterface;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
-import org.apache.zookeeper.*;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
+
+import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
 
 public class CleanupUtil {
     private Configuration conf;
@@ -95,16 +107,16 @@ public class CleanupUtil {
             for (String path : paths) {
                 zk.delete(path, -1, null, null);
             }
-            
+
             long startWait = System.currentTimeMillis();
             while (zk.exists("/lily", null) != null) {
                 Thread.sleep(5);
-                
+
                 if (System.currentTimeMillis() - startWait > 120000) {
                     throw new RuntimeException("State was not cleared in ZK within the expected timeout");
                 }
             }
-            
+
             System.out.println("Deleted " + paths.size() + " paths from ZooKeeper");
             System.out.println("------------------------------------------------------------------------");
         }
@@ -215,38 +227,47 @@ public class CleanupUtil {
     private void waitForTimestampTables(Set<String> tables, Map<String, byte[]> timestampReusingTables)
             throws IOException, InterruptedException {
         for (String tableName : tables) {
+            HTable htable = null;
+            try {
+                htable = new HTable(conf, tableName);
+                byte[] CF = timestampReusingTables.get(tableName);
+                byte[] tmpRowKey = waitForCompact(tableName, CF);
 
-            HTable htable = new HTable(conf, tableName);
+                // Delete our dummy row again
+                htable.delete(new Delete(tmpRowKey));
+            } finally {
+                if (htable != null) htable.close();
+            }
 
-            byte[] CF = timestampReusingTables.get(tableName);
-            byte[] tmpRowKey = waitForCompact(tableName, CF);
-
-            // Delete our dummy row again
-            htable.delete(new Delete(tmpRowKey));
         }
     }
 
     private byte[] waitForCompact(String tableName, byte[] CF) throws IOException, InterruptedException {
         byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
         byte[] COL = Bytes.toBytes("DummyColumn");
-        HTable htable = new HTable(conf, tableName);
+        HTable htable = null;
+        try {
+            htable = new HTable(conf, tableName);
 
-        byte[] value = null;
-        while (value == null) {
-            Put put = new Put(tmpRowKey);
-            put.add(CF, COL, 1, new byte[] { 0 });
-            htable.put(put);
+            byte[] value = null;
+            while (value == null) {
+                Put put = new Put(tmpRowKey);
+                put.add(CF, COL, 1, new byte[] { 0 });
+                htable.put(put);
 
-            Get get = new Get(tmpRowKey);
-            Result result = htable.get(get);
-            value = result.getValue(CF, COL);
-            if (value == null) {
-                // If the value is null, it is because the delete marker has not yet been flushed/compacted away
-                System.out.println("Waiting for flush/compact of " + tableName + " to complete");
-                Thread.sleep(100);
+                Get get = new Get(tmpRowKey);
+                Result result = htable.get(get);
+                value = result.getValue(CF, COL);
+                if (value == null) {
+                    // If the value is null, it is because the delete marker has not yet been flushed/compacted away
+                    System.out.println("Waiting for flush/compact of " + tableName + " to complete");
+                    Thread.sleep(100);
+                }
             }
+            return tmpRowKey;
+        } finally {
+            if (htable != null) htable.close();
         }
-        return tmpRowKey;
     }
 
     /** Force a major compaction and wait for it to finish.
@@ -257,31 +278,36 @@ public class CleanupUtil {
         byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
         byte[] COL = Bytes.toBytes("DummyColumn");
         HBaseAdmin admin = HBaseAdminFactory.get(conf);
-        HTable htable = new HTable(conf, tableName);
+        HTable htable = null;
+        try {
+            htable = new HTable(conf, tableName);
 
-        // Write a dummy row
-        for (String columnFamily : columnFamilies) {
-            byte[] CF = Bytes.toBytes(columnFamily);
-            Put put = new Put(tmpRowKey);
-            put.add(CF, COL, 1, new byte[] { 0 });
-            htable.put(put);
-            // Delete the value again
-            Delete delete = new Delete(tmpRowKey);
-            delete.deleteColumn(CF, COL);
-            htable.delete(delete);
-        }
+            // Write a dummy row
+            for (String columnFamily : columnFamilies) {
+                byte[] CF = Bytes.toBytes(columnFamily);
+                Put put = new Put(tmpRowKey);
+                put.add(CF, COL, 1, new byte[] { 0 });
+                htable.put(put);
+                // Delete the value again
+                Delete delete = new Delete(tmpRowKey);
+                delete.deleteColumn(CF, COL);
+                htable.delete(delete);
+            }
 
-        // Perform major compaction
-        admin.flush(tableName);
-        admin.majorCompact(tableName);
+            // Perform major compaction
+            admin.flush(tableName);
+            admin.majorCompact(tableName);
 
-        // Wait for compact to finish
-        for (String columnFamily : columnFamilies) {
-            byte[] CF = Bytes.toBytes(columnFamily);
-            waitForCompact(tableName, CF);
+            // Wait for compact to finish
+            for (String columnFamily : columnFamilies) {
+                byte[] CF = Bytes.toBytes(columnFamily);
+                waitForCompact(tableName, CF);
+            }
+        } finally {
+            htable.close();
         }
     }
-    
+
     public void cleanBlobStore(URI dfsUri) throws Exception {
         FileSystem fs = FileSystem.get(new URI(dfsUri.getScheme() + "://" + dfsUri.getAuthority()), conf);
         Path blobRootPath = new Path(dfsUri.getPath());

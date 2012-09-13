@@ -57,7 +57,7 @@ public class RemoteRepository extends BaseRepository {
 
     public RemoteRepository(InetSocketAddress address, AvroConverter converter, RemoteTypeManager typeManager,
                             IdGenerator idGenerator, BlobManager blobManager, Configuration hbaseConf)
-            throws IOException {
+            throws IOException, InterruptedException {
 
         // true flag to getRecordTable: we don't let the remote side create the record table if it
         // would not yet exist, as it is not aware of creation parameters (such as splits, compression, etc.)

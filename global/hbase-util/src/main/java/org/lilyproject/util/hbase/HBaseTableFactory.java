@@ -28,26 +28,29 @@ public interface HBaseTableFactory {
      * Gets the HBase table, creating it if necessary, handling concurrent creates.
      *
      * <p>Returned table instance if a {@link LocalHTable}, so threadsafe.
+     * @throws InterruptedException
      */
-    HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException;
+    HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException, InterruptedException;
 
     /**
      *
      * @param splitKeys allows the application, rather than the user, to define initial table splits.
+     * @throws InterruptedException
      */
-    HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException;
+    HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException, InterruptedException;
 
     /**
      * @param create if false, table will not be automatically created, TableNotFoundException will be thrown
      *               instead.
+     * @throws InterruptedException
      */
-    HTableInterface getTable(HTableDescriptor tableDescriptor, boolean create) throws IOException;
+    HTableInterface getTable(HTableDescriptor tableDescriptor, boolean create) throws IOException, InterruptedException;
 
     /**
      * @return never null, a default TableConfig is returned if the user did not specify anything.
      */
     TableConfig getTableConfig(byte[] tableName);
-    
+
     void configure(HTableDescriptor tableDescriptor);
 
     /**

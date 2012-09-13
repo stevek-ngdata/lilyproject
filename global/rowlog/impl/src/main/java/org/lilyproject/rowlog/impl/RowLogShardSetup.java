@@ -15,6 +15,8 @@
  */
 package org.lilyproject.rowlog.impl;
 
+import java.io.IOException;
+
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -22,10 +24,8 @@ import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogShardList;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 
-import java.io.IOException;
-
 public class RowLogShardSetup {
-    public static void setupShards(int shardCount, RowLog rowLog, HBaseTableFactory tableFactory) throws IOException {
+    public static void setupShards(int shardCount, RowLog rowLog, HBaseTableFactory tableFactory) throws IOException, InterruptedException {
 
         if (shardCount < 1 || shardCount > 255) {
             throw new IllegalArgumentException("Number of rowlog shards should be > 0 and < 255, but it is: "
