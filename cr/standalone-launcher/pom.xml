@@ -202,7 +202,7 @@ set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloader
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR -Dlily.plugin.dir=$LILY_HOME/plugins -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR -Dlily.plugin.dir=$LILY_HOME/plugins -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr/${version.solr}/solr-${version.solr}.war</value>
             </parameter>
             <parameter>
               <platform>unix</platform>
