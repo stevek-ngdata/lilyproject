@@ -313,21 +313,16 @@
          to be flushed to stable storage, but does not cause a new
          searcher to be opened to make those changes visible.
       -->
-    <!-- Lily change: remove the default autoCommit setting -->
+    <!-- Lily change: comment out the default autoCommit setting -->
+    <!--
      <autoCommit> 
        <maxTime>15000</maxTime> 
        <openSearcher>false</openSearcher> 
      </autoCommit>
+    -->
     <!-- Lily change: added the placeholder below to inject autocommit setting -->
     <!--AUTOCOMMIT_PLACEHOLDER-->
 
-    <!--
-       <autoCommit> 
-         <maxDocs>10000</maxDocs>
-         <maxTime>1000</maxTime> 
-         <openSearcher>false</openSearcher> 
-       </autoCommit>
-      -->
 
     <!-- softAutoCommit is like autoCommit except it causes a
          'soft' commit which only ensures that changes are visible
