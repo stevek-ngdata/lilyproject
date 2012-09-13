@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!--
+   | Configuration settings for the REST (HTTP) interface.
+   -->
+<rest>
+  <!-- How long do scanner instances continue to exist after the last request to them?
+       Value in seconds.
+       Should correspond to what is configured on the HBase side, in the
+       property hbase.regionserver.lease.period
+  -->
+  <scannerLeasePeriod>60</scannerLeasePeriod>
+</rest>

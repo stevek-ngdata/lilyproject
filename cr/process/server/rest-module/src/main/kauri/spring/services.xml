@@ -29,7 +29,11 @@
 
   <context:annotation-config/>
 
-  <kauri:module restletContext="restletContext" classLoader="moduleClassLoader" handle="module"/>
+  <kauri:module restletContext="restletContext" classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
+
+  <bean class="org.kauriproject.runtime.rapi.ConfPlaceholderConfigurer">
+    <constructor-arg ref="confRegistry"/>
+  </bean>
 
   <kauri:import-service
       id="representationBuilder"
@@ -97,7 +101,8 @@
   <bean id="recordScannerMap" class="org.lilyproject.rest.RecordScannerMapBuilder"
         factory-method="createRecordScannerMap" scope="singleton">
     <constructor-arg>
-      <value>3600</value>
+      <!--<kauri:conf path="rest:scannerLeasePeriod"/>-->
+      <value>${rest:scannerLeasePeriod}</value>
     </constructor-arg>
   </bean>
 
