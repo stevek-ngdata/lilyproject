@@ -323,6 +323,13 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
+
+    <!-- lily-mapreduce-classpath -->
+    <file>
+      <source>${basedir}/../cr/mapreduce/mapreduce/target/dist-scripts/lily-mapreduce-classpath</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
   </files>
 
   <fileSets>
