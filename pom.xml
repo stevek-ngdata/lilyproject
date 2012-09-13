@@ -32,7 +32,7 @@
     <version.maven>2.0.9</version.maven>
     <version.solr>4.0.0-BETA</version.solr>
 
-    <version.avro>1.6.1-813-976-982</version.avro>
+    <version.avro>1.7.1-813-1154</version.avro>
 
     <!-- The following properties are all Kauri-related, and should be brought in sync with
          Kauri when moving to a new Kauri version. -->
