@@ -103,6 +103,6 @@ public class FieldTypeReader implements EntityReader<FieldType> {
     @Override
     public FieldType fromJson(JsonNode node, Namespaces namespaces, Repository repository,
             LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
-        return fromJson(node, namespaces, repository, null);
+        return fromJson(node, namespaces, repository);
     }
 }
