@@ -31,6 +31,48 @@
   </parent>
 
   <build>
+    <plugins>
+      <plugin>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-genscript-plugin</artifactId>
+        <configuration>
+          <scripts>
+            <script>
+              <basename>lily-mapreduce-classpath</basename>
+              <mainClass>dummy</mainClass>
+            </script>
+          </scripts>
+          <beforeJavaHook>
+            <parameter>
+              <platform>unix</platform>
+              <mode>dev</mode>
+              <value><![CDATA[
+# This is a smallish hack to make our general java process script template also work for this use-case
+echo $CLASSPATH
+exit 0
+              ]]></value>
+            </parameter>
+            <parameter>
+              <platform>unix</platform>
+              <mode>dist</mode>
+              <value><![CDATA[
+# This is a smallish hack to make our general java process script template also work for this use-case
+echo $CLASSPATH
+exit 0
+              ]]></value>
+            </parameter>
+          </beforeJavaHook>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>genscript</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 
   <dependencies>

@@ -16,30 +16,47 @@ required dependencies in the lib subdir.
 
 To run this example:
 
+ - compile this project using "mvn install"
+
  - have a Lily stack running, e.g. using launch-test-lily
 
- - import testdata.json sample data:
+ - import the testdata.json sample data:
+
    lily-import testdata.json
 
- - start the MapReduce job using:
-   cd /to/hadoop
-   ./bin/hadoop jar my-lily-mrjob/target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar com.mycompany.MyJob
+ - have the "hadoop" command available
+
+   For this you need to have hadoop installed, in the "MapReduce v1" variant.
+   If you do this on one of the cluster nodes on which Lily is installed,
+   this should already be fine.
+
+   If you do this from your workstation, you can download the "mr1" package
+   from the Cloudera website, at:
+   https://ccp.cloudera.com/display/SUPPORT/CDH4+Downloadable+Tarballs
+   You need the "mr1-{version}" tar.gz, not the hadoop download.
+   After downloading, just extract it, no further installation is needed.
+
+ - set the classpath
+
+   export HADOOP_USER_CLASSPATH_FIRST=true
+   export HADOOP_CLASSPATH=`lily-mapreduce-classpath`
+
+ - start the MapReduce job
+
+   /path/to/hadoop-2.0.0-mr1-cdh4.0.X/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar com.mycompany.MyJob
 
    (this assumes JobTracker/Namenode/ZooKeeper is running on localhost,
    see MyJob code to adjust)
 
  - if the job has run correctly, you can run lily-scan-records to
    check the output produced by the reducer:
-   lily-scan-records -p --record-type {mrsample}Summary
 
-Setting up Hadoop with CHD4: 
-  - Download hadoop-2.0.0-mr1 for the MRv1 variant
-  
-  - Delete the avro libs under $HADOOP_HOME/lib/avro*
-  
-  - Set HADOOP_CLASSPATH 
-    To do this grab the classpath found in a lily application startup script e.g. lily-scan-records
-    
-  - Now you are ready to run the mapreduce jar under CDH4
+   This will print out entries like the following:
 
-   
+   ID = USER.and
+   Version = null
+   Non-versioned scope:
+     Record type = {mrsample}Summary, version 1
+     {mrsample}wordcount = 2
+
+   which means the word "and" has been counted twice in the input
