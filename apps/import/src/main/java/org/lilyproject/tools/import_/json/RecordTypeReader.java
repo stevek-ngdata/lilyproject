@@ -15,13 +15,21 @@
  */
 package org.lilyproject.tools.import_.json;
 
+import static org.lilyproject.util.json.JsonUtil.getArray;
+import static org.lilyproject.util.json.JsonUtil.getBoolean;
+import static org.lilyproject.util.json.JsonUtil.getLong;
+import static org.lilyproject.util.json.JsonUtil.getString;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
-
-import static org.lilyproject.util.json.JsonUtil.*;
 
 public class RecordTypeReader implements EntityReader<RecordType> {
     public static EntityReader<RecordType> INSTANCE  = new RecordTypeReader();
@@ -110,5 +118,11 @@ public class RecordTypeReader implements EntityReader<RecordType> {
         }
 
         return recordType;
+    }
+
+    @Override
+    public RecordType fromJson(JsonNode node, Namespaces namespaces, Repository repository,
+            LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
+        return fromJson(node, namespaces, repository, null);
     }
 }

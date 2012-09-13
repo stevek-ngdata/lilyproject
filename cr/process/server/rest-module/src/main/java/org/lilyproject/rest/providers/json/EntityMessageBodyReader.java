@@ -15,27 +15,33 @@
  */
 package org.lilyproject.rest.providers.json;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.rest.RepositoryEnabled;
-import org.lilyproject.rest.ResourceException;
-import org.lilyproject.tools.import_.json.JsonFormatException;
-import org.lilyproject.util.json.JsonFormat;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
 
-import static javax.ws.rs.core.Response.Status.*;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.rest.RepositoryEnabled;
+import org.lilyproject.rest.ResourceException;
+import org.lilyproject.tools.import_.json.JsonFormatException;
+import org.lilyproject.tools.import_.json.LinkTransformer;
+import org.lilyproject.util.json.JsonFormat;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Provider
 public class EntityMessageBodyReader extends RepositoryEnabled implements MessageBodyReader<Object> {
+
+    private LinkTransformer linkTransformer;
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -62,12 +68,17 @@ public class EntityMessageBodyReader extends RepositoryEnabled implements Messag
         ObjectNode objectNode = (ObjectNode)node;
 
         try {
-            return EntityRegistry.findReader(type).fromJson(objectNode, repository);
+            return EntityRegistry.findReader(type).fromJson(objectNode, null, repository, linkTransformer);
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
         } catch (Exception e) {
             throw new ResourceException("Error reading submitted JSON.", e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
+    }
+
+    @Autowired
+    public void setLinkTransformer(LinkTransformer linkTransformer) {
+        this.linkTransformer = linkTransformer;
     }
 
 }

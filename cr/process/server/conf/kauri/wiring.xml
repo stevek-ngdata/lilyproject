@@ -48,8 +48,5 @@
       <mount name="main" path="" canonical=""/>
       <inject-restservice name="repository" ref="rest:repository"/>
     </artifact>
-
-    <directory id="plugin" path="${lily.plugin.dir}${file.separator}load-at-end"/>
-
   </modules>
 </wiring>

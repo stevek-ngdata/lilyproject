@@ -17,24 +17,33 @@ package org.lilyproject.tools.import_.json.filters;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.bytes.api.ByteArray;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.CompareOp;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.filter.FieldValueFilter;
 import org.lilyproject.repository.api.filter.RecordFilter;
-import org.lilyproject.tools.import_.json.*;
+import org.lilyproject.tools.import_.json.DefaultLinkTransformer;
+import org.lilyproject.tools.import_.json.JsonFormatException;
+import org.lilyproject.tools.import_.json.LinkTransformer;
+import org.lilyproject.tools.import_.json.Namespaces;
+import org.lilyproject.tools.import_.json.NamespacesImpl;
+import org.lilyproject.tools.import_.json.QNameConverter;
+import org.lilyproject.tools.import_.json.RecordReader;
+import org.lilyproject.tools.import_.json.RecordWriter;
+import org.lilyproject.tools.import_.json.WriteOptions;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.json.JsonUtil;
 
-import java.math.BigDecimal;
-import java.net.URI;
-import java.util.List;
-
 public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValueFilter> {
+    private final LinkTransformer defaultLinkTransformer = new DefaultLinkTransformer();
     @Override
     public boolean supports(String typeName) {
         return typeName.equals(FieldValueFilter.class.getName());
     }
 
+    @Override
     public FieldValueFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
@@ -42,17 +51,17 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
 
         String field = JsonUtil.getString(node, "field", null);
         JsonNode fieldValue = node.get("fieldValue");
-        
+
         // field and fieldValue should be specified both, or not at all, for deserialization to work
         if ((field != null || fieldValue != null) && (field == null || fieldValue == null)) {
             throw new RuntimeException("FieldValueFilter deserialization: both field and fieldValue must be specified.");
         }
 
         if (field != null && fieldValue != null) {
-            QName fieldQName = QNameConverter.fromJson(field, namespaces); 
+            QName fieldQName = QNameConverter.fromJson(field, namespaces);
             filter.setField(fieldQName);
             ValueType valueType = repository.getTypeManager().getFieldTypeByName(fieldQName).getValueType();
-            Object value = RecordReader.INSTANCE.readValue(fieldValue, valueType, "fieldValue", new NamespacesImpl(), repository);
+            Object value = RecordReader.INSTANCE.readValue(fieldValue, valueType, "fieldValue", new NamespacesImpl(), repository, defaultLinkTransformer);
             filter.setFieldValue(value);
         }
 
@@ -60,13 +69,14 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
         if (compareOp != null) {
             filter.setCompareOp(CompareOp.valueOf(compareOp));
         }
-        
+
 
         filter.setFilterIfMissing(JsonUtil.getBoolean(node, "filterIfMissing", filter.getFilterIfMissing()));
-        
+
         return filter;
     }
-    
+
+    @Override
     public ObjectNode toJson(FieldValueFilter filter, Namespaces namespaces, Repository repository,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
@@ -77,14 +87,14 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
                 (filter.getField() == null || filter.getFieldValue() == null)) {
             throw new RuntimeException("Both field and fieldValue must be specified.");
         }
-        
+
         if (filter.getField() != null && filter.getFieldValue() != null) {
             node.put("field", QNameConverter.toJson(filter.getField(), namespaces));
-            
+
             ValueType valueType = repository.getTypeManager().getFieldTypeByName(filter.getField()).getValueType();
             JsonNode valueAsJson = RecordWriter.INSTANCE.valueToJson(filter.getFieldValue(), valueType,
                     new WriteOptions(), namespaces, repository);
-            
+
             node.put("fieldValue", valueAsJson);
             ObjectNode valueNode = node.putObject("value");
         }
@@ -92,9 +102,9 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
         if (filter.getCompareOp() != null) {
             node.put("compareOp", filter.getCompareOp().toString());
         }
-        
-        node.put("filterIfMissing", filter.getFilterIfMissing());        
-        
+
+        node.put("filterIfMissing", filter.getFilterIfMissing());
+
         return node;
     }
 }

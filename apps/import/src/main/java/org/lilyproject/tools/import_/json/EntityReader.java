@@ -16,11 +16,13 @@
 package org.lilyproject.tools.import_.json;
 
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 
 public interface EntityReader<T> {
+    T fromJson(JsonNode node, Namespaces namespaces, Repository repository, LinkTransformer linkTransformer)
+            throws JsonFormatException, RepositoryException, InterruptedException;
+
     T fromJson(JsonNode node, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException;
 

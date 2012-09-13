@@ -15,23 +15,9 @@
  */
 package org.lilyproject.rest.providers.json;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.rest.PostAction;
-import org.lilyproject.rest.RepositoryEnabled;
-import org.lilyproject.rest.ResourceException;
-import org.lilyproject.tools.import_.json.*;
-import org.lilyproject.util.json.JsonFormat;
-import org.lilyproject.util.json.JsonUtil;
-import org.lilyproject.util.repo.SystemFields;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyReader;
-import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -40,11 +26,38 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyReader;
+import javax.ws.rs.ext.Provider;
+
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.CompareOp;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.rest.PostAction;
+import org.lilyproject.rest.RepositoryEnabled;
+import org.lilyproject.rest.ResourceException;
+import org.lilyproject.tools.import_.json.JsonFormatException;
+import org.lilyproject.tools.import_.json.LinkTransformer;
+import org.lilyproject.tools.import_.json.Namespaces;
+import org.lilyproject.tools.import_.json.NamespacesConverter;
+import org.lilyproject.tools.import_.json.QNameConverter;
+import org.lilyproject.tools.import_.json.RecordReader;
+import org.lilyproject.util.json.JsonFormat;
+import org.lilyproject.util.json.JsonUtil;
+import org.lilyproject.util.repo.SystemFields;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Provider
 public class PostActionMessageBodyReader extends RepositoryEnabled implements MessageBodyReader<PostAction> {
+
+    private LinkTransformer linkTransformer;
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -88,7 +101,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             if (!action.equals("delete")) {
                 EntityRegistry.RegistryEntry registryEntry = EntityRegistry.findReaderRegistryEntry((Class)entityType);
                 ObjectNode objectNode = JsonUtil.getObject(postNode, registryEntry.getPropertyName());
-                entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces, repository);
+                entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces, repository, linkTransformer);
             }
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
@@ -121,7 +134,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             if (!valueNode.isNull()) {
                 FieldType fieldType = systemFields.isSystemField(fieldName) ? systemFields.get(fieldName) :
                         repository.getTypeManager().getFieldTypeByName(fieldName);
-                value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces, repository);
+                value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces, repository, linkTransformer);
             }
 
             boolean allowMissing = JsonUtil.getBoolean(conditionNode, "allowMissing", false);
@@ -141,6 +154,11 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
         }
 
         return result;
+    }
+
+    @Autowired
+    public void setLinkTransformer(LinkTransformer linkTransformer) {
+        this.linkTransformer = linkTransformer;
     }
 
 }
