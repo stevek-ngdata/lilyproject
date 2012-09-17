@@ -46,6 +46,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         options.add(defaultBatchIndexConfigurationOption);
         options.add(solrCollectionOption);
         options.add(solrZkOption);
+        options.add(solrModeOption);
         options.add(enableDerefMapOption);
 
         return options;
@@ -62,32 +63,33 @@ public class AddIndexCli extends BaseIndexerAdminCli {
             return 1;
         }
 
+        if (solrMode == null) {
+            System.out.println("You must specify the solr mode (cloud or classic) with " + solrModeOption.getLongOpt());
+            return 1;
+        }
+
         if (indexerConfiguration == null) {
             System.out.println("Specify indexer configuration with -" + configurationOption.getOpt());
         }
 
+        if (validateSolrOptions(null, solrMode)) return 1;
+
         IndexDefinition index = model.newIndex(indexName);
-
-        if (solrShards != null) {
+        if (solrMode == SolrMode.CLASSIC) {
             index.setSolrShards(solrShards);
-        } else {
-            index.setZkConnectionString(this.zkConnectionString);
-        }
 
-        if (solrZk != null) {
-            index.setZkConnectionString(solrZk);
-        } else if (solrShards == null) {
-            index.setZkConnectionString(this.zkConnectionString + "/solr");
-        }
+            if (shardingConfiguration != null)
+                index.setShardingConfiguration(shardingConfiguration);
 
-        if (solrCollection != null) {
-            index.setSolrCollection(this.solrCollection);
+        } else if (solrMode == SolrMode.CLOUD) {
+            index.setZkConnectionString(solrZk != null ? solrZk : (this.zkConnectionString + "/solr"));
+
+            if (solrCollection != null) {
+                index.setSolrCollection(this.solrCollection);
+            }
         }
 
         index.setConfiguration(indexerConfiguration);
-
-        if (shardingConfiguration != null)
-            index.setShardingConfiguration(shardingConfiguration);
 
         if (generalState != null)
             index.setGeneralState(generalState);

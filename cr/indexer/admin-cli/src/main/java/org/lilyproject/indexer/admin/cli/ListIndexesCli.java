@@ -46,6 +46,7 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
         options.add(this.printBatchConfigurationOption);
+        options.add(this.printShardingConfigurationOption);
         return options;
     }
 
@@ -71,19 +72,24 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                 System.out.println("  + Dereference Map: disabled");
             }
             if (index.getSolrShards() != null && !index.getSolrShards().isEmpty()) {
-                System.out.println("  + Solr shards: ");
+                System.out.println("  + Solr Mode: CLASSIC");
+                System.out.println("    + Solr shards:");
                 for (Map.Entry<String, String> shard : index.getSolrShards().entrySet()) {
-                    System.out.println("    + " + shard.getKey() + ": " + shard.getValue());
+                    System.out.println("      + " + shard.getKey() + ": " + shard.getValue());
+                }
+                if (printShardingConfiguration) {
+                    System.out.println("    + Sharding configuration: " + prettyPrintJson(index.getShardingConfiguration(), 6));
                 }
             } else {
-                System.out.println("  + Solr zookeeper: " + index.getZkConnectionString());
-                System.out.println("  + Solr collection: " +
+                System.out.println("  + Solr Mode: CLOUD");
+                System.out.println("    + Solr zookeeper: " + index.getZkConnectionString());
+                System.out.println("    + Solr collection: " +
                         (index.getSolrCollection() != null ? index.getSolrCollection() : "none (using solr default)"));
             }
 
             if (this.printBatchConfiguration)
                 System.out.println("  + Default batch build config : " +
-                        prettyPrintBatchConf(index.getDefaultBatchIndexConfiguration(), 4));
+                        prettyPrintJson(index.getDefaultBatchIndexConfiguration(), 4));
 
             ActiveBatchBuildInfo activeBatchBuild = index.getActiveBatchBuildInfo();
             if (activeBatchBuild != null) {
@@ -93,7 +99,7 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                 System.out.println("    + Tracking URL: " + activeBatchBuild.getTrackingUrl());
                 if (this.printBatchConfiguration)
                     System.out.println("    + Batch build config : " +
-                            prettyPrintBatchConf(activeBatchBuild.getBatchIndexConfiguration(), 6));
+                            prettyPrintJson(activeBatchBuild.getBatchIndexConfiguration(), 6));
             }
 
             BatchBuildInfo lastBatchBuild = index.getLastBatchBuildInfo();
@@ -111,7 +117,7 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                 System.out.println("    + Index failures: " + counters.get(COUNTER_NUM_FAILED_RECORDS));
                 if (this.printBatchConfiguration)
                     System.out.println("    + Batch build config : " +
-                            prettyPrintBatchConf(lastBatchBuild.getBatchIndexConfiguration(), 6));
+                            prettyPrintJson(lastBatchBuild.getBatchIndexConfiguration(), 6));
             }
         }
 
@@ -131,7 +137,7 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
         return result.toString();
     }
 
-    private String prettyPrintBatchConf(byte[] conf, int extraIndent) throws Exception {
+    private String prettyPrintJson(byte[] conf, int extraIndent) throws Exception {
         if (conf == null) {
             return "null";
         }

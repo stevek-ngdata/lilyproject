@@ -66,8 +66,10 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected Option batchIndexConfigurationOption;
     protected Option defaultBatchIndexConfigurationOption;
     protected Option printBatchConfigurationOption;
+    protected Option printShardingConfigurationOption;
     protected Option solrCollectionOption;
     protected Option solrZkOption;
+    protected Option solrModeOption;
     protected Option enableDerefMapOption;
 
     protected String indexName;
@@ -83,9 +85,15 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     private ZooKeeperItf zk;
     protected String outputFileName;
     protected boolean printBatchConfiguration;
+    protected boolean printShardingConfiguration;
     protected String solrCollection;
     protected String solrZk;
+    protected SolrMode solrMode;
     protected Boolean enableDerefMap;
+
+    protected enum SolrMode {
+        CLASSIC, CLOUD;
+    }
 
     public BaseIndexerAdminCli() {
         // Here we instantiate various options, but it is up to subclasses to decide which ones
@@ -104,15 +112,15 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
         solrShardsOption = OptionBuilder
                 .withArgName("solr-shards")
-                .hasOptionalArg()
+                .hasArg()
                 .withDescription("Comma separated list of 'shardname:URL' pairs pointing to Solr instances.")
                 .withLongOpt("solr-shards")
                 .create("s");
 
         shardingConfigurationOption = OptionBuilder
                 .withArgName("shardingconfig.json")
-                .hasArg()
-                .withDescription("Sharding configuration.")
+                .hasOptionalArg()
+                .withDescription("Sharding configuration. If no value than the sharding configuration will be removed.")
                 .withLongOpt("sharding-config")
                 .create("p");
 
@@ -135,7 +143,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withArgName("batchconfig.json")
                 .hasArg()
                 .withDescription("Configuration for the current batch build of this index. Build state must be set" +
-                		" to BUILD_REQUESTED")
+                		" to BUILD_REQUESTED.")
                 .withLongOpt("batch-config")
                 .create("bi");
 
@@ -173,6 +181,10 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withLongOpt("print-batch-conf")
                 .create("pbc");
 
+        printShardingConfigurationOption = OptionBuilder
+                .withDescription("Print the sharding configuration.")
+                .create("pp");
+
         solrCollectionOption =  OptionBuilder
                 .withArgName("collection")
                 .hasArg()
@@ -186,6 +198,13 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withDescription("Zookeeper connection string for Solr")
                 .withLongOpt("solr-zk")
                 .create("sz");
+
+        solrModeOption = OptionBuilder
+                .withArgName("Solr mode")
+                .hasArg()
+                .withDescription("Solr mode (valid values are: classic | cloud)")
+                .withLongOpt("solr-mode")
+                .create("sm");
 
         enableDerefMapOption =  OptionBuilder
                 .withArgName("enable deref map")
@@ -311,15 +330,20 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
         }
 
         if (cmd.hasOption(shardingConfigurationOption.getOpt())) {
-            File configurationFile = new File(cmd.getOptionValue(shardingConfigurationOption.getOpt()));
-
-            if (!configurationFile.exists()) {
-                System.out.println("Specified sharding configuration file not found:");
-                System.out.println(configurationFile.getAbsolutePath());
-                return 1;
+            String optionValue = cmd.getOptionValue(shardingConfigurationOption.getOpt());
+            if (optionValue != null) {
+                File configurationFile = new File(optionValue);
+    
+                if (!configurationFile.exists()) {
+                    System.out.println("Specified sharding configuration file not found:");
+                    System.out.println(configurationFile.getAbsolutePath());
+                    return 1;
+                }
+                shardingConfiguration = FileUtils.readFileToByteArray(configurationFile);
+            } else {
+                shardingConfiguration = new byte[0];
             }
 
-            shardingConfiguration = FileUtils.readFileToByteArray(configurationFile);
         }
 
         if (cmd.hasOption(configurationOption.getOpt())) {
@@ -418,7 +442,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
                 defaultBatchIndexConfiguration = FileUtils.readFileToByteArray(configurationFile);
             } else {
-                defaultBatchIndexConfiguration = new byte[0] ;
+                defaultBatchIndexConfiguration = new byte[0];
             }
         }
 
@@ -443,11 +467,24 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
             solrZk = cmd.getOptionValue(solrZkOption.getOpt());
         }
 
+        if (cmd.hasOption(solrModeOption.getOpt())) {
+            if (cmd.getOptionValue(solrModeOption.getOpt()).equals("classic")) {
+                solrMode = SolrMode.CLASSIC;
+            } else if (cmd.getOptionValue(solrModeOption.getOpt()).equals("cloud")) {
+                solrMode = SolrMode.CLOUD;
+            } else {
+                System.out.printf("Invalid solr mode: '%s' (should be 'cloud' or 'classic')\n", solrModeOption.getOpt());
+                return 1;
+            }
+        }
+
         if (cmd.hasOption(enableDerefMapOption.getOpt())) {
             enableDerefMap = Boolean.valueOf(cmd.getOptionValue(enableDerefMapOption.getOpt()));
         }
 
         printBatchConfiguration = cmd.hasOption(printBatchConfigurationOption.getOpt());
+
+        printShardingConfiguration = cmd.hasOption(printShardingConfigurationOption.getOpt());
 
         return 0;
     }
@@ -538,5 +575,34 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
         } else {
             return new FileOutputStream(outputFileName);
         }
+    }
+
+    protected boolean validateSolrOptions(SolrMode oldSolrMode, SolrMode newSolrMode) {
+        if (newSolrMode == SolrMode.CLASSIC) {
+            // oldSolrMode==null means we are adding an index.
+            // oldSolrMode!=newSolrMode means we are updating the index' mode
+            if ((oldSolrMode == null || oldSolrMode != newSolrMode) && (solrShards == null || solrShards.isEmpty())) {
+                System.out.println("In solr classic mode, you must specify shards with " + solrShardsOption.getLongOpt());
+                return true;
+            }
+            if (solrZk != null) {
+                System.out.println("Conflicting options used: Solr zookeeper connection cannot be used with solr classic mode");
+                return true;
+            }
+            if (solrCollection != null) {
+                System.out.println("Conflicting options used: Solr collection cannot be used with solr classic mode");
+                return true;
+            }
+        } else if (newSolrMode == SolrMode.CLOUD) {
+            if (solrShards != null) {
+                System.out.println("Conflicting options used: Solr shards cannot be used with solr cloud mode");
+                return true;
+            }
+            if (shardingConfiguration != null) {
+                System.out.println("Conflicting options used: Solr shards cannot be used with solr cloud mode");
+                return true;
+            }
+        }
+        return false;
     }
 }

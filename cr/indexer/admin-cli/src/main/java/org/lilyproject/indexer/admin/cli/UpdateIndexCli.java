@@ -16,6 +16,7 @@
 package org.lilyproject.indexer.admin.cli;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
@@ -48,6 +49,9 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
         options.add(forceOption);
         options.add(defaultBatchIndexConfigurationOption);
         options.add(batchIndexConfigurationOption);
+        options.add(solrCollectionOption);
+        options.add(solrZkOption);
+        options.add(solrModeOption);
         options.add(enableDerefMapOption);
 
         return options;
@@ -75,29 +79,56 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
 
             boolean changes = false;
 
+            SolrMode oldSolrMode =  SolrMode.CLOUD;
+            if (index.getSolrShards() != null && !index.getSolrShards().isEmpty()) {
+                oldSolrMode = SolrMode.CLASSIC;
+            }
+            if (solrMode == null) {
+                solrMode = oldSolrMode;
+            }
+
+            if (validateSolrOptions(oldSolrMode, solrMode)) return 1;
+
+            if (solrMode != oldSolrMode) {
+                changes = true;
+
+                if (solrMode == SolrMode.CLASSIC) {
+                    // clear solr cloud settings
+                    index.setZkConnectionString(null);
+                    index.setSolrCollection(null);
+                    
+                    // shards will be set later
+                } else {
+                    // clear solr classic settings
+                    index.setSolrShards(Collections.<String, String>emptyMap());
+                    index.setShardingConfiguration(null);
+
+                    // set the required parameter for solr mode
+                    index.setZkConnectionString(solrZk != null ? solrZk : (this.zkConnectionString + "/solr"));
+                }
+            }
+
             if (solrShards != null && !solrShards.isEmpty() && !solrShards.equals(index.getSolrShards())) {
                 index.setSolrShards(solrShards);
                 changes = true;
             }
 
-            if (index.getSolrShards() == null && solrShards.isEmpty() && solrZk == null && !this.zkConnectionString.equals(index.getZkConnectionString())) {
-                index.setZkConnectionString(this.zkConnectionString + "/solr/");
-                changes = true;
-            }
+            if (index.getSolrShards() == null || index.getSolrShards().isEmpty()) {
+                // cloud mode => only respond to solr cloud specific options
+                if (solrZk != null && !this.solrZk.equals(index.getZkConnectionString())) {
+                    index.setZkConnectionString(this.solrZk);
+                    changes = true;
+                }
 
-            if (solrZk != null && this.solrZk.equals(index.getZkConnectionString())) {
-                index.setZkConnectionString(this.zkConnectionString);
-                changes = true;
-            }
-
-            if (this.solrCollection != null && !this.solrCollection.equals(index.getSolrCollection())) {
-                index.setSolrCollection(this.solrCollection);
-                changes = true;
-            }
-
-            if (shardingConfiguration != null && !ObjectUtils.safeEquals(shardingConfiguration, index.getShardingConfiguration())) {
-                index.setShardingConfiguration(shardingConfiguration);
-                changes = true;
+                if (this.solrCollection != null && !this.solrCollection.equals(index.getSolrCollection())) {
+                    index.setSolrCollection(this.solrCollection);
+                    changes = true;
+                }
+            } else {
+                // classic mode => only respond to solr classic specific options
+                if (setShardingConfiguration(shardingConfiguration, index)) {
+                    changes = true;
+                }
             }
 
             if (indexerConfiguration != null && !Arrays.equals(indexerConfiguration, index.getConfiguration())) {
@@ -157,4 +188,27 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
 
         return 0;
     }
+
+    /**
+     * Sets the sharding configuration, returning true if any actual changes were made
+     * @param conf
+     * @param index
+     */
+    private boolean setShardingConfiguration(byte[] conf, IndexDefinition index) {
+        if (conf != null) {
+            if (index.getShardingConfiguration() == null) { 
+                if (!ObjectUtils.safeEquals(conf, index.getShardingConfiguration())) {
+                    index.setShardingConfiguration(conf);
+                    return true;
+                }
+            } else {
+                if (conf.length == 0) {
+                    index.setShardingConfiguration(null);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }
