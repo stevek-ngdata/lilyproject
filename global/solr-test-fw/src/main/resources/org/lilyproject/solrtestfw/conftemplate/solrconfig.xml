@@ -764,7 +764,8 @@
      <lst name="defaults">
        <str name="echoParams">explicit</str>
        <int name="rows">10</int>
-       <str name="df">text</str>
+       <!-- Lily change: disable df, avoids confusing messages about undefined field 'text' -->
+       <!--<str name="df">text</str>-->
      </lst>
     <!-- In addition to defaults, "appends" params can be specified
          to identify values which should be appended to the list of
@@ -826,7 +827,8 @@
        <str name="echoParams">explicit</str>
        <str name="wt">json</str>
        <str name="indent">true</str>
-       <str name="df">text</str>
+       <!-- Lily change: disable df, avoids confusing messages about undefined field 'text' -->
+       <!--<str name="df">text</str>-->
      </lst>
   </requestHandler>
 
