@@ -16,6 +16,8 @@ required dependencies in the lib subdir.
 
 To run this example:
 
+ - check the jobtracker port in MyJob.java (check mapred-site.xml on your jobtracker host. Common values are 8021, 9001 and 8012.)
+
  - compile this project using "mvn install"
 
  - have a Lily stack running, e.g. using launch-test-lily
@@ -43,7 +45,7 @@ To run this example:
 
  - start the MapReduce job
 
-   /path/to/hadoop-2.0.0-mr1-cdh4.0.X/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar com.mycompany.MyJob
+   /path/to/hadoop-2.0.0-mr1-cdh4.0.X/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar com.mycompany.MyJob [jobtrackerhost]
 
    (this assumes JobTracker/Namenode/ZooKeeper is running on localhost,
    see MyJob code to adjust)
