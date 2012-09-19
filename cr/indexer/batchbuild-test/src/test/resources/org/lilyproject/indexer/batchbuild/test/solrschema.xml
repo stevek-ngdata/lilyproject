@@ -173,8 +173,4 @@
  <!-- Lily requires the uniqueKey to be set to lily.key -->
  <uniqueKey>lily.key</uniqueKey>
 
- <defaultSearchField>field1</defaultSearchField>
-
- <solrQueryParser defaultOperator="OR"/>
-
 </schema>
