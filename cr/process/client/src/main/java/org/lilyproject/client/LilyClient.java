@@ -313,7 +313,7 @@ public class LilyClient implements Closeable {
             // connection completely without worrying we close someone else's connection (e.g.
             // when running two LilyClient's in one JVM, or when running LilyClient from within
             // the lily-server JVM, which is the case when we launch a batch build job)
-            configuration.set(HConstants.HBASE_CLIENT_INSTANCE_ID, String.valueOf(hbaseConfCounter.incrementAndGet()));
+            configuration.set(HConstants.HBASE_CLIENT_INSTANCE_ID, String.valueOf("lilyclient-" + hbaseConfCounter.incrementAndGet()));
 
             byte[] data = zk.getData(hbaseConfigPath, false, new Stat());
             ObjectNode propertiesNode = (ObjectNode) JsonFormat.deserializeSoft(data, "HBase configuration");

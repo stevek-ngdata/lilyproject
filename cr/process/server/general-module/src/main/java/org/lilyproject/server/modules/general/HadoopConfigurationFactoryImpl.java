@@ -28,6 +28,8 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.kauriproject.conf.Conf;
 import org.lilyproject.util.io.Closer;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactory {
     private Conf hbaseConf;
     private Conf mrConf;
@@ -37,6 +39,7 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
     private Configuration hbaseConfig;
 
     private Log log = LogFactory.getLog(getClass());
+    private static AtomicInteger hbaseConfCounter = new AtomicInteger();
 
     public HadoopConfigurationFactoryImpl(Conf hbaseConf, Conf mrConf, String zkConnectString, int zkSessionTimeout)
             throws Exception {
@@ -98,6 +101,13 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
                 String value = conf.getRequiredChild("value").getValue();
                 hbaseConfig.set(name, value);
             }
+
+            // Make the conf unique. Makes that our connection management doesn't clash with that of
+            // other HBase-using applications that might run in the same JVM.
+            // This helps with hbase client connection management issues occurring when stopping/starting lily-server
+            // and LilyClient many times when using them embedded in test case jvm's
+            hbaseConfig.set(HConstants.HBASE_CLIENT_INSTANCE_ID, "lilyserver-"
+                    + String.valueOf(hbaseConfCounter.incrementAndGet()));
         }
 
         return hbaseConfig;
