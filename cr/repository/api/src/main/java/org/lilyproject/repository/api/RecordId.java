@@ -44,6 +44,10 @@ public interface RecordId {
      * <pre>{record id type}.{master record id}.varprop1=value1,varprop2=value2</pre>
      *
      * <p>The variant properties are sorted in lexicographic order.
+     *
+     * <p>Reserved characters, in the id itself or in the variant property key and value
+     * should be escaped with backslash. Reserved characters are dot, comma and equals
+     * (and backslash itself).</p>
      */
     String toString();
 
