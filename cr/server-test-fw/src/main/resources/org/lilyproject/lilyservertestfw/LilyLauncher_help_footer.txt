@@ -1,9 +1,0 @@
- +-----------------------------------------------------------------------+
- | IMPORTANT WARNING: when you stop launch-lily, all data stored in it   |
- |                    will be lost. This includes everything stored in   |
- |                    HDFS, HBase and ZooKeeper.                         |
- +-----------------------------------------------------------------------+
-
-launch-lily is intended for running small-scale tests or doing small demos.
-
-For any other purpose, please install a normal HBase, which is not much work.
