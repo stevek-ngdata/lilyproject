@@ -90,6 +90,10 @@ public class BalancingAndRetryingLilyConnection {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (method.getName().equals("close")) {
+                return null;
+            }
+
             long startedAt = System.currentTimeMillis();
             int attempt = 0;
 
@@ -131,6 +135,8 @@ public class BalancingAndRetryingLilyConnection {
                 // RetriesExhausted checked exception, which would be a bit strange to declare for the
                 // getIdGenerator method
                 return idGenerator;
+            } else if (method.getName().equals("close")) {
+                return null;
             }
 
             long startedAt = System.currentTimeMillis();
@@ -181,6 +187,10 @@ public class BalancingAndRetryingLilyConnection {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (method.getName().equals("close")) {
+                return null;
+            }
+
             long startedAt = System.currentTimeMillis();
             int attempt = 0;
 
