@@ -91,25 +91,25 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         List<Option> options = super.getOptions();
 
         enableHadoopOption = OptionBuilder
-                .withDescription("Start Hadoop (DFS/MR/ZK/HBase)")
+                .withDescription("Start the Hadoop services (ZK/DFS/MR/HBase)")
                 .withLongOpt("hadoop")
                 .create("hadoop");
         options.add(enableHadoopOption);
 
         enableSolrOption = OptionBuilder
-                .withDescription("Start Solr")
+                .withDescription("Start the Solr service")
                 .withLongOpt("solr")
                 .create("solr");
         options.add(enableSolrOption);
 
         enableSolrCloudOption = OptionBuilder
-                .withDescription("Start Solr in cloud mode")
+                .withDescription("Use cloud mode (connect with zookeeper) when starting solr.")
                 .withLongOpt("solrcloud")
                 .create("solrcloud");
         options.add(enableSolrCloudOption);
 
         enableLilyOption = OptionBuilder
-                .withDescription("Start Lily")
+                .withDescription("Start the Lily service")
                 .withLongOpt("lily")
                 .create("lily");
         options.add(enableLilyOption);
@@ -170,8 +170,8 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             enableSolrCloud = cmd.hasOption(enableSolrCloudOption.getOpt());
         }
 
-        // If none of the services are explicitly enabled, we default to starting them all. Otherwise
-        // we only start those that are enabled.
+        // When running prepare mode, or if none of the services are explicitly enabled,
+        // we default to starting them all. Otherwise we only start those that are enabled.
         if (!enableHadoop && !enableSolr && !enableLily) {
             enableHadoop = true;
             enableSolr = true;

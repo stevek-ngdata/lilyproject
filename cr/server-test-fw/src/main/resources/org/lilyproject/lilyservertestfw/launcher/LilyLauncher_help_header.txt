@@ -1,2 +1,5 @@
 Launch a complete Lily, Solr, Hadoop, ZooKeeper & HBase stack within one VM,
 without requiring to configure anything.
+
+Use the --lily, --solr, --hadoop flags to specify which services to start.
+The default behaviour (without any flags) is to start all services.
