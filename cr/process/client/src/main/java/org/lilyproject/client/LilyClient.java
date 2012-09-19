@@ -115,20 +115,25 @@ public class LilyClient implements Closeable {
     }
 
     private void init() throws InterruptedException, KeeperException, NoServersException, RepositoryException {
+        this.isClosed = false; // needs to be before refreshServers and schemaCache.start()
         zk.addDefaultWatcher(watcher);
         refreshServers();
         schemaCache.start();
-        this.isClosed = false;
     }
 
     @Override
     public void close() throws IOException {
+        this.isClosed = true;
+
         zk.removeDefaultWatcher(watcher);
 
         schemaCache.close();
 
-        for (ServerNode node : servers) {
-            Closer.close(node.repository);
+        synchronized (this) {
+            for (ServerNode node : servers) {
+                node.close();
+            }
+            servers.clear();
         }
 
         if (managedZk && zk != null) {
@@ -145,14 +150,10 @@ public class LilyClient implements Closeable {
         // advanced connection mgmt so that these connections don't stay open for the lifetime
         // of LilyClient.
         Closer.close(hbaseConnections);
-
-        this.isClosed = true;
     }
 
     /**
      * Returns if the connection to the lily server has been closed.
-     *
-     * @return
      */
     public boolean isClosed() {
         return isClosed;
@@ -164,17 +165,31 @@ public class LilyClient implements Closeable {
      * over multiple Lily servers, you need to recall this method regularly to retrieve other
      * repository instances. Most of the time, you will rather use {@link #getRepository()}.
      */
-    public synchronized Repository getPlainRepository() throws IOException, NoServersException, InterruptedException,
+    public Repository getPlainRepository() throws IOException, NoServersException, InterruptedException,
             KeeperException, RepositoryException {
+        if (isClosed) {
+            throw new IllegalStateException("This LilyClient is closed.");
+        }
+
+        return getServerNode().repository;
+    }
+
+    private synchronized ServerNode getServerNode() throws NoServersException, RepositoryException, IOException,
+            InterruptedException, KeeperException {
         if (servers.size() == 0) {
             throw new NoServersException("No servers available");
         }
+
         int pos = (int) Math.floor(Math.random() * servers.size());
         ServerNode server = servers.get(pos);
         if (server.repository == null) {
             constructRepository(server);
         }
-        return server.repository;
+        if (server.indexer == null) {
+            constructIndexer(server);
+        }
+
+        return server;
     }
 
     /**
@@ -185,6 +200,10 @@ public class LilyClient implements Closeable {
      * the category org.lilyproject.client.
      */
     public Repository getRepository() {
+        if (isClosed) {
+            throw new IllegalStateException("This LilyClient is closed.");
+        }
+
         return balancingAndRetryingLilyConnection.getRepository();
     }
 
@@ -194,17 +213,13 @@ public class LilyClient implements Closeable {
      * over multiple Lily servers, you need to recall this method regularly to retrieve other
      * indexer instances. Most of the time, you will rather use {@link #getIndexer()}.
      */
-    public synchronized Indexer getPlainIndexer() throws IOException, NoServersException, InterruptedException,
+    public Indexer getPlainIndexer() throws IOException, NoServersException, InterruptedException,
             KeeperException, RepositoryException {
-        if (servers.size() == 0) {
-            throw new NoServersException("No servers available");
+        if (isClosed) {
+            throw new IllegalStateException("This LilyClient is closed.");
         }
-        int pos = (int) Math.floor(Math.random() * servers.size());
-        ServerNode server = servers.get(pos);
-        if (server.indexer == null) {
-            constructIndexer(server);
-        }
-        return server.indexer;
+
+        return getServerNode().indexer;
     }
 
     /**
@@ -215,6 +230,9 @@ public class LilyClient implements Closeable {
      * the category org.lilyproject.client.
      */
     public Indexer getIndexer() {
+        if (isClosed) {
+            throw new IllegalStateException("This LilyClient is closed.");
+        }
         return balancingAndRetryingLilyConnection.getIndexer();
     }
 
@@ -341,9 +359,18 @@ public class LilyClient implements Closeable {
         public ServerNode(String lilyAddressAndPort) {
             this.lilyAddressAndPort = lilyAddressAndPort;
         }
+
+        public void close() {
+            Closer.close(repository);
+            Closer.close(indexer);
+        }
     }
 
     private synchronized void refreshServers() throws InterruptedException, KeeperException {
+        if (isClosed()) {
+            return;
+        }
+
         Set<String> currentServers = new HashSet<String>();
 
         boolean retry;
@@ -389,7 +416,7 @@ public class LilyClient implements Closeable {
             ServerNode server = serverIt.next();
             if (removedServers.contains(server.lilyAddressAndPort)) {
                 serverIt.remove();
-                Closer.close(server.repository);
+                server.close();
             }
         }
         serverAddresses.removeAll(removedServers);
@@ -410,7 +437,7 @@ public class LilyClient implements Closeable {
         while (serverIt.hasNext()) {
             ServerNode server = serverIt.next();
             serverIt.remove();
-            Closer.close(server.repository);
+            server.close();
         }
 
         serverAddresses.clear();
