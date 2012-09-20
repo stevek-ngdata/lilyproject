@@ -177,8 +177,12 @@ public class SolrTestingUtility {
         System.setProperty("solr.solr.home", solrHomeDir.getAbsolutePath());
         if (this.useSolrCloud) {
             System.setProperty("zkHost", "localhost:2181/solr");
+            // I'd rather start with an empty set of cores, but our testfw is currently designed
+            // around always having the default 'core0' core around, and OTOH SolrCloud doens't
+            // support having cores not associated with a collection, so until we review this
+            // more thoroughly, we keep this in place
             System.setProperty("bootstrap_confdir", solrHomeDir.getAbsolutePath() + "/core0/conf");
-            System.setProperty("collection.configName", "core0");
+            System.setProperty("collection.configName", "lily_dynamic");
         }
     }
 

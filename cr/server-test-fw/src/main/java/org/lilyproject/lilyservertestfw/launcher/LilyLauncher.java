@@ -48,7 +48,6 @@ import org.lilyproject.util.test.TestHomeUtil;
 public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private Option enableHadoopOption;
     private Option enableSolrOption;
-    private Option enableSolrCloudOption;
     private Option enableLilyOption;
     private Option dataDirOption;
     private Option prepareOption;
@@ -65,7 +64,6 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
 
     boolean enableHadoop;
     boolean enableSolr;
-    boolean enableSolrCloud;
     boolean enableLily;
 
     private final Log log = LogFactory.getLog(getClass());
@@ -101,12 +99,6 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
                 .withLongOpt("solr")
                 .create("solr");
         options.add(enableSolrOption);
-
-        enableSolrCloudOption = OptionBuilder
-                .withDescription("Use cloud mode (connect with zookeeper) when starting solr.")
-                .withLongOpt("solrcloud")
-                .create("solrcloud");
-        options.add(enableSolrCloudOption);
 
         enableLilyOption = OptionBuilder
                 .withDescription("Start the Lily service")
@@ -167,7 +159,6 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             enableHadoop = cmd.hasOption(enableHadoopOption.getOpt());
             enableSolr = cmd.hasOption(enableSolrOption.getOpt());
             enableLily = cmd.hasOption(enableLilyOption.getOpt());
-            enableSolrCloud = cmd.hasOption(enableSolrCloudOption.getOpt());
         }
 
         // When running prepare mode, or if none of the services are explicitly enabled,
@@ -176,10 +167,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             enableHadoop = true;
             enableSolr = true;
             enableLily = true;
-            enableSolrCloud = false;
         }
-
-        solrService.setEnableSolrCloud(enableSolrCloud);
 
         if (enableHadoop)
             enabledServices.add(hadoopService);

@@ -34,6 +34,7 @@ public class SolrLauncherService implements LauncherService {
     private Option schemaOption;
     private Option commitOption;
     private Option solrConfigOption;
+    private Option solrCloudModeOption;
 
     private String autoCommitSetting;
     private String schema;
@@ -73,6 +74,11 @@ public class SolrLauncherService implements LauncherService {
             .create("sc");
         options.add(solrConfigOption);
 
+        solrCloudModeOption = OptionBuilder
+                .withDescription("Use cloud mode (connect with ZooKeeper) when starting Solr.")
+                .withLongOpt("solrcloud")
+                .create("solrcloud");
+        options.add(solrCloudModeOption);
     }
 
     @Override
@@ -105,6 +111,8 @@ public class SolrLauncherService implements LauncherService {
                 return 1;
             }
         }
+
+        enableSolrCloud = cmd.hasOption(solrCloudModeOption.getOpt());
 
         return 0;
     }
@@ -215,13 +223,5 @@ public class SolrLauncherService implements LauncherService {
 
     public SolrTestingUtility getSolrTestingUtility() {
         return solrTestingUtility;
-    }
-
-    public boolean isEnableSolrCloud() {
-        return enableSolrCloud;
-    }
-
-    public void setEnableSolrCloud(boolean enableSolrCloud) {
-        this.enableSolrCloud = enableSolrCloud;
     }
 }
