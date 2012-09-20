@@ -111,6 +111,12 @@ LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=tru
 if [ -z "$TEST_LILY_CONF_DIR" ] ; then
   TEST_LILY_CONF_DIR="${basedir}/../../cr/process/server/conf"
 fi
+
+if [[ "$@" == *-solrcloud* ]] ; then
+  # This is a dirty trick to make the SolrCloud admin ui work when the user specifies -solrcloud
+  # For the reason why, see Solr source code: cloud_args in app.js and SystemInfoHandler.java
+  LILY_OPTIONS="$LILY_OPTIONS -DzkHoax"
+fi
               ]]></value>
             </parameter>
             <parameter>
@@ -134,6 +140,12 @@ LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=tru
 # User can specify an alternate conf dir using TEST_LILY_CONF_DIR
 if [ -z "$TEST_LILY_CONF_DIR" ] ; then
   TEST_LILY_CONF_DIR="$LILY_HOME/conf"
+fi
+
+if [[ "$@" == *-solrcloud* ]] ; then
+  # This is a dirty trick to make the SolrCloud admin ui work when the user specifies -solrcloud
+  # For the reason why, see Solr source code: cloud_args in app.js and SystemInfoHandler.java
+  LILY_OPTIONS="$LILY_OPTIONS -DzkHoax"
 fi
               ]]></value>
             </parameter>
