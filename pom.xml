@@ -22,7 +22,7 @@
   <properties>
     <!-- This modified '-lily' version contains only small changes to the HBase client
          libs to support better interruptability. See 'patches' directory. -->
-    <version.hbase>0.92.1-cdh4.0.0-lily-v2</version.hbase>
+    <version.hbase>0.92.1-cdh4.0.0-lily</version.hbase>
     <!-- When changing the hbase version, also change the hadoop and zookeeper version below to match
          what is in HBase's pom.xml -->
 
