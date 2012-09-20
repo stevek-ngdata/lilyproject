@@ -33,101 +33,8 @@
   <name>Lily: binary distribution</name>
 
   <dependencies>
-    <!--
-       Add dependencies here for everything which should be included in the binary distribution.
-       This is not necessary for the Kauri-based Lily server, whose dependencies are collected
-       by a Maven plugin.
-     -->
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-import</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-mbox-import</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-tester</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-indexer-admin-cli</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rowlog-admin-cli</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-server-test-fw</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-standalone-launcher</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-print-host</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-upgrade</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-linkindex-cli</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-scan-records</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rowlog-visualizer</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-record-row-visualizer</artifactId>
-    </dependency>
-
-    <!--
-       The following dependencies are not strictly required to launch Lily, but they are useful
-       in case you don't have access to an external Lily repository (or if the particular
-       version is not deployed in the repository). One can then change the definition of the
-       Lily repository to point to file:///$LILY_HOME/lib.
-    -->
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-archetype-basic</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-archetype-lily-server-plugin</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-kauri-plugin</artifactId>
-    </dependency>
-
-    <!--
-      This dependency is here because otherwise Maven doesn't include its recursive
-      dependencies. (they are excluded in lily-hbase-client but not in another project
-      (they come in via a dependency of hbase:tests), and in the context here Maven
+   <!-- fixme do we still need to add commons-configuration? -->
+    <!-- This dependency is here because otherwise Maven doesn't include its recursive dependencies. (they are excluded in lily-hbase-client but not in another project (they come in via a dependency of hbase:tests), and in the context here Maven
       decides to take the commons-configuration from lily-hbase-client. Quite annoying.)
     -->
     <dependency>
@@ -169,6 +76,24 @@
         <version>1.3-SNAPSHOT</version>
         <configuration>
           <confDirectory>${basedir}/../cr/process/server/conf</confDirectory>
+          <artifacts>
+            <artifact>org.lilyproject:lily-import:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-mbox-import:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-tester:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-indexer-admin-cli:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-rowlog-admin-cli:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-server-test-fw:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-standalone-launcher:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-print-host:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-upgrade:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-linkindex-cli:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-scan-records:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-rowlog-visualizer:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-record-row-visualizer:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-archetype-basic:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-archetype-lily-server-plugin:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-kauri-plugin:1.3-SNAPSHOT</artifact>
+          </artifacts>
         </configuration>
       </plugin>
     </plugins>

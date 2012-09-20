@@ -389,15 +389,4 @@
     </fileSet>
   </fileSets>
 
-  <repositories>
-    <repository>
-      <includeMetadata>false</includeMetadata>
-      <scope>test</scope>
-      <outputDirectory>lib</outputDirectory>
-      <excludes>
-        <exclude>*lily-dist*</exclude>
-      </excludes>
-    </repository>
-  </repositories>
-
 </assembly>
