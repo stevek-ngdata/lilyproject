@@ -20,6 +20,7 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -67,7 +68,9 @@ public class ZKPublisher {
         // Translate HBase conf into json 
         ObjectNode propertiesNode = JsonNodeFactory.instance.objectNode();
         for (Map.Entry<String, String> propertyEntry : hbaseConf) {
-            propertiesNode.put(propertyEntry.getKey(), propertyEntry.getValue());
+            if (!propertyEntry.getKey().equals(HConstants.HBASE_CLIENT_INSTANCE_ID)) {
+                propertiesNode.put(propertyEntry.getKey(), propertyEntry.getValue());
+            }
         }
         // TODO we could compare with current state and log a warn if its different
         ZkUtil.createPath(zk, hbaseConfPath, JsonFormat.serializeAsBytes(propertiesNode));
