@@ -582,7 +582,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
             // oldSolrMode==null means we are adding an index.
             // oldSolrMode!=newSolrMode means we are updating the index' mode
             if ((oldSolrMode == null || oldSolrMode != newSolrMode) && (solrShards == null || solrShards.isEmpty())) {
-                System.out.println("In solr classic mode, you must specify shards with " + solrShardsOption.getLongOpt());
+                System.out.println("In solr classic mode, you must specify shards with --" + solrShardsOption.getLongOpt());
                 return true;
             }
             if (solrZk != null) {

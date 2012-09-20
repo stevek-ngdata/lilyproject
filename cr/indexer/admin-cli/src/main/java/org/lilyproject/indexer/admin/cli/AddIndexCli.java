@@ -64,7 +64,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         }
 
         if (solrMode == null) {
-            System.out.println("You must specify the solr mode (cloud or classic) with " + solrModeOption.getLongOpt());
+            System.out.println("You must specify the solr mode (cloud or classic) with --" + solrModeOption.getLongOpt());
             return 1;
         }
 
