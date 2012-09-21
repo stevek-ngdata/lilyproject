@@ -254,7 +254,8 @@ public class IndexerWorker {
 
     private SolrShardManager getSolrShardManager(IndexDefinition index) throws Exception {
         if (index.getSolrShards().isEmpty()) {
-            return new CloudSolrShardManager(index.getZkConnectionString(), index.getSolrCollection());
+            return new CloudSolrShardManager(index.getName(), index.getZkConnectionString(), index.getSolrCollection(),
+                    true);
         } else {
             ShardSelector shardSelector;
             if (index.getShardingConfiguration() == null) {

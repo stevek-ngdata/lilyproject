@@ -119,8 +119,8 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
         if (shard1Name == null) {
             String zkConnectionString = jobConf.get("org.lilyproject.indexer.batchbuild.solr.zkConnectionString");
-            return new CloudSolrShardManager(zkConnectionString,
-                    jobConf.get("org.lilyproject.indexer.batchbuild.solr.collection"));
+            return new CloudSolrShardManager(indexName, zkConnectionString,
+                    jobConf.get("org.lilyproject.indexer.batchbuild.solr.collection"), false);
         } else {
             Map<String, String> solrShards = new HashMap<String, String>();
             for (int i = 1; true; i++) {

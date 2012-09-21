@@ -15,16 +15,17 @@
  */
 package org.lilyproject.indexer.engine;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.solr.common.SolrException;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.common.SolrException;
 
 /**
  * Puts a wrapper around SolrClient that will pause and retry on certain kinds of errors. This avoids
@@ -35,7 +36,7 @@ public class RetryingSolrClient {
 
     public static SolrClient wrap(SolrClient solrClient, SolrClientMetrics metrics) {
         RetryingSolrClientInvocationHandler handler = new RetryingSolrClientInvocationHandler(solrClient, metrics);
-        return (SolrClient)Proxy.newProxyInstance(SolrClient.class.getClassLoader(), new Class[] { SolrClient.class },
+        return (SolrClient) Proxy.newProxyInstance(SolrClient.class.getClassLoader(), new Class[]{SolrClient.class},
                 handler);
     }
 
@@ -62,37 +63,31 @@ public class RetryingSolrClient {
                     return method.invoke(solrClient, args);
                 } catch (InvocationTargetException ite) {
                     Throwable throwable = ite.getTargetException();
-                    Throwable originalThrowable = throwable;
+                    final Throwable originalThrowable = throwable;
 
                     if (throwable instanceof SolrClientException) {
                         throwable = throwable.getCause();
                     }
 
-                    Throwable cause = throwable.getCause();
+                    final Throwable cause = throwable.getCause();
 
                     if (throwable instanceof SolrException) {
                         // Get the HTTP status code
-                        int code = ((SolrException)throwable).code();
+                        int code = ((SolrException) throwable).code();
                         if (code == 404) {
                             // The user has probably configured an incorrect path in the Solr URL
-                            int pause = getBackOff(attempt);
-                            log.error("'Not Found' exception connecting to Solr " + solrClient.getDescription() +
-                                    ". Incorrect path in Solr URL? Will sleep " + pause +
-                                    "ms and retry (attempt " + attempt + ")");
-                            Thread.sleep(pause);
+                            backOff(attempt, "'Not Found' exception connecting to Solr " + solrClient.getDescription() +
+                                    ". Incorrect path in Solr URL?");
                         } else {
                             throw originalThrowable;
                         }
                     } else if (cause != null && cause instanceof UnknownHostException) {
-                        int pause = getBackOff(attempt);
-                        log.error("Solr host unknown " + solrClient.getDescription() + ". Will sleep " + pause +
-                                "ms and retry (attempt " + attempt + ")");
-                        Thread.sleep(pause);
+                        backOff(attempt, "Solr host unknown " + solrClient.getDescription() + ".");
                     } else if (throwable.getCause() != null && throwable.getCause() instanceof ConnectException) {
-                        int pause = getBackOff(attempt);
-                        log.error("Could not connect to Solr " + solrClient.getDescription() +
-                                ". Will sleep " + pause + "ms and retry (attempt " + attempt + ")");
-                        Thread.sleep(pause);
+                        backOff(attempt, "Could not connect to Solr " + solrClient.getDescription() + ".");
+                    } else if (throwable.getCause() == null && throwable instanceof SolrServerException &&
+                            throwable.getMessage().equals("No live SolrServers available to handle this request")) {
+                        backOff(attempt, "Could not connect to Solr " + solrClient.getDescription() + ".");
                     } else {
                         throw originalThrowable;
                     }
@@ -100,6 +95,12 @@ public class RetryingSolrClient {
                 metrics.retries.inc();
                 attempt++;
             }
+        }
+
+        private void backOff(int attempt, String message) throws InterruptedException {
+            int pause = getBackOff(attempt);
+            log.error(message + " Will sleep " + pause + "ms and retry (attempt " + attempt + ")");
+            Thread.sleep(pause);
         }
 
         private int getBackOff(int attempt) {
