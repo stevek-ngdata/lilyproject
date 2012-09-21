@@ -77,22 +77,22 @@
         <configuration>
           <confDirectory>${basedir}/../cr/process/server/conf</confDirectory>
           <artifacts>
-            <artifact>org.lilyproject:lily-import:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-mbox-import:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-tester:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-indexer-admin-cli:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-rowlog-admin-cli:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-server-test-fw:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-standalone-launcher:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-print-host:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-upgrade:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-linkindex-cli:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-scan-records:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-rowlog-visualizer:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-record-row-visualizer:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-archetype-basic:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-archetype-lily-server-plugin:1.3-SNAPSHOT</artifact>
-            <artifact>org.lilyproject:lily-kauri-plugin:1.3-SNAPSHOT</artifact>
+            <artifact>org.lilyproject:lily-import:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-mbox-import:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-tester:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-indexer-admin-cli:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-rowlog-admin-cli:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-server-test-fw:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-standalone-launcher:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-print-host:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-upgrade:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-linkindex-cli:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-scan-records:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-rowlog-visualizer:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-record-row-visualizer:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-archetype-basic:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-archetype-lily-server-plugin:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-kauri-plugin:${project.version}</artifact>
           </artifacts>
         </configuration>
       </plugin>
