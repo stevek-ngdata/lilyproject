@@ -186,9 +186,7 @@ public abstract class BaseTestTool extends BaseZkCliTool {
         metricsStream.println();
         metricsStream.println("About hbaseLoad (if present): this is currently the same as the number of regions");
         metricsStream.println("   deployed on the region server.");
-        metricsStream.println("About hbaseRequestCount (if present): this is number of requests that happened");
-        metricsStream.println("   since the previous report to the master, which happens every");
-        metricsStream.println("   hbase.regionserver.msginterval, default 3 seconds.");
+        metricsStream.println("About hbaseRequestCount (if present): this is number of HBase requests per seconds");
         metricsStream.println();
 
         outputGeneralMetricReports();
