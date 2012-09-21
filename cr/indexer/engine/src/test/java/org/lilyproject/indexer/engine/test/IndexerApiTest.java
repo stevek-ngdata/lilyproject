@@ -2,6 +2,7 @@ package org.lilyproject.indexer.engine.test;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -11,13 +12,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.IndexerException;
+import org.lilyproject.indexer.engine.ClassicSolrShardManager;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.Indexer;
 import org.lilyproject.indexer.engine.IndexerApiImpl;
 import org.lilyproject.indexer.engine.IndexerMetrics;
 import org.lilyproject.indexer.engine.IndexerRegistry;
 import org.lilyproject.indexer.engine.SolrClientException;
-import org.lilyproject.indexer.engine.SolrShardManagerImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.FieldType;
@@ -32,8 +33,6 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 
-import com.google.common.collect.Sets;
-
 /**
  *
  */
@@ -47,7 +46,7 @@ public class IndexerApiTest {
     private SolrTestingUtility SOLR_TEST_UTIL;
     private Repository repository;
     private TypeManager typeManager;
-    private SolrShardManagerImpl solrShardManager;
+    private ClassicSolrShardManager solrShardManager;
 
     private final IndexerRegistry indexerRegistry = new IndexerRegistry();
     private IndexerApiImpl indexerApi;
@@ -74,7 +73,7 @@ public class IndexerApiTest {
 
         setupSchema();
 
-        solrShardManager = SolrShardManagerImpl.createForOneShard(SOLR_TEST_UTIL.getUri());
+        solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
 
         indexerApi = new IndexerApiImpl(repository, indexerRegistry);
     }

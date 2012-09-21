@@ -15,9 +15,11 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.io.Closeable;
+
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.repository.api.RecordId;
 
-public interface SolrShardManager {
+public interface SolrShardManager extends Closeable {
     SolrClient getSolrClient(RecordId recordId) throws ShardSelectorException;
 }

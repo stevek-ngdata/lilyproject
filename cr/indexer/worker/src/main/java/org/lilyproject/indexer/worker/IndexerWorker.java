@@ -15,6 +15,10 @@
  */
 package org.lilyproject.indexer.worker;
 
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
@@ -38,6 +43,7 @@ import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.ClassicSolrShardManager;
 import org.lilyproject.indexer.engine.CloudSolrShardManager;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
@@ -47,7 +53,6 @@ import org.lilyproject.indexer.engine.IndexerMetrics;
 import org.lilyproject.indexer.engine.IndexerRegistry;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.engine.SolrShardManager;
-import org.lilyproject.indexer.engine.SolrShardManagerImpl;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
@@ -69,10 +74,6 @@ import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
 
 /**
  * IndexerWorker is responsible for the incremental indexing updating, thus for starting
@@ -127,9 +128,10 @@ public class IndexerWorker {
     private final Log log = LogFactory.getLog(getClass());
 
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
-            Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr, SolrClientConfig solrClientConfig,
-            String hostName, IndexerWorkerSettings settings, IndexerRegistry indexerRegistry,
-            HBaseTableFactory tableFactory)
+                         Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr,
+                         SolrClientConfig solrClientConfig,
+                         String hostName, IndexerWorkerSettings settings, IndexerRegistry indexerRegistry,
+                         HBaseTableFactory tableFactory)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException, InterruptedException {
         this.indexerModel = indexerModel;
         this.repository = repository;
@@ -194,7 +196,7 @@ public class IndexerWorker {
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
                     repository);
 
-            SolrShardManager solrShardMgr = getSolrShardManager(index);
+            final SolrShardManager solrShardMgr = getSolrShardManager(index);
 
             IndexLocker indexLocker = new IndexLocker(zk, settings.getEnableLocking());
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
@@ -250,10 +252,9 @@ public class IndexerWorker {
         }
     }
 
-    private SolrShardManager getSolrShardManager(IndexDefinition index) throws Exception{
-        SolrShardManager solrShardManager = null;
+    private SolrShardManager getSolrShardManager(IndexDefinition index) throws Exception {
         if (index.getSolrShards().isEmpty()) {
-            solrShardManager = new CloudSolrShardManager(index.getZkConnectionString(), index.getSolrCollection());
+            return new CloudSolrShardManager(index.getZkConnectionString(), index.getSolrCollection());
         } else {
             ShardSelector shardSelector;
             if (index.getShardingConfiguration() == null) {
@@ -264,10 +265,9 @@ public class IndexerWorker {
 
             checkShardUsage(index.getName(), index.getSolrShards().keySet(), shardSelector.getShards());
 
-            solrShardManager = new SolrShardManagerImpl(index.getName(), index.getSolrShards(), shardSelector,
-                    httpClient, solrClientConfig, true);
+            return new ClassicSolrShardManager(index.getName(), index.getSolrShards(), shardSelector, httpClient,
+                    solrClientConfig, true);
         }
-        return solrShardManager;
     }
 
     private void checkShardUsage(String indexName, Set<String> definedShards, Set<String> selectorShards) {

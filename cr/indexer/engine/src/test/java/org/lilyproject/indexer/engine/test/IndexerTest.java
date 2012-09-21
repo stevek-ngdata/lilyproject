@@ -36,6 +36,11 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,13 +61,13 @@ import org.lilyproject.hadooptestfw.CleanupUtil;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.ClassicSolrShardManager;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
 import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
 import org.lilyproject.indexer.engine.Indexer;
 import org.lilyproject.indexer.engine.IndexerMetrics;
 import org.lilyproject.indexer.engine.SolrClientException;
-import org.lilyproject.indexer.engine.SolrShardManagerImpl;
 import org.lilyproject.indexer.integration.IndexRecordFilterHook;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
@@ -112,12 +117,6 @@ import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
 public class IndexerTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
     private static IndexerConf INDEXER_CONF;
@@ -125,7 +124,7 @@ public class IndexerTest {
     private static Repository repository;
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
-    private static SolrShardManagerImpl solrShardManager;
+    private static ClassicSolrShardManager solrShardManager;
     private static DerefMap derefMap;
     private static WriteableIndexerModel indexerModel;
     private static IndexesInfo indexesInfo;
@@ -179,7 +178,8 @@ public class IndexerTest {
         SOLR_TEST_UTIL.setSolrDefinition(
                 new SolrDefinition(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml"))));
 
-        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl", "org.lilyproject.indexer.engine.test.IndexerTest");
+        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl",
+                "org.lilyproject.indexer.engine.test.IndexerTest");
 
         SOLR_TEST_UTIL.start();
 
@@ -218,7 +218,7 @@ public class IndexerTest {
         repoSetup.waitForSubscription(repoSetup.getMq(), "IndexUpdater");
         repoSetup.waitForSubscription(repoSetup.getMq(), "OtherListener");
 
-        solrShardManager = SolrShardManagerImpl.createForOneShard(SOLR_TEST_UTIL.getUri());
+        solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
 
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
         RowLogMessageListenerMapping.INSTANCE.put("OtherListener", otherListener);
@@ -3037,7 +3037,8 @@ public class IndexerTest {
         private int readCount;
 
         @Override
-        public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RepositoryException, InterruptedException {
+        public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)
+                throws RepositoryException, InterruptedException {
             readCount++;
             return super.readWithIds(recordId, version, fieldIds);
         }

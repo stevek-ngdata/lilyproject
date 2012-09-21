@@ -15,6 +15,10 @@
  */
 package org.lilyproject.indexer.integration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -64,9 +68,6 @@ import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Tests the functionality related to intelligent feeding of the MQ: rather than dispatching
@@ -183,7 +184,7 @@ public class IndexAwareMQFeederTest {
     }
 
     private static CountingIndexUpdater createIndexUpdater(String subscriptionId, String confName,
-            SolrShardManager solrShardManager) throws Exception {
+                                                           SolrShardManager solrShardManager) throws Exception {
         IndexerConf INDEXER_CONF = IndexerConfBuilder.build(IndexAwareMQFeederTest.class.getResourceAsStream(confName),
                 repository);
 
@@ -494,7 +495,7 @@ public class IndexAwareMQFeederTest {
                 .field(field1.getId(), true)
                 .createOrUpdate();
 
-        QName stringFieldName = new QName(NS,"noindex_string");
+        QName stringFieldName = new QName(NS, "noindex_string");
 
         List<String> conf = new ArrayList<String>();
         conf.add("indexerconf_noindex_configuration.xml");
@@ -572,6 +573,11 @@ public class IndexAwareMQFeederTest {
 
         public CountingSolrClient getSolrClient() {
             return solrClient;
+        }
+
+        @Override
+        public void close() throws IOException {
+            // no op
         }
     }
 

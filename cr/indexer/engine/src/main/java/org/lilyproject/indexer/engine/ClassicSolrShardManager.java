@@ -15,6 +15,7 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -38,8 +39,13 @@ import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.indexer.model.sharding.ShardingConfigException;
 import org.lilyproject.repository.api.RecordId;
 
-public class SolrShardManagerImpl implements SolrShardManager {
-    /** Key = shard name, Value = Solr URL */
+/**
+ * Solr shard manager for Solr "classic".
+ */
+public class ClassicSolrShardManager implements SolrShardManager {
+    /**
+     * Key = shard name, Value = Solr URL
+     */
     private final Map<String, String> shards;
     private Map<String, SolrClientHandle> shardConnections;
     private final ShardSelector selector;
@@ -47,20 +53,23 @@ public class SolrShardManagerImpl implements SolrShardManager {
     private RequestWriter requestWriter;
     private ResponseParser responseParser;
 
-    public SolrShardManagerImpl(String indexName, Map<String, String> shards, ShardSelector selector, HttpClient httpClient,
-            SolrClientConfig solrClientConfig) throws MalformedURLException {
+    public ClassicSolrShardManager(String indexName, Map<String, String> shards, ShardSelector selector,
+                                   HttpClient httpClient,
+                                   SolrClientConfig solrClientConfig) throws MalformedURLException {
         this(indexName, shards, selector, httpClient, solrClientConfig, false);
     }
 
-    public SolrShardManagerImpl(String indexName, Map<String, String> shards, ShardSelector selector, HttpClient httpClient,
-            SolrClientConfig solrClientConfig, boolean blockOnIOProblem) throws MalformedURLException {
+    public ClassicSolrShardManager(String indexName, Map<String, String> shards, ShardSelector selector,
+                                   HttpClient httpClient,
+                                   SolrClientConfig solrClientConfig, boolean blockOnIOProblem)
+            throws MalformedURLException {
         this.shards = shards;
         this.selector = selector;
         this.httpClient = httpClient;
 
         if (solrClientConfig.getRequestWriter() != null) {
             try {
-                this.requestWriter = (RequestWriter)Class.forName(solrClientConfig.getRequestWriter()).newInstance();
+                this.requestWriter = (RequestWriter) Class.forName(solrClientConfig.getRequestWriter()).newInstance();
             } catch (Exception e) {
                 throw new RuntimeException("Problem instantiating Solr request writer", e);
             }
@@ -70,7 +79,8 @@ public class SolrShardManagerImpl implements SolrShardManager {
 
         if (solrClientConfig.getResponseParser() != null) {
             try {
-                this.responseParser = (ResponseParser)Class.forName(solrClientConfig.getResponseParser()).newInstance();
+                this.responseParser =
+                        (ResponseParser) Class.forName(solrClientConfig.getResponseParser()).newInstance();
             } catch (Exception e) {
                 throw new RuntimeException("Problem instantiating Solr response parser", e);
             }
@@ -84,12 +94,14 @@ public class SolrShardManagerImpl implements SolrShardManager {
     /**
      * This method is only meant for use by test cases.
      */
-    public static SolrShardManagerImpl createForOneShard(String uri) throws URISyntaxException, ShardingConfigException,
+    public static ClassicSolrShardManager createForOneShard(String uri)
+            throws URISyntaxException, ShardingConfigException,
             MalformedURLException {
         SortedMap<String, String> shards = new TreeMap<String, String>();
         shards.put("shard1", uri);
         ShardSelector selector = DefaultShardSelectorBuilder.createDefaultSelector(shards);
-        return new SolrShardManagerImpl("dummy", shards, selector, new DefaultHttpClient(new ThreadSafeClientConnManager()),
+        return new ClassicSolrShardManager("dummy", shards, selector,
+                new DefaultHttpClient(new ThreadSafeClientConnManager()),
                 new SolrClientConfig());
     }
 
@@ -141,11 +153,13 @@ public class SolrShardManagerImpl implements SolrShardManager {
         }
     }
 
-    public void shutdown() {
+    @Override
+    public void close() throws IOException {
         if (shardConnections != null) {
             for (SolrClientHandle client : shardConnections.values()) {
                 client.solrClientMetrics.shutdown();
             }
         }
     }
+
 }

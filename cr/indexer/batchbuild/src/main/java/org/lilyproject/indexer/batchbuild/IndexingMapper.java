@@ -24,7 +24,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import net.iharder.Base64;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -37,13 +36,13 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.ClassicSolrShardManager;
 import org.lilyproject.indexer.engine.CloudSolrShardManager;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.Indexer;
 import org.lilyproject.indexer.engine.IndexerMetrics;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.engine.SolrShardManager;
-import org.lilyproject.indexer.engine.SolrShardManagerImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
@@ -114,13 +113,14 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
         }
     }
 
-    private SolrShardManager getShardManager(Configuration jobConf) throws Exception{
+    private SolrShardManager getShardManager(Configuration jobConf) throws Exception {
         String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
         String shard1Name = jobConf.get("org.lilyproject.indexer.batchbuild.solrshard.name.1");
 
         if (shard1Name == null) {
             String zkConnectionString = jobConf.get("org.lilyproject.indexer.batchbuild.solr.zkConnectionString");
-            return new CloudSolrShardManager(zkConnectionString, jobConf.get("org.lilyproject.indexer.batchbuild.solr.collection"));
+            return new CloudSolrShardManager(zkConnectionString,
+                    jobConf.get("org.lilyproject.indexer.batchbuild.solr.collection"));
         } else {
             Map<String, String> solrShards = new HashMap<String, String>();
             for (int i = 1; true; i++) {
@@ -149,7 +149,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             solrConfig.setRequestWriter(jobConf.get("org.lilyproject.indexer.batchbuild.requestwriter", null));
             solrConfig.setResponseParser(jobConf.get("org.lilyproject.indexer.batchbuild.responseparser", null));
 
-            return new SolrShardManagerImpl(indexName, solrShards, shardSelector, httpClient, solrConfig);
+            return new ClassicSolrShardManager(indexName, solrShards, shardSelector, httpClient, solrConfig);
         }
     }
 
