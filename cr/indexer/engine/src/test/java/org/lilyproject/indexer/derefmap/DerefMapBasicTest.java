@@ -11,6 +11,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -21,11 +25,6 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.io.Closer;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 /**
  * This tests the functionality of the {@link DerefMapHbaseImpl}. Note there is also a DerefMapIndexTest which
@@ -39,6 +38,8 @@ public class DerefMapBasicTest {
     private static Repository repository;
     private static IdGenerator ids;
     private static DerefMapHbaseImpl derefMap;
+
+    private static int nextIdPrefix = 0;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -60,9 +61,11 @@ public class DerefMapBasicTest {
 
     @Test
     public void emptyDependencies() throws Exception {
+        String idPrefix = newIdPrefix();
+
         final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
         final SchemaId dummyField = ids.getSchemaId(UUID.randomUUID());
-        final RecordId id1 = ids.newRecordId("id1");
+        final RecordId id1 = ids.newRecordId(idPrefix + "id1");
 
         final HashMap<DependencyEntry, Set<SchemaId>> empty =
                 new HashMap<DependencyEntry, Set<SchemaId>>();
@@ -78,12 +81,14 @@ public class DerefMapBasicTest {
 
     @Test
     public void oneDependency() throws Exception {
+        String idPrefix = newIdPrefix();
+
         final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
         final SchemaId dependencyField = ids.getSchemaId(UUID.randomUUID());
         final SchemaId anotherField = ids.getSchemaId(UUID.randomUUID());
-        final RecordId dependant = ids.newRecordId("dependant");
-        final RecordId dependency = ids.newRecordId("dependency");
-        final RecordId dependencyAfterUpdate = ids.newRecordId("dependencyAfterUpdate");
+        final RecordId dependant = ids.newRecordId(idPrefix + idPrefix + "dependant");
+        final RecordId dependency = ids.newRecordId(idPrefix + idPrefix + "dependency");
+        final RecordId dependencyAfterUpdate = ids.newRecordId(idPrefix + idPrefix + "dependencyAfterUpdate");
 
         // the dependant depends on the dependencyField of the dependency
         final HashMap<DependencyEntry, Set<SchemaId>> dependencies =
@@ -140,9 +145,11 @@ public class DerefMapBasicTest {
 
     @Test
     public void oneDependencyWithMoreDimensionedVariants() throws Exception {
+        String idPrefix = newIdPrefix();
+
         final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
-        final RecordId dependant = ids.newRecordId("master", ImmutableMap.of("bar", "x"));
-        final RecordId dependency = ids.newRecordId("master", ImmutableMap.of("bar", "x", "foo", "y"));
+        final RecordId dependant = ids.newRecordId(idPrefix + "master", ImmutableMap.of("bar", "x"));
+        final RecordId dependency = ids.newRecordId(idPrefix + "master", ImmutableMap.of("bar", "x", "foo", "y"));
 
         // the dependant depends on the dependencyField of the dependency via a "+foo" dereferencing rule
         final HashMap<DependencyEntry, Set<SchemaId>> dependencies =
@@ -155,7 +162,7 @@ public class DerefMapBasicTest {
         final Set<DependencyEntry> found = derefMap.findDependencies(dependant, dummyVtag);
         assertEquals(1, found.size());
         final DependencyEntry foundDependencyEntry = found.iterator().next();
-        assertEquals(ids.newRecordId("master", ImmutableMap.of("bar", "x")), foundDependencyEntry.getDependency());
+        assertEquals(ids.newRecordId(idPrefix + "master", ImmutableMap.of("bar", "x")), foundDependencyEntry.getDependency());
         assertEquals(Sets.newHashSet("foo"), foundDependencyEntry.getMoreDimensionedVariants());
 
         // check that the dependant is found as only dependant of the dependency (without specifying a field)
@@ -168,41 +175,41 @@ public class DerefMapBasicTest {
         // are returned as dependants of our dependant (such that in reality reindexation of the dependant happens)
 
         final RecordId shouldTriggerOurDependant =
-                ids.newRecordId("master", ImmutableMap.of("bar", "x", "foo", "another-value"));
+                ids.newRecordId(idPrefix + "master", ImmutableMap.of("bar", "x", "foo", "another-value"));
         dependants = derefMap.findDependantsOf(shouldTriggerOurDependant);
         assertTrue(dependants.hasNext());
         assertEquals(dependant, dependants.next());
         assertFalse(dependants.hasNext());
 
         // doesn't have the foo property
-        final RecordId shouldNotTriggerOurDependant1 = ids.newRecordId("master", ImmutableMap.of("bar", "x"));
+        final RecordId shouldNotTriggerOurDependant1 = ids.newRecordId(idPrefix + "master", ImmutableMap.of("bar", "x"));
         assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant1).hasNext());
 
         // doesn't have the bar property
-        final RecordId shouldNotTriggerOurDependant2 = ids.newRecordId("master", ImmutableMap.of("foo", "x"));
+        final RecordId shouldNotTriggerOurDependant2 = ids.newRecordId(idPrefix + "master", ImmutableMap.of("foo", "x"));
         assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant2).hasNext());
 
         // wrong value for the bar property
         final RecordId shouldNotTriggerOurDependant3 =
-                ids.newRecordId("master", ImmutableMap.of("bar", "y", "foo", "another-value"));
+                ids.newRecordId(idPrefix + "master", ImmutableMap.of("bar", "y", "foo", "another-value"));
         assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant3).hasNext());
 
         // additional unmatched property
         final RecordId shouldNotTriggerOurDependant4 =
-                ids.newRecordId("master", ImmutableMap.of("bar", "x", "foo", "another-value", "baz", "z"));
+                ids.newRecordId(idPrefix + "master", ImmutableMap.of("bar", "x", "foo", "another-value", "baz", "z"));
         assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant4).hasNext());
 
         // another master
         final RecordId shouldNotTriggerOurDependant5 =
-                ids.newRecordId("another-master", ImmutableMap.of("bar", "x", "foo", "another-value"));
+                ids.newRecordId(idPrefix + "another-master", ImmutableMap.of("bar", "x", "foo", "another-value"));
         assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant5).hasNext());
 
         // wrong properties
-        final RecordId shouldNotTriggerOurDependant6 = ids.newRecordId("master", ImmutableMap.of("a", "b", "c", "d"));
+        final RecordId shouldNotTriggerOurDependant6 = ids.newRecordId(idPrefix + "master", ImmutableMap.of("a", "b", "c", "d"));
         assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant6).hasNext());
 
         // no properties
-        final RecordId shouldNotTriggerOurDependant7 = ids.newRecordId("master", ImmutableMap.<String, String>of());
+        final RecordId shouldNotTriggerOurDependant7 = ids.newRecordId(idPrefix + "master", ImmutableMap.<String, String>of());
         assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant7).hasNext());
     }
 
@@ -211,13 +218,15 @@ public class DerefMapBasicTest {
      */
     @Test
     public void chainOfDependencies() throws Exception {
+        String idPrefix = newIdPrefix();
+
         final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
         final SchemaId linkField1 = ids.getSchemaId(UUID.randomUUID());
         final SchemaId linkField2 = ids.getSchemaId(UUID.randomUUID());
         final SchemaId field = ids.getSchemaId(UUID.randomUUID());
-        final RecordId dependant = ids.newRecordId("dependant");
-        final RecordId dependency1 = ids.newRecordId("dependency1");
-        final RecordId dependency2 = ids.newRecordId("dependency2");
+        final RecordId dependant = ids.newRecordId(idPrefix + "dependant");
+        final RecordId dependency1 = ids.newRecordId(idPrefix + "dependency1");
+        final RecordId dependency2 = ids.newRecordId(idPrefix + "dependency2");
 
         // scenario: dependant has linkField1 -> dependency1 which has linkField2 -> dependency2 which has field "field"
         final Map<DependencyEntry, Set<SchemaId>> dependencies =
@@ -275,14 +284,16 @@ public class DerefMapBasicTest {
      */
     @Test
     public void chainOfDependenciesWhichDoesNotEndInField() throws Exception {
+        String idPrefix = newIdPrefix();
+
         final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
         final SchemaId linkField1 = ids.getSchemaId(UUID.randomUUID());
         final SchemaId linkField2 = ids.getSchemaId(UUID.randomUUID());
         final SchemaId linkField3 = ids.getSchemaId(UUID.randomUUID());
-        final RecordId dependant = ids.newRecordId("dependant");
-        final RecordId dependency1 = ids.newRecordId("dependency1");
-        final RecordId dependency2 = ids.newRecordId("dependency2");
-        final RecordId dependency3 = ids.newRecordId("dependency3");
+        final RecordId dependant = ids.newRecordId(idPrefix + "dependant");
+        final RecordId dependency1 = ids.newRecordId(idPrefix + "dependency1");
+        final RecordId dependency2 = ids.newRecordId(idPrefix + "dependency2");
+        final RecordId dependency3 = ids.newRecordId(idPrefix + "dependency3");
 
         // scenario: dependant has linkField1 -> dependency1 which has linkField2 -> dependency2 which has linkField3 -> dependency3
         final Map<DependencyEntry, Set<SchemaId>> dependencies =
@@ -318,13 +329,15 @@ public class DerefMapBasicTest {
      */
     @Test
     public void chainOfDependenciesIncludingMoreDimensionedVariantProperties() throws Exception {
+        String idPrefix = newIdPrefix();
+
         final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
         final SchemaId linkField1 = ids.getSchemaId(UUID.randomUUID());
         final SchemaId field = ids.getSchemaId(UUID.randomUUID());
-        final RecordId dependant = ids.newRecordId("dependant");
-        final RecordId dependantWithProp1 = ids.newRecordId("dependant", ImmutableMap.of("prop1", "x"));
-        final RecordId dependency1 = ids.newRecordId("dependency1");
-        final RecordId dependency1WithProp2 = ids.newRecordId("dependency1", ImmutableMap.of("prop2", "y"));
+        final RecordId dependant = ids.newRecordId(idPrefix + "dependant");
+        final RecordId dependantWithProp1 = ids.newRecordId(idPrefix + "dependant", ImmutableMap.of("prop1", "x"));
+        final RecordId dependency1 = ids.newRecordId(idPrefix + "dependency1");
+        final RecordId dependency1WithProp2 = ids.newRecordId(idPrefix + "dependency1", ImmutableMap.of("prop2", "y"));
 
         // scenario: dependant depends on all dependant +prop1 records. One such a record (dependantWithProp1) exists
         // with a linkField1 pointing to dependency1. Via the +prop2 rule, we end up with all dependency1 + prop2
@@ -347,7 +360,7 @@ public class DerefMapBasicTest {
 
         // scenario1: as if a dependency1 with prop2=value is being created
         final RecordId someRecordLikeDependency1WithProp2 =
-                ids.newRecordId("dependency1", ImmutableMap.of("prop2", "value"));
+                ids.newRecordId(idPrefix + "dependency1", ImmutableMap.of("prop2", "value"));
         DependantRecordIdsIterator scenario1 =
                 derefMap.findDependantsOf(someRecordLikeDependency1WithProp2, field, dummyVtag);
         assertTrue(scenario1.hasNext());
@@ -356,7 +369,7 @@ public class DerefMapBasicTest {
 
         // scenario2: as if a new record like dependant is created with prop1=value
         final RecordId someRecordLikeDependantWithProp1 =
-                ids.newRecordId("dependant", ImmutableMap.of("prop1", "value"));
+                ids.newRecordId(idPrefix + "dependant", ImmutableMap.of("prop1", "value"));
         DependantRecordIdsIterator scenario2 =
                 derefMap.findDependantsOf(someRecordLikeDependantWithProp1, linkField1, dummyVtag);
         assertTrue(scenario2.hasNext());
@@ -366,11 +379,13 @@ public class DerefMapBasicTest {
 
     @Test
     public void multipleDependencies() throws Exception {
+        String idPrefix = newIdPrefix();
+
         final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
         final SchemaId dependencyField = ids.getSchemaId(UUID.randomUUID());
-        final RecordId dependant = ids.newRecordId("dependant");
-        final RecordId dependency1 = ids.newRecordId("dependency1");
-        final RecordId dependency2 = ids.newRecordId("dependency2");
+        final RecordId dependant = ids.newRecordId(idPrefix + "dependant");
+        final RecordId dependency1 = ids.newRecordId(idPrefix + "dependency1");
+        final RecordId dependency2 = ids.newRecordId(idPrefix + "dependency2");
 
         // the dependant depends on the dependencyField of the dependency1 and dependency2
         final HashMap<DependencyEntry, Set<SchemaId>> dependencies =
@@ -400,12 +415,14 @@ public class DerefMapBasicTest {
 
     @Test
     public void multipleVariantsDependingOnMaster() throws Exception {
+        String idPrefix = newIdPrefix();
+
         final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
         final SchemaId dependencyField = ids.getSchemaId(UUID.randomUUID());
 
-        final RecordId master = ids.newRecordId("myrecord");
-        final RecordId v1variant = ids.newRecordId("myrecord", Collections.singletonMap("v1", "x"));
-        final RecordId v1v2variant = ids.newRecordId("myrecord", map("v1", "x", "v2", "y"));
+        final RecordId master = ids.newRecordId(idPrefix + "myrecord");
+        final RecordId v1variant = ids.newRecordId(idPrefix + "myrecord", Collections.singletonMap("v1", "x"));
+        final RecordId v1v2variant = ids.newRecordId(idPrefix + "myrecord", map("v1", "x", "v2", "y"));
 
         final HashMap<DependencyEntry, Set<SchemaId>> dependencies =
                 new HashMap<DependencyEntry, Set<SchemaId>>();
@@ -419,11 +436,13 @@ public class DerefMapBasicTest {
 
     @Test
     public void multipleDependants() throws Exception {
+        String idPrefix = newIdPrefix();
+
         final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
         final SchemaId dependencyField = ids.getSchemaId(UUID.randomUUID());
-        final RecordId dependant1 = ids.newRecordId("dependant1");
-        final RecordId dependant2 = ids.newRecordId("dependant2");
-        final RecordId dependency = ids.newRecordId("dependency");
+        final RecordId dependant1 = ids.newRecordId(idPrefix + "dependant1");
+        final RecordId dependant2 = ids.newRecordId(idPrefix + "dependant2");
+        final RecordId dependency = ids.newRecordId(idPrefix + "dependency");
 
         // the dependant1 and dependant2 depend on the dependencyField of the dependency
         final HashMap<DependencyEntry, Set<SchemaId>> dependencies =
@@ -515,6 +534,10 @@ public class DerefMapBasicTest {
             map.put(keyOrValue[i], keyOrValue[i + 1]);
         }
         return map;
+    }
+
+    private String newIdPrefix() {
+        return String.format("TEST%3d", nextIdPrefix++);
     }
 
 }
