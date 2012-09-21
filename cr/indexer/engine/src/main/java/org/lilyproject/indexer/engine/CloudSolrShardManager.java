@@ -15,6 +15,8 @@ public class CloudSolrShardManager implements SolrShardManager {
 
     private final SolrClient solrClient;
 
+    private SolrClientMetrics solrClientMetrics;
+
     public CloudSolrShardManager(String indexName, String zkHost, String collection, boolean blockOnIOProblem)
             throws MalformedURLException {
         solrServer = new CloudSolrServer(zkHost);
@@ -27,7 +29,8 @@ public class CloudSolrShardManager implements SolrShardManager {
         final SolrClientImpl solrClient = new SolrClientImpl(solrServer, collection, "Solr Cloud Client");
 
         if (blockOnIOProblem) {
-            return RetryingSolrClient.wrap(solrClient, new SolrClientMetrics(indexName, "cloud"));
+            solrClientMetrics = new SolrClientMetrics(indexName, "cloud");
+            return RetryingSolrClient.wrap(solrClient, solrClientMetrics);
         } else {
             return solrClient;
         }
@@ -41,5 +44,8 @@ public class CloudSolrShardManager implements SolrShardManager {
     @Override
     public void close() throws IOException {
         solrServer.shutdown();
+        if (solrClientMetrics != null) {
+            solrClientMetrics.shutdown();
+        }
     }
 }
