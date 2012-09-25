@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/bash
 
 # You can use the following environment variables to customize the startup
 #
