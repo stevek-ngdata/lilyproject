@@ -149,6 +149,16 @@ public class JsonUtil {
         return node.get(prop).getLongValue();
     }
 
+    public static Double getDouble(JsonNode node, String prop, Double defaultValue) throws JsonFormatException {
+        if (node.get(prop) == null) {
+            return defaultValue;
+        }
+        if (!node.get(prop).isLong() && !node.get(prop).isDouble()) {
+            throw new JsonFormatException("Not a double property: " + prop);
+        }
+        return node.get(prop).getDoubleValue();
+    }
+
     public static byte[] getBinary(JsonNode node, String prop) throws JsonFormatException {
         if (node.get(prop) == null) {
             throw new JsonFormatException("Missing required property: " + prop);

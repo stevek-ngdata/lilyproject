@@ -108,6 +108,8 @@ public class TestFieldType {
             return new ActionResult(true, generateInt(), 0);
         } else if (name.equals("LONG")) {
             return new ActionResult(true, generateLong(), 0);
+        } else if (name.equals("DOUBLE")) {
+            return new ActionResult(true, generateDouble(), 0);
         } else if (name.equals("BOOLEAN")) {
             return new ActionResult(true, generateBoolean(), 0);
         } else if (name.equals("DATE")) {
@@ -212,6 +214,26 @@ public class TestFieldType {
         return value;
     }
     
+    private double generateDouble() {
+        // Default
+        double value = 0;
+        if (properties == null)
+            value = random.nextDouble();
+        else {
+            String numberString = JsonUtil.getString(properties, "enum", null);
+            if (numberString != null) {
+                String[] numbers = numberString.split(",");
+                int index = (int) (Math.random() * numbers.length);
+                value = Double.valueOf(numbers[index]);
+            } else {
+                double min = JsonUtil.getDouble(properties, "min", Double.MIN_VALUE);
+                double max = JsonUtil.getDouble(properties, "max", Double.MAX_VALUE);
+                value = min + (double)(Math.random() * ((max - min) + 1));
+            }
+        }
+        return value;
+    }
+
     private Record generateRecord(TestAction testAction, ValueType valueType) throws RecordException {
         String valueTypeName = valueType.getName();
         String recordTypeName = valueTypeName.substring(valueTypeName.indexOf("<") + 1, valueTypeName.length()-1);
