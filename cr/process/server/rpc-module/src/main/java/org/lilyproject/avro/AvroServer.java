@@ -98,7 +98,7 @@ public class AvroServer {
         try {
             server.join();
         } catch (InterruptedException e) {
-            Thread.interrupted();
+            Thread.currentThread().interrupt();
         }
     }
 

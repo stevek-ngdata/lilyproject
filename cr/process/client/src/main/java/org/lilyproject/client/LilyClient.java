@@ -460,7 +460,7 @@ public class LilyClient implements Closeable {
                     refreshServers();
                 }
             } catch (InterruptedException e) {
-                Thread.interrupted();
+                Thread.currentThread().interrupt();
             } catch (KeeperException.ConnectionLossException e) {
                 clearServers();
             } catch (Throwable t) {
