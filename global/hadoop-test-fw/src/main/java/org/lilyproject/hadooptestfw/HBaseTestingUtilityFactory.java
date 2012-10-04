@@ -51,6 +51,9 @@ public class HBaseTestingUtilityFactory {
         
         conf.set("mapred.system.dir", "/tmp/hadoop/mapred/system");
         conf.set("mapreduce.jobtracker.staging.root.dir", "/tmp/hadoop/mapred/staging");
+
+        // Only use one MR child VM, should be lighter on developer machines
+        conf.set("mapred.tasktracker.map.tasks.maximum", "1");
         
         // Force default port numbers
         conf.set("hbase.master.info.port", "60010");
