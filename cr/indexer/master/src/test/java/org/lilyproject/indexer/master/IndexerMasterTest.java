@@ -1,10 +1,12 @@
 package org.lilyproject.indexer.master;
 
-import java.io.IOException;
+import static org.junit.Assert.fail;
 
-import org.apache.hadoop.hbase.MasterNotRunningException;
+import java.io.IOException;
+import java.util.Collections;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
@@ -13,7 +15,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.model.api.IndexConcurrentModificationException;
 import org.lilyproject.indexer.model.api.IndexDefinition;
@@ -21,8 +22,9 @@ import org.lilyproject.indexer.model.api.IndexModelException;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
 import org.lilyproject.indexer.model.api.IndexUpdateException;
 import org.lilyproject.indexer.model.api.IndexValidityException;
-import org.lilyproject.indexer.model.api.WriteableIndexerModel;
-import org.lilyproject.lilyservertestfw.LilyProxy;
+import org.lilyproject.indexer.model.impl.IndexerModelImpl;
+import org.lilyproject.indexer.model.util.IndexesInfo;
+import org.lilyproject.indexer.model.util.IndexesInfoImpl;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordType;
@@ -30,7 +32,9 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkLockException;
 
@@ -40,22 +44,24 @@ public class IndexerMasterTest {
     private static final QName BOOK_TO_AUTHOR_LINK = new QName("org.lilyproject.test", "authorLink");
     private static final QName NAME = new QName("org.lilyproject.test", "name");
 
-    private static LilyProxy lilyProxy;
-    private static LilyClient lilyClient;
+    private final static RepositorySetup repoSetup = new RepositorySetup();
     private Repository repository;
     private HBaseAdmin hBaseAdmin;
+    private IndexesInfo indexesInfo;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        lilyProxy = new LilyProxy();
-        lilyProxy.start();
-        lilyClient = lilyProxy.getLilyServerProxy().getClient();
+        repoSetup.setupCore();
+        repoSetup.setupRepository(true);
     }
 
     @Before
-    public void setUp() throws ZooKeeperConnectionException, MasterNotRunningException {
-        repository = lilyClient.getRepository();
-        hBaseAdmin = HBaseAdminFactory.get(lilyProxy.getHBaseProxy().getConf());
+    public void setUp() throws Exception {
+        repository = repoSetup.getRepository();
+        hBaseAdmin = HBaseAdminFactory.get(repoSetup.getHadoopConf());
+
+        final IndexerModelImpl model = new IndexerModelImpl(repoSetup.getZk());
+        indexesInfo = new IndexesInfoImpl(model, repository);
     }
 
     @After
@@ -66,7 +72,7 @@ public class IndexerMasterTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        lilyProxy.stop();
+        Closer.close(repoSetup);
     }
 
     @Test
@@ -105,7 +111,7 @@ public class IndexerMasterTest {
             IndexModelException, IndexConcurrentModificationException, IndexUpdateException, IndexValidityException,
             ZkConnectException {
 
-        final WriteableIndexerModel model = lilyProxy.getLilyServerProxy().getIndexerModel();
+        final IndexerModelImpl model = new IndexerModelImpl(repoSetup.getZk());
 
         final String lock = model.lockIndex(indexName);
         try {
@@ -159,9 +165,28 @@ public class IndexerMasterTest {
      */
     private String addIndex() throws Exception {
         final String indexName = "books";
-        lilyProxy.getLilyServerProxy()
-                .addIndexFromResource(indexName, "org/lilyproject/indexer/master/test_indexer_conf.xml", 60000L);
+
+        final IndexerModelImpl model = new IndexerModelImpl(repoSetup.getZk());
+
+        final IndexDefinition indexDef = model.newIndex(indexName);
+        indexDef.setConfiguration(
+                IOUtils.toByteArray(IndexerMasterTest.class.getResourceAsStream("test_indexer_conf.xml")));
+        indexDef.setSolrShards(Collections.singletonMap("shard1", "http://somewhere/"));
+        model.addIndex(indexDef);
+        waitForIndexesInfoUpdate(1);
+
         return indexName;
+    }
+
+    protected void waitForIndexesInfoUpdate(int expectedCount) throws InterruptedException {
+        // IndexesInfo will be updated asynchronously: wait for that to happen
+        long now = System.currentTimeMillis();
+        while (indexesInfo.getIndexInfos().size() != expectedCount) {
+            if (System.currentTimeMillis() - now > 10000) {
+                fail("IndexesInfo was not updated within the expected timeout.");
+            }
+            Thread.sleep(20);
+        }
     }
 
 }
