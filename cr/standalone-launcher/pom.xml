@@ -109,6 +109,11 @@ if [ -z "$TEST_LILY_CONF_DIR" ] ; then
   TEST_LILY_CONF_DIR="${basedir}/../../cr/process/server/conf"
 fi
 
+# Default plugin dir
+if [ -z "$LILY_PLUGIN_DIR" ]; then
+  LILY_PLUGIN_DIR="${basedir}/../../cr/process/server/plugins"
+fi
+
 if [[ "$@" == *-solrcloud* ]] ; then
   # This is a dirty trick to make the SolrCloud admin ui work when the user specifies -solrcloud
   # For the reason why, see Solr source code: cloud_args in app.js and SystemInfoHandler.java
@@ -137,6 +142,11 @@ LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=tru
 # User can specify an alternate conf dir using TEST_LILY_CONF_DIR
 if [ -z "$TEST_LILY_CONF_DIR" ] ; then
   TEST_LILY_CONF_DIR="$LILY_HOME/conf"
+fi
+
+# Default plugin dir
+if [ -z "$LILY_PLUGIN_DIR" ]; then
+  LILY_PLUGIN_DIR="$LILY_HOME/plugins"
 fi
 
 if [[ "$@" == *-solrcloud* ]] ; then
@@ -211,12 +221,12 @@ set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloader
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR -Dlily.plugin.dir=$LILY_HOME/plugins -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr/${version.solr}/solr-${version.solr}.war</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR -Dlily.plugin.dir=$LILY_PLUGIN_DIR -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr/${version.solr}/solr-${version.solr}.war</value>
             </parameter>
             <parameter>
               <platform>unix</platform>
               <mode>dev</mode>
-              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR -Dlily.plugin.dir=${basedir}/../../cr/process/server/plugins</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR -Dlily.plugin.dir=$LILY_PLUGIN_DIR</value>
             </parameter>
             <parameter>
               <platform>windows</platform>

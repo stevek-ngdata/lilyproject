@@ -14,7 +14,15 @@
       <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
     </artifact>
 
-    <directory id="plugin" path="${lily.plugin.dir}${file.separator}load-before-repository"/>
+    <!-- lily.plugin.dir:
+          - this property, or rather basePath, can contain a list of paths,
+            separated by the system path separator (colon on unix)
+          - each directory listed in basePath is combined with path to form
+            a full path to a directory
+          - in each of these paths, *.xml files are read (in filename-sorted
+            order) and included (these should be wiring files)
+    -->
+    <directory id="plugin" basePath="${lily.plugin.dir}" path="load-before-repository"/>
 
     <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="1.4-SNAPSHOT">
       <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
@@ -49,7 +57,7 @@
       <inject-restservice name="repository" ref="rest:repository"/>
     </artifact>
 
-    <directory id="plugin" path="${lily.plugin.dir}${file.separator}load-at-end"/>
+    <directory id="plugin" basePath="${lily.plugin.dir}" path="load-at-end"/>
 
   </modules>
 </wiring>
