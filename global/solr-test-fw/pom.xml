@@ -61,6 +61,24 @@
       <type>war</type>
     </dependency>
 
+    <!-- This dependency is added to support the spacial feature in solr4
+         For some reason it is not found in the war
+         This can be removed once 
+    -->
+    <dependency>
+      <groupId>com.vividsolutions</groupId>
+      <artifactId>jts</artifactId>
+      <version>1.12</version>      
+      <exclusions>
+        <exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+
+ 
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-cli-fw</artifactId>
