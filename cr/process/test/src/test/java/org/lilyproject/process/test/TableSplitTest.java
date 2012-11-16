@@ -15,10 +15,11 @@
  */
 package org.lilyproject.process.test;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -29,7 +30,6 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,7 +45,7 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.test.TestHomeUtil;
 
-import static org.junit.Assert.assertTrue;
+import com.google.common.collect.Lists;
 
 /**
  * This test verifies that pre-splitted record tables work correctly (for UUID-based record id's).
@@ -212,10 +212,8 @@ public class TableSplitTest {
                     count++;
                 }
 
-                //System.out.println("Number of splits in region " + regionInfo.getRegionNameAsString() + " : " + count);
-
-                assertTrue("Number of splits in region " + regionInfo.getRegionNameAsString(),
-                        count > 80 && count < 120);
+                assertTrue(String.format("Number of splits in region '%s' is %d, expected between 80 and 120",
+                                    regionInfo.getRegionNameAsString(), count), count > 80 && count < 120);
             }
         }
     }
