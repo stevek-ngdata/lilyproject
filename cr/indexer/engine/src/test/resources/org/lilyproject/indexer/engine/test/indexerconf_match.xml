@@ -98,7 +98,12 @@
     <forEach expr="master">
       <field name="product_id_${sys:id}_string" value="ns:nv_field1"/>
     </forEach>
-
+    
+    <!-- using linked records -->
+    <forEach expr="ns:nv_linkfield1">
+      <field name="linked_product" value="ns:nv_field1"/>
+    </forEach>
+    
   </fields>
 
 </indexer>

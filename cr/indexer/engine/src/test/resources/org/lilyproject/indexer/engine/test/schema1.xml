@@ -178,6 +178,9 @@
     <field name="nvmatch6" type="string" indexed="true" stored="true" required="false"/>
     <field name="nvmatch7" type="string" indexed="true" stored="true" required="false"/>
     <field name="nvmatch8" type="string" indexed="true" stored="true" required="false"/>
+    
+    <!-- fields used to test <forEach> -->
+    <field name="linked_product" type="string" indexed="true" stored="true" required="false"/>
   </fields>
 
   <!-- Field to use to determine and enforce document uniqueness.

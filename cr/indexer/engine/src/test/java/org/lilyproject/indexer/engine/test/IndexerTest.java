@@ -36,11 +36,6 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -116,6 +111,12 @@ import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 public class IndexerTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -295,6 +296,7 @@ public class IndexerTest {
         ValueType dateValueType = typeManager.getValueType("DATE");
 
         ValueType intHierValueType = typeManager.getValueType("PATH<INTEGER>");
+        
 
         //
         // Version tag fields
@@ -428,6 +430,13 @@ public class IndexerTest {
                 recordType
                         .addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS2, "match" + i)).getId(), false);
             }
+            // Link fields
+            for (int i = 1; i <= 2; i++) {
+                recordType.addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS, "nv_linkfield" + i)).getId(),
+                        false);
+                recordType.addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS2, "v_linkfield" + i)).getId(),
+                        false);
+            }
             typeManager.createRecordType(recordType);
         }
 
@@ -468,32 +477,46 @@ public class IndexerTest {
         //
         // Test ForEach
         //
+        
+        String baseProductId = "product29485";
+        String linkedProductId = "linkedProduct12345";
+        RecordId linkedRecordId = repository.getIdGenerator().newRecordId(linkedProductId);
+        
+        
         repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId("product29485"))
+                .id(repository.getIdGenerator().newRecordId(baseProductId))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "29485")
+                .field(nvLinkField1.getName(), new Link(linkedRecordId))
                 .create();
 
         repository.recordBuilder()
-                .id(repository.getIdGenerator()
-                        .newRecordId("product29485", Collections.singletonMap("country", "france")))
+                .id(repository.getIdGenerator().newRecordId(baseProductId, 
+                        Collections.singletonMap("country", "france")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "louche")
                 .field(nvfield2.getName(), "10")
                 .create();
 
         repository.recordBuilder()
-                .id(repository.getIdGenerator()
-                        .newRecordId("product29485", Collections.singletonMap("country", "belgium")))
+                .id(repository.getIdGenerator().newRecordId(baseProductId, 
+                        Collections.singletonMap("country", "belgium")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "schuimspaan")
                 .field(nvfield2.getName(), "11")
+                .create();
+        
+        repository.recordBuilder()
+                .id(linkedRecordId)
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "12345")
                 .create();
 
         commitIndex();
 
         verifyResultCount("product_description_france_string:louche", 1);
         verifyResultCount("product_price_france_string:10", 1);
+        verifyResultCount("linked_product:12345", 1);
 
         // update the price in france:
         repository.recordBuilder()

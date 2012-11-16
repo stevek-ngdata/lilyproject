@@ -36,6 +36,7 @@ public class ForEachNode extends ContainerMappingNode {
         } else if (follow instanceof RecordFieldFollow) {
             fieldType = ((RecordFieldFollow)follow).getFieldType();
         } else {
+            // Variant-based forEach
             fieldType = null;
         }
 
@@ -61,7 +62,7 @@ public class ForEachNode extends ContainerMappingNode {
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
         if (fieldType != null && !systemFields.isSystemField(fieldType.getName())) {
             indexUpdateBuilder.addDependency(fieldType.getId());
-            if (ctx.record != null || !ctx.record.hasField(fieldType.getName())) {
+            if (ctx.record != null && !ctx.record.hasField(fieldType.getName())) {
                 return;
             }
         }
