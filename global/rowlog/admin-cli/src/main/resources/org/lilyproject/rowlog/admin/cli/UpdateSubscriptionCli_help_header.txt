@@ -1,3 +1,0 @@
-Updates the properties of the subscritpion.
-- Type : VM if the listeners of the subscription are VM-local or Netty when the listeners should be contacted remotely through a netty connection
-- Order nr : a number that orders the subscription in the set of subscriptions of the same rowlog, used when respect order is enabled on the rowlog 

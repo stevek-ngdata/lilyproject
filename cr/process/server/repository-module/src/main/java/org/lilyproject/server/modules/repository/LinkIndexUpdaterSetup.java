@@ -23,7 +23,6 @@ import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.rowlog.api.*;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 
 import javax.annotation.PostConstruct;
@@ -45,7 +44,7 @@ public class LinkIndexUpdaterSetup {
     }
 
     @PostConstruct
-    public void start() throws InterruptedException, KeeperException, IOException, RowLogException,
+    public void start() throws InterruptedException, KeeperException, IOException,
             IndexNotFoundException, RepositoryException {
         // The registration of the subscription for the link index happens in the rowlog module,
         // to be sure it is already installed before the repository is started.
@@ -56,13 +55,15 @@ public class LinkIndexUpdaterSetup {
 
         LinkIndex linkIndex = new LinkIndex(indexManager, repository);
 
-        LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repository, linkIndex);
-
-        RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", linkIndexUpdater);
+        // FIXME ROWLOG REFACTORING
+//        LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repository, linkIndex);
+//
+//        RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", linkIndexUpdater);
     }
 
     @PreDestroy
     public void stop() {
-        RowLogMessageListenerMapping.INSTANCE.remove("LinkIndexUpdater");
+        // FIXME ROWLOG REFACTORING
+        //RowLogMessageListenerMapping.INSTANCE.remove("LinkIndexUpdater");
     }
 }

@@ -177,7 +177,6 @@ public interface Repository extends Closeable {
      * @throws RepositoryException         TBD
      * @throws FieldTypeNotFoundException
      * @throws RecordTypeNotFoundException
-     * @throws WalProcessingException
      */
     Record update(Record record, boolean updateVersion, boolean useLatestRecordType, List<MutationCondition> conditions)
             throws RepositoryException, InterruptedException;

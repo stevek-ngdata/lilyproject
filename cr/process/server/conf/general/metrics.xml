@@ -7,13 +7,6 @@
     <!-- The NullContextWithUpdateThread makes sure the metrics are reported to JMX when
          no other metrics output is enabled. -->
 
-    <attribute name="rowlog.class" value="org.apache.hadoop.metrics.spi.NullContextWithUpdateThread"/>
-    <attribute name="rowlog.period" value="15"/>
-    <!--
-    <attribute name="rowlog.class" value="org.apache.hadoop.metrics.ganglia.GangliaContext31"/>
-    <attribute name="rowlog.servers" value="localhost:8649"/>
-    -->
-
     <attribute name="indexer.class" value="org.apache.hadoop.metrics.spi.NullContextWithUpdateThread"/>
     <attribute name="indexer.period" value="15"/>
     <!--

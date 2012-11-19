@@ -376,30 +376,8 @@ public class LilyServerProxy {
      * @return false if the intended situation was not reached within the timeout.
      */
     public void waitOnMQSubscription(String subscriptionId, boolean waitUntilAvailable, long timeOut) throws Exception {
-        waitOnMQSubscriptionInt(subscriptionId, waitUntilAvailable, System.currentTimeMillis() + timeOut);
-    }
-
-    private void waitOnMQSubscriptionInt(String subscriptionId, boolean waitUntilAvailable, long tryUntil) throws Exception {
-        JmxLiaison jmxLiaison = new JmxLiaison("Lily:name=RowLog,id=mq");
-
-        try {
-            jmxLiaison.connect();
-
-            while (System.currentTimeMillis() < tryUntil) {
-                List<String> subscriptionIds = (List<String>)jmxLiaison.getAttribute("SubscriptionIds");
-                if (waitUntilAvailable && subscriptionIds.contains(subscriptionId)) {
-                    return;
-                } else if (!waitUntilAvailable && !subscriptionIds.contains(subscriptionId)) {
-                    return;
-                }
-                Thread.sleep(50);
-            }
-            String adjective = waitUntilAvailable ? "available" : "unavailable";
-            throw new Exception("Timed out waiting for MQ subscription to become " + adjective
-                    + " in RowLog instance: " + subscriptionId);
-        } finally {
-            jmxLiaison.disconnect();
-        }
+        // FIXME ROWLOG REFACTORING
+        // waitOnMQSubscriptionInt(subscriptionId, waitUntilAvailable, System.currentTimeMillis() + timeOut);
     }
 
     public void waitOnIndexerRegistry(String indexName, long tryUntil) throws Exception {

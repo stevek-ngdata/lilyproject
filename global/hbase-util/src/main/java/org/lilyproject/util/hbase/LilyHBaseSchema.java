@@ -35,7 +35,6 @@ public class LilyHBaseSchema {
         recordTableDescriptor = new HTableDescriptor(Table.RECORD.bytes);
         recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.DATA.bytes,
                 HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-        recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.ROWLOG.bytes));
     }
 
     private static final HTableDescriptor typeTableDescriptor;
@@ -90,8 +89,7 @@ public class LilyHBaseSchema {
      * Column families in the record table.
      */
     public static enum RecordCf {
-        DATA("data"), // The actual data fields and system fields of records are stored in the same column family
-        ROWLOG("rowlog"); // Column family for the rowlog payload and executionstate
+        DATA("data"); // The actual data fields and system fields of records are stored in the same column family
 
         public final byte[] bytes;
         public final String name;
@@ -121,10 +119,6 @@ public class LilyHBaseSchema {
         // The fields and system fields of records are stored in the same column family : DATA
         public static final byte SYSTEM_PREFIX = (byte)1; // Prefix for the column-qualifiers of system fields
         public static final byte DATA_PREFIX = (byte)2; // Prefix for the column-qualifiers of actual data fields
-
-        // The payload and executionstat of the rowlogs are stored in the same column family : ROWLOG
-        public static final byte WAL_PREFIX = (byte)3; // Prefix for the column-qualifiers of the WAL rowlog
-        public static final byte MQ_PREFIX = (byte)4; // Prefix for the column-qualifiers of the MQ rowlog
 
         RecordColumn(String name) {
             this.name = name;

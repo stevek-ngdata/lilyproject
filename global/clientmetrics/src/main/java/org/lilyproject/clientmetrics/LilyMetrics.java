@@ -44,8 +44,6 @@ public class LilyMetrics {
         table.addColumn(30, "Lily server", "s");
         table.addColumn(10, "Version", "s");
         table.addColumn(-1, "IndexerMaster", "s");
-        table.addColumn(-1, "MQ proc", "s");
-        table.addColumn(-1, "WAL proc", "s");
         table.addColumn(-1, "Max heap", "f");
         table.addColumn(-1, "Used heap", "f");
 
@@ -69,15 +67,12 @@ public class LilyMetrics {
             MBeanServerConnection connection = jmxConnections.getConnector(address, LILY_JMX_PORT).getMBeanServerConnection();
             String version = (String)connection.getAttribute(lily, "Version");
             boolean indexerMaster = (Boolean)connection.getAttribute(lily, "IndexerMaster");
-            boolean mqProcessor = (Boolean)connection.getAttribute(lily, "RowLogProcessorMQ");
-            boolean walProcessor = (Boolean)connection.getAttribute(lily, "RowLogProcessorWAL");
 
             CompositeDataSupport heapMemUsage = (CompositeDataSupport)connection.getAttribute(memory, "HeapMemoryUsage");
             double maxHeapMB = ((double)(Long)heapMemUsage.get("max")) / 1024d / 1024d;
             double usedHeapMB = ((double)(Long)heapMemUsage.get("used")) / 1024d / 1024d;
 
-            table.columns(address, version, String.valueOf(indexerMaster), String.valueOf(mqProcessor),
-                    String.valueOf(walProcessor), maxHeapMB, usedHeapMB);
+            table.columns(address, version, String.valueOf(indexerMaster), maxHeapMB, usedHeapMB);
         }
 
         table.columnSepLine();

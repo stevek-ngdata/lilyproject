@@ -30,14 +30,6 @@ public class RecordRow {
     public SystemFields systemFields = new SystemFields();
     public Fields fields = new Fields();
 
-    // MQ row log
-    public SortedMap<RowLogKey, List<String>> mqPayload = new TreeMap<RowLogKey, List<String>>();
-    public SortedMap<RowLogKey, List<ExecutionData>> mqState = new TreeMap<RowLogKey, List<ExecutionData>>();
-
-    // WAL row log
-    public SortedMap<RowLogKey, List<String>> walPayload = new TreeMap<RowLogKey, List<String>>();
-    public SortedMap<RowLogKey, List<ExecutionData>> walState = new TreeMap<RowLogKey, List<ExecutionData>>();
-
     public List<String> unknownColumnFamilies = new ArrayList<String>();
 
     private TreeSet<Long> allVersions;
@@ -56,22 +48,6 @@ public class RecordRow {
 
     public SystemFields getSystemFields() {
         return systemFields;
-    }
-
-    public SortedMap<RowLogKey, List<String>> getMqPayload() {
-        return mqPayload;
-    }
-
-    public SortedMap<RowLogKey, List<ExecutionData>> getMqState() {
-        return mqState;
-    }
-
-    public SortedMap<RowLogKey, List<String>> getWalPayload() {
-        return walPayload;
-    }
-
-    public SortedMap<RowLogKey, List<ExecutionData>> getWalState() {
-        return walState;
     }
 
     public List<String> getUnknownColumnFamilies() {

@@ -72,10 +72,10 @@ public class LocalHTable implements HTableInterface {
 
         // HTable internally has an ExecutorService. I have noticed that many of the HBase operations that Lily
         // performs don't make use of this ES, since they are not plain put or batch operations. Thus, for the
-        // operations that do make use of it (still enough, e.g. all the puts on the rowlog shards), they use
-        // the ExecutorServices of many different HTable instances, leading to very little thread re-use
-        // and many very short-lived threads. Therefore, we switch the ExecutorService instance in HBase by
-        // a shared one, which requires modifying a private variable. (seems like this is improved in HBase trunk)
+        // operations that do make use of it, they use the ExecutorServices of many different HTable instances,
+        // leading to very little thread re-use and many very short-lived threads. Therefore, we switch the
+        // ExecutorService instance in HBase by a shared one, which requires modifying a private variable.
+        // (seems like this is improved in HBase trunk)
 
         synchronized (this) {
             if (EXECUTOR_SERVICE == null) {

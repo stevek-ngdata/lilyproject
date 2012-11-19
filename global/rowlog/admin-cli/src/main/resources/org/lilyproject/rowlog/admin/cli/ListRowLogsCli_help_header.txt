@@ -1,1 +1,0 @@
-List all rowlogs, subscriptions, listeners and their properties.

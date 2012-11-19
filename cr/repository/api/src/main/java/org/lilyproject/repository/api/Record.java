@@ -354,7 +354,7 @@ public interface Record {
      *
      * <p>The purpose of these attributes is to be able to pass along data/hints to certain
      * components, such as server-side repository decorators, secondary actions, message queue listeners
-     * and the like. The attributes are stored as part of the rowlog payload of a repository mutation event.</p>
+     * and the like. The attributes are stored as part of the MQ payload of a repository mutation event.</p>
      *
      * <p>The attributes are not preserved when cloning the record, or on a round-trip from the repository,
      * thus in the record object returned from create, update, etc.</p>

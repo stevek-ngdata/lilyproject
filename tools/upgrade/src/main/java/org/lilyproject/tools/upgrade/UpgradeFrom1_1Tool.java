@@ -268,7 +268,7 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
         HTableDescriptor descriptor = new HTableDescriptor(Bytes.toBytes(tableName));
         descriptor.addFamily(new HColumnDescriptor(RecordCf.DATA.bytes,
                 HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-        descriptor.addFamily(new HColumnDescriptor(RecordCf.ROWLOG.bytes));
+        descriptor.addFamily(new HColumnDescriptor(Bytes.toBytes("rowlog")));
         return descriptor;
     }
 

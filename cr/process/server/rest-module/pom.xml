@@ -45,11 +45,6 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rowlog-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
       <artifactId>lily-repo-util</artifactId>
     </dependency>
 

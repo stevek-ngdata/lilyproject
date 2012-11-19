@@ -7,11 +7,7 @@
     <artifact id="general" groupId="org.lilyproject" artifactId="lily-general-module" version="2.2-SNAPSHOT">
     </artifact>
 
-    <artifact id="rowlog" groupId="org.lilyproject" artifactId="lily-rowlog-module" version="2.2-SNAPSHOT">
-    </artifact>
-
     <artifact id="indexer-integration" groupId="org.lilyproject" artifactId="lily-indexer-integration-module" version="2.2-SNAPSHOT">
-      <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
     </artifact>
 
     <!-- lily.plugin.dir:
@@ -23,15 +19,10 @@
             order) and included (these should be wiring files)
     -->
     <directory id="plugin" basePath="${lily.plugin.dir}" path="load-before-repository"/>
-
     <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="2.2-SNAPSHOT">
-      <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
-      <inject-javaservice name="writeAheadLog" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:writeAheadLog"/>
     </artifact>
 
     <artifact id="indexer" groupId="org.lilyproject" artifactId="lily-indexer-module" version="2.2-SNAPSHOT">
-      <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
-      <inject-javaservice name="writeAheadLog" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:writeAheadLog"/>
     </artifact>
 
     <artifact id="avro" groupId="org.lilyproject" artifactId="lily-rpc-module" version="2.2-SNAPSHOT">
@@ -49,7 +40,6 @@
     <artifact id="rest" groupId="org.lilyproject" artifactId="lily-rest-module" version="2.2-SNAPSHOT">
       <mount name="repository" path="/repository/" canonical="/repository/"/>
       <mount name="index" path="/index" canonical="/index"/>
-      <mount name="rowlog" path="/rowlog" canonical="/rowlog"/>
     </artifact>
 
     <artifact id="webui" groupId="org.lilyproject" artifactId="lily-webui-module" version="2.2-SNAPSHOT">

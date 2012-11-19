@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<!-- FIXME ROWLOG REFACTORING -->
 <rowlog  xmlns:conf="http://kauriproject.org/configuration"
          conf:inherit="deep">
 

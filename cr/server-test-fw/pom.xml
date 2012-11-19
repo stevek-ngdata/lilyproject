@@ -155,11 +155,6 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rowlog-module</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
       <artifactId>lily-rpc-module</artifactId>
     </dependency>
 
