@@ -60,7 +60,7 @@ public class IndexerApiTest {
         SOLR_TEST_UTIL.setSolrDefinition(
                 new SolrDefinition(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml"))));
 
-        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl");
+        TestHelper.setupLogging("org.lilyproject.indexer");
 
         SOLR_TEST_UTIL.start();
 

@@ -26,7 +26,6 @@ import org.apache.avro.ipc.Server;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.zookeeper.KeeperException;
-import org.junit.Assert;
 import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.AvroLilyImpl;
@@ -55,19 +54,6 @@ import org.lilyproject.repository.remote.RemoteTypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfig;
-import org.lilyproject.rowlog.api.RowLogException;
-import org.lilyproject.rowlog.api.RowLogMessageListener;
-import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.rowlog.impl.MessageQueueFeeder;
-import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
-import org.lilyproject.rowlog.impl.RowLogImpl;
-import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
-import org.lilyproject.rowlog.impl.RowLogShardSetup;
-import org.lilyproject.rowlog.impl.WalRowLog;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -87,8 +73,6 @@ public class RepositorySetup {
 
     private HBaseTableFactory hbaseTableFactory;
 
-    private RowLogConfigurationManagerImpl rowLogConfManager;
-
     private RowLocker rowLocker;
     private IdGenerator idGenerator;
     private HBaseTypeManager typeManager;
@@ -103,11 +87,6 @@ public class RepositorySetup {
 
     private BlobManager blobManager;
     private BlobManager remoteBlobManager;
-
-    private RowLog wal;
-    private RowLog mq;
-
-    private RowLogProcessorImpl mqProcessor;
 
     private boolean coreSetup;
     private boolean typeManagerSetup;
@@ -150,7 +129,7 @@ public class RepositorySetup {
         typeManagerSetup = true;
     }
 
-    public void setupRepository(boolean withWal) throws Exception {
+    public void setupRepository(/* FIXME ROWLOG REFACTORING */ boolean withWal) throws Exception {
         if (repositorySetup)
             return;
 
@@ -159,19 +138,7 @@ public class RepositorySetup {
         blobStoreAccessFactory = createBlobAccess();
         blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
 
-        if (withWal) {
-            setupRowLogConfigurationManager();
-            HBaseRowLocker rowLocker =
-                    new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
-                            RecordColumn.LOCK.bytes, 10000);
-            rowLogConfManager.addRowLog("WAL", new RowLogConfig(true, false, 100L, 5000L, 5000L, 120000L, 100));
-            wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
-                    LilyHBaseSchema.RecordCf.ROWLOG.bytes,
-                    LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker, new RowLogHashShardRouter());
-            RowLogShardSetup.setupShards(1, wal, hbaseTableFactory);
-        }
-
-        repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
+        repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager, rowLocker);
         repository.setRecordUpdateHooks(recordUpdateHooks);
 
         repositorySetup = true;
@@ -206,10 +173,6 @@ public class RepositorySetup {
     public void setBlobLimits(long inlineBlobLimit, long hbaseBlobLimit) {
         this.inlineBlobLimit = inlineBlobLimit;
         this.hbaseBlobLimit = hbaseBlobLimit;
-    }
-
-    public void setupRowLogConfigurationManager() throws Exception {
-        rowLogConfManager = new RowLogConfigurationManagerImpl(zk);
     }
 
     public void setupRemoteAccess() throws Exception {
@@ -249,48 +212,19 @@ public class RepositorySetup {
      *                             either this or withProcessor, not both.
      */
     public void setupMessageQueue(boolean withProcessor, boolean withManualProcessing) throws Exception {
-
-        rowLogConfManager.addRowLog("MQ", new RowLogConfig(false, true, 100L, 0L, 5000L, 120000L, 100));
-        rowLogConfManager.addSubscription("WAL", "MQFeeder", RowLogSubscription.Type.VM, 1);
-
-        mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
-                LilyHBaseSchema.RecordCf.ROWLOG.bytes,
-                LilyHBaseSchema.RecordColumn.MQ_PREFIX, rowLogConfManager, null, new RowLogHashShardRouter());
-        RowLogShardSetup.setupShards(1, mq, hbaseTableFactory);
-        if (withManualProcessing) {
-            mq = new ManualProcessRowLog(mq);
-        }
-
-        RowLogMessageListenerMapping listenerClassMapping = RowLogMessageListenerMapping.INSTANCE;
-        listenerClassMapping.put("MQFeeder", createMQFeeder(mq));
-
-        waitForSubscription(wal, "MQFeeder");
-
-        if (withProcessor) {
-            mqProcessor = new RowLogProcessorImpl(mq, rowLogConfManager, getHadoopConf());
-            mqProcessor.start();
-        }
-    }
-
-    /**
-     * Can be overridden by subclass to provide other implementation.
-     */
-    public RowLogMessageListener createMQFeeder(RowLog mq) {
-        return new MessageQueueFeeder(mq);
+        // FIXME ROWLOG REFACTORING
     }
 
     /**
      * When the message queue was setup with the option for manual processing, calling this method will
      * trigger synchronous MQ processing.
      */
-    public void processMQ() throws RowLogException, InterruptedException {
-        ((ManualProcessRowLog) mq).processMessages();
+    public void processMQ() throws InterruptedException {
+        // FIXME ROWLOG REFACTORING
+        // ((ManualProcessRowLog) mq).processMessages();
     }
 
     public void stop() throws InterruptedException {
-        if (mqProcessor != null)
-            mqProcessor.stop();
-
         Closer.close(remoteSchemaCache);
         Closer.close(remoteTypeManager);
         Closer.close(remoteRepository);
@@ -303,8 +237,6 @@ public class RepositorySetup {
             lilyServer.join();
         }
 
-        Closer.close(rowLogConfManager);
-
         Closer.close(zk);
         Closer.close(hbaseProxy);
         coreSetup = false;
@@ -312,19 +244,20 @@ public class RepositorySetup {
         typeManagerSetup = false;
     }
 
-    public void waitForSubscription(RowLog rowLog, String subscriptionId) throws InterruptedException {
-        boolean subscriptionKnown = false;
-        int timeOut = 10000;
-        long waitUntil = System.currentTimeMillis() + timeOut;
-        while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
-            if (rowLog.getSubscriptionIds().contains(subscriptionId)) {
-                subscriptionKnown = true;
-                break;
-            }
-            Thread.sleep(10);
-        }
-        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
-                subscriptionKnown);
+    public void waitForSubscription(String subscriptionId) throws InterruptedException {
+        // FIXME ROWLOG REFACTORING
+//        boolean subscriptionKnown = false;
+//        int timeOut = 10000;
+//        long waitUntil = System.currentTimeMillis() + timeOut;
+//        while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
+//            if (rowLog.getSubscriptionIds().contains(subscriptionId)) {
+//                subscriptionKnown = true;
+//                break;
+//            }
+//            Thread.sleep(10);
+//        }
+//        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
+//                subscriptionKnown);
     }
 
     public ZooKeeperItf getZk() {
@@ -363,24 +296,12 @@ public class RepositorySetup {
         return idGenerator;
     }
 
-    public RowLog getWal() {
-        return wal;
-    }
-
-    public RowLog getMq() {
-        return mq;
-    }
-
     public Configuration getHadoopConf() {
         return hadoopConf;
     }
 
     public HBaseTableFactory getHbaseTableFactory() {
         return hbaseTableFactory;
-    }
-
-    public RowLogConfigurationManagerImpl getRowLogConfManager() {
-        return rowLogConfManager;
     }
 
     public BlobStoreAccessFactory getBlobStoreAccessFactory() {

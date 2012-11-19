@@ -54,7 +54,8 @@ public class TableSplitTest {
     private static LilyProxy lilyProxy;
     private static File tmpDir;
 
-    private static List<String> TABLE_NAMES = Lists.newArrayList("record", "links-forward", "links-backward");
+    // FIXME ROWLOG REFACTORING: temporarily removed links-forward/backward tables
+    private static List<String> TABLE_NAMES = Lists.newArrayList("record"); //, "links-forward", "links-backward");
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -151,6 +152,7 @@ public class TableSplitTest {
         FileUtils.writeStringToFile(new File(generalConfDir, "tables.xml"), tablesXml, "UTF-8");
 
         // Write configuration to enable the linkindex
+        // FIXME ROWLOG REFACTORING
         File rowlogConfDir = new File(confDir, "rowlog");
         FileUtils.forceMkdir(rowlogConfDir);
 
@@ -212,7 +214,7 @@ public class TableSplitTest {
                     count++;
                 }
 
-                assertTrue(String.format("Number of splits in region '%s' is %d, expected between 80 and 120",
+                assertTrue(String.format("Number of records in region '%s' is %d, expected between 80 and 120",
                                     regionInfo.getRegionNameAsString(), count), count > 80 && count < 120);
             }
         }

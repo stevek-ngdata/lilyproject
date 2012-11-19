@@ -35,7 +35,6 @@
   <modules>
     <module>rpc-module</module>
     <module>general-module</module>
-    <module>rowlog-module</module>
     <module>repository-module</module>
     <module>indexer-module</module>
     <module>rest-module</module>

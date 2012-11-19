@@ -33,13 +33,6 @@ import org.lilyproject.repository.impl.*;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfig;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
-import org.lilyproject.rowlog.impl.RowLogShardSetup;
-import org.lilyproject.rowlog.impl.WalRowLog;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -65,10 +58,8 @@ public class TutorialTest {
 
     private static TypeManager typeManager;
     private static HBaseRepository repository;
-    private static RowLog wal;
     private static Configuration configuration;
     private static ZooKeeperItf zooKeeper;
-    private static RowLogConfigurationManager rowLogConfMgr;
 
     private static HBaseTableFactory hbaseTableFactory;
 
@@ -92,27 +83,16 @@ public class TutorialTest {
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-        setupWal();
         RowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
                 RecordColumn.LOCK.bytes, 10000);
-        repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
+        repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager, rowLocker);
 
-    }
-    
-    protected static void setupWal() throws Exception {
-        rowLogConfMgr = new RowLogConfigurationManagerImpl(zooKeeper);
-        HBaseRowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
-        rowLogConfMgr.addRowLog("WAL", new RowLogConfig(true, false, 0L, 5000L, 5000L, 120000L, 100));
-        wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
-                RecordColumn.WAL_PREFIX, rowLogConfMgr, rowLocker, new RowLogHashShardRouter());
-        RowLogShardSetup.setupShards(1, wal, hbaseTableFactory);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         Closer.close(typeManager);
         Closer.close(repository);
-        Closer.close(rowLogConfMgr);
         Closer.close(zooKeeper);
         HBASE_PROXY.stop();
     }

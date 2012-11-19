@@ -57,8 +57,6 @@ import org.lilyproject.indexer.model.api.IndexerModelEventType;
 import org.lilyproject.indexer.model.api.IndexerModelListener;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -91,8 +89,6 @@ public class IndexerMaster {
 
     private final int zkSessionTimeout;
 
-    private final RowLogConfigurationManager rowLogConfMgr;
-
     private final SolrClientConfig solrClientConfig;
 
     private final boolean enableLocking;
@@ -124,7 +120,7 @@ public class IndexerMaster {
 
     public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Repository repository,
             Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
-            String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr,
+            String zkConnectString, int zkSessionTimeout,
             LilyInfo lilyInfo, SolrClientConfig solrClientConfig, boolean enableLocking,
             String hostName, HBaseTableFactory tableFactory, String nodes) {
 
@@ -136,7 +132,6 @@ public class IndexerMaster {
         this.hbaseConf = hbaseConf;
         this.zkConnectString = zkConnectString;
         this.zkSessionTimeout = zkSessionTimeout;
-        this.rowLogConfMgr = rowLogConfMgr;
         this.lilyInfo = lilyInfo;
         this.solrClientConfig = solrClientConfig;
         this.enableLocking = enableLocking;
@@ -256,7 +251,8 @@ public class IndexerMaster {
                     // due to concurrent operations (e.g. someone deleting this subscription right after we
                     // created it).
                     String subscriptionId = subscriptionId(index.getName());
-                    rowLogConfMgr.addSubscription("mq", subscriptionId, RowLogSubscription.Type.Netty, 1);
+                    // FIXME ROWLOG REFACTORING take MQ subscription
+                    // rowLogConfMgr.addSubscription("mq", subscriptionId, RowLogSubscription.Type.Netty, 1);
                     index.setQueueSubscriptionId(subscriptionId);
                     indexerModel.updateIndexInternal(index);
                     log.info("Assigned queue subscription ID '" + subscriptionId + "' to index '" + indexName + "'");
@@ -276,7 +272,8 @@ public class IndexerMaster {
                 // Read current situation of record and assure it is still actual
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 if (needsSubscriptionIdUnassigned(index)) {
-                    rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
+                    // FIXME ROWLOG REFACTORING remove MQ subscription
+                    // rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
                     log.info("Deleted queue subscription for index " + indexName);
                     index.setQueueSubscriptionId(null);
                     indexerModel.updateIndexInternal(index);
@@ -374,7 +371,8 @@ public class IndexerMaster {
 
                 String queueSubscriptionId = index.getQueueSubscriptionId();
                 if (queueSubscriptionId != null) {
-                    rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
+                    // FIXME ROWLOG REFACTORING remove MQ subscription
+                    //rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
                     // We leave the subscription ID in the index definition FYI
                 }
 

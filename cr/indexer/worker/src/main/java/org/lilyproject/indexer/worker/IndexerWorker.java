@@ -21,11 +21,9 @@ import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDA
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -65,10 +63,6 @@ import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogException;
-import org.lilyproject.rowlog.impl.RemoteListenerHandler;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -94,10 +88,6 @@ public class IndexerWorker {
     private final Configuration hbaseConf;
 
     private final ZooKeeperItf zk;
-
-    private final RowLogConfigurationManager rowLogConfMgr;
-
-    private final RowLog rowLog;
 
     private final SolrClientConfig solrClientConfig;
 
@@ -127,18 +117,14 @@ public class IndexerWorker {
 
     private final Log log = LogFactory.getLog(getClass());
 
-    public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
-                         Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr,
-                         SolrClientConfig solrClientConfig,
-                         String hostName, IndexerWorkerSettings settings, IndexerRegistry indexerRegistry,
-                         HBaseTableFactory tableFactory)
+    public IndexerWorker(IndexerModel indexerModel, Repository repository, ZooKeeperItf zk, Configuration hbaseConf,
+                         SolrClientConfig solrClientConfig, String hostName, IndexerWorkerSettings settings,
+                         IndexerRegistry indexerRegistry, HBaseTableFactory tableFactory)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException, InterruptedException {
         this.indexerModel = indexerModel;
         this.repository = repository;
-        this.rowLog = rowLog;
         this.hbaseConf = hbaseConf;
         this.zk = zk;
-        this.rowLogConfMgr = rowLogConfMgr;
         this.settings = settings;
         this.solrClientConfig = solrClientConfig;
         this.hostName = hostName;
@@ -213,19 +199,20 @@ public class IndexerWorker {
             indexerRegistry.register(indexer);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
-            IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, rowLog,
-                    updaterMetrics, derefMap, index.getQueueSubscriptionId());
+            IndexUpdater indexUpdater = null; /* FIXME ROWLOG REFACTORING new IndexUpdater(indexer, repository, indexLocker, rowLog,
+                    updaterMetrics, derefMap, index.getQueueSubscriptionId()); */
 
-            List<RemoteListenerHandler> listenerHandlers = new ArrayList<RemoteListenerHandler>();
-
-            for (int i = 0; i < settings.getListenersPerIndex(); i++) {
-                RemoteListenerHandler handler = new RemoteListenerHandler(rowLog, index.getQueueSubscriptionId(),
-                        indexUpdater, rowLogConfMgr, hostName);
-                listenerHandlers.add(handler);
-            }
-
-            handle = new IndexUpdaterHandle(index, listenerHandlers, solrShardMgr, indexerMetrics, updaterMetrics);
-            handle.start();
+            // FIXME ROWLOG REFACTORING creation & startup of the remote listeners
+//            List<RemoteListenerHandler> listenerHandlers = new ArrayList<RemoteListenerHandler>();
+//
+//            for (int i = 0; i < settings.getListenersPerIndex(); i++) {
+//                RemoteListenerHandler handler = new RemoteListenerHandler(rowLog, index.getQueueSubscriptionId(),
+//                        indexUpdater, rowLogConfMgr, hostName);
+//                listenerHandlers.add(handler);
+//            }
+//
+//            handle = new IndexUpdaterHandle(index, listenerHandlers, solrShardMgr, indexerMetrics, updaterMetrics);
+//            handle.start();
 
             indexUpdaters.put(index.getName(), handle);
 
@@ -342,31 +329,31 @@ public class IndexerWorker {
 
     private class IndexUpdaterHandle {
         private final IndexDefinition indexDef;
-        private final List<RemoteListenerHandler> listenerHandlers;
         private final SolrShardManager solrShardMgr;
         private final IndexerMetrics indexerMetrics;
         private final IndexUpdaterMetrics updaterMetrics;
 
-        public IndexUpdaterHandle(IndexDefinition indexDef, List<RemoteListenerHandler> listenerHandlers,
+        public IndexUpdaterHandle(IndexDefinition indexDef,
                                   SolrShardManager solrShardMgr, IndexerMetrics indexerMetrics,
                                   IndexUpdaterMetrics updaterMetrics) {
             this.indexDef = indexDef;
-            this.listenerHandlers = listenerHandlers;
             this.solrShardMgr = solrShardMgr;
             this.indexerMetrics = indexerMetrics;
             this.updaterMetrics = updaterMetrics;
         }
 
-        public void start() throws RowLogException, InterruptedException, KeeperException {
-            for (RemoteListenerHandler handler : listenerHandlers) {
-                handler.start();
-            }
+        public void start() throws InterruptedException, KeeperException {
+            // FIXME ROWLOG REFACTORING
+//            for (RemoteListenerHandler handler : listenerHandlers) {
+//                handler.start();
+//            }
         }
 
         public void stop() throws InterruptedException {
-            for (RemoteListenerHandler handler : listenerHandlers) {
-                handler.stop();
-            }
+            // FIXME ROWLOG REFACTORING
+//            for (RemoteListenerHandler handler : listenerHandlers) {
+//                handler.stop();
+//            }
             Closer.close(solrShardMgr);
             Closer.close(indexerMetrics);
             Closer.close(updaterMetrics);

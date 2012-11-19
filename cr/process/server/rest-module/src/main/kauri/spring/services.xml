@@ -56,7 +56,6 @@
       service="org.lilyproject.indexer.Indexer"/>
 
   <kauri:export-restservice name="repository" ref="repositoryRouter"/>
-  <kauri:export-restservice name="rowlog" ref="rowlogRouter"/>
   <kauri:export-restservice name="index" ref="indexRouter"/>
 
   <bean id="repositoryRouter" factory-bean="routingService" factory-method="createRouter">
@@ -65,17 +64,6 @@
     <constructor-arg>
       <bean class="org.kauriproject.routing.RoutingConfig">
         <property name="configPath" value="repository-router.groovy"/>
-        <property name="fallBackToDefault" value="false"/>
-      </bean>
-    </constructor-arg>
-  </bean>
-
-  <bean id="rowlogRouter" factory-bean="routingService" factory-method="createRouter">
-    <constructor-arg ref="restletContext"/>
-    <constructor-arg ref="module"/>
-    <constructor-arg>
-      <bean class="org.kauriproject.routing.RoutingConfig">
-        <property name="configPath" value="rowlog-router.groovy"/>
         <property name="fallBackToDefault" value="false"/>
       </bean>
     </constructor-arg>
@@ -94,8 +82,6 @@
 
   <kauri:import-service id="indexerModel" service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
-  <kauri:import-service id="rowLogConfigurationMgr" service="org.lilyproject.rowlog.api.RowLogConfigurationManager"/>
-  
   <bean id="linkTransformer" class="org.lilyproject.tools.import_.json.DefaultLinkTransformer"/>
 
   <bean id="recordScannerMap" class="org.lilyproject.rest.RecordScannerMapBuilder"

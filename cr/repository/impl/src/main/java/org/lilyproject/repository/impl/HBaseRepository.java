@@ -77,16 +77,12 @@ import org.lilyproject.repository.api.TypeException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.VersionNotFoundException;
-import org.lilyproject.repository.api.WalProcessingException;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogException;
-import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -95,7 +91,6 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.Type;
-import org.lilyproject.util.repo.RowLogContext;
 
 import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_ID_QUALIFIERS;
 import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_VERSION_QUALIFIERS;
@@ -107,18 +102,15 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
  */
 public class HBaseRepository extends BaseRepository {
 
-    private RowLog wal;
     private RowLocker rowLocker;
     private List<RecordUpdateHook> updateHooks = Collections.emptyList();
 
     private Log log = LogFactory.getLog(getClass());
 
-    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, RowLog wal,
-                           HBaseTableFactory hbaseTableFactory, BlobManager blobManager, RowLocker rowLocker)
+    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, HBaseTableFactory hbaseTableFactory,
+                           BlobManager blobManager, RowLocker rowLocker)
             throws IOException, InterruptedException {
         super(typeManager, blobManager, idGenerator, LilyHBaseSchema.getRecordTable(hbaseTableFactory), new RepositoryMetrics("hbaserepository"));
-
-        this.wal = wal;
 
         this.rowLocker = rowLocker;
     }
@@ -272,7 +264,9 @@ public class HBaseRepository extends BaseRepository {
                 // Reserve blobs so no other records can use them
                 reserveBlobs(null, referencedBlobs);
 
-                putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
+                if (!rowLocker.put(put, rowLock)) {
+                    throw new RecordException("Invalid or expired lock trying to put record '" + recordId + "' on HBase table");
+                }
 
                 // Remove the used blobs from the blobIncubator
                 blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
@@ -282,9 +276,6 @@ public class HBaseRepository extends BaseRepository {
                 return newRecord;
 
             } catch (IOException e) {
-                throw new RecordException("Exception occurred while creating record '" + recordId + "' in HBase table",
-                        e);
-            } catch (RowLogException e) {
                 throw new RecordException("Exception occurred while creating record '" + recordId + "' in HBase table",
                         e);
             } catch (InterruptedException e) {
@@ -348,8 +339,6 @@ public class HBaseRepository extends BaseRepository {
             // Take Custom Lock
             rowLock = lockRow(recordId);
 
-            checkAndProcessOpenMessages(record.getId(), rowLock);
-
             // Check if the update is an update of mutable fields
             if (updateVersion) {
                 try {
@@ -410,7 +399,11 @@ public class HBaseRepository extends BaseRepository {
 
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
-                putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
+
+                if (!rowLocker.put(put, rowLock)) {
+                    throw new RecordException("Invalid or expired lock trying to put record '" + recordId + "' on HBase table");
+                }
+
                 // Remove the used blobs from the blobIncubator and delete unreferenced blobs from the blobstore
                 blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
                 newRecord.setResponseStatus(ResponseStatus.UPDATED);
@@ -420,10 +413,6 @@ public class HBaseRepository extends BaseRepository {
 
             newRecord.getFieldsToDelete().clear();
             return newRecord;
-
-        } catch (RowLogException e) {
-            throw new RecordException("Exception occurred while putting updated record '" + recordId
-                    + "' on HBase table", e);
 
         } catch (IOException e) {
             throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table",
@@ -435,37 +424,6 @@ public class HBaseRepository extends BaseRepository {
         } catch (BlobException e) {
             throw new RecordException("Exception occurred while putting updated record '" + recordId
                     + "' on HBase table", e);
-        }
-    }
-
-    // This method takes a put object containing the row's data to be updated
-    // A wal message is added to this put object
-    // The rowLocker is asked to put the data and message on the record table using the given rowlock
-    // Finally the wal is asked to process the message
-    private void putRowWithWalProcessing(RecordId recordId, RowLock rowLock, Put put, RecordEvent recordEvent)
-            throws InterruptedException, RowLogException, IOException, RecordException {
-        RowLogMessage walMessage;
-        walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
-        if (!rowLocker.put(put, rowLock)) {
-            throw new RecordException("Invalid or expired lock trying to put record '" + recordId + "' on HBase table");
-        }
-
-        if (walMessage != null) {
-            try {
-                RowLogContext rowLogContext = new RowLogContext();
-                rowLogContext.setRecordEvent(recordEvent);
-                walMessage.setContext(rowLogContext);
-                wal.processMessage(walMessage, rowLock);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.warn(
-                        "Processing message '" + walMessage + "' by the WAL got interrupted. It will be retried later.",
-                        e);
-            } catch (RowLogException e) {
-                log.warn(
-                        "Exception while processing message '" + walMessage + "' by the WAL. It will be retried later.",
-                        e);
-            }
         }
     }
 
@@ -830,7 +788,9 @@ public class HBaseRepository extends BaseRepository {
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
 
-                putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
+                if (!rowLocker.put(put, rowLock)) {
+                    throw new RecordException("Invalid or expired lock trying to put record '" + recordId + "' on HBase table");
+                }
 
                 // The unReferencedBlobs could still be in use in another version of the mutable field,
                 // therefore we filter them first
@@ -845,8 +805,6 @@ public class HBaseRepository extends BaseRepository {
             }
 
             setRecordTypesAfterUpdate(record, originalRecord, changedScopes);
-        } catch (RowLogException e) {
-            throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table", e);
         } catch (IOException e) {
             throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table",
                     e);
@@ -954,24 +912,12 @@ public class HBaseRepository extends BaseRepository {
 
             recordEvent.setAttributes(attributes);
 
-            RowLogMessage walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
             if (!rowLocker.put(put, rowLock)) {
                 throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table");
             }
 
             // Clear the old data and delete any referenced blobs
             clearData(recordId, originalRecord);
-
-            if (walMessage != null) {
-                try {
-                    wal.processMessage(walMessage, rowLock);
-                } catch (RowLogException e) {
-                    // Processing the message failed, it will be retried later.
-                }
-            }
-        } catch (RowLogException e) {
-            throw new RecordException("Exception occurred while deleting record '" + recordId
-                    + "' on HBase table", e);
 
         } catch (IOException e) {
             throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table",
@@ -1197,28 +1143,6 @@ public class HBaseRepository extends BaseRepository {
         }
 
         return recordIds;
-    }
-
-    private void checkAndProcessOpenMessages(RecordId recordId, RowLock rowLock) throws WalProcessingException {
-        byte[] rowKey = recordId.toBytes();
-        try {
-            List<RowLogMessage> messages = wal.getMessages(rowKey);
-            if (messages.isEmpty())
-                return;
-            try {
-                for (RowLogMessage rowLogMessage : messages) {
-                    wal.processMessage(rowLogMessage, rowLock);
-                }
-                if (!(wal.getMessages(rowKey).isEmpty())) {
-                    throw new WalProcessingException(recordId, "Not all messages were processed");
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new WalProcessingException(recordId, e);
-            }
-        } catch (RowLogException e) {
-            throw new WalProcessingException(recordId, e);
-        }
     }
 
     @Override

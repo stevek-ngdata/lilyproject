@@ -15,7 +15,6 @@
  */
 builder.router {
     jaxRs(uri: "") {
-        jaxRsResource(scanPackages: ["org.lilyproject.rest.rowlog"])
         jaxRsProvider(scanPackages: ["org.lilyproject.rest.providers"])
         jaxRsProvider(scanPackages: ["org.lilyproject.rest.providers.json"])
     }
