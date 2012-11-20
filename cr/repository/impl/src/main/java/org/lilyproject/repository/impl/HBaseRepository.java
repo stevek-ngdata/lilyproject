@@ -15,19 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
@@ -52,6 +39,7 @@ import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobException;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobReference;
+import org.lilyproject.repository.api.ConcurrentRecordUpdateException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeEntry;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
@@ -66,7 +54,6 @@ import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordExistsException;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordLockedException;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RepositoryException;
@@ -81,9 +68,8 @@ import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.repository.spi.RecordUpdateHook;
-import org.lilyproject.rowlock.RowLock;
-import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
@@ -91,6 +77,19 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.Type;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.Set;
 
 import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_ID_QUALIFIERS;
 import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_VERSION_QUALIFIERS;
@@ -102,17 +101,14 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
  */
 public class HBaseRepository extends BaseRepository {
 
-    private RowLocker rowLocker;
     private List<RecordUpdateHook> updateHooks = Collections.emptyList();
 
     private Log log = LogFactory.getLog(getClass());
 
     public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, HBaseTableFactory hbaseTableFactory,
-                           BlobManager blobManager, RowLocker rowLocker)
-            throws IOException, InterruptedException {
-        super(typeManager, blobManager, idGenerator, LilyHBaseSchema.getRecordTable(hbaseTableFactory), new RepositoryMetrics("hbaserepository"));
-
-        this.rowLocker = rowLocker;
+            BlobManager blobManager) throws IOException, InterruptedException {
+        super(typeManager, blobManager, idGenerator, LilyHBaseSchema.getRecordTable(hbaseTableFactory),
+                new RepositoryMetrics("hbaserepository"));
     }
 
     @Override
@@ -199,20 +195,19 @@ public class HBaseRepository extends BaseRepository {
             }
 
             byte[] rowId = recordId.toBytes();
-            RowLock rowLock = null;
 
             try {
                 FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
 
-                // Lock the row
-                rowLock = lockRow(recordId);
-
                 long version = 1L;
+                long oldOcc = -1L;
+                long newOcc = 1L;
                 // If the record existed it would have been deleted.
                 // The version numbering continues from where it has been deleted.
                 Get get = new Get(rowId);
                 get.addColumn(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
                 get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSION.bytes);
+                get.addColumn(RecordCf.DATA.bytes, RecordColumn.OCC.bytes);
                 Result result = recordTable.get(get);
                 if (!result.isEmpty()) {
                     // If the record existed it should have been deleted
@@ -220,6 +215,10 @@ public class HBaseRepository extends BaseRepository {
                     if (recordDeleted != null && !Bytes.toBoolean(recordDeleted)) {
                         throw new RecordExistsException(recordId);
                     }
+
+                    oldOcc = Bytes.toLong(result.getValue(RecordCf.DATA.bytes, RecordColumn.OCC.bytes));
+                    newOcc = oldOcc + 1;
+
                     byte[] oldVersion = result.getValue(RecordCf.DATA.bytes, RecordColumn.VERSION.bytes);
                     if (oldVersion != null) {
                         version = Bytes.toLong(oldVersion) + 1;
@@ -227,7 +226,11 @@ public class HBaseRepository extends BaseRepository {
                         // This is to cover the failure scenario where a record was deleted, but a failure
                         // occurred before executing the clearData
                         // If this was already done, this is a no-op
-                        clearData(recordId, null);
+                        // Note: since the removal of the row locking, this part could run concurrent with other
+                        // threads trying to re-create a record or with a delete still being in progress. This
+                        // should be no problem since the clearData will only remove the versions at the old
+                        // timestamps, and leave the non-versioned fields untouched.
+                        clearData(recordId, null, Bytes.toLong(oldVersion));
                     }
                 }
 
@@ -264,8 +267,11 @@ public class HBaseRepository extends BaseRepository {
                 // Reserve blobs so no other records can use them
                 reserveBlobs(null, referencedBlobs);
 
-                if (!rowLocker.put(put, rowLock)) {
-                    throw new RecordException("Invalid or expired lock trying to put record '" + recordId + "' on HBase table");
+                put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
+                boolean success = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
+                        oldOcc == -1 ? null : Bytes.toBytes(oldOcc), put);
+                if (!success) {
+                    throw new RecordExistsException(recordId);
                 }
 
                 // Remove the used blobs from the blobIncubator
@@ -285,8 +291,6 @@ public class HBaseRepository extends BaseRepository {
             } catch (BlobException e) {
                 throw new RecordException("Exception occurred while creating record '" + recordId + "'",
                         e);
-            } finally {
-                unlockRow(rowLock);
             }
         } finally {
             metrics.report(Action.CREATE, System.currentTimeMillis() - before);
@@ -327,7 +331,6 @@ public class HBaseRepository extends BaseRepository {
 
         long before = System.currentTimeMillis();
         RecordId recordId = record.getId();
-        RowLock rowLock = null;
         try {
             if (recordId == null) {
                 throw new InvalidRecordException("The recordId cannot be null for a record to be updated.",
@@ -336,37 +339,34 @@ public class HBaseRepository extends BaseRepository {
 
             FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
 
-            // Take Custom Lock
-            rowLock = lockRow(recordId);
-
             // Check if the update is an update of mutable fields
             if (updateVersion) {
                 try {
-                    return updateMutableFields(record, useLatestRecordType, conditions, rowLock, fieldTypes);
+                    return updateMutableFields(record, useLatestRecordType, conditions, fieldTypes);
                 } catch (BlobException e) {
                     throw new RecordException("Exception occurred while updating record '" + record.getId() + "'",
                             e);
                 }
             } else {
-                return updateRecord(record, useLatestRecordType, conditions, rowLock, fieldTypes);
+                return updateRecord(record, useLatestRecordType, conditions, fieldTypes);
             }
-        } catch (IOException e) {
-            throw new RecordException("Exception occurred while updating record '" + recordId + ">' on HBase table",
-                    e);
         } finally {
-            unlockRow(rowLock);
             metrics.report(Action.UPDATE, System.currentTimeMillis() - before);
         }
     }
 
 
     private Record updateRecord(Record record, boolean useLatestRecordType, List<MutationCondition> conditions,
-                                RowLock rowLock, FieldTypes fieldTypes) throws RepositoryException {
+                                FieldTypes fieldTypes) throws RepositoryException {
 
         RecordId recordId = record.getId();
 
         try {
-            Record originalRecord = new UnmodifiableRecord(read(record.getId(), null, null, fieldTypes));
+            Pair<Record, Long> recordAndOcc = readWithOcc(record.getId(), null, null, fieldTypes);
+            Record originalRecord = new UnmodifiableRecord(recordAndOcc.getV1());
+
+            long oldOcc = recordAndOcc.getV2();
+            long newOcc = oldOcc + 1;
 
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.UPDATE);
@@ -400,8 +400,11 @@ public class HBaseRepository extends BaseRepository {
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
 
-                if (!rowLocker.put(put, rowLock)) {
-                    throw new RecordException("Invalid or expired lock trying to put record '" + recordId + "' on HBase table");
+                put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
+                boolean occSuccess = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
+                        Bytes.toBytes(oldOcc), put);
+                if (!occSuccess) {
+                    throw new ConcurrentRecordUpdateException(recordId);
                 }
 
                 // Remove the used blobs from the blobIncubator and delete unreferenced blobs from the blobstore
@@ -671,7 +674,7 @@ public class HBaseRepository extends BaseRepository {
     }
 
     private Record updateMutableFields(Record record, boolean latestRecordType, List<MutationCondition> conditions,
-                                       RowLock rowLock, FieldTypes fieldTypes) throws RepositoryException {
+            FieldTypes fieldTypes) throws RepositoryException {
 
         Record newRecord = record.cloneRecord();
 
@@ -687,7 +690,11 @@ public class HBaseRepository extends BaseRepository {
             Map<QName, Object> fields = getFieldsToUpdate(record);
             fields = filterMutableFields(fields, fieldTypes);
 
-            Record originalRecord = new UnmodifiableRecord(read(recordId, version, null, fieldTypes));
+            Pair<Record, Long> recordAndOcc = readWithOcc(recordId, version, null, fieldTypes);
+            Record originalRecord = new UnmodifiableRecord(recordAndOcc.getV1());
+
+            long oldOcc = recordAndOcc.getV2();
+            long newOcc = oldOcc + 1;
 
             Map<QName, Object> originalFields = filterMutableFields(originalRecord.getFields(), fieldTypes);
 
@@ -788,8 +795,11 @@ public class HBaseRepository extends BaseRepository {
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
 
-                if (!rowLocker.put(put, rowLock)) {
-                    throw new RecordException("Invalid or expired lock trying to put record '" + recordId + "' on HBase table");
+                put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
+                boolean occSuccess = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
+                        Bytes.toBytes(oldOcc), put);
+                if (!occSuccess) {
+                    throw new ConcurrentRecordUpdateException(recordId);
                 }
 
                 // The unReferencedBlobs could still be in use in another version of the mutable field,
@@ -812,8 +822,6 @@ public class HBaseRepository extends BaseRepository {
             Thread.currentThread().interrupt();
             throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table",
                     e);
-        } finally {
-            unlockRow(rowLock);
         }
 
         newRecord.getFieldsToDelete().clear();
@@ -868,16 +876,16 @@ public class HBaseRepository extends BaseRepository {
             throws RepositoryException {
         ArgumentValidator.notNull(recordId, "recordId");
         long before = System.currentTimeMillis();
-        RowLock rowLock = null;
         byte[] rowId = recordId.toBytes();
         try {
-            // Take Custom Lock
-            rowLock = lockRow(recordId);
-
             // We need to read the original record in order to put the delete marker in the non-versioned fields.
             // Throw RecordNotFoundException if there is no record to be deleted
             FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-            Record originalRecord = new UnmodifiableRecord(read(recordId, null, null, fieldTypes));
+            Pair<Record, Long> recordAndOcc = readWithOcc(recordId, null, null, fieldTypes);
+            Record originalRecord = new UnmodifiableRecord(recordAndOcc.getV1());
+
+            long oldOcc = recordAndOcc.getV2();
+            long newOcc = oldOcc + 1;
 
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.DELETE);
@@ -912,12 +920,15 @@ public class HBaseRepository extends BaseRepository {
 
             recordEvent.setAttributes(attributes);
 
-            if (!rowLocker.put(put, rowLock)) {
-                throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table");
+            put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
+            boolean occSuccess = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
+                    Bytes.toBytes(oldOcc), put);
+            if (!occSuccess) {
+                throw new ConcurrentRecordUpdateException(recordId);
             }
 
             // Clear the old data and delete any referenced blobs
-            clearData(recordId, originalRecord);
+            clearData(recordId, originalRecord, originalRecord.getVersion());
 
         } catch (IOException e) {
             throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table",
@@ -927,7 +938,6 @@ public class HBaseRepository extends BaseRepository {
             throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table",
                     e);
         } finally {
-            unlockRow(rowLock);
             long after = System.currentTimeMillis();
             metrics.report(Action.DELETE, (after - before));
         }
@@ -937,11 +947,18 @@ public class HBaseRepository extends BaseRepository {
 
     // Clear all data of the recordId until the latest record version (included)
     // And delete any referred blobs
-    private void clearData(RecordId recordId, Record originalRecord)
+    private void clearData(RecordId recordId, Record originalRecord, Long upToVersion)
             throws IOException, RepositoryException, InterruptedException {
         Get get = new Get(recordId.toBytes());
         get.addFamily(RecordCf.DATA.bytes);
         get.setFilter(new ColumnPrefixFilter(new byte[]{RecordColumn.DATA_PREFIX}));
+        // Only read versions that exist(ed) at the time the record was deleted, since this code could
+        // run concurrently with the re-creation of the same record.
+        if (upToVersion != null) {
+            get.setTimeRange(1 /* inclusive */, upToVersion + 1 /* exclusive */);
+        } else {
+            get.setTimeRange(1, 2);
+        }
         get.setMaxVersions();
         Result result = recordTable.get(get);
 
@@ -984,7 +1001,7 @@ public class HBaseRepository extends BaseRepository {
                                             blobsToDelete
                                                     .addAll(getReferencedBlobs((FieldTypeImpl) fieldType, blobValue));
                                     } catch (BlobException e) {
-                                        log.warn("Failure occured while clearing blob data", e);
+                                        log.warn("Failure occurred while clearing blob data", e);
                                         // We do a best effort here
                                     }
                                 }
@@ -999,10 +1016,10 @@ public class HBaseRepository extends BaseRepository {
                                 dataToDelete = true;
                             }
                         } catch (FieldTypeNotFoundException e) {
-                            log.warn("Failure occured while clearing blob data", e);
+                            log.warn("Failure occurred while clearing blob data", e);
                             // We do a best effort here
                         } catch (TypeException e) {
-                            log.warn("Failure occured while clearing blob data", e);
+                            log.warn("Failure occurred while clearing blob data", e);
                             // We do a best effort here
                         }
                     }
@@ -1014,38 +1031,20 @@ public class HBaseRepository extends BaseRepository {
             blobManager.handleBlobReferences(recordId, null, blobsToDelete);
 
             // Delete data
-            if (dataToDelete) { // Avoid a delete action when no data was found to delete
+            if (dataToDelete && upToVersion != null) { // Avoid a delete action when no data was found to delete
                 // Do not delete the NON-VERSIONED record type column.
                 // If the thombstone was not processed yet (major compaction)
                 // a re-creation of the record would then loose its record type since the NON-VERSIONED
                 // field is always stored at timestamp 1L
                 // Re-creating the record will always overwrite the (NON-VERSIONED) record type.
                 // So, there is no risk of old record type information ending up in the new record.
-                delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_ID.bytes);
-                delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_VERSION.bytes);
-                delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes);
-                delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
+                delete.deleteColumns(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_ID.bytes, upToVersion);
+                delete.deleteColumns(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_VERSION.bytes, upToVersion);
+                delete.deleteColumns(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes, upToVersion);
+                delete.deleteColumns(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes, upToVersion);
                 recordTable.delete(delete);
             }
         }
-    }
-
-    private void unlockRow(RowLock rowLock) {
-        if (rowLock != null) {
-            try {
-                rowLocker.unlockRow(rowLock);
-            } catch (IOException e) {
-                log.warn("Exception while unlocking row '" + Bytes.toStringBinary(rowLock.getRowKey()) + "'", e);
-            }
-        }
-    }
-
-    private RowLock lockRow(RecordId recordId) throws IOException,
-            RecordLockedException {
-        RowLock rowLock = rowLocker.lockRow(recordId.toBytes());
-        if (rowLock == null)
-            throw new RecordLockedException(recordId);
-        return rowLock;
     }
 
     private Set<BlobReference> getReferencedBlobs(FieldTypeImpl fieldType, Object value) throws BlobException {

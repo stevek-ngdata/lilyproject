@@ -52,10 +52,6 @@
       service="org.lilyproject.util.LilyInfo"/>
 
   <kauri:export-service
-      ref="rowLocker"
-      service="org.lilyproject.rowlock.RowLocker"/>
-
-  <kauri:export-service
       ref="networkItfInfo"
       service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
@@ -140,21 +136,6 @@
     <property name="server">
       <bean class="java.lang.management.ManagementFactory" factory-method="getPlatformMBeanServer"/>
     </property>
-  </bean>
-
-  <bean id="rowLockerMetrics" class="org.lilyproject.rowlock.RowLockerMetrics" destroy-method="shutdown">
-  </bean>
-
-  <bean id="rowLocker" class="org.lilyproject.rowlock.HBaseRowLocker">
-    <constructor-arg>
-      <bean class="org.lilyproject.util.hbase.LilyHBaseSchema" factory-method="getRecordTable">
-        <constructor-arg ref="hbaseTableFactory"/>
-      </bean>
-    </constructor-arg>
-    <constructor-arg value="data"/>
-    <constructor-arg value="lock"/>
-    <constructor-arg value="10000"/>
-    <constructor-arg ref="rowLockerMetrics"/>
   </bean>
 
   <bean id="indexerModel" class="org.lilyproject.indexer.model.impl.IndexerModelImpl">

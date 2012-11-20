@@ -52,10 +52,6 @@
       service="org.lilyproject.util.hbase.HBaseTableFactory"/>
 
   <kauri:import-service
-      id="rowLocker"
-      service="org.lilyproject.rowlock.RowLocker"/>
-
-  <kauri:import-service
       id="networkItfInfo"
       service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
@@ -125,7 +121,6 @@
         <constructor-arg ref="idGenerator"/>
         <constructor-arg ref="hbaseTableFactory"/>
         <constructor-arg ref="blobManager"/>
-        <constructor-arg ref="rowLocker"/>
       </bean>
     </constructor-arg>
   </bean>

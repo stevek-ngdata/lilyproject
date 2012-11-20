@@ -31,15 +31,10 @@ import org.junit.Test;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.*;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-import org.lilyproject.rowlock.HBaseRowLocker;
-import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.PrintUtil;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
@@ -83,9 +78,7 @@ public class TutorialTest {
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-        RowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
-                RecordColumn.LOCK.bytes, 10000);
-        repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager, rowLocker);
+        repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager);
 
     }
 

@@ -104,8 +104,8 @@ public class LilyHBaseSchema {
      * Columns in the record table.
      */
     public static enum RecordColumn {
+        OCC("occ"), // occ = optimistic concurrency control (a version counter)
         VERSION("version"),
-        LOCK("lock"),
         DELETED("deleted"),
         NON_VERSIONED_RT_ID("nv-rt"),
         NON_VERSIONED_RT_VERSION("nv-rtv"),

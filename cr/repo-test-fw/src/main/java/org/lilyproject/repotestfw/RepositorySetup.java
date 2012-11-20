@@ -52,8 +52,6 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.RemoteRepository;
 import org.lilyproject.repository.remote.RemoteTypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
-import org.lilyproject.rowlock.HBaseRowLocker;
-import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -73,7 +71,6 @@ public class RepositorySetup {
 
     private HBaseTableFactory hbaseTableFactory;
 
-    private RowLocker rowLocker;
     private IdGenerator idGenerator;
     private HBaseTypeManager typeManager;
     private RemoteTypeManager remoteTypeManager;
@@ -113,9 +110,6 @@ public class RepositorySetup {
 
         hbaseTableFactory = new HBaseTableFactoryImpl(hadoopConf);
 
-        rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
-                RecordColumn.LOCK.bytes, 10000);
-
         coreSetup = true;
     }
 
@@ -138,7 +132,7 @@ public class RepositorySetup {
         blobStoreAccessFactory = createBlobAccess();
         blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
 
-        repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager, rowLocker);
+        repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager);
         repository.setRecordUpdateHooks(recordUpdateHooks);
 
         repositorySetup = true;
@@ -318,10 +312,6 @@ public class RepositorySetup {
 
     public BlobManager getRemoteBlobManager() {
         return remoteBlobManager;
-    }
-
-    public RowLocker getRowLocker() {
-        return rowLocker;
     }
 
     private class RemoteTestSchemaCache extends AbstractSchemaCache implements SchemaCache {

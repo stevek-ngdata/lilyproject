@@ -64,6 +64,7 @@ import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
@@ -385,6 +386,14 @@ public abstract class BaseRepository implements Repository {
 
     protected Record read(RecordId recordId, Long requestedVersion, List<FieldType> fields, FieldTypes fieldTypes)
             throws RepositoryException, InterruptedException {
+        return readWithOcc(recordId, requestedVersion, fields, fieldTypes).getV1();
+    }
+
+    /**
+     * Returns both the record and its occ (optimistic concurrency control) version.
+     */
+    protected Pair<Record, Long> readWithOcc(RecordId recordId, Long requestedVersion, List<FieldType> fields,
+            FieldTypes fieldTypes) throws RepositoryException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             ArgumentValidator.notNull(recordId, "recordId");
@@ -401,7 +410,9 @@ public abstract class BaseRepository implements Repository {
                     throw new VersionNotFoundException(recordId, requestedVersion);
                 }
             }
-            return recdec.decodeRecord(recordId, requestedVersion, null, result, fieldTypes);
+
+            Long occ = Bytes.toLong(result.getValue(RecordCf.DATA.bytes, RecordColumn.OCC.bytes));
+            return new Pair<Record, Long>(recdec.decodeRecord(recordId, requestedVersion, null, result, fieldTypes), occ);
         } finally {
             if (metrics != null)
                 metrics.report(Action.READ, System.currentTimeMillis() - before);
