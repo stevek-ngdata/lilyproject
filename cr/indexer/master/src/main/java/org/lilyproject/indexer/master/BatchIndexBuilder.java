@@ -16,14 +16,9 @@
 package org.lilyproject.indexer.master;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.util.Enumeration;
 import java.util.Map;
 
 import net.iharder.Base64;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
@@ -48,8 +43,10 @@ public class BatchIndexBuilder {
      * @return the ID of the started job
      */
     public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf, Configuration hbaseConf,
-            Repository repository, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig,
-            byte[] batchIndexConfiguration, boolean enableLocking, HBaseTableFactory tableFactory) throws Exception {
+                                         Repository repository, String zkConnectString, int zkSessionTimeout,
+                                         SolrClientConfig solrConfig,
+                                         byte[] batchIndexConfiguration, boolean enableLocking,
+                                         HBaseTableFactory tableFactory) throws Exception {
 
         Configuration conf = new Configuration(mapReduceConf);
         Job job = new Job(conf, "BatchIndexBuild Job");
@@ -57,15 +54,8 @@ public class BatchIndexBuilder {
         //
         // Find and set the MapReduce job jar.
         //
-        Class mapperClass = IndexingMapper.class;
-        String jobJar = findContainingJar(mapperClass);
-        if (jobJar == null) {
-            // TODO
-            throw new RuntimeException("Job jar not found for class " + mapperClass);
-        }
-
-        job.getConfiguration().set("mapred.jar", jobJar);
-        job.setMapperClass(mapperClass);
+        job.setJarByClass(IndexingMapper.class);
+        job.setMapperClass(IndexingMapper.class);
 
         //
         // Pass information about the index to be built
@@ -88,9 +78,10 @@ public class BatchIndexBuilder {
         }
 
         if (index.getZkConnectionString() != null) {
-            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.solr.zkConnectionString", index.getZkConnectionString());
+            job.getConfiguration()
+                    .set("org.lilyproject.indexer.batchbuild.solr.zkConnectionString", index.getZkConnectionString());
         }
-        if (index.getSolrCollection() != null ) {
+        if (index.getSolrCollection() != null) {
             job.getConfiguration().set("org.lilyproject.indexer.batchbuild.solr.collection", index.getSolrCollection());
         }
 
@@ -157,29 +148,5 @@ public class BatchIndexBuilder {
         job.submit();
 
         return job;
-    }
-
-    /**
-     * This method was copied from Hadoop JobConf (Apache License).
-     */
-    private static String findContainingJar(Class my_class) {
-        ClassLoader loader = my_class.getClassLoader();
-        String class_file = my_class.getName().replaceAll("\\.", "/") + ".class";
-        try {
-            for (Enumeration itr = loader.getResources(class_file); itr.hasMoreElements(); ) {
-                URL url = (URL) itr.nextElement();
-                if ("jar".equals(url.getProtocol())) {
-                    String toReturn = url.getPath();
-                    if (toReturn.startsWith("file:")) {
-                        toReturn = toReturn.substring("file:".length());
-                    }
-                    toReturn = URLDecoder.decode(toReturn, "UTF-8");
-                    return toReturn.replaceAll("!.*$", "");
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return null;
     }
 }
