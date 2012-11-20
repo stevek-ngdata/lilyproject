@@ -88,11 +88,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rowlock</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
     </dependency>

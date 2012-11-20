@@ -199,8 +199,6 @@ public class RecordRowVisualizer extends BaseZkCliTool {
                 setSystemField("Versioned-mutable Record Type ID", column.getValue(), new RecordTypeValueDecoder(typeMgr));
             } else if (Arrays.equals(columnKey, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes)) {
                 setSystemField("Versioned-mutable Record Type Version", column.getValue(), LONG_DECODER);
-            } else if (Arrays.equals(columnKey, RecordColumn.LOCK.bytes)) {
-                setSystemField("Lock", column.getValue(), BASE64_DECODER);
             } else if (Arrays.equals(columnKey, RecordColumn.VERSION.bytes)) {
                 setSystemField("Record Version", column.getValue(), LONG_DECODER);
             } else {
