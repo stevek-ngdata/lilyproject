@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo 1>&2 `basename $0` "is no longer supported within Lily"
+exit 1
