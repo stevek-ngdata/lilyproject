@@ -33,8 +33,12 @@ public class LilyHBaseSchema {
 
     static {
         recordTableDescriptor = new HTableDescriptor(Table.RECORD.bytes);
-        recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.DATA.bytes,
-                HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
+        HColumnDescriptor dataCf = new HColumnDescriptor(RecordCf.DATA.bytes,
+                HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER);
+        dataCf.setScope(1); // replication scope: HBase docs: "a scope of 0 (default) means that it won't be
+                            // replicated and a scope of 1 means it's going to be. In the future, different scope can
+                            // be used for routing policies."
+        recordTableDescriptor.addFamily(dataCf);
     }
 
     private static final HTableDescriptor typeTableDescriptor;
@@ -104,7 +108,8 @@ public class LilyHBaseSchema {
      * Columns in the record table.
      */
     public static enum RecordColumn {
-        OCC("occ"), // occ = optimistic concurrency control (a version counter)
+        /** occ = optimistic concurrency control (a version counter) */
+        OCC("occ"),
         VERSION("version"),
         DELETED("deleted"),
         NON_VERSIONED_RT_ID("nv-rt"),
@@ -112,7 +117,9 @@ public class LilyHBaseSchema {
         VERSIONED_RT_ID("v-rt"),
         VERSIONED_RT_VERSION("v-rtv"),
         VERSIONED_MUTABLE_RT_ID("vm-rt"),
-        VERSIONED_MUTABLE_RT_VERSION("vm-rtv");
+        VERSIONED_MUTABLE_RT_VERSION("vm-rtv"),
+        /** payload for the event dispatcher */
+        PAYLOAD("pl");
 
         public final byte[] bytes;
         public final String name;

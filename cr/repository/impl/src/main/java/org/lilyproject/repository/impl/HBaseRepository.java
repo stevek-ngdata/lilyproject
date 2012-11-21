@@ -267,6 +267,7 @@ public class HBaseRepository extends BaseRepository {
                 // Reserve blobs so no other records can use them
                 reserveBlobs(null, referencedBlobs);
 
+                put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
                 put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
                 boolean success = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
                         oldOcc == -1 ? null : Bytes.toBytes(oldOcc), put);
@@ -400,6 +401,7 @@ public class HBaseRepository extends BaseRepository {
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
 
+                put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
                 put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
                 boolean occSuccess = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
                         Bytes.toBytes(oldOcc), put);
@@ -795,6 +797,7 @@ public class HBaseRepository extends BaseRepository {
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
 
+                put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
                 put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
                 boolean occSuccess = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
                         Bytes.toBytes(oldOcc), put);
