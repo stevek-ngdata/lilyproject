@@ -15,24 +15,33 @@
  */
 package org.lilyproject.hadooptestfw;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hbase.*;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
 import org.lilyproject.util.test.TestHomeUtil;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
 
 /**
  * Provides access to HBase, either by starting an embedded HBase or by connecting to a running HBase.
@@ -54,7 +63,8 @@ public class HBaseProxy {
     private boolean format;
     private Log log = LogFactory.getLog(getClass());
 
-    public enum Mode { EMBED, CONNECT }
+    public enum Mode {EMBED, CONNECT}
+
     public static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
 
     public HBaseProxy() throws IOException {
@@ -64,16 +74,17 @@ public class HBaseProxy {
     public HBaseProxy(Mode mode) throws IOException {
         this(mode, true);
     }
-    
+
     /**
      * Creates new HBaseProxy
-     * @param mode either EMBED or CONNECT
+     *
+     * @param mode      either EMBED or CONNECT
      * @param clearData if true, clears the data directories upon shutdown
      * @throws IOException
      */
     public HBaseProxy(Mode mode, boolean clearData) throws IOException {
         this.clearData = clearData;
-        
+
         if (mode == null) {
             String hbaseModeProp = System.getProperty(HBASE_MODE_PROP_NAME);
             if (hbaseModeProp == null || hbaseModeProp.equals("") || hbaseModeProp.equals("embed")) {
@@ -100,7 +111,7 @@ public class HBaseProxy {
             testHome = TestHomeUtil.createTestHome("lily-hbaseproxy-");
         }
 
-        if (!testHome.exists()) 
+        if (!testHome.exists())
             format = true; // A new directory: the NameNode and DataNodes will have to be formatted first
         FileUtils.forceMkdir(testHome);
     }
@@ -126,7 +137,6 @@ public class HBaseProxy {
     }
 
     /**
-     *
      * @param timestampReusingTables map containing table name as key and column family as value. Since HBase does
      *                               not support supporting writing data older than a deletion thombstone, these tables
      *                               will be compacted and waited for until inserting data works again.
@@ -150,6 +160,8 @@ public class HBaseProxy {
                 if (enableMapReduce) {
                     hbaseTestUtil.startMiniMapReduceCluster(1);
                 }
+
+                writeConfiguration(testHome, conf);
 
                 // In the past, it happened that HMaster would not become initialized, blocking later on
                 // the proper shutdown of the mini cluster. Now added this as an early warning mechanism.
@@ -186,10 +198,35 @@ public class HBaseProxy {
         }
     }
 
+    /**
+     * Dumps the hadoop and hbase configuration. Useful as a reference if other applications want to use the
+     * same configuration to connect with the hadoop cluster.
+     *
+     * @param testHome directory in which to dump the configuration (it will create a conf subdir inside)
+     * @param conf     the configuration
+     */
+    private void writeConfiguration(File testHome, Configuration conf) throws IOException {
+        final File confDir = new File(testHome, "conf");
+        final boolean confDirCreated = confDir.mkdir();
+        if (!confDirCreated)
+            throw new IOException("failed to create " + confDir);
+
+        // dumping everything into multiple xxx-site.xml files.. so that the expected files are definitely there
+        for (String filename : Arrays.asList("core-site.xml", "mapred-site.xml")) {
+            final BufferedOutputStream out =
+                    new BufferedOutputStream(new FileOutputStream(new File(confDir, filename)));
+            try {
+                conf.writeXml(out);
+            } finally {
+                out.close();
+            }
+        }
+    }
+
     public String getZkConnectString() {
         return conf.get("hbase.zookeeper.quorum") + ":" + conf.get("hbase.zookeeper.property.clientPort");
     }
-    
+
     /**
      * Adds all system property prefixed with "lily.test.hbase." to the HBase configuration.
      */
@@ -243,7 +280,8 @@ public class HBaseProxy {
                 System.err.println("Unable to stop embedded mini cluster within predetermined timeout.");
                 System.err.println("Dumping stack for future investigation.");
                 ReflectionUtils.printThreadInfo(new PrintWriter(System.out), "Thread dump");
-                System.out.println("Will now try to interrupt the mini-cluster-stop-thread and give it some more time to end.");
+                System.out.println(
+                        "Will now try to interrupt the mini-cluster-stop-thread and give it some more time to end.");
                 stopHBaseThread.interrupt();
                 stopHBaseThread.join(20000);
                 throw new Exception("Failed to stop the mini cluster within the predetermined timeout.");
@@ -281,10 +319,10 @@ public class HBaseProxy {
             return FileSystem.get(new URI(dfsUri), getConf());
         }
     }
-    
+
     /**
      * Cleans all data from the hbase tables.
-     * 
+     *
      * <p>Should only be called when lily-server is not running.
      */
     public void cleanTables() throws Exception {
@@ -293,7 +331,7 @@ public class HBaseProxy {
 
     /**
      * Cleans all blobs from the hdfs blobstore
-     * 
+     *
      * <p>Should only be called when lily-server is not running.
      */
     public void cleanBlobStore() throws Exception {
@@ -302,7 +340,7 @@ public class HBaseProxy {
 
     /**
      * Waits for all messages from the WAL and MQ to be processed.
-     * 
+     *
      * @param timeout the maximum time to wait
      * @return false if the timeout was reached before all messages were processed
      */
@@ -313,10 +351,10 @@ public class HBaseProxy {
         long duration = System.currentTimeMillis() - before;
         return waitMQMessagesProcessed(timeout - duration);
     }
-    
+
     /**
      * Waits for all messages from the WAL to be processed.
-     * 
+     *
      * @param timeout the maximum time to wait
      * @return false if the timeout was reached before all messages were processed
      */
@@ -332,7 +370,7 @@ public class HBaseProxy {
 
     /**
      * Waits for all messages from the MQ to be processed.
-     * 
+     *
      * @param timeout the maximum time to wait
      * @return false if the timeout was reached before all messages were processed
      */
@@ -345,7 +383,7 @@ public class HBaseProxy {
             hTable.close();
         }
     }
-    
+
     private boolean waitRowLogMessagesProcessed(long timeout, HTable hTable) throws Exception {
         if (log.isDebugEnabled()) {
             log.debug("Begin waiting on " + Bytes.toString(hTable.getTableName()));

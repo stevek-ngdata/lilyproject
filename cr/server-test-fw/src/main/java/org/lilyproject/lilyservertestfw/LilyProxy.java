@@ -34,9 +34,9 @@ import org.lilyproject.util.test.TestHomeUtil;
 
 public class LilyProxy {
     /**
-     * 
+     *
      */
-    private static final String TEMP_DIR_PREFIX = "lily-proxy-";
+    public static final String TEMP_DIR_PREFIX = "lily-proxy-";
     private HBaseProxy hbaseProxy;
     private LilyServerProxy lilyServerProxy;
     private SolrProxy solrProxy;
@@ -46,7 +46,8 @@ public class LilyProxy {
     private boolean hasBeenStarted = false;
     private boolean clearData = true;
 
-    public enum Mode { EMBED, CONNECT, HADOOP_CONNECT }
+    public enum Mode {EMBED, CONNECT, HADOOP_CONNECT}
+
     public static String MODE_PROP_NAME = "lily.lilyproxy.mode";
     public static String TESTHOME_PROP_NAME = "lily.lilyproxy.dir";
     public static String CLEARDATA_PROP_NAME = "lily.lilyproxy.clear";
@@ -62,10 +63,11 @@ public class LilyProxy {
 
     /**
      * Creates a new LilyProxy
-     * @param mode either EMBED, CONNECT or HADOOP_CONNECT
-     * @param testHome the directory in which to store data and logfiles. Can only be used in EMBED mode.
-     * @param clearData if true, clear the data when stopping the LilyProxy. 
-     *        Should be used together with the testHome parameter and can only be used in EMBED mode.
+     *
+     * @param mode      either EMBED, CONNECT or HADOOP_CONNECT
+     * @param testHome  the directory in which to store data and logfiles. Can only be used in EMBED mode.
+     * @param clearData if true, clear the data when stopping the LilyProxy.
+     *                  Should be used together with the testHome parameter and can only be used in EMBED mode.
      * @throws IOException
      */
     public LilyProxy(Mode mode, File testHome, Boolean clearData) throws IOException {
@@ -91,7 +93,7 @@ public class LilyProxy {
             if (testHomeProp != null)
                 setTestHome(new File(testHomeProp));
         }
-        
+
         if (clearData != null) {
             this.clearData = clearData;
         } else {
@@ -153,7 +155,7 @@ public class LilyProxy {
         if (solrSchemaData != null || solrConfigData != null) {
             start(new SolrDefinition(solrSchemaData, solrConfigData));
         } else {
-            start((SolrDefinition)null);
+            start((SolrDefinition) null);
         }
     }
 
@@ -181,11 +183,13 @@ public class LilyProxy {
             System.out.println("Calling reset state flag on externally launched Lily...");
             try {
                 String hostport = "localhost:10102";
-                JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://" + hostport + "/jmxrmi");
+                JMXServiceURL url =
+                        new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://" + hostport + "/jmxrmi");
                 JMXConnector connector = JMXConnectorFactory.connect(url);
                 connector.connect();
                 ObjectName lilyLauncher = new ObjectName("LilyLauncher:name=Launcher");
-                connector.getMBeanServerConnection().invoke(lilyLauncher, "resetLilyState", new Object[0], new String[0]);
+                connector.getMBeanServerConnection()
+                        .invoke(lilyLauncher, "resetLilyState", new Object[0], new String[0]);
                 connector.close();
             } catch (Exception e) {
                 throw new Exception("Resetting Lily state failed.", e);
@@ -196,13 +200,13 @@ public class LilyProxy {
         if (mode == Mode.EMBED || mode == Mode.HADOOP_CONNECT) {
             if (testHome == null)
                 testHome = TestHomeUtil.createTestHome(TEMP_DIR_PREFIX);
-            
+
             if (mode == Mode.EMBED)
                 hbaseProxy.setTestHome(new File(testHome, TemplateDir.HADOOP_DIR));
             solrProxy.setTestHome(new File(testHome, TemplateDir.SOLR_DIR));
             lilyServerProxy.setTestHome(new File(testHome, TemplateDir.LILYSERVER_DIR));
         }
-        
+
         if (mode == Mode.EMBED && Boolean.parseBoolean(System.getProperty(RESTORE_TEMPLATE_DIR_PROP_NAME, "true"))) {
             TemplateDir.restoreTemplateDir(testHome);
         }
@@ -211,7 +215,7 @@ public class LilyProxy {
         solrProxy.start(solrDef);
         lilyServerProxy.start();
     }
-    
+
     public void stop() throws Exception {
         Closer.close(lilyServerProxy);
         Closer.close(solrProxy);
@@ -225,13 +229,15 @@ public class LilyProxy {
                 // since deleting the folder often fails in Windows.
                 // Throwing the exception would also fail the testcase although
                 // it is only the cleanup of the temporary folder that failed.
-                System.out.println("Warning! LilyProxy.stop() failed to delete folder: " + testHome.getAbsolutePath() + ", " + e.getMessage());
+                System.out.println(
+                        "Warning! LilyProxy.stop() failed to delete folder: " + testHome.getAbsolutePath() + ", " +
+                                e.getMessage());
             }
         }
 
         started = false;
     }
-    
+
     public void setTestHome(File testHome) throws IOException {
         if (mode != Mode.EMBED) {
             throw new RuntimeException("testHome should only be set when mode is EMBED");
@@ -239,11 +245,15 @@ public class LilyProxy {
         this.testHome = testHome;
         System.setProperty("test.build.data", testHome.getAbsolutePath());
     }
-    
+
+    public File getTestHome() {
+        return testHome;
+    }
+
     public void cleanOldTmpDirs() {
         if (clearData) {
             File tempDirectory = FileUtils.getTempDirectory();
-            File[] files = tempDirectory.listFiles((FilenameFilter)new PrefixFileFilter(TEMP_DIR_PREFIX));
+            File[] files = tempDirectory.listFiles((FilenameFilter) new PrefixFileFilter(TEMP_DIR_PREFIX));
             for (File file : files) {
                 FileUtils.deleteQuietly(file);
             }
@@ -261,10 +271,10 @@ public class LilyProxy {
     public SolrProxy getSolrProxy() {
         return solrProxy;
     }
-    
+
     /**
      * Waits for all messages from the WAL and MQ to be processed and optionally commits the solr index.
-     * 
+     *
      * @param timeout the maximum time to wait
      * @param
      * @return false if the timeout was reached before all messages were processed
@@ -275,10 +285,10 @@ public class LilyProxy {
             solrProxy.commit();
         return result;
     }
-    
+
     /**
      * Waits for all messages from the WAL and MQ to be processed and commits the solr index by default.
-     * 
+     *
      * @param timeout the maximum time to wait
      * @param
      * @return false if the timeout was reached before all messages were processed

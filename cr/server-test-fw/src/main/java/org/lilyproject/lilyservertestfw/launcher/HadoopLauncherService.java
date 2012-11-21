@@ -15,10 +15,7 @@
  */
 package org.lilyproject.lilyservertestfw.launcher;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
@@ -107,32 +104,7 @@ public class HadoopLauncherService implements LauncherService {
             postStartupInfo.add("");
         }
 
-        writeConfiguration(testHome, conf);
-
         return 0;
-    }
-
-    /**
-     * Dumps the hadoop and hbase configuration. Useful as a reference if other applications want to use the
-     * same configuration to connect with the hadoop cluster.
-     *
-     * @param testHome directory in which to dump the configuration (it will create a conf subdir inside)
-     * @param conf     the configuration
-     */
-    private void writeConfiguration(File testHome, Configuration conf) throws IOException {
-        final File confDir = new File(testHome, "conf");
-        final boolean confDirCreated = confDir.mkdir();
-        if (!confDirCreated)
-            throw new IOException("failed to create " + confDir);
-
-        // dumping everything into hadoop-site.xml, assuming the actual file name shouldn't matter
-        final BufferedOutputStream out =
-                new BufferedOutputStream(new FileOutputStream(new File(confDir, "hadoop-site.xml")));
-        try {
-            conf.writeXml(out);
-        } finally {
-            out.close();
-        }
     }
 
     @Override
