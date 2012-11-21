@@ -75,6 +75,8 @@ public class HBaseTestingUtilityFactory {
         // on the next startup (and even then, I've seen data loss, maybe sync is not active for the mini cluster?).
         conf.set("fs.automatic.close", "false");
 
+        conf.set("hbase.replication", "true");
+
         return new HBaseTestingUtility(conf, clearData);
     }
 
