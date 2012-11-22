@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 /*
- * Copyright 2010 Outerthought bvba
+ * Copyright 2012 NGDATA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-indexer-master</artifactId>
-  <name>Lily: Indexer: Master</name>
+  <artifactId>lily-sep-impl</artifactId>
+  <name>Lily: Side Effect Processor: impl</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily-indexer</artifactId>
-    <version>2.2-SNAPSHOT</version>
+    <artifactId>lily</artifactId>
+    <version>1.4-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -36,29 +36,17 @@
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
+      <artifactId>lily-hbase-client</artifactId>
+    </dependency>
+
+    <!-- Note: sep should only depend on 'global' stuff, not on Lily repository itself -->
+    <dependency>
+      <groupId>org.lilyproject</groupId>
       <artifactId>lily-zk-util</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-indexer-model</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-sep-impl</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-indexer-batchbuild</artifactId>
-      <classifier>mapreduce-job</classifier>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repo-test-fw</artifactId>
-      <scope>test</scope>
+      <artifactId>lily-hbase-util</artifactId>
     </dependency>
   </dependencies>
 

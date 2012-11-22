@@ -105,6 +105,7 @@
     <module>global/clientmetrics</module>
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
+    <module>global/sep</module>
 
     <module>tools/lily-kauri-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
@@ -439,6 +440,11 @@
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-scan-records</artifactId>
         <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-sep-impl</artifactId>
+        <version>1.4-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.apache.zookeeper</groupId>

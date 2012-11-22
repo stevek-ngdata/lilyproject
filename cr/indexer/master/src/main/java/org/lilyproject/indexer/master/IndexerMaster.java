@@ -57,6 +57,7 @@ import org.lilyproject.indexer.model.api.IndexerModelEventType;
 import org.lilyproject.indexer.model.api.IndexerModelListener;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.sep.impl.SepModel;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -115,8 +116,9 @@ public class IndexerMaster {
 
     private final String nodes;
 
-
     private byte[] fullTableScanConf;
+
+    private SepModel sepModel;
 
     public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Repository repository,
             Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
@@ -138,6 +140,7 @@ public class IndexerMaster {
         this.hostName = hostName;
         this.tableFactory = tableFactory;
         this.nodes = nodes;
+        this.sepModel = new SepModel(zk, hbaseConf);
     }
 
     @PostConstruct
@@ -253,6 +256,7 @@ public class IndexerMaster {
                     String subscriptionId = subscriptionId(index.getName());
                     // FIXME ROWLOG REFACTORING take MQ subscription
                     // rowLogConfMgr.addSubscription("mq", subscriptionId, RowLogSubscription.Type.Netty, 1);
+                    sepModel.addSubscription(subscriptionId);
                     index.setQueueSubscriptionId(subscriptionId);
                     indexerModel.updateIndexInternal(index);
                     log.info("Assigned queue subscription ID '" + subscriptionId + "' to index '" + indexName + "'");
@@ -274,6 +278,7 @@ public class IndexerMaster {
                 if (needsSubscriptionIdUnassigned(index)) {
                     // FIXME ROWLOG REFACTORING remove MQ subscription
                     // rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
+                    sepModel.removeSubscription(index.getQueueSubscriptionId());
                     log.info("Deleted queue subscription for index " + indexName);
                     index.setQueueSubscriptionId(null);
                     indexerModel.updateIndexInternal(index);
