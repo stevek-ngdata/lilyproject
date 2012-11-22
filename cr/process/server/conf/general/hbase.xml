@@ -24,6 +24,10 @@
       <name>hbase.zookeeper.property.clientPort</name>
       <value>2181</value>
     </property>
+    <property>
+      <name>hbase.replication</name>
+      <value>true</value>
+    </property>
 
     <!-- You can add other HBase client properties here too, for
          example to control the number of retries.-->
