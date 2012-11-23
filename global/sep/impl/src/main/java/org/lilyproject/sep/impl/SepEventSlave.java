@@ -1,5 +1,6 @@
 package org.lilyproject.sep.impl;
 
+import com.google.common.base.Preconditions;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import org.apache.commons.logging.Log;
@@ -48,6 +49,7 @@ public class SepEventSlave extends BaseHRegionServer {
      */
     public SepEventSlave(String subscriptionId, EventListener listener, int threadCnt, String hostName, ZooKeeperItf zk,
             Configuration hbaseConf) {
+        Preconditions.checkArgument(threadCnt > 0, "Thread count must be > 0");
         this.subscriptionId = subscriptionId;
         this.listener = listener;
         this.hostName = hostName;
@@ -103,7 +105,7 @@ public class SepEventSlave extends BaseHRegionServer {
                 if (kv.matchingColumn(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes)) {
                     // We don't want messages of the same row to be processed concurrently, therefore choose
                     // a thread based on the hash of the row key
-                    int partition = Math.abs(hashFunction.hashBytes(kv.getRow()).asInt()) % threadCnt;
+                    int partition = (hashFunction.hashBytes(kv.getRow()).asInt() & Integer.MAX_VALUE) % threadCnt;
                     Future future = executors.get(partition).submit(new Runnable() {
                         @Override
                         public void run() {
