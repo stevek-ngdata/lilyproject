@@ -378,6 +378,7 @@ public class IndexerMaster {
                 if (queueSubscriptionId != null) {
                     // FIXME ROWLOG REFACTORING remove MQ subscription
                     //rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
+                    sepModel.removeSubscription(index.getQueueSubscriptionId());
                     // We leave the subscription ID in the index definition FYI
                 }
 
