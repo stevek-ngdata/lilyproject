@@ -15,6 +15,26 @@
  */
 package org.lilyproject.repository.impl;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PreDestroy;
+
 import com.google.common.collect.Sets;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
@@ -25,16 +45,19 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.data.Stat;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeBucket;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
 
 
 public abstract class AbstractSchemaCache implements SchemaCache {
@@ -50,8 +73,8 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     private RecordTypesCache recordTypes = new RecordTypesCache();
 
-    private Set<CacheWatcher> cacheWatchers = new HashSet<CacheWatcher>();
-    private Map<String, Integer> bucketVersions = new HashMap<String, Integer>();
+    private Set<CacheWatcher> cacheWatchers = Collections.synchronizedSet(new HashSet<CacheWatcher>());
+    private Map<String, Integer> bucketVersions = new ConcurrentHashMap<String, Integer>();
     private ParentWatcher parentWatcher = new ParentWatcher();
     private Integer parentVersion = null;
 
@@ -128,13 +151,32 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         cacheRefresher.start();
 
         ZkUtil.createPath(zooKeeper, CACHE_INVALIDATION_PATH);
+        final ExecutorService threadPool = Executors.newFixedThreadPool(50);
+        final List<Future> futures = new ArrayList<Future>();
         for (int i = 0; i < 16; i++) {
-            for (int j = 0; j < 16; j++) {
-                String bucket = "" + DIGITS_LOWER[i] + DIGITS_LOWER[j];
-                ZkUtil.createPath(zooKeeper, bucketPath(bucket));
-                cacheWatchers.add(new CacheWatcher(bucket));
+            final int index = i;
+            futures.add(threadPool.submit(new Callable<Void>() {
+                @Override
+                public Void call() throws InterruptedException, KeeperException, RepositoryException {
+                    for (int j = 0; j < 16; j++) {
+                        String bucket = "" + DIGITS_LOWER[index] + DIGITS_LOWER[j];
+                        ZkUtil.createPath(zooKeeper, bucketPath(bucket));
+                        cacheWatchers.add(new CacheWatcher(bucket));
+                    }
+
+                    return null;
+                }
+            }));
+        }
+        for (Future future : futures) {
+            try {
+                future.get();
+            } catch (ExecutionException e) {
+                throw new RuntimeException("failed to start cache", e);
             }
         }
+        threadPool.shutdown();
+        threadPool.awaitTermination(1, TimeUnit.HOURS);
         ZkUtil.createPath(zooKeeper, CACHE_REFRESHENABLED_PATH);
         connectionWatcher = new ConnectionWatcher();
         zooKeeper.addDefaultWatcher(connectionWatcher);
@@ -260,26 +302,38 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             if (log.isDebugEnabled())
                 log.debug("Refreshing all types in the schema cache, no bucket versions known yet");
             // Set a watch again on all buckets
-            for (CacheWatcher watcher : cacheWatchers) {
-                String bucketId = watcher.getBucket();
-                String bucketPath = bucketPath(bucketId);
-                Stat stat = new Stat();
-                try {
-                    ZkUtil.getData(zooKeeper, bucketPath, watcher, stat);
-                    bucketVersions.put(bucketId, stat.getVersion());
-                } catch (KeeperException e) {
-                    if (Thread.currentThread().isInterrupted()) {
-                        if (log.isDebugEnabled())
-                            log.debug("Failed to put watcher on bucket " + bucketPath + " : thread interrupted");
-                    } else {
-                        log.warn("Failed to put watcher on bucket " + bucketPath
-                                         + " - Relying on connection watcher to reinitialize cache", e);
-                        // Failed to put our watcher.
-                        // Relying on the ConnectionWatcher to put it again and
-                        // initialize the caches.
+            final ExecutorService sixteenThreads = Executors.newFixedThreadPool(50);
+            for (final CacheWatcher watcher : cacheWatchers) {
+                sixteenThreads.submit(new Callable<Void>() {
+                    @Override
+                    public Void call() throws Exception {
+                        String bucketId = watcher.getBucket();
+                        String bucketPath = bucketPath(bucketId);
+                        Stat stat = new Stat();
+                        try {
+                            ZkUtil.getData(zooKeeper, bucketPath, watcher, stat);
+                            bucketVersions.put(bucketId, stat.getVersion());
+                        } catch (KeeperException e) {
+                            if (Thread.currentThread().isInterrupted()) {
+                                if (log.isDebugEnabled())
+                                    log.debug(
+                                            "Failed to put watcher on bucket " + bucketPath + " : thread interrupted");
+                            } else {
+                                log.warn("Failed to put watcher on bucket " + bucketPath
+                                        + " - Relying on connection watcher to reinitialize cache", e);
+                                // Failed to put our watcher.
+                                // Relying on the ConnectionWatcher to put it again and
+                                // initialize the caches.
+                            }
+                        }
+
+                        return null;
                     }
-                }
+                });
             }
+            sixteenThreads.shutdown();
+            sixteenThreads.awaitTermination(1, TimeUnit.HOURS);
+
             // Read all types in one go
             Pair<List<FieldType>, List<RecordType>> types = getTypeManager().getTypesWithoutCache();
             fieldTypesCache.refreshFieldTypes(types.getV1());
@@ -309,7 +363,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                             log.debug("Failed to put watcher on bucket " + bucketPath + " : thread is interrupted");
                     } else {
                         log.warn("Failed to put watcher on bucket " + bucketPath
-                                         + " - Relying on connection watcher to reinitialize cache", e);
+                                + " - Relying on connection watcher to reinitialize cache", e);
                         // Failed to put our watcher.
                         // Relying on the ConnectionWatcher to put it again and
                         // initialize the caches.
@@ -359,7 +413,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                         log.debug("Failed to put watcher on bucket " + bucketPath + " : thread is interrupted");
                 } else {
                     log.warn("Failed to put watcher on bucket " + bucketPath
-                                     + " - Relying on connection watcher to reinitialize cache", e);
+                            + " - Relying on connection watcher to reinitialize cache", e);
                     // Failed to put our watcher.
                     // Relying on the ConnectionWatcher to put it again and
                     // initialize the caches.
@@ -399,7 +453,8 @@ public abstract class AbstractSchemaCache implements SchemaCache {
      * {@link #needsRefresh} on the CacheRefresher, setting the needsRefresh flag. This is the only thing the
      * CacheWatcher does. Thereby it can return quickly when it received an event.<br/>
      * <p/>
-     * The CacheRefresher in its turn will notice the needsRefresh flag being set and will refresh the cache. It runs in
+     * The CacheRefresher in its turn will notice the needsRefresh flag being set and will refresh the cache. It runs
+     * in
      * a separate thread so that we can avoid that the refresh work would be done in the thread of the watcher.
      */
     private class CacheRefresher implements Runnable {
@@ -508,8 +563,8 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                                         parentVersion = null;
                                         if (log.isDebugEnabled())
                                             log.debug("One or more LilyNodes stopped. "
-                                                              +
-                                                              "Refreshing cache to cover possibly missed refresh triggers");
+                                                    +
+                                                    "Refreshing cache to cover possibly missed refresh triggers");
                                     }
                                     knownLilyNodes.clear();
                                     knownLilyNodes.addAll(lilyNodes);
