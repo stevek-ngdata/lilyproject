@@ -207,7 +207,8 @@
     "delete": {
       "request": [
         {"name": "recordId", "type": "bytes"},
-        {"name": "conditions", "type": [{"type": "array", "items": "AvroMutationCondition"}, "null"]}
+        {"name": "conditions", "type": [{"type": "array", "items": "AvroMutationCondition"}, "null"]},
+        {"name": "attributes", "type": [{"type": "map", "values": "string"}, "null"]}
       ],
       "response": ["null", "bytes"],
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]

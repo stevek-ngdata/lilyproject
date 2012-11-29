@@ -896,9 +896,37 @@ public abstract class AbstractRepositoryTest {
     }
 
     @Test
-    public void testDeleteRecord() throws Exception {
+    public void testDeleteRecordById() throws Exception {
         Record record = createDefaultRecord();
         repository.delete(record.getId());
+        try {
+            if (avro)
+                System.out.println("Expecting RecordNotFoundException");
+            repository.read(record.getId());
+            fail();
+        } catch (RecordNotFoundException expected) {
+        }
+        try {
+            if (avro)
+                System.out.println("Expecting RecordNotFoundException");
+            repository.update(record);
+            fail();
+        } catch (RecordNotFoundException expected) {
+        }
+        try {
+            if (avro)
+                System.out.println("Expecting RecordNotFoundException");
+            repository.delete(record.getId());
+            fail();
+        } catch (RecordNotFoundException expected) {
+        }
+    }
+    
+
+    @Test
+    public void testDeleteRecord() throws Exception {
+        Record record = createDefaultRecord();
+        repository.delete(record);
         try {
             if (avro)
                 System.out.println("Expecting RecordNotFoundException");

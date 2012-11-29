@@ -18,11 +18,13 @@ package org.lilyproject.avro;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.avro.AvroRemoteException;
 import org.lilyproject.indexer.Indexer;
 import org.lilyproject.indexer.IndexerException;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TypeBucket;
@@ -66,11 +68,25 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer delete(ByteBuffer recordId, List<AvroMutationCondition> conditions)
+    public ByteBuffer delete(ByteBuffer recordId, List<AvroMutationCondition> conditions, 
+                            Map<String,String> attributes)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
-            Record record =
-                    repository.delete(converter.convertAvroRecordId(recordId), converter.convertFromAvro(conditions));
+            RecordId decodedRecordId = converter.convertAvroRecordId(recordId);
+            
+            
+            Record record = null;
+            if (attributes == null) {
+                record = repository.delete(decodedRecordId, converter.convertFromAvro(conditions));
+            } else if (conditions == null) {
+                Record toDelete = repository.newRecord(decodedRecordId);
+                toDelete.setAttributes(attributes);
+                repository.delete(toDelete);
+            } else {
+                // There is no API call where a full record and MutationConditions can be supplied, so
+                // something has gone wrong if we get here
+                throw new IllegalStateException("Cannot delete a full record with MutationConditions");
+            }
             return record == null ? null : converter.convert(record);
         } catch (RepositoryException e) {
             throw converter.convert(e);

@@ -24,13 +24,12 @@ import java.util.Set;
 
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
-import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.avro.AvroGenericException;
 import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.AvroRepositoryException;
-import org.lilyproject.avro.NettyTransceiverFactory;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IORecordException;
 import org.lilyproject.repository.api.IdGenerator;
@@ -58,19 +57,21 @@ public class RemoteRepository extends BaseRepository {
     public RemoteRepository(InetSocketAddress address, AvroConverter converter, RemoteTypeManager typeManager,
                             IdGenerator idGenerator, BlobManager blobManager, Configuration hbaseConf)
             throws IOException, InterruptedException {
-
+        this(new AvroLilyTransceiver(address), converter, typeManager, idGenerator, blobManager, 
+                    LilyHBaseSchema.getRecordTable(new HBaseTableFactoryImpl(hbaseConf), true));
+    }
+    
+    protected RemoteRepository(AvroLilyTransceiver lilyTransceiver, AvroConverter converter, RemoteTypeManager typeManager,
+                                IdGenerator idGenerator, BlobManager blobManager, HTableInterface recordTable)
+                throws IOException, InterruptedException {
         // true flag to getRecordTable: we don't let the remote side create the record table if it
         // would not yet exist, as it is not aware of creation parameters (such as splits, compression, etc.)
-        super(typeManager, blobManager, idGenerator,
-                LilyHBaseSchema.getRecordTable(new HBaseTableFactoryImpl(hbaseConf), true), null);
-
+        super(typeManager, blobManager, idGenerator, recordTable, null);
         this.converter = converter;
-
-        //client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
-        client = NettyTransceiverFactory.create(address);
-
-        lilyProxy = SpecificRequestor.getClient(AvroLily.class, client);
+        client = lilyTransceiver.getTransceiver();
+        lilyProxy = lilyTransceiver.getLilyProxy();
     }
+    
 
     @Override
     public void close() throws IOException {
@@ -102,7 +103,7 @@ public class RemoteRepository extends BaseRepository {
     public Record delete(RecordId recordId, List<MutationCondition> conditions)
             throws RepositoryException, InterruptedException {
         try {
-            ByteBuffer record = lilyProxy.delete(converter.convert(recordId), converter.convert(null, conditions));
+            ByteBuffer record = lilyProxy.delete(converter.convert(recordId), converter.convert(null, conditions), null);
             return record == null ? null : converter.convertRecord(record);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
@@ -118,7 +119,7 @@ public class RemoteRepository extends BaseRepository {
     @Override
     public void delete(RecordId recordId) throws RepositoryException, InterruptedException {
         try {
-            lilyProxy.delete(converter.convert(recordId), null);
+            lilyProxy.delete(converter.convert(recordId), null, null);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -133,7 +134,7 @@ public class RemoteRepository extends BaseRepository {
     @Override
     public void delete(Record record) throws RepositoryException, InterruptedException {
         try {
-            lilyProxy.delete(converter.convert(record), null);
+            lilyProxy.delete(converter.convert(record.getId()), null, record.getAttributes());
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
