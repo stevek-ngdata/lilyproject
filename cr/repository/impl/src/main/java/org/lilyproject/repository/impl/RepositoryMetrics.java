@@ -19,6 +19,10 @@ import java.util.EnumMap;
 
 import javax.management.ObjectName;
 
+import org.apache.commons.lang.StringUtils;
+
+import org.apache.hadoop.metrics.util.MetricsLongValue;
+
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
 import org.apache.hadoop.metrics.MetricsUtil;
@@ -36,7 +40,9 @@ public class RepositoryMetrics implements Updater {
     private final MetricsRecord metricsRecord;
     private final MetricsContext context;
     private final EnumMap<Action, MetricsTimeVaryingRate> rates = new EnumMap<Action, MetricsTimeVaryingRate>(Action.class);
-    private final EnumMap<HBaseAction, MetricsTimeVaryingRate> hbaseRates = new EnumMap<HBaseAction, MetricsTimeVaryingRate>(HBaseAction.class);
+    private final EnumMap<Action, MetricsLongValue> lastOperationTimestamps = new EnumMap<Action, MetricsLongValue>(Action.class);
+    private final EnumMap<HBaseAction, MetricsTimeVaryingRate> hbaseRates = 
+                new EnumMap<HBaseAction, MetricsTimeVaryingRate>(HBaseAction.class);
     private final RepositoryMetricsMXBean mbean;
     private final String recordName;
 
@@ -44,6 +50,9 @@ public class RepositoryMetrics implements Updater {
         this.recordName = recordName;
         for (Action action : Action.values()) {
             rates.put(action, new MetricsTimeVaryingRate(action.name().toLowerCase(), registry));
+            lastOperationTimestamps.put(action,
+                    new MetricsLongValue("timestampLast" + StringUtils.capitalize(action.name().toLowerCase()),
+                            registry));
         }
 
         for (HBaseAction action : HBaseAction.values()) {
@@ -73,6 +82,7 @@ public class RepositoryMetrics implements Updater {
 
     void report(Action action, long duration) {
         rates.get(action).inc(duration);
+        lastOperationTimestamps.get(action).set(System.currentTimeMillis());
     }
 
     void reportHBase(HBaseAction action, long duration) {

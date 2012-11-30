@@ -22,11 +22,11 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.management.MBeanServerConnection;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
@@ -379,15 +379,16 @@ public class LilyServerProxy {
         // FIXME ROWLOG REFACTORING
         // waitOnMQSubscriptionInt(subscriptionId, waitUntilAvailable, System.currentTimeMillis() + timeOut);
     }
-
+    
     public void waitOnIndexerRegistry(String indexName, long tryUntil) throws Exception {
-        JmxLiaison jmxLiaison = new JmxLiaison("Lily:name=Indexer");
+        JmxLiaison jmxLiaison = new JmxLiaison();
+        ObjectName indexerObjectName = new ObjectName("Lily:name=Indexer");
 
         try {
             jmxLiaison.connect();
 
             while (System.currentTimeMillis() < tryUntil) {
-                Set<String> subscriptionIds = (Set<String>)jmxLiaison.getAttribute("IndexNames");
+                Set<String> subscriptionIds = (Set<String>)jmxLiaison.getAttribute(indexerObjectName, "IndexNames");
                 if (subscriptionIds.contains(indexName)) {
                     return;
                 }
@@ -398,19 +399,64 @@ public class LilyServerProxy {
             jmxLiaison.disconnect();
         }
     }
+    
+    /**
+     * Wait until all Secondary Event Processing (SEP) events have been processed. This typically corresponds to 
+     * the indexing of content.
+     * 
+     * @param timeout The maximum amount of time to wait, in milliseconds
+     * @return true if all SEP events were processed within the timeout, otherwise false
+     */
+    public boolean waitForSepEventProcessing(long timeout) throws Exception {
+        JmxLiaison jmxLiaison = new JmxLiaison();
+        ObjectName indexerObjectName = new ObjectName("Lily:name=Indexer");
+        ObjectName repositoryObjectName = new ObjectName("Lily:service=Repository,name=hbaserepository");
+        String sepObjectNameTemplate = "Lily:service=SEP,name=IndexUpdater_%s";
+        long tryUntil = System.currentTimeMillis() + timeout;
+
+        try {
+            jmxLiaison.connect();
+
+            // Spin while there is a has been a mutation without a corresponding SEP delivery within 10 milliseconds of it
+            // The SEP timestamps are actually the write time of the WAL edit, so they will be the same or slightly before
+            // the timestamp for the completion of a mutation action in HBase.
+            while (System.currentTimeMillis() < tryUntil) {
+                long lastCreateTimestamp = (Long)jmxLiaison.getAttribute(repositoryObjectName, "timestampLastCreate");
+                long lastUpdateTimestamp = (Long)jmxLiaison.getAttribute(repositoryObjectName, "timestampLastUpdate");
+                long lastDeleteTimestamp = (Long)jmxLiaison.getAttribute(repositoryObjectName, "timestampLastDelete");
+
+                long lastMutationTimestamp = Math.max(Math.max(lastCreateTimestamp, lastUpdateTimestamp),
+                        lastDeleteTimestamp);
+
+                long maxTimeDiff = Long.MIN_VALUE;
+                Set<String> indexNames = (Set<String>)jmxLiaison.getAttribute(indexerObjectName, "IndexNames");
+                if (indexNames.isEmpty()) {
+                    // No index updaters, so nothing to wait for
+                    return true;
+                }
+                
+                for (String indexName : indexNames) {
+                    long sepTimestamp = (Long)jmxLiaison.getAttribute(
+                            new ObjectName(String.format(sepObjectNameTemplate, indexName)), "lastSepTimestamp");
+                    maxTimeDiff = Math.max(maxTimeDiff, lastMutationTimestamp - sepTimestamp);
+                }
+                if (maxTimeDiff >= 0 && maxTimeDiff < 10) {
+                    return true;
+                }
+                Thread.sleep(50);
+            }
+        } finally {
+            jmxLiaison.disconnect();
+        }
+
+        return false;
+    }
 
     private class JmxLiaison {
-        private final String objectNameString;
-        private ObjectName objectName;
         private MBeanServerConnection connection;
         private JMXConnector connector;
 
-        public JmxLiaison(String objectName) {
-            this.objectNameString = objectName;
-        }
-
         public void connect() throws Exception {
-            objectName = new ObjectName(objectNameString);
             switch (mode) {
                 case EMBED:
                     connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
@@ -431,7 +477,7 @@ public class LilyServerProxy {
                 connector.close();
         }
 
-        public Object getAttribute(String attrName) throws Exception {
+        public Object getAttribute(ObjectName objectName, String attrName) throws Exception {
             return connection.getAttribute(objectName, attrName);
         }
     }
