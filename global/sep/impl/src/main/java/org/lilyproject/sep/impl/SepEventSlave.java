@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +39,7 @@ public class SepEventSlave extends BaseHRegionServer {
     private final int threadCnt;
     private List<ThreadPoolExecutor> executors;
     private HashFunction hashFunction = Hashing.murmur3_32();
+    private SepMetrics sepMetrics;
     private Log log = LogFactory.getLog(getClass());
 
     /**
@@ -89,10 +89,13 @@ public class SepEventSlave extends BaseHRegionServer {
         String serverName = hostName + "," + port + "," + System.currentTimeMillis();
         zk.create(SepModel.HBASE_ROOT + "/" + subscriptionId + "/rs/" + serverName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.EPHEMERAL);
+        
+        this.sepMetrics = new SepMetrics(subscriptionId);
     }
 
     public void stop() {
         Closer.close(rpcServer);
+        sepMetrics.shutdown();
     }
 
     @Override
@@ -100,6 +103,9 @@ public class SepEventSlave extends BaseHRegionServer {
         // TODO quickly hacked in the multi-threading: should maybe approach this differently
         List<Future> futures = new ArrayList<Future>();
 
+        // TODO Recording of last processed timestamp won't work if two batches of log entries are sent out of order
+        long lastProcessedTimestamp = -1;
+        
         nextEntry: for (HLog.Entry entry : entries) {
             for (final KeyValue kv : entry.getEdit().getKeyValues()) {
                 if (kv.matchingColumn(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes)) {
@@ -109,12 +115,14 @@ public class SepEventSlave extends BaseHRegionServer {
                     Future future = executors.get(partition).submit(new Runnable() {
                         @Override
                         public void run() {
+                            long before = System.currentTimeMillis();
                             log.debug("Delivering message to listener");
                             listener.processMessage(kv.getRow(), kv.getValue());
+                            sepMetrics.reportFilteredSepOperation(System.currentTimeMillis() - before); 
                         }
                     });
                     futures.add(future);
-
+                    lastProcessedTimestamp = Math.max(lastProcessedTimestamp, entry.getKey().getWriteTime());
                     continue nextEntry;
                 }
             }
@@ -137,6 +145,9 @@ public class SepEventSlave extends BaseHRegionServer {
                 // TODO think about error handling, probably just logging is a good idea
                 log.error("Listener failure in processing event", e);
             }
+        }
+        if (lastProcessedTimestamp > 0) {
+            sepMetrics.reportSepTimestamp(lastProcessedTimestamp);
         }
     }
 }

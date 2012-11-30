@@ -279,8 +279,8 @@ public class LilyProxy {
      * @param
      * @return false if the timeout was reached before all messages were processed
      */
-    public boolean waitWalAndMQMessagesProcessed(long timeout, boolean commitSolr) throws Exception {
-        boolean result = hbaseProxy.waitWalAndMQMessagesProcessed(timeout);
+    public boolean waitSepMessagesProcessed(long timeout, boolean commitSolr) throws Exception {
+        boolean result = lilyServerProxy.waitForSepEventProcessing(timeout);
         if (commitSolr)
             solrProxy.commit();
         return result;
@@ -293,7 +293,7 @@ public class LilyProxy {
      * @param
      * @return false if the timeout was reached before all messages were processed
      */
-    public boolean waitWalAndMQMessagesProcessed(long timeout) throws Exception {
-        return waitWalAndMQMessagesProcessed(timeout, true);
+    public boolean waitSepMessagesProcessed(long timeout) throws Exception {
+        return waitSepMessagesProcessed(timeout, true);
     }
 }
