@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.lilyproject.sep.impl.EventPublisher;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
@@ -93,6 +95,7 @@ public class IndexUpdater implements EventListener {
     private IndexUpdaterMetrics metrics;
     private ClassLoader myContextClassLoader;
     private IndexLocker indexLocker;
+    private EventPublisher eventPublisher;
     private String subscriptionId;
 
     /**
@@ -110,13 +113,14 @@ public class IndexUpdater implements EventListener {
      *                       this subscription. FIXME ROWLOG REFACTORING
      */
     public IndexUpdater(Indexer indexer, Repository repository, IndexLocker indexLocker,
-            IndexUpdaterMetrics metrics, DerefMap derefMap, String subscriptionId)
+            IndexUpdaterMetrics metrics, DerefMap derefMap, EventPublisher eventPublisher, String subscriptionId)
             throws IOException {
         this.indexer = indexer;
         this.repository = repository;
         this.idGenerator = repository.getIdGenerator();
         this.indexLocker = indexLocker;
         this.derefMap = derefMap;
+        this.eventPublisher = eventPublisher;
         this.subscriptionId = subscriptionId;
 
         this.myContextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -448,11 +452,8 @@ public class IndexUpdater implements EventListener {
                 payload.addVTagToIndex(vtag);
             }
 
-            // TODO how will this behave if the row was meanwhile deleted?
             try {
-                // FIXME ROWLOG REFACTORING
-//                rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null,
-//                        Collections.singletonList(subscriptionId));
+                eventPublisher.publishMessage(referrer.toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.

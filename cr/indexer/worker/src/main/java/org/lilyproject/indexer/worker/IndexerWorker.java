@@ -32,6 +32,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.lilyproject.sep.impl.HBaseEventPublisher;
+
+import org.lilyproject.sep.impl.EventPublisher;
+
+import org.lilyproject.util.hbase.LilyHBaseSchema;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -200,8 +206,9 @@ public class IndexerWorker {
             indexerRegistry.register(indexer);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
+            EventPublisher hbaseEventPublisher = new HBaseEventPublisher(LilyHBaseSchema.getRecordTable(tableFactory));
             IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, updaterMetrics, derefMap,
-                    index.getQueueSubscriptionId());
+                    hbaseEventPublisher, index.getQueueSubscriptionId());
 
             // FIXME ROWLOG REFACTORING in particular, need to decide what to do with settings.getListenersPerIndex(),
             //                          either use it or dop it
