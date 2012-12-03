@@ -26,6 +26,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
+import org.apache.hadoop.hbase.util.Bytes;
+
 import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
@@ -107,6 +111,9 @@ public class SepEventSlave extends BaseHRegionServer {
         long lastProcessedTimestamp = -1;
         
         nextEntry: for (HLog.Entry entry : entries) {
+            if (!Bytes.equals(entry.getKey().getTablename(), Table.RECORD.bytes)) {
+                continue;
+            }
             for (final KeyValue kv : entry.getEdit().getKeyValues()) {
                 if (kv.matchingColumn(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes)) {
                     // We don't want messages of the same row to be processed concurrently, therefore choose
