@@ -16,15 +16,20 @@
 package org.lilyproject.repotestfw;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.regionserver.wal.HLog.Entry;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.avro.AvroLily;
@@ -52,14 +57,18 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.RemoteRepository;
 import org.lilyproject.repository.remote.RemoteTypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
+import org.lilyproject.sep.impl.EventListener;
+import org.lilyproject.sep.impl.EventPublisher;
+import org.lilyproject.sep.impl.HBaseEventPublisher;
+import org.lilyproject.sep.impl.SepEventSlave;
+import org.lilyproject.sep.impl.SepModel;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
 
 /**
  * Helper class to instantiate and wire all the repository related services.
@@ -84,11 +93,15 @@ public class RepositorySetup {
 
     private BlobManager blobManager;
     private BlobManager remoteBlobManager;
+    
+    private SepModel sepModel;
+    private WrappedSepEventSlave sepEventSlave;
+    private WrappedEventPublisher eventPublisher;
 
     private boolean coreSetup;
     private boolean typeManagerSetup;
     private boolean repositorySetup;
-
+    
     private long hbaseBlobLimit = -1;
     private long inlineBlobLimit = -1;
 
@@ -134,6 +147,10 @@ public class RepositorySetup {
 
         repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager);
         repository.setRecordUpdateHooks(recordUpdateHooks);
+        
+        sepModel = new SepModel(zk, hadoopConf);
+        eventPublisher = new WrappedEventPublisher( 
+                            new HBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory)));
 
         repositorySetup = true;
     }
@@ -210,15 +227,37 @@ public class RepositorySetup {
     }
 
     /**
-     * When the message queue was setup with the option for manual processing, calling this method will
-     * trigger synchronous MQ processing.
+     * Wait until all queued SEP procesing is complete. It is assumed that there is something to
+     * wait for, as the SEP implementation doesn't provide information on the number of queued
+     * events.
      */
-    public void processMQ() throws InterruptedException {
-        // FIXME ROWLOG REFACTORING
-        // ((ManualProcessRowLog) mq).processMessages();
+    public void waitForSepProcessing() throws Exception {
+        
+        MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
+        
+        if (sepEventSlave != null && sepEventSlave.isRunning()) {
+            for (int retry = 0; retry < 10; retry++) {
+                long lastMutationTimestamp = (Long)platformMBeanServer.getAttribute(new ObjectName(
+                        "Lily:service=Repository,name=hbaserepository"), "timestampLastMutation");
+                long lastPublishedMessage = eventPublisher.getLastPublishedTimestamp();
+                long lastProcessedSepEvent = sepEventSlave.getLastProcessedTimestamp();
+                
+                long lastOperation = Math.max(lastMutationTimestamp, lastPublishedMessage);
+                
+                if (Math.abs(lastOperation - lastProcessedSepEvent) < 10) {
+                    return;
+                }
+                Thread.sleep(1000);
+            }
+        }
+
+        throw new IllegalStateException(
+                "Waited for 10 seconds, but no SEP events within 100 milliseconds were encountered");
     }
 
     public void stop() throws InterruptedException {
+
+        Closer.close(sepEventSlave);
         Closer.close(remoteSchemaCache);
         Closer.close(remoteTypeManager);
         Closer.close(remoteRepository);
@@ -268,6 +307,39 @@ public class RepositorySetup {
 
     public Repository getRemoteRepository() {
         return remoteRepository;
+    }
+    
+    
+    public SepModel getSepModel() {
+        return sepModel;
+    }
+    
+    public EventPublisher getEventPublisher() {
+        return eventPublisher;
+    }
+    
+    public void stopSepEventSlave() {
+        if (sepEventSlave == null || !sepEventSlave.isRunning()) {
+            throw new IllegalStateException("No SepEventSlave to stop");
+        } 
+        sepEventSlave.stop();
+        sepEventSlave = null;
+    }
+    
+    /**
+     * Start a SEP event processor. Only a single SEP event processor is supported within the
+     * context of this class.
+     * 
+     * @param subscriptionId The id of the subscription for which the slave will process events
+     * @param eventListener The listener to handle incoming events
+     */
+    public void startSepEventSlave(String subscriptionId, EventListener eventListener) throws Exception {
+        if (sepEventSlave != null) {
+            throw new IllegalStateException("There is already a SepEventSlave running, stop it first");
+        }
+        sepEventSlave = new WrappedSepEventSlave(subscriptionId, System.currentTimeMillis(), 
+                                                    eventListener, 1, "localhost", zk, hadoopConf);
+        sepEventSlave.start();
     }
 
     /**
@@ -331,5 +403,59 @@ public class RepositorySetup {
             return typeManager;
         }
 
+    }
+    
+    /**
+     * Wrapper around SepEventSlave to allow keeping track of whether or not events for a given point
+     * in time have been processed.
+     */
+    private static class WrappedSepEventSlave extends SepEventSlave {
+
+        private long lastProcessedTimestamp;
+        
+        public WrappedSepEventSlave(String subscriptionId, long subscriptionTimestamp, EventListener listener, 
+                int threadCnt, String hostName, ZooKeeperItf zk, Configuration hbaseConf) {
+            super(subscriptionId, subscriptionTimestamp, listener, threadCnt, hostName, zk, hbaseConf);
+        }
+        
+        @Override
+        public void replicateLogEntries(Entry[] entries) throws IOException {
+            super.replicateLogEntries(entries);
+            if (entries.length > 0){
+                lastProcessedTimestamp = entries[entries.length - 1].getKey().getWriteTime();
+            }
+        }
+        
+        /**
+         * Get the write timestamp of the last processed HLog entry.
+         */
+        public long getLastProcessedTimestamp() {
+            return lastProcessedTimestamp;
+        }
+        
+    }
+    
+    private static class WrappedEventPublisher implements EventPublisher {
+        
+        private EventPublisher delegate;
+        private long lastPublishedTimestamp;
+        
+        public WrappedEventPublisher(EventPublisher delegate) {
+            this.delegate = delegate;
+        }
+        
+        public long getLastPublishedTimestamp() {
+            return lastPublishedTimestamp;
+        }
+        
+        @Override
+        public boolean publishMessage(byte[] row, byte[] payload) throws IOException {
+            boolean result = delegate.publishMessage(row, payload);
+            if (result) {
+                lastPublishedTimestamp = System.currentTimeMillis();
+            }
+            return result;
+            
+        }
     }
 }

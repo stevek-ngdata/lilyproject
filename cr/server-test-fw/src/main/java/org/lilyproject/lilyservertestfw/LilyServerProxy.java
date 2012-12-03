@@ -421,12 +421,7 @@ public class LilyServerProxy {
             // The SEP timestamps are actually the write time of the WAL edit, so they will be the same or slightly before
             // the timestamp for the completion of a mutation action in HBase.
             while (System.currentTimeMillis() < tryUntil) {
-                long lastCreateTimestamp = (Long)jmxLiaison.getAttribute(repositoryObjectName, "timestampLastCreate");
-                long lastUpdateTimestamp = (Long)jmxLiaison.getAttribute(repositoryObjectName, "timestampLastUpdate");
-                long lastDeleteTimestamp = (Long)jmxLiaison.getAttribute(repositoryObjectName, "timestampLastDelete");
-
-                long lastMutationTimestamp = Math.max(Math.max(lastCreateTimestamp, lastUpdateTimestamp),
-                        lastDeleteTimestamp);
+                long lastMutationTimestamp = (Long)jmxLiaison.getAttribute(repositoryObjectName, "timestampLastMutation");
 
                 long maxTimeDiff = Long.MIN_VALUE;
                 Set<String> indexNames = (Set<String>)jmxLiaison.getAttribute(indexerObjectName, "IndexNames");
