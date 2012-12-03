@@ -28,8 +28,8 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
  */
 public class HBaseEventPublisher implements EventPublisher {
 
-    private static final byte [] FALSE_BYTES = Bytes.toBytes(false);
-    
+    private static final byte[] FALSE_BYTES = Bytes.toBytes(false);
+
     private HTableInterface recordTable;
 
     public HBaseEventPublisher(HTableInterface recordTable) {
@@ -40,7 +40,8 @@ public class HBaseEventPublisher implements EventPublisher {
     public boolean publishMessage(byte[] row, byte[] payload) throws IOException {
         Put messagePut = new Put(row);
         messagePut.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, payload);
-        return recordTable.checkAndPut(row, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, FALSE_BYTES, messagePut);
+        return recordTable.checkAndPut(row, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, FALSE_BYTES,
+                messagePut);
     }
-    
+
 }

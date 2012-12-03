@@ -47,6 +47,8 @@ public class SepEventSlave extends BaseHRegionServer {
     private List<ThreadPoolExecutor> executors;
     private HashFunction hashFunction = Hashing.murmur3_32();
     private SepMetrics sepMetrics;
+    private String zkNodePath;
+    boolean running = false;
     private Log log = LogFactory.getLog(getClass());
 
     /**
@@ -96,19 +98,36 @@ public class SepEventSlave extends BaseHRegionServer {
         // See HBase ServerName class: format of server name is: host,port,startcode
         // Startcode is to distinguish restarted servers on same hostname/port
         String serverName = hostName + "," + port + "," + System.currentTimeMillis();
-        zk.create(SepModel.HBASE_ROOT + "/" + subscriptionId + "/rs/" + serverName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
+        zkNodePath = SepModel.HBASE_ROOT + "/" + subscriptionId + "/rs/" + serverName;
+        zk.create(zkNodePath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        
+        this.running = true;
     }
 
     public void stop() {
-        Closer.close(rpcServer);
-        sepMetrics.shutdown();
+        if (running) {
+            running = false;
+            Closer.close(rpcServer);
+            try {
+                zk.delete(zkNodePath, -1);
+            } catch (Exception e) {
+                log.debug("Exception while removing zookeeper node", e);
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+	    sepMetrics.shutdown();
+    }
+    
+    public boolean isRunning() {
+        return running;
     }
 
     @Override
     public void replicateLogEntries(HLog.Entry[] entries) throws IOException {
         // TODO quickly hacked in the multi-threading: should maybe approach this differently
-        List<Future> futures = new ArrayList<Future>();
+        List<Future<?>> futures = new ArrayList<Future<?>>();
 
         // TODO Recording of last processed timestamp won't work if two batches of log entries are sent out of order
         long lastProcessedTimestamp = -1;
@@ -123,7 +142,7 @@ public class SepEventSlave extends BaseHRegionServer {
                     // We don't want messages of the same row to be processed concurrently, therefore choose
                     // a thread based on the hash of the row key
                     int partition = (hashFunction.hashBytes(kv.getRow()).asInt() & Integer.MAX_VALUE) % threadCnt;
-                    Future future = executors.get(partition).submit(new Runnable() {
+                    Future<?> future = executors.get(partition).submit(new Runnable() {
                         @Override
                         public void run() {
                             long before = System.currentTimeMillis();
@@ -146,7 +165,7 @@ public class SepEventSlave extends BaseHRegionServer {
 
         // We should wait for all operations to finish before returning, because otherwise HBase might
         // deliver a next batch from the same HLog to a different server
-        for (Future future : futures) {
+        for (Future<?> future : futures) {
             try {
                 future.get();
             } catch (InterruptedException e) {
