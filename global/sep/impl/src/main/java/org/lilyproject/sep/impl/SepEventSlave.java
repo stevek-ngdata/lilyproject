@@ -68,6 +68,7 @@ public class SepEventSlave extends BaseHRegionServer {
             executor.setRejectedExecutionHandler(new WaitPolicy());
             executors.add(executor);
         }
+        this.sepMetrics = new SepMetrics(subscriptionId);
     }
 
     public void start() throws IOException, InterruptedException, KeeperException {
@@ -93,8 +94,6 @@ public class SepEventSlave extends BaseHRegionServer {
         String serverName = hostName + "," + port + "," + System.currentTimeMillis();
         zk.create(SepModel.HBASE_ROOT + "/" + subscriptionId + "/rs/" + serverName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.EPHEMERAL);
-        
-        this.sepMetrics = new SepMetrics(subscriptionId);
     }
 
     public void stop() {

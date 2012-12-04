@@ -50,7 +50,6 @@ public class SepEventSlaveTest {
         zkItf = mock(ZooKeeperItf.class);
         eventSlave = new SepEventSlave("subscriptionId", eventListener, 1, "localhost", zkItf,
                 HBaseConfiguration.create());
-        eventSlave.start();
     }
 
     @After
