@@ -22,7 +22,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
 import org.lilyproject.util.test.TestHomeUtil;
@@ -168,6 +167,7 @@ public class HBaseProxy {
             case CONNECT:
                 conf.set("hbase.zookeeper.quorum", "localhost");
                 conf.set("hbase.zookeeper.property.clientPort", "2181");
+                conf.set("hbase.replication", "true");
                 addUserProps(conf);
 
                 cleanupUtil = new CleanupUtil(conf, getZkConnectString());
@@ -178,6 +178,8 @@ public class HBaseProxy {
                     allTimestampReusingTables.putAll(cleanupUtil.getDefaultTimestampReusingTables());
                     allTimestampReusingTables.putAll(timestampReusingTables);
                     cleanupUtil.cleanTables(allTimestampReusingTables);
+
+                    cleanupUtil.cleanHBaseReplicas();
                 }
 
                 break;
