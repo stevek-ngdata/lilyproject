@@ -20,7 +20,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-genscript-plugin</artifactId>
+<<<<<<< HEAD
   <version>2.2-SNAPSHOT</version>
+=======
+  <version>1.4-SEP-SNAPSHOT</version>
+>>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
   <name>Lily: Maven plugin to generate shell scripts</name>
   <packaging>maven-plugin</packaging>
 

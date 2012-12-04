@@ -21,7 +21,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-pluginregistry-impl</artifactId>
+<<<<<<< HEAD
   <version>2.2-SNAPSHOT</version>
+=======
+  <version>1.4-SEP-SNAPSHOT</version>
+>>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
   <name>Lily: Plugin Registry: Implementation</name>
 
   <parent>
@@ -34,7 +38,11 @@
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-pluginregistry-api</artifactId>
+<<<<<<< HEAD
       <version>2.2-SNAPSHOT</version>
+=======
+      <version>1.4-SEP-SNAPSHOT</version>
+>>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
     </dependency>
 
     <dependency>

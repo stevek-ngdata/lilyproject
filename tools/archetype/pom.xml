@@ -22,7 +22,11 @@
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-archetype-parent</artifactId>
   <packaging>pom</packaging>
+<<<<<<< HEAD
   <version>2.2-SNAPSHOT</version>
+=======
+  <version>1.4-SEP-SNAPSHOT</version>
+>>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
   <name>Lily: archetype parent</name>
 
   <parent>
