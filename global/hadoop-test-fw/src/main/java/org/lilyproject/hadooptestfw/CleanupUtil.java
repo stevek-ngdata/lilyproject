@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -312,5 +313,12 @@ public class CleanupUtil {
         FileSystem fs = FileSystem.get(new URI(dfsUri.getScheme() + "://" + dfsUri.getAuthority()), conf);
         Path blobRootPath = new Path(dfsUri.getPath());
         fs.delete(blobRootPath, true);
+    }
+
+    public void cleanHBaseReplicas() throws Exception {
+        ReplicationAdmin repliAdmin = new ReplicationAdmin(conf);
+        for (String peerId : repliAdmin.listPeers().keySet()) {
+            repliAdmin.removePeer(peerId);
+        }
     }
 }

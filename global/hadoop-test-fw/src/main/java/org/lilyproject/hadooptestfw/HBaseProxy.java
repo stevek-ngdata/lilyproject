@@ -180,6 +180,7 @@ public class HBaseProxy {
             case CONNECT:
                 conf.set("hbase.zookeeper.quorum", "localhost");
                 conf.set("hbase.zookeeper.property.clientPort", "2181");
+                conf.set("hbase.replication", "true");
                 addUserProps(conf);
 
                 cleanupUtil = new CleanupUtil(conf, getZkConnectString());
@@ -190,6 +191,8 @@ public class HBaseProxy {
                     allTimestampReusingTables.putAll(cleanupUtil.getDefaultTimestampReusingTables());
                     allTimestampReusingTables.putAll(timestampReusingTables);
                     cleanupUtil.cleanTables(allTimestampReusingTables);
+
+                    cleanupUtil.cleanHBaseReplicas();
                 }
 
                 break;
