@@ -1,13 +1,13 @@
 <?xml version="1.0"?> <wiring>
   <modules>
     <artifact id="pluginregistry" groupId="org.lilyproject" artifactId="lily-pluginregistry-impl"
-              version="1.4-SNAPSHOT">
+              version="1.4-SEP-SNAPSHOT">
     </artifact>
 
-    <artifact id="general" groupId="org.lilyproject" artifactId="lily-general-module" version="1.4-SNAPSHOT">
+    <artifact id="general" groupId="org.lilyproject" artifactId="lily-general-module" version="1.4-SEP-SNAPSHOT">
     </artifact>
 
-    <artifact id="indexer-integration" groupId="org.lilyproject" artifactId="lily-indexer-integration-module" version="1.4-SNAPSHOT">
+    <artifact id="indexer-integration" groupId="org.lilyproject" artifactId="lily-indexer-integration-module" version="1.4-SEP-SNAPSHOT">
     </artifact>
 
     <!-- lily.plugin.dir:
@@ -20,13 +20,13 @@
     -->
     <directory id="plugin" basePath="${lily.plugin.dir}" path="load-before-repository"/>
 
-    <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="1.4-SNAPSHOT">
+    <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="1.4-SEP-SNAPSHOT">
     </artifact>
 
-    <artifact id="indexer" groupId="org.lilyproject" artifactId="lily-indexer-module" version="1.4-SNAPSHOT">
+    <artifact id="indexer" groupId="org.lilyproject" artifactId="lily-indexer-module" version="1.4-SEP-SNAPSHOT">
     </artifact>
 
-    <artifact id="avro" groupId="org.lilyproject" artifactId="lily-rpc-module" version="1.4-SNAPSHOT">
+    <artifact id="avro" groupId="org.lilyproject" artifactId="lily-rpc-module" version="1.4-SEP-SNAPSHOT">
     </artifact>
 
     <artifact id="template" groupId="org.kauriproject" artifactId="kauri-template-service-impl">
@@ -38,12 +38,12 @@
     <artifact id="routing" groupId="org.kauriproject" artifactId="kauri-routing-impl">
     </artifact>
 
-    <artifact id="rest" groupId="org.lilyproject" artifactId="lily-rest-module" version="1.4-SNAPSHOT">
+    <artifact id="rest" groupId="org.lilyproject" artifactId="lily-rest-module" version="1.4-SEP-SNAPSHOT">
       <mount name="repository" path="/repository/" canonical="/repository/"/>
       <mount name="index" path="/index" canonical="/index"/>
     </artifact>
 
-    <artifact id="webui" groupId="org.lilyproject" artifactId="lily-webui-module" version="1.4-SNAPSHOT">
+    <artifact id="webui" groupId="org.lilyproject" artifactId="lily-webui-module" version="1.4-SEP-SNAPSHOT">
       <mount name="main" path="" canonical=""/>
       <inject-restservice name="repository" ref="rest:repository"/>
     </artifact>
