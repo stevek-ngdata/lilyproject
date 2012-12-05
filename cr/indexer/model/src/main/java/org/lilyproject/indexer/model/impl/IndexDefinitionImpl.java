@@ -20,9 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
-
-import org.mockito.internal.matchers.apachecommons.ReflectionEquals;
-
 import org.lilyproject.indexer.model.api.ActiveBatchBuildInfo;
 import org.lilyproject.indexer.model.api.BatchBuildInfo;
 import org.lilyproject.indexer.model.api.IndexBatchBuildState;
