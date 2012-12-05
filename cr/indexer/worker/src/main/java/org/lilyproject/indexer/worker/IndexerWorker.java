@@ -222,8 +222,8 @@ public class IndexerWorker {
 //
 //            handle = new IndexUpdaterHandle(index, listenerHandlers, solrShardMgr, indexerMetrics, updaterMetrics);
 //            handle.start();
-            SepEventSlave sepEventSlave = new SepEventSlave(index.getQueueSubscriptionId(), indexUpdater,
-                    settings.getListenersPerIndex(), hostName, zk, hbaseConf);
+            SepEventSlave sepEventSlave = new SepEventSlave(index.getQueueSubscriptionId(), index.getSubscriptionTimestamp(),
+                    indexUpdater, settings.getListenersPerIndex(), hostName, zk, hbaseConf);
             handle = new IndexUpdaterHandle(index, sepEventSlave, solrShardMgr, indexerMetrics, updaterMetrics);
             handle.start();
 
