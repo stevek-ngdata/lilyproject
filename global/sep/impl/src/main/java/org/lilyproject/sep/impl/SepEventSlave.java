@@ -26,6 +26,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.hadoop.hbase.regionserver.wal.HLogKey;
+
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 import org.apache.hadoop.hbase.util.Bytes;
@@ -35,6 +37,7 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public class SepEventSlave extends BaseHRegionServer {
     private final String subscriptionId;
+    private long subscriptionTimestamp;
     private final EventListener listener;
     private final String hostName;
     private final ZooKeeperItf zk;
@@ -47,14 +50,15 @@ public class SepEventSlave extends BaseHRegionServer {
     private Log log = LogFactory.getLog(getClass());
 
     /**
-     *
+     * @param subscriptionTimestamp timestamp of when the index subscription became active (or more accurately, not inactive)
      * @param listener listeners that will process the events
      * @param hostName hostname to bind to
      */
-    public SepEventSlave(String subscriptionId, EventListener listener, int threadCnt, String hostName, ZooKeeperItf zk,
-            Configuration hbaseConf) {
+    public SepEventSlave(String subscriptionId, long subscriptionTimestamp, EventListener listener, int threadCnt, 
+            String hostName, ZooKeeperItf zk, Configuration hbaseConf) {
         Preconditions.checkArgument(threadCnt > 0, "Thread count must be > 0");
         this.subscriptionId = subscriptionId;
+        this.subscriptionTimestamp = subscriptionTimestamp;
         this.listener = listener;
         this.hostName = hostName;
         this.zk = zk;
@@ -110,7 +114,8 @@ public class SepEventSlave extends BaseHRegionServer {
         long lastProcessedTimestamp = -1;
         
         nextEntry: for (HLog.Entry entry : entries) {
-            if (!Bytes.equals(entry.getKey().getTablename(), Table.RECORD.bytes)) {
+            HLogKey entryKey = entry.getKey();
+            if (!Bytes.equals(entryKey.getTablename(), Table.RECORD.bytes) || entryKey.getWriteTime() < subscriptionTimestamp) {
                 continue;
             }
             for (final KeyValue kv : entry.getEdit().getKeyValues()) {

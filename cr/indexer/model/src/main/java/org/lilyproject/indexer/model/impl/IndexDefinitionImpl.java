@@ -19,6 +19,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+
+import org.mockito.internal.matchers.apachecommons.ReflectionEquals;
+
 import org.lilyproject.indexer.model.api.ActiveBatchBuildInfo;
 import org.lilyproject.indexer.model.api.BatchBuildInfo;
 import org.lilyproject.indexer.model.api.IndexBatchBuildState;
@@ -44,6 +48,7 @@ public class IndexDefinitionImpl implements IndexDefinition {
     private String zkConnectionString;
     private String solrCollection;
     private boolean enableDerefMap;
+    private long subscriptionTimestamp;
 
     public IndexDefinitionImpl(String name) {
         this.name = name;
@@ -85,6 +90,9 @@ public class IndexDefinitionImpl implements IndexDefinition {
     @Override
     public void setUpdateState(IndexUpdateState state) {
         checkIfMutable();
+        if (this.updateState == IndexUpdateState.DO_NOT_SUBSCRIBE && state != IndexUpdateState.DO_NOT_SUBSCRIBE) {
+            setSubscriptionTimestamp(System.currentTimeMillis());
+        }
         this.updateState = state;
     }
 
@@ -223,5 +231,20 @@ public class IndexDefinitionImpl implements IndexDefinition {
 
     public void setEnableDerefMap(boolean enableDerefMap) {
         this.enableDerefMap = enableDerefMap;
+    }
+    
+    @Override
+    public void setSubscriptionTimestamp(long timestamp) {
+        this.subscriptionTimestamp = timestamp;
+    }
+    
+    @Override
+    public long getSubscriptionTimestamp() {
+        return subscriptionTimestamp;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        return EqualsBuilder.reflectionEquals(this, obj);
     }
 }

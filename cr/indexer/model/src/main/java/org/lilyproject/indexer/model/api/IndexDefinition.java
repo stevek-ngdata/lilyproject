@@ -101,4 +101,20 @@ public interface IndexDefinition {
     boolean isEnableDerefMap();
 
     void setEnableDerefMap(boolean enableDerefMap);
+    
+    /**
+     * Set the timestamp of when this index's update subscription started. Only record updates that have
+     * occurred after this timestamp will be consumed by this index.
+     * 
+     * @param timestamp Number of milliseconds since the epoch
+     */
+    void setSubscriptionTimestamp(long timestamp);
+
+    /**
+     * Get the timestamp of when this index's update subscription started.
+     * 
+     * @return Number of milliseconds since the epoch
+     */
+    long getSubscriptionTimestamp();
+
 }

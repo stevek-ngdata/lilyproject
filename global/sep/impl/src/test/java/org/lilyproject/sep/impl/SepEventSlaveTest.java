@@ -16,7 +16,10 @@
 package org.lilyproject.sep.impl;
 
 import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -39,6 +42,8 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.mockito.Mockito;
 
 public class SepEventSlaveTest {
+    
+    private static final long SUBSCRIPTION_TIMESTAMP = 100000;
 
     private EventListener eventListener;
     private ZooKeeperItf zkItf;
@@ -48,7 +53,7 @@ public class SepEventSlaveTest {
     public void setUp() throws IOException, InterruptedException, KeeperException {
         eventListener = mock(EventListener.class);
         zkItf = mock(ZooKeeperItf.class);
-        eventSlave = new SepEventSlave("subscriptionId", eventListener, 1, "localhost", zkItf,
+        eventSlave = new SepEventSlave("subscriptionId", SUBSCRIPTION_TIMESTAMP, eventListener, 1, "localhost", zkItf,
                 HBaseConfiguration.create());
     }
 
@@ -59,10 +64,17 @@ public class SepEventSlaveTest {
 
     private HLog.Entry[] createHlogEntries(byte[] tableName, byte[] rowKey, byte[] columnFamily, byte[] qualifier,
             byte[] data) {
+        return createHlogEntries(tableName, rowKey, columnFamily, qualifier, data, SUBSCRIPTION_TIMESTAMP +1);
+    }
+    
+    // Overload of createHlogEntries to allow specifying a write time in the HLog
+    private HLog.Entry[] createHlogEntries(byte[] tableName, byte[] rowKey, byte[] columnFamily, byte[] qualifier,
+            byte[] data, long writeTime) {
         KeyValue keyValue = new KeyValue(rowKey, columnFamily, qualifier, data);
         HLog.Entry entry = mock(HLog.Entry.class, Mockito.RETURNS_DEEP_STUBS);
         when(entry.getEdit().getKeyValues()).thenReturn(Lists.newArrayList(keyValue));
         when(entry.getKey().getTablename()).thenReturn(tableName);
+        when(entry.getKey().getWriteTime()).thenReturn(writeTime);
         return new HLog.Entry[] { entry };
     }
 
@@ -94,6 +106,32 @@ public class SepEventSlaveTest {
         eventSlave.replicateLogEntries(hlogEntries);
 
         // Event listener shouldn't be touched as the event wasn't on the record table
-        verifyNoMoreInteractions(eventListener);
+        verify(eventListener, never()).processMessage(any(byte[].class), any(byte[].class));
+    }
+    
+    @Test
+    public void testReplicateLogEntries_EntryTimestampBeforeSubscriptionTimestamp() throws IOException {
+        byte[] rowKey = Bytes.toBytes("rowkey");
+        byte[] payloadDataBeforeTimestamp = Bytes.toBytes("payloadBeforeTimestamp");
+        byte[] payloadDataOnTimestamp = Bytes.toBytes("payloadOnTimestamp");
+        byte[] payloadDataAfterTimestamp = Bytes.toBytes("payloadAfterTimestamp");
+
+        HLog.Entry[] hlogEntriesBeforeTimestamp = createHlogEntries(Table.RECORD.bytes, rowKey, RecordCf.DATA.bytes,
+                RecordColumn.PAYLOAD.bytes, payloadDataBeforeTimestamp, SUBSCRIPTION_TIMESTAMP - 1);
+        HLog.Entry[] hlogEntriesOnTimestamp = createHlogEntries(Table.RECORD.bytes, rowKey, RecordCf.DATA.bytes,
+                RecordColumn.PAYLOAD.bytes, payloadDataOnTimestamp, SUBSCRIPTION_TIMESTAMP);
+        HLog.Entry[] hlogEntriesAfterTimestamp = createHlogEntries(Table.RECORD.bytes, rowKey, RecordCf.DATA.bytes,
+                RecordColumn.PAYLOAD.bytes, payloadDataAfterTimestamp, SUBSCRIPTION_TIMESTAMP + 1);
+
+        eventSlave.replicateLogEntries(hlogEntriesBeforeTimestamp);
+        eventSlave.replicateLogEntries(hlogEntriesOnTimestamp);
+        eventSlave.replicateLogEntries(hlogEntriesAfterTimestamp);
+
+        when(eventListener.processMessage(any(byte[].class), any(byte[].class))).thenReturn(true);
+
+        // Event should be published for data on or after the subscription timestamp, but not before
+        verify(eventListener, never()).processMessage(aryEq(rowKey), aryEq(payloadDataBeforeTimestamp));
+        verify(eventListener, times(1)).processMessage(aryEq(rowKey), aryEq(payloadDataOnTimestamp));
+        verify(eventListener, times(1)).processMessage(aryEq(rowKey), aryEq(payloadDataAfterTimestamp));
     }
 }

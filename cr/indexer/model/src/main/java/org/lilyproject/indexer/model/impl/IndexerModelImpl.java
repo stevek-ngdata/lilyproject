@@ -31,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PreDestroy;
 
+import org.lilyproject.indexer.model.api.IndexUpdateState;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.CreateMode;
@@ -160,6 +162,9 @@ public class IndexerModelImpl implements WriteableIndexerModel {
     public void addIndex(IndexDefinition index) throws IndexExistsException, IndexModelException, IndexValidityException {
         assertValid(index);
 
+        if (index.getUpdateState() != IndexUpdateState.DO_NOT_SUBSCRIBE) {
+            index.setSubscriptionTimestamp(System.currentTimeMillis());
+        }
         final String indexPath = INDEX_COLLECTION_PATH + "/" + index.getName();
         final byte[] data = IndexDefinitionConverter.INSTANCE.toJsonBytes(index);
 
