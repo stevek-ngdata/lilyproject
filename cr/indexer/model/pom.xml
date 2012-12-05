@@ -72,6 +72,11 @@
     </dependency>
 
     <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+    </dependency>
+
+    <dependency>
       <!-- Currently only here to get the logging deps in -->
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-hadoop-test-fw</artifactId>
