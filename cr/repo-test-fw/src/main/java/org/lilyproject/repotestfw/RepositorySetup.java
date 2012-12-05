@@ -244,7 +244,7 @@ public class RepositorySetup {
                 
                 long lastOperation = Math.max(lastMutationTimestamp, lastPublishedMessage);
                 
-                if (Math.abs(lastOperation - lastProcessedSepEvent) < 10) {
+                if (Math.abs(lastOperation - lastProcessedSepEvent) < 50) {
                     return;
                 }
                 Thread.sleep(1000);

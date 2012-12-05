@@ -169,7 +169,6 @@ public class IndexerApiTest {
     }
 
     private void commitIndex() throws Exception {
-        repoSetup.waitForSepProcessing();
         solrShardManager.commit(true, true);
     }
 
