@@ -460,6 +460,7 @@ public class IndexUpdater implements EventListener {
                 log.error("Error putting index message on queue of record " + referrer, e);
                 metrics.errors.inc();
             }
+            metrics.lastReindexRequestedTimestamp.set(System.currentTimeMillis());
         }
     }
 

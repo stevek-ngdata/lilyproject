@@ -412,6 +412,7 @@ public class LilyServerProxy {
         ObjectName indexerObjectName = new ObjectName("Lily:name=Indexer");
         ObjectName repositoryObjectName = new ObjectName("Lily:service=Repository,name=hbaserepository");
         String sepObjectNameTemplate = "Lily:service=SEP,name=IndexUpdater_%s";
+        String indexUpdaterNameTemplate = "Lily:service=Index Updater,name=%s";
         long tryUntil = System.currentTimeMillis() + timeout;
 
         try {
@@ -433,7 +434,12 @@ public class LilyServerProxy {
                 for (String indexName : indexNames) {
                     long sepTimestamp = (Long)jmxLiaison.getAttribute(
                             new ObjectName(String.format(sepObjectNameTemplate, indexName)), "lastSepTimestamp");
-                    maxTimeDiff = Math.max(maxTimeDiff, lastMutationTimestamp - sepTimestamp);
+                    long indexUpdaterTimestamp = (Long)jmxLiaison.getAttribute(
+                            new ObjectName(String.format(indexUpdaterNameTemplate, indexName)), 
+                            "lastReindexRequestTimestamp");
+                    
+                    maxTimeDiff = Math.max(maxTimeDiff, 
+                                            Math.max(lastMutationTimestamp, indexUpdaterTimestamp) - sepTimestamp);
                 }
                 if (maxTimeDiff >= 0 && maxTimeDiff < 10) {
                     return true;

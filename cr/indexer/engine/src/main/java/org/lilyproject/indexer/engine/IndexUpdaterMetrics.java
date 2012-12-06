@@ -28,6 +28,8 @@ import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 
 import javax.management.ObjectName;
 
+import org.apache.hadoop.metrics.util.MetricsLongValue;
+
 public class IndexUpdaterMetrics implements Updater {
     private final String indexName;
     private final MetricsRegistry registry = new MetricsRegistry();
@@ -36,6 +38,8 @@ public class IndexUpdaterMetrics implements Updater {
     private final IndexerMetricsMBean mbean;
 
     public MetricsTimeVaryingRate updates = new MetricsTimeVaryingRate("updates", registry);
+    public MetricsLongValue lastReindexRequestedTimestamp = 
+                    new MetricsLongValue("lastReindexRequestTimestamp", registry);
 
     /**
      * This metric is incremented for all unusual errors, that is errors which prevented the index from being
