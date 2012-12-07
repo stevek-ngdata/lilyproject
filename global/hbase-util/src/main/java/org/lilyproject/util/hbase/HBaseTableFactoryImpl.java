@@ -31,7 +31,6 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.util.ByteArrayKey;
 
 public class HBaseTableFactoryImpl implements HBaseTableFactory {
     private Log log = LogFactory.getLog(getClass());
@@ -66,7 +65,7 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
     }
 
     private HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys, boolean create) throws IOException, InterruptedException {
-        HBaseAdmin admin = HBaseAdminFactory.get(configuration);
+        HBaseAdmin admin = new HBaseAdmin(configuration);
 
         try {
             try {

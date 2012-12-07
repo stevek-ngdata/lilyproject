@@ -15,36 +15,59 @@
  */
 package org.lilyproject.tools.recordrowvisualizer;
 
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.kauriproject.template.*;
+import org.kauriproject.template.CompiledTemplate;
+import org.kauriproject.template.DefaultTemplateBuilder;
+import org.kauriproject.template.DefaultTemplateContext;
+import org.kauriproject.template.DefaultTemplateExecutor;
+import org.kauriproject.template.DefaultTemplateService;
+import org.kauriproject.template.ExecutionContext;
+import org.kauriproject.template.KauriSaxHandler;
+import org.kauriproject.template.TemplateContext;
+import org.kauriproject.template.TemplateResult;
+import org.kauriproject.template.TemplateResultImpl;
 import org.kauriproject.template.source.ClasspathSourceResolver;
 import org.kauriproject.template.source.Source;
 import org.kauriproject.template.source.SourceResolver;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.cli.BaseZkCliTool;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.EncodingUtil;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.Version;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.xml.sax.SAXException;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
-
-import java.io.OutputStream;
-import java.util.*;
 
 /**
  * Tool to visualize the HBase-storage structure of a Lily record, in the form
@@ -143,7 +166,6 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         Closer.close(typeMgr);
         Closer.close(zk);
         HConnectionManager.deleteAllConnections(true);
-        HBaseAdminFactory.closeAll();
         super.cleanup();
     }
 

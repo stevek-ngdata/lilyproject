@@ -15,6 +15,8 @@
  */
 package org.lilyproject.hadooptestfw;
 
+import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -43,9 +45,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
-
-import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
 
 public class CleanupUtil {
     private Configuration conf;
@@ -146,7 +145,7 @@ public class CleanupUtil {
         StringBuilder truncateReport = new StringBuilder();
         StringBuilder retainReport = new StringBuilder();
 
-        HBaseAdmin admin = HBaseAdminFactory.get(conf);
+        HBaseAdmin admin = new HBaseAdmin(conf);
         HTableDescriptor[] tables = admin.listTables();
         System.out.println("Found tables: " + (tables == null ? "null" : tables.length));
         tables = tables == null ? new HTableDescriptor[0] : tables;
@@ -278,7 +277,7 @@ public class CleanupUtil {
     public void majorCompact(String tableName, String[] columnFamilies) throws Exception {
         byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
         byte[] COL = Bytes.toBytes("DummyColumn");
-        HBaseAdmin admin = HBaseAdminFactory.get(conf);
+        HBaseAdmin admin = new HBaseAdmin(conf);
         HTable htable = null;
         try {
             htable = new HTable(conf, tableName);

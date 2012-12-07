@@ -15,6 +15,15 @@
  */
 package org.lilyproject.testclientfw;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -25,21 +34,15 @@ import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.joda.time.DateTime;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.cli.OptionUtil;
-import org.lilyproject.clientmetrics.*;
+import org.lilyproject.clientmetrics.HBaseMetrics;
+import org.lilyproject.clientmetrics.HBaseMetricsPlugin;
+import org.lilyproject.clientmetrics.LilyMetrics;
+import org.lilyproject.clientmetrics.ListMetricsPlugin;
+import org.lilyproject.clientmetrics.Metrics;
 import org.lilyproject.util.concurrent.WaitPolicy;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public abstract class BaseTestTool extends BaseZkCliTool {
     private Option workersOption;
@@ -138,8 +141,6 @@ public abstract class BaseTestTool extends BaseZkCliTool {
 
         // Close any HBase connections used for the metrics
         HConnectionManager.deleteAllConnections(true);
-        HBaseAdminFactory.closeAll();
-
         super.cleanup();
     }
 
@@ -151,7 +152,7 @@ public abstract class BaseTestTool extends BaseZkCliTool {
 
         File metricsFile = Util.getOutputFileRollOldOne(metricsFileName);
 
-        HBaseAdmin hbaseAdmin = HBaseAdminFactory.get(getHBaseConf());
+        HBaseAdmin hbaseAdmin = new HBaseAdmin(getHBaseConf());
 
         hbaseMetrics = new HBaseMetrics(hbaseAdmin);
         lilyMetrics = new LilyMetrics(getZooKeeper());
