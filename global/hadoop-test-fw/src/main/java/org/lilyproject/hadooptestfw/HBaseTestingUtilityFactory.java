@@ -15,12 +15,12 @@
  */
 package org.lilyproject.hadooptestfw;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
-
-import java.io.File;
-import java.io.IOException;
 
 public class HBaseTestingUtilityFactory {
     public static final String TEST_DIR_KEY = "lily.hbasetestingutility.dir";
