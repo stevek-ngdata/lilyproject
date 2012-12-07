@@ -27,6 +27,9 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.util.List;
 
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.RowMutations;
+
 /**
  * Empty implementation of HRegionInterface, except for {@link #getProtocolVersion} and
  * {@link #getProtocolVersion}.
@@ -50,210 +53,273 @@ public class BaseHRegionServer implements HRegionInterface {
     @Override
     public HRegionInfo getRegionInfo(byte[] regionName) throws NotServingRegionException, ConnectException,
             IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Result getClosestRowBefore(byte[] regionName, byte[] row, byte[] family) throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Result get(byte[] regionName, Get get) throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean exists(byte[] regionName, Get get) throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void put(byte[] regionName, Put put) throws IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public int put(byte[] regionName, List<Put> puts) throws IOException {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void delete(byte[] regionName, Delete delete) throws IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public int delete(byte[] regionName, List<Delete> deletes) throws IOException {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean checkAndPut(byte[] regionName, byte[] row, byte[] family, byte[] qualifier, byte[] value,
             Put put) throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean checkAndDelete(byte[] regionName, byte[] row, byte[] family, byte[] qualifier, byte[] value,
             Delete delete) throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public long incrementColumnValue(byte[] regionName, byte[] row, byte[] family, byte[] qualifier, long amount,
             boolean writeToWAL) throws IOException {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Result increment(byte[] regionName, Increment increment) throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public long openScanner(byte[] regionName, Scan scan) throws IOException {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Result next(long scannerId) throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Result[] next(long scannerId, int numberOfRows) throws IOException {
-        return new Result[0];
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void close(long scannerId) throws IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public long lockRow(byte[] regionName, byte[] row) throws IOException {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void unlockRow(byte[] regionName, long lockId) throws IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public List<HRegionInfo> getOnlineRegions() throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public HServerInfo getHServerInfo() throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public <R> MultiResponse multi(MultiAction<R> multi) throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean bulkLoadHFiles(List<Pair<byte[], String>> familyPaths, byte[] regionName) throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public RegionOpeningState openRegion(HRegionInfo region) throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public RegionOpeningState openRegion(HRegionInfo region, int versionOfOfflineNode) throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void openRegions(List<HRegionInfo> regions) throws IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean closeRegion(HRegionInfo region) throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean closeRegion(HRegionInfo region, int versionOfClosingNode) throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean closeRegion(HRegionInfo region, boolean zk) throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean closeRegion(byte[] encodedRegionName, boolean zk) throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void flushRegion(HRegionInfo regionInfo) throws NotServingRegionException, IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void splitRegion(HRegionInfo regionInfo) throws NotServingRegionException, IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void splitRegion(HRegionInfo regionInfo, byte[] splitPoint) throws NotServingRegionException, IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void compactRegion(HRegionInfo regionInfo, boolean major) throws NotServingRegionException, IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void replicateLogEntries(HLog.Entry[] entries) throws IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public ExecResult execCoprocessor(byte[] regionName, Exec call) throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean checkAndPut(byte[] regionName, byte[] row, byte[] family, byte[] qualifier,
             CompareFilter.CompareOp compareOp, WritableByteArrayComparable comparator, Put put) throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean checkAndDelete(byte[] regionName, byte[] row, byte[] family, byte[] qualifier,
             CompareFilter.CompareOp compareOp, WritableByteArrayComparable comparator, Delete delete)
             throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public List<BlockCacheColumnFamilySummary> getBlockCacheColumnFamilySummaries() throws IOException {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public byte[][] rollHLogWriter() throws IOException, FailedLogCloseException {
-        return new byte[0][];
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void stop(String why) {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void abort(String why, Throwable e) {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean isAborted() {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public boolean isStopped() {
-        return false;
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void flushRegion(byte[] regionName) throws IllegalArgumentException, IOException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void flushRegion(byte[] regionName, long ifOlderThanTS) throws IllegalArgumentException, IOException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public long getLastFlushTime(byte[] regionName) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public List<String> getStoreFileList(byte[] regionName, byte[] columnFamily) throws IllegalArgumentException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public List<String> getStoreFileList(byte[] regionName, byte[][] columnFamilies) throws IllegalArgumentException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public List<String> getStoreFileList(byte[] regionName) throws IllegalArgumentException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void mutateRow(byte[] regionName, RowMutations rm) throws IOException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Result append(byte[] regionName, Append append) throws IOException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public String getCompactionState(byte[] regionName) throws IOException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void compactRegion(HRegionInfo regionInfo, boolean major, byte[] columnFamily)
+            throws NotServingRegionException, IOException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 }

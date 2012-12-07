@@ -69,29 +69,29 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
         HBaseAdmin admin = HBaseAdminFactory.get(configuration);
 
         try {
-            admin.getTableDescriptor(tableDescriptor.getName());
-        } catch (TableNotFoundException e) {
-            if (!create) {
-                throw e;
-            }
-
             try {
-                // Make a deep copy, we don't want to touch the original
-                tableDescriptor = new HTableDescriptor(tableDescriptor);
-                configure(tableDescriptor);
-
-                int regionCount = splitKeys == null ? 1 : splitKeys.length + 1;
-                log.info("Creating '" + tableDescriptor.getNameAsString() + "' table using "
-                        + regionCount + " initial region" + (regionCount > 1 ? "s." : "."));
-                admin.createTable(tableDescriptor, splitKeys);
-            } catch (TableExistsException e2) {
-                // Table is meanwhile created by another process
-                log.info("Table already existed: '" + tableDescriptor.getNameAsString() + "'.");
-
+                admin.getTableDescriptor(tableDescriptor.getName());
+            } catch (TableNotFoundException e) {
+                if (!create) {
+                    throw e;
+                }
+    
+                try {
+                    // Make a deep copy, we don't want to touch the original
+                    tableDescriptor = new HTableDescriptor(tableDescriptor);
+                    configure(tableDescriptor);
+    
+                    int regionCount = splitKeys == null ? 1 : splitKeys.length + 1;
+                    log.info("Creating '" + tableDescriptor.getNameAsString() + "' table using "
+                            + regionCount + " initial region" + (regionCount > 1 ? "s." : "."));
+                    admin.createTable(tableDescriptor, splitKeys);
+                } catch (TableExistsException e2) {
+                    // Table is meanwhile created by another process
+                    log.info("Table already existed: '" + tableDescriptor.getNameAsString() + "'.");
+    
+                }
             }
-        }
-
-        try {
+      
             //In all cases we need to wait until the table is available
             // https://issues.apache.org/jira/browse/HBASE-6576
             long startWait = System.currentTimeMillis();

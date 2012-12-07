@@ -64,20 +64,20 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
      * <p>IMPORTANT: This implementation depends on the byte encodings from ValueTypeImpl, BlobValueType and DataOutputImpl.
      *               Any changes there have an impact on this implementation. 
      */
-    public int compareTo(byte[] theirValue) {
+    public int compareTo(byte[] theirValue, int fromOffset, int length) {
         byte[] ourStoreKey = Bytes.tail(nestingLevelAndValue, nestingLevelAndValue.length-Bytes.SIZEOF_INT);
         if (theirValue == null && ourStoreKey == null)
             return 0;
-        if (theirValue.length == 0 && ourStoreKey.length == 0)
+        if (length == 0 && ourStoreKey.length == 0)
             return 0;
-        if (theirValue.length < ourStoreKey.length)
+        if (length < ourStoreKey.length)
             return -1;
-        if (theirValue[0] == (byte)(1)) { // First byte indicates if it was deleted or not
+        if (theirValue[fromOffset] == (byte)(1)) { // First byte indicates if it was deleted or not
             return -1;
         }
 
         int nestingLevel = Bytes.toInt(nestingLevelAndValue);
-        offset = 1;
+        offset = fromOffset + 1;
         
         return compareBlob(nestingLevel, ourStoreKey, theirValue);
     }
