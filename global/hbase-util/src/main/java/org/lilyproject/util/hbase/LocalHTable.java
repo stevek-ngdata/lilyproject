@@ -31,6 +31,12 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.hadoop.hbase.client.HTableInterface;
+
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RowMutations;
+
 /**
  * This is a threadsafe solution for the non-threadsafe HTable.
  *
@@ -354,23 +360,12 @@ public class LocalHTable implements HTableInterface {
 
     @Override
     public boolean isAutoFlush() {
-        return runNoExc(new TableRunnable<Boolean>() {
-            @Override
-            public Boolean run(HTableInterface table) throws IOException, InterruptedException {
-                return table.isAutoFlush();
-            }
-        });
+        throw new UnsupportedOperationException("isAutoFlush is not supported on LocalHTables");
     }
 
     @Override
     public void flushCommits() throws IOException {
-        runNoIE(new TableRunnable<Object>() {
-            @Override
-            public Object run(HTableInterface table) throws IOException, InterruptedException {
-                table.flushCommits();
-                return null;
-            }
-        });
+        throw new UnsupportedOperationException("flushCommits is not supported on LocalHTables");
     }
 
     @Override
@@ -400,7 +395,7 @@ public class LocalHTable implements HTableInterface {
     }
 
     @Override
-    public void batch(final List<Row> actions, final Object[] results) throws IOException, InterruptedException {
+    public void batch(final List<? extends Row> actions, final Object[] results) throws IOException, InterruptedException {
         run(new TableRunnable<Void>() {
             @Override
             public Void run(HTableInterface table) throws IOException, InterruptedException {
@@ -411,7 +406,7 @@ public class LocalHTable implements HTableInterface {
     }
 
     @Override
-    public Object[] batch(final List<Row> actions) throws IOException, InterruptedException {
+    public Object[] batch(final List<? extends Row> actions) throws IOException, InterruptedException {
         return run(new TableRunnable<Object[]>() {
             @Override
             public Object[] run(HTableInterface table) throws IOException, InterruptedException {
@@ -471,7 +466,48 @@ public class LocalHTable implements HTableInterface {
             table.close();
         }
     }
+    
+    @Override
+    public void mutateRow(final RowMutations rm) throws IOException {
+        runNoIE(new TableRunnable<Object>() {
+            @Override
+            public Object run(HTableInterface table) throws IOException, InterruptedException {
+                table.mutateRow(rm);
+                return null;
+            }
+        });
+    }
 
+    @Override
+    public Result append(final Append append) throws IOException {
+        return runNoIE(new TableRunnable<Result>() {
+            @Override
+            public Result run(HTableInterface table) throws IOException, InterruptedException {
+                return table.append(append);
+            }
+        });
+    }
+
+    @Override
+    public void setAutoFlush(boolean autoFlush) {
+        throw new UnsupportedOperationException("setAutoFlush is not supported on LocalHTables");
+    }
+
+    @Override
+    public void setAutoFlush(boolean autoFlush, boolean clearBufferOnFail) {
+        throw new UnsupportedOperationException("setAutoFlush is not supported on LocalHTables");
+    }
+
+    @Override
+    public long getWriteBufferSize() {
+        throw new UnsupportedOperationException("getWriteBufferSize is not supported on LocalHTables");
+    }
+
+    @Override
+    public void setWriteBufferSize(long writeBufferSize) throws IOException {
+        throw new UnsupportedOperationException("setWriteBufferSize is not supported on LocalHTables");
+    }
+    
     private <T> T run(TableRunnable<T> runnable) throws IOException, InterruptedException {
         // passing tableNameString, since otherwise pool.getTable converts it to string anyway
         HTableInterface table = pool.getTable(tableNameString);
@@ -586,4 +622,5 @@ public class LocalHTable implements HTableInterface {
             executorService.execute(command);
         }
     }
+
 }

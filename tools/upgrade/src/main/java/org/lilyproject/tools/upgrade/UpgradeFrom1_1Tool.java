@@ -145,7 +145,7 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
         //
         HTable srcTable;
         try {
-            srcTable = new HTable(SRC_TABLE_NAME);
+            srcTable = new HTable(conf, SRC_TABLE_NAME);
         } catch (TableNotFoundException e) {
             System.err.println("Source table does not exist: " + SRC_TABLE_NAME);
             return 1;
