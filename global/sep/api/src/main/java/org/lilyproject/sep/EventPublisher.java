@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.sep.impl;
+package org.lilyproject.sep;
+
+import org.lilyproject.sep.EventListener;
 
 import java.io.IOException;
 

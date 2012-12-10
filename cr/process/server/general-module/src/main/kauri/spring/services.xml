@@ -60,6 +60,10 @@
       service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
   <kauri:export-service
+      ref="sepModel"
+      service="org.lilyproject.sep.SepModel"/>
+
+  <kauri:export-service
       ref="prematureRepository"
       service="org.lilyproject.util.repo.PrematureRepository"/>
 
@@ -142,7 +146,25 @@
     <constructor-arg ref="zooKeeper"/>
   </bean>
 
+  <bean id="sepModel" class="org.lilyproject.sep.impl.SepModelImpl">
+    <constructor-arg ref="zooKeeper"/>
+    <constructor-arg ref="hbaseConf"/>
+  </bean>
+
   <bean id="prematureRepository" class="org.lilyproject.util.repo.PrematureRepositoryImpl">
+  </bean>
+
+  <bean class="org.lilyproject.server.modules.general.LinkIndexSetup">
+    <constructor-arg ref="sepModel"/>
+    <constructor-arg value="${linkindex:enabled}"/>
+    <constructor-arg value="${linkindex:threads}"/>
+    <constructor-arg ref="prematureRepository"/>
+    <constructor-arg ref="hbaseConf"/>
+    <constructor-arg ref="hbaseTableFactory"/>
+    <constructor-arg ref="zooKeeper"/>
+    <constructor-arg>
+      <bean factory-bean="networkItfInfo" factory-method="getHostName"/>
+    </constructor-arg>
   </bean>
 
 </beans>

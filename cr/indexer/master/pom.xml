@@ -46,7 +46,7 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-sep-impl</artifactId>
+      <artifactId>lily-sep-api</artifactId>
     </dependency>
 
     <dependency>

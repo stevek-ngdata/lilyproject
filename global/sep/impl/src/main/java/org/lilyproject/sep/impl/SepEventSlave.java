@@ -14,6 +14,8 @@ import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
+import org.lilyproject.sep.EventListener;
+import org.lilyproject.sep.SepModel;
 import org.lilyproject.util.concurrent.WaitPolicy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;

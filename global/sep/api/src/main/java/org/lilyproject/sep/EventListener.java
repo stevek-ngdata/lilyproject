@@ -1,4 +1,4 @@
-package org.lilyproject.sep.impl;
+package org.lilyproject.sep;
 
 /**
  * Handles incoming Secondary Event Processor messages.

@@ -104,7 +104,7 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.sep.impl.EventListener;
+import org.lilyproject.sep.EventListener;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.repo.PrematureRepository;

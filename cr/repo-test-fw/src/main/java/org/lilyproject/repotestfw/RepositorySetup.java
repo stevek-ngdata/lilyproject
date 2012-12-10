@@ -57,11 +57,12 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.RemoteRepository;
 import org.lilyproject.repository.remote.RemoteTypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
-import org.lilyproject.sep.impl.EventListener;
-import org.lilyproject.sep.impl.EventPublisher;
+import org.lilyproject.sep.SepModel;
+import org.lilyproject.sep.EventListener;
+import org.lilyproject.sep.EventPublisher;
 import org.lilyproject.sep.impl.HBaseEventPublisher;
 import org.lilyproject.sep.impl.SepEventSlave;
-import org.lilyproject.sep.impl.SepModel;
+import org.lilyproject.sep.impl.SepModelImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -148,7 +149,7 @@ public class RepositorySetup {
         repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager);
         repository.setRecordUpdateHooks(recordUpdateHooks);
         
-        sepModel = new SepModel(zk, hadoopConf);
+        sepModel = new SepModelImpl(zk, hadoopConf);
         eventPublisher = new WrappedEventPublisher( 
                             new HBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory)));
 

@@ -37,281 +37,283 @@ import java.util.UUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class LinkIndexTest { }
-//    private final static RepositorySetup repoSetup = new RepositorySetup();
-//
-//    private static TypeManager typeManager;
-//    private static Repository repository;
-//    private static IdGenerator ids;
-//    private static LinkIndex linkIndex;
-//
-//    private SchemaId field1 = new SchemaIdImpl(UUID.randomUUID());
-//
-//    @BeforeClass
-//    public static void setUpBeforeClass() throws Exception {
-//        TestHelper.setupLogging("org.lilyproject.linkindex", "org.lilyproject.rowlog.impl.RowLogImpl");
-//
-//        repoSetup.setupCore();
-//        repoSetup.setupRepository(true);
-//
-//        typeManager = repoSetup.getTypeManager();
-//        repository = repoSetup.getRepository();
-//        ids = repository.getIdGenerator();
-//
-//        IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
-//
-//        linkIndex = new LinkIndex(indexManager, repository);
-//
-//        repoSetup.getRowLogConfManager().addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1);
-//        RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
-//
-//        repoSetup.waitForSubscription(repoSetup.getWal(), "LinkIndexUpdater");
-//    }
-//
-//    @AfterClass
-//    public static void tearDownAfterClass() throws Exception {
-//        Closer.close(repoSetup);
-//    }
-//
-//    @Test
-//    public void testLinkIndex() throws Exception {
-//        SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
-//
-//        Set<FieldedLink> links1 = new HashSet<FieldedLink>();
-//        links1.add(new FieldedLink(ids.newRecordId("id1"), field1));
-//        links1.add(new FieldedLink(ids.newRecordId("id2"), field1));
-//
-//        Set<FieldedLink> links2 = new HashSet<FieldedLink>();
-//        links2.add(new FieldedLink(ids.newRecordId("id3"), field1));
-//        links2.add(new FieldedLink(ids.newRecordId("id4"), field1));
-//
-//        linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
-//        linkIndex.updateLinks(ids.newRecordId("idB"), liveTag, links1);
-//        linkIndex.updateLinks(ids.newRecordId("idC"), liveTag, links2);
-//
-//        // Test forward link retrieval
-//        Set<FieldedLink> links = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
-//        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id1"), field1)));
-//        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2"), field1)));
-//        assertEquals(2, links.size());
-//
-//        // Test backward link retrieval
-//        Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("id1"), liveTag);
-//        assertTrue(referrers.contains(ids.newRecordId("idA")));
-//        assertTrue(referrers.contains(ids.newRecordId("idB")));
-//        assertEquals(2, referrers.size());
-//
-//        // Update the links for record idA and re-check
-//        links1.add(new FieldedLink(ids.newRecordId("id2a"), field1));
-//        linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
-//
-//        links = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
-//        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id1"), field1)));
-//        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2"), field1)));
-//        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2a"), field1)));
-//        assertEquals(3, links.size());
-//
-//        referrers = linkIndex.getReferrers(ids.newRecordId("id1"), liveTag);
-//        assertTrue(referrers.contains(ids.newRecordId("idA")));
-//        assertTrue(referrers.contains(ids.newRecordId("idB")));
-//        assertEquals(2, referrers.size());
-//
-//        referrers = linkIndex.getReferrers(ids.newRecordId("id2a"), liveTag);
-//        assertTrue(referrers.contains(ids.newRecordId("idA")));
-//        assertEquals(1, referrers.size());
-//    }
-//
-//    @Test
-//    public void testLinkIndexWithShortRecordIds() throws Exception {
-//        final RecordId id1 = ids.newRecordId("id1");
-//        final RecordId id2 = ids.newRecordId("id2");
-//        final RecordId id3 = ids.newRecordId("id3");
-//        final RecordId id4 = ids.newRecordId("id4");
-//
-//        testLinkIndexRetrievalWithProvidedIds(id1, id2, id3, id4);
-//    }
-//
-//    @Test
-//    public void testLinkIndexWithLongRecordIds() throws Exception {
-//        final RecordId id1 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes1");
-//        final RecordId id2 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes2");
-//        final RecordId id3 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes3");
-//        final RecordId id4 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes4");
-//
-//        testLinkIndexRetrievalWithProvidedIds(id1, id2, id3, id4);
-//    }
-//
-//    private void testLinkIndexRetrievalWithProvidedIds(RecordId id1, RecordId id2, RecordId id3, RecordId id4) throws Exception {
-//        SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
-//
-//        Set<FieldedLink> links1 = new HashSet<FieldedLink>();
-//        links1.add(new FieldedLink(id1, field1));
-//        links1.add(new FieldedLink(id2, field1));
-//
-//        Set<FieldedLink> links2 = new HashSet<FieldedLink>();
-//        links2.add(new FieldedLink(id3, field1));
-//        links2.add(new FieldedLink(id4, field1));
-//
-//        linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
-//        linkIndex.updateLinks(ids.newRecordId("idB"), liveTag, links2);
-//
-//        // Test forward link retrieval
-//        Set<FieldedLink> linksFromA = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
-//        assertTrue(linksFromA.contains(new FieldedLink(id1, field1)));
-//        assertTrue(linksFromA.contains(new FieldedLink(id2, field1)));
-//        assertEquals(2, linksFromA.size());
-//
-//        Set<FieldedLink> linksFromB = linkIndex.getFieldedForwardLinks(ids.newRecordId("idB"), liveTag);
-//        assertTrue(linksFromB.contains(new FieldedLink(id3, field1)));
-//        assertTrue(linksFromB.contains(new FieldedLink(id4, field1)));
-//        assertEquals(2, linksFromB.size());
-//
-//        // Test backward link retrieval
-//        Set<RecordId> referrers1 = linkIndex.getReferrers(id1, liveTag);
-//        assertTrue(referrers1.contains(ids.newRecordId("idA")));
-//        assertEquals(1, referrers1.size());
-//
-//        Set<RecordId> referrers2 = linkIndex.getReferrers(id2, liveTag);
-//        assertTrue(referrers2.contains(ids.newRecordId("idA")));
-//        assertEquals(1, referrers2.size());
-//
-//        Set<RecordId> referrers3 = linkIndex.getReferrers(id3, liveTag);
-//        assertTrue(referrers3.contains(ids.newRecordId("idB")));
-//        assertEquals(1, referrers3.size());
-//
-//        Set<RecordId> referrers4 = linkIndex.getReferrers(id4, liveTag);
-//        assertTrue(referrers4.contains(ids.newRecordId("idB")));
-//        assertEquals(1, referrers4.size());
-//    }
-//
-//    @Test
-//    public void testLinkIndexUpdater() throws Exception {
-//        FieldType nonVersionedFt = typeManager.newFieldType(typeManager.getValueType("LINK"),
-//                new QName("ns", "link1"), Scope.NON_VERSIONED);
-//        nonVersionedFt = typeManager.createFieldType(nonVersionedFt);
-//
-//        FieldType versionedFt = typeManager.newFieldType(typeManager.getValueType("LIST<LINK>"),
-//                new QName("ns", "link2"), Scope.VERSIONED);
-//        versionedFt = typeManager.createFieldType(versionedFt);
-//
-//        FieldType versionedMutableFt = typeManager.newFieldType(typeManager.getValueType("LIST<LINK>"),
-//                new QName("ns", "link3"), Scope.VERSIONED_MUTABLE);
-//        versionedMutableFt = typeManager.createFieldType(versionedMutableFt);
-//
-//        FieldType nestedFt = typeManager.newFieldType(typeManager.getValueType("LIST<LIST<PATH<LINK>>>"),
-//                new QName("ns", "nestedLinks"), Scope.NON_VERSIONED);
-//        nestedFt = typeManager.createFieldType(nestedFt);
-//
-//        FieldType complexFt = typeManager.newFieldType(typeManager.getValueType("LIST<RECORD>"),
-//                new QName("ns", "complexLinks"), Scope.NON_VERSIONED);
-//        complexFt = typeManager.createFieldType(complexFt);
-//
-//        RecordType recordType = typeManager.newRecordType(new QName("ns", "MyRecordType"));
-//        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(nonVersionedFt.getId(), false));
-//        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(versionedFt.getId(), false));
-//        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(versionedMutableFt.getId(), false));
-//        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(nestedFt.getId(), false));
-//        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(complexFt.getId(), false));
-//        recordType = typeManager.createRecordType(recordType);
-//
-//        SchemaId lastVTag = typeManager.getFieldTypeByName(VersionTag.LAST).getId();
-//
-//        //
-//        // Link extraction from a record without versions
-//        //
-//        {
-//            Record record = repository.newRecord();
-//            record.setRecordType(recordType.getName());
-//            record.setField(nonVersionedFt.getName(), new Link(ids.newRecordId("foo1")));
-//            record = repository.create(record);
-//
-//            Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), lastVTag);
-//            assertEquals(1, referrers.size());
-//            assertTrue(referrers.contains(record.getId()));
-//
-//            referrers = linkIndex.getReferrers(ids.newRecordId("bar1"), lastVTag);
-//            assertEquals(0, referrers.size());
-//
-//            // Now perform an update so that there is a version
-//            record.setField(versionedFt.getName(), Arrays.asList(new Link(ids.newRecordId("foo2")),
-//                    new Link(ids.newRecordId("foo3"))));
-//            record = repository.update(record);
-//
-//            referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), lastVTag);
-//            assertEquals(1, referrers.size());
-//            assertTrue(referrers.contains(record.getId()));
-//
-//            referrers = linkIndex.getReferrers(ids.newRecordId("foo2"), lastVTag);
-//            assertEquals(1, referrers.size());
-//            assertTrue(referrers.contains(record.getId()));
-//        }
-//
-//        //
-//        // Link extraction from nested types
-//        //
-//        {
-//            Record record = repository
-//                    .recordBuilder()
-//                    .defaultNamespace("ns")
-//                    .recordType("MyRecordType")
-//                    .field("nestedLinks",
-//                            Arrays.asList(
-//                                    Arrays.asList(
-//                                            new HierarchyPath(new Link(ids.newRecordId("nl1"))),
-//                                            new HierarchyPath(new Link(ids.newRecordId("nl2")))
-//                                    ),
-//                                    Arrays.asList(
-//                                            new HierarchyPath(new Link(ids.newRecordId("nl3"))),
-//                                            new HierarchyPath(new Link(ids.newRecordId("nl4")))
-//                                    )
-//                            ))
-//                    .create();
-//
-//            Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("nl1"), lastVTag);
-//            assertEquals(1, referrers.size());
-//            assertTrue(referrers.contains(record.getId()));
-//
-//            Set<RecordId> forwardLinks = linkIndex.getForwardLinks(record.getId(), lastVTag, nestedFt.getId());
-//            assertEquals(4, forwardLinks.size());
-//            assertTrue(forwardLinks.contains(ids.newRecordId("nl1")));
-//            assertTrue(forwardLinks.contains(ids.newRecordId("nl2")));
-//            assertTrue(forwardLinks.contains(ids.newRecordId("nl3")));
-//            assertTrue(forwardLinks.contains(ids.newRecordId("nl4")));
-//        }
-//
-//        //
-//        // Link extraction from complex types
-//        //
-//        {
-//            Record record = repository
-//                    .recordBuilder()
-//                    .defaultNamespace("ns")
-//                    .recordType("MyRecordType")
-//                    .field("complexLinks",
-//                            Arrays.asList(
-//                                    repository
-//                                            .recordBuilder()
-//                                            .defaultNamespace("ns")
-//                                            .recordType("MyRecordType")
-//                                            .field("link1", new Link(ids.newRecordId("cl1")))
-//                                            .build(),
-//                                    repository
-//                                            .recordBuilder()
-//                                            .defaultNamespace("ns")
-//                                            .recordType("MyRecordType")
-//                                            .field("link1", new Link(ids.newRecordId("cl2")))
-//                                            .build()
-//                            ))
-//                    .create();
-//
-//            Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("cl1"), lastVTag);
-//            assertEquals(1, referrers.size());
-//            assertTrue(referrers.contains(record.getId()));
-//
-//            Set<RecordId> forwardLinks = linkIndex.getForwardLinks(record.getId(), lastVTag, complexFt.getId());
-//            assertEquals(2, forwardLinks.size());
-//            assertTrue(forwardLinks.contains(ids.newRecordId("cl1")));
-//            assertTrue(forwardLinks.contains(ids.newRecordId("cl2")));
-//        }
-//    }
-//}
+public class LinkIndexTest {
+    private final static RepositorySetup repoSetup = new RepositorySetup();
+
+    private static TypeManager typeManager;
+    private static Repository repository;
+    private static IdGenerator ids;
+    private static LinkIndex linkIndex;
+
+    private SchemaId field1 = new SchemaIdImpl(UUID.randomUUID());
+
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
+        TestHelper.setupLogging("org.lilyproject.linkindex", "org.lilyproject.rowlog.impl.RowLogImpl");
+
+        repoSetup.setupCore();
+        repoSetup.setupRepository(true);
+
+        typeManager = repoSetup.getTypeManager();
+        repository = repoSetup.getRepository();
+        ids = repository.getIdGenerator();
+
+        IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
+
+        linkIndex = new LinkIndex(indexManager, repository);
+
+        repoSetup.getSepModel().addSubscription("LinkIndexUpdater");
+        repoSetup.startSepEventSlave("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
+    }
+
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+        Closer.close(repoSetup);
+    }
+
+    @Test
+    public void testLinkIndex() throws Exception {
+        SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
+
+        Set<FieldedLink> links1 = new HashSet<FieldedLink>();
+        links1.add(new FieldedLink(ids.newRecordId("id1"), field1));
+        links1.add(new FieldedLink(ids.newRecordId("id2"), field1));
+
+        Set<FieldedLink> links2 = new HashSet<FieldedLink>();
+        links2.add(new FieldedLink(ids.newRecordId("id3"), field1));
+        links2.add(new FieldedLink(ids.newRecordId("id4"), field1));
+
+        linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
+        linkIndex.updateLinks(ids.newRecordId("idB"), liveTag, links1);
+        linkIndex.updateLinks(ids.newRecordId("idC"), liveTag, links2);
+
+        // Test forward link retrieval
+        Set<FieldedLink> links = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
+        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id1"), field1)));
+        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2"), field1)));
+        assertEquals(2, links.size());
+
+        // Test backward link retrieval
+        Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("id1"), liveTag);
+        assertTrue(referrers.contains(ids.newRecordId("idA")));
+        assertTrue(referrers.contains(ids.newRecordId("idB")));
+        assertEquals(2, referrers.size());
+
+        // Update the links for record idA and re-check
+        links1.add(new FieldedLink(ids.newRecordId("id2a"), field1));
+        linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
+
+        links = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
+        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id1"), field1)));
+        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2"), field1)));
+        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2a"), field1)));
+        assertEquals(3, links.size());
+
+        referrers = linkIndex.getReferrers(ids.newRecordId("id1"), liveTag);
+        assertTrue(referrers.contains(ids.newRecordId("idA")));
+        assertTrue(referrers.contains(ids.newRecordId("idB")));
+        assertEquals(2, referrers.size());
+
+        referrers = linkIndex.getReferrers(ids.newRecordId("id2a"), liveTag);
+        assertTrue(referrers.contains(ids.newRecordId("idA")));
+        assertEquals(1, referrers.size());
+    }
+
+    @Test
+    public void testLinkIndexWithShortRecordIds() throws Exception {
+        final RecordId id1 = ids.newRecordId("id1");
+        final RecordId id2 = ids.newRecordId("id2");
+        final RecordId id3 = ids.newRecordId("id3");
+        final RecordId id4 = ids.newRecordId("id4");
+
+        testLinkIndexRetrievalWithProvidedIds(id1, id2, id3, id4);
+    }
+
+    @Test
+    public void testLinkIndexWithLongRecordIds() throws Exception {
+        final RecordId id1 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes1");
+        final RecordId id2 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes2");
+        final RecordId id3 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes3");
+        final RecordId id4 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes4");
+
+        testLinkIndexRetrievalWithProvidedIds(id1, id2, id3, id4);
+    }
+
+    private void testLinkIndexRetrievalWithProvidedIds(RecordId id1, RecordId id2, RecordId id3, RecordId id4) throws Exception {
+        SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
+
+        Set<FieldedLink> links1 = new HashSet<FieldedLink>();
+        links1.add(new FieldedLink(id1, field1));
+        links1.add(new FieldedLink(id2, field1));
+
+        Set<FieldedLink> links2 = new HashSet<FieldedLink>();
+        links2.add(new FieldedLink(id3, field1));
+        links2.add(new FieldedLink(id4, field1));
+
+        linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
+        linkIndex.updateLinks(ids.newRecordId("idB"), liveTag, links2);
+
+        // Test forward link retrieval
+        Set<FieldedLink> linksFromA = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
+        assertTrue(linksFromA.contains(new FieldedLink(id1, field1)));
+        assertTrue(linksFromA.contains(new FieldedLink(id2, field1)));
+        assertEquals(2, linksFromA.size());
+
+        Set<FieldedLink> linksFromB = linkIndex.getFieldedForwardLinks(ids.newRecordId("idB"), liveTag);
+        assertTrue(linksFromB.contains(new FieldedLink(id3, field1)));
+        assertTrue(linksFromB.contains(new FieldedLink(id4, field1)));
+        assertEquals(2, linksFromB.size());
+
+        // Test backward link retrieval
+        Set<RecordId> referrers1 = linkIndex.getReferrers(id1, liveTag);
+        assertTrue(referrers1.contains(ids.newRecordId("idA")));
+        assertEquals(1, referrers1.size());
+
+        Set<RecordId> referrers2 = linkIndex.getReferrers(id2, liveTag);
+        assertTrue(referrers2.contains(ids.newRecordId("idA")));
+        assertEquals(1, referrers2.size());
+
+        Set<RecordId> referrers3 = linkIndex.getReferrers(id3, liveTag);
+        assertTrue(referrers3.contains(ids.newRecordId("idB")));
+        assertEquals(1, referrers3.size());
+
+        Set<RecordId> referrers4 = linkIndex.getReferrers(id4, liveTag);
+        assertTrue(referrers4.contains(ids.newRecordId("idB")));
+        assertEquals(1, referrers4.size());
+    }
+
+    @Test
+    public void testLinkIndexUpdater() throws Exception {
+        FieldType nonVersionedFt = typeManager.newFieldType(typeManager.getValueType("LINK"),
+                new QName("ns", "link1"), Scope.NON_VERSIONED);
+        nonVersionedFt = typeManager.createFieldType(nonVersionedFt);
+
+        FieldType versionedFt = typeManager.newFieldType(typeManager.getValueType("LIST<LINK>"),
+                new QName("ns", "link2"), Scope.VERSIONED);
+        versionedFt = typeManager.createFieldType(versionedFt);
+
+        FieldType versionedMutableFt = typeManager.newFieldType(typeManager.getValueType("LIST<LINK>"),
+                new QName("ns", "link3"), Scope.VERSIONED_MUTABLE);
+        versionedMutableFt = typeManager.createFieldType(versionedMutableFt);
+
+        FieldType nestedFt = typeManager.newFieldType(typeManager.getValueType("LIST<LIST<PATH<LINK>>>"),
+                new QName("ns", "nestedLinks"), Scope.NON_VERSIONED);
+        nestedFt = typeManager.createFieldType(nestedFt);
+
+        FieldType complexFt = typeManager.newFieldType(typeManager.getValueType("LIST<RECORD>"),
+                new QName("ns", "complexLinks"), Scope.NON_VERSIONED);
+        complexFt = typeManager.createFieldType(complexFt);
+
+        RecordType recordType = typeManager.newRecordType(new QName("ns", "MyRecordType"));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(nonVersionedFt.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(versionedFt.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(versionedMutableFt.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(nestedFt.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(complexFt.getId(), false));
+        recordType = typeManager.createRecordType(recordType);
+
+        SchemaId lastVTag = typeManager.getFieldTypeByName(VersionTag.LAST).getId();
+
+        //
+        // Link extraction from a record without versions
+        //
+        {
+            Record record = repository.newRecord();
+            record.setRecordType(recordType.getName());
+            record.setField(nonVersionedFt.getName(), new Link(ids.newRecordId("foo1")));
+            record = repository.create(record);
+            repoSetup.waitForSepProcessing();
+
+            Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), lastVTag);
+            assertEquals(1, referrers.size());
+            assertTrue(referrers.contains(record.getId()));
+
+            referrers = linkIndex.getReferrers(ids.newRecordId("bar1"), lastVTag);
+            assertEquals(0, referrers.size());
+
+            // Now perform an update so that there is a version
+            record.setField(versionedFt.getName(), Arrays.asList(new Link(ids.newRecordId("foo2")),
+                    new Link(ids.newRecordId("foo3"))));
+            record = repository.update(record);
+            repoSetup.waitForSepProcessing();
+
+            referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), lastVTag);
+            assertEquals(1, referrers.size());
+            assertTrue(referrers.contains(record.getId()));
+
+            referrers = linkIndex.getReferrers(ids.newRecordId("foo2"), lastVTag);
+            assertEquals(1, referrers.size());
+            assertTrue(referrers.contains(record.getId()));
+        }
+
+        //
+        // Link extraction from nested types
+        //
+        {
+            Record record = repository
+                    .recordBuilder()
+                    .defaultNamespace("ns")
+                    .recordType("MyRecordType")
+                    .field("nestedLinks",
+                            Arrays.asList(
+                                    Arrays.asList(
+                                            new HierarchyPath(new Link(ids.newRecordId("nl1"))),
+                                            new HierarchyPath(new Link(ids.newRecordId("nl2")))
+                                    ),
+                                    Arrays.asList(
+                                            new HierarchyPath(new Link(ids.newRecordId("nl3"))),
+                                            new HierarchyPath(new Link(ids.newRecordId("nl4")))
+                                    )
+                            ))
+                    .create();
+            repoSetup.waitForSepProcessing();
+
+            Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("nl1"), lastVTag);
+            assertEquals(1, referrers.size());
+            assertTrue(referrers.contains(record.getId()));
+
+            Set<RecordId> forwardLinks = linkIndex.getForwardLinks(record.getId(), lastVTag, nestedFt.getId());
+            assertEquals(4, forwardLinks.size());
+            assertTrue(forwardLinks.contains(ids.newRecordId("nl1")));
+            assertTrue(forwardLinks.contains(ids.newRecordId("nl2")));
+            assertTrue(forwardLinks.contains(ids.newRecordId("nl3")));
+            assertTrue(forwardLinks.contains(ids.newRecordId("nl4")));
+        }
+
+        //
+        // Link extraction from complex types
+        //
+        {
+            Record record = repository
+                    .recordBuilder()
+                    .defaultNamespace("ns")
+                    .recordType("MyRecordType")
+                    .field("complexLinks",
+                            Arrays.asList(
+                                    repository
+                                            .recordBuilder()
+                                            .defaultNamespace("ns")
+                                            .recordType("MyRecordType")
+                                            .field("link1", new Link(ids.newRecordId("cl1")))
+                                            .build(),
+                                    repository
+                                            .recordBuilder()
+                                            .defaultNamespace("ns")
+                                            .recordType("MyRecordType")
+                                            .field("link1", new Link(ids.newRecordId("cl2")))
+                                            .build()
+                            ))
+                    .create();
+            repoSetup.waitForSepProcessing();
+
+            Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("cl1"), lastVTag);
+            assertEquals(1, referrers.size());
+            assertTrue(referrers.contains(record.getId()));
+
+            Set<RecordId> forwardLinks = linkIndex.getForwardLinks(record.getId(), lastVTag, complexFt.getId());
+            assertEquals(2, forwardLinks.size());
+            assertTrue(forwardLinks.contains(ids.newRecordId("cl1")));
+            assertTrue(forwardLinks.contains(ids.newRecordId("cl2")));
+        }
+    }
+}
