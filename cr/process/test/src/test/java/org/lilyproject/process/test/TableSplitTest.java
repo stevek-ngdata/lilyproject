@@ -54,8 +54,7 @@ public class TableSplitTest {
     private static LilyProxy lilyProxy;
     private static File tmpDir;
 
-    // FIXME ROWLOG REFACTORING: temporarily removed links-forward/backward tables
-    private static List<String> TABLE_NAMES = Lists.newArrayList("record"); //, "links-forward", "links-backward");
+    private static List<String> TABLE_NAMES = Lists.newArrayList("record", "links-forward", "links-backward");
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -152,14 +151,10 @@ public class TableSplitTest {
         FileUtils.writeStringToFile(new File(generalConfDir, "tables.xml"), tablesXml, "UTF-8");
 
         // Write configuration to enable the linkindex
-        // FIXME ROWLOG REFACTORING
-        File rowlogConfDir = new File(confDir, "rowlog");
-        FileUtils.forceMkdir(rowlogConfDir);
+        String linkindexXml = "<linkindex xmlns:conf='http://kauriproject.org/configuration' conf:inherit='deep'>" +
+                "<enabled>true</enabled></linkindex>";
 
-        String rowlogXml = "<rowlog xmlns:conf='http://kauriproject.org/configuration' conf:inherit='deep'>" +
-                "<linkIndexUpdater enabled='true'/></rowlog>";
-
-        FileUtils.writeStringToFile(new File(rowlogConfDir, "rowlog.xml"), rowlogXml, "UTF-8");
+        FileUtils.writeStringToFile(new File(generalConfDir, "linkindex.xml"), linkindexXml, "UTF-8");
 
         return confDir;
     }
