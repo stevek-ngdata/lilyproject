@@ -1,0 +1,72 @@
+package org.lilyproject.server.modules.general;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.zookeeper.KeeperException;
+import org.lilyproject.hbaseindex.IndexManager;
+import org.lilyproject.hbaseindex.IndexNotFoundException;
+import org.lilyproject.linkindex.LinkIndex;
+import org.lilyproject.linkindex.LinkIndexUpdater;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.sep.SepModel;
+import org.lilyproject.sep.impl.SepEventSlave;
+import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.io.IOException;
+
+public class LinkIndexSetup {
+    private final SepModel sepModel;
+    private final boolean linkIndexEnabled;
+    private final int threads;
+    private final Repository repository;
+    private final Configuration hbaseConf;
+    private final HBaseTableFactory tableFactory;
+    private final ZooKeeperItf zk;
+    private final String hostName;
+    private SepEventSlave sepEventSlave;
+
+    public LinkIndexSetup(SepModel sepModel, boolean linkIndexEnabled, int threads, Repository repository,
+            Configuration hbaseConf, HBaseTableFactory tableFactory, ZooKeeperItf zk, String hostName) {
+        this.sepModel = sepModel;
+        this.linkIndexEnabled = linkIndexEnabled;
+        this.threads = threads;
+        this.repository = repository;
+        this.hbaseConf = hbaseConf;
+        this.tableFactory = tableFactory;
+        this.zk = zk;
+        this.hostName = hostName;
+    }
+
+    @PostConstruct
+    public void start() throws InterruptedException, KeeperException, IOException,
+            IndexNotFoundException, RepositoryException {
+
+        if (linkIndexEnabled) {
+            // assure the subscription exists
+            sepModel.addSubscriptionSilent("LinkIndexUpdater");
+        } else {
+            // assure the subscription doesn't exist
+            sepModel.removeSubscriptionSilent("LinkIndexUpdater");
+        }
+
+        if (linkIndexEnabled) {
+            IndexManager indexManager = new IndexManager(hbaseConf, tableFactory);
+
+            LinkIndex linkIndex = new LinkIndex(indexManager, repository);
+
+            LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repository, linkIndex);
+
+            sepEventSlave = new SepEventSlave("LinkIndexUpdater", 0L, linkIndexUpdater, threads, hostName, zk, hbaseConf);
+            sepEventSlave.start();
+        }
+    }
+
+    @PreDestroy
+    public void stop() {
+        Closer.close(sepEventSlave);
+    }
+}

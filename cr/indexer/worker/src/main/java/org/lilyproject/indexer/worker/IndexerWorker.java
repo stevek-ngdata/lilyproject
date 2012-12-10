@@ -34,7 +34,7 @@ import javax.annotation.PreDestroy;
 
 import org.lilyproject.sep.impl.HBaseEventPublisher;
 
-import org.lilyproject.sep.impl.EventPublisher;
+import org.lilyproject.sep.EventPublisher;
 
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 

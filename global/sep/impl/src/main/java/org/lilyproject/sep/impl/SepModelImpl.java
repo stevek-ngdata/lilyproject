@@ -8,19 +8,18 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+import org.lilyproject.sep.SepModel;
 
 import java.io.IOException;
 import java.util.UUID;
 
-public class SepModel {
+public class SepModelImpl implements SepModel {
     private final ZooKeeperItf zk;
     private final Configuration hbaseConf;
     private ReplicationAdmin replicationAdmin;
     private Log log = LogFactory.getLog(getClass());
 
-    public static final String HBASE_ROOT = "/lily/sep/hbase-slave";
-
-    public SepModel(ZooKeeperItf zk, Configuration hbaseConf) {
+    public SepModelImpl(ZooKeeperItf zk, Configuration hbaseConf) {
         this.zk = zk;
         this.hbaseConf = hbaseConf;
 
@@ -32,8 +31,14 @@ public class SepModel {
     }
 
     public void addSubscription(String name) throws InterruptedException, KeeperException, IOException {
-        if (replicationAdmin.listPeers().containsKey(name)) {
+        if (!addSubscriptionSilent(name)) {
             throw new IllegalStateException("There is already a subscription for name '" + name + "'.");
+        }
+    }
+
+    public boolean addSubscriptionSilent(String name) throws InterruptedException, KeeperException, IOException {
+        if (replicationAdmin.listPeers().containsKey(name)) {
+            return false;
         }
 
         String basePath = HBASE_ROOT + "/" + name;
@@ -44,14 +49,43 @@ public class SepModel {
         // Let's assume we're all using the same ZooKeeper
         String zkQuorum = hbaseConf.get("hbase.zookeeper.quorum");
         String zkClientPort = hbaseConf.get("hbase.zookeeper.property.clientPort");
-        replicationAdmin.addPeer(name, zkQuorum + ":" + zkClientPort + ":" + basePath);
+
+        try {
+            replicationAdmin.addPeer(name, zkQuorum + ":" + zkClientPort + ":" + basePath);
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().equals("Cannot add existing peer")) {
+                return false;
+            }
+            throw e;
+        }
+
+        return true;
     }
 
     public void removeSubscription(String name) throws IOException {
+        if (!removeSubscriptionSilent(name)) {
+            throw new IllegalStateException("No subscription named '" + name + "'.");
+        }
+    }
+
+    public boolean removeSubscriptionSilent(String name) throws IOException {
         if (!replicationAdmin.listPeers().containsKey(name)) {
             log.error("Requested to remove a subscription which does not exist, skipping silently: '" + name + "'");
+            return false;
         } else {
-            replicationAdmin.removePeer(name);
+            try {
+                replicationAdmin.removePeer(name);
+            } catch (IllegalArgumentException e) {
+                if (e.getMessage().equals("Cannot remove inexisting peer")) { // see ReplicationZookeeper
+                    return false;
+                }
+                throw e;
+            }
         }
+        return true;
+    }
+
+    public boolean hasSubscription(String name) {
+       return replicationAdmin.listPeers().containsKey(name);
     }
 }

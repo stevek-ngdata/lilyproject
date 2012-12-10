@@ -52,7 +52,8 @@ import org.lilyproject.util.io.Closer;
 // the backward table, is not arbitrary. It is such that if the process would fail in between, there would
 // never be left any state in the backward table which would not be found via the forward index.
 public class LinkIndex {
-    private IdGenerator idGenerator;
+    private Repository repository;
+    private IdGenerator lazyIdGenerator;
     private LinkIndexMetrics metrics;
     private Index forwardIndex;
     private Index backwardIndex;
@@ -63,7 +64,7 @@ public class LinkIndex {
     public LinkIndex(final IndexManager indexManager, Repository repository) throws IndexNotFoundException, IOException,
             InterruptedException {
         metrics = new LinkIndexMetrics("linkIndex");
-        this.idGenerator = repository.getIdGenerator();
+        this.repository = repository;
 
         // About the structure of these indexes:
         //  - the vtag comes after the recordid because this way we can delete all
@@ -296,7 +297,7 @@ public class LinkIndex {
             QueryResult qr = backwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                result.add(idGenerator.fromBytes(id));
+                result.add(getIdGenerator().fromBytes(id));
             }
             Closer.close(
                     qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -324,8 +325,8 @@ public class LinkIndex {
             QueryResult qr = backwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
-                result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
+                SchemaId sourceField = getIdGenerator().getSchemaId(qr.getData(SOURCE_FIELD_KEY));
+                result.add(new FieldedLink(getIdGenerator().fromBytes(id), sourceField));
             }
             Closer.close(
                     qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -349,10 +350,10 @@ public class LinkIndex {
             QueryResult qr = forwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
-                SchemaId vtag = idGenerator.getSchemaId(qr.getData(VTAG_KEY));
+                SchemaId sourceField = getIdGenerator().getSchemaId(qr.getData(SOURCE_FIELD_KEY));
+                SchemaId vtag = getIdGenerator().getSchemaId(qr.getData(VTAG_KEY));
                 result.add(
-                        new Pair<FieldedLink, SchemaId>(new FieldedLink(idGenerator.fromBytes(id), sourceField), vtag));
+                        new Pair<FieldedLink, SchemaId>(new FieldedLink(getIdGenerator().fromBytes(id), sourceField), vtag));
             }
             Closer.close(
                     qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -388,7 +389,7 @@ public class LinkIndex {
             QueryResult qr = forwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                result.add(idGenerator.fromBytes(id));
+                result.add(getIdGenerator().fromBytes(id));
             }
             Closer.close(
                     qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -417,8 +418,8 @@ public class LinkIndex {
             QueryResult qr = forwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
-                result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
+                SchemaId sourceField = getIdGenerator().getSchemaId(qr.getData(SOURCE_FIELD_KEY));
+                result.add(new FieldedLink(getIdGenerator().fromBytes(id), sourceField));
             }
             Closer.close(
                     qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -430,6 +431,16 @@ public class LinkIndex {
         } finally {
             metrics.report(Action.GET_FW_LINKS, System.currentTimeMillis() - before);
         }
+    }
+
+    private IdGenerator getIdGenerator() {
+        // synchronization not an issue, doesn't matter if this happens twice
+        // can't assign IdGenerator in constructor since the repository is a premature one
+        if (lazyIdGenerator == null) {
+            lazyIdGenerator = repository.getIdGenerator();
+        }
+
+        return lazyIdGenerator;
     }
 
 }

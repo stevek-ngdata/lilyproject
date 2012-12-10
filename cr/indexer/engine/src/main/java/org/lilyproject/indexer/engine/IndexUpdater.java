@@ -16,13 +16,12 @@
 package org.lilyproject.indexer.engine;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.lilyproject.sep.impl.EventPublisher;
+import org.lilyproject.sep.EventPublisher;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
@@ -46,7 +45,7 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
-import org.lilyproject.sep.impl.EventListener;
+import org.lilyproject.sep.EventListener;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;

@@ -60,6 +60,10 @@
       service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
   <kauri:import-service
+      id="sepModel"
+      service="org.lilyproject.sep.SepModel"/>
+
+  <kauri:import-service
       id="hbaseTableFactory"
       service="org.lilyproject.util.hbase.HBaseTableFactory"/>
 
@@ -97,6 +101,7 @@
     <constructor-arg>
       <bean factory-bean="hadoopConfFactory" factory-method="getZooKeeperSessionTimeout"/>
     </constructor-arg>
+    <constructor-arg ref="sepModel"/>
     <constructor-arg ref="lilyInfo"/>
     <constructor-arg ref="solrClientConfig"/>
     <constructor-arg value="${indexer:enableLocking}"/>

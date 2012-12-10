@@ -57,7 +57,7 @@ import org.lilyproject.indexer.model.api.IndexerModelEventType;
 import org.lilyproject.indexer.model.api.IndexerModelListener;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.sep.impl.SepModel;
+import org.lilyproject.sep.SepModel;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -122,7 +122,7 @@ public class IndexerMaster {
 
     public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Repository repository,
             Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
-            String zkConnectString, int zkSessionTimeout,
+            String zkConnectString, int zkSessionTimeout, SepModel sepModel,
             LilyInfo lilyInfo, SolrClientConfig solrClientConfig, boolean enableLocking,
             String hostName, HBaseTableFactory tableFactory, String nodes) {
 
@@ -140,7 +140,7 @@ public class IndexerMaster {
         this.hostName = hostName;
         this.tableFactory = tableFactory;
         this.nodes = nodes;
-        this.sepModel = new SepModel(zk, hbaseConf);
+        this.sepModel = sepModel;
     }
 
     @PostConstruct
