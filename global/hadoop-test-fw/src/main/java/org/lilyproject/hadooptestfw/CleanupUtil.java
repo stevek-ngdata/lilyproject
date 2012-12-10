@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest.CompactionState;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -230,6 +232,7 @@ public class CleanupUtil {
             HTable htable = null;
             try {
                 htable = new HTable(conf, tableName);
+                
                 byte[] CF = timestampReusingTables.get(tableName);
                 byte[] tmpRowKey = waitForCompact(tableName, CF);
 
@@ -248,8 +251,9 @@ public class CleanupUtil {
         HTable htable = null;
         try {
             htable = new HTable(conf, tableName);
-
+            System.out.println("Waiting for flush/compact of " + tableName + " table to complete");
             byte[] value = null;
+            long waitStart = System.currentTimeMillis();
             while (value == null) {
                 Put put = new Put(tmpRowKey);
                 put.add(CF, COL, 1, new byte[] { 0 });
@@ -260,8 +264,19 @@ public class CleanupUtil {
                 value = result.getValue(CF, COL);
                 if (value == null) {
                     // If the value is null, it is because the delete marker has not yet been flushed/compacted away
-                    System.out.println("Waiting for flush/compact of " + tableName + " to complete");
-                    Thread.sleep(100);
+                    Thread.sleep(500);
+                }
+                
+                long totalWait = System.currentTimeMillis() - waitStart;
+                if (totalWait > 5000) {
+                    HBaseAdmin admin = new HBaseAdmin(conf);
+                    CompactionState compactionState = admin.getCompactionState(tableName);
+                    if (compactionState != CompactionState.MAJOR && compactionState != CompactionState.MAJOR_AND_MINOR) {
+                        System.out.println("Re-requesting major compaction on " + tableName);
+                        admin.majorCompact(tableName);
+                    }
+                    admin.close();
+                    waitStart = System.currentTimeMillis();
                 }
             }
             return tmpRowKey;
