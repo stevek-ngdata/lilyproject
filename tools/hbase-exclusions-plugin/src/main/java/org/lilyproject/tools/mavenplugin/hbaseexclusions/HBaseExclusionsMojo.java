@@ -127,6 +127,7 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
         ALLOWED_ARTIFACTS.add("commons-configuration:commons-configuration");
         ALLOWED_ARTIFACTS.add("org.apache.hadoop:hadoop-auth");
         ALLOWED_ARTIFACTS.add("com.google.protobuf:protobuf-java");
+        ALLOWED_ARTIFACTS.add("com.github.stephenc.high-scale-lib:high-scale-lib");
     }
     
     private boolean isAllowed(String groupId, String artifactId) {
