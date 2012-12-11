@@ -283,9 +283,6 @@ public class BatchBuildTest {
         }
     }
 
-    // FIXME ROWLOG REFACTORING Upgrading to HBase 0.94.3 breaks the ability to remove tables from within
-    // the HBaseTestingUtility
-    @Ignore
     @Test
     public void testClearDerefMap() throws Exception {
         DerefMap derefMap = DerefMapHbaseImpl
