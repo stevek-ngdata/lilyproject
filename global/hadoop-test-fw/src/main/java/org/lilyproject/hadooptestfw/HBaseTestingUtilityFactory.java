@@ -79,6 +79,10 @@ public class HBaseTestingUtilityFactory {
         conf.set("hbase.replication", "true");
         conf.set("replication.source.nb.capacity", "200");
 
+        // make replication react quicker
+        conf.setLong("replication.source.sleepforretries", 50);
+        conf.setLong("replication.source.maxretriesmultiplier", 1);
+
         return new HBaseTestingUtility(conf, clearData);
     }
 

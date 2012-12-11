@@ -189,33 +189,31 @@ public class TableSplitTest {
                     .create();
         }
 
-        // FIXME ROWLOG REFACTORING
-        // The following code should be re-enabled, but we need a wait-for-sep here that
-        // waits on the LinkIndexUpdater having consumed everything.
+        lilyProxy.waitSepEventsProcessed(60000L);
 
         //
         // Count number of records in each region
         //
-//        for (String tableName : TABLE_NAMES) {
-//            HTable table = new HTable(lilyProxy.getHBaseProxy().getConf(), tableName);
-//            for (HRegionInfo regionInfo : table.getRegionsInfo().keySet()) {
-//                Scan scan = new Scan();
-//                scan.setStartRow(regionInfo.getStartKey());
-//                scan.setStopRow(regionInfo.getEndKey());
-//
-//                ResultScanner scanner = table.getScanner(scan);
-//                int count = 0;
-//                for (Result result : scanner) {
-//                    //System.out.println("result = " + Arrays.toString(result.getRow()));
-//                    count++;
-//                }
-//
-//                assertTrue(String.format("Number of records in region '%s' is %d, expected between 80 and 120, " +
-//                        "start key is '%s', end key is '%s'", regionInfo.getRegionNameAsString(), count,
-//                        Bytes.toStringBinary(regionInfo.getStartKey()), Bytes.toStringBinary(regionInfo.getEndKey())),
-//                        count > 80 && count < 120);
-//            }
-//        }
+        for (String tableName : TABLE_NAMES) {
+            HTable table = new HTable(lilyProxy.getHBaseProxy().getConf(), tableName);
+            for (HRegionInfo regionInfo : table.getRegionsInfo().keySet()) {
+                Scan scan = new Scan();
+                scan.setStartRow(regionInfo.getStartKey());
+                scan.setStopRow(regionInfo.getEndKey());
+
+                ResultScanner scanner = table.getScanner(scan);
+                int count = 0;
+                for (Result result : scanner) {
+                    //System.out.println("result = " + Arrays.toString(result.getRow()));
+                    count++;
+                }
+
+                assertTrue(String.format("Number of records in region '%s' is %d, expected between 80 and 120, " +
+                        "start key is '%s', end key is '%s'", regionInfo.getRegionNameAsString(), count,
+                        Bytes.toStringBinary(regionInfo.getStartKey()), Bytes.toStringBinary(regionInfo.getEndKey())),
+                        count > 80 && count < 120);
+            }
+        }
     }
 
 }

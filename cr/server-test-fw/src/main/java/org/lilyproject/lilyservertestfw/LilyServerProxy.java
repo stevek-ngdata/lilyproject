@@ -25,12 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -385,7 +380,7 @@ public class LilyServerProxy {
         ObjectName indexerObjectName = new ObjectName("Lily:name=Indexer");
 
         try {
-            jmxLiaison.connect();
+            jmxLiaison.connect(mode == Mode.EMBED);
 
             while (System.currentTimeMillis() < tryUntil) {
                 Set<String> subscriptionIds = (Set<String>)jmxLiaison.getAttribute(indexerObjectName, "IndexNames");
@@ -416,7 +411,7 @@ public class LilyServerProxy {
         long tryUntil = System.currentTimeMillis() + timeout;
 
         try {
-            jmxLiaison.connect();
+            jmxLiaison.connect(mode == Mode.EMBED);
 
             // Spin while there is a has been a mutation without a corresponding SEP delivery within 10 milliseconds of it
             // The SEP timestamps are actually the write time of the WAL edit, so they will be the same or slightly before
@@ -451,36 +446,6 @@ public class LilyServerProxy {
         }
 
         return false;
-    }
-
-    private class JmxLiaison {
-        private MBeanServerConnection connection;
-        private JMXConnector connector;
-
-        public void connect() throws Exception {
-            switch (mode) {
-                case EMBED:
-                    connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
-                    break;
-                case CONNECT:
-                    String hostport = "localhost:10102";
-                    JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://"
-                            + hostport + "/jmxrmi");
-                    connector = JMXConnectorFactory.connect(url);
-                    connector.connect();
-                    connection = connector.getMBeanServerConnection();
-                    break;
-            }
-        }
-
-        public void disconnect() throws Exception {
-            if (connector != null)
-                connector.close();
-        }
-
-        public Object getAttribute(ObjectName objectName, String attrName) throws Exception {
-            return connection.getAttribute(objectName, attrName);
-        }
     }
 
     /**
