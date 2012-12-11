@@ -384,8 +384,6 @@ public class IndexTest {
         }
     }
 
-    // TODO ROWLOG REFACTORING Verify that this has been broken in HBase
-    @Ignore("HTable delete in HBaseTestingUtility appears to be broken in HBase 0.94.3")
     @Test
     public void testDeleteIndex() throws Exception {
         final String INDEX_NAME = "deleteIndex";
