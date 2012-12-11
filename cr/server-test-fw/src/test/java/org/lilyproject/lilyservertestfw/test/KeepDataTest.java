@@ -125,20 +125,19 @@ public class KeepDataTest {
         Record record = repository.read(recordId);
         Assert.assertEquals("name1", (String)record.getField(FIELD1));
 
-        // FIXME ROWLOG REFACTORING
-//        // Wait for messages to be processed
-//        Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
-//
-//        // Query Solr and assert all previously created records are indexed
-//        List<RecordId> recordIds = querySolr("name1");
-//
-//        for (RecordId recordId2 : recordIds) {
-//            System.out.println("[KeepDataTest] RecordId from query : " + recordId2);
-//        }
-//        for (int j = 0; j < i; j++) {
-//            RecordId expectedRecordId = repository.getIdGenerator().newRecordId("MyRecord" + j);
-//            Assert.assertTrue("Expected " + expectedRecordId + " to be in query result", recordIds.contains(expectedRecordId));
-//        }
+        // Wait for messages to be processed
+        Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepMessagesProcessed(60000L));
+
+        // Query Solr and assert all previously created records are indexed
+        List<RecordId> recordIds = querySolr("name1");
+
+        for (RecordId recordId2 : recordIds) {
+            System.out.println("[KeepDataTest] RecordId from query : " + recordId2);
+        }
+        for (int j = 0; j < i; j++) {
+            RecordId expectedRecordId = repository.getIdGenerator().newRecordId("MyRecord" + j);
+            Assert.assertTrue("Expected " + expectedRecordId + " to be in query result", recordIds.contains(expectedRecordId));
+        }
     }
 
     private List<RecordId> querySolr(String name) throws SolrServerException {
