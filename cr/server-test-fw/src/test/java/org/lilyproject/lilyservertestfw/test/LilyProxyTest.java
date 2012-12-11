@@ -89,59 +89,57 @@ public class LilyProxyTest {
         record = repository.read(record.getId());
         Assert.assertEquals("name1", (String)record.getField(FIELD1));
 
-        // FIXME ROWLOG REFACTORING
+        // Wait for messages to be processed
+        Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepMessagesProcessed(10000L));
 
-//        // Wait for messages to be processed
-//        Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
-//
-//        // Query Solr
-//        List<RecordId> recordIds = querySolr("name1");
-//
-//        Assert.assertTrue(recordIds.contains(record.getId()));
-//
-//        System.out.println("Original record:" +record.getId().toString());
-//        System.out.println("Queried record:" +recordIds.get(0).toString());
-//
-//        //
-//        // Batch index build scenario
-//        //
-//        if (System.getProperty("os.name").startsWith("Windows")) {
-//            System.out.println("Skipping the Batch index build scenario since this does not work under Windows.");
-//        } else {
-//            // Disable incremental index updating
-//            WriteableIndexerModel indexerModel = lilyProxy.getLilyServerProxy().getIndexerModel();
-//            String lock = indexerModel.lockIndex(indexName);
-//            String subscriptionId;
-//            try {
-//                IndexDefinition index = indexerModel.getMutableIndex(indexName);
-//                subscriptionId = index.getQueueSubscriptionId();
-//                index.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
-//                indexerModel.updateIndex(index, lock);
-//            } finally {
-//                indexerModel.unlockIndex(lock);
-//            }
-//            lilyProxy.getLilyServerProxy().waitOnMQSubscription(subscriptionId, false, 60000L);
-//
-//            // Create record
-//            record = repository.newRecord();
-//            record.setRecordType(RECORDTYPE1);
-//            record.setField(FIELD1, "name2");
-//            record = repository.create(record);
-//
-//            // Wait for messages to be processed -- there shouldn't be any
-//            Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
-//
-//            // Record shouldn't be in index yet
-//            recordIds = querySolr("name2");
-//            Assert.assertFalse(recordIds.contains(record.getId()));
-//
-//            // Trigger batch build
-//            lilyProxy.getLilyServerProxy().batchBuildIndex(indexName, 60000L * 4);
-//
-//            // Now record should be in index
-//            recordIds = querySolr("name2");
-//            Assert.assertFalse(recordIds.contains(record.getId()));
-//        }
+        // Query Solr
+        List<RecordId> recordIds = querySolr("name1");
+
+        Assert.assertTrue(recordIds.contains(record.getId()));
+
+        System.out.println("Original record:" +record.getId().toString());
+        System.out.println("Queried record:" +recordIds.get(0).toString());
+
+        //
+        // Batch index build scenario
+        //
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            System.out.println("Skipping the Batch index build scenario since this does not work under Windows.");
+        } else {
+            // Disable incremental index updating
+            WriteableIndexerModel indexerModel = lilyProxy.getLilyServerProxy().getIndexerModel();
+            String lock = indexerModel.lockIndex(indexName);
+            String subscriptionId;
+            try {
+                IndexDefinition index = indexerModel.getMutableIndex(indexName);
+                subscriptionId = index.getQueueSubscriptionId();
+                index.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
+                indexerModel.updateIndex(index, lock);
+            } finally {
+                indexerModel.unlockIndex(lock);
+            }
+            lilyProxy.getLilyServerProxy().waitOnMQSubscription(subscriptionId, false, 60000L);
+
+            // Create record
+            record = repository.newRecord();
+            record.setRecordType(RECORDTYPE1);
+            record.setField(FIELD1, "name2");
+            record = repository.create(record);
+
+            // Wait for messages to be processed -- there shouldn't be any
+            Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepMessagesProcessed(10000L));
+
+            // Record shouldn't be in index yet
+            recordIds = querySolr("name2");
+            Assert.assertFalse(recordIds.contains(record.getId()));
+
+            // Trigger batch build
+            lilyProxy.getLilyServerProxy().batchBuildIndex(indexName, 60000L * 4);
+
+            // Now record should be in index
+            recordIds = querySolr("name2");
+            Assert.assertFalse(recordIds.contains(record.getId()));
+        }
     }
 
     private List<RecordId> querySolr(String name) throws SolrServerException {
