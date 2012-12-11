@@ -341,4 +341,14 @@ public class HBaseProxy {
         cleanupUtil.cleanBlobStore(getBlobFS().getUri());
     }
 
+    public void rollHLog() throws Exception {
+        HBaseAdmin admin = new HBaseAdmin(conf);
+        Collection<ServerName> serverNames = admin.getClusterStatus().getServers();
+        if (serverNames.size() != 1) {
+            throw new RuntimeException("Expected exactly one region server, but got: " + serverNames.size());
+        }
+        admin.rollHLogWriter(serverNames.iterator().next().getServerName());
+        admin.close();
+    }
+
 }
