@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.lilyproject.util.Pair;
+
 import org.lilyproject.sep.EventPublisher;
 
 import com.google.common.base.Function;
@@ -179,10 +181,10 @@ public class IndexUpdater implements EventListener {
                 // Based on the partial old/new record state stored in the RecordEvent, determine whether we
                 // now match a different IndexCase than before, and if so, if the new case would have less vtags
                 // than the old one, perform the necessary deletes on Solr.
-                Record[] records =
+                Pair<Record,Record> oldAndNewRecords =
                         IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, event, repository);
-                Record oldRecord = records[0];
-                Record newRecord = records[1];
+                Record oldRecord = oldAndNewRecords.getV1();
+                Record newRecord = oldAndNewRecords.getV2();
                 IndexCase caseOld = oldRecord != null ? indexer.getConf().getIndexCase(oldRecord) : null;
                 IndexCase caseNew = newRecord != null ? indexer.getConf().getIndexCase(newRecord) : null;
 
