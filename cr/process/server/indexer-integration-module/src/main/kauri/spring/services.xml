@@ -57,11 +57,4 @@
     <constructor-arg ref="indexesInfo"/>
   </bean>
 
-  <bean id="indexAwareMQFeeder" class="org.lilyproject.indexer.integration.IndexAwareMQFeeder">
-    <!--
-    <constructor-arg ref="prematureRepository"/>
-    <constructor-arg ref="indexesInfo"/>
-    -->
-  </bean>
-
 </beans>
