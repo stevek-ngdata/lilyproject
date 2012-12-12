@@ -25,6 +25,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Sets;
+
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
+import org.apache.commons.lang.builder.EqualsBuilder;
+
+import com.google.common.collect.ImmutableSet;
+
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
@@ -52,7 +60,7 @@ public class RecordEvent {
     private IndexRecordFilterData indexRecordFilterData;
     /** A copy of the attributes supplied via {@link Record#setAttributes(Map)}. */
     private Map<String, String> attributes;
-
+    
     public enum Type {
         CREATE("repo:record-created"),
         UPDATE("repo:record-updated"),
@@ -380,11 +388,24 @@ public class RecordEvent {
      * more powerful selections in the future.</p>
      */
     public static class IndexRecordFilterData {
+        
+        /**
+         *  A subscription id set that represents as "all the index subscriptions".
+         */
+        public static final Set<String> ALL_INDEX_SUBSCRIPTIONS = ImmutableSet.of("/");
+        
         private boolean newRecordExists;
         private boolean oldRecordExists;
         private SchemaId newRecordType;
         private SchemaId oldRecordType;
         private List<FieldChange> fieldChanges;
+        
+        // All index subscriptions to be either included or excluded when indexing (see also includeSubcriptions)
+        private Set<String> indexSubscriptionIds;
+        
+        // Flag to determine if the indexSubscriptions set is for inclusion (true) or exclusion (false)
+        private boolean includeSubscriptions = true;
+
 
         public IndexRecordFilterData() {
         }
@@ -407,6 +428,8 @@ public class RecordEvent {
                     newRecordType = idGenerator.getSchemaId(jp.getBinaryValue());
                 } else if (fieldName.equals("oldRecordType")) {
                     oldRecordType = idGenerator.getSchemaId(jp.getBinaryValue());
+                } else if (fieldName.equals("includeSubscriptions")) {
+                    includeSubscriptions = jp.getBooleanValue();
                 } else if (fieldName.equals("fields")) {
                     if (current != JsonToken.START_ARRAY) {
                         throw new RuntimeException("updatedFields is not a JSON array");
@@ -414,6 +437,14 @@ public class RecordEvent {
                     fieldChanges = new ArrayList<FieldChange>();
                     while (jp.nextToken() != JsonToken.END_ARRAY) {
                         fieldChanges.add(new FieldChange(jp, idGenerator));
+                    }
+                } else if (fieldName.equals("subscriptions")) {
+                    if (current != JsonToken.START_ARRAY) {
+                        throw new RuntimeException("subscriptions is not a JSON array");
+                    }
+                    indexSubscriptionIds = Sets.newHashSet();
+                    while (jp.nextToken() != JsonToken.END_ARRAY) {
+                        indexSubscriptionIds.add(jp.getText());
                     }
                 }
             }
@@ -466,9 +497,9 @@ public class RecordEvent {
             gen.writeStartObject();
 
             gen.writeBooleanField("old", oldRecordExists);
-
             gen.writeBooleanField("new", newRecordExists);
-
+            gen.writeBooleanField("includeSubscriptions", includeSubscriptions);
+            
             if (newRecordType != null) {
                 gen.writeBinaryField("newRecordType", newRecordType.getBytes());
             }
@@ -486,8 +517,76 @@ public class RecordEvent {
 
                 gen.writeEndArray();
             }
+            
+            if (indexSubscriptionIds != null) {
+                gen.writeArrayFieldStart("subscriptions");
+                for (String subscriptionId : indexSubscriptionIds) {
+                    gen.writeString(subscriptionId);
+                }
+                gen.writeEndArray();
+            }
 
             gen.writeEndObject();
+        }
+        
+        
+
+        /**
+         * Set the index subscription ids to be included when distributing the containing record
+         * event to indexers. This cannot be combined with exclusions.
+         * 
+         * @param indexSubscriptionIds Ids of the index subscriptions for which the containing
+         *        RecordEvent applies
+         */
+        public void setSubscriptionInclusions(Set<String> indexSubscriptionIds) {
+            if (indexSubscriptionIds.equals(ALL_INDEX_SUBSCRIPTIONS)){
+                indexSubscriptionIds = null;
+            } else {
+                this.indexSubscriptionIds = indexSubscriptionIds;
+            }
+            includeSubscriptions = true;
+        }
+
+        /**
+         * Set the index subscription ids to be excluded when distributing the containing record
+         * event to indexers. This cannot be combined with inclusions.
+         * 
+         * @param indexSubscriptionIds Ids of the index subscriptions for which the containing
+         *        RecordEvent does not apply
+         */
+        public void setSubscriptionExclusions(Set<String> indexSubscriptionIds) {
+            if (indexSubscriptionIds.equals(ALL_INDEX_SUBSCRIPTIONS)){
+                indexSubscriptionIds = null;
+            } else {
+                this.indexSubscriptionIds = indexSubscriptionIds;
+            }
+            includeSubscriptions = false;
+        }
+
+        /**
+         * Check if the containing RecordEvent is applicable to an index subscription.
+         * 
+         * @param indexSubscriptionId Id of the index subscription to be checked
+         * @return true if the RecordEvent is applicable for the index subscription
+         */
+        public boolean appliesToSubscription(String indexSubscriptionId) {
+            if (includeSubscriptions) {
+                return indexSubscriptionIds == null 
+                        || indexSubscriptionIds.contains(indexSubscriptionId);
+            } else {
+                return indexSubscriptionIds != null
+                        && !indexSubscriptionIds.contains(indexSubscriptionId);
+            }
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            return EqualsBuilder.reflectionEquals(this, obj);
+        }
+        
+        @Override
+        public int hashCode() {
+            return HashCodeBuilder.reflectionHashCode(this);
         }
     }
 
@@ -548,6 +647,16 @@ public class RecordEvent {
             }
 
             gen.writeEndObject();
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            return EqualsBuilder.reflectionEquals(this, obj);
+        }
+        
+        @Override
+        public int hashCode() {
+            return HashCodeBuilder.reflectionHashCode(this);
         }
     }
 }

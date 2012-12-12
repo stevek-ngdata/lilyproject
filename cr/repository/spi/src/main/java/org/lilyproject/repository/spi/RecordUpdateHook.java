@@ -41,7 +41,7 @@ public interface RecordUpdateHook {
      *                       fields. Unmodifiable.
      * @param fieldTypes snapshot of the state of the field types when the update operation started (to
      *                   be insensitive to changes such as field type name changes)
-     * @param recordEvent the RecordEvent that will be added as payload to the WAL & MQ. Hooks can add their
+     * @param recordEvent the RecordEvent that will be added as payload to the SEP. Hooks can add their
      *                    own data in here, but should not in any case modify any of the data managed by
      *                    Lily itself. <b>Be very careful what you do!</b>
      */

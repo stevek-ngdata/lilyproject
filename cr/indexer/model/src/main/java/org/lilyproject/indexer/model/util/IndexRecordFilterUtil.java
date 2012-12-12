@@ -1,5 +1,7 @@
 package org.lilyproject.indexer.model.util;
 
+import org.lilyproject.util.Pair;
+
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -28,7 +30,7 @@ public class IndexRecordFilterUtil {
      * will only match IndexRecordFilter's that match all records anyway, so they won't match
      * more filters than either the old or new record state would match.</p>
      */
-    public static Record[] getOldAndNewRecordForRecordFilterEvaluation(RecordId recordId, RecordEvent recordEvent,
+    public static Pair<Record,Record> getOldAndNewRecordForRecordFilterEvaluation(RecordId recordId, RecordEvent recordEvent,
             Repository repository) throws RepositoryException, InterruptedException {
 
         //
@@ -78,9 +80,9 @@ public class IndexRecordFilterUtil {
                 oldRecord.setRecordType(typeManager.getRecordTypeById(idxSel.getOldRecordType(), null).getName());
             }
 
-            return new Record[] { oldRecord, newRecord };
+            return Pair.create(oldRecord, newRecord);
         }
 
-        return new Record[] { null, null };
+        return Pair.create(null, null);
     }
 }

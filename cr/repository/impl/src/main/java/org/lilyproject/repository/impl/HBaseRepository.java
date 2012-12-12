@@ -103,7 +103,7 @@ public class HBaseRepository extends BaseRepository {
 
     private List<RecordUpdateHook> updateHooks = Collections.emptyList();
 
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, HBaseTableFactory hbaseTableFactory,
             BlobManager blobManager) throws IOException, InterruptedException {
@@ -237,12 +237,12 @@ public class HBaseRepository extends BaseRepository {
                 RecordEvent recordEvent = new RecordEvent();
                 recordEvent.setType(Type.CREATE);
 
-                for (RecordUpdateHook hook : updateHooks) {
-                    hook.beforeCreate(record, this, fieldTypes, recordEvent);
-                }
-
                 Record newRecord = record.cloneRecord();
                 newRecord.setId(recordId);
+
+                for (RecordUpdateHook hook : updateHooks) {
+                    hook.beforeCreate(newRecord, this, fieldTypes, recordEvent);
+                }
 
                 Record dummyOriginalRecord = newRecord();
                 Put put = new Put(newRecord.getId().toBytes());
