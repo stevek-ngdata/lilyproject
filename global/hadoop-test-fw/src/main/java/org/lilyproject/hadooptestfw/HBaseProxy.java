@@ -74,7 +74,7 @@ public class HBaseProxy implements HBaseProxyMBean {
     private boolean enableMapReduce = false;
     private boolean clearData = true;
     private boolean format;
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     public enum Mode {EMBED, CONNECT}
 
@@ -202,6 +202,7 @@ public class HBaseProxy implements HBaseProxyMBean {
                 conf.set("hbase.zookeeper.quorum", "localhost");
                 conf.set("hbase.zookeeper.property.clientPort", "2181");
                 conf.set("hbase.replication", "true");
+
                 addUserProps(conf);
 
                 cleanupUtil = new CleanupUtil(conf, getZkConnectString());
