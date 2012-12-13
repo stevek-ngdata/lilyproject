@@ -61,7 +61,7 @@ public class HBaseProxy implements HBaseProxyMBean {
     private boolean enableMapReduce = false;
     private boolean clearData = true;
     private boolean format;
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     public enum Mode { EMBED, CONNECT }
     public static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
@@ -73,7 +73,7 @@ public class HBaseProxy implements HBaseProxyMBean {
     public HBaseProxy(Mode mode) throws IOException {
         this(mode, true);
     }
-    
+
     /**
      * Creates new HBaseProxy
      * @param mode either EMBED or CONNECT
@@ -82,7 +82,7 @@ public class HBaseProxy implements HBaseProxyMBean {
      */
     public HBaseProxy(Mode mode, boolean clearData) throws IOException {
         this.clearData = clearData;
-        
+
         if (mode == null) {
             String hbaseModeProp = System.getProperty(HBASE_MODE_PROP_NAME);
             if (hbaseModeProp == null || hbaseModeProp.equals("") || hbaseModeProp.equals("embed")) {
@@ -113,7 +113,7 @@ public class HBaseProxy implements HBaseProxyMBean {
             testHome = TestHomeUtil.createTestHome("lily-hbaseproxy-");
         }
 
-        if (!testHome.exists()) 
+        if (!testHome.exists())
             format = true; // A new directory: the NameNode and DataNodes will have to be formatted first
         FileUtils.forceMkdir(testHome);
     }
@@ -186,6 +186,7 @@ public class HBaseProxy implements HBaseProxyMBean {
                 conf.set("hbase.zookeeper.quorum", "localhost");
                 conf.set("hbase.zookeeper.property.clientPort", "2181");
                 conf.set("hbase.replication", "true");
+
                 addUserProps(conf);
 
                 cleanupUtil = new CleanupUtil(conf, getZkConnectString());
@@ -211,7 +212,7 @@ public class HBaseProxy implements HBaseProxyMBean {
     public String getZkConnectString() {
         return conf.get("hbase.zookeeper.quorum") + ":" + conf.get("hbase.zookeeper.property.clientPort");
     }
-    
+
     /**
      * Adds all system property prefixed with "lily.test.hbase." to the HBase configuration.
      */
@@ -305,10 +306,10 @@ public class HBaseProxy implements HBaseProxyMBean {
             return FileSystem.get(new URI(dfsUri), getConf());
         }
     }
-    
+
     /**
      * Cleans all data from the hbase tables.
-     * 
+     *
      * <p>Should only be called when lily-server is not running.
      */
     public void cleanTables() throws Exception {
@@ -317,7 +318,7 @@ public class HBaseProxy implements HBaseProxyMBean {
 
     /**
      * Cleans all blobs from the hdfs blobstore
-     * 
+     *
      * <p>Should only be called when lily-server is not running.
      */
     public void cleanBlobStore() throws Exception {
