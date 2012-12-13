@@ -133,6 +133,12 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-sep-filter</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
       <artifactId>lily-repository-spi</artifactId>
     </dependency>
 

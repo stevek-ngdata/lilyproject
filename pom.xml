@@ -700,6 +700,11 @@
         <version>1.4-SEP-SNAPSHOT</version>
       </dependency>
       <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-indexer-sep-filter</artifactId>
+        <version>1.4-SEP-SNAPSHOT</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${version.zookeeper}</version>
