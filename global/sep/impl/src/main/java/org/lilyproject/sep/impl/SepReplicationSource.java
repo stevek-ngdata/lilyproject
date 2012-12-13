@@ -63,8 +63,8 @@ public class SepReplicationSource extends ReplicationSource {
     @Override
     public void init(Configuration conf, FileSystem fs, ReplicationSourceManager manager, Stoppable stopper,
             AtomicBoolean replicating, String peerClusterZnode) throws IOException {
-        log.debug("init on cluster " + getPeerClusterId() + " on node " + getPeerClusterZnode());
         super.init(conf, fs, manager, stopper, replicating, peerClusterZnode);
+        log.debug("init on cluster " + getPeerClusterId() + " on node " + getPeerClusterZnode());
         setWALEditFilter(loadEditFilter(getPeerClusterId(), ServiceLoader.load(WALEditFilterProvider.class)));
     }
 

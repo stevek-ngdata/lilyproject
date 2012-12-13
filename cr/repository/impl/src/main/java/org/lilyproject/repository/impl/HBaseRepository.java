@@ -717,6 +717,9 @@ public class HBaseRepository extends BaseRepository {
             recordEvent.setType(Type.UPDATE);
             recordEvent.setVersionUpdated(version);
 
+            for (RecordUpdateHook hook : updateHooks) {
+                hook.beforeUpdate(record, originalRecord, this, fieldTypes, recordEvent);
+            }
 
             Set<Scope> changedScopes = calculateUpdateFields(record, fields, originalFields, originalNextFields,
                     version, put,
@@ -791,8 +794,6 @@ public class HBaseRepository extends BaseRepository {
 
                 // Validate if the new values for the record are valid wrt the recordType (e.g. mandatory fields)
                 validateRecord(newRecord, originalRecord, recordType, fieldTypes);
-
-                recordEvent.setVersionUpdated(version);
 
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);

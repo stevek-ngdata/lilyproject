@@ -118,7 +118,7 @@ import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
-public class IndexerTest { 
+public class IndexerTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
     private static IndexerConf INDEXER_CONF;
     private static SolrTestingUtility SOLR_TEST_UTIL;
@@ -177,6 +177,7 @@ public class IndexerTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+
         SOLR_TEST_UTIL = new SolrTestingUtility();
         SOLR_TEST_UTIL.setSolrDefinition(
                 new SolrDefinition(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml"))));
@@ -209,7 +210,7 @@ public class IndexerTest {
 
         // Field types should exist before the indexer conf is loaded
         setupSchema();
-        
+
 //        RowLogConfigurationManager rowLogConfMgr = repoSetup.getRowLogConfManager();
 //        rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 2);
 //
@@ -229,7 +230,7 @@ public class IndexerTest {
         jmxLiaison = new JmxLiaison();
         jmxLiaison.connect(repoSetup.getHBaseProxy().getMode() == HBaseProxy.Mode.EMBED);
     }
-    
+
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         repoSetup.stop();
@@ -569,7 +570,7 @@ public class IndexerTest {
                 .update();
 
         commitIndex();
-        
+
         verifyResultCount("product_price_france_string:12", 1);
 
     }

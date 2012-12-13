@@ -41,6 +41,7 @@
     <module>remote-impl</module>
     <module>engine</module>
     <module>derefmap-indexfilter</module>
+    <module>sep-filter</module>
     <module>model</module>
     <module>admin-cli</module>
     <module>worker</module>

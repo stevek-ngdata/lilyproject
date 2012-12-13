@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
+
+import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
+
 import org.lilyproject.util.Pair;
 
 import org.lilyproject.sep.EventPublisher;
@@ -111,7 +115,7 @@ public class IndexUpdater implements EventListener {
     /**
      * @param subscriptionId ID of the rowlog subscription to which this listener is listening. This is needed
      *                       because the IndexUpdater generates events itself, which should only be sent to
-     *                       this subscription. FIXME ROWLOG REFACTORING
+     *                       this subscription.
      */
     public IndexUpdater(Indexer indexer, Repository repository, IndexLocker indexLocker,
             IndexUpdaterMetrics metrics, DerefMap derefMap, EventPublisher eventPublisher, String subscriptionId)
@@ -452,6 +456,9 @@ public class IndexUpdater implements EventListener {
             for (SchemaId vtag : referrersAndVTags.get(referrer)) {
                 payload.addVTagToIndex(vtag);
             }
+            IndexRecordFilterData filterData = new IndexRecordFilterData();
+            filterData.setSubscriptionInclusions(ImmutableSet.of(this.subscriptionId));
+            payload.setIndexRecordFilterData(filterData);
 
             try {
                 eventPublisher.publishMessage(referrer.toBytes(), payload.toJsonBytes());
