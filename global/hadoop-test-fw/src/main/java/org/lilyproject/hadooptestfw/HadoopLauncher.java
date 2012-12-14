@@ -19,7 +19,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.lilyproject.cli.BaseCliTool;
-import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
 
@@ -59,9 +58,10 @@ public class HadoopLauncher extends BaseCliTool {
 
         baseTempDir = TestHomeUtil.createTestHome("launch-hadoop-");
 
-        HBaseTestingUtility testUtil = HBaseTestingUtilityFactory.create(conf, baseTempDir, true);
-        testUtil.startMiniCluster(1);
-        testUtil.startMiniMapReduceCluster(1);
+        HBaseProxy hbaseProxy = new HBaseProxy(HBaseProxy.Mode.EMBED);
+        hbaseProxy.setTestHome(baseTempDir);
+        hbaseProxy.setEnableMapReduce(true);
+        hbaseProxy.start();
 
         System.out.println("-------------------------");
         System.out.println("Minicluster is up");
@@ -78,14 +78,14 @@ public class HadoopLauncher extends BaseCliTool {
         System.out.println("For MapReduce, use:");
         System.out.println("Configuration conf = new Configuration();");
         System.out.println("conf.set(\"mapred.job.tracker\", \"localhost:" +
-                testUtil.getMRCluster().getJobTrackerPort() + "\");");
+                hbaseProxy.getHBaseTestingUtility().getMRCluster().getJobTrackerPort() + "\");");
         System.out.println("Job job = new Job(conf);");
         System.out.println();
         System.out.println("JobTracker web ui:   http://localhost:" +
-                testUtil.getMRCluster().getJobTrackerRunner().getJobTrackerInfoPort());
+                hbaseProxy.getHBaseTestingUtility().getMRCluster().getJobTrackerRunner().getJobTrackerInfoPort());
         System.out.println("HDFS web ui:         http://" + conf.get("dfs.namenode.http-address"));
         System.out.println("HBase master web ui: http://localhost:" +
-                testUtil.getHBaseCluster().getMaster().getInfoServer().getPort());
+                hbaseProxy.getHBaseTestingUtility().getHBaseCluster().getMaster().getInfoServer().getPort());
         System.out.println("-------------------------");
 
         return 0;

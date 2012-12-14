@@ -16,20 +16,15 @@
 package org.lilyproject.repotestfw;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.regionserver.wal.HLog.Entry;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.avro.AvroLily;
@@ -96,8 +91,8 @@ public class RepositorySetup {
     private BlobManager remoteBlobManager;
     
     private SepModel sepModel;
-    private WrappedSepEventSlave sepEventSlave;
-    private WrappedEventPublisher eventPublisher;
+    private SepEventSlave sepEventSlave;
+    private EventPublisher eventPublisher;
 
     private boolean coreSetup;
     private boolean typeManagerSetup;
@@ -150,8 +145,7 @@ public class RepositorySetup {
         repository.setRecordUpdateHooks(recordUpdateHooks);
         
         sepModel = new SepModelImpl(zk, hadoopConf);
-        eventPublisher = new WrappedEventPublisher( 
-                            new HBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory)));
+        eventPublisher = new HBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory));
 
         repositorySetup = true;
     }
@@ -228,32 +222,16 @@ public class RepositorySetup {
     }
 
     /**
-     * Wait until all queued SEP procesing is complete. It is assumed that there is something to
-     * wait for, as the SEP implementation doesn't provide information on the number of queued
-     * events.
+     * Wait until all currently queued SEP events are processed.
+     *
+     * <p>New events that are generated after/during a call to this method will not be waited for.</p>
      */
     public void waitForSepProcessing() throws Exception {
-        
-        MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
-        
-        if (sepEventSlave != null && sepEventSlave.isRunning()) {
-            for (int retry = 0; retry < 10; retry++) {
-                long lastMutationTimestamp = (Long)platformMBeanServer.getAttribute(new ObjectName(
-                        "Lily:service=Repository,name=hbaserepository"), "timestampLastMutation");
-                long lastPublishedMessage = eventPublisher.getLastPublishedTimestamp();
-                long lastProcessedSepEvent = sepEventSlave.getLastProcessedTimestamp();
-                
-                long lastOperation = Math.max(lastMutationTimestamp, lastPublishedMessage);
-                
-                if (Math.abs(lastOperation - lastProcessedSepEvent) < 50) {
-                    return;
-                }
-                Thread.sleep(1000);
-            }
+        long timeout = 60000L;
+        boolean success = hbaseProxy.waitOnReplication(timeout);
+        if (!success) {
+            throw new Exception("Events were not processed within a timeout of " + timeout + "ms");
         }
-
-        throw new IllegalStateException(
-                "Waited for 10 seconds, but no SEP events within 100 milliseconds were encountered");
     }
 
     public void stop() throws InterruptedException {
@@ -276,22 +254,6 @@ public class RepositorySetup {
         coreSetup = false;
         repositorySetup = false;
         typeManagerSetup = false;
-    }
-
-    public void waitForSubscription(String subscriptionId) throws InterruptedException {
-        // FIXME ROWLOG REFACTORING
-//        boolean subscriptionKnown = false;
-//        int timeOut = 10000;
-//        long waitUntil = System.currentTimeMillis() + timeOut;
-//        while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
-//            if (rowLog.getSubscriptionIds().contains(subscriptionId)) {
-//                subscriptionKnown = true;
-//                break;
-//            }
-//            Thread.sleep(10);
-//        }
-//        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
-//                subscriptionKnown);
     }
 
     public ZooKeeperItf getZk() {
@@ -338,8 +300,8 @@ public class RepositorySetup {
         if (sepEventSlave != null) {
             throw new IllegalStateException("There is already a SepEventSlave running, stop it first");
         }
-        sepEventSlave = new WrappedSepEventSlave(subscriptionId, System.currentTimeMillis(), 
-                                                    eventListener, 1, "localhost", zk, hadoopConf);
+        sepEventSlave = new SepEventSlave(subscriptionId, System.currentTimeMillis(), eventListener, 1, "localhost",
+                zk, hadoopConf);
         sepEventSlave.start();
     }
 
@@ -387,6 +349,10 @@ public class RepositorySetup {
         return remoteBlobManager;
     }
 
+    public HBaseProxy getHBaseProxy() {
+        return hbaseProxy;
+    }
+
     private class RemoteTestSchemaCache extends AbstractSchemaCache implements SchemaCache {
 
         private TypeManager typeManager;
@@ -404,59 +370,5 @@ public class RepositorySetup {
             return typeManager;
         }
 
-    }
-    
-    /**
-     * Wrapper around SepEventSlave to allow keeping track of whether or not events for a given point
-     * in time have been processed.
-     */
-    private static class WrappedSepEventSlave extends SepEventSlave {
-
-        private long lastProcessedTimestamp;
-        
-        public WrappedSepEventSlave(String subscriptionId, long subscriptionTimestamp, EventListener listener, 
-                int threadCnt, String hostName, ZooKeeperItf zk, Configuration hbaseConf) {
-            super(subscriptionId, subscriptionTimestamp, listener, threadCnt, hostName, zk, hbaseConf);
-        }
-        
-        @Override
-        public void replicateLogEntries(Entry[] entries) throws IOException {
-            super.replicateLogEntries(entries);
-            if (entries.length > 0){
-                lastProcessedTimestamp = entries[entries.length - 1].getKey().getWriteTime();
-            }
-        }
-        
-        /**
-         * Get the write timestamp of the last processed HLog entry.
-         */
-        public long getLastProcessedTimestamp() {
-            return lastProcessedTimestamp;
-        }
-        
-    }
-    
-    private static class WrappedEventPublisher implements EventPublisher {
-        
-        private EventPublisher delegate;
-        private long lastPublishedTimestamp;
-        
-        public WrappedEventPublisher(EventPublisher delegate) {
-            this.delegate = delegate;
-        }
-        
-        public long getLastPublishedTimestamp() {
-            return lastPublishedTimestamp;
-        }
-        
-        @Override
-        public boolean publishMessage(byte[] row, byte[] payload) throws IOException {
-            boolean result = delegate.publishMessage(row, payload);
-            if (result) {
-                lastPublishedTimestamp = System.currentTimeMillis();
-            }
-            return result;
-            
-        }
     }
 }

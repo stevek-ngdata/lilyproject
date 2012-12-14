@@ -35,9 +35,12 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
+import javax.management.ObjectName;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -58,6 +61,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.CleanupUtil;
+import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
@@ -82,6 +86,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.MappingNode;
 import org.lilyproject.indexer.model.indexerconf.VariantFollow;
+import org.lilyproject.indexer.model.util.IndexInfo;
 import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.indexer.model.util.IndexesInfoImpl;
 import org.lilyproject.repository.api.Blob;
@@ -107,6 +112,7 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.sep.EventListener;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
+import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
@@ -167,6 +173,8 @@ public class IndexerTest {
     private static Map<String, FieldType> fields = Maps.newHashMap();
     private final Map<String, Integer> matchResultCounts = Maps.newHashMap();
 
+    private static JmxLiaison jmxLiaison;
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         SOLR_TEST_UTIL = new SolrTestingUtility();
@@ -217,6 +225,9 @@ public class IndexerTest {
 //
 //        RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
 //        RowLogMessageListenerMapping.INSTANCE.put("OtherListener", otherListener);
+
+        jmxLiaison = new JmxLiaison();
+        jmxLiaison.connect(repoSetup.getHBaseProxy().getMode() == HBaseProxy.Mode.EMBED);
     }
     
     @AfterClass
@@ -225,9 +236,33 @@ public class IndexerTest {
 
         if (SOLR_TEST_UTIL != null)
             SOLR_TEST_UTIL.stop();
+
+        jmxLiaison.disconnect();
     }
+
+    // augmented each time we change the indexerconf, to give the indexes unique names
+    private static int idxChangeCnt = 0;
     
     public static void changeIndexUpdater(String confName) throws Exception {
+        String prevIndexName = "test" + idxChangeCnt;
+        idxChangeCnt++;
+        String indexName = "test" + idxChangeCnt;
+
+        System.out.println("changeIndexUpdater invocation " + idxChangeCnt);
+
+        // First clean up stuff of old index, to be sure this also gets executed in case of invalid indexerconf
+        if (indexerModel.hasIndex(prevIndexName)) {
+            indexerModel.deleteIndex(prevIndexName);
+            repoSetup.getSepModel().removeSubscription("IndexUpdater_" + prevIndexName);
+            jmxLiaison.invoke(new ObjectName("LilyHBaseProxy:name=HBaseProxy"), "removeReplicationSource",
+                    "IndexUpdater_" + prevIndexName);
+            repoSetup.stopSepEventSlave();
+        }
+        waitForIndexesInfoUpdate(0);
+
+        // warning: the below line will throw an exception in case of invalid conf, which is an exception
+        // which some test cases expect, and hence it won't be visible but will cause the remainder of the
+        // code in this method not to be executed! (so keep this in mind for anything related to resource cleanup)
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
 
@@ -244,36 +279,26 @@ public class IndexerTest {
             }
         }
         derefMap = DerefMapHbaseImpl.create("test", hbaseConf, null, repository.getIdGenerator());
-        Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
-                new IndexerMetrics("test"), derefMap);
-        
-       
+        Indexer indexer = new Indexer(indexName, INDEXER_CONF, repository, solrShardManager, indexLocker,
+                new IndexerMetrics(indexName), derefMap);
 
-// TODO ROWLOG REFACTORING
-//        RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, indexUpdaterRepository,
-//                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test"), derefMap, "IndexUpdater"));
-        
         // The registration of the index into the IndexerModel is only needed for the IndexRecordFilterHook
-        IndexDefinition indexDef = indexerModel.newIndex("test");
+        IndexDefinition indexDef = indexerModel.newIndex(indexName);
         indexDef.setConfiguration(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream(confName)));
         indexDef.setSolrShards(Collections.singletonMap("shard1", "http://somewhere/"));
-        indexDef.setQueueSubscriptionId("IndexUpdater_test");
+        indexDef.setQueueSubscriptionId("IndexUpdater_" + indexName);
 
-        if (indexerModel.hasIndex("test")) {
-            indexerModel.deleteIndex("test");
-            repoSetup.getSepModel().removeSubscription(indexDef.getQueueSubscriptionId());
-            repoSetup.stopSepEventSlave();
-        }
-        
-        waitForIndexesInfoUpdate(0);
-        
         indexerModel.addIndex(indexDef);
+
         repoSetup.getSepModel().addSubscription(indexDef.getQueueSubscriptionId());
-       
+
+        jmxLiaison.invoke(new ObjectName("LilyHBaseProxy:name=HBaseProxy"), "waitForReplicationSource",
+                "IndexUpdater_" + indexName);
+
         IndexUpdater indexUpdater = new IndexUpdater(indexer, indexUpdaterRepository, indexLocker,
-                new IndexUpdaterMetrics("test"), derefMap, repoSetup.getEventPublisher(), indexDef.getQueueSubscriptionId());
-        repoSetup.startSepEventSlave(indexDef.getQueueSubscriptionId(), indexUpdater);
-        
+                new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisher(), "IndexUpdater_" + indexName);
+        repoSetup.startSepEventSlave("IndexUpdater_" + indexName, indexUpdater);
+
         waitForIndexesInfoUpdate(1);
     }
 
@@ -282,7 +307,15 @@ public class IndexerTest {
         long now = System.currentTimeMillis();
         while (indexesInfo.getIndexInfos().size() != expectedCount) {
             if (System.currentTimeMillis() - now > 10000) {
-                fail("IndexesInfo was not updated within the expected timeout.");
+                String indexNames = Joiner.on(",").join(
+                        Collections2.transform(indexesInfo.getIndexInfos(), new Function<IndexInfo, String>() {
+                            @Override
+                            public String apply(@Nullable IndexInfo input) {
+                                return input.getIndexDefinition().getName();
+                            }
+                        }));
+                fail("IndexesInfo was not updated within the expected timeout, expected count = " + expectedCount +
+                        " actual entries = " + indexNames);
             }
             Thread.sleep(20);
         }
@@ -486,6 +519,8 @@ public class IndexerTest {
         // Test ForEach
         //
 
+        log.debug("Begin test forEach");
+
         String baseProductId = "product29485";
         String linkedProductId = "linkedProduct12345";
         RecordId linkedRecordId = repository.getIdGenerator().newRecordId(linkedProductId);
@@ -526,6 +561,7 @@ public class IndexerTest {
         verifyResultCount("linked_product:12345", 1);
 
         // update the price in france:
+        log.debug("Begin test forEach - update");
         repository.recordBuilder()
                 .id(repository.getIdGenerator()
                         .newRecordId("product29485", Collections.singletonMap("country", "france")))
@@ -2893,7 +2929,13 @@ public class IndexerTest {
     }
 
     private void commitIndex() throws Exception {
+        // wait for all events that exist at this point in time to be processed
         repoSetup.waitForSepProcessing();
+
+        // The events that have been processed up to now might themselves have produced new events (reindex events)
+        // that now also need to be processed, therefore do another wait.
+        repoSetup.waitForSepProcessing();
+
         solrShardManager.commit(true, true);
     }
 

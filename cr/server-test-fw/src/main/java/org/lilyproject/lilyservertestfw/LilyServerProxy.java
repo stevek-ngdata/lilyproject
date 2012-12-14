@@ -43,6 +43,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
@@ -393,59 +394,6 @@ public class LilyServerProxy {
         } finally {
             jmxLiaison.disconnect();
         }
-    }
-    
-    /**
-     * Wait until all Secondary Event Processing (SEP) events have been processed. This typically corresponds to 
-     * the indexing of content.
-     * 
-     * @param timeout The maximum amount of time to wait, in milliseconds
-     * @return true if all SEP events were processed within the timeout, otherwise false
-     */
-    public boolean waitForSepEventProcessing(long timeout) throws Exception {
-        JmxLiaison jmxLiaison = new JmxLiaison();
-        ObjectName indexerObjectName = new ObjectName("Lily:name=Indexer");
-        ObjectName repositoryObjectName = new ObjectName("Lily:service=Repository,name=hbaserepository");
-        String sepObjectNameTemplate = "Lily:service=SEP,name=IndexUpdater_%s";
-        String indexUpdaterNameTemplate = "Lily:service=Index Updater,name=%s";
-        long tryUntil = System.currentTimeMillis() + timeout;
-
-        try {
-            jmxLiaison.connect(mode == Mode.EMBED);
-
-            // Spin while there is a has been a mutation without a corresponding SEP delivery within 10 milliseconds of it
-            // The SEP timestamps are actually the write time of the WAL edit, so they will be the same or slightly before
-            // the timestamp for the completion of a mutation action in HBase.
-            while (System.currentTimeMillis() < tryUntil) {
-                long lastMutationTimestamp = (Long)jmxLiaison.getAttribute(repositoryObjectName, "timestampLastMutation");
-
-                long maxTimeDiff = Long.MIN_VALUE;
-                Set<String> indexNames = (Set<String>)jmxLiaison.getAttribute(indexerObjectName, "IndexNames");
-                if (indexNames.isEmpty()) {
-                    // No index updaters, so nothing to wait for
-                    return true;
-                }
-                
-                for (String indexName : indexNames) {
-                    long sepTimestamp = (Long)jmxLiaison.getAttribute(
-                            new ObjectName(String.format(sepObjectNameTemplate, indexName)), "lastSepTimestamp");
-                    long indexUpdaterTimestamp = (Long)jmxLiaison.getAttribute(
-                            new ObjectName(String.format(indexUpdaterNameTemplate, indexName)), 
-                            "lastReindexRequestTimestamp");
-                    
-                    maxTimeDiff = Math.max(maxTimeDiff, 
-                                            Math.max(lastMutationTimestamp, indexUpdaterTimestamp) - sepTimestamp);
-                }
-                if (maxTimeDiff >= 0 && maxTimeDiff < 10) {
-                    return true;
-                }
-                Thread.sleep(50);
-            }
-        } finally {
-            jmxLiaison.disconnect();
-        }
-
-        return false;
     }
 
     /**
