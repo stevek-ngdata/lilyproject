@@ -43,9 +43,6 @@ import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.util.jmx.JmxLiaison;
-
-import javax.management.ObjectName;
 
 
 public class LilyProxyTest {
@@ -121,13 +118,8 @@ public class LilyProxyTest {
             } finally {
                 indexerModel.unlockIndex(lock);
             }
-            lilyProxy.getLilyServerProxy().waitOnMQSubscription(subscriptionId, false, 60000L);
 
-            JmxLiaison jmxLiaison = new JmxLiaison();
-            jmxLiaison.connect(lilyProxy.getMode() == LilyProxy.Mode.EMBED);
-            jmxLiaison.invoke(new ObjectName("LilyHBaseProxy:name=HBaseProxy"), "removeReplicationSource",
-                    "IndexUpdater_" + indexName);
-            jmxLiaison.disconnect();
+            lilyProxy.getHBaseProxy().waitOnReplicationPeerStopped(subscriptionId);
 
             // Create record
             record = repository.newRecord();

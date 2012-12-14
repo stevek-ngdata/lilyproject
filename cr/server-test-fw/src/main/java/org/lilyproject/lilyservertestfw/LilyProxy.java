@@ -18,7 +18,6 @@ package org.lilyproject.lilyservertestfw;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Set;
 
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
@@ -27,14 +26,10 @@ import javax.management.remote.JMXServiceURL;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
 
 public class LilyProxy {
@@ -138,7 +133,7 @@ public class LilyProxy {
         }
         hbaseProxy.setEnableMapReduce(true);
         solrProxy = new SolrProxy(solrMode, this.clearData);
-        lilyServerProxy = new LilyServerProxy(lilyServerMode, this.clearData);
+        lilyServerProxy = new LilyServerProxy(lilyServerMode, this.clearData, hbaseProxy);
     }
 
     public Mode getMode() {

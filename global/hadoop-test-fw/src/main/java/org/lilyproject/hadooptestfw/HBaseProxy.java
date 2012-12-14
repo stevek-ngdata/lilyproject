@@ -41,17 +41,11 @@ import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
 import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
 
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -64,7 +58,7 @@ import java.util.*;
  * <p><b>VERY VERY IMPORTANT</b>: when connecting to an existing HBase, this class will DELETE ALL ROWS
  * FROM ALL TABLES!
  */
-public class HBaseProxy implements HBaseProxyMBean {
+public class HBaseProxy {
     private Mode mode;
     private Configuration conf;
     private HBaseTestingUtility hbaseTestUtil;
@@ -75,6 +69,7 @@ public class HBaseProxy implements HBaseProxyMBean {
     private boolean clearData = true;
     private boolean format;
     private final Log log = LogFactory.getLog(getClass());
+    private ReplicationPeerUtil mbean = new ReplicationPeerUtil();
 
     public enum Mode {EMBED, CONNECT}
 
@@ -222,7 +217,8 @@ public class HBaseProxy implements HBaseProxyMBean {
                 throw new RuntimeException("Unexpected mode: " + mode);
         }
 
-        ManagementFactory.getPlatformMBeanServer().registerMBean(this, new ObjectName("LilyHBaseProxy:name=HBaseProxy"));
+        ManagementFactory.getPlatformMBeanServer().registerMBean(mbean,
+                new ObjectName("LilyHBaseProxy:name=ReplicationPeer"));
     }
 
     /**
@@ -328,7 +324,7 @@ public class HBaseProxy implements HBaseProxyMBean {
             TestHomeUtil.cleanupTestHome(testHome);
         }
 
-        ManagementFactory.getPlatformMBeanServer().unregisterMBean(new ObjectName("LilyHBaseProxy:name=HBaseProxy"));
+        ManagementFactory.getPlatformMBeanServer().unregisterMBean(new ObjectName("LilyHBaseProxy:name=ReplicationPeer"));
     }
 
     public Configuration getConf() {
@@ -377,6 +373,15 @@ public class HBaseProxy implements HBaseProxyMBean {
         admin.close();
     }
 
+    /**
+     * Wait for all outstanding waledit's that are currently in the hlog(s) to be replicated. Any new waledits
+     * produced during the calling of this method won't be processed.
+     *
+     * <p>To avoid any timing issues, after adding a replication peer you will want to call
+     * {@link #waitOnReplicationPeerReady(String)} to be sure the current logs are in the queue
+     * of the new peer and that the peer's mbean is registered, otherwise this method might skip
+     * that peer (usually will go so fast that this problem doesn't really exist, but just to be sure).</p>
+     */
     public boolean waitOnReplication(long timeout) throws Exception {
         // Wait for the SEP to have processed all events.
         // The idea is as follows:
@@ -432,68 +437,36 @@ public class HBaseProxy implements HBaseProxyMBean {
         return true;
     }
 
-    @Override
-    public void removeReplicationSource(String peerId) {
-        long tryUntil = System.currentTimeMillis() + 60000L;
-        boolean waited = false;
-        while (threadExists(".replicationSource," + peerId)) {
-            waited = true;
-            if (System.currentTimeMillis() > tryUntil) {
-                throw new RuntimeException("Replication thread for peer " + peerId + " didn't stop within timeout.");
-            }
-            System.out.print("\nWaiting for replication source for " + peerId + " to be stopped...");
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                // I don't expect this
-                throw new RuntimeException(e);
-            }
-        }
-
-        if (waited)
-            System.out.println("done");
-
-        try {
-            MBeanServerConnection connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
-            ObjectName replicationSourceMBean = new ObjectName("hadoop:service=Replication,name=ReplicationSource for " + peerId);
-            connection.unregisterMBean(replicationSourceMBean);
-        } catch (Exception e) {
-            throw new RuntimeException("Error removing replication source mean for " + peerId, e);
+    /**
+     * After adding a new replication peer, this waits for the replication source in the region server to be started.
+     */
+    public void waitOnReplicationPeerReady(String peerId) throws Exception {
+        if (mode == Mode.EMBED) {
+            mbean.waitOnReplicationPeerReady(peerId);
+        } else {
+            JmxLiaison jmxLiaison = new JmxLiaison();
+            jmxLiaison.connect(false);
+            jmxLiaison.invoke(new ObjectName("LilyHBaseProxy:name=ReplicationPeer"), "waitOnReplicationPeerReady",
+                    peerId);
+            jmxLiaison.disconnect();
         }
     }
 
-    @Override
-    public void waitForReplicationSource(String peerId) {
-        long tryUntil = System.currentTimeMillis() + 60000L;
-        boolean waited = false;
-        while (!threadExists(".replicationSource," + peerId)) {
-            waited = true;
-            if (System.currentTimeMillis() > tryUntil) {
-                throw new RuntimeException("Replication thread for peer " + peerId + " didn't start within timeout.");
-            }
-            System.out.print("\nWaiting for replication source for " + peerId + " to be started...");
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                // I don't expect this
-                throw new RuntimeException(e);
-            }
+    /**
+     * After removing a replication peer, this waits for the replication source in the region server to be stopped,
+     * and will as well unregister its mbean (a workaround because this is missing in hbase at the time of this
+     * writing -- hbase 0.94.3)
+     */
+    public void waitOnReplicationPeerStopped(String peerId) throws Exception {
+        if (mode == Mode.EMBED) {
+            mbean.waitOnReplicationPeerStopped(peerId);
+        } else {
+            JmxLiaison jmxLiaison = new JmxLiaison();
+            jmxLiaison.connect(false);
+            jmxLiaison.invoke(new ObjectName("LilyHBaseProxy:name=ReplicationPeer"), "waitOnReplicationPeerStopped",
+                    peerId);
+            jmxLiaison.disconnect();
         }
-
-        if (waited)
-            System.out.println("done");
     }
 
-    private static boolean threadExists(String namepart) {
-        ThreadMXBean threadmx = ManagementFactory.getThreadMXBean();
-        ThreadInfo[] infos = threadmx.getThreadInfo(threadmx.getAllThreadIds());
-        for (ThreadInfo info : infos) {
-            if (info != null) { // see javadoc getThreadInfo (thread can have disappeared between the two calls)
-                if (info.getThreadName().contains(namepart)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 }
