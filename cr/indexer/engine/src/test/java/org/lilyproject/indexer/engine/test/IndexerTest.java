@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import javax.management.ObjectName;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -61,7 +60,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.CleanupUtil;
-import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
@@ -112,7 +110,6 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.sep.EventListener;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
-import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
@@ -173,8 +170,6 @@ public class IndexerTest {
     private static Map<String, FieldType> fields = Maps.newHashMap();
     private final Map<String, Integer> matchResultCounts = Maps.newHashMap();
 
-    private static JmxLiaison jmxLiaison;
-
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
 
@@ -226,9 +221,6 @@ public class IndexerTest {
 //
 //        RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
 //        RowLogMessageListenerMapping.INSTANCE.put("OtherListener", otherListener);
-
-        jmxLiaison = new JmxLiaison();
-        jmxLiaison.connect(repoSetup.getHBaseProxy().getMode() == HBaseProxy.Mode.EMBED);
     }
 
     @AfterClass
@@ -237,8 +229,6 @@ public class IndexerTest {
 
         if (SOLR_TEST_UTIL != null)
             SOLR_TEST_UTIL.stop();
-
-        jmxLiaison.disconnect();
     }
 
     // augmented each time we change the indexerconf, to give the indexes unique names
@@ -255,8 +245,7 @@ public class IndexerTest {
         if (indexerModel.hasIndex(prevIndexName)) {
             indexerModel.deleteIndex(prevIndexName);
             repoSetup.getSepModel().removeSubscription("IndexUpdater_" + prevIndexName);
-            jmxLiaison.invoke(new ObjectName("LilyHBaseProxy:name=HBaseProxy"), "removeReplicationSource",
-                    "IndexUpdater_" + prevIndexName);
+            repoSetup.getHBaseProxy().waitOnReplicationPeerStopped("IndexUpdater_" + prevIndexName);
             repoSetup.stopSepEventSlave();
         }
         waitForIndexesInfoUpdate(0);
@@ -293,8 +282,7 @@ public class IndexerTest {
 
         repoSetup.getSepModel().addSubscription(indexDef.getQueueSubscriptionId());
 
-        jmxLiaison.invoke(new ObjectName("LilyHBaseProxy:name=HBaseProxy"), "waitForReplicationSource",
-                "IndexUpdater_" + indexName);
+        repoSetup.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + indexName);
 
         IndexUpdater indexUpdater = new IndexUpdater(indexer, indexUpdaterRepository, indexLocker,
                 new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisher(), "IndexUpdater_" + indexName);
