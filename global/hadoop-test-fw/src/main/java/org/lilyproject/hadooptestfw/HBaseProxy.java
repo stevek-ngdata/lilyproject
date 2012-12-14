@@ -54,7 +54,6 @@ public class HBaseProxy {
     private boolean cleanStateOnConnect = true;
     private boolean enableMapReduce = false;
     private boolean clearData = true;
-    private boolean format;
     private final Log log = LogFactory.getLog(getClass());
     private ReplicationPeerUtil mbean = new ReplicationPeerUtil();
 
@@ -108,8 +107,6 @@ public class HBaseProxy {
             testHome = TestHomeUtil.createTestHome("lily-hbaseproxy-");
         }
 
-        if (!testHome.exists())
-            format = true; // A new directory: the NameNode and DataNodes will have to be formatted first
         FileUtils.forceMkdir(testHome);
     }
 
