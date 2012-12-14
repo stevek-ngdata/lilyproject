@@ -1,4 +1,4 @@
-package org.lilyproject.lilyservertestfw;
+package org.lilyproject.util.jmx;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -8,7 +8,10 @@ import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.util.Set;
 
-class JmxLiaison {
+/**
+ * Abstracts between calling JMX methods on the current JVM or another one (of launch-test-lily or launch-hadoop).
+ */
+public class JmxLiaison {
     private MBeanServerConnection connection;
     private JMXConnector connector;
 
@@ -36,5 +39,13 @@ class JmxLiaison {
 
     public Set<ObjectName> queryNames(ObjectName objectName) throws IOException {
         return connection.queryNames(objectName, null);
+    }
+
+    public Object invoke(ObjectName objectName, String operation, Object[] params, String[] signature) throws Exception {
+        return connection.invoke(objectName, operation, params, signature);
+    }
+
+    public Object invoke(ObjectName objectName, String operation, String arg) throws Exception {
+        return connection.invoke(objectName, operation, new Object[] { arg }, new String[] { "java.lang.String" });
     }
 }

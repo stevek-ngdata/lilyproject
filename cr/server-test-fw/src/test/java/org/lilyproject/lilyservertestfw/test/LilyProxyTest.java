@@ -43,6 +43,9 @@ import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.util.jmx.JmxLiaison;
+
+import javax.management.ObjectName;
 
 
 public class LilyProxyTest {
@@ -90,7 +93,7 @@ public class LilyProxyTest {
         Assert.assertEquals("name1", (String)record.getField(FIELD1));
 
         // Wait for messages to be processed
-        Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepMessagesProcessed(10000L));
+        Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepEventsProcessed(10000L));
 
         // Query Solr
         List<RecordId> recordIds = querySolr("name1");
@@ -120,6 +123,12 @@ public class LilyProxyTest {
             }
             lilyProxy.getLilyServerProxy().waitOnMQSubscription(subscriptionId, false, 60000L);
 
+            JmxLiaison jmxLiaison = new JmxLiaison();
+            jmxLiaison.connect(lilyProxy.getMode() == LilyProxy.Mode.EMBED);
+            jmxLiaison.invoke(new ObjectName("LilyHBaseProxy:name=HBaseProxy"), "removeReplicationSource",
+                    "IndexUpdater_" + indexName);
+            jmxLiaison.disconnect();
+
             // Create record
             record = repository.newRecord();
             record.setRecordType(RECORDTYPE1);
@@ -127,7 +136,7 @@ public class LilyProxyTest {
             record = repository.create(record);
 
             // Wait for messages to be processed -- there shouldn't be any
-            Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepMessagesProcessed(10000L));
+            Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepEventsProcessed(10000L));
 
             // Record shouldn't be in index yet
             recordIds = querySolr("name2");

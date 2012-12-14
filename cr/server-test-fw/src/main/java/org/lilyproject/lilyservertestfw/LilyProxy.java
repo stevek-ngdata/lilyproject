@@ -34,6 +34,7 @@ import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
 
 public class LilyProxy {
@@ -264,70 +265,30 @@ public class LilyProxy {
     }
     
     /**
-     * Waits for all messages from the WAL and MQ to be processed and optionally commits the solr index.
-     * 
+     * Waits for all SEP events to be processed and if successful commits the solr index.
+     *
+     * <p>The canonical usage in tests is along these lines:</p>
+     *
+     * <pre>Assert.assertTrue("Processing events took too long", lilyProxy.waitSepEventsProcessed(60000L));</pre>
+     *
      * @param timeout the maximum time to wait
-     * @param
-     * @return false if the timeout was reached before all messages were processed
+     * @return false if the timeout was reached before all events were processed
      */
-    public boolean waitSepMessagesProcessed(long timeout, boolean commitSolr) throws Exception {
-        boolean result = lilyServerProxy.waitForSepEventProcessing(timeout);
-        if (commitSolr)
-            solrProxy.commit();
-        return result;
+    public boolean waitSepEventsProcessed(long timeout) throws Exception {
+        return waitSepEventsProcessed(timeout, true);
     }
 
     /**
-     * Waits for all messages from the WAL and MQ to be processed and commits the solr index by default.
-     * 
+     * Waits for all SEP events to be processed and optionally commits the solr index.
+     *
      * @param timeout the maximum time to wait
-     * @param
-     * @return false if the timeout was reached before all messages were processed
+     * @return false if the timeout was reached before all events were processed
      */
-    public boolean waitSepMessagesProcessed(long timeout) throws Exception {
-        return waitSepMessagesProcessed(timeout, true);
-    }
-
-    public void waitSepEventsProcessed(long timeout) throws Exception {
-        // Wait for the SEP to have processed all events.
-        // The idea is as follows:
-        //   - we want to be sure hbase replication processed all outstanding events in the hlog
-        //   - therefore, roll the current hlog
-        //   - if the queue of hlogs to be processed by replication contains only the current hlog (the newly
-        //     rolled one), all events in the previous hlog(s) will have been processed
-        //
-        // It only works for one region server (which is the case for the test framework) and of course
-        // assumes that new hlogs aren't being created in the meantime, but that is under all reasonable
-        // circumstances the case.
-        // It does ignore new edits that are happening after/during the call of this method, which is a good thing.
-
-        // Roll the hlog
-        hbaseProxy.rollHLog();
-        // HBase replication doesn't deal too well with empty hlogs, it constantly prints error messages about
-        // it, therefore write a dummy waledit. See also HBASE-6446 or HBASE-7122.
-        // This assumes the record table exits (doing the same with the .META. tables gives an exception
-        // "Failed openScanner" at KeyComparator.compareWithoutRow in connect mode)
-        HTable table = new HTable(hbaseProxy.getConf(), "record");
-        Delete delete = new Delete(Bytes.toBytes("i-am-quite-sure-this-row-does-not-exist-ha-ha-ha"));
-        table.delete(delete);
-        table.close();
-
-        // Using JMX, query the size of the queue of hlogs to be processed for each replication source
-        JmxLiaison jmxLiaison = new JmxLiaison();
-        jmxLiaison.connect(mode == Mode.EMBED);
-        ObjectName lilyLauncher = new ObjectName("hadoop:service=Replication,name=ReplicationSource for *");
-        Set<ObjectName> mbeans = jmxLiaison.queryNames(lilyLauncher);
-        long tryUntil = System.currentTimeMillis() + timeout;
-        for (ObjectName mbean : mbeans) {
-            int logQSize = Integer.MAX_VALUE;
-            while (logQSize > 0 && System.currentTimeMillis() < tryUntil) {
-                logQSize = (Integer)jmxLiaison.getAttribute(mbean, "sizeOfLogQueue");
-                // logQSize == 0 means there is one active hlog that is polled by replication
-                // and none that are queued for later processing
-                if (logQSize > 0) {
-                    Thread.sleep(100);
-                }
-            }
+    public boolean waitSepEventsProcessed(long timeout, boolean commitSolr) throws Exception {
+        boolean success = hbaseProxy.waitOnReplication(timeout);
+        if (success && commitSolr) {
+            solrProxy.commit();
         }
+        return success;
     }
 }

@@ -22,13 +22,23 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
+import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServerConnection;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -41,7 +51,7 @@ import java.util.*;
  * <p><b>VERY VERY IMPORTANT</b>: when connecting to an existing HBase, this class will DELETE ALL ROWS
  * FROM ALL TABLES!
  */
-public class HBaseProxy {
+public class HBaseProxy implements HBaseProxyMBean {
     private Mode mode;
     private Configuration conf;
     private HBaseTestingUtility hbaseTestUtil;
@@ -87,6 +97,10 @@ public class HBaseProxy {
         }
     }
 
+    public Mode getMode() {
+        return mode;
+    }
+
     public void setTestHome(File testHome) throws IOException {
         if (mode != Mode.EMBED) {
             throw new RuntimeException("testHome should only be set when mode is EMBED");
@@ -118,6 +132,10 @@ public class HBaseProxy {
 
     public void setEnableMapReduce(boolean enableMapReduce) {
         this.enableMapReduce = enableMapReduce;
+    }
+
+    public HBaseTestingUtility getHBaseTestingUtility() {
+        return hbaseTestUtil;
     }
 
     public void start() throws Exception {
@@ -186,6 +204,8 @@ public class HBaseProxy {
             default:
                 throw new RuntimeException("Unexpected mode: " + mode);
         }
+
+        ManagementFactory.getPlatformMBeanServer().registerMBean(this, new ObjectName("LilyHBaseProxy:name=HBaseProxy"));
     }
 
     public String getZkConnectString() {
@@ -264,6 +284,8 @@ public class HBaseProxy {
         if (clearData && testHome != null) {
             TestHomeUtil.cleanupTestHome(testHome);
         }
+
+        ManagementFactory.getPlatformMBeanServer().unregisterMBean(new ObjectName("LilyHBaseProxy:name=HBaseProxy"));
     }
 
     public Configuration getConf() {
@@ -312,4 +334,123 @@ public class HBaseProxy {
         admin.close();
     }
 
+    public boolean waitOnReplication(long timeout) throws Exception {
+        // Wait for the SEP to have processed all events.
+        // The idea is as follows:
+        //   - we want to be sure hbase replication processed all outstanding events in the hlog
+        //   - therefore, roll the current hlog
+        //   - if the queue of hlogs to be processed by replication contains only the current hlog (the newly
+        //     rolled one), all events in the previous hlog(s) will have been processed
+        //
+        // It only works for one region server (which is the case for the test framework) and of course
+        // assumes that new hlogs aren't being created in the meantime, but that is under all reasonable
+        // circumstances the case.
+        // It does ignore new edits that are happening after/during the call of this method, which is a good thing.
+
+        // Make sure there actually is something within the hlog, otherwise it won't roll
+        // This assumes the record table exits (doing the same with the .META. tables gives an exception
+        // "Failed openScanner" at KeyComparator.compareWithoutRow in connect mode)
+        HTable table = new HTable(conf, "record");
+        Delete delete = new Delete(Bytes.toBytes("i-am-quite-sure-this-row-does-not-exist-ha-ha-ha"));
+        table.delete(delete);
+
+        // Roll the hlog
+        rollHLog();
+
+        // HBase replication doesn't deal too well with empty hlogs, it constantly prints error messages about
+        // it, therefore write a dummy waledit. See also HBASE-6446 or HBASE-7122.
+        delete = new Delete(Bytes.toBytes("i-am-quite-sure-this-row-does-not-exist-ha-ha-ha-2"));
+        table.delete(delete);
+        table.close();
+
+        // Using JMX, query the size of the queue of hlogs to be processed for each replication source
+        JmxLiaison jmxLiaison = new JmxLiaison();
+        jmxLiaison.connect(mode == Mode.EMBED);
+        ObjectName replicationSources = new ObjectName("hadoop:service=Replication,name=ReplicationSource for *");
+        Set<ObjectName> mbeans = jmxLiaison.queryNames(replicationSources);
+        long tryUntil = System.currentTimeMillis() + timeout;
+        nextMBean: for (ObjectName mbean : mbeans) {
+            int logQSize = Integer.MAX_VALUE;
+            while (logQSize > 0 && System.currentTimeMillis() < tryUntil) {
+                logQSize = (Integer)jmxLiaison.getAttribute(mbean, "sizeOfLogQueue");
+                // logQSize == 0 means there is one active hlog that is polled by replication
+                // and none that are queued for later processing
+                // System.out.println("hlog q size is " + logQSize + " for " + mbean.toString() + " max wait left is " +
+                //     (tryUntil - System.currentTimeMillis()));
+                if (logQSize == 0) {
+                    continue nextMBean;
+                } else {
+                    Thread.sleep(100);
+                }
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void removeReplicationSource(String peerId) {
+        long tryUntil = System.currentTimeMillis() + 60000L;
+        boolean waited = false;
+        while (threadExists(".replicationSource," + peerId)) {
+            waited = true;
+            if (System.currentTimeMillis() > tryUntil) {
+                throw new RuntimeException("Replication thread for peer " + peerId + " didn't stop within timeout.");
+            }
+            System.out.print("\nWaiting for replication source for " + peerId + " to be stopped...");
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                // I don't expect this
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (waited)
+            System.out.println("done");
+
+        try {
+            MBeanServerConnection connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
+            ObjectName replicationSourceMBean = new ObjectName("hadoop:service=Replication,name=ReplicationSource for " + peerId);
+            connection.unregisterMBean(replicationSourceMBean);
+        } catch (Exception e) {
+            throw new RuntimeException("Error removing replication source mean for " + peerId, e);
+        }
+    }
+
+    @Override
+    public void waitForReplicationSource(String peerId) {
+        long tryUntil = System.currentTimeMillis() + 60000L;
+        boolean waited = false;
+        while (!threadExists(".replicationSource," + peerId)) {
+            waited = true;
+            if (System.currentTimeMillis() > tryUntil) {
+                throw new RuntimeException("Replication thread for peer " + peerId + " didn't start within timeout.");
+            }
+            System.out.print("\nWaiting for replication source for " + peerId + " to be started...");
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                // I don't expect this
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (waited)
+            System.out.println("done");
+    }
+
+    private static boolean threadExists(String namepart) {
+        ThreadMXBean threadmx = ManagementFactory.getThreadMXBean();
+        ThreadInfo[] infos = threadmx.getThreadInfo(threadmx.getAllThreadIds());
+        for (ThreadInfo info : infos) {
+            if (info != null) { // see javadoc getThreadInfo (thread can have disappeared between the two calls)
+                if (info.getThreadName().contains(namepart)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }
