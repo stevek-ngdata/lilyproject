@@ -15,8 +15,12 @@
  */
 package org.lilyproject.util;
 
+import java.util.Set;
+
 public interface LilyInfoMBean {
     String getVersion();
+
+    Set<String> getHostnames();
 
     boolean isIndexerMaster();
 

@@ -17,6 +17,7 @@ package org.lilyproject.process.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.OutputStream;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
@@ -174,5 +175,13 @@ public class LilyClientTest {
 
         // explicitly index the record (if this succeeds, the test succeeded to verify that we can access the indexer through lily-client)
         client.getIndexer().index(record.getId());
+    }
+
+    @Test
+    public void testGetHostnames() throws Exception {
+        LilyClient client = lilyProxy.getLilyServerProxy().getClient();
+        Set<String> hosts = client.getLilyHostnames();
+        assertEquals(1, hosts.size());
+        assertTrue(hosts.contains("localhost"));
     }
 }

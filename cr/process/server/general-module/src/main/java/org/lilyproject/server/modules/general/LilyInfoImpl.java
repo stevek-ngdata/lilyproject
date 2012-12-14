@@ -15,12 +15,76 @@
  */
 package org.lilyproject.server.modules.general;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.lilyproject.util.LilyInfo;
+import org.lilyproject.util.zookeeper.ZkUtil;
+import org.lilyproject.util.zookeeper.ZooKeeperItf;
+import org.lilyproject.util.zookeeper.ZooKeeperOperation;
+
+import javax.annotation.PostConstruct;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class LilyInfoImpl implements LilyInfo {
     private boolean indexerMaster;
     private boolean rowLogProcessorMQ;
     private boolean rowLogProcessorWAL;
+
+    private final ZooKeeperItf zk;
+    private final Watcher watcher = new RepositoryNodesWatcher();
+    private Set<String> hostnames = Collections.emptySet();
+    private final Log log = LogFactory.getLog(getClass());
+
+    public LilyInfoImpl(ZooKeeperItf zk) {
+        this.zk = zk;
+    }
+
+    @PostConstruct
+    public void init() throws KeeperException, InterruptedException {
+        ZkUtil.createPath(zk, "/lily/repositoryNodes");
+        refresh();
+    }
+
+    private void refresh() throws KeeperException, InterruptedException {
+        List<String> addresses = zk.getChildren("/lily/repositoryNodes", watcher);
+        Set<String> hostNames = new HashSet<String>();
+        for (String address : addresses) {
+            int colonPos = address.indexOf(":");
+            String hostName = address.substring(0, colonPos);
+            hostNames.add(hostName);
+        }
+        this.hostnames = Collections.unmodifiableSet(hostNames);
+    }
+
+    private class RepositoryNodesWatcher implements Watcher {
+        @Override
+        public void process(WatchedEvent event) {
+            try {
+                if (event.getState() != Event.KeeperState.SyncConnected) {
+                    hostnames = Collections.emptySet();
+                } else {
+                    refresh();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (KeeperException.ConnectionLossException e) {
+                hostnames = Collections.emptySet();
+            } catch (Throwable t) {
+                log.error("Error in ZooKeeper watcher.", t);
+            }
+        }
+    }
+
+    @Override
+    public Set<String> getHostnames() {
+        return hostnames;
+    }
 
     @Override
     public String getVersion() {

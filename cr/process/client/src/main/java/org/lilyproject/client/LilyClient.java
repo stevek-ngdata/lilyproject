@@ -78,6 +78,7 @@ public class LilyClient implements Closeable {
     private boolean managedZk;
     private List<ServerNode> servers = Collections.synchronizedList(new ArrayList<ServerNode>());
     private Set<String> serverAddresses = new HashSet<String>();
+    private Set<String> lilyHosts = Collections.emptySet();
     private RetryConf retryConf = new RetryConf();
     private static final String nodesPath = "/lily/repositoryNodes";
     private static final String hbaseConfigPath = "/lily/hbaseConfig";
@@ -427,6 +428,14 @@ public class LilyClient implements Closeable {
             serverAddresses.add(server);
         }
 
+        Set<String> lilyHosts = new HashSet<String>();
+        for (String address : serverAddresses) {
+            int colonPos = address.indexOf(":");
+            String hostName = address.substring(0, colonPos);
+            lilyHosts.add(hostName);
+        }
+        this.lilyHosts = Collections.unmodifiableSet(lilyHosts);
+
         if (log.isInfoEnabled()) {
             log.info("Current Lily servers = " + serverAddresses.toString());
         }
@@ -441,6 +450,10 @@ public class LilyClient implements Closeable {
         }
 
         serverAddresses.clear();
+    }
+
+    public synchronized Set<String> getLilyHostnames() {
+        return lilyHosts;
     }
 
     private class ZkWatcher implements Watcher {
