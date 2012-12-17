@@ -15,12 +15,17 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.ObjectUtils;
-
-import java.util.*;
 
 /**
  * A link to another record.
@@ -139,6 +144,33 @@ public class Link {
         return variantProps;
     }
 
+    /** FIXME: copy-paste job from IdGeneratorImpl, add to utility class? */
+    private static String[] escapedSplit(String s, char delimiter) {
+        ArrayList<String> split = new ArrayList<String>();
+        StringBuffer sb = new StringBuffer();
+        boolean escaped = false;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (escaped) {
+                escaped = false;
+                sb.append(c);
+            } else if (delimiter == c) {
+                split.add(sb.toString());
+                sb = new StringBuffer();
+            } else if ('\\' == c) {
+                escaped = true;
+                sb.append(c);
+            } else {
+                sb.append(c);
+            }
+        }
+        split.add(sb.toString());
+
+        return split.toArray(new String[0]);
+    }
+
+
+
     /**
      * Parses a link in the syntax produced by {@link #toString()}.
      *
@@ -170,15 +202,13 @@ public class Link {
                 throw new IllegalArgumentException("Invalid link, contains no dot: " + link);
             }
 
-            int secondDotPos = link.indexOf('.', firstDotPos + 1);
+            String[] parts = escapedSplit(link, '.');
+            String masterIdString = parts[0] + "." + parts[1];
 
-            String masterIdString;
-            if (secondDotPos == -1) {
-                masterIdString = link;
+            if (parts.length < 3) {
                 variantString = null;
             } else {
-                masterIdString = link.substring(0, secondDotPos);
-                variantString = link.substring(secondDotPos + 1);
+                variantString = parts[2];
             }
 
             recordId = idGenerator.fromString(masterIdString);

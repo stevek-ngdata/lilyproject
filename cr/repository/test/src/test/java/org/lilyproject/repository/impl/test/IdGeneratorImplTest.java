@@ -87,6 +87,11 @@ public class IdGeneratorImplTest {
         byte[] idBytes = new byte[] {0, 65, 66, 67};
         String idString = "USER.ABC";
         assertArrayEquals(idBytes, idGenerator.fromString(idString).toBytes());
+
+
+        byte[] withDotsBytes = new byte[] { 0, 65, 66, ':', 67, 68, '.', 69, 70 };
+        String withDots = "USER.AB:CD\\.EF";
+        assertArrayEquals(withDotsBytes, idGenerator.fromString(withDots).toBytes());
     }
 
     @Test

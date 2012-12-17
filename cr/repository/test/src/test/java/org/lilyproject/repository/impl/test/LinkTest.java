@@ -68,6 +68,19 @@ public class LinkTest {
         assertEquals(2, resolved.getVariantProperties().size());
     }
 
+    @Test public void testFromStringWithDots() {
+        String idStr = "USER.AB\\.CD";
+        Link link = Link.fromString(idStr, idGenerator);
+        assertEquals("USER.AB\\.CD", link.toString());
+
+        String variantStr = ".foo\\.com=bar\\.com";
+        Link variantLink = Link.fromString(variantStr, idGenerator);
+
+        String fullStr = "USER.AB\\.CD.foo\\.com=bar\\.com";
+        Link fullLink = Link.fromString(fullStr, idGenerator);
+
+    }
+
     @Test
     public void testRecordIdWithVarProps() {
         Map<String, String> varProps = new HashMap<String, String>();
