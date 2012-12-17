@@ -5,16 +5,14 @@
   <!--
      | Base properties, used to connect to job tracker for status information and also
      |  used for MR jobs.
+     |
+     | The properties in hadoop.xml are used as base properties, the
+     | properties specified here are for mapreduce (jobconf) specific settings.
      -->
   <properties conf:inheritKey="string(name)">
     <property>
       <name>mapred.job.tracker</name>
       <value>localhost:9001</value>
-    </property>
-    <property>
-      <!-- DFS location: needed for distributed cache (maybe also for other things, not sure) -->
-      <name>fs.defaultFS</name>
-      <value>hdfs://localhost:8020</value>
     </property>
   </properties>
 

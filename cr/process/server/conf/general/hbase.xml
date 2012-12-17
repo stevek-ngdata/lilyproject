@@ -4,9 +4,11 @@
 
   <!--
      | These are the properties used to build the HBase configuration
-     | used by the HBase client.
+     | used by the HBase client in Lily.
+     |
+     | The properties in hadoop.xml are used as base properties, the
+     | properties specified here are for hbase specific settings.
      -->
-
   <properties conf:inheritKey="string(name)">
     <property>
       <!--

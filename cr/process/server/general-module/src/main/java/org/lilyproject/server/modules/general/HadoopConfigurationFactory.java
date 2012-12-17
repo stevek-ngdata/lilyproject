@@ -23,6 +23,8 @@ public interface HadoopConfigurationFactory {
 
     Configuration getMapReduceConf();
 
+    Configuration getHadoopConf();
+
     /**
      * Combines the default MR properties with those specified in the conf argument.
      */

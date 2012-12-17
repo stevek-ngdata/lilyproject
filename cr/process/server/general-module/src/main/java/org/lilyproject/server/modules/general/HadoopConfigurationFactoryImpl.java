@@ -31,6 +31,7 @@ import org.lilyproject.util.io.Closer;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactory {
+    private Conf hadoopConf;
     private Conf hbaseConf;
     private Conf mrConf;
     private String zkConnectString;
@@ -41,8 +42,9 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
     private Log log = LogFactory.getLog(getClass());
     private static AtomicInteger hbaseConfCounter = new AtomicInteger();
 
-    public HadoopConfigurationFactoryImpl(Conf hbaseConf, Conf mrConf, String zkConnectString, int zkSessionTimeout)
-            throws Exception {
+    public HadoopConfigurationFactoryImpl(Conf hadoopConf, Conf hbaseConf, Conf mrConf, String zkConnectString,
+            int zkSessionTimeout) throws Exception {
+        this.hadoopConf = hadoopConf;
         this.hbaseConf = hbaseConf;
         this.mrConf = mrConf;
         this.zkConnectString = zkConnectString;
@@ -91,10 +93,28 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
     }
 
     @Override
+    public Configuration getHadoopConf() {
+        Configuration hadoopConfig = new Configuration();
+        addHadoopConf(hadoopConfig);
+        return hadoopConfig;
+    }
+
+    private void addHadoopConf(Configuration config) {
+        for (Conf conf : hadoopConf.getChild("properties").getChildren("property")) {
+            String name = conf.getRequiredChild("name").getValue();
+            String value = conf.getRequiredChild("value").getValue();
+            config.set(name, value);
+        }
+    }
+
+    @Override
     public Configuration getHBaseConf() {
         // To enable reuse of HBase connections, we should always return the same Configuration instance
         if (hbaseConfig == null) {
             hbaseConfig = HBaseConfiguration.create();
+
+            // Inherit from the hadoop conf
+            addHadoopConf(hbaseConfig);
 
             for (Conf conf : hbaseConf.getChild("properties").getChildren("property")) {
                 String name = conf.getRequiredChild("name").getValue();
@@ -116,25 +136,26 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
     @Override
     public Configuration getMapReduceConf() {
         Configuration hadoopConf = new Configuration();
+        addMapReduceConf(hadoopConf);
+        return hadoopConf;
+    }
+
+    private void addMapReduceConf(Configuration config) {
+        // Inherit from the hadoop conf
+        addHadoopConf(config);
 
         for (Conf conf : mrConf.getChild("properties").getChildren("property")) {
             String name = conf.getRequiredChild("name").getValue();
             String value = conf.getRequiredChild("value").getValue();
-            hadoopConf.set(name, value);
+            config.set(name, value);
         }
-
-        return hadoopConf;
     }
 
     @Override
     public Configuration getMapReduceConf(Conf subConf) {
         Configuration hadoopConf = new Configuration();
 
-        for (Conf conf : mrConf.getChild("properties").getChildren("property")) {
-            String name = conf.getRequiredChild("name").getValue();
-            String value = conf.getRequiredChild("value").getValue();
-            hadoopConf.set(name, value);
-        }
+        addMapReduceConf(hadoopConf);
 
         for (Conf conf : subConf.getChildren("property")) {
             String name = conf.getRequiredChild("name").getValue();

@@ -72,6 +72,7 @@
   <bean id="hbaseConfiguration"
       class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl"
       depends-on="zooKeeper">
+    <constructor-arg><kauri:conf path="hadoop"/></constructor-arg>
     <constructor-arg><kauri:conf path="hbase"/></constructor-arg>
     <constructor-arg><kauri:conf path="mapreduce"/></constructor-arg>
     <constructor-arg value="${zookeeper:connectString}"/>
