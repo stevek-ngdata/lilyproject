@@ -30,10 +30,6 @@
       <name>hbase.replication</name>
       <value>true</value>
     </property>
-    <property>
-      <name>replication.replicationsource.implementation</name>
-      <value>org.lilyproject.sep.impl.SepReplicationSource</value>
-    </property>
 
     <!-- You can add other HBase client properties here too, for
          example to control the number of retries.-->
