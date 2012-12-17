@@ -182,6 +182,5 @@ public class LilyClientTest {
         LilyClient client = lilyProxy.getLilyServerProxy().getClient();
         Set<String> hosts = client.getLilyHostnames();
         assertEquals(1, hosts.size());
-        assertTrue(hosts.contains("localhost"));
     }
 }
