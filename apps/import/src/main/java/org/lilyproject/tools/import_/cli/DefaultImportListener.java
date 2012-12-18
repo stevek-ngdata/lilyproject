@@ -16,16 +16,35 @@
 package org.lilyproject.tools.import_.cli;
 
 import java.io.PrintStream;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public class DefaultImportListener implements ImportListener {
     private PrintStream out;
 
-    public DefaultImportListener() {
-        this(System.out);
-    }
+    private LoadingCache<EntityType, AtomicInteger> counters;
 
-    public DefaultImportListener(PrintStream out) {
+    private Set<EntityType> suppressedTypes;
+
+    public DefaultImportListener(PrintStream out, EntityType... suppressedTypes) {
         this.out = out;
+        this.suppressedTypes = Sets.newHashSet(suppressedTypes);
+        counters = CacheBuilder.newBuilder()
+                .build(new CacheLoader<EntityType, AtomicInteger>() {
+
+                    @Override
+                    public AtomicInteger load(EntityType key) throws Exception {
+                        return new AtomicInteger(0);
+                    }
+                });
     }
 
     @Override
@@ -43,21 +62,45 @@ public class DefaultImportListener implements ImportListener {
 
     @Override
     public void existsAndEqual(EntityType entityType, String entityName, String entityId) {
-        out.println(String.format("%1$s already exists and is equal: %2$s", toText(entityType), id(entityName, entityId)));
+        if (!checkSuppressed(entityType)) {
+            out.println(String.format("%1$s already exists and is equal: %2$s", toText(entityType), id(entityName, entityId)));
+        }
+
     }
 
     @Override
     public void updated(EntityType entityType, String entityName, String entityId, long version) {
         if (entityType == EntityType.RECORD || entityType == EntityType.RECORD_TYPE) {
-            out.println(String.format("%1$s updated: %2$s (version %3$s)", toText(entityType), id(entityName, entityId), version));
+            if (!checkSuppressed(entityType)) {
+                out.println(String.format("%1$s updated: %2$s (version %3$s)", toText(entityType), id(entityName, entityId), version));
+            }
         } else {
-            out.println(String.format("%1$s updated: %2$s", toText(entityType), id(entityName, entityId)));
+            if (!checkSuppressed(entityType)) {
+                out.println(String.format("%1$s updated: %2$s", toText(entityType), id(entityName, entityId)));
+            }
         }
+    }
+
+    private boolean checkSuppressed(EntityType entityType) {
+        if (suppressedTypes.contains(entityType)) {
+            try {
+                int count = counters.get(entityType).incrementAndGet();
+                if ((count % 1000) == 0) {
+                    out.print(".");
+                }
+            } catch (ExecutionException e) {
+                System.err.println("Failed to update counter for " + entityType + " event");
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
     public void created(EntityType entityType, String entityName, String entityId) {
-        out.println(String.format("%1$s created: %2$s", toText(entityType), id(entityName, entityId)));
+        if (!checkSuppressed(entityType)) {
+            out.println(String.format("%1$s created: %2$s", toText(entityType), id(entityName, entityId)));
+        }
     }
 
     private String id(String entityName, String entityId) {

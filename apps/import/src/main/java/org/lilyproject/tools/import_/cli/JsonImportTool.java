@@ -29,6 +29,7 @@ import java.util.*;
 public class JsonImportTool extends BaseZkCliTool {
     private Option schemaOnlyOption;
     private Option workersOption;
+    private Option quietOption;
     private LilyClient lilyClient;
 
     @Override
@@ -63,6 +64,12 @@ public class JsonImportTool extends BaseZkCliTool {
                 .create("s");
         options.add(schemaOnlyOption);
 
+        quietOption = OptionBuilder
+                .withDescription("Instead of printing out all record ids, only print a dot every 1000 records")
+                .withLongOpt("quiet")
+                .create("q");
+        options.add(quietOption);
+
         return options;
     }
 
@@ -88,7 +95,11 @@ public class JsonImportTool extends BaseZkCliTool {
             System.out.println("Importing " + arg);
             InputStream is = new FileInputStream(arg);
             try {
-                JsonImport.load(lilyClient.getRepository(), is, schemaOnly, workers);
+                if (cmd.hasOption(quietOption.getOpt())) {
+                    JsonImport.load(lilyClient.getRepository(), new DefaultImportListener(System.out, EntityType.RECORD), is, schemaOnly, workers);
+                } else {
+                    JsonImport.load(lilyClient.getRepository(), is, schemaOnly, workers);
+                }
             } finally {
                 Closer.close(is);
             }
