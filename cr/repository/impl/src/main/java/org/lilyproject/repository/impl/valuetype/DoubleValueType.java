@@ -57,7 +57,7 @@ public class DoubleValueType extends AbstractValueType implements ValueType {
 
     @Override
     public Class getType() {
-        return Long.class;
+        return Double.class;
     }
 
     @Override
