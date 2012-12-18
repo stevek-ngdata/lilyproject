@@ -22,10 +22,10 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class RecordWritable implements Writable {    
+public class RecordWritable implements Writable {
     private Record record;
 
-    protected RecordWritable() {
+    public RecordWritable() {
     }
 
     @Override
