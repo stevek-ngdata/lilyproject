@@ -16,7 +16,6 @@
 package org.lilyproject.tools.import_.cli;
 
 import java.io.PrintStream;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class DefaultImportListener implements ImportListener {
@@ -33,6 +31,10 @@ public class DefaultImportListener implements ImportListener {
     private LoadingCache<EntityType, AtomicInteger> counters;
 
     private Set<EntityType> suppressedTypes;
+    
+    public DefaultImportListener() {
+        this(System.out);
+    }
 
     public DefaultImportListener(PrintStream out, EntityType... suppressedTypes) {
         this.out = out;
