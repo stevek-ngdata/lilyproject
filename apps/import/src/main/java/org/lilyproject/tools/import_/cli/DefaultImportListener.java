@@ -36,10 +36,6 @@ public class DefaultImportListener implements ImportListener {
         this(System.out);
     }
 
-    public DefaultImportListener() {
-        this(System.out);
-    }
-
     public DefaultImportListener(PrintStream out, EntityType... suppressedTypes) {
         this.out = out;
         this.suppressedTypes = Sets.newHashSet(suppressedTypes);
