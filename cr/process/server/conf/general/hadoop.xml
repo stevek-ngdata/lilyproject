@@ -1,9 +1,17 @@
-<hadoop>
-  <properties>
+<?xml version="1.0"?>
+<hadoop xmlns:conf="http://kauriproject.org/configuration"
+       conf:inherit="deep">
+
+  <!--
+     | Hadoop properties.
+     |
+     | See also hbase.xml and mapreduce.xml.
+     -->
+  <properties conf:inheritKey="string(name)">
     <property>
-      <!-- DFS location: needed for distributed cache (maybe also for other things, not sure) -->
       <name>fs.defaultFS</name>
       <value>hdfs://localhost:8020</value>
     </property>
   </properties>
+
 </hadoop>
