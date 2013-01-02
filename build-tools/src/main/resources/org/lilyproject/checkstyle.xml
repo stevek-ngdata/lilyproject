@@ -41,7 +41,9 @@
 
     <!-- Checks that a package-info.java file exists for each package.     -->
     <!-- See http://checkstyle.sf.net/config_javadoc.html#JavadocPackage -->
+    <!--
     <module name="JavadocPackage"/>
+    -->
 
     <!-- Checks whether files end with a new line.                        -->
     <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
@@ -81,9 +83,16 @@
 
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
-        <module name="JavadocMethod"/>
+        <module name="JavadocMethod">
+           <property name="scope" value="public"/>
+           <property name="allowMissingPropertyJavadoc" value="true"/>
+        </module>
+        <!--
         <module name="JavadocType"/>
+        -->
+        <!--
         <module name="JavadocVariable"/>
+        -->
         <module name="JavadocStyle"/>
 
 
@@ -122,12 +131,16 @@
         <module name="EmptyForIteratorPad"/>
         <module name="GenericWhitespace"/>
         <module name="MethodParamPad"/>
-        <module name="NoWhitespaceAfter"/>
+        <module name="NoWhitespaceAfter">
+          <property name="tokens" value="ARRAY_INIT, BNOT, DEC, DOT, INC, LNOT, UNARY_MINUS, UNARY_PLUS, TYPECAST"/>
+        </module>
         <module name="NoWhitespaceBefore"/>
         <module name="OperatorWrap"/>
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
-        <module name="WhitespaceAfter"/>
+        <module name="WhitespaceAfter">
+          <property name="tokens" value="COMMA, SEMI"/>
+        </module>
         <module name="WhitespaceAround"/>
 
 
