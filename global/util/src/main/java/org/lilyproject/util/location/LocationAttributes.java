@@ -45,24 +45,40 @@ import org.xml.sax.helpers.AttributesImpl;
  * @since 2.1.8
  */
 public class LocationAttributes {
-    /** Prefix for the location namespace */
+    /**
+     * Prefix for the location namespace
+     */
     public static final String PREFIX = "loc";
-    /** Namespace URI for location attributes */
+    /**
+     * Namespace URI for location attributes
+     */
     public static final String URI = "http://apache.org/cocoon/location";
 
-    /** Attribute name for the location URI */
-    public static final String SRC_ATTR  = "src";
-    /** Attribute name for the line number */
+    /**
+     * Attribute name for the location URI
+     */
+    public static final String SRC_ATTR = "src";
+    /**
+     * Attribute name for the line number
+     */
     public static final String LINE_ATTR = "line";
-    /** Attribute name for the column number */
-    public static final String COL_ATTR  = "column";
+    /**
+     * Attribute name for the column number
+     */
+    public static final String COL_ATTR = "column";
 
-    /** Attribute qualified name for the location URI */
-    public static final String Q_SRC_ATTR  = "loc:src";
-    /** Attribute qualified name for the line number */
+    /**
+     * Attribute qualified name for the location URI
+     */
+    public static final String Q_SRC_ATTR = "loc:src";
+    /**
+     * Attribute qualified name for the line number
+     */
     public static final String Q_LINE_ATTR = "loc:line";
-    /** Attribute qualified name for the column number */
-    public static final String Q_COL_ATTR  = "loc:column";
+    /**
+     * Attribute qualified name for the column number
+     */
+    public static final String Q_COL_ATTR = "loc:column";
 
     // Private constructor, we only have static methods
     private LocationAttributes() {
@@ -73,7 +89,7 @@ public class LocationAttributes {
      * Add location attributes to a set of SAX attributes.
      *
      * @param locator the <code>Locator</code> (can be null)
-     * @param attrs the <code>Attributes</code> where locator information should be added
+     * @param attrs   the <code>Attributes</code> where locator information should be added
      */
     public static Attributes addLocationAttributes(Locator locator, Attributes attrs) {
         if (locator == null || attrs.getIndex(URI, SRC_ATTR) != -1) {
@@ -83,7 +99,7 @@ public class LocationAttributes {
 
         // Get an AttributeImpl so that we can add new attributes.
         AttributesImpl newAttrs = attrs instanceof AttributesImpl ?
-            (AttributesImpl)attrs : new AttributesImpl(attrs);
+                (AttributesImpl)attrs : new AttributesImpl(attrs);
 
         newAttrs.addAttribute(URI, SRC_ATTR, Q_SRC_ATTR, "CDATA", locator.getSystemId());
         newAttrs.addAttribute(URI, LINE_ATTR, Q_LINE_ATTR, "CDATA", Integer.toString(locator.getLineNumber()));
@@ -95,7 +111,7 @@ public class LocationAttributes {
     /**
      * Returns the {@link Location} of an element (SAX flavor).
      *
-     * @param attrs the element's attributes that hold the location information
+     * @param attrs       the element's attributes that hold the location information
      * @param description a description for the location (can be null)
      * @return a {@link Location} object
      */
@@ -164,7 +180,7 @@ public class LocationAttributes {
     /**
      * Returns the {@link Location} of an element (DOM flavor).
      *
-     * @param elem the element that holds the location information
+     * @param elem        the element that holds the location information
      * @param description a description for the location (if <code>null</code>, the element's name is used)
      * @return a {@link Location} object
      */
@@ -175,7 +191,7 @@ public class LocationAttributes {
         }
 
         return new LocationImpl(description == null ? "<" + elem.getNodeName() + ">" : description,
-                                srcAttr.getValue(), getLine(elem), getColumn(elem));
+                srcAttr.getValue(), getLine(elem), getColumn(elem));
     }
 
     /**
@@ -242,7 +258,7 @@ public class LocationAttributes {
     /**
      * Remove the location attributes from a DOM element.
      *
-     * @param elem the element to remove the location attributes from.
+     * @param elem    the element to remove the location attributes from.
      * @param recurse if <code>true</code>, also remove location attributes on descendant elements.
      */
     public static void remove(Element elem, boolean recurse) {
@@ -264,7 +280,7 @@ public class LocationAttributes {
      * A SAX filter that adds the information available from the <code>Locator</code> as attributes.
      * The purpose of having location as attributes is to allow this information to survive transformations
      * of the document (an XSL could copy these attributes over) or conversion of SAX events to a DOM.
-     * <p>
+     * <p/>
      * The location is added as 3 attributes in a specific namespace to each element.
      * <pre>
      * &lt;root xmlns:loc="http://apache.org/cocoon/location"
@@ -294,6 +310,7 @@ public class LocationAttributes {
 
         /**
          * Create a filter that is chained to another handler.
+         *
          * @param next the next handler in the chain.
          */
         public Pipe(ContentHandler next) {

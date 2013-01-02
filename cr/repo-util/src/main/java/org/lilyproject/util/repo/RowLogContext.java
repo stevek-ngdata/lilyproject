@@ -17,11 +17,11 @@ package org.lilyproject.util.repo;
 
 /**
  * RowLogContext is a context object to be used on a RowLogMessage.
- * <p>
+ * <p/>
  * It is intended to use from the HBaseRepository when calling processMessage
  * right after the message has been created and the repository still has a lock
  * on the record.
- * <p>
+ * <p/>
  * The RecordEvent and Record can be put on this context object to avoid that it
  * has to be constructed again when from the payload when processing the
  * message.

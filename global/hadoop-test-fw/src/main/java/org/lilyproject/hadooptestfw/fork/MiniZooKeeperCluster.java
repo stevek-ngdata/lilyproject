@@ -79,7 +79,10 @@ public class MiniZooKeeperCluster {
     private boolean clearData;
 
     // Lily change: added this constructor with clearData arg
-    /** Create mini ZooKeeper cluster with configuration (usually from test environment) */
+
+    /**
+     * Create mini ZooKeeper cluster with configuration (usually from test environment)
+     */
     public MiniZooKeeperCluster(Configuration configuration, boolean clearData) {
         this.started = false;
         this.configuration = configuration;
@@ -112,7 +115,7 @@ public class MiniZooKeeperCluster {
     }
 
     public int getBackupZooKeeperServerNum() {
-        return zooKeeperServers.size()-1;
+        return zooKeeperServers.size() - 1;
     }
 
     public int getZooKeeperServerNum() {
@@ -134,7 +137,7 @@ public class MiniZooKeeperCluster {
 
     public int startup(File baseDir) throws IOException,
             InterruptedException {
-        return startup(baseDir,1);
+        return startup(baseDir, 1);
     }
 
     /**
@@ -146,15 +149,16 @@ public class MiniZooKeeperCluster {
      */
     public int startup(File baseDir, int numZooKeeperServers) throws IOException,
             InterruptedException {
-        if (numZooKeeperServers <= 0)
+        if (numZooKeeperServers <= 0) {
             return -1;
+        }
 
         setupTestEnv();
         shutdown();
 
         // running all the ZK servers
         for (int i = 0; i < numZooKeeperServers; i++) {
-            File dir = new File(baseDir, "zookeeper_"+i).getAbsoluteFile();
+            File dir = new File(baseDir, "zookeeper_" + i).getAbsoluteFile();
             recreateDir(dir);
             clientPort = defaultClientPort;
             int tickTimeToUse;
@@ -242,14 +246,15 @@ public class MiniZooKeeperCluster {
         LOG.info("Shutdown MiniZK cluster with all ZK servers");
     }
 
-    /**@return clientPort return clientPort if there is another ZK backup can run
+    /**
+     * @return clientPort return clientPort if there is another ZK backup can run
      *         when killing the current active; return -1, if there is no backups.
      * @throws IOException
      * @throws InterruptedException
      */
     public int killCurrentActiveZooKeeperServer() throws IOException,
             InterruptedException {
-        if (!started || activeZKServerIndex < 0 ) {
+        if (!started || activeZKServerIndex < 0) {
             return -1;
         }
 
@@ -283,6 +288,7 @@ public class MiniZooKeeperCluster {
 
     /**
      * Kill one back up ZK servers
+     *
      * @throws IOException
      * @throws InterruptedException
      */
@@ -290,10 +296,10 @@ public class MiniZooKeeperCluster {
             InterruptedException {
         if (!started || activeZKServerIndex < 0 ||
                 standaloneServerFactoryList.size() <= 1) {
-            return ;
+            return;
         }
 
-        int backupZKServerIndex = activeZKServerIndex+1;
+        int backupZKServerIndex = activeZKServerIndex + 1;
         // Shutdown the current active one
         NIOServerCnxnFactory standaloneServerFactory =
                 standaloneServerFactoryList.get(backupZKServerIndex);

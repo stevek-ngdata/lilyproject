@@ -18,8 +18,6 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 
 /**
  * Index filter (hbase-index) used when filtering results from a query on the dereference map.
- *
- *
  */
 public class DerefMapIndexFilter extends IndexFilter {
 
@@ -72,7 +70,7 @@ public class DerefMapIndexFilter extends IndexFilter {
     public boolean filterField(String name, Object value) {
         if ("variant_properties_pattern".equals(name)) {
             final DerefMapVariantPropertiesPattern variantPropertiesPattern =
-                    this.serializationUtil.deserializeVariantPropertiesPattern((byte[]) value);
+                    this.serializationUtil.deserializeVariantPropertiesPattern((byte[])value);
 
             if (!variantPropertiesPattern.matches(dependencyRecordVariantProperties)) {
                 return true;

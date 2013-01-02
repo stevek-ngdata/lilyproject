@@ -15,9 +15,9 @@
  */
 package org.lilyproject.rowlog.impl.test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -63,10 +63,11 @@ public class ValidationMessageListener implements RowLogMessageListener {
         if (times == null) {
             processedMessages.put(message, 1);
         } else {
-            processedMessages.put(message, times+1);
+            processedMessages.put(message, times + 1);
         }
-        if (messagesToFail.remove(message))
+        if (messagesToFail.remove(message)) {
             return false;
+        }
         return true;
     }
 
@@ -74,7 +75,7 @@ public class ValidationMessageListener implements RowLogMessageListener {
         long waitUntil = System.currentTimeMillis() + timeout;
         RowLogShard shard = rowLog.getShards().get(0);
         List<RowLogMessage> messages = shard.next(subscriptionId, 20);
-        while(true) {
+        while (true) {
             if (System.currentTimeMillis() >= waitUntil) {
                 System.out.println("ValidationMessageListener#waitUntilMessagesConsumed: Timeout expired, nr of messages=" + messages.size() + ", count=" + count);
                 break;
@@ -91,33 +92,33 @@ public class ValidationMessageListener implements RowLogMessageListener {
     public void validate() throws Exception {
         boolean success = true;
         StringBuilder validationMessage = new StringBuilder();
-        
+
         if (!(numberOfMessagesToBeExpected == count)) {
             success = false;
-            validationMessage.append("\n"+name+ " did not process the same amount of messages <"+count+"> as expected <"+numberOfMessagesToBeExpected+">");
+            validationMessage.append("\n" + name + " did not process the same amount of messages <" + count + "> as expected <" + numberOfMessagesToBeExpected + ">");
         }
         RowLogShard shard = rowLog.getShards().get(0);
         List<RowLogMessage> messages = shard.next(subscriptionId, 20);
         if (!messages.isEmpty()) {
             success = false;
-            validationMessage.append("\n"+name+ " has messages to be processed: <" + messages.size()+">");
+            validationMessage.append("\n" + name + " has messages to be processed: <" + messages.size() + ">");
         }
-        for (Entry<RowLogMessage, Integer> entry: processedMessages.entrySet()) {
+        for (Entry<RowLogMessage, Integer> entry : processedMessages.entrySet()) {
             if (!expectedMessages.containsKey(entry.getKey())) {
                 success = false;
-                validationMessage.append("\n"+name+ " did not expect to receive message <"+entry.getKey()+">");
+                validationMessage.append("\n" + name + " did not expect to receive message <" + entry.getKey() + ">");
             } else {
                 Integer expectedTimes = expectedMessages.get(entry.getKey());
                 if (!expectedTimes.equals(entry.getValue())) {
                     success = false;
-                    validationMessage.append("\n"+name+ " did not receive message <"+entry.getKey()+"> the number of expected times: <"+entry.getValue()+"> instead of <" +expectedTimes+ ">");
+                    validationMessage.append("\n" + name + " did not receive message <" + entry.getKey() + "> the number of expected times: <" + entry.getValue() + "> instead of <" + expectedTimes + ">");
                 }
             }
         }
         for (RowLogMessage expectedMessage : expectedMessages.keySet()) {
             if (!processedMessages.containsKey(expectedMessage)) {
                 success = false;
-                validationMessage.append("\n"+name+ " did not receive expected message <" +expectedMessage+ ">");
+                validationMessage.append("\n" + name + " did not receive expected message <" + expectedMessage + ">");
             }
         }
         Assert.assertTrue(validationMessage.toString(), success);

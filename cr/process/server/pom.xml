@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
@@ -88,12 +89,16 @@
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>--repository $M2_REPO --confdir $LILY_KAURICONF_DIR --log-configuration $LILY_HOME/lily-log4j.properties</value>
+              <value>--repository $M2_REPO --confdir $LILY_KAURICONF_DIR --log-configuration
+                $LILY_HOME/lily-log4j.properties
+              </value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dist</mode>
-              <value>--repository "%M2_REPO%" --confdir "%LILY_HOME%\conf" --log-configuration "%LILY_HOME%\lily-log4j.properties"</value>
+              <value>--repository "%M2_REPO%" --confdir "%LILY_HOME%\conf" --log-configuration
+                "%LILY_HOME%\lily-log4j.properties"
+              </value>
             </parameter>
             <parameter>
               <platform>unix</platform>
@@ -105,12 +110,16 @@
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>-Dkauri.launcher.repository=$LAUNCHER_M2_REPO -Dlily.logdir=$LILY_HOME/logs -Dlily.plugin.dir=$LILY_PLUGIN_DIR</value>
+              <value>-Dkauri.launcher.repository=$LAUNCHER_M2_REPO -Dlily.logdir=$LILY_HOME/logs
+                -Dlily.plugin.dir=$LILY_PLUGIN_DIR
+              </value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dist</mode>
-              <value>-Dkauri.launcher.repository="%LAUNCHER_M2_REPO%" -Dlily.logdir="%LILY_HOME%\logs" -Dlily.plugin.dir="%LILY_HOME%\plugins"</value>
+              <value>-Dkauri.launcher.repository="%LAUNCHER_M2_REPO%" -Dlily.logdir="%LILY_HOME%\logs"
+                -Dlily.plugin.dir="%LILY_HOME%\plugins"
+              </value>
             </parameter>
             <parameter>
               <platform>unix</platform>
@@ -128,34 +137,36 @@
               <platform>unix</platform>
               <mode>dist</mode>
               <value>
-# Default plugin dir
-if [ -z "$LILY_PLUGIN_DIR" ]; then
-  LILY_PLUGIN_DIR="$LILY_HOME/plugins"
-fi
+                # Default plugin dir
+                if [ -z "$LILY_PLUGIN_DIR" ]; then
+                LILY_PLUGIN_DIR="$LILY_HOME/plugins"
+                fi
 
-# Default conf dir
-if [ -z "$LILY_KAURICONF_DIR" ]; then
-  LILY_KAURICONF_DIR="$LILY_HOME/conf"
-fi
+                # Default conf dir
+                if [ -z "$LILY_KAURICONF_DIR" ]; then
+                LILY_KAURICONF_DIR="$LILY_HOME/conf"
+                fi
               </value>
             </parameter>
             <parameter>
               <platform>unix</platform>
               <mode>dev</mode>
               <value>
-# Enable JMX access
-LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10202"
-LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
+                # Enable JMX access
+                LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false
+                -Dcom.sun.management.jmxremote.authenticate=false
+                -Dcom.sun.management.jmxremote.port=10202"
+                LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
 
-# Default plugin dir (assumes this script is started from cr/process/server)
-if [ -z "$LILY_PLUGIN_DIR" ]; then
-  LILY_PLUGIN_DIR="plugins"
-fi
+                # Default plugin dir (assumes this script is started from cr/process/server)
+                if [ -z "$LILY_PLUGIN_DIR" ]; then
+                LILY_PLUGIN_DIR="plugins"
+                fi
 
-# Default conf dir (assumes this script is started from cr/process/server)
-if [ -z "$LILY_KAURICONF_DIR" ]; then
-  LILY_KAURICONF_DIR="conf"
-fi
+                # Default conf dir (assumes this script is started from cr/process/server)
+                if [ -z "$LILY_KAURICONF_DIR" ]; then
+                LILY_KAURICONF_DIR="conf"
+                fi
               </value>
             </parameter>
           </beforeJavaHook>

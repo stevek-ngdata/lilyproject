@@ -92,7 +92,7 @@ public class VariantRecordId implements RecordId {
 
             // TODO this needs to be designed some other way
             if (masterRecordId instanceof UserRecordId) {
-                dataOutput.writeByte((byte) 0);
+                dataOutput.writeByte((byte)0);
             }
 
             Set<Entry<String, String>> entrySet = variantProperties.entrySet();
@@ -133,23 +133,30 @@ public class VariantRecordId implements RecordId {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        VariantRecordId other = (VariantRecordId) obj;
+        }
+        VariantRecordId other = (VariantRecordId)obj;
         if (masterRecordId == null) {
-            if (other.masterRecordId != null)
+            if (other.masterRecordId != null) {
                 return false;
-        } else if (!masterRecordId.equals(other.masterRecordId))
+            }
+        } else if (!masterRecordId.equals(other.masterRecordId)) {
             return false;
+        }
         if (variantProperties == null) {
-            if (other.variantProperties != null)
+            if (other.variantProperties != null) {
                 return false;
-        } else if (!variantProperties.equals(other.variantProperties))
+            }
+        } else if (!variantProperties.equals(other.variantProperties)) {
             return false;
+        }
         return true;
     }
 }

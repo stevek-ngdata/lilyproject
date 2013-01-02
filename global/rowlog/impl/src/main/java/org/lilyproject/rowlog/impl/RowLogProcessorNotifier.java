@@ -50,17 +50,17 @@ public class RowLogProcessorNotifier {
         triggerables.getUnchecked(new SubscriptionKey(rowLogId, subscriptionId)).trigger();
     }
 
-	private void sendNotification(SubscriptionKey subscriptionKey) throws InterruptedException {
-		try {
-			rowLogConfMgr.notifyProcessor(subscriptionKey.getRowLogId(), subscriptionKey.getSubscriptionId());
-		} catch (KeeperException e) {
-			log.debug("Exception while notifying processor for rowlog subscription " + subscriptionKey, e);
-		}
+    private void sendNotification(SubscriptionKey subscriptionKey) throws InterruptedException {
+        try {
+            rowLogConfMgr.notifyProcessor(subscriptionKey.getRowLogId(), subscriptionKey.getSubscriptionId());
+        } catch (KeeperException e) {
+            log.debug("Exception while notifying processor for rowlog subscription " + subscriptionKey, e);
+        }
     }
-    
+
     public void close() throws InterruptedException {
         for (Triggerable triggerable : triggerables.asMap().values()) {
             Closer.close(triggerable);
         }
-    }    
+    }
 }

@@ -15,11 +15,11 @@
  */
 package org.lilyproject.util.io;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.Closeable;
 import java.lang.reflect.Method;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class Closer {
     /**

@@ -15,15 +15,15 @@
  */
 package org.lilyproject.tools.printhost;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.util.Version;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.List;
 
 public class PrintHostTool extends BaseCliTool {
     protected Option nameserverOption;
@@ -61,8 +61,9 @@ public class PrintHostTool extends BaseCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         System.out.println("Below we print the detected host name and address.");
         System.out.println("These are used by Lily and Hadoop. For example, this is what is");
@@ -95,7 +96,7 @@ public class PrintHostTool extends BaseCliTool {
         for (InetAddress addr : addrs) {
             System.out.println("  " + addr.getHostAddress());
         }
-        
+
         return 0;
     }
 }

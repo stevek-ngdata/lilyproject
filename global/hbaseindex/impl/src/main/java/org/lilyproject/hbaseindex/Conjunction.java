@@ -22,16 +22,16 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * Merge-joins two QueryResults into one, in other words: an AND
  * operation on two indices.
- *
+ * <p/>
  * <p>This only works if the individual QueryResults return their rows
  * sorted in increasing identifier order, and return each identifier at most
  * once. This will not be the case for queries that only search
  * on a subset of the fields in the index, or when using range queries
  * on multi-valued fields.
- *
+ * <p/>
  * <p>A Conjunction itself also returns its results in increasing identifier
  * order, and can hence serve as input to other Conjunctions.
- *
+ * <p/>
  * <p>TODO the implementation is currently not optimal if lots of rows need
  * to be skipped to move to the next common result, since this is done by
  * iterating one result at a time using next() calls. It would be better to
@@ -56,8 +56,9 @@ public class Conjunction extends BaseQueryResult {
         byte[] key1 = result1.next();
         byte[] key2 = result2.next();
 
-        if (key1 == null || key2 == null)
+        if (key1 == null || key2 == null) {
             return null;
+        }
 
         int cmp = Bytes.compareTo(key1, key2);
 
@@ -65,15 +66,17 @@ public class Conjunction extends BaseQueryResult {
             if (cmp < 0) {
                 while (cmp < 0) {
                     key1 = result1.next();
-                    if (key1 == null)
+                    if (key1 == null) {
                         return null;
+                    }
                     cmp = Bytes.compareTo(key1, key2);
                 }
             } else if (cmp > 0) {
                 while (cmp > 0) {
                     key2 = result2.next();
-                    if (key2 == null)
+                    if (key2 == null) {
                         return null;
+                    }
                     cmp = Bytes.compareTo(key1, key2);
                 }
             }

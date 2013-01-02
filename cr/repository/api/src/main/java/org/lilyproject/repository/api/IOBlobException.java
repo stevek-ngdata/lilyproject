@@ -22,8 +22,9 @@ import java.util.Map;
  */
 public class IOBlobException extends BlobException {
     public IOBlobException(String message, Map<String, String> params) {
-        super(message,params);
+        super(message, params);
     }
+
     public IOBlobException(Throwable cause) {
         super(cause);
     }

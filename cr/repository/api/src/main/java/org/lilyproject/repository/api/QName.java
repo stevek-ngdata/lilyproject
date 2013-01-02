@@ -19,9 +19,9 @@ import org.lilyproject.util.ArgumentValidator;
 
 /**
  * A qualified name. A qualified name consists of a namespace and a name.
- *
+ * <p/>
  * <p>Qualifed names are used within the repository schema, see {@link FieldType}.
- *
+ * <p/>
  * <p>They allow to re-use existing vocabularies (e.g. dublin core) without name clashes.
  */
 public class QName {
@@ -35,11 +35,11 @@ public class QName {
         this.namespace = namespace;
         this.name = name;
     }
-    
+
     public String getNamespace() {
         return namespace;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -55,20 +55,26 @@ public class QName {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        QName other = (QName) obj;
-        if (!name.equals(other.name))
+        }
+        QName other = (QName)obj;
+        if (!name.equals(other.name)) {
             return false;
+        }
         if (namespace == null) {
-            if (other.namespace != null)
+            if (other.namespace != null) {
                 return false;
-        } else if (!namespace.equals(other.namespace))
+            }
+        } else if (!namespace.equals(other.namespace)) {
             return false;
+        }
         return true;
     }
 
@@ -76,17 +82,18 @@ public class QName {
     public String toString() {
         return "{" + namespace + "}" + name;
     }
-    
+
     /**
      * Creates a qname based on a string.
-     *
+     * <p/>
      * <p>The format of the string needs to be the same as the string returned by {@link #toString()}:
      * {namespace}name
      */
     public static QName fromString(String qname) throws IllegalArgumentException {
         int indexBracket = qname.indexOf('}');
-        if (indexBracket < 1 || !qname.startsWith("{"))
+        if (indexBracket < 1 || !qname.startsWith("{")) {
             throw new IllegalArgumentException("QName string should be of the format {namespace}name");
-        return new QName(qname.substring(1,indexBracket), qname.substring(indexBracket + 1));
+        }
+        return new QName(qname.substring(1, indexBracket), qname.substring(indexBracket + 1));
     }
 }

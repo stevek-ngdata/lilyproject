@@ -15,43 +15,66 @@
  */
 package org.lilyproject.util.hbase;
 
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.HTableInterfaceFactory;
+import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowLock;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.ipc.CoprocessorProtocol;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.concurrent.WaitPolicy;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.concurrent.*;
-
 /**
  * This is a threadsafe solution for the non-threadsafe HTable.
- *
+ * <p/>
  * <p>The problem with HTable this tries to solve is that HTable is not threadsafe, and
  * on the other hand it is best not to instantiate a new HTable for each use for
  * performance reasons.
- *
+ * <p/>
  * <p>HTable is, unlike e.g. a file handle or a JDBC connection, not a scarce
  * resource which needs to be closed. The actual connection handling (which
  * consists of connections to a variety of region servers) it handled at other
  * places. We only need to avoid the cost of creating new copies of HTable all the time.
- *
+ * <p/>
  * <p>The first implementation was based on caching HTable instances in threadlocal
  * variables, now it is based on HTablePool. The reason for changing this was that
  * HTable now contains an ExecutorService instance, which is better exploited if we
  * reduce the number of HTable instances (and now this implementation even changes
  * it by a shared ExecutorService instance, since otherwise threads still very
  * many very short-lived threads were created).
- *
+ * <p/>
  * <p>Be careful/considerate when using autoflush.
- *
  */
 public class LocalHTable implements HTableInterface {
     private Configuration conf;
@@ -126,14 +149,14 @@ public class LocalHTable implements HTableInterface {
         }
         return pool;
     }
-    
-    public static void closePool(Configuration configuration) throws IOException{
+
+    public static void closePool(Configuration configuration) throws IOException {
         synchronized (HTABLE_POOLS) {
             HTABLE_POOLS.remove(configuration).close();
         }
     }
-    
-    public static void closeAllPools() throws IOException{
+
+    public static void closeAllPools() throws IOException {
         synchronized (HTABLE_POOLS) {
             Iterator<Map.Entry<Configuration, HTablePool>> it = HTABLE_POOLS.entrySet().iterator();
             while (it.hasNext()) {
@@ -145,7 +168,7 @@ public class LocalHTable implements HTableInterface {
             }
         }
     }
-    
+
     public class HTableFactory implements HTableInterfaceFactory {
         @Override
         public HTableInterface createHTableInterface(Configuration config, byte[] tableName) {
@@ -288,7 +311,7 @@ public class LocalHTable implements HTableInterface {
 
     @Override
     public boolean checkAndPut(final byte[] row, final byte[] family, final byte[] qualifier, final byte[] value,
-            final Put put) throws IOException {
+                               final Put put) throws IOException {
         return runNoIE(new TableRunnable<Boolean>() {
             @Override
             public Boolean run(HTableInterface table) throws IOException, InterruptedException {
@@ -321,7 +344,7 @@ public class LocalHTable implements HTableInterface {
 
     @Override
     public boolean checkAndDelete(final byte[] row, final byte[] family, final byte[] qualifier, final byte[] value,
-            final Delete delete) throws IOException {
+                                  final Delete delete) throws IOException {
         return runNoIE(new TableRunnable<Boolean>() {
             @Override
             public Boolean run(HTableInterface table) throws IOException, InterruptedException {
@@ -343,7 +366,7 @@ public class LocalHTable implements HTableInterface {
 
     @Override
     public long incrementColumnValue(final byte[] row, final byte[] family, final byte[] qualifier, final long amount,
-            final boolean writeToWAL) throws IOException {
+                                     final boolean writeToWAL) throws IOException {
         return runNoIE(new TableRunnable<Long>() {
             @Override
             public Long run(HTableInterface table) throws IOException, InterruptedException {
@@ -452,7 +475,7 @@ public class LocalHTable implements HTableInterface {
 
     @Override
     public <T extends CoprocessorProtocol, R> Map<byte[], R> coprocessorExec(Class<T> protocol,
-            byte[] startKey, byte[] endKey, Batch.Call<T,R> callable) throws IOException, Throwable {
+                                                                             byte[] startKey, byte[] endKey, Batch.Call<T, R> callable) throws IOException, Throwable {
         HTableInterface table = pool.getTable(tableNameString);
         try {
             return table.coprocessorExec(protocol, startKey, endKey, callable);
@@ -463,7 +486,7 @@ public class LocalHTable implements HTableInterface {
 
     @Override
     public <T extends CoprocessorProtocol, R> void coprocessorExec(Class<T> protocol, byte[] startKey, byte[] endKey,
-            Batch.Call<T,R> callable, Batch.Callback<R> callback) throws IOException, Throwable {
+                                                                   Batch.Call<T, R> callable, Batch.Callback<R> callback) throws IOException, Throwable {
         HTableInterface table = pool.getTable(tableNameString);
         try {
             table.coprocessorExec(protocol, startKey, endKey, callable, callback);

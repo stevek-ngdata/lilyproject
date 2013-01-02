@@ -18,15 +18,15 @@ package org.lilyproject.bytes.api;
 /**
  * The <code>DataOutput</code> converts primitive types to bytes
  * and writes them to an underlying byte array.
- * 
- * <p>The <code>DataOutput</code> maintains the position within the 
+ * <p/>
+ * <p>The <code>DataOutput</code> maintains the position within the
  * underlying byte[]. Every write call writes the value after the previous value.
- * 
+ * <p/>
  * <p>The underlying byte[] is automatically resized,
  * avoiding IOExceptions or OutOfBoundsExceptions.
- * 
+ * <p/>
  * <p>This array can be retrieved by calling toByteArray().
- * 
+ * <p/>
  * <p>A related {@link DataInput} should be created based on the byte[]
  * created by a <code>DataOutput</code>.
  */
@@ -36,25 +36,25 @@ public interface DataOutput {
      * Returns the underlying byte[]
      */
     byte[] toByteArray();
-    
+
     /**
-     * Writes a byte to the <code>DataOutput</code> 
+     * Writes a byte to the <code>DataOutput</code>
      */
     void writeByte(byte b);
 
     /**
-     * Writes a byte[] to the <code>DataOutput</code> 
+     * Writes a byte[] to the <code>DataOutput</code>
      */
     void writeBytes(byte[] value);
 
     /**
      * Writes a string to the <code>DataOutput</code>.
-     * 
+     * <p/>
      * <p>The string is encoded in unmodified UTF-8.
-     * 
-     * <p>Its encoding includes the size of the string so that it can be read from a {@link DataInput} 
+     * <p/>
+     * <p>Its encoding includes the size of the string so that it can be read from a {@link DataInput}
      * without the need to specify its size.
-     * 
+     *
      * @param value the string to write. Empty string and null are also allowed.
      */
     void writeUTF(String value);
@@ -67,12 +67,12 @@ public interface DataOutput {
 
     /**
      * Writes a string to the <code>DataOutput</code>.
-     * 
+     * <p/>
      * <p>This method is the same as {@link #writeUTF(String)} but allows to disable
      * writing the length of the string.</p>
      *
-     * @param value the string to write. Empty string and null are also allowed.
-     * @param includeLength boolean indicating whether the length should be written             
+     * @param value         the string to write. Empty string and null are also allowed.
+     * @param includeLength boolean indicating whether the length should be written
      */
     void writeUTF(String value, boolean includeLength);
 
@@ -80,12 +80,12 @@ public interface DataOutput {
      * Writes an integer to the <code>DataOutput</code>
      */
     void writeInt(int value);
-    
+
     /**
      * Writes a long to the <code>DataOutput</code>
      */
     void writeLong(long value);
-    
+
     /**
      * Writes a boolean to the <code>DataOutput</code>
      */
@@ -95,7 +95,7 @@ public interface DataOutput {
      * Writes a double to the <code>DataOutput</code>
      */
     void writeDouble(double value);
-    
+
     /**
      * Writes a short to the <code>DataOutput</code>
      */
@@ -109,7 +109,7 @@ public interface DataOutput {
     /**
      * Writes an integer to the <code>DataOutput</code>
      * Its encoding will be variable length between 1 and 5 bytes.
-     * Smaller values have smaller encodings. 
+     * Smaller values have smaller encodings.
      * Negative numbers are not supported.
      */
     void writeVInt(int i);
@@ -117,11 +117,11 @@ public interface DataOutput {
     /**
      * Writes a long to the <code>DataOutput</code>
      * Its encoding will be variable length between 1 and 5 bytes.
-     * Smaller values have smaller encodings. 
+     * Smaller values have smaller encodings.
      * Negative numbers are not supported.
      */
     void writeVLong(long i);
-    
+
     /**
      * Returns the current number of bytes in the <code>DataOutput</code>
      */

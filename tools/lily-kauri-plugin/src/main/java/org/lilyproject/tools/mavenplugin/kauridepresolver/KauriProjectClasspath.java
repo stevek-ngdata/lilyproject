@@ -15,6 +15,22 @@
  */
 package org.lilyproject.tools.mavenplugin.kauridepresolver;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -28,19 +44,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
 public class KauriProjectClasspath {
     protected XPathFactory xpathFactory = XPathFactory.newInstance();
     private String kauriVersion;
@@ -51,7 +54,7 @@ public class KauriProjectClasspath {
     private Log log;
 
     public KauriProjectClasspath(Log log, ArtifactFilter filter, ArtifactFactory artifactFactory,
-            ArtifactResolver resolver, ArtifactRepository localRepository) {
+                                 ArtifactResolver resolver, ArtifactRepository localRepository) {
         this.filter = filter;
         this.artifactFactory = artifactFactory;
         this.resolver = resolver;
@@ -86,8 +89,9 @@ public class KauriProjectClasspath {
 
                 return result;
             } finally {
-                if (fis != null)
+                if (fis != null) {
                     fis.close();
+                }
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Error reading kauri XML configuration from " + configFile, e);
@@ -95,7 +99,7 @@ public class KauriProjectClasspath {
     }
 
     public ModuleArtifacts getModuleArtifactsFromKauriConfig(Set<Artifact> dependencies, String wiringPath,
-            MavenProjectBuilder mavenProjectBuilder, List remoteRepos)
+                                                             MavenProjectBuilder mavenProjectBuilder, List remoteRepos)
             throws MojoExecutionException {
 
         try {
@@ -172,10 +176,16 @@ public class KauriProjectClasspath {
         } catch (Exception e) {
             throw new MojoExecutionException("Error reading " + entryPath + " from " + moduleArtifact, e);
         } finally {
-            if (is != null)
-                try { is.close(); } catch (Exception e) { /* ignore */ }
-            if (zipFile != null)
-                try { zipFile.close(); } catch (Exception e) { /* ignore */ }
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (Exception e) { /* ignore */ }
+            }
+            if (zipFile != null) {
+                try {
+                    zipFile.close();
+                } catch (Exception e) { /* ignore */ }
+            }
         }
 
         return getArtifacts(classLoaderDocument,
@@ -183,7 +193,7 @@ public class KauriProjectClasspath {
     }
 
     protected Set<Artifact> getArtifacts(Document configDoc, String artifactXPath, String sourceDescr,
-            List remoteRepos) throws MojoExecutionException {
+                                         List remoteRepos) throws MojoExecutionException {
         Set<Artifact> artifacts = new HashSet<Artifact>();
         NodeList nodeList;
         try {
@@ -197,10 +207,12 @@ public class KauriProjectClasspath {
             String artifactId = el.getAttribute("artifactId");
             String version = el.getAttribute("version");
             String classifier = el.getAttribute("classifier");
-            if (version.equals("") && groupId.startsWith("org.kauriproject"))
+            if (version.equals("") && groupId.startsWith("org.kauriproject")) {
                 version = kauriVersion;
-            if (classifier.equals(""))
+            }
+            if (classifier.equals("")) {
                 classifier = null;
+            }
 
             Artifact artifact = artifactFactory.createArtifactWithClassifier(groupId, artifactId, version, "jar", classifier);
 

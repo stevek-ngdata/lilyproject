@@ -15,27 +15,26 @@
  */
 package org.lilyproject.client.integration;
 
-import org.junit.Test;
-import org.lilyproject.client.LilyClient;
-import org.lilyproject.util.io.Closer;
-
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+
+import org.junit.Test;
+import org.lilyproject.client.LilyClient;
+import org.lilyproject.util.io.Closer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
  * This test verifies that we have the expected number of ZooKeeper connections at any time.
- *
+ * <p/>
  * <p>We test the presence of ZK connections by looking if there are any threads with the
  * typical ZooKeeper name.</p>
- *
+ * <p/>
  * <p>This is implemented as an integration test, since if the Hadoop/Lily stack would be
  * started embedded, there would be extra ZK connections which would be hard to
  * distinguish from those set up by LilyClient.</p>
- *
  */
 public class ZkConnectionTest {
     // For each ZK client, there are two threads, one with "-EventThread" in the name,
@@ -44,7 +43,7 @@ public class ZkConnectionTest {
 
     @Test
     public void testZkConnectionsGoneAfterLilyClientStop() throws Exception {
-        
+
         // At this point, there should be no running ZK threads
         checkNoZkThread();
 
@@ -55,7 +54,7 @@ public class ZkConnectionTest {
 
         //System.out.println("Before close:");
         //printAllZkThreads();
-        
+
         Closer.close(lilyClient);
         // We can't rely on threads being closed immediately
         int patience = 10;
@@ -63,7 +62,7 @@ public class ZkConnectionTest {
             Thread.sleep(1000);
             patience--;
         }
-        
+
         //System.out.println("After close:");
         //printAllZkThreads();
 
@@ -84,7 +83,7 @@ public class ZkConnectionTest {
         //  [not applicable anymore since CDH3u4] 1 for HBaseAdmin
         int threadCnt = countZkThreads();
         assertEquals(2, threadCnt);
-        
+
         Closer.close(lilyClient);
     }
 
@@ -105,11 +104,11 @@ public class ZkConnectionTest {
     private String findZkThread() {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         long[] threadIds = threadBean.getAllThreadIds();
-        for (long tid: threadIds) {
+        for (long tid : threadIds) {
             ThreadInfo info = threadBean.getThreadInfo(tid);
-            
+
             String name = info.getThreadName();
-            
+
             if (name.contains(ZK_THREAD_MARKER)) {
                 return name;
             }
@@ -121,9 +120,11 @@ public class ZkConnectionTest {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         long[] threadIds = threadBean.getAllThreadIds();
         int count = 0;
-        for (long tid: threadIds) {
+        for (long tid : threadIds) {
             ThreadInfo info = threadBean.getThreadInfo(tid);
-            if (info == null) continue;
+            if (info == null) {
+                continue;
+            }
             String name = info.getThreadName();
 
             if (name.contains(ZK_THREAD_MARKER)) {
@@ -136,7 +137,7 @@ public class ZkConnectionTest {
     private void printAllZkThreads() {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         long[] threadIds = threadBean.getAllThreadIds();
-        for (long tid: threadIds) {
+        for (long tid : threadIds) {
             ThreadInfo info = threadBean.getThreadInfo(tid);
 
             String name = info.getThreadName();

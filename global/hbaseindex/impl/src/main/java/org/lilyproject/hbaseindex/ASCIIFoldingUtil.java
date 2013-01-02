@@ -27,10 +27,10 @@ package org.lilyproject.hbaseindex;
  * This class converts alphabetic, numeric, and symbolic Unicode characters
  * which are not in the first 127 ASCII characters (the "Basic Latin" Unicode
  * block) into their ASCII equivalents, if one exists.
- *
+ * <p/>
  * Characters from the following Unicode blocks are converted; however, only
  * those characters with reasonable ASCII alternatives are converted:
- *
+ * <p/>
  * <ul>
  * <li>C1 Controls and Latin-1 Supplement: <a href="http://www.unicode.org/charts/PDF/U0080.pdf">http://www.unicode.org/charts/PDF/U0080.pdf</a>
  * <li>Latin Extended-A: <a href="http://www.unicode.org/charts/PDF/U0100.pdf">http://www.unicode.org/charts/PDF/U0100.pdf</a>
@@ -49,9 +49,9 @@ package org.lilyproject.hbaseindex;
  * <li>Alphabetic Presentation Forms: <a href="http://www.unicode.org/charts/PDF/UFB00.pdf">http://www.unicode.org/charts/PDF/UFB00.pdf</a>
  * <li>Halfwidth and Fullwidth Forms: <a href="http://www.unicode.org/charts/PDF/UFF00.pdf">http://www.unicode.org/charts/PDF/UFF00.pdf</a>
  * </ul>
- *
+ * <p/>
  * See: <a href="http://en.wikipedia.org/wiki/Latin_characters_in_Unicode">http://en.wikipedia.org/wiki/Latin_characters_in_Unicode</a>
- *
+ * <p/>
  * The set of character conversions supported by this class is a superset of
  * those supported by Lucene's {@link ISOLatin1AccentFilter} which strips
  * accents from Latin1 characters.  For example, '&agrave;' will be replaced by

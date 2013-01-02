@@ -29,14 +29,15 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.rowlock.HBaseRowLocker;
-import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.rowlock.HBaseRowLocker;
+import org.lilyproject.rowlock.RowLock;
+
+import static org.junit.Assert.*;
 
 public class RowLockerTest {
     private static HBaseProxy HBASE_PROXY;
@@ -79,7 +80,7 @@ public class RowLockerTest {
     @After
     public void tearDown() throws Exception {
     }
-    
+
     @Test
     public void testLockUnlock() throws IOException {
         HBaseRowLocker locker = new HBaseRowLocker(table, family, qualifier, 600000L);
@@ -102,7 +103,7 @@ public class RowLockerTest {
         locker.unlockRow(lock);
         assertFalse(locker.isLocked(rowKey));
     }
-    
+
     @Test
     public void testLockTimesOut() throws Exception {
         HBaseRowLocker locker = new HBaseRowLocker(table, family, qualifier, 1L);
@@ -129,7 +130,7 @@ public class RowLockerTest {
         locker.unlockRow(lock2);
         assertFalse(locker.put(put, lock2));
     }
-    
+
     @Test
     public void testPutLockOtherRow() throws IOException {
         HBaseRowLocker locker = new HBaseRowLocker(table, family, qualifier, 60000L);
@@ -137,7 +138,7 @@ public class RowLockerTest {
         Put put = new Put(Bytes.toBytes("testPutLockOtherRow2"));
         put.add(family, Bytes.toBytes("testQualifier"), Bytes.toBytes("testValue"));
         assertFalse(locker.put(put, lock));
-        
+
         // Cleanup
         locker.unlockRow(lock);
     }

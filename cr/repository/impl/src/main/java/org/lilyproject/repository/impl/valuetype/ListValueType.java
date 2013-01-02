@@ -15,51 +15,59 @@
  */
 package org.lilyproject.repository.impl.valuetype;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 import org.lilyproject.util.ArgumentValidator;
 
 public class ListValueType extends AbstractValueType implements ValueType {
-    
+
     public final static String NAME = "LIST";
-    
+
     private ValueType valueType;
 
     private final String fullName;
-    
+
     public ListValueType(TypeManager typeManager, String typeParams) throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(typeParams, "typeParams");
-        this.fullName = NAME+"<"+typeParams+">";
+        this.fullName = NAME + "<" + typeParams + ">";
         this.valueType = typeManager.getValueType(typeParams);
     }
-    
+
     public ListValueType(TypeManager typeManager, DataInput typeParamsDataInput) throws RepositoryException, InterruptedException {
         this(typeManager, typeParamsDataInput.readUTF());
     }
-    
+
     @Override
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public String getName() {
         return fullName;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return valueType.getDeepestValueType();
     }
-    
+
     @Override
     public ValueType getNestedValueType() {
         return valueType;
     }
-    
+
     @Override
     public int getNestingLevel() {
         return 1 + valueType.getNestingLevel();
@@ -70,16 +78,16 @@ public class ListValueType extends AbstractValueType implements ValueType {
     public List<Object> read(DataInput dataInput) throws RepositoryException, InterruptedException {
         int nrOfValues = dataInput.readInt();
         List<Object> result = new ArrayList<Object>(nrOfValues);
-        for (int i = 0 ; i < nrOfValues; i++) {
+        for (int i = 0; i < nrOfValues; i++) {
             result.add(valueType.read(dataInput));
-       }
+        }
         return result;
     }
 
     @Override
     public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException {
-        List<Object> values = ((List<Object>) value);
+        List<Object> values = ((List<Object>)value);
         dataOutput.writeInt(values.size());
         for (Object element : values) {
             valueType.write(element, dataOutput, parentRecords);
@@ -99,17 +107,17 @@ public class ListValueType extends AbstractValueType implements ValueType {
     @Override
     public Set<Object> getValues(Object value) {
         Set<Object> result = new HashSet<Object>();
-        for (Object element : ((List<Object>) value)) {
+        for (Object element : ((List<Object>)value)) {
             result.addAll(valueType.getValues(element));
-        } 
+        }
         return result;
     }
-    
+
     @Override
     public boolean isMultiValue() {
         return true;
     }
-    
+
     @Override
     public boolean isHierarchical() {
         return valueType.isHierarchical();
@@ -125,13 +133,16 @@ public class ListValueType extends AbstractValueType implements ValueType {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        return fullName.equals(((ListValueType) obj).fullName);
+        }
+        return fullName.equals(((ListValueType)obj).fullName);
     }
 
     //
@@ -140,15 +151,15 @@ public class ListValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory(TypeManager typeManager) {
         return new ListValueTypeFactory(typeManager);
     }
-    
+
     public static class ListValueTypeFactory implements ValueTypeFactory {
-        
+
         private TypeManager typeManager;
 
         public ListValueTypeFactory(TypeManager typeManager) {
             this.typeManager = typeManager;
         }
-        
+
         @Override
         public ValueType getValueType(String typeParams) throws RepositoryException, InterruptedException {
             return new ListValueType(typeManager, typeParams);

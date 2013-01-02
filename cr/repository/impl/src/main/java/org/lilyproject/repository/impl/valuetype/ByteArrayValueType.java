@@ -17,18 +17,17 @@ package org.lilyproject.repository.impl.valuetype;
 
 import java.util.Comparator;
 
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.IdentityRecordStack;
-import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
-import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * The ByteArrayValueType allows to use byte arrays (byte[]) as field values.
- * <p>
+ * <p/>
  * To avoid issues with changing byte[] values while they are used in a field,
  * we require them to be wrapped in a read only {@link ByteArray} object.
  */
@@ -47,7 +46,7 @@ public class ByteArrayValueType extends AbstractValueType implements ValueType {
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
@@ -65,7 +64,7 @@ public class ByteArrayValueType extends AbstractValueType implements ValueType {
 
     @Override
     public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords) {
-        ByteArray byteArray = (ByteArray) value;
+        ByteArray byteArray = (ByteArray)value;
         dataOutput.writeInt(byteArray.length());
         // We can use getBytesUnsafe here since we know that in this use case
         // the
@@ -94,12 +93,15 @@ public class ByteArrayValueType extends AbstractValueType implements ValueType {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         return true;
     }
 
@@ -109,10 +111,10 @@ public class ByteArrayValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new ByteArrayValueTypeFactory();
     }
-    
+
     public static class ByteArrayValueTypeFactory implements ValueTypeFactory {
         private static ByteArrayValueType instance = new ByteArrayValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

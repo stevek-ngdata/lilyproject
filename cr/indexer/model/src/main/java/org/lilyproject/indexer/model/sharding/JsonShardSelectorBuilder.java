@@ -15,18 +15,18 @@
  */
 package org.lilyproject.indexer.model.sharding;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.json.JsonUtil;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-
 /**
  * Creates a {@link ShardSelector} from a json config.
- *
+ * <p/>
  * <pre>
  * {
  *   shardingKey: {
@@ -50,7 +50,7 @@ import java.io.IOException;
  *     ]
  *
  *     in case of range:
-
+ *
  *     entries: [
  *       { shard: "shard1", upTo: 1000 },
  *       { shard: "shard2" }
@@ -131,7 +131,7 @@ public class JsonShardSelectorBuilder {
         ShardSelector selector;
         if (mappingTypeName.equals("range")) {
             selector = new RangeShardSelector(shardingKey);
-        } else if (mappingTypeName.equals("list")) {            
+        } else if (mappingTypeName.equals("list")) {
             selector = new ListShardSelector(shardingKey);
         } else {
             throw new ShardingConfigException("Unsupported mappingType: " + mappingTypeName);

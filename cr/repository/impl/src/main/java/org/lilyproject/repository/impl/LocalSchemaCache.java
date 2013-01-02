@@ -54,21 +54,22 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
     /**
      * Sets the cache refresh flag on Zookeeper. This triggers the caches to
      * refresh their data.
-     * 
-     * @param force
-     *            if true, it is ignored if cache refreshing is enabled or not.
+     *
+     * @param force if true, it is ignored if cache refreshing is enabled or not.
      */
     public void triggerRefresh(byte[] rowKey, boolean force) throws TypeException, InterruptedException {
         if (force || cacheRefreshingEnabled) {
             try {
                 if (rowKey == null) {
-                    if (log.isDebugEnabled())
+                    if (log.isDebugEnabled()) {
                         log.debug("Triggering schema cache refresh for all types.");
+                    }
                     ZkUtil.update(zooKeeper, CACHE_INVALIDATION_PATH, null, -1);
                 } else {
                     String bucketId = encodeHex(rowKey);
-                    if (log.isDebugEnabled())
+                    if (log.isDebugEnabled()) {
                         log.debug("Triggering schema cache refresh for bucket: " + bucketId);
+                    }
                     ZkUtil.update(zooKeeper, CACHE_INVALIDATION_PATH + "/" + bucketId, null, -1);
                 }
             } catch (KeeperException e) {
@@ -101,7 +102,7 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
         byte[] data;
         try {
             data = zooKeeper.getData(CACHE_REFRESHENABLED_PATH, new CacheRefreshingEnabledWatcher(), new Stat());
-            if (data == null || data.length == 0 || data[0] == (byte) 1) {
+            if (data == null || data.length == 0 || data[0] == (byte)1) {
                 cacheRefreshingEnabled = true;
             } else {
                 cacheRefreshingEnabled = false;
@@ -115,7 +116,7 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
 
     public void enableSchemaCacheRefresh() throws TypeException, InterruptedException {
         try {
-            zooKeeper.setData(CACHE_REFRESHENABLED_PATH, new byte[] { (byte) 1 }, -1);
+            zooKeeper.setData(CACHE_REFRESHENABLED_PATH, new byte[]{(byte)1}, -1);
             cacheRefreshingEnabled = true;
             triggerRefresh();
         } catch (KeeperException e) {
@@ -125,7 +126,7 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
 
     public void disableSchemaCacheRefresh() throws TypeException, InterruptedException {
         try {
-            zooKeeper.setData(CACHE_REFRESHENABLED_PATH, new byte[] { (byte) 0 }, -1);
+            zooKeeper.setData(CACHE_REFRESHENABLED_PATH, new byte[]{(byte)0}, -1);
             cacheRefreshingEnabled = false;
         } catch (KeeperException e) {
             throw new TypeException("Enabling schema cache refreshing failed", e);

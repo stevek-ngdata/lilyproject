@@ -1,14 +1,14 @@
 package org.lilyproject.util.repo;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
-
-import java.util.Map;
-import java.util.Set;
 
 import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
 

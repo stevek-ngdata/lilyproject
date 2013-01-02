@@ -32,7 +32,7 @@ public abstract class AbstractListenersSubscriptionHandler extends AbstractSubsc
     private Log log = LogFactory.getLog(getClass());
 
     public AbstractListenersSubscriptionHandler(String subscriptionId, MessagesWorkQueue messagesWorkQueue,
-            RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager) {
+                                                RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager) {
         super(subscriptionId, messagesWorkQueue, rowLog);
         this.rowLogConfigurationManager = rowLogConfigurationManager;
     }
@@ -46,20 +46,23 @@ public abstract class AbstractListenersSubscriptionHandler extends AbstractSubsc
     public void shutdown() {
         stop = true;
         rowLogConfigurationManager.removeListenersObserver(rowLogId, subscriptionId, this);
-        for (String listenerId : listeners.keySet())
+        for (String listenerId : listeners.keySet()) {
             listenerUnregistered(listenerId);
+        }
     }
 
     @Override
     public void listenersChanged(List<String> newListeners) {
         if (!stop) {
             for (String newListener : newListeners) {
-                if (!listeners.containsKey(newListener))
+                if (!listeners.containsKey(newListener)) {
                     listenerRegistered(newListener);
+                }
             }
             for (String listenerId : listeners.keySet()) {
-                if (!newListeners.contains(listenerId))
+                if (!newListeners.contains(listenerId)) {
                     listenerUnregistered(listenerId);
+                }
             }
         }
     }

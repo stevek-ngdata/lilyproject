@@ -15,21 +15,22 @@
  */
 package org.lilyproject.tools.import_.json;
 
+import java.io.IOException;
+
 import net.iharder.Base64;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.util.json.JsonUtil;
 
-import java.io.IOException;
-
 public class BlobConverter {
     public static ObjectNode toJson(Blob blob) {
         ObjectNode jsonBlob = JsonNodeFactory.instance.objectNode();
         jsonBlob.put("value", valueToString(blob.getValue()));
         jsonBlob.put("mediaType", blob.getMediaType());
-        if (blob.getName() != null)
+        if (blob.getName() != null) {
             jsonBlob.put("name", blob.getName());
+        }
         jsonBlob.put("size", blob.getSize());
         return jsonBlob;
     }

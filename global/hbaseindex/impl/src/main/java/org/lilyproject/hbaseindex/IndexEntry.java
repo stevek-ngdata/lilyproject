@@ -24,13 +24,13 @@ import org.lilyproject.util.ByteArrayKey;
 
 /**
  * An entry to add to or remove from an Index.
- *
+ * <p/>
  * <p>This object can be simply instantiated yourself and passed to
  * {@link Index#addEntry} or {@link Index#removeEntry}.
- *
+ * <p/>
  * <p>The fields added to this entry should correspond in name
  * and type to the fields defined in the {@link IndexDefinition}.
- *
+ * <p/>
  * <p>Missing fields will be interpreted as fields with a null value.
  */
 public class IndexEntry {

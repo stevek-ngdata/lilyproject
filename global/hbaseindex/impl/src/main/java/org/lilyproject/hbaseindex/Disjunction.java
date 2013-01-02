@@ -21,7 +21,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * A QueryResult which is the disjunction (= OR operation) of two other QueryResults.
- *
+ * <p/>
  * <p>The supplied QueryResults should adhere to the same requirements as for
  * {@link Conjunction}s.
  */

@@ -15,16 +15,18 @@
  */
 package org.lilyproject.tools.import_.cli;
 
-import org.apache.commons.cli.*;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.List;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.io.Closer;
-
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.*;
 
 public class JsonImportTool extends BaseZkCliTool {
     private Option schemaOnlyOption;
@@ -76,8 +78,9 @@ public class JsonImportTool extends BaseZkCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         int workers = OptionUtil.getIntOption(cmd, workersOption, 1);
 

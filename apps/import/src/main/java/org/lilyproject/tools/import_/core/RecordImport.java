@@ -15,9 +15,14 @@
  */
 package org.lilyproject.tools.import_.core;
 
-import org.lilyproject.repository.api.*;
-
 import java.util.List;
+
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordExistsException;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 
 //
 // This class stems from a time when the repository did not yet offer 'create or update' behavior, nor did it
@@ -33,7 +38,7 @@ public class RecordImport {
     }
 
     public static ImportResult<Record> importRecord(Record newRecord, ImportMode impMode,
-            List<MutationCondition> conditions, Repository repository)
+                                                    List<MutationCondition> conditions, Repository repository)
             throws RepositoryException, InterruptedException {
 
         // If the user specified both record type name and version, we assume he wants to use that version, otherwise

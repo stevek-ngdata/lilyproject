@@ -24,9 +24,9 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class LilyHBaseSchema {
-    public static final byte EXISTS_FLAG = (byte) 0;
-    public static final byte DELETE_FLAG = (byte) 1;
-    public static final byte[] DELETE_MARKER = new byte[] { DELETE_FLAG };
+    public static final byte EXISTS_FLAG = (byte)0;
+    public static final byte DELETE_FLAG = (byte)1;
+    public static final byte[] DELETE_MARKER = new byte[]{DELETE_FLAG};
 
 
     private static final HTableDescriptor recordTableDescriptor;
@@ -128,7 +128,7 @@ public class LilyHBaseSchema {
 
         RecordColumn(String name) {
             this.name = name;
-            this.bytes = Bytes.add(new byte[]{SYSTEM_PREFIX},Bytes.toBytes(name));
+            this.bytes = Bytes.add(new byte[]{SYSTEM_PREFIX}, Bytes.toBytes(name));
         }
     }
 

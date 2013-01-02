@@ -13,9 +13,9 @@ public class SolrHomeDirSetup {
     private final File solrHomeDir;
     private final SolrDefinition solrDef;
     private final String autoCommitSetting;
-    private static final String[] SW_LANGS = new String[] {"ar","bg","ca","cz","da","de","el","en","es","eu","fa","fi",
-        "fr","ga","gl","hi","hu","hy","id","it","ja","lv","nl","no","pt","ro","ru","sv","th","tr"};
-    private static final String[] CONTRACT_LANGS = new String[] {"ca","fr","ga","it"};
+    private static final String[] SW_LANGS = new String[]{"ar", "bg", "ca", "cz", "da", "de", "el", "en", "es", "eu", "fa", "fi",
+            "fr", "ga", "gl", "hi", "hu", "hy", "id", "it", "ja", "lv", "nl", "no", "pt", "ro", "ru", "sv", "th", "tr"};
+    private static final String[] CONTRACT_LANGS = new String[]{"ca", "fr", "ga", "it"};
 
     private SolrHomeDirSetup(File solrHomeDir, SolrDefinition solrDef, String autoCommitSetting) {
         this.solrHomeDir = solrHomeDir;
@@ -65,10 +65,10 @@ public class SolrHomeDirSetup {
         createEmptyFile(new File(solrConfDir, "stopwords.txt"));
         createEmptyFile(new File(solrConfDir, "protwords.txt"));
         for (String lang : SW_LANGS) {
-            createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "stopwords_" + lang  + ".txt"));
+            createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "stopwords_" + lang + ".txt"));
         }
         for (String lang : CONTRACT_LANGS) {
-            createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "contractions_" + lang  + ".txt"));
+            createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "contractions_" + lang + ".txt"));
         }
         createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "hyphenations_ga.txt"));
         createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "stoptags_ja.txt"));

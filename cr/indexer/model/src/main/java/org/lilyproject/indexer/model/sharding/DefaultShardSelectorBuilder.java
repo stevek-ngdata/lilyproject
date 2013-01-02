@@ -15,7 +15,8 @@
  */
 package org.lilyproject.indexer.model.sharding;
 
-import java.util.*;
+import java.util.Map;
+import java.util.TreeSet;
 
 public class DefaultShardSelectorBuilder {
     public static ShardSelector createDefaultSelector(Map<String, String> solrShards) throws ShardingConfigException {

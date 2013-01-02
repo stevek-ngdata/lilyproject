@@ -15,11 +15,15 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import org.lilyproject.rowlog.api.*;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.List;
+
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogShard;
+import org.lilyproject.rowlog.api.RowLogShardList;
+import org.lilyproject.rowlog.api.RowLogShardRouter;
 
 /**
  * Assigns messages to shards based on the hash of the row key. Messages thus always

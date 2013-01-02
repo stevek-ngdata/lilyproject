@@ -18,7 +18,10 @@ package org.lilyproject.lilyservertestfw;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.*;
+import java.net.JarURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -28,7 +31,7 @@ import org.apache.commons.lang.StringUtils;
 
 public class ConfUtil {
     public static final String CONF_RESOURCE_PATH = "org/lilyproject/lilyservertestfw/conf/";
-    
+
     public static void copyConfResources(URL confUrl, String confResourcePath, File confDir) throws IOException, URISyntaxException {
         URLConnection urlConnection = confUrl.openConnection();
         if (urlConnection instanceof JarURLConnection) {
@@ -54,9 +57,10 @@ public class ConfUtil {
                         entryInputStream = jarFile.getInputStream(entry);
                         FileUtils.copyInputStreamToFile(entryInputStream, new File(confDir, fileName));
                     } finally {
-                        if (entryInputStream != null)
+                        if (entryInputStream != null) {
                             entryInputStream.close();
-                  }
+                        }
+                    }
                 }
             }
         }

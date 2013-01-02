@@ -15,11 +15,25 @@
  */
 package org.lilyproject.util.repo;
 
-import org.lilyproject.repository.api.*;
-import org.lilyproject.util.Pair;
-
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.util.Pair;
 
 /**
  * Utilities for producing a readable dump of a Record and a RecordType.
@@ -28,7 +42,7 @@ public class PrintUtil {
     public static void print(Record record, Repository repository) {
         print(record, repository, System.out);
     }
-    
+
     public static void print(Record record, Repository repository, PrintStream out) {
         TypeManager typeManager = repository.getTypeManager();
 
@@ -88,7 +102,7 @@ public class PrintUtil {
             printField(out, 2, field.getKey(), field.getValue());
         }
     }
-    
+
     private static void printField(PrintStream out, int indent, QName fieldName, Object fieldValue) {
         print(out, indent, fieldName + " = ");
         printFieldValue(out, indent, fieldValue);
@@ -121,7 +135,7 @@ public class PrintUtil {
 
     private static void printRecordValue(PrintStream out, int indent, Record record) {
         println(out, indent, "Record of type " + record.getRecordTypeName() + ", version " + record.getRecordTypeVersion());
-        for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {        
+        for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
             printField(out, indent, field.getKey(), field.getValue());
         }
     }
@@ -201,7 +215,7 @@ public class PrintUtil {
     }
 
     private static void printFieldTypes(List<Pair<FieldTypeEntry, FieldType>> fieldTypeEntries, PrintStream out,
-            int indent) {
+                                        int indent) {
 
         Collections.sort(fieldTypeEntries, FT_COMP);
         for (Pair<FieldTypeEntry, FieldType> pair : fieldTypeEntries) {

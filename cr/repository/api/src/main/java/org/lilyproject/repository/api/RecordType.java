@@ -20,24 +20,24 @@ import java.util.Map;
 
 /**
  * A record type describes the schema to be followed by a {@link Record}.
- *
+ * <p/>
  * <p>Record types are managed via the {@link TypeManager}. To instantiate a RecordType use
  * {@link TypeManager#newRecordType(QName)}  TypeManager.newRecordType}. As all entities within this API,
  * record types are dumb data objects.
- *
+ * <p/>
  * <p>A record type consists of:
- *
+ * <p/>
  * <ul>
  * <li>a list of field types, associated via {@link FieldTypeEntry} which defines properties specific to the use
  * of a field type within this record type.
  * <li>a list of mixins, these are references to other record types to be mixed in (imported within) this record
  * type.
  * </ul>
- *
+ * <p/>
  * <p>Record types are versioned: upon each update, a new version of the record type is created. Record store a
  * pointer to the particular version of a record type that was used when creating/updating a record type. The references
  * to the mixin record types are also to specific versions.
- *
+ * <p/>
  * <p>A record type has two unique identifiers:
  * <ul>
  * <li>a system-generated id, immutable after creation of the record type
@@ -49,7 +49,7 @@ import java.util.Map;
 public interface RecordType {
     /**
      * Sets the id.
-     *
+     * <p/>
      * <p>Even though IDs are system-generated, you might need to set them on the record type e.g. to construct
      * a record type to pass to the {@link TypeManager#updateRecordType(RecordType)}.
      */
@@ -59,7 +59,7 @@ public interface RecordType {
      * The id is unique, immutable and system-generated.
      */
     SchemaId getId();
-    
+
     void setName(QName name);
 
     /**
@@ -68,7 +68,7 @@ public interface RecordType {
     QName getName();
 
     void setVersion(Long version);
-    
+
     Long getVersion();
 
     /**
@@ -82,15 +82,14 @@ public interface RecordType {
     FieldTypeEntry addFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory);
 
     /**
-     *
      * @return null if there is not field type entry for this field type
      */
     FieldTypeEntry getFieldTypeEntry(SchemaId fieldTypeId);
-    
+
     void removeFieldTypeEntry(SchemaId fieldTypeId);
-    
+
     Collection<FieldTypeEntry> getFieldTypeEntries();
-    
+
     /**
      * Adds a mixin to the record type.
      * When no version is given, the latest recordType version will be filled in.
@@ -101,18 +100,18 @@ public interface RecordType {
      * Same as {@link #addMixin(SchemaId, Long)} but with null for the recordTypeVersion.
      */
     void addMixin(SchemaId recordTypeId);
-    
+
     /**
      * Removes a mixin from the recordType.
      */
     void removeMixin(SchemaId recordTypeId);
-    
+
     /**
      * Returns a map of the recordTypeIds and versions of the mixins of the RecordType.
      */
     Map<SchemaId, Long> getMixins();
-    
+
     RecordType clone();
-    
+
     boolean equals(Object obj);
 }

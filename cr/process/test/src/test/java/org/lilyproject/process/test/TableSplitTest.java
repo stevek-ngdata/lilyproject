@@ -15,11 +15,10 @@
  */
 package org.lilyproject.process.test;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.util.List;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -45,7 +44,7 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.test.TestHomeUtil;
 
-import com.google.common.collect.Lists;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This test verifies that pre-splitted record tables work correctly (for UUID-based record id's).
@@ -107,8 +106,9 @@ public class TableSplitTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        if (lilyProxy != null)
+        if (lilyProxy != null) {
             lilyProxy.stop();
+        }
         TestHomeUtil.cleanupTestHome(tmpDir);
 
         if (lilyProxy.getMode() == LilyProxy.Mode.CONNECT || lilyProxy.getMode() == LilyProxy.Mode.HADOOP_CONNECT) {
@@ -213,7 +213,7 @@ public class TableSplitTest {
                 }
 
                 assertTrue(String.format("Number of splits in region '%s' is %d, expected between 80 and 120",
-                                    regionInfo.getRegionNameAsString(), count), count > 80 && count < 120);
+                        regionInfo.getRegionNameAsString(), count), count > 80 && count < 120);
             }
         }
     }

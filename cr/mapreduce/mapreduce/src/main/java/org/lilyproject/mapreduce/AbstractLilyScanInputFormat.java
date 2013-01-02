@@ -48,11 +48,11 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
  * A MapReduce InputFormat for Lily based on Lily scanners.
  */
 public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputFormat<KEYIN, VALUEIN> implements Configurable {
-    
+
     public static final String SCAN = "lily.mapreduce.scan";
 
     final Log log = LogFactory.getLog(AbstractLilyScanInputFormat.class);
-    
+
     private Configuration conf;
     protected String zkConnectString;
 
@@ -98,7 +98,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
             } else {
                 startRow = new byte[0];
             }
-            
+
             byte[] stopRow;
             if (scan.getRawStopRecordId() != null) {
                 stopRow = scan.getRawStopRecordId();
@@ -129,7 +129,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
      * License note: this code was copied from HBase's TableInputFormat.
      *
      * @param startRow start row of the scan
-     * @param stopRow stop row of the scan
+     * @param stopRow  stop row of the scan
      */
     public List<InputSplit> getSplits(HTable table, final byte[] startRow, final byte[] stopRow) throws IOException {
         if (table == null) {
@@ -143,7 +143,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
         int count = 0;
         List<InputSplit> splits = new ArrayList<InputSplit>(keys.getFirst().length);
         for (int i = 0; i < keys.getFirst().length; i++) {
-            if ( !includeRegionInSplit(keys.getFirst()[i], keys.getSecond()[i])) {
+            if (!includeRegionInSplit(keys.getFirst()[i], keys.getSecond()[i])) {
                 continue;
             }
             String regionLocation = table.getRegionLocation(keys.getFirst()[i]).
@@ -163,19 +163,19 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
                 InputSplit split = new TableSplit(table.getTableName(),
                         splitStart, splitStop, regionLocation);
                 splits.add(split);
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug("getSplits: split -> " + (count++) + " -> " + split);
+                }
             }
         }
         return splits;
     }
 
-    protected boolean includeRegionInSplit(final byte[] startKey, final byte [] endKey) {
+    protected boolean includeRegionInSplit(final byte[] startKey, final byte[] endKey) {
         return true;
     }
 
 
-    
     protected RecordScan getScan(Repository repository) {
         RecordScan scan;
         String scanData = conf.get(SCAN);

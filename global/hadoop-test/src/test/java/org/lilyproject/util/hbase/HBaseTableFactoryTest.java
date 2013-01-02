@@ -57,7 +57,7 @@ public class HBaseTableFactoryTest {
         }
 
         List<Throwable> throwables = Lists.newArrayList();
-        for (Future<HTableInterface> f: futures) {
+        for (Future<HTableInterface> f : futures) {
             try {
                 f.get();
             } catch (Throwable t) {

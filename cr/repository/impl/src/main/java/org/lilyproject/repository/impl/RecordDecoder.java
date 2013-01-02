@@ -50,7 +50,7 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 /**
  * Methods related to decoding HBase Result objects into Lily Record objects.
- *
+ * <p/>
  * <p>The methods in this class assume they are supplied with non-deleted records, thus where the
  * {@link LilyHBaseSchema.RecordColumn#DELETED} flag is false.</p>
  */
@@ -133,19 +133,20 @@ public class RecordDecoder {
                 }
             }
         }
-        
+
         for (Scope scope : Scope.values()) {
-            Pair<SchemaId, Long> recordTypePair =  requestedVersion == null ? extractLatestRecordType(scope, result) : 
-                extractVersionRecordType(scope, result, requestedVersion);
+            Pair<SchemaId, Long> recordTypePair = requestedVersion == null ? extractLatestRecordType(scope, result) :
+                    extractVersionRecordType(scope, result, requestedVersion);
             if (recordTypePair != null) {
                 RecordType recordType =
                         typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
                 record.setRecordType(scope, recordType.getName(), recordType.getVersion());
-                if (readContext != null)
+                if (readContext != null) {
                     readContext.setRecordTypeId(scope, recordType);
+                }
             }
         }
-           
+
         return record;
     }
 
@@ -239,9 +240,9 @@ public class RecordDecoder {
 
             // We're only adding the record types if any fields were read.
             if (!scopesForVersion.isEmpty()) {
-                // Get the record type for each scope 
+                // Get the record type for each scope
 
-                // At least the non-versioned record type should be read since that is also the record type of the whole record 
+                // At least the non-versioned record type should be read since that is also the record type of the whole record
                 scopesForVersion.add(Scope.NON_VERSIONED);
                 for (Scope scope : scopesForVersion) {
                     Pair<SchemaId, Long> recordTypePair = extractVersionRecordType(scope, result, recordEntry.getKey());
@@ -273,8 +274,9 @@ public class RecordDecoder {
             return null;
         }
         FieldType fieldType = fieldTypes.getFieldType(new SchemaIdImpl(Bytes.tail(key, key.length - 1)));
-        if (context != null)
+        if (context != null) {
             context.addFieldType(fieldType);
+        }
         ValueType valueType = fieldType.getValueType();
         Object value = valueType.read(EncodingUtil.stripPrefix(prefixedValue));
         return new Pair<FieldType, Object>(fieldType, value);
@@ -286,8 +288,9 @@ public class RecordDecoder {
     private Pair<SchemaId, Long> extractLatestRecordType(Scope scope, Result result) {
         byte[] idBytes = getLatest(result, RecordCf.DATA.bytes, RECORD_TYPE_ID_QUALIFIERS.get(scope));
         byte[] versionBytes = getLatest(result, RecordCf.DATA.bytes, RECORD_TYPE_VERSION_QUALIFIERS.get(scope));
-        if ((idBytes == null || idBytes.length == 0) || (versionBytes == null || versionBytes.length == 0))
+        if ((idBytes == null || idBytes.length == 0) || (versionBytes == null || versionBytes.length == 0)) {
             return null; // No record type was found
+        }
         return new Pair<SchemaId, Long>(new SchemaIdImpl(idBytes), Bytes.toLong(versionBytes));
     }
 
@@ -299,16 +302,19 @@ public class RecordDecoder {
      */
     public byte[] getLatest(Result result, byte[] family, byte[] qualifier) {
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> map = result.getMap();
-        if (map == null)
+        if (map == null) {
             return null;
+        }
 
         NavigableMap<byte[], NavigableMap<Long, byte[]>> qualifiers = map.get(family);
-        if (qualifiers == null)
+        if (qualifiers == null) {
             return null;
+        }
 
         NavigableMap<Long, byte[]> timestamps = qualifiers.get(qualifier);
-        if (timestamps == null)
+        if (timestamps == null) {
             return null;
+        }
 
         Map.Entry<Long, byte[]> entry = timestamps.lastEntry();
         return entry == null ? null : entry.getValue();
@@ -357,8 +363,9 @@ public class RecordDecoder {
             idCeilingEntry = recordTypeIdMap.ceilingEntry(version);
         }
         SchemaId recordTypeId;
-        if (idCeilingEntry == null)
+        if (idCeilingEntry == null) {
             return null; // No record type was found
+        }
         recordTypeId = new SchemaIdImpl(idCeilingEntry.getValue());
 
         // Get recordTypeVersion
@@ -368,8 +375,9 @@ public class RecordDecoder {
         if (recordTypeVersionMap != null) {
             versionCeilingEntry = recordTypeVersionMap.ceilingEntry(version);
         }
-        if (versionCeilingEntry == null)
+        if (versionCeilingEntry == null) {
             return null; // No record type was found, we should never get here: if there is an id there should also be a version
+        }
         recordTypeVersion = Bytes.toLong(versionCeilingEntry.getValue());
         Pair<SchemaId, Long> recordType = new Pair<SchemaId, Long>(recordTypeId, recordTypeVersion);
         return recordType;

@@ -24,11 +24,11 @@ import java.util.Map;
 public class RepositoryException extends Exception {
     /**
      * Constructor only used by {@link AvroConverter} to reconstruct the original exception.
-     * 
+     * <p/>
      * <p>Each subclass should implement this constructor and be able to re-construct itself based on either the message or the state.
-     * 
+     *
      * @param message the message of the exception
-     * @param state the other values of the exception
+     * @param state   the other values of the exception
      */
     public RepositoryException(String message, Map<String, String> state) {
         super(message);
@@ -36,14 +36,14 @@ public class RepositoryException extends Exception {
 
     /**
      * Returns a map with the state of the exception so that its constructor can use them to recreate the original exception.
-     * 
+     * <p/>
      * <p>Each subclass should implement this method.
      * <p>Only to be used by the {@link AvroConverter}
      */
     public Map<String, String> getState() {
         return null;
     }
-    
+
     public RepositoryException() {
         super();
     }
@@ -59,5 +59,5 @@ public class RepositoryException extends Exception {
     public RepositoryException(Throwable cause) {
         super(cause);
     }
-    
+
 }

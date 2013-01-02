@@ -69,7 +69,7 @@ public class ClassicSolrShardManager implements SolrShardManager {
 
         if (solrClientConfig.getRequestWriter() != null) {
             try {
-                this.requestWriter = (RequestWriter) Class.forName(solrClientConfig.getRequestWriter()).newInstance();
+                this.requestWriter = (RequestWriter)Class.forName(solrClientConfig.getRequestWriter()).newInstance();
             } catch (Exception e) {
                 throw new RuntimeException("Problem instantiating Solr request writer", e);
             }
@@ -80,7 +80,7 @@ public class ClassicSolrShardManager implements SolrShardManager {
         if (solrClientConfig.getResponseParser() != null) {
             try {
                 this.responseParser =
-                        (ResponseParser) Class.forName(solrClientConfig.getResponseParser()).newInstance();
+                        (ResponseParser)Class.forName(solrClientConfig.getResponseParser()).newInstance();
             } catch (Exception e) {
                 throw new RuntimeException("Problem instantiating Solr response parser", e);
             }

@@ -21,7 +21,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 public class EncodingUtil {
-    
+
     public static boolean isDeletedField(byte[] value) {
         return value[0] == LilyHBaseSchema.DELETE_FLAG;
     }
@@ -37,14 +37,14 @@ public class EncodingUtil {
     public static byte[] stripPrefix(byte[] prefixedValue) {
         return Arrays.copyOfRange(prefixedValue, 1, prefixedValue.length);
     }
-    
+
     /**
      * Generates a new HBase rowkey based on the recordTypeId.
      */
     public static byte[] generateRecordTypeRowKey(String recordTypeId) {
         return Bytes.toBytes(recordTypeId);
     }
-    
+
     /**
      * Generates a new HBase rowkey based on the recordTypeId and fieldTypeId.
      */

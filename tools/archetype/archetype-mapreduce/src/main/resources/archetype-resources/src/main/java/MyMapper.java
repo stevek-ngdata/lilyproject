@@ -1,4 +1,6 @@
-package ${package};
+package $
+
+{package};
 
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;

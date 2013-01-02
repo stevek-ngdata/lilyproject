@@ -50,19 +50,19 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 /**
  * This tool upgrades the Lily schema from Lily 1.0 to 1.1.
- * <p>
+ * <p/>
  * It performs two upgrades: <br/>
  * - A conversion of a 'null' namespace in record type and field type names.<br/>
  * - A conversion of the value type of the field types to a new encoding
  * including a conversion of multivalue and hierarchical types to LIST and PATH
  * types.
- * <p>
+ * <p/>
  * Old value type encoding:
  * Bytes.toBytes("primitiveValueTypeName,multivalueBoolean,hierarchyBoolean")
- * <p>
+ * <p/>
  * New value type encoding: encodingVersionByte( = (byte)1) + utf encoding of
  * value type name (e.g. "LIST<STRING>")
- * <p>
+ * <p/>
  * This tool should only be run when upgrading from Lily 1.0 to 1.1, and Lily
  * should not be running.
  */
@@ -111,7 +111,7 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
         options.add(namespaceOption);
 
         namespaceValueOption = OptionBuilder.withArgName("namespacevalue").hasArg().withDescription(
-"The value to use to replace 'null' namespaces with (default = emtpy string).")
+                "The value to use to replace 'null' namespaces with (default = emtpy string).")
                 .withLongOpt("namespacevalue")
                 .create("nsv");
         options.add(namespaceValueOption);
@@ -126,8 +126,9 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         inspectOptions(cmd);
 
@@ -167,8 +168,9 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
     }
 
     private void convertNamespace() {
-        if (!all && !namespace)
+        if (!all && !namespace) {
             return;
+        }
 
         System.out.println("\nConvert 'null' namespaces");
         System.out.println("=========================");
@@ -179,8 +181,9 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
         }
 
         try {
-            if (!assertLilyNotRunning())
+            if (!assertLilyNotRunning()) {
                 return;
+            }
 
             HTableInterface typeTable = getTypeTable();
 
@@ -207,8 +210,9 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
     }
 
     private void upgradeValueTypes() {
-        if (!all && !upgradeValueType)
+        if (!all && !upgradeValueType) {
             return;
+        }
 
         System.out.println("\nUpgrade value type encoding");
         System.out.println("===========================");
@@ -219,8 +223,9 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
         }
 
         try {
-            if (!assertLilyNotRunning())
+            if (!assertLilyNotRunning()) {
                 return;
+            }
 
             HTableInterface typeTable = getTypeTable();
 
@@ -354,7 +359,7 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
         private final Scope scope;
 
         FieldTypeContext(byte[] id, String namespace, String name, Scope scope, String valueTypeName, boolean multiValue,
-                boolean hierarchical) {
+                         boolean hierarchical) {
             this.id = id;
             this.namespace = namespace;
             this.name = name;
@@ -376,10 +381,12 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
             StringBuilder builder = new StringBuilder();
             builder.append("{").append(namespace).append("}").append(name).append(", ").append(scope).append(" : ");
             builder.append(valueTypeName);
-            if (multiValue)
+            if (multiValue) {
                 builder.append(", multivalue");
-            if (hierarchical)
+            }
+            if (hierarchical) {
                 builder.append(", hierarchical");
+            }
             builder.append(" -> ").append(newValueTypeName);
             System.out.println(builder.toString());
 

@@ -17,7 +17,7 @@ package org.lilyproject.rowlog.api;
 
 /**
  * The execution state of a rowlog message.
- * <p>
+ * <p/>
  * It keeps track for each subscription if the message has been handled or not.
  */
 public interface ExecutionState {

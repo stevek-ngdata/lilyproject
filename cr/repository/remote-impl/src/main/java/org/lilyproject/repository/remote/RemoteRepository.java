@@ -57,13 +57,13 @@ public class RemoteRepository extends BaseRepository {
     public RemoteRepository(InetSocketAddress address, AvroConverter converter, RemoteTypeManager typeManager,
                             IdGenerator idGenerator, BlobManager blobManager, Configuration hbaseConf)
             throws IOException, InterruptedException {
-        this(new AvroLilyTransceiver(address), converter, typeManager, idGenerator, blobManager, 
-                    LilyHBaseSchema.getRecordTable(new HBaseTableFactoryImpl(hbaseConf), true));
+        this(new AvroLilyTransceiver(address), converter, typeManager, idGenerator, blobManager,
+                LilyHBaseSchema.getRecordTable(new HBaseTableFactoryImpl(hbaseConf), true));
     }
-    
+
     protected RemoteRepository(AvroLilyTransceiver lilyTransceiver, AvroConverter converter, RemoteTypeManager typeManager,
-                                IdGenerator idGenerator, BlobManager blobManager, HTableInterface recordTable)
-                throws IOException, InterruptedException {
+                               IdGenerator idGenerator, BlobManager blobManager, HTableInterface recordTable)
+            throws IOException, InterruptedException {
         // true flag to getRecordTable: we don't let the remote side create the record table if it
         // would not yet exist, as it is not aware of creation parameters (such as splits, compression, etc.)
         super(typeManager, blobManager, idGenerator, recordTable, null);
@@ -71,7 +71,7 @@ public class RemoteRepository extends BaseRepository {
         client = lilyTransceiver.getTransceiver();
         lilyProxy = lilyTransceiver.getLilyProxy();
     }
-    
+
 
     @Override
     public void close() throws IOException {

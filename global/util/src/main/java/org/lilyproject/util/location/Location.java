@@ -23,7 +23,7 @@ package org.lilyproject.util.location;
 /**
  * A location in a resource. The location is composed of the URI of the resource, and
  * the line and column numbers within that resource (when available), along with a description.
- * <p>
+ * <p/>
  * Locations are mostly provided by {@link Locatable}s objects.
  *
  * @since 2.1.8
@@ -48,6 +48,7 @@ public interface Location {
      * @return the URI (<code>null</code> if unknown).
      */
     public String getURI();
+
     /**
      * Get the line number of this location
      *

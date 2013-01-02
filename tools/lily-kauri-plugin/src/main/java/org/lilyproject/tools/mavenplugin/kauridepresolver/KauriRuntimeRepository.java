@@ -15,6 +15,9 @@
  */
 package org.lilyproject.tools.mavenplugin.kauridepresolver;
 
+import java.util.List;
+import java.util.Set;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -23,11 +26,7 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
-import java.util.List;
-import java.util.Set;
-
 /**
- *
  * @goal assemble-runtime-repository
  * @requiresDependencyResolution runtime
  * @description Creates a Maven-style repository for Kauri with all the dependencies needed to launch Kauri.

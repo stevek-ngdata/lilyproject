@@ -76,23 +76,27 @@ public interface IndexDefinition {
     /**
      * The JSON configuration for the batch indexer
      */
-    byte[] getBatchIndexConfiguration ();
+    byte[] getBatchIndexConfiguration();
+
     void setBatchIndexConfiguration(byte[] batchIndexConfiguration);
 
     byte[] getDefaultBatchIndexConfiguration();
+
     void setDefaultBatchIndexConfiguration(byte[] defaultBatchIndexConfiguration);
 
     String getZkConnectionString();
+
     void setZkConnectionString(String zkConnectionString);
 
     String getSolrCollection();
+
     void setSolrCollection(String collection);
 
     /**
      * Do we need to maintain a deref map for this index. Note that if this returns true (the default) but the index
      * configuration doesn't have any dereference expressions, than no deref map will be maintained anyways (because
      * there is no need).
-     *
+     * <p/>
      * Setting this to false might be useful in the situation that you have an index with dereference expressions, but
      * you plan to populate this index only through batch index building (which doesn't use the deref map anyways).
      *

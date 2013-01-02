@@ -15,27 +15,42 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.FieldNotFoundException;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.ObjectUtils;
 
 public class RecordImpl implements Record, Cloneable {
     private RecordId id;
     private Map<QName, Object> fields = new HashMap<QName, Object>();
     private List<QName> fieldsToDelete = new ArrayList<QName>(0); // default size zero because this is used relatively
-                                                                  // rarely compared to fields added/updated.
+    // rarely compared to fields added/updated.
     private Map<Scope, RecordTypeRef> recordTypes = new EnumMap<Scope, RecordTypeRef>(Scope.class);
     private Long version;
     private ResponseStatus responseStatus;
-    
-    private Map<String,String> attributes;
-    
+
+    private Map<String, String> attributes;
+
     private String defaultNamespace = null;
-    
+
     /**
      * This constructor should not be called directly.
+     *
      * @use {@link Repository#newRecord} instead
      */
     public RecordImpl() {
@@ -43,6 +58,7 @@ public class RecordImpl implements Record, Cloneable {
 
     /**
      * This constructor should not be called directly.
+     *
      * @use {@link Repository#newRecord} instead
      */
     public RecordImpl(RecordId id) {
@@ -53,17 +69,17 @@ public class RecordImpl implements Record, Cloneable {
     public void setId(RecordId id) {
         this.id = id;
     }
-    
+
     @Override
     public RecordId getId() {
         return id;
     }
-    
+
     @Override
     public void setVersion(Long version) {
         this.version = version;
     }
-    
+
     @Override
     public Long getVersion() {
         return version;
@@ -73,12 +89,12 @@ public class RecordImpl implements Record, Cloneable {
     public void setRecordType(QName name, Long version) {
         setRecordType(Scope.NON_VERSIONED, name, version);
     }
-    
+
     @Override
     public void setRecordType(QName name) {
         setRecordType(name, null);
     }
-    
+
     @Override
     public QName getRecordTypeName() {
         return getRecordTypeName(Scope.NON_VERSIONED);
@@ -88,7 +104,7 @@ public class RecordImpl implements Record, Cloneable {
     public Long getRecordTypeVersion() {
         return getRecordTypeVersion(Scope.NON_VERSIONED);
     }
-    
+
     @Override
     public void setRecordType(Scope scope, QName name, Long version) {
         if (name == null && version == null) {
@@ -97,25 +113,25 @@ public class RecordImpl implements Record, Cloneable {
             recordTypes.put(scope, new RecordTypeRef(name, version));
         }
     }
-    
+
     @Override
     public QName getRecordTypeName(Scope scope) {
         RecordTypeRef ref = recordTypes.get(scope);
         return ref != null ? ref.name : null;
     }
-    
+
     @Override
     public Long getRecordTypeVersion(Scope scope) {
         RecordTypeRef ref = recordTypes.get(scope);
         return ref != null ? ref.version : null;
     }
-    
+
     @Override
     public void setField(QName name, Object value) {
         fields.put(name, value);
         fieldsToDelete.remove(name);
     }
-    
+
     @Override
     public <T> T getField(QName name) throws FieldNotFoundException {
         Object field = fields.get(name);
@@ -179,7 +195,7 @@ public class RecordImpl implements Record, Cloneable {
             throw new RuntimeException(e);
         }
     }
-    
+
     @Override
     public Record cloneRecord() throws RecordException {
         return cloneRecord(new IdentityRecordStack());
@@ -187,8 +203,9 @@ public class RecordImpl implements Record, Cloneable {
 
     @Override
     public Record cloneRecord(IdentityRecordStack parentRecords) throws RecordException {
-        if (parentRecords.contains(this))
+        if (parentRecords.contains(this)) {
             throw new RecordException("A record may not be nested in itself: " + id);
+        }
 
         RecordImpl record = new RecordImpl();
         record.id = id;
@@ -216,36 +233,41 @@ public class RecordImpl implements Record, Cloneable {
 
     private boolean detectRecordRecursion(List<Record> parentRecords) {
         for (Entry<QName, Object> entry : fields.entrySet()) {
-            if (detectRecordRecursion(entry.getValue(), parentRecords))
+            if (detectRecordRecursion(entry.getValue(), parentRecords)) {
                 return true;
+            }
         }
         return false;
     }
 
     private boolean detectRecordRecursion(Object value, List<Record> parentRecords) {
         if (value instanceof HierarchyPath) {
-            Object[] elements = ((HierarchyPath) value).getElements();
+            Object[] elements = ((HierarchyPath)value).getElements();
             for (Object object : elements) {
-                if (detectRecordRecursion(object, parentRecords))
+                if (detectRecordRecursion(object, parentRecords)) {
                     return true;
+                }
             }
         }
         if (value instanceof List) {
-            List<Object> values = (List<Object>) value;
+            List<Object> values = (List<Object>)value;
             for (Object object : values) {
-                if (detectRecordRecursion(object, parentRecords))
+                if (detectRecordRecursion(object, parentRecords)) {
                     return true;
+                }
             }
         }
         if (value instanceof Record) {
-            if (parentRecords.contains(value))
+            if (parentRecords.contains(value)) {
                 return true;
-            Record record = (Record) value;
+            }
+            Record record = (Record)value;
             parentRecords.add(record);
             Map<QName, Object> fields = record.getFields();
             for (Entry<QName, Object> entry : fields.entrySet()) {
-                if (detectRecordRecursion(entry.getValue(), parentRecords))
+                if (detectRecordRecursion(entry.getValue(), parentRecords)) {
                     return true;
+                }
             }
             parentRecords.remove(record);
         }
@@ -274,7 +296,7 @@ public class RecordImpl implements Record, Cloneable {
             return ((Blob)value).clone();
         }
         if (value instanceof Record) {
-            Record record = (Record) value;
+            Record record = (Record)value;
             return (record).cloneRecord(parentRecords);
         }
         return value; // All other values are immutable
@@ -294,8 +316,9 @@ public class RecordImpl implements Record, Cloneable {
 
     @Override
     public boolean equals(Object obj) {
-        if (!softEquals(obj))
+        if (!softEquals(obj)) {
             return false;
+        }
 
         if (obj instanceof RecordRvtImpl) {
             return equals(((RecordRvtImpl)obj).getRecord());
@@ -304,18 +327,20 @@ public class RecordImpl implements Record, Cloneable {
             return softEquals(((IdRecordImpl)obj).getRecord());
         }
 
-        RecordImpl other = (RecordImpl) obj;
+        RecordImpl other = (RecordImpl)obj;
 
         if (recordTypes == null) {
-            if (other.recordTypes != null)
+            if (other.recordTypes != null) {
                 return false;
+            }
         } else if (!recordTypes.equals(other.recordTypes)) {
             return false;
         }
 
         if (version == null) {
-            if (other.version != null)
+            if (other.version != null) {
                 return false;
+            }
         } else if (!version.equals(other.version)) {
             return false;
         }
@@ -325,37 +350,43 @@ public class RecordImpl implements Record, Cloneable {
 
     @Override
     public boolean softEquals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
+        }
         if (obj instanceof RecordRvtImpl) {
             return softEquals(((RecordRvtImpl)obj).getRecord());
         }
         if (obj instanceof IdRecordImpl) {
             return softEquals(((IdRecordImpl)obj).getRecord());
         }
-        if (getClass() != obj.getClass())
+        if (getClass() != obj.getClass()) {
             return false;
-        RecordImpl other = (RecordImpl) obj;
+        }
+        RecordImpl other = (RecordImpl)obj;
 
         if (fields == null) {
-            if (other.fields != null)
+            if (other.fields != null) {
                 return false;
+            }
         } else if (!fields.equals(other.fields)) {
             return false;
         }
 
         if (fieldsToDelete == null) {
-            if (other.fieldsToDelete != null)
+            if (other.fieldsToDelete != null) {
                 return false;
+            }
         } else if (!fieldsToDelete.equals(other.fieldsToDelete)) {
             return false;
         }
 
         if (id == null) {
-            if (other.id != null)
+            if (other.id != null) {
                 return false;
+            }
         } else if (!id.equals(other.id)) {
             return false;
         }
@@ -373,8 +404,8 @@ public class RecordImpl implements Record, Cloneable {
     @Override
     public String toString() {
         return "RecordImpl [id=" + id + ", version=" + version + ", recordTypes=" + recordTypes
-                        + ", fields=" + fields + ", fieldsToDelete="
-                        + fieldsToDelete + "]";
+                + ", fields=" + fields + ", fieldsToDelete="
+                + fieldsToDelete + "]";
     }
 
     private static final class RecordTypeRef {
@@ -403,65 +434,70 @@ public class RecordImpl implements Record, Cloneable {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
-            RecordTypeRef other = (RecordTypeRef) obj;
+            }
+            RecordTypeRef other = (RecordTypeRef)obj;
             return ObjectUtils.safeEquals(name, other.name) && ObjectUtils.safeEquals(version, other.version);
         }
     }
-    
+
     @Override
     public void setDefaultNamespace(String namespace) {
         this.defaultNamespace = namespace;
     }
 
     private QName resolveNamespace(String name) throws RecordException {
-        if (defaultNamespace != null)
+        if (defaultNamespace != null) {
             return new QName(defaultNamespace, name);
+        }
 
         QName recordTypeName = getRecordTypeName();
-        if (recordTypeName != null)
+        if (recordTypeName != null) {
             return new QName(recordTypeName.getNamespace(), name);
+        }
 
         throw new RecordException("Namespace could not be resolved for name '" + name +
-            "' since no default namespace was given and no record type is set.");
+                "' since no default namespace was given and no record type is set.");
     }
-    
+
     @Override
     public void setRecordType(String recordTypeName) throws RecordException {
         setRecordType(resolveNamespace(recordTypeName));
     }
-    
+
     @Override
     public void setRecordType(String recordTypeName, Long version) throws RecordException {
         setRecordType(resolveNamespace(recordTypeName), version);
     }
-    
+
     @Override
     public void setRecordType(Scope scope, String recordTypeName, Long version) throws RecordException {
         setRecordType(scope, resolveNamespace(recordTypeName), version);
     }
-    
+
     @Override
     public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
         // The cast to (T) is only needed for a bug in JDK's < 1.6u24
         return (T)getField(resolveNamespace(fieldName));
     }
-    
+
     @Override
     public void setField(String fieldName, Object value) throws RecordException {
         setField(resolveNamespace(fieldName), value);
     }
-    
+
     @Override
     public void delete(String fieldName, boolean addFieldsToDelete) throws RecordException {
         delete(resolveNamespace(fieldName), addFieldsToDelete);
     }
-    
+
     @Override
     public boolean hasField(String fieldName) throws RecordException {
         return hasField(resolveNamespace(fieldName));
@@ -484,5 +520,5 @@ public class RecordImpl implements Record, Cloneable {
     public void setAttributes(Map<String, String> attributes) {
         this.attributes = attributes;
     }
-    
+
 }

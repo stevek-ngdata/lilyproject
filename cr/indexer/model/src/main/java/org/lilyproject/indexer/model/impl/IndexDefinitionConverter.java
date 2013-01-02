@@ -83,8 +83,12 @@ public class IndexDefinitionConverter {
             solrShards.put(shardName, address);
         }
 
-        if (node.has("zkConnectionString")) index.setZkConnectionString(node.get("zkConnectionString").getTextValue());
-        if (node.has("solrCollection")) index.setSolrCollection(node.get("solrCollection").getTextValue());
+        if (node.has("zkConnectionString")) {
+            index.setZkConnectionString(node.get("zkConnectionString").getTextValue());
+        }
+        if (node.has("solrCollection")) {
+            index.setSolrCollection(node.get("solrCollection").getTextValue());
+        }
 
         ActiveBatchBuildInfo activeBatchBuild = null;
         if (node.get("activeBatchBuild") != null) {
@@ -102,7 +106,7 @@ public class IndexDefinitionConverter {
         }
 
         BatchBuildInfo lastBatchBuild = null;
-        if (node.has("lastBatchBuild") && ! node.get("lastBatchBuild").isNull()) {
+        if (node.has("lastBatchBuild") && !node.get("lastBatchBuild").isNull()) {
             ObjectNode buildNode = JsonUtil.getObject(node, "lastBatchBuild");
             lastBatchBuild = new BatchBuildInfo();
             lastBatchBuild.setJobId(JsonUtil.getString(buildNode, "jobId"));
@@ -133,7 +137,9 @@ public class IndexDefinitionConverter {
             defaultBatchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "defaultBatchIndexConfiguration"));
         }
 
-        if (node.has("maintainDerefMap") && !node.get("maintainDerefMap").isNull()) index.setEnableDerefMap(node.get("maintainDerefMap").asBoolean());
+        if (node.has("maintainDerefMap") && !node.get("maintainDerefMap").isNull()) {
+            index.setEnableDerefMap(node.get("maintainDerefMap").asBoolean());
+        }
 
         index.setGeneralState(state);
         index.setUpdateState(updateState);
@@ -166,8 +172,9 @@ public class IndexDefinitionConverter {
 
         node.put("zkDataVersion", index.getZkDataVersion());
 
-        if (index.getQueueSubscriptionId() != null)
+        if (index.getQueueSubscriptionId() != null) {
             node.put("queueSubscriptionId", index.getQueueSubscriptionId());
+        }
 
         String configurationAsString;
         try {
@@ -219,14 +226,15 @@ public class IndexDefinitionConverter {
             buildNode.put("submitTime", buildInfo.getSubmitTime());
             buildNode.put("success", buildInfo.getSuccess());
             buildNode.put("jobState", buildInfo.getJobState());
-            if (buildInfo.getTrackingUrl() != null)
+            if (buildInfo.getTrackingUrl() != null) {
                 buildNode.put("trackingUrl", buildInfo.getTrackingUrl());
+            }
             ObjectNode countersNode = buildNode.putObject("counters");
             for (Map.Entry<String, Long> counter : buildInfo.getCounters().entrySet()) {
                 countersNode.put(counter.getKey(), counter.getValue());
             }
             if (buildInfo.getBatchIndexConfiguration() != null) {
-              buildNode.put("batchIndexConfiguration", deserializeByteArray(buildInfo.getBatchIndexConfiguration()));
+                buildNode.put("batchIndexConfiguration", deserializeByteArray(buildInfo.getBatchIndexConfiguration()));
             }
         }
         if (index.getBatchIndexConfiguration() != null) {
@@ -241,7 +249,7 @@ public class IndexDefinitionConverter {
         return node;
     }
 
-    private JsonNode deserializeByteArray (byte[] b) {
+    private JsonNode deserializeByteArray(byte[] b) {
         JsonNode node;
         try {
             node = JsonFormat.deserializeNonStd(new ByteArrayInputStream(b));
@@ -251,7 +259,7 @@ public class IndexDefinitionConverter {
         return node;
     }
 
-    private byte[] serializeJsonNode (JsonNode node) {
+    private byte[] serializeJsonNode(JsonNode node) {
         byte[] b;
         try {
             b = JsonFormat.serializeAsBytes(node);

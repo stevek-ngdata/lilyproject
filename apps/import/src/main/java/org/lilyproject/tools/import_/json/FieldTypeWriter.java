@@ -19,7 +19,6 @@ import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.ValueType;
 
 public class FieldTypeWriter implements EntityWriter<FieldType> {
     public static EntityWriter<FieldType> INSTANCE = new FieldTypeWriter();

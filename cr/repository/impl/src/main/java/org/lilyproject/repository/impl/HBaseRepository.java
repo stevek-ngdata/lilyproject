@@ -266,8 +266,9 @@ public class HBaseRepository extends BaseRepository {
                 // created record
                 recordEvent.setRecordTypeChanged(false);
                 Long newVersion = newRecord.getVersion();
-                if (newVersion != null)
+                if (newVersion != null) {
                     recordEvent.setVersionCreated(newVersion);
+                }
 
                 // Reserve blobs so no other records can use them
                 reserveBlobs(null, referencedBlobs);
@@ -655,7 +656,7 @@ public class HBaseRepository extends BaseRepository {
                             || (isDeleteMarker(newValue) && fieldIsNewOrDeleted)    // Don't delete if it doesn't exist
                             ||
                             (newValue.equals(originalValue)))) {                 // Don't update if they didn't change
-                FieldTypeImpl fieldType = (FieldTypeImpl) fieldTypes.getFieldType(fieldName);
+                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldType(fieldName);
                 Scope scope = fieldType.getScope();
 
                 // Check if the newValue contains blobs
@@ -698,8 +699,9 @@ public class HBaseRepository extends BaseRepository {
 
     private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue)
             throws RepositoryException, InterruptedException {
-        if (isDeleteMarker(fieldValue))
+        if (isDeleteMarker(fieldValue)) {
             return DELETE_MARKER;
+        }
         ValueType valueType = fieldType.getValueType();
 
         DataOutput dataOutput = new DataOutputImpl();
@@ -709,7 +711,7 @@ public class HBaseRepository extends BaseRepository {
     }
 
     private boolean isDeleteMarker(Object fieldValue) {
-        return (fieldValue instanceof byte[]) && Arrays.equals(DELETE_MARKER, (byte[]) fieldValue);
+        return (fieldValue instanceof byte[]) && Arrays.equals(DELETE_MARKER, (byte[])fieldValue);
     }
 
     private Record updateMutableFields(Record record, boolean latestRecordType, List<MutationCondition> conditions,
@@ -886,7 +888,7 @@ public class HBaseRepository extends BaseRepository {
             throws RepositoryException, InterruptedException {
         Object originalNextValue = originalNextFields.get(fieldName);
         if ((originalValue == null && originalNextValue == null) || originalValue.equals(originalNextValue)) {
-            FieldTypeImpl fieldType = (FieldTypeImpl) fieldTypes.getFieldType(fieldName);
+            FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldType(fieldName);
             byte[] encodedValue = encodeFieldValue(parentRecord, fieldType, originalValue);
             put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), version + 1, encodedValue);
         }
@@ -896,17 +898,19 @@ public class HBaseRepository extends BaseRepository {
     public void delete(RecordId recordId) throws RepositoryException {
         delete(recordId, null);
     }
+
     @Override
     public Record delete(RecordId recordId, List<MutationCondition> conditions)
             throws RepositoryException {
         return delete(recordId, conditions, null);
     }
+
     @Override
     public void delete(Record record) throws RepositoryException {
         delete(record.getId(), null, record.hasAttributes() ? record.getAttributes() : null);
     }
 
-    private  Record delete(RecordId recordId, List<MutationCondition> conditions, Map<String,String> attributes)
+    private Record delete(RecordId recordId, List<MutationCondition> conditions, Map<String, String> attributes)
             throws RepositoryException {
         ArgumentValidator.notNull(recordId, "recordId");
         long before = System.currentTimeMillis();
@@ -945,7 +949,7 @@ public class HBaseRepository extends BaseRepository {
             // See trac ticket http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/297
             Map<QName, Object> fields = originalRecord.getFields();
             for (Entry<QName, Object> fieldEntry : fields.entrySet()) {
-                FieldTypeImpl fieldType = (FieldTypeImpl) fieldTypes.getFieldType(fieldEntry.getKey());
+                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldType(fieldEntry.getKey());
                 if (Scope.NON_VERSIONED == fieldType.getScope()) {
                     put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), 1L, DELETE_MARKER);
                 }
@@ -1025,8 +1029,9 @@ public class HBaseRepository extends BaseRepository {
                                     if (fieldType.getScope() == Scope.NON_VERSIONED) {
                                         // Read the blob value from the original record,
                                         // since the delete marker has already been put in the field by the delete call
-                                        if (originalRecord != null)
+                                        if (originalRecord != null) {
                                             blobValue = originalRecord.getField(fieldType.getName());
+                                        }
                                     } else {
                                         byte[] value = cell.getValue();
                                         if (!isDeleteMarker(value)) {
@@ -1034,9 +1039,10 @@ public class HBaseRepository extends BaseRepository {
                                         }
                                     }
                                     try {
-                                        if (blobValue != null)
+                                        if (blobValue != null) {
                                             blobsToDelete
-                                                    .addAll(getReferencedBlobs((FieldTypeImpl) fieldType, blobValue));
+                                                    .addAll(getReferencedBlobs((FieldTypeImpl)fieldType, blobValue));
+                                        }
                                     } catch (BlobException e) {
                                         log.warn("Failure occured while clearing blob data", e);
                                         // We do a best effort here
@@ -1097,8 +1103,9 @@ public class HBaseRepository extends BaseRepository {
     private RowLock lockRow(RecordId recordId) throws IOException,
             RecordLockedException {
         RowLock rowLock = rowLocker.lockRow(recordId.toBytes());
-        if (rowLock == null)
+        if (rowLock == null) {
             throw new RecordLockedException(recordId);
+        }
         return rowLock;
     }
 
@@ -1108,7 +1115,7 @@ public class HBaseRepository extends BaseRepository {
         if ((valueType.getDeepestValueType() instanceof BlobValueType) && !isDeleteMarker(value)) {
             Set<Object> values = valueType.getValues(value);
             for (Object object : values) {
-                referencedBlobs.add(new BlobReference((Blob) object, null, fieldType));
+                referencedBlobs.add(new BlobReference((Blob)object, null, fieldType));
             }
         }
         return referencedBlobs;
@@ -1130,11 +1137,12 @@ public class HBaseRepository extends BaseRepository {
     // Checks the set of blobs and returns a subset of those blobs which are not referenced anymore
     private Set<BlobReference> filterReferencedBlobs(RecordId recordId, Set<BlobReference> blobs, Long ignoreVersion)
             throws IOException {
-        if (recordId == null)
+        if (recordId == null) {
             return blobs;
+        }
         Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
         for (BlobReference blobReference : blobs) {
-            FieldTypeImpl fieldType = (FieldTypeImpl) blobReference.getFieldType();
+            FieldTypeImpl fieldType = (FieldTypeImpl)blobReference.getFieldType();
             byte[] recordIdBytes = recordId.toBytes();
             ValueType valueType = fieldType.getValueType();
 
@@ -1203,8 +1211,9 @@ public class HBaseRepository extends BaseRepository {
         byte[] rowKey = recordId.toBytes();
         try {
             List<RowLogMessage> messages = wal.getMessages(rowKey);
-            if (messages.isEmpty())
+            if (messages.isEmpty()) {
                 return;
+            }
             try {
                 for (RowLogMessage rowLogMessage : messages) {
                     wal.processMessage(rowLogMessage, rowLock);

@@ -18,7 +18,10 @@ package org.lilyproject.testclientfw;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 public class Words {
     public enum WordList {
@@ -32,7 +35,9 @@ public class Words {
             this.file = file;
             this.estimatedSize = estimatedSize;
         }
-    };
+    }
+
+    ;
 
     private static Map<WordList, List<String>> WORDS = new EnumMap<WordList, List<String>>(WordList.class);
 
@@ -75,8 +80,9 @@ public class Words {
     public static String get(WordList list, int amount) {
         StringBuilder buffer = new StringBuilder(20 * amount);
         for (int i = 0; i < amount; i++) {
-            if (i > 0)
+            if (i > 0) {
                 buffer.append(' ');
+            }
             buffer.append(get(list));
         }
         return buffer.toString();

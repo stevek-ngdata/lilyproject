@@ -15,30 +15,29 @@
  */
 package org.lilyproject.server.modules.repository;
 
+import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.zookeeper.KeeperException;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.JsonNodeFactory;
 import org.kauriproject.conf.Conf;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.impl.*;
+import org.lilyproject.repository.impl.BlobManagerImpl;
+import org.lilyproject.repository.impl.BlobStoreAccessConfig;
+import org.lilyproject.repository.impl.DFSBlobStoreAccess;
+import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
+import org.lilyproject.repository.impl.InlineBlobStoreAccess;
+import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.DfsUri;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import javax.annotation.PreDestroy;
 
 public class BlobManagerSetup {
     private final String lilyPath = "/lily";
@@ -49,7 +48,7 @@ public class BlobManagerSetup {
     private BlobManager blobManager;
 
     public BlobManagerSetup(URI dfsUri, Configuration configuration, HBaseTableFactory tableFactory, ZooKeeperItf zk,
-            Conf blobManagerConf) throws IOException, InterruptedException, KeeperException {
+                            Conf blobManagerConf) throws IOException, InterruptedException, KeeperException {
 
         fs = FileSystem.get(DfsUri.getBaseDfsUri(dfsUri), configuration);
         Path blobRootPath = new Path(DfsUri.getDfsPath(dfsUri));

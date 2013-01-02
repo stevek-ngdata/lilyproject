@@ -20,21 +20,21 @@ import java.util.List;
 /**
  * A listener observer is interested in getting notified when the set of listeners
  * of a subscription has changed.
- * 
+ * <p/>
  * <p>The {@link RowLogConfigurationManager} performs the task of calling the {@link #listenersChanged(List)}
  * method when the set of listeners has changed.
- * 
+ * <p/>
  * <p>This observer should be registered with the {@link RowLogConfigurationManager} by calling
- * {@link RowLogConfigurationManager#addListenersObserver(String, String, ListenersObserver)} 
+ * {@link RowLogConfigurationManager#addListenersObserver(String, String, ListenersObserver)}
  */
 public interface ListenersObserver {
 
     /**
      * Notifies the listeners have changed.
-     *
+     * <p/>
      * <p>An observer will never be called from more than one thread concurrently, i.e. all
      * changes are reported sequentially.
-
+     *
      * @param listeners the full list of current listeners.
      */
     void listenersChanged(List<String> listeners);

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<rowlog  xmlns:conf="http://kauriproject.org/configuration"
-         conf:inherit="deep">
+<rowlog xmlns:conf="http://kauriproject.org/configuration"
+        conf:inherit="deep">
 
   <mqConfig>
     <notifyDelay>20</notifyDelay>

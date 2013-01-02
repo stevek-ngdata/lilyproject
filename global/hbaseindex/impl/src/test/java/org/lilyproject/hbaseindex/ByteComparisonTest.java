@@ -27,7 +27,7 @@ import static org.junit.Assert.fail;
 /**
  * Various tests that check whether the comparison of the binary representations
  * of values gives the expected result.
- *
+ * <p/>
  * Actually we are testing Orderly here, which is the underlying library used for encoding/decoding index row keys.
  */
 public class ByteComparisonTest {
@@ -175,7 +175,7 @@ public class ByteComparisonTest {
     /**
      * Code to print out a complete bit representation of a byte,
      * including leading zeros.
-     *
+     * <p/>
      * <p>Copied from
      * http://manniwood.wordpress.com/2009/10/21/javas-long-tobinarystringlong-l-come-on-guys/
      */

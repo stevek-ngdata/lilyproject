@@ -15,17 +15,24 @@
  */
 package org.lilyproject.util.zookeeper;
 
-import org.apache.commons.logging.LogFactory;
-import org.apache.zookeeper.*;
-import org.apache.zookeeper.data.Stat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-import java.util.*;
+import org.apache.commons.logging.LogFactory;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.Stat;
 
 /**
  * Implements a ZooKeeper-based lock following ZooKeeper's lock recipe.
- *
+ * <p/>
  * <p>The recipe is also in the paper on ZooKeeper, in more compact (and clearer) form:
- *
+ * <p/>
  * <pre>
  * Lock
  * 1 n = create(l + “/lock-”, EPHEMERAL|SEQUENTIAL)
@@ -38,7 +45,7 @@ import java.util.*;
  * Unlock
  * 1 delete(n)
  * </pre>
- *
+ * <p/>
  * <p><b>Important usage note:</b> do not take ZKLock's in ZooKeeper's Watcher.process()
  * callback, unless the ZooKeeper handle used to take the lock is different from the one
  * of that called the Watcher. This is because ZkLock might need to wait for an event
@@ -46,7 +53,6 @@ import java.util.*;
  * watchers are dispatched by one thread, it would hang forever. This limitation is not
  * very important, since long lasting actions (which waiting for a lock could be) should
  * never be done in Watcher callbacks.
- *
  */
 public class ZkLock {
 
@@ -58,7 +64,6 @@ public class ZkLock {
      *
      * @param lockPath path in ZooKeeper below which the ephemeral lock nodes will be created. This path should
      *                 exist prior to calling this method.
-     *
      * @return a string identifying this lock, needs to be supplied to {@link ZkLock#unlock}.
      */
     public static String lock(final ZooKeeperItf zk, final String lockPath) throws ZkLockException {
@@ -198,7 +203,7 @@ public class ZkLock {
     /**
      * Releases a lock.
      *
-     * @param lockId the string returned by {@link ZkLock#lock}.
+     * @param lockId        the string returned by {@link ZkLock#lock}.
      * @param ignoreMissing if true, do not throw an exception if the lock does not exist
      */
     public static void unlock(final ZooKeeperItf zk, final String lockId, boolean ignoreMissing) throws ZkLockException {
@@ -243,8 +248,9 @@ public class ZkLock {
                 }
             });
 
-            if (children.isEmpty())
+            if (children.isEmpty()) {
                 return false;
+            }
 
             SortedSet<String> sortedChildren = new TreeSet<String>(children);
 
@@ -317,12 +323,15 @@ public class ZkLock {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             ZkLockNode other = (ZkLockNode)obj;
 
             return other.threadId == threadId && other.seqNr == seqNr;
@@ -330,7 +339,7 @@ public class ZkLock {
 
         @Override
         public int hashCode() {
-            int result = (int) (threadId ^ (threadId >>> 32));
+            int result = (int)(threadId ^ (threadId >>> 32));
             result = 31 * result + seqNr;
             return result;
         }

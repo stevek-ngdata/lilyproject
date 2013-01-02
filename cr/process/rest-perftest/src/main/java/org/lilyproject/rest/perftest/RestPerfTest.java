@@ -15,6 +15,12 @@
  */
 package org.lilyproject.rest.perftest;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -30,16 +36,9 @@ import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.testclientfw.BaseTestTool;
-import org.lilyproject.testclientfw.Util;
 import org.lilyproject.testclientfw.Words;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.json.JsonFormat;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class RestPerfTest extends BaseTestTool {
 
@@ -83,8 +82,9 @@ public class RestPerfTest extends BaseTestTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         iterations = OptionUtil.getIntOption(cmd, iterationsOption, 10000);
 
@@ -435,8 +435,9 @@ public class RestPerfTest extends BaseTestTool {
     private String toString(int[] numbers) {
         StringBuilder builder = new StringBuilder();
         for (int number : numbers) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append(", ");
+            }
             builder.append(number);
         }
         return builder.toString();

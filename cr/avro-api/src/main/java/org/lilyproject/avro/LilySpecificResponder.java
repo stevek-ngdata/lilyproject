@@ -83,7 +83,7 @@ public class LilySpecificResponder extends GenericResponder {
         int i = 0;
         try {
             for (Schema.Field param : message.getRequest().getFields()) {
-                params[i] = ((GenericRecord) request).get(param.name());
+                params[i] = ((GenericRecord)request).get(param.name());
                 paramTypes[i] = data.getClass(param.schema());
                 i++;
             }
@@ -92,7 +92,7 @@ public class LilySpecificResponder extends GenericResponder {
             return method.invoke(impl, params);
         } catch (InvocationTargetException e) {
             if (e.getTargetException() instanceof SpecificRecord) {
-                throw (Exception) e.getTargetException();
+                throw (Exception)e.getTargetException();
             } else {
                 throw converter.convertOtherException(e.getTargetException());
             }

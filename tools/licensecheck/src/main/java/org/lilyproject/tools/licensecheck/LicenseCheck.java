@@ -23,13 +23,16 @@ import java.util.Set;
 
 public class LicenseCheck {
     private static Set extensions = new HashSet();
+
     static {
         extensions.add("java");
         extensions.add("xsl");
         extensions.add("js");
         extensions.add("xml");
     }
+
     private static Set exclusions = new HashSet();
+
     static {
         exclusions.add("target");
         exclusions.add(".svn");
@@ -75,11 +78,14 @@ public class LicenseCheck {
             int count = 0;
             while ((line = reader.readLine()) != null) {
                 if (line.indexOf("Licensed under the Apache License") != -1
-                    || line.indexOf("Do not apply Lily license") != -1)
+                        || line.indexOf("Do not apply Lily license") != -1) {
                     return true;
+                }
                 count++;
                 if (count > 15)  // read max 15 lines in file
+                {
                     break;
+                }
             }
 
             return false;

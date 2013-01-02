@@ -37,7 +37,7 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
 
         setupTypes();
     }
-    
+
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         repoSetup.stop();

@@ -15,6 +15,7 @@
  */
 package org.lilyproject.lilyservertestfw.launcher;
 
+import javax.management.ObjectName;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,8 +27,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.management.ObjectName;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -136,8 +135,9 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         boolean prepareMode = cmd.hasOption(prepareOption.getOpt());
 
@@ -169,12 +169,15 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             enableLily = true;
         }
 
-        if (enableHadoop)
+        if (enableHadoop) {
             enabledServices.add(hadoopService);
-        if (enableSolr)
+        }
+        if (enableSolr) {
             enabledServices.add(solrService);
-        if (enableLily)
+        }
+        if (enableLily) {
             enabledServices.add(lilyService);
+        }
 
         //
         // Determine directory below which all services will store their data
@@ -208,13 +211,15 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         List<String> postStartupInfo = new ArrayList<String>();
 
         for (LauncherService service : enabledServices) {
-            if ((result = service.setup(cmd, testHome, clearData)) != 0)
+            if ((result = service.setup(cmd, testHome, clearData)) != 0) {
                 return result;
+            }
         }
 
         for (LauncherService service : enabledServices) {
-            if ((result = service.start(postStartupInfo)) != 0)
+            if ((result = service.start(postStartupInfo)) != 0) {
                 return result;
+            }
         }
 
         if (prepareMode) {

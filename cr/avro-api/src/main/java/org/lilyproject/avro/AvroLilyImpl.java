@@ -68,13 +68,13 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer delete(ByteBuffer recordId, List<AvroMutationCondition> conditions, 
-                            Map<String,String> attributes)
+    public ByteBuffer delete(ByteBuffer recordId, List<AvroMutationCondition> conditions,
+                             Map<String, String> attributes)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
             RecordId decodedRecordId = converter.convertAvroRecordId(recordId);
-            
-            
+
+
             Record record = null;
             if (attributes == null) {
                 record = repository.delete(decodedRecordId, converter.convertFromAvro(conditions));

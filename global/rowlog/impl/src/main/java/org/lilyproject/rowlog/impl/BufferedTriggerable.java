@@ -21,12 +21,13 @@ import org.apache.commons.logging.LogFactory;
 /**
  * Buffers up triggers during a certain interval and only lets one go through. This is useful
  * when triggers are produced at a high rate.
- *
+ * <p/>
  * <p>This is an active component which needs to be stopped when it is not longer used,
  * see {@link #stop}.</p>
  */
 public class BufferedTriggerable implements Triggerable {
-    enum Mode { BUFFERING, SLEEPING }
+    enum Mode {BUFFERING, SLEEPING}
+
     private long delay;
     private Mode mode = Mode.SLEEPING;
     private final Object modeLock = new Object();
@@ -34,7 +35,7 @@ public class BufferedTriggerable implements Triggerable {
     private Triggerable delegate;
     private Thread thread;
     private Log log = LogFactory.getLog(getClass());
-    
+
     public BufferedTriggerable(Triggerable delegate, long delay) {
         this.delegate = delegate;
         this.delay = delay;
@@ -46,7 +47,7 @@ public class BufferedTriggerable implements Triggerable {
         this.thread.interrupt();
         this.thread.join();
     }
-    
+
     public void trigger() {
         synchronized (modeLock) {
             if (mode == Mode.SLEEPING) {
@@ -57,7 +58,7 @@ public class BufferedTriggerable implements Triggerable {
             }
         }
     }
-    
+
     private class TriggerFlusher implements Runnable {
         @Override
         public void run() {

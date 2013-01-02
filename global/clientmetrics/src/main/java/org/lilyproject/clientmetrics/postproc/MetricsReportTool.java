@@ -15,6 +15,24 @@
  */
 package org.lilyproject.clientmetrics.postproc;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.text.Collator;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -24,14 +42,6 @@ import org.joda.time.format.DateTimeFormatter;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.util.ConsoleUtil;
 import org.lilyproject.util.Version;
-
-import java.io.*;
-import java.text.Collator;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Makes a nice report with graphs based on a plain metrics output file.
@@ -58,7 +68,7 @@ public class MetricsReportTool extends BaseCliTool {
     private static final int COL_MAX = 5;
 
     // http://www.uni-hamburg.de/Wiss/FB/15/Sustainability/schneider/gnuplot/colors.htm
-    private static final String[] COLORS = new String[] {
+    private static final String[] COLORS = new String[]{
             "#D2691E", /* chocolate */
             "#DC143C", /* crimson */
             "#00008B", /* darkblue */
@@ -120,15 +130,16 @@ public class MetricsReportTool extends BaseCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         String metricFileName = cmd.getOptionValue(metricsFileOption.getOpt());
         if (metricFileName == null) {
             System.out.println("Specify metrics file name with -" + metricsFileOption.getOpt());
             return 1;
         }
-        
+
         File metricFile = new File(metricFileName);
         if (!metricFile.exists()) {
             System.err.println("Specified metrics file does not exist: " + metricFile.getAbsolutePath());
@@ -146,8 +157,9 @@ public class MetricsReportTool extends BaseCliTool {
             if (!cmd.hasOption(forceOption.getOpt())) {
                 System.err.println("Specified output directory already exists: " + outputDir.getAbsolutePath());
                 boolean proceed = ConsoleUtil.promptYesNo("Continue anyway? [y/N]", false);
-                if (!proceed)
+                if (!proceed) {
                     return 1;
+                }
             }
         }
 
@@ -371,8 +383,9 @@ public class MetricsReportTool extends BaseCliTool {
             int colorStart = i * numberOfValues;
 
             for (int c = firstPlotValue; c <= lastPlotValue; c++) {
-                if (i > 0 || c > firstPlotValue)
+                if (i > 0 || c > firstPlotValue) {
                     plot.append(", ");
+                }
 
                 int dataCol = (COLS_PER_METRIC * i) + HEADER_COLUMNS + c;
                 int color = colorStart + c - firstPlotValue;
@@ -422,7 +435,7 @@ public class MetricsReportTool extends BaseCliTool {
         Collections.sort(orderedGroupNames);
 
         for (GroupName group : orderedGroupNames) {
-            ps.println("<img src='" + group.fileName  + ".png'/><br/>");
+            ps.println("<img src='" + group.fileName + ".png'/><br/>");
         }
 
         ps.println("</body></html>");
@@ -489,8 +502,9 @@ public class MetricsReportTool extends BaseCliTool {
         private String groupNameToFileName(String groupName) {
             groupName = groupName.replaceAll(Pattern.quote("/"), Matcher.quoteReplacement("_"));
             groupName = groupName.replaceAll(Pattern.quote(" "), Matcher.quoteReplacement("_"));
-            if (groupName.startsWith("-"))
+            if (groupName.startsWith("-")) {
                 groupName = groupName.substring(1);
+            }
             return groupName;
         }
 
@@ -509,13 +523,16 @@ public class MetricsReportTool extends BaseCliTool {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
-            GroupName other = (GroupName) obj;
+            }
+            GroupName other = (GroupName)obj;
             return name.equals(other.name);
         }
 

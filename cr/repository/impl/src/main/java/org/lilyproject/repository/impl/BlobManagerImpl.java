@@ -73,7 +73,7 @@ public class BlobManagerImpl implements BlobManager {
     }
 
     @Override
-    public BlobAccess getBlobAccess(Record record, QName fieldName, FieldType fieldType, int...indexes)
+    public BlobAccess getBlobAccess(Record record, QName fieldName, FieldType fieldType, int... indexes)
             throws BlobException {
         if (!(fieldType.getValueType().getDeepestValueType() instanceof BlobValueType)) {
             throw new BlobException("Cannot read a blob from a non-blob field type: " + fieldType.getName());
@@ -97,8 +97,9 @@ public class BlobManagerImpl implements BlobManager {
         Set<BlobReference> failedBlobs = new HashSet<BlobReference>();
         for (BlobReference referencedBlob : blobs) {
             try {
-                if (!reserveBlob(referencedBlob))
+                if (!reserveBlob(referencedBlob)) {
                     failedBlobs.add(referencedBlob);
+                }
             } catch (BlobNotFoundException bnfe) {
                 failedBlobs.add(referencedBlob);
             } catch (BlobException be) {
@@ -108,7 +109,7 @@ public class BlobManagerImpl implements BlobManager {
         return failedBlobs;
     }
 
-    private boolean reserveBlob(BlobReference referencedBlob)  throws BlobNotFoundException, BlobException, IOException {
+    private boolean reserveBlob(BlobReference referencedBlob) throws BlobNotFoundException, BlobException, IOException {
         BlobStoreAccess blobStoreAccess = registry.getBlobStoreAccess(referencedBlob.getBlob());
 
         // Inline blobs are not incubated and therefore reserving them always succeeds
@@ -185,7 +186,7 @@ public class BlobManagerImpl implements BlobManager {
             int index = indexes[i];
             try {
                 if (valueType.getBaseName().equals("LIST")) {
-                    value = ((List<Object>) value).get(index);
+                    value = ((List<Object>)value).get(index);
                     valueType = valueType.getNestedValueType();
                     continue;
                 }

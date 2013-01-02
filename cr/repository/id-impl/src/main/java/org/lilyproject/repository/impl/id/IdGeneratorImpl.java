@@ -31,8 +31,8 @@ import org.lilyproject.util.ArgumentValidator;
 public class IdGeneratorImpl implements IdGenerator {
 
     protected static enum IdType {
-        USER((byte) 0, new UserRecordIdFactory()),
-        UUID((byte) 1, new UUIDRecordIdFactory());
+        USER((byte)0, new UserRecordIdFactory()),
+        UUID((byte)1, new UUIDRecordIdFactory());
 
         private final byte identifierByte;
         private final RecordIdFactory factory;
@@ -63,11 +63,13 @@ public class IdGeneratorImpl implements IdGenerator {
         ArgumentValidator.notNull(masterRecordId, "masterRecordId");
         ArgumentValidator.notNull(variantProperties, "variantProperties");
 
-        if (!masterRecordId.isMaster())
+        if (!masterRecordId.isMaster()) {
             throw new IllegalArgumentException("Specified masterRecordId is a variant record ID.");
+        }
 
-        if (variantProperties.isEmpty())
+        if (variantProperties.isEmpty()) {
             return masterRecordId;
+        }
 
         checkReservedCharacters(variantProperties);
 

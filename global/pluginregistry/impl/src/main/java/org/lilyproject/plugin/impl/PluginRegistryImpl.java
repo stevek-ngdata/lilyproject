@@ -15,17 +15,21 @@
  */
 package org.lilyproject.plugin.impl;
 
-import org.lilyproject.plugin.PluginRegistry;
-import org.lilyproject.plugin.PluginUser;
-import org.lilyproject.plugin.PluginException;
-import org.lilyproject.plugin.PluginHandle;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import javax.annotation.PreDestroy;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lilyproject.plugin.PluginException;
+import org.lilyproject.plugin.PluginHandle;
+import org.lilyproject.plugin.PluginRegistry;
+import org.lilyproject.plugin.PluginUser;
 
 public class PluginRegistryImpl implements PluginRegistry {
     private Map<Class, PluginManager> pluginsByType = new HashMap<Class, PluginManager>();
@@ -70,8 +74,9 @@ public class PluginRegistryImpl implements PluginRegistry {
             if (manager.getPluginCount() > 0) {
                 StringBuilder pluginNames = new StringBuilder();
                 for (PluginEntry entry : (List<PluginEntry>)manager.getPlugins()) {
-                    if (pluginNames.length() > 0)
+                    if (pluginNames.length() > 0) {
                         pluginNames.append(", ");
+                    }
                     pluginNames.append(entry.getName());
                 }
                 log.error("Plugin type " + manager.getType().getName() + ": still " + manager.getPluginCount() + " plugin(s) registered: " + pluginNames);
@@ -132,14 +137,16 @@ public class PluginRegistryImpl implements PluginRegistry {
             if (!type.isAssignableFrom(plugin.getClass())) {
                 throw new PluginException("Plugin does not implement its plugin type. Plugin \"" + name + "\" of type " + type.getName());
             }
-            
+
             PluginEntry<T> newEntry = new PluginEntry<T>(name, plugin);
 
             for (PluginEntry entry : plugins) {
-                if (entry.equals(newEntry))
+                if (entry.equals(newEntry)) {
                     throw new PluginException("This plugin instance is already registered. Plugin \"" + name + "\" of type " + type.getName());
-                if (entry.name.equals(newEntry.name))
+                }
+                if (entry.name.equals(newEntry.name)) {
                     throw new PluginException("There is already another plugin registered with this name: \"" + name + "\".");
+                }
             }
 
             plugins.add(newEntry);
@@ -169,8 +176,9 @@ public class PluginRegistryImpl implements PluginRegistry {
         }
 
         public void setPluginUser(PluginUser<T> pluginUser) {
-            if (this.user != null)
+            if (this.user != null) {
                 throw new PluginException("Error setting plugin user: there can be only one PluginUser per plugin type. Type = " + type.getName());
+            }
 
             this.user = pluginUser;
 
@@ -180,8 +188,9 @@ public class PluginRegistryImpl implements PluginRegistry {
         }
 
         public void unsetPluginUser(PluginUser<T> pluginUser) {
-            if (this.user != pluginUser)
+            if (this.user != pluginUser) {
                 throw new PluginException("Error removing plugin user: the current plugin user does not correspond to the specified plugin user.");
+            }
 
             this.user = null;
         }
@@ -253,8 +262,9 @@ public class PluginRegistryImpl implements PluginRegistry {
         }
 
         public boolean equals(Object obj) {
-            if (!(obj instanceof PluginEntry))
+            if (!(obj instanceof PluginEntry)) {
                 return false;
+            }
 
             PluginEntry other = (PluginEntry)obj;
             return other.plugin == plugin && other.name.equals(name);

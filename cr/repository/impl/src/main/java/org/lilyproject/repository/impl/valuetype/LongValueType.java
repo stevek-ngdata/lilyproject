@@ -23,7 +23,7 @@ import org.lilyproject.repository.api.IdentityRecordStack;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
-public class LongValueType extends AbstractValueType  implements ValueType {
+public class LongValueType extends AbstractValueType implements ValueType {
 
     public final static String NAME = "LONG";
 
@@ -38,7 +38,7 @@ public class LongValueType extends AbstractValueType  implements ValueType {
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
@@ -75,12 +75,15 @@ public class LongValueType extends AbstractValueType  implements ValueType {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         return true;
     }
 
@@ -90,10 +93,10 @@ public class LongValueType extends AbstractValueType  implements ValueType {
     public static ValueTypeFactory factory() {
         return new LongValueTypeFactory();
     }
-    
+
     public static class LongValueTypeFactory implements ValueTypeFactory {
         private static LongValueType instance = new LongValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

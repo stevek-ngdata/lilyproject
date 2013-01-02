@@ -35,6 +35,7 @@ import org.lilyproject.tools.import_.json.RecordWriter;
 
 public class EntityRegistry {
     protected static Map<Class, RegistryEntry> SUPPORTED_TYPES;
+
     static {
         SUPPORTED_TYPES = new HashMap<Class, RegistryEntry>();
         SUPPORTED_TYPES.put(RecordType.class, new RegistryEntry(RecordTypeReader.INSTANCE, RecordTypeWriter.INSTANCE, "recordType"));

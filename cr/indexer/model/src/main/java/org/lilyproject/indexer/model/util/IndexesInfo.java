@@ -15,15 +15,15 @@
  */
 package org.lilyproject.indexer.model.util;
 
-import org.lilyproject.repository.api.QName;
-
 import java.util.Collection;
 import java.util.Set;
+
+import org.lilyproject.repository.api.QName;
 
 /**
  * Utility bean providing access to the parsed indexerconfs for all defined indexes. It keeps
  * these permanently available for fast access, and updates them when the indexer model changes.
- *
+ * <p/>
  * <p>For complete Indexer instances that you can call to index records, see IndexerRegistry
  * instead.</p>
  */

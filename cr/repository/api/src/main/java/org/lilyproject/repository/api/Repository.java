@@ -31,30 +31,30 @@ import java.util.Set;
 
 /**
  * Repository is the primary access point for accessing the functionality of the Lily repository.
- *
+ * <p/>
  * <p>Via Repository, you can perform all {@link Record}-related CRUD operations. You can also
  * scan sequentially over records using {@link #getScanner(RecordScan)}.
  */
 public interface Repository extends Closeable {
     /**
      * Instantiates a new Record object.
-     *
+     * <p/>
      * <p>This is only a factory method, nothing is created in the repository.
      */
     Record newRecord() throws RecordException;
 
     /**
      * Instantiates a new Record object with the RecordId already filled in.
-     *
+     * <p/>
      * <p>This is only a factory method, nothing is created in the repository.
      */
     Record newRecord(RecordId recordId) throws RecordException;
 
     /**
      * Creates a new record in the repository.
-     *
+     * <p/>
      * <p>A Record object can be instantiated via {@link #newRecord}.
-     *
+     * <p/>
      * <p>If a recordId is given in {@link Record}, that id is used. If not, a new id is generated and available
      * from the returned Record object.
      *
@@ -85,81 +85,81 @@ public interface Repository extends Closeable {
 
     /**
      * Updates an existing record in the repository.
-     *
+     * <p/>
      * <p>An update can either update the versioned and/or non-versioned fields (in this last case a new version
      * will be created), or it can update the versioned-mutable fields. This last one is an update of (manipulation
      * of) an existing version and cannot be combined with updating fields in the versioned and non-versioned scope.
      * So these are two distinct operations, you have to choose which one you want to do, this is done by setting
      * the updateVersion argument. Most of the time you will update versioned or non-versioned fields, for this you
      * set updateVersion to false.
-     *
+     * <p/>
      * <p>The provided Record object can either be obtained by reading a record via {@link #read} or
      * it can also be instantiated from scratch via {@link #newRecord}.
-     *
+     * <p/>
      * <p>The Record object can be limited to contain only those fields that you are interested in changing, so it
      * can be sparsely filled. If you want to be sure of the value of all fields, then specify them all, even if
      * they have not changed compared to what you read, since another update might have been performed concurrently.
      * Fields that are not present in the record will not be deleted, deleting fields
      * needs to be done explicitly by adding them to the list of fields to delete, see {@link
      * Record#getFieldsToDelete}.
-     *
+     * <p/>
      * <p>If the record contains any changed versioned fields, a new version will be created. The number of the created
      * version will be available on the returned Record object.
-     *
+     * <p/>
      * <p>If no record type is specified in the record object, the record type that is currently stored (in the
      * non-versioned scope) will be used. Newly created versions always get the same record type as the current
      * record type of the non-versioned scope (= either the one specified in the Record, or if absent, from
      * what is currently stored). Usually you will want to move automatically to the latest version of
      * the record type. This can be done by setting the version to null in the record (if you also specify the name
      * in the record object), but more conveniently using the useLatestRecordType argument.
-     *
+     * <p/>
      * <p><b>Updating an existing version: updating versioned-mutable fields</b>
-     *
+     * <p/>
      * <p>The following applies to updating an existing version:
-     *
+     * <p/>
      * <ul>
-     *
+     * <p/>
      * <li>It is required to specify a version in the Record object.
-     *
+     * <p/>
      * <li>If you do not specify a record type in the Record object, the record type of the versioned-mutable scope
      * of the version that is being modified will be set to the current one (= the stored one) of the non-versioned
      * scope, and possibly to its latest version depending on the argument useLatestRecordType.
-     *
+     * <p/>
      * <li>If you do specify a record type in the Record object (using {@link Record#setRecordType(QName)}), the record
      * type of the versioned-mutable scope of the version that is being modified will be changed to it, but the record
      * type of the non-versioned scope will be left unmodified. This is in contrast to the record type of the versioned
      * scope, which is always brought to the record type of the non-versioned scope when a new version is created.
      * However, we found it should be possible to modify the versioned-mutable record type of an existing version
      * without influencing the current record state.
-     *
+     * <p/>
      * </ul>
-     *
+     * <p/>
      * <p><b>The returned record object</b>
-     *
+     * <p/>
      * <p>The record object you supply as argument will not be modified, it is internally cloned an modified. Currently
      * these modifications are mostly limited to setting the resolved record type and version. The returned record
      * object will never contain any fields you did not specify in the Record object, so you might have to do a read
      * to see the full record situation (other fields might have been added by concurrent updates). This will be
      * addressed by issue <a href="http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/93">93<a>.<p>
-     *
+     * <p/>
      * <p><b>Conditionally updating a record: the conditions argument</b></p>
-     *
+     * <p/>
      * <p>A conditional update allows to update a record only in case it satisfies certain conditions. This is
      * also known as "check and update (CAS - check and set)" or "optimistic concurrency control (OCC)".</p>
-     *
+     * <p/>
      * <p>The condition can check on any of the record fields (of any scope), thus is not limited to the fields
      * provided in the record object. For versioned(-mutable) fields, the check is usually performed on the data
      * from the latest version, except in case updateVersion is true, then the data from version being updated
      * will be checked (both for the versioned and versioned-mutable fields).</p>
-     *
+     * <p/>
      * <p>For more details on specifying the conditions, see {@link MutationCondition}. All the conditions should
      * be satisfied for the update to proceed, thus the conditions are AND-ed.</p>
-     *
+     * <p/>
      * <p>In case one ore more conditions are not satisfied, NO exception is thrown, rather the responseStatus
      * field of the returned Record object is set to {@link ResponseStatus#CONFLICT}. So the caller who is interested
      * in knowing whether the update succeeded should check on this field. The returned record object will contain
      * the currently stored repository state, not the submitted record values.</p>
-     *
+     * <p/>
      * <p>The conditions are checked before checking if the record actually needs updating, so you might get
      * a conflict response even if the stored record state corresponds to the supplied record state.</p>
      *
@@ -184,17 +184,17 @@ public interface Repository extends Closeable {
 
     /**
      * Creates or updates a record, depending on whether the record already exists.
-     *
+     * <p/>
      * <p>See {@link #createOrUpdate(Record, boolean)} for more details.
      */
     Record createOrUpdate(Record record) throws RepositoryException, InterruptedException;
 
     /**
      * Creates or updates a record, depending on whether the record already exists.
-     *
+     * <p/>
      * <p>This method has the advantage that you do not have to deal with {@link RecordExistsException}
      * (in case of create) or {@link RecordNotFoundException} (in case of update).
-     *
+     * <p/>
      * <p>This method has the advantage over create that it can be safely retried in case of IO related problems,
      * without having to worry about whether the previous call did or did not go through, and thus avoiding
      * {@link RecordExistsException}'s or the creation of multiple records (in case the client did not
@@ -206,13 +206,13 @@ public interface Repository extends Closeable {
      * @param recordId   the id of the record to read, null is not allowed
      * @param fieldNames list of names of the fields to read or null to read all fields
      * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(List, QName...)} instead.
-     *
+     *             <p/>
      *             Reads a record limited to a subset of the fields. Only the fields specified in the fieldNames list
      *             will be
      *             included.
-     *
+     *             <p/>
      *             <p>Versioned and versioned-mutable fields will be taken from the latest version.
-     *
+     *             <p/>
      *             <p>It is not an error if the record would not have a particular field, though it is an error to
      *             specify
      *             a non-existing field name.
@@ -224,9 +224,9 @@ public interface Repository extends Closeable {
      * Reads a record.
      * If fieldNames are specified, the read is limited to include only this subset of fields.
      * Otherwise all fields of the record are read.
-     *
+     * <p/>
      * <p>Versioned and versioned-mutable fields will be taken from the latest version.
-     *
+     * <p/>
      * <p>It is not an error if the record would not have a particular field, though it is an error to specify
      * a non-existing field name.
      *
@@ -240,17 +240,17 @@ public interface Repository extends Closeable {
      * @param fieldNames list of names of the fields to read or null to read all fields
      * @return list of records that are read, can be smaller than the amount or requested ids when those are not found
      * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(List, QName...)} instead.
-     *
+     *             <p/>
      *             Reads a list of records limited to a subset of the fields. Only the fields specified in the
      *             fieldNames list will be
      *             included.
-     *
+     *             <p/>
      *             <p>Versioned and versioned-mutable fields will be taken from the latest version.
-     *
+     *             <p/>
      *             <p>It is not an error if the records would not have a particular field, though it is an error to
      *             specify
      *             a non-existing field name.
-     *
+     *             <p/>
      *             <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
      *             Instead, the returned list will not contain an entry for that requested id.
      */
@@ -262,12 +262,12 @@ public interface Repository extends Closeable {
      * Reads a list of records.
      * If fieldNames are specified, the read is limited to include only this subset of fields.
      * Otherwise all fields are read.
-     *
+     * <p/>
      * <p>Versioned and versioned-mutable fields will be taken from the latest version.
-     *
+     * <p/>
      * <p>It is not an error if the records would not have a particular field, though it is an error to specify
      * a non-existing field name.
-     *
+     * <p/>
      * <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
      * Instead, the returned list will not contain an entry for that requested id.
      *
@@ -280,9 +280,9 @@ public interface Repository extends Closeable {
     /**
      * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(RecordId, Long, QName...)}
      *             instead.
-     *
+     *             <p/>
      *             Reads a specific version of a record limited to a subset of the fields.
-     *
+     *             <p/>
      *             <p>If the given list of fields is empty, all fields will be read.
      */
     @Deprecated
@@ -293,7 +293,7 @@ public interface Repository extends Closeable {
      * Reads a specific version of a record.
      * If fieldNames are specified, the read is limited to include only this subset of fields.
      * Otherwise all fields are read.
-     *
+     * <p/>
      * <p>If the given list of fields is empty, all fields will be read.
      */
     Record read(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException, InterruptedException;
@@ -301,11 +301,11 @@ public interface Repository extends Closeable {
     /**
      * @deprecated in favor of using varargs for the fieldNames. Please use
      *             {@link #readVersions(RecordId, Long, Long, QName...)} instead.
-     *
+     *             <p/>
      *             Reads all versions of a record between fromVersion and toVersion (both included), limited to a
      *             subset
      *             of the fields.
-     *
+     *             <p/>
      *             <p>If the given list of fields is empty, all fields will be read.
      */
     @Deprecated
@@ -317,7 +317,7 @@ public interface Repository extends Closeable {
      * Reads all versions of a record between fromVersion and toVersion (both included).
      * If fieldNames are specified, the read is limited to include only this subset of fields.
      * Otherwise all fields are read.
-     *
+     * <p/>
      * <p>If the given list of fields is empty, all fields will be read.
      */
     List<Record> readVersions(RecordId recordId, Long fromversion, Long toVersion, QName... fieldNames)
@@ -332,7 +332,7 @@ public interface Repository extends Closeable {
      *         have a higher number than the highest existing version.
      * @deprecated in favor of using varargs for the fieldNames. Please use
      *             {@link #read(RecordId, List<Long>, QName...)} instead.
-     *
+     *             <p/>
      *             Reads all versions of a record listed the <code>versions</code>, limited to a subset of the fields.
      */
     @Deprecated
@@ -356,7 +356,7 @@ public interface Repository extends Closeable {
 
     /**
      * Reads a Record and also returns the mapping from QNames to IDs.
-     *
+     * <p/>
      * <p>See {@link IdRecord} for more information.
      *
      * @param version  version to load. Optional, can be null.
@@ -374,12 +374,12 @@ public interface Repository extends Closeable {
 
     /**
      * Conditionally delete a record from the repository.
-     *
+     * <p/>
      * <p>The delete will only succeed if all the supplied conditions are satisfied. The conditions can check
      * on fields from all scopes, it are the values from the latest version which are used.</p>
-     *
+     * <p/>
      * <p>In case the conditions are satisfied, this method returns null.</p>
-     *
+     * <p/>
      * <p>In case the conditions are not satisfied, this method returns a Record object with its responseStatus
      * field set to {@link ResponseStatus#CONFLICT}. The fields contained in the record object will be those
      * referred to in the conditions, as far as they exist.</p>
@@ -418,8 +418,8 @@ public interface Repository extends Closeable {
      * the blob may be stored in a {@link Record}. The method
      * {@link Blob#setValue(byte[])} will be called internally to update the
      * blob with the reference to where the blob is stored (possibly inlined).
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * The {@link BlobStoreAccessFactory} will decide to which underlying
      * blobstore the data will be written.
      *
@@ -432,7 +432,7 @@ public interface Repository extends Closeable {
     /**
      * Returns a {@link BlobAccess} object which provides access to the blob metadata and the input stream to
      * read the blob's data.
-     *
+     * <p/>
      * <p>A blob is retrieved by specifying the {record id, version, field name} coordinates.
      * And in case of ListValueType or PathValueType fields an array of indexes.
      *
@@ -449,10 +449,10 @@ public interface Repository extends Closeable {
 
     /**
      * Backwards compatibility method, which accepts null arguments for the indexes.
-     *
+     * <p/>
      * <p>Due to autoboxing, this method will also be called in preference to the varargs variant when the number
      * of indexes is two or less. Therefore I've not marked it as deprecated, though it really is deprecated.
-     *
+     * <p/>
      * <p>See {@link #getBlob(RecordId, Long, QName, int...)}
      */
     BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
@@ -465,7 +465,7 @@ public interface Repository extends Closeable {
 
     /**
      * Returns an {@link InputStream} from which the binary data of a blob can be read.
-     *
+     * <p/>
      * <p>A blob is retrieved by specifying the {record id, version, field name} coordinates.
      * And in case of ListValueType or PathValueType fields an array of indexes.
      *
@@ -482,10 +482,10 @@ public interface Repository extends Closeable {
 
     /**
      * Backwards compatibility method, which accepts null arguments for the indexes.
-     *
+     * <p/>
      * <p>Due to autoboxing, this method will also be called in preference to the varargs variant when the number
      * of indexes is two or less. Therefore I've not marked it as deprecated, though it really is deprecated.
-     *
+     * <p/>
      * <p>See {@link #getInputStream(RecordId, Long, QName, int...)}
      */
     InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
@@ -506,10 +506,10 @@ public interface Repository extends Closeable {
 
     /**
      * Backwards compatibility method, which accepts null arguments for the indexes.
-     *
+     * <p/>
      * <p>Due to autoboxing, this method will also be called in preference to the varargs variant when the number
      * of indexes is two or less. Therefore I've not marked it as deprecated, though it really is deprecated.
-     *
+     * <p/>
      * <p>See {@link #getInputStream(Record, QName, int...)}
      */
     InputStream getInputStream(Record record, QName fieldName, Integer mvIndex, Integer hIndex)
@@ -527,13 +527,13 @@ public interface Repository extends Closeable {
 
     /**
      * Get a scanner to sequentially run over all, or a subset of, the records in the repository.
-     *
+     * <p/>
      * <p>To run over a subset of the records, use the methods {@link RecordScan#setStartRecordId(RecordId)}
      * and {@link RecordScan#setStopRecordId(RecordId)}. Additionally, you can set filters on
      * the RecordScan to further restrain the returned records.</p>
-     *
+     * <p/>
      * <p>Scanners always return the latest versions of records.</p>
-     *
+     * <p/>
      * <p>Note that scans, and the filters defined as part of it, are not based on indexes:
      * the scan always runs over the defined range of records and checks each record one
      * by one. Hence, this is intended for batch-use, or for cases where you scan over a
@@ -546,7 +546,7 @@ public interface Repository extends Closeable {
     /**
      * Get a scanner to sequentially run over all, or a subset of, the records in the repository. This is the same as
      * {@link #getScanner(RecordScan)}, except that it returns {@link IdRecord} in stead of {@link Record} instances.
-     *
+     * <p/>
      * <p>See {@link IdRecord} for more information.
      */
     IdRecordScanner getScannerWithIds(RecordScan scan) throws RepositoryException, InterruptedException;

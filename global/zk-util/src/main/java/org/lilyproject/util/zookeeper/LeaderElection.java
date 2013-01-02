@@ -15,28 +15,32 @@
  */
 package org.lilyproject.util.zookeeper;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.zookeeper.*;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.Watcher.Event.EventType;
-import org.apache.zookeeper.data.Stat;
-import org.lilyproject.util.Logs;
-
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.Stat;
+import org.lilyproject.util.Logs;
 
 /**
  * Simple leader election system, not optimized for large numbers of potential leaders (could be improved
  * for herd effect, see ZK recipe).
- *
+ * <p/>
  * <p>It currently only reports if this client is the leader or not, it does not report who the leader is,
  * but that could be added.
- *
+ * <p/>
  * <p>It is intended for 'active leaders', which should give up their leader role as soon as we
  * are disconnected from the ZK cluster, rather than only when we get a session expiry event
  * (see http://markmail.org/message/o6whuii7wlf2a64c).
- *
+ * <p/>
  * <p>The leader state is reported via the {@link LeaderElectionCallback}, which is called from
  * within a different Thread than the ZooKeeper event thread.
  */
@@ -58,8 +62,7 @@ public class LeaderElection {
     private Log log = LogFactory.getLog(this.getClass());
 
     /**
-     *
-     * @param position a name for what position this leader election is about, used in informational messages.
+     * @param position     a name for what position this leader election is about, used in informational messages.
      * @param electionPath path under which the ephemeral leader election nodes should be created. The path
      *                     will be created if it does not exist. The path should not end on a slash.
      */
@@ -177,7 +180,7 @@ public class LeaderElection {
 
             if (event.getType() == EventType.None &&
                     (event.getState().equals(Event.KeeperState.Disconnected) ||
-                    event.getState().equals(Event.KeeperState.Expired))) {
+                            event.getState().equals(Event.KeeperState.Expired))) {
 
                 if (elected) {
                     elected = false;
@@ -207,7 +210,7 @@ public class LeaderElection {
      * improvement would be to put their processing in a queue. But when we have a lot of disconnected/connected
      * events in a short time frame, faster than they are processed, it would not make sense to process them one by
      * one, we are only interested in bringing the leader to latest requested state.
-     *
+     * <p/>
      * Therefore, the solution used here just keeps a 'requiredState' variable and notifies a monitor when
      * it is changed.
      */

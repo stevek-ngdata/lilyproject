@@ -15,13 +15,13 @@
  */
 package org.lilyproject.clientmetrics;
 
-import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeDataSupport;
 import java.io.PrintStream;
 import java.util.List;
+
+import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 /**
  * Various utility methods to pull interesting data from Lily.

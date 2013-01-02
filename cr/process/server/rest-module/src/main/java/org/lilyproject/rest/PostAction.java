@@ -15,9 +15,9 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.MutationCondition;
-
 import java.util.List;
+
+import org.lilyproject.repository.api.MutationCondition;
 
 public class PostAction<T> {
     private String action;

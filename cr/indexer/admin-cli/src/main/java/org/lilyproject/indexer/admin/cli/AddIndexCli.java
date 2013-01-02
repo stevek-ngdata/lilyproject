@@ -55,8 +55,9 @@ public class AddIndexCli extends BaseIndexerAdminCli {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (indexName == null) {
             System.out.println("Specify index name with -" + nameOption.getOpt());
@@ -72,14 +73,17 @@ public class AddIndexCli extends BaseIndexerAdminCli {
             System.out.println("Specify indexer configuration with -" + configurationOption.getOpt());
         }
 
-        if (validateSolrOptions(null, solrMode)) return 1;
+        if (validateSolrOptions(null, solrMode)) {
+            return 1;
+        }
 
         IndexDefinition index = model.newIndex(indexName);
         if (solrMode == SolrMode.CLASSIC) {
             index.setSolrShards(solrShards);
 
-            if (shardingConfiguration != null)
+            if (shardingConfiguration != null) {
                 index.setShardingConfiguration(shardingConfiguration);
+            }
 
         } else if (solrMode == SolrMode.CLOUD) {
             index.setZkConnectionString(solrZk != null ? solrZk : (this.zkConnectionString + "/solr"));
@@ -91,25 +95,31 @@ public class AddIndexCli extends BaseIndexerAdminCli {
 
         index.setConfiguration(indexerConfiguration);
 
-        if (generalState != null)
+        if (generalState != null) {
             index.setGeneralState(generalState);
+        }
 
-        if (updateState != null)
+        if (updateState != null) {
             index.setUpdateState(updateState);
+        }
 
-        if (buildState != null)
+        if (buildState != null) {
             index.setBatchBuildState(buildState);
+        }
 
-        if (defaultBatchIndexConfiguration != null)
+        if (defaultBatchIndexConfiguration != null) {
             index.setDefaultBatchIndexConfiguration(defaultBatchIndexConfiguration);
+        }
 
-        if (batchIndexConfiguration != null)
+        if (batchIndexConfiguration != null) {
             index.setBatchIndexConfiguration(batchIndexConfiguration);
+        }
 
-        if (enableDerefMap != null)
+        if (enableDerefMap != null) {
             index.setEnableDerefMap(enableDerefMap);
-        else
+        } else {
             index.setEnableDerefMap(true); // default true
+        }
 
         model.addIndex(index);
 

@@ -24,14 +24,14 @@ public class RecordLockedException extends RecordException {
     public RecordLockedException(String message, Map<String, String> state) {
         this.recordId = state.get("recordId");
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
         state.put("recordId", recordId);
         return state;
     }
-    
+
     public RecordLockedException(RecordId recordId) {
         this.recordId = recordId != null ? recordId.toString() : null;
     }

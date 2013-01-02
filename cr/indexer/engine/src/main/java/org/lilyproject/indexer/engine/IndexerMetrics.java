@@ -60,9 +60,9 @@ public class IndexerMetrics implements Updater {
     @Override
     public void doUpdates(MetricsContext metricsContext) {
         synchronized (this) {
-          for (MetricsBase m : registry.getMetricsList()) {
-            m.pushMetric(metricsRecord);
-          }
+            for (MetricsBase m : registry.getMetricsList()) {
+                m.pushMetric(metricsRecord);
+            }
         }
         metricsRecord.update();
     }
@@ -77,8 +77,9 @@ public class IndexerMetrics implements Updater {
         }
 
         public void shutdown() {
-            if (mbeanName != null)
+            if (mbeanName != null) {
                 MBeanUtil.unregisterMBean(mbeanName);
+            }
         }
     }
 }

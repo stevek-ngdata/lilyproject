@@ -1,5 +1,11 @@
 package org.lilyproject.util.repo;
 
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.QName;
@@ -8,15 +14,9 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 public class FieldTypeUtil {
     public static Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds, FieldFilter fieldFilter,
-            TypeManager typeManager) throws RepositoryException, InterruptedException {
+                                                                  TypeManager typeManager) throws RepositoryException, InterruptedException {
 
         // Could be written more elegantly using Multimaps.index, but we want to limit dependencies
         Map<Scope, Set<FieldType>> result = new EnumMap<Scope, Set<FieldType>>(Scope.class);
@@ -41,31 +41,33 @@ public class FieldTypeUtil {
     }
 
     public static Map<Scope, Set<SchemaId>> getFieldTypeIdsAndScope(Set<SchemaId> fieldIds, FieldFilter fieldFilter,
-            TypeManager typeManager) throws RepositoryException, InterruptedException {
+                                                                    TypeManager typeManager) throws RepositoryException, InterruptedException {
         Map<Scope, Set<SchemaId>> result = new HashMap<Scope, Set<SchemaId>>();
         Map<Scope, Set<FieldType>> fieldTypesByScope = getFieldTypeAndScope(fieldIds, fieldFilter, typeManager);
-        for (Scope scope: fieldTypesByScope.keySet()) {
+        for (Scope scope : fieldTypesByScope.keySet()) {
             Set<SchemaId> schemaIds = new HashSet<SchemaId>();
-            for (FieldType t: fieldTypesByScope.get(scope)) {
+            for (FieldType t : fieldTypesByScope.get(scope)) {
                 schemaIds.add(t.getId());
             }
             result.put(scope, schemaIds);
-        };
+        }
+        ;
 
         return result;
     }
 
     public static Map<Scope, Set<QName>> getFieldTypeNamesAndScope(Set<SchemaId> fieldIds, FieldFilter fieldFilter,
-                TypeManager typeManager) throws RepositoryException, InterruptedException {
+                                                                   TypeManager typeManager) throws RepositoryException, InterruptedException {
         Map<Scope, Set<QName>> result = new HashMap<Scope, Set<QName>>();
         Map<Scope, Set<FieldType>> fieldTypesByScope = getFieldTypeAndScope(fieldIds, fieldFilter, typeManager);
-        for (Scope scope: fieldTypesByScope.keySet()) {
+        for (Scope scope : fieldTypesByScope.keySet()) {
             Set<QName> schemaIds = new HashSet<QName>();
-            for (FieldType t: fieldTypesByScope.get(scope)) {
+            for (FieldType t : fieldTypesByScope.get(scope)) {
                 schemaIds.add(t.getName());
             }
             result.put(scope, schemaIds);
-        };
+        }
+        ;
 
         return result;
     }

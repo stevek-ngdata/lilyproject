@@ -15,6 +15,8 @@
  */
 package org.lilyproject.indexer.engine;
 
+import javax.management.ObjectName;
+
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
 import org.apache.hadoop.metrics.MetricsUtil;
@@ -25,8 +27,6 @@ import org.apache.hadoop.metrics.util.MetricsTimeVaryingLong;
 import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 
-import javax.management.ObjectName;
-
 public class SolrClientMetrics implements Updater {
     private final String recordName;
     private final MetricsRegistry registry = new MetricsRegistry();
@@ -34,7 +34,9 @@ public class SolrClientMetrics implements Updater {
     private final SolrClientMetricsMBean mbean;
     private final MetricsContext context;
 
-    /** Counts number of times a Solr operation has been retried because of connection-related problems. */
+    /**
+     * Counts number of times a Solr operation has been retried because of connection-related problems.
+     */
     public MetricsTimeVaryingLong retries = new MetricsTimeVaryingLong("retries", registry);
 
     public SolrClientMetrics(String indexName, String shardName) {
@@ -53,9 +55,9 @@ public class SolrClientMetrics implements Updater {
     @Override
     public void doUpdates(MetricsContext metricsContext) {
         synchronized (this) {
-          for (MetricsBase m : registry.getMetricsList()) {
-            m.pushMetric(metricsRecord);
-          }
+            for (MetricsBase m : registry.getMetricsList()) {
+                m.pushMetric(metricsRecord);
+            }
         }
         metricsRecord.update();
     }
@@ -70,8 +72,9 @@ public class SolrClientMetrics implements Updater {
         }
 
         public void shutdown() {
-            if (mbeanName != null)
+            if (mbeanName != null) {
                 MBeanUtil.unregisterMBean(mbeanName);
+            }
         }
     }
 }

@@ -118,12 +118,14 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         private final HTableInterface blobTable;
         private final byte[] blobKey;
         private final Blob blob;
+
         public HBaseBlobOutputStream(HTableInterface table, byte[] blobKey, Blob blob) {
             super();
             blobTable = table;
             this.blobKey = blobKey;
             this.blob = blob;
         }
+
         @Override
         public void close() throws IOException {
             super.close();

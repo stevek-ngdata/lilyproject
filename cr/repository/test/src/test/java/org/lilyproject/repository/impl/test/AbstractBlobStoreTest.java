@@ -63,6 +63,7 @@ import static org.junit.Assert.fail;
 public abstract class AbstractBlobStoreTest {
     private static String namespace = "test";
     protected static final RepositorySetup repoSetup = new RepositorySetup();
+
     static {
         repoSetup.setBlobLimits(50, 1024);
     }
@@ -940,7 +941,7 @@ public abstract class AbstractBlobStoreTest {
 
     @Test
     public void testBadEncoding() throws Exception {
-        Blob blob = new Blob("aMediaType", (long) 10, "aName");
+        Blob blob = new Blob("aMediaType", (long)10, "aName");
         blob.setValue(new byte[0]);
         try {
             testBlobStoreAccessRegistry.getBlobAccess(blob).getInputStream();
@@ -1011,16 +1012,16 @@ public abstract class AbstractBlobStoreTest {
     }
 
     private Blob writeBlob(byte[] bytes, String mediaType, String name) throws RepositoryException, InterruptedException,
- IOException {
+            IOException {
         return writeBlob(bytes, mediaType, name, (int)bytes.length);
     }
 
     /**
      * @param length The blob site to be used when constructing the blob
-     * (this can be used to control how the blob will be stored)
+     *               (this can be used to control how the blob will be stored)
      */
     private Blob writeBlob(byte[] bytes, String mediaType, String name, long length) throws RepositoryException, InterruptedException,
- IOException {
+            IOException {
         Blob blob = new Blob(mediaType, length, name);
         OutputStream outputStream = repository.getOutputStream(blob);
         outputStream.write(bytes);
@@ -1033,7 +1034,7 @@ public abstract class AbstractBlobStoreTest {
         return readBlob(recordId, null, fieldName);
     }
 
-    private byte[] readBlob(RecordId recordId, Long version, QName fieldName, int...indexes)
+    private byte[] readBlob(RecordId recordId, Long version, QName fieldName, int... indexes)
             throws RepositoryException, InterruptedException, IOException {
         InputStream inputStream = repository.getInputStream(recordId, version, fieldName, indexes);
         try {

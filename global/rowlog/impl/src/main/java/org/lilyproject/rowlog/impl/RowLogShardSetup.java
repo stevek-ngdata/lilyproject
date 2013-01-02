@@ -38,7 +38,7 @@ public class RowLogShardSetup {
         byte[][] splits = new byte[shardCount - 1][];
         for (int i = 0; i < shardCount - 1 /* HBase adds last shard automatically (up to 'null' key) */ ; i++) {
             // region end keys are exclusive (everything lower than the end key is in the region)
-            byte[] endKey = new byte[] { (byte)(i + 1) };
+            byte[] endKey = new byte[]{(byte)(i + 1)};
             splits[i] = endKey;
         }
 
@@ -60,7 +60,7 @@ public class RowLogShardSetup {
         //
         RowLogShardList shards = rowLog.getShardList();
         for (int i = 0; i < shardCount; i++) {
-            byte[] rowKeyPrefix = new byte[] { (byte)i };
+            byte[] rowKeyPrefix = new byte[]{(byte)i};
             shards.addShard(new RowLogShardImpl("shard" + i, rowKeyPrefix, table, rowLog,
                     rowLog.getConfig().getDeleteBufferSize()));
         }

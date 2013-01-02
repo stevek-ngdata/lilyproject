@@ -15,7 +15,11 @@
  */
 package org.lilyproject.util.hbase.metrics;
 
-import javax.management.*;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 
 /**
@@ -23,8 +27,8 @@ import java.lang.management.ManagementFactory;
  */
 public class MBeanUtil {
     public static ObjectName registerMBean(final String serviceName,
-            final String nameName,
-            final Object theMbean) {
+                                           final String nameName,
+                                           final Object theMbean) {
         final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         ObjectName name = getMBeanName(serviceName, nameName);
         try {
@@ -40,11 +44,12 @@ public class MBeanUtil {
 
     static public void unregisterMBean(ObjectName mbeanName) {
         final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        if (mbeanName == null)
+        if (mbeanName == null) {
             return;
+        }
         try {
             mbs.unregisterMBean(mbeanName);
-        } catch (InstanceNotFoundException e ) {
+        } catch (InstanceNotFoundException e) {
             // ignore
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -52,7 +57,7 @@ public class MBeanUtil {
     }
 
     static private ObjectName getMBeanName(final String serviceName,
-            final String nameName) {
+                                           final String nameName) {
         ObjectName name = null;
         try {
             name = new ObjectName("Lily:" +

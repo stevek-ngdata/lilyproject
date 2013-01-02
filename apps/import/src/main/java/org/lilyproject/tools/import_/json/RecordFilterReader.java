@@ -50,7 +50,7 @@ public class RecordFilterReader implements EntityReader<RecordFilter> {
 
     @Override
     public RecordFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
-            LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
+                                 LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(node, namespaces, repository);
     }
 

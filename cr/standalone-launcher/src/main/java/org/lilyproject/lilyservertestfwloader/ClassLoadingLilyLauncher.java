@@ -15,19 +15,18 @@
  */
 package org.lilyproject.lilyservertestfwloader;
 
-import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.w3c.dom.Document;
 
@@ -54,7 +53,7 @@ public class ClassLoadingLilyLauncher {
         this.repositoryLocation = repositoryLocation;
     }
 
-    
+
     public void run(String[] args) throws Throwable {
 
         ClassLoader classLoader = LauncherClasspathHelper.getClassLoader("org/lilyproject/lilyservertestfwloader/classloader.xml", repositoryLocation);
@@ -119,19 +118,22 @@ public class ClassLoadingLilyLauncher {
 
         @Override
         public String getNamespaceURI(String prefix) {
-            if (prefix == null)
+            if (prefix == null) {
                 throw new IllegalArgumentException("Null argument: prefix");
+            }
 
-            if (prefix.equals(XMLConstants.XML_NS_PREFIX))
+            if (prefix.equals(XMLConstants.XML_NS_PREFIX)) {
                 return XMLConstants.XML_NS_URI;
-            else if (prefix.equals(XMLConstants.XMLNS_ATTRIBUTE))
+            } else if (prefix.equals(XMLConstants.XMLNS_ATTRIBUTE)) {
                 return XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
+            }
 
             String uri = prefixToUri.get(prefix);
-            if (uri != null)
+            if (uri != null) {
                 return uri;
-            else
+            } else {
                 return XMLConstants.NULL_NS_URI;
+            }
         }
 
         @Override

@@ -27,7 +27,7 @@ public class FieldTypeNotFoundException extends TypeException {
         this.id = state.get("id");
         this.name = state.get("name");
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
@@ -35,11 +35,11 @@ public class FieldTypeNotFoundException extends TypeException {
         state.put("name", name);
         return state;
     }
-    
+
     public FieldTypeNotFoundException(SchemaId id) {
         this.id = (id != null) ? id.toString() : null;
     }
-    
+
     public FieldTypeNotFoundException(QName name) {
         this.name = (name != null) ? name.toString() : null;
     }

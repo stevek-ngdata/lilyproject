@@ -15,12 +15,21 @@
  */
 package org.lilyproject.tools.rowlogvisualizer;
 
+import java.nio.ByteBuffer;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.LocalDateTime;
 import org.lilyproject.cli.BaseZkCliTool;
@@ -32,9 +41,6 @@ import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
-
-import java.nio.ByteBuffer;
-import java.util.List;
 
 import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
@@ -82,9 +88,10 @@ public class RowLogVisualizer extends BaseZkCliTool {
 
     @Override
     public int run(CommandLine cmd) throws Exception {
-        int result =  super.run(cmd);
-        if (result != 0)
+        int result = super.run(cmd);
+        if (result != 0) {
             return result;
+        }
 
         Configuration hbaseConf = HBaseConfiguration.create();
         hbaseConf.set("hbase.zookeeper.quorum", zkConnectionString);
@@ -105,8 +112,8 @@ public class RowLogVisualizer extends BaseZkCliTool {
 
         // General parameters
         byte rowLogIdByte = rowLogId.equals("mq") ? RecordColumn.MQ_PREFIX : RecordColumn.WAL_PREFIX;
-        this.executionStatePrefix = new byte[] {rowLogIdByte, ES_BYTE};
-        this.payloadPrefix = new byte[] {rowLogIdByte, PL_BYTE};
+        this.executionStatePrefix = new byte[]{rowLogIdByte, ES_BYTE};
+        this.payloadPrefix = new byte[]{rowLogIdByte, PL_BYTE};
         byte[] rowLogColumnFamily = LilyHBaseSchema.RecordCf.ROWLOG.bytes;
 
         //

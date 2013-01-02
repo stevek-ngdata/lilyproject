@@ -26,13 +26,26 @@ import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelDownstreamHandler;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.ChannelGroupFuture;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
-import org.lilyproject.rowlog.api.*;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
 
 public class RemoteListenerHandler {
@@ -48,7 +61,7 @@ public class RemoteListenerHandler {
     private final String hostName;
 
     public RemoteListenerHandler(RowLog rowLog, String subscriptionId, RowLogMessageListener rowLogMessageListener,
-            RowLogConfigurationManager rowLogConfMgr, String hostName) throws RowLogException {
+                                 RowLogConfigurationManager rowLogConfMgr, String hostName) throws RowLogException {
         this.rowLog = rowLog;
         this.subscriptionId = subscriptionId;
         this.rowLogMessageListener = rowLogMessageListener;
@@ -77,7 +90,7 @@ public class RemoteListenerHandler {
         bootstrap.setOption("child.tcpNoDelay", true);
         bootstrap.setOption("child.keepAlive", true);
     }
-    
+
     public void start() throws RowLogException, InterruptedException, KeeperException {
         InetSocketAddress inetSocketAddress = new InetSocketAddress(hostName, 0);
         channel = bootstrap.bind(inetSocketAddress);
@@ -86,7 +99,7 @@ public class RemoteListenerHandler {
         listenerId = hostName + ":" + port;
         rowLogConfMgr.addListener(rowLog.getId(), subscriptionId, listenerId);
     }
-    
+
     public void stop() throws InterruptedException {
         ChannelGroupFuture future = allChannels.close();
         future.awaitUninterruptibly();
@@ -105,7 +118,7 @@ public class RemoteListenerHandler {
             }
         }
     }
-    
+
     private class MessageDecoder extends FrameDecoder {
         @Override
         protected ChannelBuffer decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
@@ -148,20 +161,20 @@ public class RemoteListenerHandler {
             return frame;
         }
     }
-    
+
     private class RowLogMessageDecoder extends SimpleChannelUpstreamHandler {
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             ChannelBufferInputStream inputStream = new ChannelBufferInputStream((ChannelBuffer)e.getMessage());
-            
+
             long timestamp = inputStream.readLong();
-            
+
             int rowKeyLength = inputStream.readInt();
             byte[] rowKey = new byte[rowKeyLength];
             inputStream.readFully(rowKey, 0, rowKeyLength);
-            
+
             long seqnr = inputStream.readLong();
-            
+
             int dataLength = inputStream.readInt();
             byte[] data = null;
             if (dataLength > 0) {
@@ -173,7 +186,7 @@ public class RemoteListenerHandler {
             Channels.fireMessageReceived(ctx, rowLogMessage); // Give the message to the MessageHandler
         }
     }
-    
+
     private class MessageHandler extends SimpleChannelUpstreamHandler {
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
@@ -186,10 +199,10 @@ public class RemoteListenerHandler {
             if (channel.isOpen()) {
                 channel.write(Boolean.valueOf(result)).await();
             } else {
-                log.warn("Failed to send processing result '"+result+"' for message '"+message+"' due to closed channel.");
+                log.warn("Failed to send processing result '" + result + "' for message '" + message + "' due to closed channel.");
             }
         }
-        
+
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
             log.warn("Exception in MessageHandler while processing message", e.getCause());
@@ -198,14 +211,14 @@ public class RemoteListenerHandler {
             // The client (RemoteListenersSubscriptionHandler) will then retry to set up the channel and send the message 
             e.getChannel().close();
         }
-        
+
         @Override
         public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
             allChannels.add(e.getChannel()); // Put the channel in the channel group so that it will be closed upon shutdown
             super.channelOpen(ctx, e);
         }
     }
-    
+
     private class ResultEncoder extends SimpleChannelDownstreamHandler {
         @Override
         public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {

@@ -26,7 +26,7 @@ public class FieldedLink {
     private final SchemaId fieldTypeId;
     private final int hash;
 
-    public FieldedLink(RecordId recordId, SchemaId fieldTypeId){
+    public FieldedLink(RecordId recordId, SchemaId fieldTypeId) {
         this.recordId = recordId;
         this.fieldTypeId = fieldTypeId;
 

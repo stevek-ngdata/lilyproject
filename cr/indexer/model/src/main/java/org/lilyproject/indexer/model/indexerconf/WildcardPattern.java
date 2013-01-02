@@ -20,20 +20,19 @@ import org.lilyproject.util.Pair;
 /**
  * Simple wildcard matching: a star wildcard is supported at the start or the
  * end of the string.
- *
+ * <p/>
  * <p>A wildcard matches zero or more characters.
- *
+ * <p/>
  * <p>If the wildcard character would occur on both ends, the
  * one on the start will take precedence and the other one will be interpreted
  * as a literal character. If the wildcard character appears at any other
  * position in the string, it is treated as a literal character.
- *
  */
 public class WildcardPattern {
     private final Type type;
     private final String string;
 
-    enum Type { EQUALS, STARTS_WITH, ENDS_WITH }
+    enum Type {EQUALS, STARTS_WITH, ENDS_WITH}
 
     public WildcardPattern(String pattern) {
         // We require the pattern length to be at least 2, so that a star on itself

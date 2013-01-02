@@ -1,7 +1,5 @@
 package org.lilyproject.indexer.engine.test;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -32,6 +30,8 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -82,8 +82,9 @@ public class IndexerApiTest {
     public void tearDown() throws Exception {
         repoSetup.stop();
 
-        if (SOLR_TEST_UTIL != null)
+        if (SOLR_TEST_UTIL != null) {
             SOLR_TEST_UTIL.stop();
+        }
     }
 
     public void changeIndexUpdater(String confName) throws Exception {

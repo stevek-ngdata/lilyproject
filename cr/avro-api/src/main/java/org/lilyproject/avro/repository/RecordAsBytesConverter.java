@@ -40,7 +40,7 @@ import org.lilyproject.repository.impl.IdRecordImpl;
 
 /**
  * (De)serialization of Record objects from/to bytes.
- *
+ * <p/>
  * <p>TODO: idea for further improvement: the namespaces of the QName's could be stored just once
  * and mapped to a short prefix, giving some compression.</p>
  */

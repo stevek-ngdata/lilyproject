@@ -29,62 +29,62 @@ import org.lilyproject.util.ObjectUtils;
 
 /**
  * A link to another record.
- *
+ * <p/>
  * <p>The difference between a Link and a RecordId is that a Link can be relative. This means
  * that the link needs to be resolved against the context it occurs in (= the record it occurs in)
  * in order to get the actual id of the record it points to.
- *
+ * <p/>
  * <h2>About relative links</h2>
- *
+ * <p/>
  * <p>As an example, suppose we have a record with a variant property 'language=en'. In this
  * record, we want to link to another record, also having the 'language=en'. By using Link,
  * we can specify only the master record ID of the target record, without the 'language=en'
  * property. The 'language=en' will be inherited from the record in which the link occurs.
  * The advantage is that if the link is copied to another record with e.g. 'language=fr',
  * the link will automatically adjust to this context.
- *
+ * <p/>
  * <p>Links have the following possibilities to specify the relative link:
- *
+ * <p/>
  * <ul>
- *  <li>the master record id itself is optional, and can be copied (= inherited) from the context.
- *  <li>it is possible to specify that all variant properties from the context should be copied.
- *      This is specified by the "copyAll" property of this object.
- *  <li>it is possible to specify individual properties. For each individual property, you can
- *      specify one of the following:
- *      <ul>
- *       <li>an exact value
- *       <li>copy the value from the context (if any). This allows to selectively copy some variant
- *           properties from the context. This only makes sense when not using copyAll.
- *       <li>remove the value, if it would have been copied from the context. This is useful if you
- *           want to copy all variant properties from the context (not knowing how many there are),
- *           except some of them.
- *      </ul>
+ * <li>the master record id itself is optional, and can be copied (= inherited) from the context.
+ * <li>it is possible to specify that all variant properties from the context should be copied.
+ * This is specified by the "copyAll" property of this object.
+ * <li>it is possible to specify individual properties. For each individual property, you can
+ * specify one of the following:
+ * <ul>
+ * <li>an exact value
+ * <li>copy the value from the context (if any). This allows to selectively copy some variant
+ * properties from the context. This only makes sense when not using copyAll.
+ * <li>remove the value, if it would have been copied from the context. This is useful if you
+ * want to copy all variant properties from the context (not knowing how many there are),
+ * except some of them.
  * </ul>
- *
+ * </ul>
+ * <p/>
  * <h2>Creating links</h2>
- *
+ * <p/>
  * <p>If you just want a link to point to an exact record id, use the constructor
  * <tt>new Link(recordId, false)</tt>.
- *
+ * <p/>
  * <p>To have a link that copies variant properties from the context, use:
  * <tt>new Link(recordId)</tt>.
- *
+ * <p/>
  * <p>In such cases you might want to consider creating the link based only on the master record id
- *
+ * <p/>
  * <tt>new Link(recordId.getMaster())</tt>.
- *
+ * <p/>
  * <p>The Link class is immutable after construction. You have to either pass all properties
  * through constructor arguments, or use the LinkBuilder class obtained via {@link #newBuilder}.
- *
+ * <p/>
  * <p>Example using LinkBuilder:
- *
+ * <p/>
  * <pre>
  * RecordId recordId = ...;
  * Link link = Link.newBuilder().recordId(recordId).copyAll(false).copy("dev").set("foo", "bar").create();
  * </pre>
- *
+ * <p/>
  * <h2>Resolving links to RecordId's</h2>
- *
+ * <p/>
  * <p>To resolve a link to a RecordId, using the {@link #resolve(RecordId, IdGenerator)} method.
  */
 public class Link {
@@ -131,9 +131,10 @@ public class Link {
     }
 
     private static SortedMap<String, PropertyValue> createVariantProps(RecordId recordId) {
-        if (recordId == null)
+        if (recordId == null) {
             return null;
-        
+        }
+
         SortedMap<String, PropertyValue> variantProps = null;
         if (!recordId.isMaster()) {
             variantProps = new TreeMap<String, PropertyValue>();
@@ -144,7 +145,9 @@ public class Link {
         return variantProps;
     }
 
-    /** FIXME: copy-paste job from IdGeneratorImpl, add to utility class? */
+    /**
+     * FIXME: copy-paste job from IdGeneratorImpl, add to utility class?
+     */
     private static String[] escapedSplit(String s, char delimiter) {
         ArrayList<String> split = new ArrayList<String>();
         StringBuffer sb = new StringBuffer();
@@ -170,12 +173,11 @@ public class Link {
     }
 
 
-
     /**
      * Parses a link in the syntax produced by {@link #toString()}.
-     *
+     * <p/>
      * <p>An empty string is interpreted as a link-to-self, thus the same as ".".
-     *
+     * <p/>
      * <p>If the same variant property would be specified multiple times, it is its
      * last occurrence which will count.
      *
@@ -238,7 +240,7 @@ public class Link {
                     builder.copyAll(false);
                 } else if (thing.startsWith("+") && thing.length() > 1) {
                     builder.copy(thing.substring(1));
-                } else if  (thing.startsWith("-") && thing.length() > 1) {
+                } else if (thing.startsWith("-") && thing.length() > 1) {
                     builder.remove(thing.substring(1));
                 } else {
                     throw new IllegalArgumentException("Invalid link: " + link);
@@ -268,24 +270,24 @@ public class Link {
 
     /**
      * Creates a string representation of this link.
-     *
+     * <p/>
      * <p>The syntax is:
-     *
+     * <p/>
      * <pre>{recordId}.!*,arg1=val1,+arg2,-arg3<pre>
-     *
+     * <p/>
      * <p>The recordId is optional. Arguments, if any, follow after the . symbol and are separated by ','
      * symbols. Note that the {recordId} itself also contains a dot to separate the record id type and its
      * actual content (e.g. USER.235523432).
-     *
+     * <p/>
      * <p>The '!*' argument indicates 'not copyAll', copyAll is the default if not specified.
-     *
+     * <p/>
      * <p><tt>arg1=val1</tt> is an example of specifying an exact value for a variant property.
-     *
+     * <p/>
      * <p><tt>+arg2</tt> is an explicit copy of the variant property 'arg2' from the context. Does
      * only make sense when not using copyAll, thus when !* is in the link.
-     *
+     * <p/>
      * <p><<tt>-arg3</tt> is a removal (exclusion) of a variant property copied by using copyAll.
-     *
+     * <p/>
      * <p>The arguments will always be specified in alphabetical order, ignoring the + or - symbol.
      * "Not copyAll" (!*) is always the first argument.
      */
@@ -355,7 +357,7 @@ public class Link {
         if (recordIdBytes.length > 0) {
             dataOutput.writeBytes(recordIdBytes);
         }
-        
+
         StringBuilder argsBuilder = new StringBuilder();
         argstoString(argsBuilder);
         dataOutput.writeUTF(argsBuilder.toString());
@@ -370,7 +372,7 @@ public class Link {
             recordIdBytes = dataInput.readBytes(recordIdLength);
         }
         String args = dataInput.readUTF();
-        
+
         if (recordIdLength == 0 && args == null) {
             return new Link();
         }
@@ -469,7 +471,7 @@ public class Link {
                 return false;
             }
 
-            final PropertyValue that = (PropertyValue) o;
+            final PropertyValue that = (PropertyValue)o;
 
             if (mode != that.mode) {
                 return false;
@@ -503,8 +505,9 @@ public class Link {
                     break;
                 case COPY:
                     String value = contextProps.get(entry.getKey());
-                    if (value != null)
+                    if (value != null) {
                         resolvedProps.put(entry.getKey(), value);
+                    }
                     break;
             }
         }
@@ -512,38 +515,49 @@ public class Link {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
 
         Link other = (Link)obj;
-        if (!ObjectUtils.safeEquals(masterRecordId, other.masterRecordId))
+        if (!ObjectUtils.safeEquals(masterRecordId, other.masterRecordId)) {
             return false;
-        
-        if (copyAll != other.copyAll)
-            return false;
+        }
 
-        if (variantProps == null && other.variantProps == null)
+        if (copyAll != other.copyAll) {
+            return false;
+        }
+
+        if (variantProps == null && other.variantProps == null) {
             return true;
+        }
 
-        if ((variantProps == null && other.variantProps != null) || (variantProps != null && other.variantProps == null))
+        if ((variantProps == null && other.variantProps != null) || (variantProps != null && other.variantProps == null)) {
             return false;
+        }
 
-        if (variantProps.size() != other.variantProps.size())
+        if (variantProps.size() != other.variantProps.size()) {
             return false;
+        }
 
         for (Map.Entry<String, PropertyValue> entry : variantProps.entrySet()) {
             PropertyValue otherVal = other.variantProps.get(entry.getKey());
-            if (otherVal == null)
+            if (otherVal == null) {
                 return false;
+            }
             PropertyValue val = entry.getValue();
-            if (val.mode != otherVal.mode)
-                    return false;
-            if (!ObjectUtils.safeEquals(val.value, otherVal.value))
+            if (val.mode != otherVal.mode) {
                 return false;
+            }
+            if (!ObjectUtils.safeEquals(val.value, otherVal.value)) {
+                return false;
+            }
         }
 
         return true;
@@ -620,8 +634,9 @@ public class Link {
         }
 
         private void initVarProps() {
-            if (variantProps == null)
+            if (variantProps == null) {
                 variantProps = new HashMap<String, PropertyValue>();
+            }
         }
     }
 }

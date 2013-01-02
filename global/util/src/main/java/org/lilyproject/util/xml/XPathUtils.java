@@ -15,18 +15,18 @@
  */
 package org.lilyproject.util.xml;
 
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
-import org.w3c.dom.Element;
-
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * Convenience XPath methods, intended for occassional use or cases
  * where performance is not an issue (e.g. in testcases), as
  * no compiled expression caching is involved.
- *
+ * <p/>
  * <p>See {@link LocalXPathExpression} for heavy-duty usages.
  */
 public class XPathUtils {
@@ -41,8 +41,9 @@ public class XPathUtils {
     public static Element evalElement(String expression, Node node) {
         try {
             Node result = (Node)LocalXPathFactory.newXPath().evaluate(expression, node, XPathConstants.NODE);
-            if (!(result instanceof Element))
+            if (!(result instanceof Element)) {
                 throw new RuntimeException("Expected an element from the evaluation of the xpath expression " + expression + ", but got a " + result.getClass().getName());
+            }
             return (Element)result;
         } catch (XPathExpressionException e) {
             throw new RuntimeException(e);

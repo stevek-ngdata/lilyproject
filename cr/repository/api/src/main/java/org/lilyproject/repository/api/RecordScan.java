@@ -19,7 +19,7 @@ import org.lilyproject.repository.api.filter.RecordFilter;
 
 /**
  * Defines the parameters of a scan to be performed over the records.
- *
+ * <p/>
  * <p>See {@link Repository#getScanner(RecordScan)}.</p>
  */
 public class RecordScan {
@@ -41,23 +41,23 @@ public class RecordScan {
 
     /**
      * Sets the record ID where the scan should start.
-     *
+     * <p/>
      * <p>If you don't set the start record ID, the scan will start at the very
      * first record. If you don't set a stop record ID either, then scan will
      * run until the last record. In such case, you are doing a full table scan.
      * Some filters (see {@link #setRecordFilter(RecordFilter)} are
      * also able to stop the scan early when certain conditions are reached,
      * see for example the {@link org.lilyproject.repository.api.filter.RecordIdPrefixFilter}.</p>
-     *
+     * <p/>
      * <p>The start record ID does not have to be an existing record ID, the scan will
      * start from the first record which has a record ID greater than or equal to
      * this ID.</p>
-     *
+     * <p/>
      * <p>It makes little sense to use this with UUID-based record ID's, except
      * if you would like to read all variants of a record. See also
      * {@link Repository#getVariants(RecordId)}, which only gives the ID's of the
      * variant records.</p>
-     *
+     * <p/>
      * <p>To scan all rows starting with a common prefix, use the
      * {@link org.lilyproject.repository.api.filter.RecordIdPrefixFilter}</p>
      *
@@ -77,7 +77,7 @@ public class RecordScan {
 
     /**
      * Sets the record ID before which the scan should stop.
-     *
+     * <p/>
      * <p>For more information, see {@link #setStartRecordId(RecordId)}.</p>
      *
      * @param stopRecordId record ID to stop on, exclusive (scan stops at last entry before this ID)
@@ -97,9 +97,9 @@ public class RecordScan {
 
     /**
      * <b>EXPERT ONLY!</b> Sets the start record ID as bytes.
-     *
+     * <p/>
      * <p>If this is set, it takes precedence over {@link #setStartRecordId(RecordId)}.</p>
-     *
+     * <p/>
      * <p>One case where this is used is for the MapReduce integration: the scans there
      * start/stop at the boundaries of a region, which can be defined as some
      * arbitrary byte sequence which is not necessarily a valid Lily record ID.</p>
@@ -121,7 +121,7 @@ public class RecordScan {
 
     /**
      * <b>EXPERT ONLY!</b> Sets the stop record ID as bytes.
-     *
+     * <p/>
      * <p>If this is set, it takes precedence over {@link #setStopRecordId(RecordId)}.</p>
      *
      * @see #setStopRecordId(RecordId)
@@ -140,13 +140,13 @@ public class RecordScan {
     /**
      * Sets a record filter. A record filter filters records server-side, without ever
      * returning them to the client.
-     *
+     * <p/>
      * <p>There are various filter implementations available, check out the implementations
      * of {@link RecordFilter}.</p>
-     *
+     * <p/>
      * <p>Note that filters do not work index-based: the scan will still run over every
      * record, evaluate the filter, and then decide to return the record or not.</p>
-     *
+     * <p/>
      * <p>Multiple filters can be combined using
      * {@link org.lilyproject.repository.api.filter.RecordFilterList}.</p>
      */
@@ -163,10 +163,10 @@ public class RecordScan {
 
     /**
      * Sets the fields to return for each record.
-     *
+     * <p/>
      * <p>By default, all fields of a record are returned. Limiting this to return only
      * the fields of interest can seriously speed up scan operations.</p>
-     *
+     * <p/>
      * <p>You can either set {@link ReturnFields#ALL} and {@link ReturnFields#NONE} (if
      * you are only interested in record id and/or type), or a manual enumeration of
      * fields.</p>
@@ -184,7 +184,7 @@ public class RecordScan {
 
     /**
      * Sets the number of records to be read in one go from the server.
-     *
+     * <p/>
      * <p>By default caching is disabled, but it it is strongly recommended to enable it,
      * since otherwise each individual call to {@link RecordScanner#next()} will cause a
      * new request to be sent to the server.</p>

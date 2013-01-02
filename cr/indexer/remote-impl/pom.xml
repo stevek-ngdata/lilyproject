@@ -16,13 +16,15 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-indexer-remote-impl</artifactId>
   <name>Lily: Indexer remote IMPL</name>
-  <description>Implementation of the remote end of the indexer API (for client side use of the indexer api)</description>
+  <description>Implementation of the remote end of the indexer API (for client side use of the indexer api)
+  </description>
 
   <parent>
     <groupId>org.lilyproject</groupId>

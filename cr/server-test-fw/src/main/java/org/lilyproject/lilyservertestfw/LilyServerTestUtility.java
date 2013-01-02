@@ -43,10 +43,10 @@ public class LilyServerTestUtility {
 
     /**
      * LilyServerTestUtility is used to start Lily using the KauriRuntime.
-     * 
-     * @param defaultConfDir path to the directory containing the default configuration files to startup lily 
-     * @param customConfDir path to a directory containing custom configuration files which should be used on top
-     *                      of the default configuration files
+     *
+     * @param defaultConfDir path to the directory containing the default configuration files to startup lily
+     * @param customConfDir  path to a directory containing custom configuration files which should be used on top
+     *                       of the default configuration files
      */
     public LilyServerTestUtility(String defaultConfDir, String customConfDir, File testHome) throws IOException, URISyntaxException {
         this.defaultConfDir = defaultConfDir;
@@ -57,7 +57,7 @@ public class LilyServerTestUtility {
         URL confUrl = getClass().getClassLoader().getResource(TEST_SPECIFIC_CONF_RESOURCE_PATH);
         ConfUtil.copyConfResources(confUrl, TEST_SPECIFIC_CONF_RESOURCE_PATH, testSpecificConfDir);
     }
-    
+
     public void start() throws Exception {
         // This disable the HBaseConnectionDisposer in Lily which deletes HBase connections on shutdown
         System.setProperty("lily.hbase.deleteConnections", "false");
@@ -70,18 +70,20 @@ public class LilyServerTestUtility {
         runtime.setMode(Mode.getDefault());
         runtime.start();
     }
-    
+
     public void stop() {
         Closer.close(runtime);
     }
-    
+
     private ConfManager getConfManager() {
         List<File> confDirs = new ArrayList<File>();
         confDirs.add(testSpecificConfDir);
-        if (customConfDir != null)
+        if (customConfDir != null) {
             confDirs.add(new File(customConfDir));
-        if (defaultConfDir != null)
+        }
+        if (defaultConfDir != null) {
             confDirs.add(new File(defaultConfDir));
+        }
         return new ConfManagerImpl(confDirs);
     }
 

@@ -34,9 +34,9 @@ import org.lilyproject.util.repo.VTaggedRecord;
 /**
  * The configuration for the indexer, describes how record types should be mapped
  * onto index documents.
- *
+ * <p/>
  * <p>Fields and vtags are identified by ID in this object model.
- *
+ * <p/>
  * <p>The IndexerConf is constructed by the {@link IndexerConfBuilder}. Some essential
  * validation is done by that builder which would not be done in case of direct
  * construction.
@@ -79,7 +79,7 @@ public class IndexerConf {
             @Override
             public boolean apply(MappingNode node) {
                 if (node instanceof IndexField) {
-                    IndexField indexField = (IndexField) node;
+                    IndexField indexField = (IndexField)node;
                     if (indexField.getValue() instanceof DerefValue) {
                         containsDerefExpression = true;
                     }
@@ -128,8 +128,9 @@ public class IndexerConf {
 
         // Check <fields>
         boolean affects = indexFields.isIndexAffectedByUpdate(vtRecord, scope);
-        if (affects)
+        if (affects) {
             return true;
+        }
 
         // Check dynamic fields
         for (FieldType fieldType : changedFields) {

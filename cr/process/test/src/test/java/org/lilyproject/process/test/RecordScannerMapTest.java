@@ -18,8 +18,8 @@ package org.lilyproject.process.test;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.cache.Cache;
 import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.repository.api.Record;
@@ -27,30 +27,28 @@ import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.rest.RecordScannerMapBuilder;
 
-import com.google.common.cache.Cache;
-
 public class RecordScannerMapTest {
-    private Cache<String,RecordScanner> cache;
-    
+    private Cache<String, RecordScanner> cache;
+
     @Before
-    public void setup () {
+    public void setup() {
         cache = RecordScannerMapBuilder.createRecordScannerMap(10, TimeUnit.MILLISECONDS);
     }
-    
-    
+
+
     @Test
-    public void testRecordScannerMapExpiration() throws Exception{
+    public void testRecordScannerMapExpiration() throws Exception {
         RecordScanner scanner = new DummyRecordScanner();
         String id = "TTT";
         cache.put(id, scanner);
         Thread.currentThread().sleep(11);
         RecordScanner returnScanner = cache.getIfPresent(id);
         Assert.assertNull(returnScanner);
-        
+
     }
-    
+
     @Test
-    public void testRecordScannerMapAccessExpiration() throws Exception{
+    public void testRecordScannerMapAccessExpiration() throws Exception {
         RecordScanner scanner = new DummyRecordScanner();
         String id = "QQQ";
         cache.put(id, scanner);
@@ -62,7 +60,7 @@ public class RecordScannerMapTest {
         Thread.currentThread().sleep(11);
         Assert.assertNull(cache.getIfPresent(id));
     }
-    
+
     private class DummyRecordScanner implements RecordScanner {
         // This is a dummy, it does not need to do anything; 
 
@@ -81,9 +79,9 @@ public class RecordScannerMapTest {
         @Override
         public void close() {
             // TODO Auto-generated method stub
-            
+
         }
-        
+
     }
 
 }

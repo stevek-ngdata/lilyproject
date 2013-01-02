@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<blobmanager  xmlns:conf="http://kauriproject.org/configuration"
-         conf:inherit="deep">
+<blobmanager xmlns:conf="http://kauriproject.org/configuration"
+             conf:inherit="deep">
 
   <!--  BlobIncubatorMonitor : Monitors the BlobIncubatorTable and cleans up any unused (stale) blobs. These are
                                blobs which were uploaded, but not actually used in records.
@@ -15,15 +15,15 @@
         runDelay : The minimal time (in seconds) between two runs of the monitor.
    -->
   <blobIncubatorMonitor minimalAge="3600" monitorDelay="20" runDelay="600">
-    <!-- Nodes: A comma-separated list of hostnames of the nodes on which the 
+    <!-- Nodes: A comma-separated list of hostnames of the nodes on which the
          blobIncubatorMonitor is allowed to run.
          The leader election algorithm will select one of those nodes to run
          the blobIncubatorMonitor on.
          If no nodes are given (default), all lily-nodes will be taken into account.
     -->
-  	<nodes></nodes>
+    <nodes></nodes>
   </blobIncubatorMonitor>
-  
+
   <!--  The BlobManager can store blobs in three different BlobStores : "HDFS", "HBASE" and "INLINE"
         Depending on the size of the blob it is stored on Hdfs, in a dedicated HBase table or inside the blob field of the record.
         The upper limits for the blob sizes can be configured below.

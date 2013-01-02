@@ -15,12 +15,6 @@
  */
 package org.lilyproject.rowlog.impl.test;
 
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.isA;
-import static org.easymock.classextension.EasyMock.createControl;
-import static org.junit.Assert.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,18 +22,31 @@ import java.util.List;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.easymock.classextension.IMocksControl;
-import org.junit.*;
-import org.lilyproject.rowlog.api.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfig;
+import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogShard;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
 import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
 import org.lilyproject.rowlog.impl.RowLogImpl;
 import org.lilyproject.rowlog.impl.RowLogMessageImpl;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import static org.easymock.EasyMock.*;
+import static org.easymock.classextension.EasyMock.createControl;
+import static org.junit.Assert.*;
 
 
 public class RowLogTest {
@@ -90,7 +97,7 @@ public class RowLogTest {
         control.reset();
         Closer.close(rowLog);
     }
-    
+
     @Test
     public void testPutMessage() throws Exception {
         shard.putMessage(isA(RowLogMessage.class), eq(subscriptionIds));
@@ -103,16 +110,17 @@ public class RowLogTest {
         assertEquals(message, messages.get(0));
         control.verify();
     }
-    
+
     @Test
     public void testPutMessageNoSubscriptions() throws Exception {
         configurationManager.removeSubscription(rowLogId, subscriptionId1);
         // Wait until rowlog notices the subscription has been removed
         long timeout = System.currentTimeMillis() + 10000;
-        while(!rowLog.getSubscriptions().isEmpty()) {
+        while (!rowLog.getSubscriptions().isEmpty()) {
             Thread.sleep(10);
-            if (System.currentTimeMillis() > timeout)
+            if (System.currentTimeMillis() > timeout) {
                 break;
+            }
         }
         control.replay();
         rowLog.getShardList().addShard(shard);
@@ -123,13 +131,13 @@ public class RowLogTest {
         configurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 1); // Put subscription back for the other tests
         AbstractRowLogEndToEndTest.waitForSubscription(rowLog, subscriptionId1);
     }
-    
+
     @Test
     public void testMultipleMessages() throws Exception {
         shard.putMessage(isA(RowLogMessage.class), eq(subscriptionIds));
         expectLastCall().times(3);
         shard.removeMessage(isA(RowLogMessage.class), eq(subscriptionId1));
-        
+
         control.replay();
         rowLog.getShardList().addShard(shard);
         byte[] rowKey = Bytes.toBytes("row2");
@@ -137,14 +145,14 @@ public class RowLogTest {
         RowLogMessage message2 = rowLog.putMessage(rowKey, null, null, null);
         RowLogMessage message3 = rowLog.putMessage(rowKey, null, null, null);
         rowLog.messageDone(message2, subscriptionId1);
-        
+
         List<RowLogMessage> messages = rowLog.getMessages(rowKey, subscriptionId1);
         assertEquals(2, messages.size());
         assertEquals(message1, messages.get(0));
         assertEquals(message3, messages.get(1));
         control.verify();
     }
-    
+
     @Test
     public void testNoShardsRegistered() throws Exception {
 
@@ -154,18 +162,18 @@ public class RowLogTest {
             fail("Expected a RowLogException since no shards are registered");
         } catch (RowLogException expected) {
         }
-        
+
         RowLogMessage message = new RowLogMessageImpl(System.currentTimeMillis(), Bytes.toBytes("row1"), 0L, null, rowLog);
         try {
-            rowLog.messageDone(message , subscriptionId1);
+            rowLog.messageDone(message, subscriptionId1);
             fail("Expected a RowLogException since no shards are registered");
         } catch (RowLogException expected) {
         }
         // Cleanup
-        
+
         control.verify();
     }
-    
+
     @Test
     public void testMessageConsumed() throws Exception {
 
@@ -180,20 +188,21 @@ public class RowLogTest {
         assertTrue(rowLog.isMessageDone(message, subscriptionId1));
         control.verify();
     }
-    
+
     @Test
     public void testgetMessages() throws Exception {
         String subscriptionId3 = "subscriptionId3";
-        
+
         RowLogConfigurationManagerImpl configurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
         configurationManager.addSubscription(rowLogId, subscriptionId3, Type.VM, 3);
-        
+
         long waitUntil = System.currentTimeMillis() + 10000;
         while (waitUntil > System.currentTimeMillis()) {
-            if (rowLog.getSubscriptions().size() > 1)
+            if (rowLog.getSubscriptions().size() > 1) {
                 break;
+            }
         }
-        
+
         assertEquals(2, rowLog.getSubscriptions().size());
         List<String> ids = new ArrayList<String>(subscriptionIds);
         ids.add(subscriptionId3);
@@ -211,22 +220,22 @@ public class RowLogTest {
 
         rowLog.messageDone(message1, subscriptionId1);
         rowLog.messageDone(message2, subscriptionId3);
-        
+
         List<RowLogMessage> messages;
         messages = rowLog.getMessages(rowKey);
         assertEquals(2, messages.size());
-        
+
         messages = rowLog.getMessages(rowKey, subscriptionId1);
         assertEquals(1, messages.size());
         assertEquals(message2, messages.get(0));
-        
+
         messages = rowLog.getMessages(rowKey, subscriptionId3);
         assertEquals(1, messages.size());
         assertEquals(message1, messages.get(0));
-        
+
         messages = rowLog.getMessages(rowKey, subscriptionId1, subscriptionId3);
         assertEquals(2, messages.size());
-        
+
         control.verify();
         configurationManager.removeSubscription(rowLogId, subscriptionId3);
     }

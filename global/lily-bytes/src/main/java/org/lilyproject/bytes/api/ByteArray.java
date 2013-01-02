@@ -19,12 +19,12 @@ import java.util.Arrays;
 
 /**
  * A utility class providing read only access to a byte[].
- * <p>
+ * <p/>
  * Upon construction, the byte[] to be wrapped needs to be given.</br>
- * 
+ * <p/>
  * This byte[] is copied by the constructor {@link ByteArray#ByteArray(byte[])}
  * to avoid external changes to the byte[] from having an impact.
- * <p>
+ * <p/>
  * If the user is absolutely certain a byte[] will not be modified later on, the
  * factory method {@link ByteArray#wrap(byte[])} can be used which will not copy
  * the byte[] but just wrap it.
@@ -35,7 +35,7 @@ public class ByteArray {
 
     /**
      * Provides an uninitialized ByteArray.
-     * <p>
+     * <p/>
      * For internal use only.
      */
     private ByteArray() {
@@ -50,12 +50,11 @@ public class ByteArray {
 
     /**
      * Wraps a byte[] instead of copying it like the constructor does.
-     * <p>
+     * <p/>
      * Warning! This method should only be used when the user is absolutely
      * certain that the provided byte[] will not be modified anymore.
-     * 
-     * @param bytes
-     *            the byte[] to wrap
+     *
+     * @param bytes the byte[] to wrap
      * @return a ByteArray
      */
     public static ByteArray wrap(byte[] bytes) {
@@ -73,7 +72,7 @@ public class ByteArray {
 
     /**
      * Returns the wrapped byte[] without copying it first.
-     * <p>
+     * <p/>
      * Warning! This method should only be used when the user is absolutely
      * certain that the returned byte[] will nog be modified anymore.
      */
@@ -83,13 +82,11 @@ public class ByteArray {
 
     /**
      * Returns the byte at index of the wrapped byte[].
-     * 
-     * @param index
-     *            of the byte to return
+     *
+     * @param index of the byte to return
      * @return a byte
-     * @throws ArrayIndexOutOfBoundsException
-     *             when the given index is outside the range of the wrapped
-     *             byte[]
+     * @throws ArrayIndexOutOfBoundsException when the given index is outside the range of the wrapped
+     *                                        byte[]
      */
     public byte get(int index) {
         return this.bytes[index];
@@ -104,14 +101,12 @@ public class ByteArray {
 
     /**
      * Returns a copy of the specified range of the wrapped byte[]
-     * 
-     * @param from
-     *            the initial index of the range to be copied, inclusive
-     * @param to
-     *            the final index of the range to be copied, exclusive. (This
-     *            index may lie outside the array in which case it is limited to
-     *            the last index of the original byte[].)
-     **/
+     *
+     * @param from the initial index of the range to be copied, inclusive
+     * @param to   the final index of the range to be copied, exclusive. (This
+     *             index may lie outside the array in which case it is limited to
+     *             the last index of the original byte[].)
+     */
     public byte[] getRange(int from, int to) {
         return Arrays.copyOfRange(this.bytes, from, to);
     }
@@ -136,15 +131,19 @@ public class ByteArray {
      */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        ByteArray other = (ByteArray) obj;
-        if (!Arrays.equals(bytes, other.bytes))
+        }
+        ByteArray other = (ByteArray)obj;
+        if (!Arrays.equals(bytes, other.bytes)) {
             return false;
+        }
         return true;
     }
 

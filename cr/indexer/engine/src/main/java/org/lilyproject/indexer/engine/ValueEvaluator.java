@@ -68,6 +68,7 @@ public class ValueEvaluator {
 
     /**
      * Evaluates a value for a given record & vtag.
+     *
      * @return null if there is no value
      */
     public List<String> eval(Value valueDef, IndexUpdateBuilder indexUpdateBuilder)
@@ -75,8 +76,9 @@ public class ValueEvaluator {
 
         List<IndexValue> indexValues = evalValue(valueDef, indexUpdateBuilder);
 
-        if (indexValues == null || indexValues.size() == 0)
+        if (indexValues == null || indexValues.size() == 0) {
             return null;
+        }
 
         Repository repository = indexUpdateBuilder.getRepository();
         if (valueDef.extractContent()) {
@@ -94,13 +96,13 @@ public class ValueEvaluator {
      * record.
      */
     public List<String> format(Record record, FieldType fieldType, boolean extractContent, String formatterName,
-            Repository repository) throws InterruptedException {
+                               Repository repository) throws InterruptedException {
         Object value = record.getField(fieldType.getName());
 
         List<IndexValue> indexValues;
 
         if (fieldType.getValueType().getBaseName().equals("LIST")) {
-            List<Object> values = (List<Object>) value;
+            List<Object> values = (List<Object>)value;
             indexValues = new ArrayList<IndexValue>(values.size());
             for (int i = 0; i < values.size(); i++) {
                 indexValues.add(new IndexValue(record, fieldType, i, values.get(i)));
@@ -130,8 +132,9 @@ public class ValueEvaluator {
         for (IndexValue indexValue : indexValues) {
             indexes.clear();
 
-            if (indexValue.listIndex != null)
+            if (indexValue.listIndex != null) {
                 indexes.addLast(indexValue.listIndex);
+            }
 
             extractContent(indexValue.value, indexes, indexValue.record, indexValue.fieldType, result, repository);
         }
@@ -140,10 +143,10 @@ public class ValueEvaluator {
     }
 
     private void extractContent(Object value, Deque<Integer> indexes, Record record, FieldType fieldType,
-            List<String> result, Repository repository) {
+                                List<String> result, Repository repository) {
 
         if (value instanceof List) { // this covers both LIST and PATH types
-            List values = (List) value;
+            List values = (List)value;
             for (int i = 0; i < values.size(); i++) {
                 indexes.addLast(i);
                 extractContent(values.get(i), indexes, record, fieldType, result, repository);
@@ -155,9 +158,9 @@ public class ValueEvaluator {
     }
 
     private void extractContent(Object value, Record record, FieldType fieldType, int[] indexes, List<String> result,
-            Repository repository) {
+                                Repository repository) {
 
-        Blob blob = (Blob) value;
+        Blob blob = (Blob)value;
         InputStream is = null;
 
         // TODO make write limit configurable
@@ -169,8 +172,9 @@ public class ValueEvaluator {
 
             Metadata metadata = new Metadata();
             metadata.add(Metadata.CONTENT_TYPE, blob.getMediaType());
-            if (blob.getName() != null)
+            if (blob.getName() != null) {
                 metadata.add(Metadata.RESOURCE_NAME_KEY, blob.getName());
+            }
 
             ParseContext parseContext = new ParseContext();
 
@@ -193,8 +197,9 @@ public class ValueEvaluator {
         }
 
         String text = ch.toString();
-        if (text.length() > 0)
+        if (text.length() > 0) {
             result.add(text);
+        }
     }
 
     private List<IndexValue> evalValue(Value value, IndexUpdateBuilder indexUpdateBuilder)
@@ -203,7 +208,7 @@ public class ValueEvaluator {
             return getValue(indexUpdateBuilder, ((FieldValue)value).getTargetFieldType(), null);
         } else if (value instanceof DerefValue) {
             List<IndexValue> result = Lists.newArrayList();
-            evalDerefValue((DerefValue) value, indexUpdateBuilder, result);
+            evalDerefValue((DerefValue)value, indexUpdateBuilder, result);
             return result;
         } else {
             throw new RuntimeException("Unexpected type of value: " + value.getClass().getName());
@@ -211,9 +216,8 @@ public class ValueEvaluator {
     }
 
     /**
-     * @param indexValues
-     *            optional, if supplied values will be added to this list,
-     *            otherwise a new list will be created and returned
+     * @param indexValues optional, if supplied values will be added to this list,
+     *                    otherwise a new list will be created and returned
      * @return null if there's no value
      */
     private List<IndexValue> getValue(IndexUpdateBuilder indexUpdateBuilder, FieldType fieldType, List<IndexValue> indexValues) throws RepositoryException, InterruptedException {
@@ -227,7 +231,7 @@ public class ValueEvaluator {
         }
 
         if (fieldType.getValueType().getBaseName().equals("LIST")) {
-            List<Object> values = (List<Object>) value;
+            List<Object> values = (List<Object>)value;
             result = indexValues != null ? indexValues : new ArrayList<IndexValue>(values.size());
             for (int i = 0; i < values.size(); i++) {
                 result.add(new IndexValue(record, fieldType, i, values.get(i)));
@@ -256,7 +260,7 @@ public class ValueEvaluator {
      * non-existing doc, etc.).
      */
     public void evalDerefValue(final DerefValue deref, final int fieldNum,
-            final IndexUpdateBuilder indexUpdateBuilder, final List<IndexValue> values) throws RepositoryException, InterruptedException {
+                               final IndexUpdateBuilder indexUpdateBuilder, final List<IndexValue> values) throws RepositoryException, InterruptedException {
         if (fieldNum >= deref.getFollows().size()) {
             getValue(indexUpdateBuilder, deref.getTargetFieldType(), values);
             return;

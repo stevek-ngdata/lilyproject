@@ -15,6 +15,18 @@
  */
 package org.lilyproject.tools.mavenplugin.genscript;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -27,11 +39,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.Settings;
-
-import java.io.*;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @requiresDependencyResolution runtime
@@ -151,7 +158,7 @@ public class GenScriptMojo extends AbstractMojo {
         private String envSuffix;
         private String extension;
     }
-    
+
     enum Mode {
         DEV("-dev"),
         DIST("");
@@ -169,7 +176,7 @@ public class GenScriptMojo extends AbstractMojo {
         outputDirectories.put(Mode.DIST, distOutputDirectory);
 
         try {
-            for (Script script: scripts) {
+            for (Script script : scripts) {
                 generateScripts(script);
             }
         } catch (IOException ioe) {
@@ -201,7 +208,7 @@ public class GenScriptMojo extends AbstractMojo {
     }
 
     private void generateScript(File outputFile, String template, String mainClass,
-            String classPath, Platform platform, Mode mode) throws IOException {
+                                String classPath, Platform platform, Mode mode) throws IOException {
 
         InputStream is = getClass().getResourceAsStream("/org/lilyproject/tools/mavenplugin/genscript/".concat(template));
         String result = streamToString(is);
@@ -217,11 +224,11 @@ public class GenScriptMojo extends AbstractMojo {
 
         String separator = "$$$";
         result = result.replaceAll(Pattern.quote(separator.concat("CLASSPATH").concat(separator)), Matcher.quoteReplacement(classPath)).
-            replaceAll(Pattern.quote(separator.concat("CLASSPATH_PREFIX").concat(separator)), Matcher.quoteReplacement(classPathPrefix)).
-            replaceAll(Pattern.quote(separator.concat("MAINCLASS").concat(separator)), Matcher.quoteReplacement(mainClass)).
-            replaceAll(Pattern.quote(separator.concat("DEFAULT_CLI_ARGS").concat(separator)), Matcher.quoteReplacement(defaultCliArgs)).
-            replaceAll(Pattern.quote(separator.concat("DEFAULT_JVM_ARGS").concat(separator)), Matcher.quoteReplacement(defaultJvmArgs)).
-            replaceAll(Pattern.quote(separator.concat("BEFORE_JAVA_HOOK").concat(separator)), Matcher.quoteReplacement(beforeJavaHook));
+                replaceAll(Pattern.quote(separator.concat("CLASSPATH_PREFIX").concat(separator)), Matcher.quoteReplacement(classPathPrefix)).
+                replaceAll(Pattern.quote(separator.concat("MAINCLASS").concat(separator)), Matcher.quoteReplacement(mainClass)).
+                replaceAll(Pattern.quote(separator.concat("DEFAULT_CLI_ARGS").concat(separator)), Matcher.quoteReplacement(defaultCliArgs)).
+                replaceAll(Pattern.quote(separator.concat("DEFAULT_JVM_ARGS").concat(separator)), Matcher.quoteReplacement(defaultJvmArgs)).
+                replaceAll(Pattern.quote(separator.concat("BEFORE_JAVA_HOOK").concat(separator)), Matcher.quoteReplacement(beforeJavaHook));
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
         writer.write(result);
@@ -231,7 +238,7 @@ public class GenScriptMojo extends AbstractMojo {
     private String streamToString(InputStream in) throws IOException {
         StringBuilder out = new StringBuilder();
         byte[] b = new byte[4096];
-        for (int n; (n = in.read(b)) != -1;) {
+        for (int n; (n = in.read(b)) != -1; ) {
             out.append(new String(b, 0, n));
         }
         return out.toString();
@@ -244,15 +251,17 @@ public class GenScriptMojo extends AbstractMojo {
         ArtifactRepositoryLayout layout = m2layout;
         String basePath = isDevelopment ? settings.getLocalRepository() : platform.envPrefix.concat("LILY_HOME").concat(platform.envSuffix).concat(platform.fileSeparator).concat("lib");
 
-        for (Artifact artifact: getClassPath()) {
-            if (result.length() > 0)
+        for (Artifact artifact : getClassPath()) {
+            if (result.length() > 0) {
                 result.append(platform.pathSeparator);
+            }
             result.append(basePath).append(platform.fileSeparator).append(artifactPath(artifact, platform));
         }
 
         if (includeProjectInClasspath) {
-            if (result.length() > 0)
+            if (result.length() > 0) {
                 result.append(platform.pathSeparator);
+            }
 
             // Disabled the isDevelopment treatment: otherwise in development, META-INF does not exist which
             // is used by Lily's CLI tools to read their version. Not sure if there is a good reason for this
@@ -261,7 +270,7 @@ public class GenScriptMojo extends AbstractMojo {
             //if (isDevelopment) {
             //    result.append(project.getBuild().getOutputDirectory());
             //} else {
-                result.append(basePath).append(platform.fileSeparator).append(artifactPath(project.getArtifact(), platform));
+            result.append(basePath).append(platform.fileSeparator).append(artifactPath(project.getArtifact(), platform));
             //}
         }
 
@@ -299,8 +308,9 @@ public class GenScriptMojo extends AbstractMojo {
     }
 
     private String getParameter(List<Parameter> parameters, Platform platform, Mode mode, String defaultValue) {
-        if (parameters == null)
+        if (parameters == null) {
             return defaultValue;
+        }
 
         for (Parameter parameter : parameters) {
             if (parameter.platform.toUpperCase().equals(platform.name()) && parameter.mode.toUpperCase().equals(mode.name())) {

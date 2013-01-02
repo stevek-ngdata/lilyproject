@@ -28,10 +28,24 @@ import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelDownstreamHandler;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
-import org.lilyproject.rowlog.api.*;
+import org.lilyproject.rowlog.api.RemoteListenerIOException;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.io.Closer;
 
@@ -42,7 +56,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
     private Map<Integer, RemoteWorkerDelegate> workerDelegates = new ConcurrentHashMap<Integer, RemoteWorkerDelegate>();
 
     public RemoteListenersSubscriptionHandler(String subscriptionId, MessagesWorkQueue messagesWorkQueue,
-            RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager) {
+                                              RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager) {
         super(subscriptionId, messagesWorkQueue, rowLog, rowLogConfigurationManager);
         initBootstrap();
     }
@@ -191,7 +205,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             RemoteWorkerDelegate worker = getWorkerDelegate(ctx);
-            worker.remoteProcessMessageResult = (Boolean) e.getMessage();
+            worker.remoteProcessMessageResult = (Boolean)e.getMessage();
             worker.semaphore.release(); // We received the message, the processMessage call can continue
         }
 
@@ -231,12 +245,13 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             ChannelBufferOutputStream outputStream = null;
             try {
-                RowLogMessage message = (RowLogMessage) e.getMessage();
+                RowLogMessage message = (RowLogMessage)e.getMessage();
                 byte[] rowKey = message.getRowKey();
                 byte[] data = message.getData();
                 int msgLength = 8 + 4 + rowKey.length + 8 + 4; // timestamp + rowkey-length + rowkey + seqnr + data-length + data
-                if (data != null)
+                if (data != null) {
                     msgLength = msgLength + data.length;
+                }
                 ChannelBuffer channelBuffer = ChannelBuffers.buffer(4 + msgLength);
                 outputStream = new ChannelBufferOutputStream(channelBuffer);
                 outputStream.writeInt(msgLength);

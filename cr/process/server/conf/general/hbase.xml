@@ -16,7 +16,7 @@
         For example, "host1.mydomain.com,host2.mydomain.com,host3.mydomain.com".
         This should be the same as specified in your HBase installation
         (hbase-site.xml).
-        
+
         Note that the port number must be specified in a separate property.
       -->
       <name>hbase.zookeeper.quorum</name>

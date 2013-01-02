@@ -3,7 +3,8 @@
 
   <records>
     <record matchNamespace="ns" matchName="NVRecordType1" matchVariant="*" vtags="live,nonversioned"/>
-    <record matchNamespace="ns2" matchName="VRecordType1" matchVariant="*" vtags="live,preview,latest,nonversioned"/>
+    <record matchNamespace="ns2" matchName="VRecordType1" matchVariant="*"
+            vtags="live,preview,latest,nonversioned"/>
     <record matchNamespace="ns2" matchName="LastRecordType" matchVariant="*" vtags="last"/>
   </records>
 

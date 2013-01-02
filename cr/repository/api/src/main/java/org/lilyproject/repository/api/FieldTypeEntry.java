@@ -18,10 +18,10 @@ package org.lilyproject.repository.api;
 /**
  * Describes the association between a {@link RecordType} and a {@link FieldType}. Or in other words, the occurrence of a
  * field type within a record type.
- *
+ * <p/>
  * <p>At this time, the only attribute specific to this relation indicates if the field type is mandatory
  * within the record type.
- *
+ * <p/>
  * <p>Field type entries are added to record types via
  * {@link RecordType#addFieldTypeEntry(FieldTypeEntry) RecordType.addFieldTypeEntry} and instantiated via
  * {@link TypeManager#newFieldTypeEntry(String, boolean) TypeManager.newFieldTypeEntry}. As all entities within this

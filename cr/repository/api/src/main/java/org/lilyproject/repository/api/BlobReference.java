@@ -16,10 +16,9 @@
 package org.lilyproject.repository.api;
 
 
-
 public class BlobReference {
 
-    
+
     private Blob blob;
     private RecordId recordId;
     private FieldType fieldType;
@@ -51,7 +50,7 @@ public class BlobReference {
     }
 
     public void setFieldType(FieldType fieldType) {
-        this.fieldType= fieldType;
+        this.fieldType = fieldType;
     }
 
     @Override
@@ -66,28 +65,37 @@ public class BlobReference {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        BlobReference other = (BlobReference) obj;
+        }
+        BlobReference other = (BlobReference)obj;
         if (blob == null) {
-            if (other.blob != null)
+            if (other.blob != null) {
                 return false;
-        } else if (!blob.equals(other.blob))
+            }
+        } else if (!blob.equals(other.blob)) {
             return false;
+        }
         if (fieldType == null) {
-            if (other.fieldType != null)
+            if (other.fieldType != null) {
                 return false;
-        } else if (!fieldType.equals(other.fieldType))
+            }
+        } else if (!fieldType.equals(other.fieldType)) {
             return false;
+        }
         if (recordId == null) {
-            if (other.recordId != null)
+            if (other.recordId != null) {
                 return false;
-        } else if (!recordId.equals(other.recordId))
+            }
+        } else if (!recordId.equals(other.recordId)) {
             return false;
+        }
         return true;
     }
 

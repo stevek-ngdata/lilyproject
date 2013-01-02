@@ -15,9 +15,8 @@
  */
 package org.lilyproject.linkindex;
 
-import java.util.EnumMap;
-
 import javax.management.ObjectName;
+import java.util.EnumMap;
 
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
@@ -30,8 +29,11 @@ import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 
 public class LinkIndexUpdaterMetrics implements Updater {
-    public enum Action{
-        UPDATE, EXTRACT};
+    public enum Action {
+        UPDATE, EXTRACT
+    }
+
+    ;
     private final MetricsRegistry registry = new MetricsRegistry();
     private final MetricsRecord metricsRecord;
     private final MetricsContext context;
@@ -59,9 +61,9 @@ public class LinkIndexUpdaterMetrics implements Updater {
     @Override
     public void doUpdates(MetricsContext unused) {
         synchronized (this) {
-          for (MetricsBase m : registry.getMetricsList()) {
-            m.pushMetric(metricsRecord);
-          }
+            for (MetricsBase m : registry.getMetricsList()) {
+                m.pushMetric(metricsRecord);
+            }
         }
         metricsRecord.update();
     }
@@ -80,8 +82,9 @@ public class LinkIndexUpdaterMetrics implements Updater {
         }
 
         public void shutdown() {
-            if (mbeanName != null)
+            if (mbeanName != null) {
                 MBeanUtil.unregisterMBean(mbeanName);
+            }
         }
     }
 }

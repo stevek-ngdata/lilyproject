@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <properties>
     <!-- This modified '-lily' version contains only small changes to the HBase client
@@ -50,7 +51,7 @@
     <!-- Set the argLine property to empty value by default. This is to make sure the ${argLine} in
          the configuration of the surefire plugin will get substituted.
          Otherwise the tests fail with a "java.lang.NoClassDefFoundError: null".-->
-    <argLine />
+    <argLine/>
   </properties>
 
   <modelVersion>4.0.0</modelVersion>
@@ -925,6 +926,7 @@
         <version>2.9.1</version>
         <configuration>
           <configLocation>org/lilyproject/checkstyle.xml</configLocation>
+          <suppressionsLocation>org/lilyproject/checkstyle-suppressions.xml</suppressionsLocation>
         </configuration>
         <dependencies>
           <dependency>

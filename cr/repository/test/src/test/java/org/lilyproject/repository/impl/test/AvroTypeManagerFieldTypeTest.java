@@ -19,8 +19,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.repotestfw.RepositorySetup;
 
 public class AvroTypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTest {
 

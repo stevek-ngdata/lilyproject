@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * A formatter which only keeps the first entry of multi-valued values.
- *
+ * <p/>
  * <p>One case where this is useful is when you want to be able to sort
  * on LIST-type fields which only sometimes contain multiple values,
  * in this case you could decide to sort on the first value.

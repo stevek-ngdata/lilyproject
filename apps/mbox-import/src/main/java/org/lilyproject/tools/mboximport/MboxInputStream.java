@@ -15,11 +15,12 @@
  */
 package org.lilyproject.tools.mboximport;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * An input stream that allows to read one mime message at a time from an mbox file.
- *
+ * <p/>
  * <p>Each new message starts on a line starting with "From<space>", this line itself
  * is not part of the message.
  */
@@ -39,8 +40,9 @@ public class MboxInputStream extends InputStream {
     }
 
     public boolean nextMessage() throws IOException {
-        if (eof)
+        if (eof) {
             return false;
+        }
 
         if (!atFromLine) {
             while (!atFromLine && !eof) {
@@ -49,8 +51,9 @@ public class MboxInputStream extends InputStream {
             }
         }
 
-        if (eof)
+        if (eof) {
             return false;
+        }
 
         readLine();
 
@@ -59,8 +62,9 @@ public class MboxInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        if (atFromLine || eof)
+        if (atFromLine || eof) {
             return -1;
+        }
 
         currentLinePos++;
 
@@ -75,8 +79,9 @@ public class MboxInputStream extends InputStream {
 
     @Override
     public int read(byte b[], int off, int len) throws IOException {
-        if (atFromLine || eof)
+        if (atFromLine || eof) {
             return -1;
+        }
 
         currentLinePos++;
 

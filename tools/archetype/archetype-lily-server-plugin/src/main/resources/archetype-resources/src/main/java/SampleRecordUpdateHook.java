@@ -1,4 +1,6 @@
-package ${package};
+package $
+
+{package};
 
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.repository.api.FieldTypes;
@@ -12,7 +14,9 @@ import javax.annotation.PreDestroy;
 
 public class SampleRecordUpdateHook implements RecordUpdateHook {
     private PluginRegistry pluginRegistry;
-    /** Name should be unique among all RecordUpdateHook's */
+    /**
+     * Name should be unique among all RecordUpdateHook's
+     */
     private String NAME = "${groupId}.${artifactId}";
 
     public SampleRecordUpdateHook(PluginRegistry pluginRegistry) {
@@ -28,7 +32,7 @@ public class SampleRecordUpdateHook implements RecordUpdateHook {
 
     @Override
     public void beforeUpdate(Record record, Record originalRecord, Repository repository, FieldTypes fieldTypes,
-            RecordEvent recordEvent) throws RepositoryException, InterruptedException {
+                             RecordEvent recordEvent) throws RepositoryException, InterruptedException {
         System.out.println("Record update hook is called for record: " + record.getId());
     }
 
@@ -40,7 +44,7 @@ public class SampleRecordUpdateHook implements RecordUpdateHook {
 
     @Override
     public void beforeDelete(Record originalRecord, Repository repository, FieldTypes fieldTypes,
-            RecordEvent recordEvent) throws RepositoryException, InterruptedException {
+                             RecordEvent recordEvent) throws RepositoryException, InterruptedException {
         System.out.println("Record update hook is called for record: " + record.getId());
     }
 }

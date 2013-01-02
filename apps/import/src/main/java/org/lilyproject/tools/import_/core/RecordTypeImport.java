@@ -15,17 +15,24 @@
  */
 package org.lilyproject.tools.import_.core;
 
-import org.lilyproject.repository.api.*;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeExistsException;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 
 import static org.lilyproject.tools.import_.core.ImportMode.*;
 
 public class RecordTypeImport {
     public static ImportResult<RecordType> importRecordType(RecordType newRecordType, ImportMode impMode,
-            IdentificationMode idMode, QName identifyingName, TypeManager typeManager) throws RepositoryException,
+                                                            IdentificationMode idMode, QName identifyingName, TypeManager typeManager) throws RepositoryException,
             InterruptedException {
 
         if (idMode == IdentificationMode.ID && impMode == CREATE_OR_UPDATE) {

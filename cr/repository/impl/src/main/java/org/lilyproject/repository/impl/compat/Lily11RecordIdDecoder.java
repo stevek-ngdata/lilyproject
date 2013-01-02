@@ -15,6 +15,12 @@
  */
 package org.lilyproject.repository.impl.compat;
 
+import java.lang.reflect.Constructor;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.UUID;
+
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.IdGenerator;
@@ -25,17 +31,12 @@ import org.lilyproject.repository.impl.id.UUIDRecordId;
 import org.lilyproject.repository.impl.id.UserRecordId;
 import org.lilyproject.repository.impl.id.VariantRecordId;
 
-import java.lang.reflect.Constructor;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.UUID;
-
 /**
  * This class contains code to parse Lily <= 1.1 style record id's encoded as bytes.
  */
 public class Lily11RecordIdDecoder {
     private static Constructor UUID_CONSTRUCTOR;
+
     static {
         try {
             UUID_CONSTRUCTOR = UUIDRecordId.class.getDeclaredConstructor(UUID.class, IdGeneratorImpl.class);
@@ -46,6 +47,7 @@ public class Lily11RecordIdDecoder {
     }
 
     private static Constructor USER_CONSTRUCTOR;
+
     static {
         try {
             USER_CONSTRUCTOR = UserRecordId.class.getDeclaredConstructor(String.class, IdGeneratorImpl.class);
@@ -56,6 +58,7 @@ public class Lily11RecordIdDecoder {
     }
 
     private static Constructor VARIANT_CONSTRUCTOR;
+
     static {
         try {
             VARIANT_CONSTRUCTOR = VariantRecordId.class.getDeclaredConstructor(RecordId.class, Map.class, IdGeneratorImpl.class);
@@ -71,7 +74,8 @@ public class Lily11RecordIdDecoder {
         this.idGenerator = idGenerator;
     }
 
-    private static enum IdIdentifier {USER((byte)0), UUID((byte)1), VARIANT((byte)2);
+    private static enum IdIdentifier {
+        USER((byte)0), UUID((byte)1), VARIANT((byte)2);
 
         private final byte identifierByte;
 
@@ -85,6 +89,7 @@ public class Lily11RecordIdDecoder {
     }
 
     private static IdIdentifier[] IDENTIFIERS;
+
     static {
         IDENTIFIERS = new IdIdentifier[3];
         IDENTIFIERS[0] = IdIdentifier.USER;
@@ -217,7 +222,7 @@ public class Lily11RecordIdDecoder {
                     builder.copyAll(false);
                 } else if (thing.startsWith("+") && thing.length() > 1) {
                     builder.copy(thing.substring(1));
-                } else if  (thing.startsWith("-") && thing.length() > 1) {
+                } else if (thing.startsWith("-") && thing.length() > 1) {
                     builder.remove(thing.substring(1));
                 } else {
                     throw new IllegalArgumentException("Invalid link: " + link);

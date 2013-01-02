@@ -105,18 +105,23 @@ public class UUIDRecordId implements RecordId {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        UUIDRecordId other = (UUIDRecordId) obj;
+        }
+        UUIDRecordId other = (UUIDRecordId)obj;
         if (uuid == null) {
-            if (other.uuid != null)
+            if (other.uuid != null) {
                 return false;
-        } else if (!uuid.equals(other.uuid))
+            }
+        } else if (!uuid.equals(other.uuid)) {
             return false;
+        }
         return true;
     }
 

@@ -51,7 +51,7 @@ public class LinkFieldFollow implements Follow {
         // but make sure missing records are also treated (handled here via null linkedRecord in case of RecordNotFoundException
         if (ctx.record != null) {
             List links = IndexerUtils.flatList(ctx.record, fieldType);
-            for (Link link: (List<Link>)links) {
+            for (Link link : (List<Link>)links) {
                 RecordId linkedRecordId = link.resolve(ctx.contextRecord, idGenerator);
                 Record linkedRecord = null;
                 try {

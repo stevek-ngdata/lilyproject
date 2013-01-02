@@ -21,7 +21,7 @@ import java.util.List;
  * A RowLogShard is a shard of the "global rowlog queue", that is the index that points to the rows
  * that might have outstanding messages to be processed. The reason why this is sharded is explained
  * over at {@link RowLog}.
- *
+ * <p/>
  * <p>A RowLogShard is added to the {@link RowLogShardList} obtained from {@link RowLog#getShardList()}</p>
  */
 public interface RowLogShard {
@@ -33,12 +33,12 @@ public interface RowLogShard {
 
     /**
      * Puts a RowLogMessage onto the table.
-     * 
+     *
      * @param message the {@link RowLogMessage} to be put on the table
      * @throws RowLogException when an unexpected exception occurs
      */
     void putMessage(RowLogMessage message, List<String> subscriptionIds) throws RowLogException;
-    
+
     /**
      * Puts a RowLogMessage onto the table.
      */
@@ -46,8 +46,8 @@ public interface RowLogShard {
 
     /**
      * Removes the RowLogMessage from the table for the indicated subscription.
-     * 
-     * @param message the {@link RowLogMessage} to be removed from the table
+     *
+     * @param message      the {@link RowLogMessage} to be removed from the table
      * @param subscription the id of the subscription for which the message needs to be removed
      * @throws RowLogException when an unexpected exception occurs
      */
@@ -57,22 +57,20 @@ public interface RowLogShard {
 
     /**
      * Retrieves the next messages to be processed by the indicated subscription.
-     * 
-     * @param subscription the id of the subscription for which the next messages should be retrieved
-     * @param batchSize how many messages to fetch (at most)
      *
+     * @param subscription the id of the subscription for which the next messages should be retrieved
+     * @param batchSize    how many messages to fetch (at most)
      * @return the next batchSize, or less, {@link RowLogMessage}s to be processed
      * @throws RowLogException when an unexpected exception occurs
      */
     List<RowLogMessage> next(String subscription, int batchSize) throws RowLogException;
-    
+
     /**
      * Retrieves the next messages to be processed by the indicated subscription.
-     * 
-     * @param subscription the id of the subscription for which the next messages should be retrieved
-     * @param minimalTimestamp the minimal timestamp of the messages to be retrieved
-     * @param batchSize how many messages to fetch (at most)
      *
+     * @param subscription     the id of the subscription for which the next messages should be retrieved
+     * @param minimalTimestamp the minimal timestamp of the messages to be retrieved
+     * @param batchSize        how many messages to fetch (at most)
      * @return the next batchSize, or less, {@link RowLogMessage}s to be processed
      * @throws RowLogException when an unexpected exception occurs
      */

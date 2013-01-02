@@ -36,37 +36,37 @@ public class RecordFilterListJson implements RecordFilterJsonConverter<RecordFil
 
     @Override
     public ObjectNode toJson(RecordFilterList filter, Namespaces namespaces, Repository repository,
-            RecordFilterJsonConverter<RecordFilter> converter)
+                             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
 
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();
-        
+
         if (filter.getOperator() != null) {
             node.put("operator", filter.getOperator().toString());
         }
-        
+
         if (filter.getFilters() != null) {
             ArrayNode filters = node.putArray("filters");
             for (RecordFilter subFilter : filter.getFilters()) {
                 filters.add(converter.toJson(subFilter, namespaces, repository, converter));
             }
         }
-        
+
         return node;
     }
 
     @Override
     public RecordFilterList fromJson(JsonNode node, Namespaces namespaces, Repository repository,
-            RecordFilterJsonConverter<RecordFilter> converter)
+                                     RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
-        
+
         RecordFilterList filter = new RecordFilterList();
-        
+
         String operator = JsonUtil.getString(node, "operator", null);
         if (operator != null) {
             filter.setOperator(RecordFilterList.Operator.valueOf(operator));
         }
-        
+
         ArrayNode filters = JsonUtil.getArray(node, "filters", null);
         if (filters != null) {
             for (JsonNode subFilterNode : filters) {
@@ -77,7 +77,7 @@ public class RecordFilterListJson implements RecordFilterJsonConverter<RecordFil
                 filter.addFilter(converter.fromJson(subFilterObjectNode, namespaces, repository, converter));
             }
         }
-        
+
         return filter;
     }
 }

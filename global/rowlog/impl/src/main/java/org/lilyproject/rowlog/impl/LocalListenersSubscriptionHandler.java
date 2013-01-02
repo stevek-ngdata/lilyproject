@@ -15,12 +15,17 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import org.lilyproject.rowlog.api.*;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogMessageListener;
+import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 
 public class LocalListenersSubscriptionHandler extends AbstractListenersSubscriptionHandler {
-    
+
     public LocalListenersSubscriptionHandler(String subscriptionId, MessagesWorkQueue messagesWorkQueue, RowLog rowLog,
-            RowLogConfigurationManager rowLogConfigurationManager) {
+                                             RowLogConfigurationManager rowLogConfigurationManager) {
         super(subscriptionId, messagesWorkQueue, rowLog, rowLogConfigurationManager);
     }
 
@@ -33,8 +38,9 @@ public class LocalListenersSubscriptionHandler extends AbstractListenersSubscrip
         @Override
         public boolean processMessage(RowLogMessage message) throws RowLogException, InterruptedException {
             RowLogMessageListener listener = RowLogMessageListenerMapping.INSTANCE.get(subscriptionId);
-            if (listener == null)
+            if (listener == null) {
                 return false;
+            }
             return listener.processMessage(message);
         }
 

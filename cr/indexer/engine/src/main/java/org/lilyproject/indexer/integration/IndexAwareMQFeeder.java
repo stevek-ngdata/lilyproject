@@ -15,6 +15,11 @@
  */
 package org.lilyproject.indexer.integration;
 
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -32,11 +37,6 @@ import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RowLogContext;
-
-import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class IndexAwareMQFeeder implements RowLogMessageListener {
     private Log log = LogFactory.getLog(getClass());
@@ -111,7 +111,7 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
      * list.
      */
     private void filterSubscriptions(List<String> subscriptionIds, Collection<IndexInfo> indexInfos,
-            RowLogMessage message, RecordEvent recordEvent) {
+                                     RowLogMessage message, RecordEvent recordEvent) {
 
         try {
             //

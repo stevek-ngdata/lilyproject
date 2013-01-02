@@ -36,7 +36,7 @@ public class RetryingSolrClient {
 
     public static SolrClient wrap(SolrClient solrClient, SolrClientMetrics metrics) {
         RetryingSolrClientInvocationHandler handler = new RetryingSolrClientInvocationHandler(solrClient, metrics);
-        return (SolrClient) Proxy.newProxyInstance(SolrClient.class.getClassLoader(), new Class[]{SolrClient.class},
+        return (SolrClient)Proxy.newProxyInstance(SolrClient.class.getClassLoader(), new Class[]{SolrClient.class},
                 handler);
     }
 
@@ -73,7 +73,7 @@ public class RetryingSolrClient {
 
                     if (throwable instanceof SolrException) {
                         // Get the HTTP status code
-                        int code = ((SolrException) throwable).code();
+                        int code = ((SolrException)throwable).code();
                         if (code == 404) {
                             // The user has probably configured an incorrect path in the Solr URL
                             backOff(attempt, "'Not Found' exception connecting to Solr " + solrClient.getDescription() +

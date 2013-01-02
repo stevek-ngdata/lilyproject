@@ -15,12 +15,16 @@
  */
 package org.lilyproject.util.json;
 
-import org.codehaus.jackson.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.MappingJsonFactory;
 import org.codehaus.jackson.map.ObjectMapper;
-
-import java.io.*;
 
 /**
  * Json serialization & deserialization to/from Jackson's generic tree model.
@@ -30,6 +34,7 @@ public class JsonFormat {
     public static final JsonFactory JSON_FACTORY = OBJECT_MAPPER.getJsonFactory();
 
     public static final MappingJsonFactory JSON_FACTORY_NON_STD;
+
     static {
         JSON_FACTORY_NON_STD = new MappingJsonFactory();
         JSON_FACTORY_NON_STD.configure(JsonParser.Feature.ALLOW_COMMENTS, true);

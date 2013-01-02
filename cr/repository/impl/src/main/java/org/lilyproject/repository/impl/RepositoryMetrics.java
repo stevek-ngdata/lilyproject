@@ -15,9 +15,8 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.EnumMap;
-
 import javax.management.ObjectName;
+import java.util.EnumMap;
 
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
@@ -30,8 +29,13 @@ import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 
 public class RepositoryMetrics implements Updater {
-    public enum Action{CREATE, READ, UPDATE, DELETE};
-    public enum HBaseAction{PUT, GET, LOCK, UNLOCK};
+    public enum Action {CREATE, READ, UPDATE, DELETE}
+
+    ;
+
+    public enum HBaseAction {PUT, GET, LOCK, UNLOCK}
+
+    ;
     private final MetricsRegistry registry = new MetricsRegistry();
     private final MetricsRecord metricsRecord;
     private final MetricsContext context;
@@ -49,7 +53,7 @@ public class RepositoryMetrics implements Updater {
         for (HBaseAction action : HBaseAction.values()) {
             hbaseRates.put(action, new MetricsTimeVaryingRate(action.name().toLowerCase(), registry));
         }
-        
+
         context = MetricsUtil.getContext("repository");
         metricsRecord = MetricsUtil.createRecord(context, recordName);
         context.registerUpdater(this);
@@ -64,9 +68,9 @@ public class RepositoryMetrics implements Updater {
     @Override
     public void doUpdates(MetricsContext unused) {
         synchronized (this) {
-          for (MetricsBase m : registry.getMetricsList()) {
-            m.pushMetric(metricsRecord);
-          }
+            for (MetricsBase m : registry.getMetricsList()) {
+                m.pushMetric(metricsRecord);
+            }
         }
         metricsRecord.update();
     }
@@ -89,8 +93,9 @@ public class RepositoryMetrics implements Updater {
         }
 
         public void shutdown() {
-            if (mbeanName != null)
+            if (mbeanName != null) {
                 MBeanUtil.unregisterMBean(mbeanName);
+            }
         }
     }
 }

@@ -17,7 +17,10 @@ package org.lilyproject.rowlog.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.rowlog.api.*;
+import org.lilyproject.rowlog.api.RemoteListenerIOException;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.util.Logs;
 
 public abstract class AbstractSubscriptionHandler implements SubscriptionHandler {
@@ -26,8 +29,8 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
     protected final String subscriptionId;
     protected final MessagesWorkQueue messagesWorkQueue;
     private Log log = LogFactory.getLog(AbstractSubscriptionHandler.class);
-	private SubscriptionHandlerMetrics metrics;
-    
+    private SubscriptionHandlerMetrics metrics;
+
     public AbstractSubscriptionHandler(String subscriptionId, MessagesWorkQueue messagesWorkQueue, RowLog rowLog) {
         this.rowLog = rowLog;
         this.rowLogId = rowLog.getId();
@@ -51,7 +54,7 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
          */
         void close();
     }
-    
+
     protected class Worker implements Runnable {
         private WorkerDelegate delegate;
         private final String subscriptionId;
@@ -81,10 +84,10 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
 
         @Override
         public void run() {
-            while(!stop && !Thread.interrupted()) {
+            while (!stop && !Thread.interrupted()) {
                 RowLogMessage message;
                 try {
-                	metrics.queueSize.set(messagesWorkQueue.size());
+                    metrics.queueSize.set(messagesWorkQueue.size());
                     message = messagesWorkQueue.take();
                     if (message != null) {
                         try {
@@ -105,10 +108,10 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
                                     }
                                 }
                                 if (processMessageResult) {
-                                	metrics.successRate.inc();
+                                    metrics.successRate.inc();
                                     rowLog.messageDone(message, subscriptionId);
                                 } else {
-                                	metrics.failureRate.inc();
+                                    metrics.failureRate.inc();
                                 }
                             } else {
                                 if (log.isDebugEnabled()) {

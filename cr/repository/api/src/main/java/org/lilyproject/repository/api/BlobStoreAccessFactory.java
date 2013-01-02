@@ -24,6 +24,7 @@ import java.util.Collection;
  */
 public interface BlobStoreAccessFactory {
     BlobStoreAccess get(Blob blob);
+
     Collection<BlobStoreAccess> getAll();
 
 }

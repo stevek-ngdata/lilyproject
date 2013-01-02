@@ -243,7 +243,7 @@ public abstract class BaseRepository implements Repository {
             switch (returnFields.getType()) {
                 case ENUM:
                     for (QName field : returnFields.getFields()) {
-                        FieldTypeImpl fieldType = (FieldTypeImpl) typeManager.getFieldTypeByName(field);
+                        FieldTypeImpl fieldType = (FieldTypeImpl)typeManager.getFieldTypeByName(field);
                         hbaseScan.addColumn(RecordCf.DATA.bytes, fieldType.getQualifier());
                     }
                     break;
@@ -267,6 +267,7 @@ public abstract class BaseRepository implements Repository {
     }
 
     private static List<HBaseRecordFilterFactory> FILTER_FACTORIES;
+
     static {
         FILTER_FACTORIES = new ArrayList<HBaseRecordFilterFactory>();
         // Make our own copy of list of filter factories, because it is not thread-safe to iterate over filterLoader
@@ -284,8 +285,9 @@ public abstract class BaseRepository implements Repository {
                 throws RepositoryException, InterruptedException {
             for (HBaseRecordFilterFactory filterFactory : FILTER_FACTORIES) {
                 Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repository, factory);
-                if (hbaseFilter != null)
+                if (hbaseFilter != null) {
                     return hbaseFilter;
+                }
             }
             throw new RepositoryException("No implementation available for filter type " + filter.getClass().getName());
         }
@@ -354,8 +356,9 @@ public abstract class BaseRepository implements Repository {
             }
             return recdec.decodeRecordWithIds(recordId, requestedVersion, result, fieldTypes);
         } finally {
-            if (metrics != null)
+            if (metrics != null) {
                 metrics.report(Action.READ, System.currentTimeMillis() - before);
+            }
         }
     }
 
@@ -403,8 +406,9 @@ public abstract class BaseRepository implements Repository {
             }
             return recdec.decodeRecord(recordId, requestedVersion, null, result, fieldTypes);
         } finally {
-            if (metrics != null)
+            if (metrics != null) {
                 metrics.report(Action.READ, System.currentTimeMillis() - before);
+            }
         }
     }
 
@@ -414,8 +418,9 @@ public abstract class BaseRepository implements Repository {
         try {
             ArgumentValidator.notNull(recordIds, "recordIds");
             List<Record> records = new ArrayList<Record>();
-            if (recordIds.isEmpty())
+            if (recordIds.isEmpty()) {
                 return records;
+            }
 
             Map<RecordId, Result> results = getRows(recordIds, fields);
 
@@ -425,8 +430,9 @@ public abstract class BaseRepository implements Repository {
             }
             return records;
         } finally {
-            if (metrics != null)
+            if (metrics != null) {
                 metrics.report(Action.READ, System.currentTimeMillis() - before);
+            }
         }
     }
 
@@ -441,15 +447,17 @@ public abstract class BaseRepository implements Repository {
             // Add the columns for the fields to get
             addFieldsToGet(get, fields);
 
-            if (version != null)
+            if (version != null) {
                 get.setTimeRange(0, version + 1); // Only retrieve data within this timerange
+            }
             get.setMaxVersions(numberOfVersions);
 
             // Retrieve the data from the repository
             result = recordTable.get(get);
 
-            if (result == null || result.isEmpty())
+            if (result == null || result.isEmpty()) {
                 throw new RecordNotFoundException(recordId);
+            }
 
         } catch (IOException e) {
             throw new RecordException("Exception occurred while retrieving record '" + recordId
@@ -461,7 +469,7 @@ public abstract class BaseRepository implements Repository {
     private void addFieldsToGet(Get get, List<FieldType> fields) {
         if (fields != null && (!fields.isEmpty())) {
             for (FieldType field : fields) {
-                get.addColumn(RecordCf.DATA.bytes, ((FieldTypeImpl) field).getQualifier());
+                get.addColumn(RecordCf.DATA.bytes, ((FieldTypeImpl)field).getQualifier());
             }
             RecordDecoder.addSystemColumnsToGet(get);
         } else {
@@ -526,13 +534,15 @@ public abstract class BaseRepository implements Repository {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
         List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
 
-        int numberOfVersionsToRetrieve = (int) (toVersion - fromVersion + 1);
+        int numberOfVersionsToRetrieve = (int)(toVersion - fromVersion + 1);
         Result result = getRow(recordId, toVersion, numberOfVersionsToRetrieve, fields);
-        if (fromVersion < 1L)
+        if (fromVersion < 1L) {
             fromVersion = 1L; // Put the fromVersion to a sensible value
+        }
         Long latestVersion = recdec.getLatestVersion(result);
-        if (latestVersion < toVersion)
+        if (latestVersion < toVersion) {
             toVersion = latestVersion; // Limit the toVersion to the highest possible version
+        }
         List<Long> versionsToRead = new ArrayList<Long>();
         for (long version = fromVersion; version <= toVersion; version++) {
             versionsToRead.add(version);
@@ -551,8 +561,9 @@ public abstract class BaseRepository implements Repository {
         ArgumentValidator.notNull(recordId, "recordId");
         ArgumentValidator.notNull(versions, "versions");
 
-        if (versions.isEmpty())
+        if (versions.isEmpty()) {
             return new ArrayList<Record>();
+        }
 
         Collections.sort(versions);
 
@@ -561,15 +572,16 @@ public abstract class BaseRepository implements Repository {
 
         Long lowestRequestedVersion = versions.get(0);
         Long highestRequestedVersion = versions.get(versions.size() - 1);
-        int numberOfVersionsToRetrieve = (int) (highestRequestedVersion - lowestRequestedVersion + 1);
+        int numberOfVersionsToRetrieve = (int)(highestRequestedVersion - lowestRequestedVersion + 1);
         Result result = getRow(recordId, highestRequestedVersion, numberOfVersionsToRetrieve, fields);
         Long latestVersion = recdec.getLatestVersion(result);
 
         // Drop the versions that are higher than the latestVersion
         List<Long> validVersions = new ArrayList<Long>();
         for (Long version : versions) {
-            if (version > latestVersion)
+            if (version > latestVersion) {
                 break;
+            }
             validVersions.add(version);
         }
         return recdec.decodeRecords(recordId, validVersions, result, fieldTypes);

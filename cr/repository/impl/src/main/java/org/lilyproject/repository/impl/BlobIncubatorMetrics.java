@@ -15,15 +15,18 @@
  */
 package org.lilyproject.repository.impl;
 
+import javax.management.ObjectName;
+
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
 import org.apache.hadoop.metrics.MetricsUtil;
 import org.apache.hadoop.metrics.Updater;
-import org.apache.hadoop.metrics.util.*;
+import org.apache.hadoop.metrics.util.MetricsBase;
+import org.apache.hadoop.metrics.util.MetricsRegistry;
+import org.apache.hadoop.metrics.util.MetricsTimeVaryingInt;
+import org.apache.hadoop.metrics.util.MetricsTimeVaryingRate;
 import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
-
-import javax.management.ObjectName;
 
 public class BlobIncubatorMetrics implements Updater {
     private final MetricsRegistry registry = new MetricsRegistry();
@@ -37,7 +40,7 @@ public class BlobIncubatorMetrics implements Updater {
 
     public MetricsTimeVaryingInt blobDeleteCount = new MetricsTimeVaryingInt("blob_delete_cnt", registry);
     public MetricsTimeVaryingInt refDeleteCount = new MetricsTimeVaryingInt("ref_delete_cnt", registry);
-    
+
     public BlobIncubatorMetrics() {
         context = MetricsUtil.getContext("blobIncubator");
         metricsRecord = MetricsUtil.createRecord(context, "blobIncubator");
@@ -53,9 +56,9 @@ public class BlobIncubatorMetrics implements Updater {
     @Override
     public void doUpdates(MetricsContext metricsContext) {
         synchronized (this) {
-          for (MetricsBase m : registry.getMetricsList()) {
-            m.pushMetric(metricsRecord);
-          }
+            for (MetricsBase m : registry.getMetricsList()) {
+                m.pushMetric(metricsRecord);
+            }
         }
         metricsRecord.update();
     }
@@ -70,8 +73,9 @@ public class BlobIncubatorMetrics implements Updater {
         }
 
         public void shutdown() {
-            if (mbeanName != null)
+            if (mbeanName != null) {
                 MBeanUtil.unregisterMBean(mbeanName);
+            }
         }
     }
 }

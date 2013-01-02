@@ -21,34 +21,33 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.CompareOp;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.filter.FieldValueFilter;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.impl.FieldTypeImpl;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
 
-import java.util.Arrays;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 
 public class HBaseFieldValueFilter implements HBaseRecordFilterFactory {
     @Override
     public Filter createHBaseFilter(RecordFilter uncastFilter, Repository repository, HBaseRecordFilterFactory factory)
             throws RepositoryException, InterruptedException {
-        
+
         if (!(uncastFilter instanceof FieldValueFilter)) {
             return null;
         }
-        
+
         FieldValueFilter filter = (FieldValueFilter)uncastFilter;
-        
+
         if (filter.getField() == null) {
             throw new IllegalArgumentException("Field name should be specified in FieldValueFilter");
         }
-        
+
         if (filter.getFieldValue() == null) {
             throw new IllegalArgumentException("Field value should be specified in FieldValueFilter");
         }

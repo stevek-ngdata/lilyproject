@@ -10,8 +10,6 @@ import org.lilyproject.repository.api.SchemaId;
 /**
  * A DerefMap allows to keep track of dependencies between indexed records (due to dereferencing) in the scope of a
  * given (solr) index.
- *
- *
  */
 public interface DerefMap {
 

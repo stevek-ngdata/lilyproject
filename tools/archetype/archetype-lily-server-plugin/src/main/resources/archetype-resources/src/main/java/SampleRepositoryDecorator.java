@@ -1,4 +1,6 @@
-package ${package};
+package $
+
+{package};
 
 import org.lilyproject.plugin.PluginRegistry;
 import org.lilyproject.repository.api.Record;
@@ -10,7 +12,9 @@ import javax.annotation.PreDestroy;
 
 public class SampleRepositoryDecorator extends BaseRepositoryDecorator {
     private PluginRegistry pluginRegistry;
-    /** Name should be unique among all RepositoryDecorator's */
+    /**
+     * Name should be unique among all RepositoryDecorator's
+     */
     private String NAME = "${groupId}.${artifactId}";
 
     public SampleRepositoryDecorator(PluginRegistry pluginRegistry) {

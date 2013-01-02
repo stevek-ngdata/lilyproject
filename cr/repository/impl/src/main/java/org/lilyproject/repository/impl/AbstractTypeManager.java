@@ -15,11 +15,43 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.valuetype.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeBuilder;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
+import org.lilyproject.repository.impl.valuetype.BlobValueType;
+import org.lilyproject.repository.impl.valuetype.BooleanValueType;
+import org.lilyproject.repository.impl.valuetype.ByteArrayValueType;
+import org.lilyproject.repository.impl.valuetype.DateTimeValueType;
+import org.lilyproject.repository.impl.valuetype.DateValueType;
+import org.lilyproject.repository.impl.valuetype.DecimalValueType;
+import org.lilyproject.repository.impl.valuetype.DoubleValueType;
+import org.lilyproject.repository.impl.valuetype.IntegerValueType;
+import org.lilyproject.repository.impl.valuetype.LinkValueType;
+import org.lilyproject.repository.impl.valuetype.ListValueType;
+import org.lilyproject.repository.impl.valuetype.LongValueType;
+import org.lilyproject.repository.impl.valuetype.PathValueType;
+import org.lilyproject.repository.impl.valuetype.RecordValueType;
+import org.lilyproject.repository.impl.valuetype.StringValueType;
+import org.lilyproject.repository.impl.valuetype.UriValueType;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -28,38 +60,39 @@ public abstract class AbstractTypeManager implements TypeManager {
 
     protected Map<String, ValueTypeFactory> valueTypeFactories = new HashMap<String, ValueTypeFactory>();
     protected IdGenerator idGenerator;
-    
+
     protected ZooKeeperItf zooKeeper;
 
     protected SchemaCache schemaCache;
-    
+
     public AbstractTypeManager(ZooKeeperItf zooKeeper) {
         this.zooKeeper = zooKeeper;
     }
-    
+
     @Override
     public FieldTypes getFieldTypesSnapshot() throws InterruptedException {
         return schemaCache.getFieldTypesSnapshot();
     }
-    
+
     @Override
     abstract public List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException;
+
     @Override
     abstract public List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
-    
+
     protected void updateFieldTypeCache(FieldType fieldType) throws TypeException, InterruptedException {
         schemaCache.updateFieldType(fieldType);
     }
-    
+
     protected void updateRecordTypeCache(RecordType recordType) throws TypeException, InterruptedException {
         schemaCache.updateRecordType(recordType);
     }
-    
+
     @Override
     public Collection<RecordType> getRecordTypes() throws InterruptedException {
         return schemaCache.getRecordTypes();
     }
-    
+
     @Override
     public List<FieldType> getFieldTypes() throws TypeException, InterruptedException {
         return schemaCache.getFieldTypes();
@@ -72,7 +105,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     protected RecordType getRecordTypeFromCache(SchemaId id) {
         return schemaCache.getRecordType(id);
     }
-    
+
     @Override
     public RecordType getRecordTypeById(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(id, "id");
@@ -89,7 +122,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         }
         return recordType.clone();
     }
-    
+
     @Override
     public RecordType getRecordTypeByName(QName name, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(name, "name");
@@ -106,19 +139,19 @@ public abstract class AbstractTypeManager implements TypeManager {
         }
         return recordType.clone();
     }
-    
+
     abstract protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException;
-    
+
     @Override
     public FieldType getFieldTypeById(SchemaId id) throws TypeException, InterruptedException {
         return schemaCache.getFieldType(id);
     }
-    
+
     @Override
     public FieldType getFieldTypeByName(QName name) throws InterruptedException, TypeException {
         return schemaCache.getFieldType(name);
     }
-    
+
     //
     // Object creation methods
     //
@@ -126,7 +159,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     public RecordType newRecordType(QName name) {
         return new RecordTypeImpl(null, name);
     }
-    
+
     @Override
     public RecordType newRecordType(SchemaId recordTypeId, QName name) {
         return new RecordTypeImpl(recordTypeId, name);
@@ -181,8 +214,9 @@ public abstract class AbstractTypeManager implements TypeManager {
         int indexOfParams = valueTypeSpec.indexOf("<");
         if (indexOfParams == -1) {
             ValueTypeFactory valueTypeFactory = valueTypeFactories.get(valueTypeSpec);
-            if (valueTypeFactory == null)
+            if (valueTypeFactory == null) {
                 throw new TypeException("Unkown value type: " + valueTypeSpec);
+            }
             valueType = valueTypeFactory.getValueType(null);
         } else {
             if (!valueTypeSpec.endsWith(">")) {
@@ -198,14 +232,15 @@ public abstract class AbstractTypeManager implements TypeManager {
             }
 
             ValueTypeFactory valueTypeFactory = valueTypeFactories.get(valueTypeSpec.substring(0, indexOfParams));
-            if (valueTypeFactory == null)
+            if (valueTypeFactory == null) {
                 throw new TypeException("Unkown value type: " + valueTypeSpec);
+            }
             valueType = valueTypeFactory.getValueType(arg);
         }
 
         return valueType;
     }
-    
+
     // TODO get this from some configuration file
     protected void registerDefaultValueTypes() {
         //

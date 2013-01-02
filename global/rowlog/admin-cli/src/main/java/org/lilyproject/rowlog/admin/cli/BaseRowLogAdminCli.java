@@ -29,7 +29,7 @@ import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
-    
+
     protected Option rowLogIdOption;
     protected Option respectOrderOption;
     protected Option notifyEnabledOption;
@@ -39,7 +39,7 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
     protected Option subscriptionIdOption;
     protected Option subscriptionTypeOption;
     protected Option subscriptionOrderNrOption;
-    
+
     protected String rowLogId = null;
     protected String subscriptionId = null;
     protected Boolean respectOrder = null;
@@ -49,7 +49,7 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
     protected Long wakeupTimeout = null;
     protected RowLogSubscription.Type type = null;
     protected Integer orderNr = null;
-    
+
     protected RowLogConfigurationManagerImpl rowLogConfigurationManager;
     protected ZooKeeperItf zk;
 
@@ -63,21 +63,21 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
                 .withDescription("RowLog id")
                 .withLongOpt("rowlog-id")
                 .create("r");
-        
+
         subscriptionIdOption = OptionBuilder
                 .withArgName("subscription")
                 .hasArg()
                 .withDescription("Subscription id")
                 .withLongOpt("subscription-id")
                 .create("s");
-        
+
         respectOrderOption = OptionBuilder
                 .withArgName("order")
                 .hasArg()
                 .withDescription("Respect order ('true' or 'false')")
                 .withLongOpt("respect-order")
                 .create("o");
-        
+
         notifyEnabledOption = OptionBuilder
                 .withArgName("notify-enabled")
                 .hasArg()
@@ -105,14 +105,14 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
                 .withDescription("Wakeup timeout (a number >= 0)")
                 .withLongOpt("wakeup-timeout")
                 .create("w");
-        
+
         subscriptionTypeOption = OptionBuilder
                 .withArgName("type")
                 .hasArg()
                 .withDescription("Subscription type")
                 .withLongOpt("subscription-type")
                 .create("t");
-        
+
         subscriptionOrderNrOption = OptionBuilder
                 .withArgName("order-nr")
                 .hasArg()
@@ -120,7 +120,7 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
                 .withLongOpt("subscription-order-nr")
                 .create("nr");
     }
-    
+
     @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
@@ -136,36 +136,37 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int result = super.processOptions(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (cmd.hasOption(rowLogIdOption.getOpt())) {
             rowLogId = cmd.getOptionValue(rowLogIdOption.getOpt());
         }
-        
+
         if (cmd.hasOption(subscriptionIdOption.getOpt())) {
             subscriptionId = cmd.getOptionValue(subscriptionIdOption.getOpt());
         }
-        
+
         if (cmd.hasOption(respectOrderOption.getOpt())) {
             String optionValue = cmd.getOptionValue(respectOrderOption.getOpt());
-            if ("true".equals(optionValue.toLowerCase()))
+            if ("true".equals(optionValue.toLowerCase())) {
                 respectOrder = Boolean.TRUE;
-            else if ("false".equals(optionValue.toLowerCase()))
+            } else if ("false".equals(optionValue.toLowerCase())) {
                 respectOrder = Boolean.FALSE;
-            else {
+            } else {
                 System.out.println("Specified value for 'respect order' should be either 'true' or 'false'");
                 return 1;
             }
         }
-        
+
         if (cmd.hasOption(notifyEnabledOption.getOpt())) {
             String optionValue = cmd.getOptionValue(notifyEnabledOption.getOpt());
-            if ("true".equals(optionValue.toLowerCase()))
+            if ("true".equals(optionValue.toLowerCase())) {
                 notifyEnabled = Boolean.TRUE;
-            else if ("false".equals(optionValue.toLowerCase()))
+            } else if ("false".equals(optionValue.toLowerCase())) {
                 notifyEnabled = Boolean.FALSE;
-            else {
+            } else {
                 System.out.println("Specified value for 'notify enabled' should be either 'true' or 'false'");
                 return 1;
             }
@@ -196,7 +197,7 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
                 return 1;
             }
         }
-        
+
         if (cmd.hasOption(wakeupTimeoutOption.getOpt())) {
             try {
                 wakeupTimeout = Long.valueOf(cmd.getOptionValue(wakeupTimeoutOption.getOpt()));
@@ -212,7 +213,7 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
 
         if (cmd.hasOption(subscriptionOrderNrOption.getOpt())) {
             try {
-                orderNr= Integer.valueOf(cmd.getOptionValue(subscriptionOrderNrOption.getOpt()));
+                orderNr = Integer.valueOf(cmd.getOptionValue(subscriptionOrderNrOption.getOpt()));
                 if (orderNr < 0) {
                     System.out.println("Subscription order number must be a number >= 0");
                     return 1;
@@ -222,7 +223,7 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
                 return 1;
             }
         }
-        
+
         if (cmd.hasOption(subscriptionTypeOption.getOpt())) {
             try {
                 type = RowLogSubscription.Type.valueOf(cmd.getOptionValue(subscriptionTypeOption.getOpt()));
@@ -231,21 +232,22 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
                 return 1;
             }
         }
-        
+
 
         return 0;
     }
-    
+
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
-        
+        }
+
         zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
-        
+
         rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zk);
-        
+
         return 0;
     }
 

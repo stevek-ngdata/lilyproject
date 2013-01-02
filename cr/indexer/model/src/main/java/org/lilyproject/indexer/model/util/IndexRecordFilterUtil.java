@@ -13,15 +13,15 @@ public class IndexRecordFilterUtil {
     /**
      * Returns Record instances that can be used to evaluate an IndexerConf's IndexRecordFilter. The record
      * instances are created based on state stored in the RecordEvent by the IndexRecordFilterHook.
-     *
+     * <p/>
      * <p>The IndexRecordFilterHook puts the fields & record type info needed by each of the
      * indexes known at that time in the RecordEvent.</p>
-     *
+     * <p/>
      * <p>Of course, it can happen that indexerconfs have been changed, or new indexes have been added,
      * since the RecordEvent was created. It can also be that the 'new' record state stored in
      * the RecordEvent doesn't correspond to the record state you would get now when reading the
      * record. It is up to the caller to decide how to deal with these situations.</p>
-     *
+     * <p/>
      * <p>This method returns always two Record instances: the old and new record state, even if
      * there would be no old instance (in case of record creation) or new (in case of record deletion).
      * In those cases, the Record objects will be empty, hence will be more generic, and hence
@@ -29,7 +29,7 @@ public class IndexRecordFilterUtil {
      * more filters than either the old or new record state would match.</p>
      */
     public static Record[] getOldAndNewRecordForRecordFilterEvaluation(RecordId recordId, RecordEvent recordEvent,
-            Repository repository) throws RepositoryException, InterruptedException {
+                                                                       Repository repository) throws RepositoryException, InterruptedException {
 
         //
         // Create the 'old' and 'new' Record instances.
@@ -78,9 +78,9 @@ public class IndexRecordFilterUtil {
                 oldRecord.setRecordType(typeManager.getRecordTypeById(idxSel.getOldRecordType(), null).getName());
             }
 
-            return new Record[] { oldRecord, newRecord };
+            return new Record[]{oldRecord, newRecord};
         }
 
-        return new Record[] { null, null };
+        return new Record[]{null, null};
     }
 }

@@ -35,16 +35,17 @@ public class LilyMapReduceUtil {
     public static void initMapperJob(RecordScan scan, String zooKeeperConnectString, Repository repository, Job job) {
         initMapperJob(scan, false, zooKeeperConnectString, repository, job);
     }
-    
+
     /**
      * Set the necessary parameters inside the job configuration for using Lily as input.
      */
     public static void initMapperJob(RecordScan scan, boolean returnIdRecords, String zooKeeperConnectString, Repository repository, Job job) {
-        if (returnIdRecords)
+        if (returnIdRecords) {
             job.setInputFormatClass(LilyIdScanInputFormat.class);
-        else 
+        } else {
             job.setInputFormatClass(LilyScanInputFormat.class);
-        
+        }
+
         job.getConfiguration().set(ZK_CONNECT_STRING, zooKeeperConnectString);
 
         if (scan != null) {

@@ -15,19 +15,13 @@
  */
 package org.lilyproject.tools.import_.json.test;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -65,7 +59,7 @@ import org.lilyproject.tools.import_.json.WriteOptions;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 
-import com.google.common.collect.Lists;
+import static org.junit.Assert.*;
 
 public class JsonConversionTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -202,8 +196,8 @@ public class JsonConversionTest {
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof RecordTypeFilter);
-        assertEquals(recordType, ((RecordTypeFilter) parsedScan.getRecordFilter()).getRecordType());
-        assertNull(((RecordTypeFilter) parsedScan.getRecordFilter()).getVersion());
+        assertEquals(recordType, ((RecordTypeFilter)parsedScan.getRecordFilter()).getRecordType());
+        assertNull(((RecordTypeFilter)parsedScan.getRecordFilter()).getVersion());
 
         // Check json
         JsonNode node = new ObjectMapper().readTree(data);
@@ -227,7 +221,7 @@ public class JsonConversionTest {
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof RecordIdPrefixFilter);
-        assertEquals(recordId, ((RecordIdPrefixFilter) parsedScan.getRecordFilter()).getRecordId());
+        assertEquals(recordId, ((RecordIdPrefixFilter)parsedScan.getRecordFilter()).getRecordId());
 
         // Check json
         JsonNode node = new ObjectMapper().readTree(data);
@@ -250,7 +244,7 @@ public class JsonConversionTest {
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof FieldValueFilter);
-        FieldValueFilter filter = (FieldValueFilter) parsedScan.getRecordFilter();
+        FieldValueFilter filter = (FieldValueFilter)parsedScan.getRecordFilter();
         assertEquals(name, filter.getField());
         assertEquals(value, filter.getFieldValue());
         assertTrue(filter.getFilterIfMissing());
@@ -264,12 +258,12 @@ public class JsonConversionTest {
         // Try different data types as field value
         value = 3L;
         scan.setRecordFilter(new FieldValueFilter(new QName("ns", "longField"), value));
-        assertEquals(value, ((FieldValueFilter) scanFromBytes(scanToBytes(scan))
+        assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
                 .getRecordFilter()).getFieldValue());
 
         value = Lists.newArrayList("foo", "bar");
         scan.setRecordFilter(new FieldValueFilter(new QName("ns", "stringListField"), value));
-        assertEquals(value, ((FieldValueFilter) scanFromBytes(scanToBytes(scan))
+        assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
                 .getRecordFilter()).getFieldValue());
 
         // The following test made more sense when we were using a generic type-detection
@@ -304,8 +298,8 @@ public class JsonConversionTest {
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof RecordVariantFilter);
-        assertEquals(recordId.getMaster(), ((RecordVariantFilter) parsedScan.getRecordFilter()).getMasterRecordId());
-        assertEquals(variantProperties, ((RecordVariantFilter) parsedScan.getRecordFilter()).getVariantProperties());
+        assertEquals(recordId.getMaster(), ((RecordVariantFilter)parsedScan.getRecordFilter()).getMasterRecordId());
+        assertEquals(variantProperties, ((RecordVariantFilter)parsedScan.getRecordFilter()).getVariantProperties());
 
         // Check json
         JsonNode node = new ObjectMapper().readTree(data);
@@ -333,7 +327,7 @@ public class JsonConversionTest {
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof RecordFilterList);
-        RecordFilterList parsedFilterList = (RecordFilterList) filterList;
+        RecordFilterList parsedFilterList = (RecordFilterList)filterList;
         assertTrue(parsedFilterList.getFilters().get(0) instanceof RecordIdPrefixFilter);
         assertTrue(parsedFilterList.getFilters().get(1) instanceof RecordTypeFilter);
         assertEquals(RecordFilterList.Operator.MUST_PASS_ONE, parsedFilterList.getOperator());
@@ -398,7 +392,7 @@ public class JsonConversionTest {
         record.getAttributes().put("one", "onevalue");
 
         ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repository);
-        ObjectNode attributes = (ObjectNode) recordNode.get("attributes");
+        ObjectNode attributes = (ObjectNode)recordNode.get("attributes");
         for (String key : record.getAttributes().keySet()) {
             Assert.assertEquals(record.getAttributes().get(key), attributes.get(key).asText());
         }
@@ -408,7 +402,7 @@ public class JsonConversionTest {
         record = RecordReader.INSTANCE.fromJson(recordNode, repository);
         Iterator<Entry<String, JsonNode>> it = attributes.getFields();
         while (it.hasNext()) {
-            Entry<String,JsonNode> attr = it.next();
+            Entry<String, JsonNode> attr = it.next();
             Assert.assertEquals(attr.getValue().asText(), record.getAttributes().get(attr.getKey()));
         }
     }

@@ -35,7 +35,7 @@ public class InvalidRecordException extends RecordException {
         state.put("info", info);
         return state;
     }
-    
+
     public InvalidRecordException(String info, RecordId recordId) {
         this.recordId = recordId != null ? recordId.toString() : null;
         this.info = info;

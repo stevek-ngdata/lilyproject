@@ -16,13 +16,32 @@
 package org.lilyproject.repository.impl.test;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractSchemaCache;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
@@ -32,6 +51,7 @@ public class SchemaCacheTest {
     private static final RepositorySetup repoSetup = new RepositorySetup();
 
     private List<TypeManager> typeManagersToClose = new ArrayList<TypeManager>();
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
@@ -183,7 +203,7 @@ public class SchemaCacheTest {
         long total = 0;
         int iterations = 10;
         int nrOfTypes = 100; // Set to a low number to reduce automated test
-                             // time
+        // time
         for (int i = 0; i < iterations; i++) {
             long before = System.currentTimeMillis();
             for (int j = 0; j < nrOfTypes; j++) {
@@ -213,26 +233,26 @@ public class SchemaCacheTest {
         }
         System.out.println("Creating 5 extra record types and 5 extra field types took: "
                 + (System.currentTimeMillis() - before));
-        
+
         for (TypeManager tm : typeManagersToClose) {
             waitForRecordType(10000, new QName(namespace, "recordType" + ((iterations * nrOfTypes) - 1)), tm);
         }
     }
-    
+
     @Test
     public void testRenameFieldType() throws Exception {
         TypeManager typeManager = repoSetup.getTypeManager();
         QName ftName = new QName("testRenameFieldType", "f");
         FieldType fieldType = typeManager.fieldTypeBuilder().name(ftName).create();
         for (int i = 0; i < 100; i++) {
-            QName newFtName = new QName("testRenameFieldType", "f"+i);
+            QName newFtName = new QName("testRenameFieldType", "f" + i);
             fieldType.setName(newFtName);
             fieldType = typeManager.updateFieldType(fieldType);
             typeManager.getFieldTypeByName(newFtName);
             ftName = newFtName;
         }
     }
-    
+
     @Test
     public void testRenameRecordType() throws Exception {
         TypeManager typeManager = repoSetup.getTypeManager();
@@ -254,9 +274,9 @@ public class SchemaCacheTest {
         RecordType recordType = typeManager.recordTypeBuilder().name(rtName).create();
         Assert.assertNull(typeManager.getRecordTypeByName(rtName, null).getFieldTypeEntry(fieldType.getId()));
         recordType.addFieldTypeEntry(fieldType.getId(), true);
-        Assert.assertNull(typeManager.getRecordTypeByName(rtName, null).getFieldTypeEntry(fieldType.getId()));        
+        Assert.assertNull(typeManager.getRecordTypeByName(rtName, null).getFieldTypeEntry(fieldType.getId()));
     }
-   
+
     private RecordType waitForRecordType(long timeout, QName name, TypeManager typeManager2)
             throws RepositoryException, InterruptedException {
         long before = System.currentTimeMillis();
@@ -305,7 +325,7 @@ public class SchemaCacheTest {
         byte[] decodeHexAndNextHex = AbstractSchemaCache.decodeHexAndNextHex(AbstractSchemaCache.encodeHex(rowPrefix));
         random.nextBytes(rowPrefix);
         Scan scan = new Scan(rowPrefix);
-        scan.setStopRow(new byte[] { decodeHexAndNextHex[1] });
+        scan.setStopRow(new byte[]{decodeHexAndNextHex[1]});
         scan.addColumn(CF, C1);
         scan.addColumn(CF, C2);
         scan.addColumn(CF, C3);
@@ -336,7 +356,7 @@ public class SchemaCacheTest {
                     throw new RuntimeException();
                 }
             }
-            System.out.println("Scanner " + name + ", count="+count+": " + (System.currentTimeMillis() - before));
+            System.out.println("Scanner " + name + ", count=" + count + ": " + (System.currentTimeMillis() - before));
         }
     }
 }

@@ -57,7 +57,7 @@ public class IdGeneratorImplTest {
         assertTrue(idGenerator.fromString(uuidRecordIDString).isMaster());
 
         // Test bytes representation
-        byte[] uuidRecordIdBytes = new byte[] {1, -46, 124, -37, 110, -82, 109, 17, -49, -106, -72, 68, 69, 83, 84, 0, 0};
+        byte[] uuidRecordIdBytes = new byte[]{1, -46, 124, -37, 110, -82, 109, 17, -49, -106, -72, 68, 69, 83, 84, 0, 0};
         assertArrayEquals(uuidRecordIdBytes, idGenerator.fromBytes(uuidRecordIdBytes).toBytes());
 
         assertEquals(uuidRecordIDString, idGenerator.fromBytes(uuidRecordIdBytes).toString());
@@ -84,12 +84,12 @@ public class IdGeneratorImplTest {
         assertEquals(userRecordIDString, idGenerator.fromBytes(userRecordIdBytes).toString());
 
         // Test the bytes representation is really what we expect it to be
-        byte[] idBytes = new byte[] {0, 65, 66, 67};
+        byte[] idBytes = new byte[]{0, 65, 66, 67};
         String idString = "USER.ABC";
         assertArrayEquals(idBytes, idGenerator.fromString(idString).toBytes());
 
 
-        byte[] withDotsBytes = new byte[] { 0, 65, 66, ':', 67, 68, '.', 69, 70 };
+        byte[] withDotsBytes = new byte[]{0, 65, 66, ':', 67, 68, '.', 69, 70};
         String withDots = "USER.AB:CD\\.EF";
         assertArrayEquals(withDotsBytes, idGenerator.fromString(withDots).toBytes());
     }
@@ -115,17 +115,17 @@ public class IdGeneratorImplTest {
         assertEquals(variantRecordId, idGenerator.fromBytes(variantRecordId.toBytes()));
 
         // Test bytes representation is really what we expect it to be
-        byte[] masterIdBytes = new byte[] {
+        byte[] masterIdBytes = new byte[]{
                 /* uuid type marker */1,
-                /* uuid bytes */-46, 124, -37, 110, -82, 109, 17, -49, -106, -72, 68, 69, 83, 84, 0, 0 };
+                /* uuid bytes */-46, 124, -37, 110, -82, 109, 17, -49, -106, -72, 68, 69, 83, 84, 0, 0};
 
-        byte[] variantIdBytes = new byte[] {
+        byte[] variantIdBytes = new byte[]{
                 /* uuid type marker */1,
                 /* uuid bytes */-46, 124, -37, 110, -82, 109, 17, -49, -106, -72, 68, 69, 83, 84, 0, 0
                 /* length of key (vint) */, 1
                 /* the key (letter X) */, 88
                 /* length of value (vint) */, 3
-                /* the value (ABC) */, 65, 66, 67 };
+                /* the value (ABC) */, 65, 66, 67};
 
         RecordId variantId = idGenerator.newRecordId(idGenerator.fromBytes(masterIdBytes),
                 Collections.singletonMap("X", "ABC"));
@@ -175,7 +175,7 @@ public class IdGeneratorImplTest {
 
         // Test bytes representation is what it is supposed to be
         // Note that the keys should always be in sorted order
-        byte[] variantIdBytes = new byte[] {
+        byte[] variantIdBytes = new byte[]{
                 /* user type marker */0,
                 /* 'marvellous' as bytes */109, 97, 114, 118, 101, 108, 108, 111, 117, 115,
                 /* separator byte between id and the props */0,
@@ -213,7 +213,7 @@ public class IdGeneratorImplTest {
     @Test
     public void testReservedCharacterEscapingInUserId() {
         IdGenerator idGenerator = new IdGeneratorImpl();
-        char[] chars = new char[] {'.', ',', '=' };
+        char[] chars = new char[]{'.', ',', '='};
         for (int i = 0; i < chars.length; i++) {
             char c = chars[i];
             RecordId recordId = idGenerator.newRecordId("hello" + c + "world");
@@ -235,7 +235,7 @@ public class IdGeneratorImplTest {
 
     @Test
     public void testReservedCharsInUserIdFromString() {
-        char[] chars = new char[] {'.', ',', '=' };
+        char[] chars = new char[]{'.', ',', '='};
         for (int i = 0; i < chars.length; i++) {
             char c = chars[i];
             testNotAllowedChar(c);

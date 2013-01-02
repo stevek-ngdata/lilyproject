@@ -17,18 +17,27 @@ package org.lilyproject.tools.tester;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.codehaus.jackson.JsonNode;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.util.json.JsonUtil;
 
 public class ReadAction extends AbstractTestAction implements TestAction {
 
     private boolean readBlobs = false;
+
     public ReadAction(JsonNode jsonNode, TestActionContext testActionContext) {
         super(jsonNode, testActionContext);
         readBlobs = JsonUtil.getBoolean(actionNode, "readBlobs", false);
@@ -38,25 +47,27 @@ public class ReadAction extends AbstractTestAction implements TestAction {
     protected void runAction() {
         TestRecord testRecord = testActionContext.records.getRecord(source);
 
-        if (testRecord == null)
+        if (testRecord == null) {
             return;
+        }
 
         long before = System.nanoTime();
         try {
             Record readRecord = testActionContext.repository.read(testRecord.getRecordId());
             long after = System.nanoTime();
-            report(true, (int) (after - before), "R", null);
+            report(true, (int)(after - before), "R", null);
 
             // Read blobs
-            if (readBlobs)
+            if (readBlobs) {
                 readBlobs(readRecord);
+            }
 
             // if (!readRecord.equals(testRecord.record)) {
             // System.out.println("Read record does not match written record!");
             // }
         } catch (Throwable t) {
             long after = System.nanoTime();
-            report(false, (int) (after - before));
+            report(false, (int)(after - before));
             reportError("Error reading record.", t);
         }
     }
@@ -72,23 +83,23 @@ public class ReadAction extends AbstractTestAction implements TestAction {
             }
         }
     }
-    
+
     private void readBlobs(Record readRecord, QName fieldName, Object value, ValueType valueType, int... indexes)
             throws RepositoryException, InterruptedException, IOException {
         if (valueType.getBaseName().equals("LIST")) {
-            List<Object> multivalues = (List<Object>) (value);
+            List<Object> multivalues = (List<Object>)(value);
             int multivalueIndex = randomIndex(multivalues.size());
             Object subValue = (multivalues.get(multivalueIndex));
             indexes = ArrayUtils.add(indexes, multivalueIndex);
             readBlobs(readRecord, fieldName, subValue, valueType.getNestedValueType(), indexes);
         } else if (valueType.getBaseName().equals("PATH")) {
-            Object[] hierarchyValues = ((HierarchyPath) (value)).getElements();
+            Object[] hierarchyValues = ((HierarchyPath)(value)).getElements();
             int hierarchyIndex = randomIndex(hierarchyValues.length);
             Object subValue = hierarchyValues[hierarchyIndex];
             indexes = ArrayUtils.add(indexes, hierarchyIndex);
             readBlobs(readRecord, fieldName, subValue, valueType.getNestedValueType(), indexes);
         } else {
-            Blob blob = (Blob) value;
+            Blob blob = (Blob)value;
             InputStream inputStream = testActionContext.repository.getInputStream(readRecord, fieldName, indexes);
             readBlobBytes(blob, inputStream);
         }
@@ -102,7 +113,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
         byte[] readBytes = new byte[blob.getSize().intValue()];
         int offset = 0;
         int len = blob.getSize().intValue();
-        
+
         while (true) {
             int amountRead = inputStream.read(readBytes, offset, len);
             if (amountRead == -1) {
@@ -113,7 +124,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
         }
 //        System.out.println("Blob read len="+offset+", expected="+blob.getSize());
     }
-    
+
     @Override
     public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) {
         throw new UnsupportedOperationException();

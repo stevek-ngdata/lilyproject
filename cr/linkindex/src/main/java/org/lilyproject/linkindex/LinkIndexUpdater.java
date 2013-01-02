@@ -15,19 +15,31 @@
  */
 package org.lilyproject.linkindex;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.linkindex.LinkIndexUpdaterMetrics.Action;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.util.repo.FieldFilter;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.RowLogContext;
 import org.lilyproject.util.repo.VTaggedRecord;
-import org.lilyproject.rowlog.api.RowLogMessage;
-import org.lilyproject.rowlog.api.RowLogMessageListener;
-
-import java.util.*;
 
 import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
@@ -62,11 +74,12 @@ public class LinkIndexUpdater implements RowLogMessageListener {
             Object context = msg.getContext();
             RecordEvent recordEvent = null;
             if (context != null) {
-                RowLogContext rowLogContext = (RowLogContext) msg.getContext();
+                RowLogContext rowLogContext = (RowLogContext)msg.getContext();
                 recordEvent = rowLogContext.getRecordEvent();
             }
-            if (recordEvent == null)
+            if (recordEvent == null) {
                 recordEvent = new RecordEvent(msg.getPayload(), repository.getIdGenerator());
+            }
             update(recordId, recordEvent);
         } catch (Exception e) {
             log.error("Error processing event in LinkIndexUpdater", e);
@@ -200,8 +213,9 @@ public class LinkIndexUpdater implements RowLogMessageListener {
      * Lookup name of field type, for use in debug logs. Beware, this might be slow.
      */
     private String safeLoadTagName(SchemaId fieldTypeId) {
-        if (fieldTypeId == null)
+        if (fieldTypeId == null) {
             return "null";
+        }
 
         try {
             return typeManager.getFieldTypeById(fieldTypeId).getName().getName();

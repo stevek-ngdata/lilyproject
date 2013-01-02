@@ -1,20 +1,19 @@
 package org.lilyproject.indexer.derefmap;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
+import static org.junit.Assert.assertEquals;
 
 /**
  *

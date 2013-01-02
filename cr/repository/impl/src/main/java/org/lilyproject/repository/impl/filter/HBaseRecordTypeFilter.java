@@ -15,14 +15,20 @@
  */
 package org.lilyproject.repository.impl.filter;
 
-import org.apache.hadoop.hbase.filter.*;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
 
@@ -38,19 +44,19 @@ public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
 
         Filter nameFilter = null;
         Filter versionFilter = null;
-        
+
         if (filter.getRecordType() != null) {
             RecordType recordType = repository.getTypeManager().getRecordTypeByName(filter.getRecordType(), null);
             nameFilter = new SingleColumnValueFilter(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_ID.bytes,
                     CompareFilter.CompareOp.EQUAL, recordType.getId().getBytes());
         }
-        
+
         if (filter.getVersion() != null) {
             versionFilter = new SingleColumnValueFilter(RecordCf.DATA.bytes,
                     RecordColumn.NON_VERSIONED_RT_VERSION.bytes, CompareFilter.CompareOp.EQUAL,
                     Bytes.toBytes(filter.getVersion()));
         }
-        
+
         Filter result;
         if (nameFilter == null && versionFilter == null) {
             throw new IllegalArgumentException("A RecordTypeFilter should at least specify the record type or its version.");

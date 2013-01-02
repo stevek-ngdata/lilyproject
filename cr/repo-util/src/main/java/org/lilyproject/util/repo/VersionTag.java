@@ -123,7 +123,7 @@ public class VersionTag {
         } else if (!record.hasField(vtagName)) {
             return null;
         } else {
-            version = (Long) record.getField(vtagName);
+            version = (Long)record.getField(vtagName);
 
             if (version == 0) {
                 reduceToNonVersioned(record, fields != null ? new HashSet<QName>(fields) : null,
@@ -158,8 +158,8 @@ public class VersionTag {
         }
 
         // Remove versioned record type info
-        record.setRecordType(Scope.VERSIONED, (QName) null, null);
-        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName) null, null);
+        record.setRecordType(Scope.VERSIONED, (QName)null, null);
+        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName)null, null);
     }
 
     private static void filterFields(Record record, Set<QName> fields) {

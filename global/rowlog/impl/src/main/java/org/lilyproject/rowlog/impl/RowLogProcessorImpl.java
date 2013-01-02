@@ -62,7 +62,9 @@ import org.lilyproject.util.io.Closer;
 public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, SubscriptionsObserver, ProcessorNotifyObserver {
     private volatile boolean stop = true;
     protected final RowLog rowLog;
-    /** key = subscription id */
+    /**
+     * key = subscription id
+     */
     protected final Map<String, SubscriptionThread> subscriptionThreads
             = Collections.synchronizedMap(new HashMap<String, SubscriptionThread>());
     private RowLogConfigurationManager rowLogConfigurationManager;
@@ -72,18 +74,20 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     private ScheduledExecutorService scheduledServices;
     private Configuration hbaseConf;
     private RowLogProcessorSettings settings;
-    /** key = subscription id */
+    /**
+     * key = subscription id
+     */
     private LoadingCache<String, Triggerable> bufferedProcessorNotifiers;
 
     private final AtomicBoolean initialRowLogConfigLoaded = new AtomicBoolean(false);
-    
+
     public RowLogProcessorImpl(RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager,
-            final Configuration hbaseConf) {
+                               final Configuration hbaseConf) {
         this(rowLog, rowLogConfigurationManager, hbaseConf, new RowLogProcessorSettings());
     }
 
     public RowLogProcessorImpl(RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager,
-            final Configuration hbaseConf, RowLogProcessorSettings settings) {
+                               final Configuration hbaseConf, RowLogProcessorSettings settings) {
         this.rowLog = rowLog;
         this.rowLogConfigurationManager = rowLogConfigurationManager;
         this.hbaseConf = hbaseConf;
@@ -94,7 +98,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     public RowLog getRowLog() {
         return rowLog;
     }
-    
+
     @Override
     public synchronized void start() throws InterruptedException, IOException {
         if (stop) {
@@ -154,13 +158,15 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         for (Triggerable triggerable : bufferedProcessorNotifiers.asMap().values()) {
             Closer.close(triggerable);
         }
-        if (scheduledServices != null)
+        if (scheduledServices != null) {
             scheduledServices.shutdownNow();
+        }
         stopRowLogConfig();
         stopSubscriptions();
         stopSubscriptionThreads();
-        if (globalQScanExecutor != null)
+        if (globalQScanExecutor != null) {
             globalQScanExecutor.shutdownNow();
+        }
     }
 
     private int getScanThreadCount(int regionServerCnt) {
@@ -191,7 +197,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     private void initializeRowLogConfig() throws InterruptedException {
         rowLogConfigurationManager.addRowLogObserver(rowLog.getId(), this);
         synchronized (initialRowLogConfigLoaded) {
-            while(!initialRowLogConfigLoaded.get()) {
+            while (!initialRowLogConfigLoaded.get()) {
                 initialRowLogConfigLoaded.wait();
             }
         }
@@ -246,7 +252,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         subscriptionThread.start();
         return subscriptionThread;
     }
-    
+
     private void stopSubscriptionThread(String subscriptionId) {
         SubscriptionThread subscriptionThread = subscriptionThreads.get(subscriptionId);
         subscriptionThread.shutdown();
@@ -296,7 +302,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     public boolean isRunning(String subscriptionId) {
         return subscriptionThreads.get(subscriptionId) != null;
     }
-            
+
     /**
      * Called when a message has been posted on the rowlog that needs to be processed by this RowLogProcessor.
      * The notification will only be taken into account when a delay has passed since the previous notification.
@@ -333,7 +339,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         public SubscriptionThread(RowLogSubscription subscription) {
             super(new ThreadGroup("RowLogProcessor"), "Row log SubscriptionThread for " + subscription.getId());
             this.subscription = subscription;
-            this.metrics = new ProcessorMetrics(rowLog.getId()+"_"+subscription.getId());
+            this.metrics = new ProcessorMetrics(rowLog.getId() + "_" + subscription.getId());
 
             int scanBatchPerShard = settings.getScanBatchSize() / rowLog.getShards().size();
             if (scanBatchPerShard < 1) {
@@ -347,7 +353,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
 
             switch (subscription.getType()) {
                 case VM:
-                    subscriptionHandler =new LocalListenersSubscriptionHandler(subscription.getId(), messagesWorkQueue,
+                    subscriptionHandler = new LocalListenersSubscriptionHandler(subscription.getId(), messagesWorkQueue,
                             rowLog, rowLogConfigurationManager);
                     break;
 
@@ -365,30 +371,30 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                     break;
             }
         }
-        
+
         public RowLogSubscription getSubscription() {
             return subscription;
         }
-        
+
         public synchronized void wakeup() {
             metrics.wakeups.inc();
             lastWakeup = System.currentTimeMillis();
             this.notify();
         }
-        
+
         @Override
         public synchronized void start() {
             stopRequested = false;
             subscriptionHandler.start();
             super.start();
         }
-        
+
         public void shutdown() {
             stopRequested = true;
             subscriptionHandler.shutdown();
             interrupt();
         }
-                
+
         @Override
         public void run() {
             try {
@@ -435,7 +441,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                             List<RowLogMessage> shardMessages = future.get();
                             messages.addAll(shardMessages);
                             if (shardMessages.size() > maxMessagesFromOneShard) {
-                                 maxMessagesFromOneShard = shardMessages.size();
+                                maxMessagesFromOneShard = shardMessages.size();
                             }
                         }
 
@@ -480,15 +486,16 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         }
 
                         metrics.messagesPerScan.inc(messages != null ? messages.size() : 0);
-						if (messages != null && !messages.isEmpty()) {
-						    minimalTimestamp = messages.get(0).getTimestamp() - settings.getMsgTimestampMargin();
+                        if (messages != null && !messages.isEmpty()) {
+                            minimalTimestamp = messages.get(0).getTimestamp() - settings.getMsgTimestampMargin();
                             for (RowLogMessage message : messages) {
-                                if (stopRequested)
+                                if (stopRequested) {
                                     return;
+                                }
 
                                 if (checkMinimalProcessDelay(message)) {
                                     scanFirstMessageOnly = true;
-                                	break; // Rescan the messages since they might have been processed in the meanwhile
+                                    break; // Rescan the messages since they might have been processed in the meanwhile
                                 } else {
                                     scanFirstMessageOnly = false;
                                 }
@@ -521,8 +528,9 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                     } catch (InterruptedException e) {
                         return;
                     } catch (Throwable t) {
-                        if (Thread.currentThread().isInterrupted())
+                        if (Thread.currentThread().isInterrupted()) {
                             return;
+                        }
                         log.error("Error in subscription thread for " + subscriptionId, t);
                     }
                 }
@@ -536,7 +544,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
          * until it is. Any other messages that might be in the queue to be
          * processed should (will) be younger and don't have to be processed yet
          * either.
-         * 
+         *
          * @return true if we waited
          * @throws InterruptedException
          */
@@ -550,21 +558,21 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                 }
                 return true;
             }
-        	return false;
+            return false;
         }
     }
-    
+
     @Override
     public void rowLogConfigChanged(RowLogConfig rowLogConfig) {
         this.rowLogConfig = rowLogConfig;
         if (this.rowLogConfig != null && !initialRowLogConfigLoaded.get()) {
-            synchronized(initialRowLogConfigLoaded) {
+            synchronized (initialRowLogConfigLoaded) {
                 initialRowLogConfigLoaded.set(true);
                 initialRowLogConfigLoaded.notifyAll();
             }
         }
     }
-    
+
     protected boolean isMessageDone(RowLogMessage message, String subscriptionId) throws RowLogException {
         return rowLog.isMessageDone(message, subscriptionId);
     }

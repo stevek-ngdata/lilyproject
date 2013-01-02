@@ -19,11 +19,18 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 import org.lilyproject.repository.impl.compat.Lily11RecordIdDecoder;
 
 public class LinkValueType extends AbstractValueType implements ValueType {
-    
+
     public final static String NAME = "LINK";
     private String fullName;
 
@@ -46,22 +53,22 @@ public class LinkValueType extends AbstractValueType implements ValueType {
             fullName = NAME;
         }
     }
-    
+
     @Override
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public String getName() {
         return fullName;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
     }
-    
+
     @Override
     public Link read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
@@ -108,13 +115,16 @@ public class LinkValueType extends AbstractValueType implements ValueType {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        return fullName.equals(((LinkValueType) obj).fullName);
+        }
+        return fullName.equals(((LinkValueType)obj).fullName);
     }
 
     //
@@ -123,16 +133,16 @@ public class LinkValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory(IdGenerator idGenerator, TypeManager typeManager) {
         return new LinkValueTypeFactory(idGenerator, typeManager);
     }
-    
+
     public static class LinkValueTypeFactory implements ValueTypeFactory {
         private final TypeManager typeManager;
         private final IdGenerator idGenerator;
 
-        LinkValueTypeFactory(IdGenerator idGenerator, TypeManager typeManager){
+        LinkValueTypeFactory(IdGenerator idGenerator, TypeManager typeManager) {
             this.idGenerator = idGenerator;
             this.typeManager = typeManager;
         }
-        
+
         @Override
         public ValueType getValueType(String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
             return new LinkValueType(idGenerator, typeManager, recordTypeName);

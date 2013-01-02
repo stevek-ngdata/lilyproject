@@ -36,7 +36,7 @@ public class HBaseRecordVariantFilter implements HBaseRecordFilterFactory {
             return null;
         }
 
-        final RecordVariantFilter filter = (RecordVariantFilter) uncastFilter;
+        final RecordVariantFilter filter = (RecordVariantFilter)uncastFilter;
 
         if (filter.getMasterRecordId() == null) {
             throw new IllegalArgumentException("Record ID should be specified in RecordVariantFilter");

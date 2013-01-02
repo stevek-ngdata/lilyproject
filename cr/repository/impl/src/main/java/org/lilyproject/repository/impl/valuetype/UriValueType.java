@@ -21,7 +21,6 @@ import java.util.Comparator;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.IdentityRecordStack;
-import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -69,12 +68,15 @@ public class UriValueType extends AbstractValueType implements ValueType {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         return true;
     }
 
@@ -84,10 +86,10 @@ public class UriValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new UriValueTypeFactory();
     }
-    
+
     public static class UriValueTypeFactory implements ValueTypeFactory {
         private static UriValueType instance = new UriValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

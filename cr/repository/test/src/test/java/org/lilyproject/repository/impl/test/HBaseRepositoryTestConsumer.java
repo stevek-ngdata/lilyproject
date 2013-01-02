@@ -16,19 +16,18 @@
 package org.lilyproject.repository.impl.test;
 
 import junit.framework.Assert;
-
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 
 public class HBaseRepositoryTestConsumer implements RowLogMessageListener {
     private static RowLogMessage message = null;
     private static RowLogMessage processedMessage = null;
-    
+
     public static void reset() {
         message = null;
         processedMessage = null;
     }
-    
+
     @Override
     public boolean processMessage(RowLogMessage message) {
         if (HBaseRepositoryTestConsumer.message == null) {
@@ -45,5 +44,5 @@ public class HBaseRepositoryTestConsumer implements RowLogMessageListener {
             }
         }
     }
-    
+
 }

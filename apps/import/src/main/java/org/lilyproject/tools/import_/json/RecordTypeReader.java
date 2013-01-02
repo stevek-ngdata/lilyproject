@@ -15,11 +15,6 @@
  */
 package org.lilyproject.tools.import_.json;
 
-import static org.lilyproject.util.json.JsonUtil.getArray;
-import static org.lilyproject.util.json.JsonUtil.getBoolean;
-import static org.lilyproject.util.json.JsonUtil.getLong;
-import static org.lilyproject.util.json.JsonUtil.getString;
-
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
@@ -31,8 +26,10 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 
+import static org.lilyproject.util.json.JsonUtil.*;
+
 public class RecordTypeReader implements EntityReader<RecordType> {
-    public static EntityReader<RecordType> INSTANCE  = new RecordTypeReader();
+    public static EntityReader<RecordType> INSTANCE = new RecordTypeReader();
 
     @Override
     public RecordType fromJson(JsonNode node, Repository repository) throws JsonFormatException, RepositoryException,
@@ -59,8 +56,9 @@ public class RecordTypeReader implements EntityReader<RecordType> {
         RecordType recordType = typeManager.newRecordType(name);
 
         String id = getString(node, "id", null);
-        if (id != null)
+        if (id != null) {
             recordType.setId(new SchemaIdImpl(id));
+        }
 
         if (node.get("fields") != null) {
             ArrayNode fields = getArray(node, "fields");
@@ -122,7 +120,7 @@ public class RecordTypeReader implements EntityReader<RecordType> {
 
     @Override
     public RecordType fromJson(JsonNode node, Namespaces namespaces, Repository repository,
-            LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
+                               LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(node, namespaces, repository);
     }
 }

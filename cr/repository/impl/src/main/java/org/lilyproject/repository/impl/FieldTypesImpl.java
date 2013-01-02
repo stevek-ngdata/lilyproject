@@ -15,17 +15,24 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ArgumentValidator;
 
 public class FieldTypesImpl implements FieldTypes {
     private Log log = LogFactory.getLog(getClass());
-    
+
     // Always use getNameCache() instead of this variable directly, to make sure
     // this is the up-to-date nameCache (in case of FieldTypesCache).
     protected Map<QName, FieldType> nameCache;
@@ -48,12 +55,12 @@ public class FieldTypesImpl implements FieldTypes {
         }
         return fieldTypes;
     }
-    
+
     @Override
     public FieldType getFieldType(SchemaId id) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(id, "id");
         String bucket = AbstractSchemaCache.encodeHex(id.getBytes());
-        
+
         Map<SchemaId, FieldType> fieldTypeIdCacheBucket = buckets.get(bucket);
         if (fieldTypeIdCacheBucket == null) {
             throw new FieldTypeNotFoundException(id);

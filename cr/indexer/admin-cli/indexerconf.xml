@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
-<indexer xmlns:foo="foo">
-    <!--
-  <records>
-    <record matchNamespace="foo" matchName="Book" matchVariant="*" vtags="live"/>
-  </records>
+<indexer>
+  <!--
+<records>
+  <record matchNamespace="foo" matchName="Book" matchVariant="*" vtags="live"/>
+</records>
 
-  <fields>
-    <field name="title" value="foo:title"/>
-  </fields>
-  -->
+<fields>
+  <field name="title" value="foo:title"/>
+</fields>
+-->
 
 </indexer>

@@ -15,16 +15,16 @@
  */
 package org.lilyproject.lilyservertestfw.integration;
 
-import org.junit.Test;
-import org.lilyproject.client.LilyClient;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.tools.import_.cli.JsonImport;
-
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import java.io.InputStream;
+
+import org.junit.Test;
+import org.lilyproject.client.LilyClient;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.tools.import_.cli.JsonImport;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -55,7 +55,7 @@ public class ResetLilyStateTest {
             // There's always the last vtag field type defined
             assertEquals(1, repository.getTypeManager().getFieldTypes().size());
             assertEquals(1, repository.getTypeManager().getFieldTypesWithoutCache().size());
-            
+
             // Load a schema
             InputStream is = ResetLilyStateTest.class.getResourceAsStream("schema.json");
             JsonImport.load(repository, is, false);
@@ -71,7 +71,7 @@ public class ResetLilyStateTest {
                     .field("field1", "foo")
                     .create();
         }
-        
+
         lilyClient.close();
     }
 

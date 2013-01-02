@@ -17,7 +17,7 @@ public class SynchronizedImportListener implements ImportListener {
 
     @Override
     public synchronized void conflict(EntityType entityType, String entityName, String propName, Object oldValue,
-            Object newValue) throws ImportConflictException {
+                                      Object newValue) throws ImportConflictException {
         delegate.conflict(entityType, entityName, propName, oldValue, newValue);
     }
 

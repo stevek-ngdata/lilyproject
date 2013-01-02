@@ -13,5 +13,4 @@ public class VariantPropertyTemplatePart implements TemplatePart {
     }
 
 
-
 }

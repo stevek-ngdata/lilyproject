@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
@@ -44,13 +45,16 @@
                     Copy the classloader XML file, for which we rely on the lily-server-test-fw project
                     to generate it for us.
                 -->
-                <property name="classLoaderXmlLocation" value="${basedir}/../server-test-fw/target/classloader-for-use-by-launcher.xml" />
-                <available property="classLoaderXmlAvailable" file="${classLoaderXmlLocation}" />
-                <fail unless="classLoaderXmlAvailable" message="File not available: ${classLoaderXmlLocation}" />
+                <property name="classLoaderXmlLocation"
+                          value="${basedir}/../server-test-fw/target/classloader-for-use-by-launcher.xml"/>
+                <available property="classLoaderXmlAvailable" file="${classLoaderXmlLocation}"/>
+                <fail unless="classLoaderXmlAvailable"
+                      message="File not available: ${classLoaderXmlLocation}"/>
 
-                <property name="targetDir" value="target/classes/org/lilyproject/lilyservertestfwloader" />
-                <mkdir dir="${targetDir}" />
-                <copy file="${classLoaderXmlLocation}" tofile="${targetDir}/classloader.xml" />
+                <property name="targetDir"
+                          value="target/classes/org/lilyproject/lilyservertestfwloader"/>
+                <mkdir dir="${targetDir}"/>
+                <copy file="${classLoaderXmlLocation}" tofile="${targetDir}/classloader.xml"/>
               </tasks>
             </configuration>
             <goals>
@@ -65,8 +69,9 @@
             </goals>
             <configuration>
               <tasks>
-                <mkdir dir="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/" />
-                <echo file="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/kauri.properties" encoding="utf8">kauri.version=${version.kauri}
+                <mkdir dir="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/"/>
+                <echo file="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/kauri.properties"
+                      encoding="utf8">kauri.version=${version.kauri}
                 </echo>
               </tasks>
             </configuration>
@@ -221,22 +226,32 @@ set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloader
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR -Dlily.plugin.dir=$LILY_PLUGIN_DIR -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr/${version.solr}/solr-${version.solr}.war</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR
+                -Dlily.plugin.dir=$LILY_PLUGIN_DIR -Dlily.testlauncher.repository=$M2_REPO
+                -Dsolr.war=$M2_REPO/org/apache/solr/solr/${version.solr}/solr-${version.solr}.war
+              </value>
             </parameter>
             <parameter>
               <platform>unix</platform>
               <mode>dev</mode>
-              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR -Dlily.plugin.dir=$LILY_PLUGIN_DIR</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$TEST_LILY_CONF_DIR
+                -Dlily.plugin.dir=$LILY_PLUGIN_DIR
+              </value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dist</mode>
-              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=%LILY_HOME%\conf -Dlily.plugin.dir=%LILY_HOME%\plugins -Dlily.testlauncher.repository=%M2_REPO% -Dsolr.war=%M2_REPO%\org\apache\solr\solr\${version.solr}\solr-${version.solr}.war</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=%LILY_HOME%\conf
+                -Dlily.plugin.dir=%LILY_HOME%\plugins -Dlily.testlauncher.repository=%M2_REPO%
+                -Dsolr.war=%M2_REPO%\org\apache\solr\solr\${version.solr}\solr-${version.solr}.war
+              </value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dev</mode>
-              <value>-XX:MaxPermSize=128m -Dlily.plugin.dir=${basedir}\..\..\cr\process\server\conf -Dlily.plugin.dir=${basedir}\..\..\cr\process\server\plugins</value>
+              <value>-XX:MaxPermSize=128m -Dlily.plugin.dir=${basedir}\..\..\cr\process\server\conf
+                -Dlily.plugin.dir=${basedir}\..\..\cr\process\server\plugins
+              </value>
             </parameter>
           </defaultJvmArgs>
         </configuration>

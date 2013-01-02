@@ -15,11 +15,6 @@
  */
 package org.lilyproject.rest;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.NullInputStream;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.util.io.Closer;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -30,7 +25,13 @@ import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import static javax.ws.rs.core.Response.Status.*;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.NullInputStream;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.util.io.Closer;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @Path("blob")
 public class BlobCollectionResource extends RepositoryEnabled {

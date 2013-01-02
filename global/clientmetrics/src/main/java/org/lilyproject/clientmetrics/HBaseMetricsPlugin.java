@@ -15,12 +15,12 @@
  */
 package org.lilyproject.clientmetrics;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-
-import java.util.Collections;
-import java.util.List;
 
 public class HBaseMetricsPlugin implements MetricsPlugin {
     private HBaseMetrics hbaseMetrics;
@@ -36,8 +36,9 @@ public class HBaseMetricsPlugin implements MetricsPlugin {
 
     @Override
     public void beforeReport(Metrics metrics) {
-        if (!useJmx)
+        if (!useJmx) {
             return;
+        }
 
         try {
             hbaseMetrics.reportMetrics(metrics);

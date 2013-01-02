@@ -16,13 +16,16 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-hadoop-test</artifactId>
   <name>Lily: Test module for misc Hadoop/Zk/HBase</name>
-  <description>This separate test module was introduced to allow testing dependencies of hadoop-test-fw, while still making use of hadoop-test-fw.</description>
+  <description>This separate test module was introduced to allow testing dependencies of hadoop-test-fw, while still
+    making use of hadoop-test-fw.
+  </description>
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily</artifactId>

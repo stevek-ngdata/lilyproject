@@ -37,7 +37,7 @@ public class RowLogMessageImpl implements RowLogMessage {
     public RowLogMessageImpl(long timestamp, byte[] rowKey, long seqnr, byte[] data, RowLog rowLog) {
         this(timestamp, rowKey, seqnr, data, null, rowLog);
     }
-    
+
     public RowLogMessageImpl(long timestamp, byte[] rowKey, long seqnr, byte[] data, byte[] payload, RowLog rowLog) {
         this.timestamp = timestamp;
         this.rowKey = rowKey;
@@ -54,8 +54,9 @@ public class RowLogMessageImpl implements RowLogMessage {
 
     @Override
     public byte[] getPayload() throws RowLogException {
-        if (payload == null)
+        if (payload == null) {
             this.payload = rowLog.getPayload(this);
+        }
         return payload;
     }
 
@@ -68,7 +69,7 @@ public class RowLogMessageImpl implements RowLogMessage {
     public long getSeqNr() {
         return seqnr;
     }
-    
+
     @Override
     public long getTimestamp() {
         return timestamp;
@@ -79,26 +80,32 @@ public class RowLogMessageImpl implements RowLogMessage {
         final int prime = 31;
         int result = 1;
         result = prime * result + Arrays.hashCode(rowKey);
-        result = prime * result + (int) (seqnr ^ (seqnr >>> 32));
-        result = prime * result + (int) (timestamp ^ (timestamp >>> 32));
+        result = prime * result + (int)(seqnr ^ (seqnr >>> 32));
+        result = prime * result + (int)(timestamp ^ (timestamp >>> 32));
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        RowLogMessageImpl other = (RowLogMessageImpl) obj;
-        if (!Arrays.equals(rowKey, other.rowKey))
+        }
+        RowLogMessageImpl other = (RowLogMessageImpl)obj;
+        if (!Arrays.equals(rowKey, other.rowKey)) {
             return false;
-        if (seqnr != other.seqnr)
+        }
+        if (seqnr != other.seqnr) {
             return false;
-        if (timestamp != other.timestamp)
+        }
+        if (timestamp != other.timestamp) {
             return false;
+        }
         return true;
     }
 
@@ -106,8 +113,8 @@ public class RowLogMessageImpl implements RowLogMessage {
     public String toString() {
         return "RowLogMessageImpl [rowLog=" + rowLog.getId() + ", timestamp=" + timestamp + ", rowKey="
                 + Bytes.toStringBinary(rowKey) + ", seqnr=" + seqnr + "]";
-    }    
-    
+    }
+
     /**
      * Set the execution state
      */
@@ -118,7 +125,7 @@ public class RowLogMessageImpl implements RowLogMessage {
     public ExecutionState getExecutionState() {
         return executionState;
     }
-    
+
     public void setContext(Object context) {
         this.context = context;
     }

@@ -15,14 +15,22 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.hadoop.hbase.util.Bytes.ByteArrayComparator;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.ArgumentValidator;
 
 public class RecordTypeImpl implements RecordType, Cloneable {
-    
+
     private SchemaId id;
     private QName name;
     private Long version;
@@ -38,6 +46,7 @@ public class RecordTypeImpl implements RecordType, Cloneable {
 
     /**
      * This constructor should not be called directly.
+     *
      * @use {@link TypeManager#newRecordType} instead
      */
     public RecordTypeImpl(SchemaId id, QName name) {
@@ -47,22 +56,22 @@ public class RecordTypeImpl implements RecordType, Cloneable {
         // each time they are requested.
         fieldTypeEntries = new TreeMap<SchemaId, FieldTypeEntry>(comparator);
     }
-    
+
     @Override
     public void setId(SchemaId id) {
         this.id = id;
     }
-    
+
     @Override
     public SchemaId getId() {
         return id;
     }
-    
+
     @Override
     public void setName(QName name) {
         this.name = name;
     }
-    
+
     @Override
     public QName getName() {
         return name;
@@ -72,27 +81,27 @@ public class RecordTypeImpl implements RecordType, Cloneable {
     public Long getVersion() {
         return version;
     }
-    
+
     @Override
-    public void setVersion(Long version){
+    public void setVersion(Long version) {
         this.version = version;
     }
-    
+
     @Override
     public Collection<FieldTypeEntry> getFieldTypeEntries() {
         return fieldTypeEntries.values();
     }
-    
+
     @Override
     public FieldTypeEntry getFieldTypeEntry(SchemaId fieldTypeId) {
         return fieldTypeEntries.get(fieldTypeId);
     }
-    
+
     @Override
     public void removeFieldTypeEntry(SchemaId fieldTypeId) {
         fieldTypeEntries.remove(fieldTypeId);
     }
-    
+
     @Override
     public void addFieldTypeEntry(FieldTypeEntry fieldTypeEntry) {
         fieldTypeEntries.put(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry);
@@ -110,17 +119,17 @@ public class RecordTypeImpl implements RecordType, Cloneable {
         ArgumentValidator.notNull(recordTypeId, "recordTypeId");
         mixins.put(recordTypeId, recordTypeVersion);
     }
-    
+
     @Override
     public void addMixin(SchemaId recordTypeId) {
         addMixin(recordTypeId, null);
     }
-    
+
     @Override
     public void removeMixin(SchemaId recordTypeId) {
         mixins.remove(recordTypeId);
     }
-    
+
     @Override
     public Map<SchemaId, Long> getMixins() {
         return mixins;
@@ -149,38 +158,51 @@ public class RecordTypeImpl implements RecordType, Cloneable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        RecordTypeImpl other = (RecordTypeImpl) obj;
+        }
+        RecordTypeImpl other = (RecordTypeImpl)obj;
         if (fieldTypeEntries == null) {
-            if (other.fieldTypeEntries != null)
+            if (other.fieldTypeEntries != null) {
                 return false;
-        } else if (!fieldTypeEntries.equals(other.fieldTypeEntries))
+            }
+        } else if (!fieldTypeEntries.equals(other.fieldTypeEntries)) {
             return false;
+        }
         if (id == null) {
-            if (other.id != null)
+            if (other.id != null) {
                 return false;
-        } else if (!id.equals(other.id))
+            }
+        } else if (!id.equals(other.id)) {
             return false;
+        }
         if (mixins == null) {
-            if (other.mixins != null)
+            if (other.mixins != null) {
                 return false;
-        } else if (!mixins.equals(other.mixins))
+            }
+        } else if (!mixins.equals(other.mixins)) {
             return false;
+        }
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false;
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false;
+        }
         if (version == null) {
-            if (other.version != null)
+            if (other.version != null) {
                 return false;
-        } else if (!version.equals(other.version))
+            }
+        } else if (!version.equals(other.version)) {
             return false;
+        }
         return true;
     }
 

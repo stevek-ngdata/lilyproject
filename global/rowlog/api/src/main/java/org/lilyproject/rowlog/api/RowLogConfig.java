@@ -29,20 +29,20 @@ public class RowLogConfig {
 
     /**
      * A value object bundling the configuration paramaters for a rowlog and its processors.
-     * @see RowLogConfigurationManager
-     * 
-     * @param respsectOrder true if the order of subscriptions needs to be respected for the rowlog
-     * @param enableNotify true if the processor need to be notified of new messages being put on the rowlog
-     * @param notifyDelay the minimal delay between two notify messages to be sent to the processor
-     * @param minimalProcessDelay the minimal age a messages needs to have before a processor will pick it up for processing
-     * @param wakeupTimeout the maximum time to wait before checking for new messages in case notify messages are
-     *                      missed notifying is disabled
+     *
+     * @param respsectOrder        true if the order of subscriptions needs to be respected for the rowlog
+     * @param enableNotify         true if the processor need to be notified of new messages being put on the rowlog
+     * @param notifyDelay          the minimal delay between two notify messages to be sent to the processor
+     * @param minimalProcessDelay  the minimal age a messages needs to have before a processor will pick it up for processing
+     * @param wakeupTimeout        the maximum time to wait before checking for new messages in case notify messages are
+     *                             missed notifying is disabled
      * @param orphanedMessageDelay time that should have passed before deciding that an entry on the global queue is
      *                             orphaned, i.e. has no corresponding message on the row-local queue.
-     * @param deleteBufferSize number of deletes to buffer per rowlog shard before applying them to HBase.
+     * @param deleteBufferSize     number of deletes to buffer per rowlog shard before applying them to HBase.
+     * @see RowLogConfigurationManager
      */
     public RowLogConfig(boolean respsectOrder, boolean enableNotify, long notifyDelay, long minimalProcessDelay,
-            long wakeupTimeout, long orphanedMessageDelay, int deleteBufferSize) {
+                        long wakeupTimeout, long orphanedMessageDelay, int deleteBufferSize) {
         this.respectOrder = respsectOrder;
         this.enableNotify = enableNotify;
         this.notifyDelay = notifyDelay;
@@ -55,11 +55,11 @@ public class RowLogConfig {
     public boolean isRespectOrder() {
         return respectOrder;
     }
-    
+
     public void setRespectOrder(boolean respectOrder) {
         this.respectOrder = respectOrder;
     }
-    
+
     public boolean isEnableNotify() {
         return enableNotify;
     }
@@ -83,11 +83,11 @@ public class RowLogConfig {
     public void setMinimalProcessDelay(long minimalProcessDelay) {
         this.minimalProcessDelay = minimalProcessDelay;
     }
-    
+
     public long getWakeupTimeout() {
         return wakeupTimeout;
     }
-    
+
     public void setWakeupTimeout(long wakeupTimeout) {
         this.wakeupTimeout = wakeupTimeout;
     }
@@ -116,13 +116,16 @@ public class RowLogConfig {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        RowLogConfig other = (RowLogConfig) obj;
+        }
+        RowLogConfig other = (RowLogConfig)obj;
         return Objects.equal(enableNotify, other.enableNotify)
                 && Objects.equal(minimalProcessDelay, other.minimalProcessDelay)
                 && Objects.equal(notifyDelay, other.notifyDelay)

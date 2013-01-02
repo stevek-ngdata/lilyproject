@@ -15,19 +15,15 @@
  */
 package org.lilyproject.rest.providers.json;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
@@ -38,6 +34,9 @@ import org.lilyproject.tools.import_.json.LinkTransformer;
 import org.lilyproject.util.json.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+
 @Provider
 public class EntityMessageBodyReader extends RepositoryEnabled implements MessageBodyReader<Object> {
 
@@ -47,8 +46,9 @@ public class EntityMessageBodyReader extends RepositoryEnabled implements Messag
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
             for (Class clazz : EntityRegistry.SUPPORTED_TYPES.keySet()) {
-                if (type.isAssignableFrom(clazz))
+                if (type.isAssignableFrom(clazz)) {
                     return true;
+                }
             }
         }
         return false;
@@ -56,7 +56,7 @@ public class EntityMessageBodyReader extends RepositoryEnabled implements Messag
 
     @Override
     public Object readFrom(Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType,
-            MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
+                           MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
             throws IOException, WebApplicationException {
 
         JsonNode node = JsonFormat.deserializeNonStd(entityStream);

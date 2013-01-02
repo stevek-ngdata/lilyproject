@@ -15,6 +15,12 @@
  */
 package org.lilyproject.server.modules.general;
 
+import javax.annotation.PostConstruct;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
@@ -23,13 +29,6 @@ import org.apache.zookeeper.Watcher;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-import org.lilyproject.util.zookeeper.ZooKeeperOperation;
-
-import javax.annotation.PostConstruct;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class LilyInfoImpl implements LilyInfo {
     private boolean indexerMaster;

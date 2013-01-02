@@ -20,8 +20,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
 
 public class BlobStoreTest extends AbstractBlobStoreTest {
 
@@ -53,5 +53,5 @@ public class BlobStoreTest extends AbstractBlobStoreTest {
     public void tearDown() throws Exception {
     }
 
-    
+
 }

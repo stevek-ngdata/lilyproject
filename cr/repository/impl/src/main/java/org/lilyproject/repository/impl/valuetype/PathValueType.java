@@ -15,51 +15,60 @@
  */
 package org.lilyproject.repository.impl.valuetype;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 import org.lilyproject.util.ArgumentValidator;
 
 public class PathValueType extends AbstractValueType implements ValueType {
-    
+
     public final static String NAME = "PATH";
-    
+
     private ValueType valueType;
 
     private final String fullName;
-    
+
     public PathValueType(TypeManager typeManager, String typeParams) throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(typeParams, "typeParams");
-        this.fullName = NAME+"<"+typeParams+">";
+        this.fullName = NAME + "<" + typeParams + ">";
         this.valueType = typeManager.getValueType(typeParams);
     }
-    
+
     public PathValueType(TypeManager typeManager, DataInput typeParamsDataInput) throws RepositoryException, InterruptedException {
         this(typeManager, typeParamsDataInput.readUTF());
     }
-    
+
     @Override
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public String getName() {
         return fullName;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return valueType.getDeepestValueType();
     }
-    
+
     @Override
     public ValueType getNestedValueType() {
         return valueType;
     }
-    
+
     @Override
     public int getNestingLevel() {
         return 1 + valueType.getNestingLevel();
@@ -70,7 +79,7 @@ public class PathValueType extends AbstractValueType implements ValueType {
     public HierarchyPath read(DataInput dataInput) throws RepositoryException, InterruptedException {
         int nrOfValues = dataInput.readInt();
         List<Object> result = new ArrayList<Object>(nrOfValues);
-        for (int i = 0 ; i < nrOfValues; i++) {
+        for (int i = 0; i < nrOfValues; i++) {
             result.add(valueType.read(dataInput));
         }
         return new HierarchyPath(result.toArray(new Object[result.size()]));
@@ -79,7 +88,7 @@ public class PathValueType extends AbstractValueType implements ValueType {
     @Override
     public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException {
-        Object[] elements = ((HierarchyPath) value).getElements();
+        Object[] elements = ((HierarchyPath)value).getElements();
         dataOutput.writeInt(elements.length);
         for (Object element : elements) {
             valueType.write(element, dataOutput, parentRecords);
@@ -99,12 +108,12 @@ public class PathValueType extends AbstractValueType implements ValueType {
     @Override
     public Set<Object> getValues(Object value) {
         Set<Object> result = new HashSet<Object>();
-        for (Object element : ((HierarchyPath) value).getElements()) {
+        for (Object element : ((HierarchyPath)value).getElements()) {
             result.addAll(valueType.getValues(element));
-        } 
+        }
         return result;
     }
-    
+
     @Override
     public boolean isHierarchical() {
         return true;
@@ -120,13 +129,16 @@ public class PathValueType extends AbstractValueType implements ValueType {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        return fullName.equals(((PathValueType) obj).fullName);
+        }
+        return fullName.equals(((PathValueType)obj).fullName);
     }
 
     //
@@ -135,15 +147,15 @@ public class PathValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory(TypeManager typeManager) {
         return new PathValueTypeFactory(typeManager);
     }
-    
+
     public static class PathValueTypeFactory implements ValueTypeFactory {
-        
+
         private TypeManager typeManager;
 
         public PathValueTypeFactory(TypeManager typeManager) {
             this.typeManager = typeManager;
         }
-        
+
         @Override
         public ValueType getValueType(String typeParams) throws RepositoryException, InterruptedException {
             return new PathValueType(typeManager, typeParams);

@@ -35,7 +35,7 @@ public class LilyIdScanInputFormat extends AbstractLilyScanInputFormat<RecordIdW
 
     @Override
     public RecordReader<RecordIdWritable, IdRecordWritable> createRecordReader(InputSplit inputSplit,
-            TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
+                                                                               TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
 
         LilyClient lilyClient = null;
         try {

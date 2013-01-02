@@ -34,25 +34,27 @@ public class CustomThreadFactory implements ThreadFactory {
     public CustomThreadFactory(String name, ThreadGroup group) {
         this(name, group, false);
     }
-    
+
     public CustomThreadFactory(String name, ThreadGroup group, boolean daemon) {
         this.name = name;
         this.group = group == null ? Thread.currentThread().getThreadGroup() : group;
         this.namePrefix = name + "-thread-";
         this.daemon = daemon;
     }
-    
-    @Override    
+
+    @Override
     public Thread newThread(Runnable r) {
         Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
 
-        if (daemon)
+        if (daemon) {
             t.setDaemon(true);
-        else if (t.isDaemon())
+        } else if (t.isDaemon()) {
             t.setDaemon(false);
+        }
 
-        if (t.getPriority() != Thread.NORM_PRIORITY)
+        if (t.getPriority() != Thread.NORM_PRIORITY) {
             t.setPriority(Thread.NORM_PRIORITY);
+        }
 
         return t;
     }

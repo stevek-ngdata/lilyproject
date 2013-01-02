@@ -22,7 +22,7 @@ import org.codehaus.jackson.node.ObjectNode;
 
 /**
  * An IndexFieldDefinition for floats.
- *
+ * <p/>
  * <p>Note that since float representation is always approximative, it is
  * better suited for range queries than equals queries.
  */

@@ -66,7 +66,7 @@ public class SolrTestingUtility {
     }
 
     public String getAutoCommitSetting() {
-      return autoCommitSetting;
+        return autoCommitSetting;
     }
 
     public void setAutoCommitSetting(String autoCommitSetting) {
@@ -127,7 +127,7 @@ public class SolrTestingUtility {
         server.start();
     }
 
-    private Server createServer() throws Exception{
+    private Server createServer() throws Exception {
         if (this.useSolrCloud) {
             // create path on zookeeper for solr cloud
             ZooKeeperItf zk = ZkUtil.connect("localhost:2181", 10000);
@@ -153,8 +153,9 @@ public class SolrTestingUtility {
     }
 
     public void stop() throws Exception {
-        if (server != null)
+        if (server != null) {
             server.stop();
+        }
 
         if (clearData && solrHomeDir != null) {
             FileUtils.deleteDirectory(solrHomeDir);

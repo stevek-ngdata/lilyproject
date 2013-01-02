@@ -51,7 +51,7 @@ public class RecordScanReader implements EntityReader<RecordScan> {
                     nodeNode.getClass().getName());
         }
 
-        ObjectNode node = (ObjectNode) nodeNode;
+        ObjectNode node = (ObjectNode)nodeNode;
         RecordScan scan = new RecordScan();
 
         namespaces = NamespacesConverter.fromContextJson(node, namespaces);
@@ -112,7 +112,7 @@ public class RecordScanReader implements EntityReader<RecordScan> {
 
     @Override
     public RecordScan fromJson(JsonNode node, Namespaces namespaces, Repository repository,
-            LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
+                               LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(node, namespaces, repository);
     }
 }

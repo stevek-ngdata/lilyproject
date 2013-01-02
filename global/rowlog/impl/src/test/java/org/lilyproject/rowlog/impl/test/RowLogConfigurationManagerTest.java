@@ -16,7 +16,11 @@
 package org.lilyproject.rowlog.impl.test;
 
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -26,16 +30,16 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.rowlog.api.ListenersObserver;
 import org.lilyproject.rowlog.api.ProcessorNotifyObserver;
 import org.lilyproject.rowlog.api.RowLogConfig;
 import org.lilyproject.rowlog.api.RowLogObserver;
 import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.rowlog.api.SubscriptionsObserver;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
+import org.lilyproject.rowlog.api.SubscriptionsObserver;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -43,7 +47,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 public class RowLogConfigurationManagerTest {
     protected static HBaseProxy HBASE_PROXY;
     private static ZooKeeperItf zooKeeper;
-    
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
@@ -87,7 +91,7 @@ public class RowLogConfigurationManagerTest {
         Map<String, RowLogConfig> rowLogs = rowLogConfigurationManager.getRowLogs();
         Assert.assertEquals(1, rowLogs.size());
         Assert.assertEquals(rowLogConfig, rowLogs.get(rowLogId));
-        
+
         RowLogCallBack callBack2 = new RowLogCallBack();
         RowLogConfig rowLogConfig2 = new RowLogConfig(true, true, 100L, 5000L, 2000L, 120000L, 100);
         callBack2.expect(rowLogConfig2);
@@ -98,7 +102,7 @@ public class RowLogConfigurationManagerTest {
         Assert.assertEquals(2, rowLogs.size());
         Assert.assertEquals(rowLogConfig, rowLogs.get(rowLogId));
         Assert.assertEquals(rowLogConfig2, rowLogs.get(rowLogId2));
-        
+
         // Update rowlog
         RowLogConfig rowLogConfig1b = new RowLogConfig(false, true, 200L, 9L, 5000L, 120000L, 100);
         callBack.expect(rowLogConfig1b);
@@ -108,7 +112,7 @@ public class RowLogConfigurationManagerTest {
         Assert.assertEquals(2, rowLogs.size());
         Assert.assertEquals(rowLogConfig1b, rowLogs.get(rowLogId));
         Assert.assertEquals(rowLogConfig2, rowLogs.get(rowLogId2));
-        
+
         // Remove rowlog
         callBack.expect(null);
         rowLogConfigurationManager.removeRowLog(rowLogId);
@@ -116,19 +120,19 @@ public class RowLogConfigurationManagerTest {
         rowLogs = rowLogConfigurationManager.getRowLogs();
         Assert.assertEquals(1, rowLogs.size());
         Assert.assertEquals(rowLogConfig2, rowLogs.get(rowLogId2));
-        
+
         // RowLogId2 was not updated nor removed
         callBack2.expect(rowLogConfig2);
         callBack2.validate();
 
         rowLogConfigurationManager.shutdown();
     }
-    
+
     private class RowLogCallBack implements RowLogObserver {
         public RowLogConfig rowLogConfig;
         private RowLogConfig expectedRowLogConfig;
         private Semaphore semaphore = new Semaphore(0);
-        
+
         @Override
         public void rowLogConfigChanged(RowLogConfig rowLogConfig) {
             this.rowLogConfig = rowLogConfig;
@@ -139,13 +143,14 @@ public class RowLogConfigurationManagerTest {
             semaphore.drainPermits();
             this.expectedRowLogConfig = rowLogConfig;
         }
-        
-        public void validate() throws Exception{
+
+        public void validate() throws Exception {
             semaphore.tryAcquire(3, TimeUnit.SECONDS);
-            if (expectedRowLogConfig == null)
+            if (expectedRowLogConfig == null) {
                 Assert.assertNull(rowLogConfig);
-            else 
+            } else {
                 Assert.assertEquals(expectedRowLogConfig, rowLogConfig);
+            }
         }
     }
 
@@ -174,7 +179,7 @@ public class RowLogConfigurationManagerTest {
         callBack.expect(Arrays.asList(expectedSubscriptionContext, expectedSubscriptionContext2));
         rowLogConfigurationManager.addSubscription(rowLogId, subscriptionId2, Type.Netty, 2);
         callBack.validate();
-        
+
         // Update subscription
         RowLogSubscription expectedSubscriptionContext3 = new RowLogSubscription(rowLogId, subscriptionId1, Type.Netty, 7);
         callBack.expect(Arrays.asList(expectedSubscriptionContext2, expectedSubscriptionContext3));
@@ -183,19 +188,19 @@ public class RowLogConfigurationManagerTest {
         callBack.expect(Arrays.asList(expectedSubscriptionContext2));
         rowLogConfigurationManager.removeSubscription(rowLogId, subscriptionId1);
         callBack.validate();
-        
+
         callBack.expect(Collections.<RowLogSubscription>emptyList());
         rowLogConfigurationManager.removeSubscription(rowLogId, subscriptionId2);
         callBack.validate();
 
         rowLogConfigurationManager.shutdown();
     }
-    
+
     private class SubscriptionsCallBack implements SubscriptionsObserver {
         public List<RowLogSubscription> subscriptions = new ArrayList<RowLogSubscription>();
         private List<RowLogSubscription> expectedSubscriptions;
         private Semaphore semaphore = new Semaphore(0);
-        
+
         @Override
         public void subscriptionsChanged(List<RowLogSubscription> subscriptions) {
             this.subscriptions = subscriptions;
@@ -205,8 +210,8 @@ public class RowLogConfigurationManagerTest {
         public void expect(List<RowLogSubscription> asList) {
             this.expectedSubscriptions = asList;
         }
-        
-        public void validate() throws Exception{
+
+        public void validate() throws Exception {
             semaphore.tryAcquire(10, TimeUnit.SECONDS);
             for (RowLogSubscription subscriptionContext : subscriptions) {
                 Assert.assertTrue(expectedSubscriptions.contains(subscriptionContext));
@@ -216,7 +221,7 @@ public class RowLogConfigurationManagerTest {
             }
         }
     }
-    
+
     @Test
     public void testListener() throws Exception {
         String rowLogId = "testListenerRowLogId";
@@ -250,20 +255,20 @@ public class RowLogConfigurationManagerTest {
         callBack.expect(Arrays.asList("Listener2"));
         rowLogConfigurationManager.removeListener(rowLogId, subscriptionId1, "Listener1");
         callBack.validate();
-        
+
         callBack.expect(Collections.<String>emptyList());
         rowLogConfigurationManager.removeListener(rowLogId, subscriptionId1, "Listener2");
         callBack.validate();
 
         rowLogConfigurationManager.shutdown();
     }
-    
+
     private class ListenersCallBack implements ListenersObserver {
         public List<String> listeners = new ArrayList<String>();
         private List<String> expectedListeners;
-        
+
         private Semaphore semaphore = new Semaphore(0);
-        
+
         @Override
         public void listenersChanged(List<String> listeners) {
             this.listeners = listeners;
@@ -274,10 +279,10 @@ public class RowLogConfigurationManagerTest {
             semaphore.drainPermits();
             this.expectedListeners = expectedListeners;
         }
-        
+
         private void validate() throws Exception {
             semaphore.tryAcquire(10, TimeUnit.SECONDS);
-            for (String listener: listeners) {
+            for (String listener : listeners) {
                 Assert.assertTrue(expectedListeners.contains(listener));
             }
             for (String listener : expectedListeners) {
@@ -288,7 +293,7 @@ public class RowLogConfigurationManagerTest {
 
     @Test
     public void testProcessorNotify() throws Exception {
-    	String rowLogId1 = "testProcessorNotifyRowLogId1";
+        String rowLogId1 = "testProcessorNotifyRowLogId1";
         String rowLogId2 = "testProcessorNotifyRowLogId2";
         String subscriptionId1 = "testSubscriptionId1";
         String subscriptionId2 = "testSubscriptionId2";
@@ -332,11 +337,11 @@ public class RowLogConfigurationManagerTest {
         callBack1Sub2.validate();
         callBack2Sub1.validate();
     }
-    
+
     private class ProcessorNotifyCallBack implements ProcessorNotifyObserver {
-        
+
         private Semaphore semaphore = new Semaphore(0);
-		private boolean expect = false;
+        private boolean expect = false;
 
         @Override
         public void notifyProcessor(String rowLogId, String subscriptionId) {
@@ -344,13 +349,13 @@ public class RowLogConfigurationManagerTest {
         }
 
         public void expect(boolean expect) {
-            this.expect  = expect;
-			semaphore.drainPermits();
+            this.expect = expect;
+            semaphore.drainPermits();
         }
-        
+
         private void validate() throws Exception {
-        	Assert.assertEquals(expect, semaphore.tryAcquire(5, TimeUnit.SECONDS));
+            Assert.assertEquals(expect, semaphore.tryAcquire(5, TimeUnit.SECONDS));
         }
     }
-    
+
 }

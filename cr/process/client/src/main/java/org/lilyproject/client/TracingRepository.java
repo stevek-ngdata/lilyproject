@@ -12,13 +12,13 @@ import org.lilyproject.repository.api.TypeManager;
 public class TracingRepository {
 
     public static Repository wrap(Repository repository) {
-        TypeManager typeManager = (TypeManager) Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
+        TypeManager typeManager = (TypeManager)Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
                 new Class[]{TypeManager.class}, new TracingTypeManagerIH(repository.getTypeManager()));
 
-        IdGenerator idGenerator = (IdGenerator) Proxy.newProxyInstance(IdGenerator.class.getClassLoader(),
+        IdGenerator idGenerator = (IdGenerator)Proxy.newProxyInstance(IdGenerator.class.getClassLoader(),
                 new Class[]{IdGenerator.class}, new TracingIdGeneratorIH(repository.getIdGenerator()));
 
-        return (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),
+        return (Repository)Proxy.newProxyInstance(Repository.class.getClassLoader(),
                 new Class[]{Repository.class}, new TracingRepositoryIH(repository, typeManager, idGenerator));
     }
 
@@ -59,11 +59,12 @@ public class TracingRepository {
                 builder.append(i > 0 ? ", " : " ");
                 builder.append("arg").append(i).append(" = ");
                 if (args[i] != null && args[i].getClass().isArray()) {
-                    Object[] values = (Object[]) args[i];
+                    Object[] values = (Object[])args[i];
                     builder.append("[");
                     for (int j = 0; j < values.length; j++) {
-                        if (j > 0)
+                        if (j > 0) {
                             builder.append(", ");
+                        }
                         builder.append(values[i]);
                     }
                     builder.append("]");

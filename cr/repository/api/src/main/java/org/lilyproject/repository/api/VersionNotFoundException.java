@@ -28,7 +28,7 @@ public class VersionNotFoundException extends RecordException {
         String version = state.get("version");
         this.version = version != null ? Long.valueOf(version) : null;
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
@@ -36,7 +36,7 @@ public class VersionNotFoundException extends RecordException {
         state.put("version", version != null ? version.toString() : null);
         return state;
     }
-    
+
     public VersionNotFoundException(RecordId recordId, long version) {
         this.recordId = recordId != null ? recordId.toString() : null;
         this.version = version;

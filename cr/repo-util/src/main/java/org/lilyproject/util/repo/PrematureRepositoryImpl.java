@@ -15,13 +15,30 @@
  */
 package org.lilyproject.util.repo;
 
-import org.lilyproject.repository.api.*;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
+
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobAccess;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.IdRecordScanner;
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordBuilder;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.RecordScanner;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 
 /**
  * See {@link PrematureRepository}.
@@ -92,7 +109,7 @@ public class PrematureRepositoryImpl implements PrematureRepository {
 
     @Override
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType,
-            List<MutationCondition> conditions) throws RepositoryException, InterruptedException {
+                         List<MutationCondition> conditions) throws RepositoryException, InterruptedException {
         waitOnRepo();
         return delegate.update(record, updateVersion, useLatestRecordType, conditions);
     }

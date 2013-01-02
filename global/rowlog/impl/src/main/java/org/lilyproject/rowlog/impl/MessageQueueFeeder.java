@@ -25,11 +25,11 @@ import org.lilyproject.rowlog.api.RowLogMessageListener;
 public class MessageQueueFeeder implements RowLogMessageListener {
     private Log log = LogFactory.getLog(getClass());
     private RowLog messageQueue = null;
-    
+
     public MessageQueueFeeder(RowLog messageQueueRowLog) {
         this.messageQueue = messageQueueRowLog;
     }
-    
+
     @Override
     public boolean processMessage(RowLogMessage message) throws InterruptedException {
         Exception lastException = null;
@@ -46,7 +46,7 @@ public class MessageQueueFeeder implements RowLogMessageListener {
                 Thread.sleep(100);
             }
         }
-        log.info("Failed to put message '"+message+"' on the message queue. Retried during 5 seconds.", lastException);
+        log.info("Failed to put message '" + message + "' on the message queue. Retried during 5 seconds.", lastException);
         return false;
     }
 }

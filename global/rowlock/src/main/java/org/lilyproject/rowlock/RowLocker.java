@@ -15,16 +15,16 @@
  */
 package org.lilyproject.rowlock;
 
+import java.io.IOException;
+
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
-
-import java.io.IOException;
 
 public interface RowLocker {
 
     /**
      * Locks the specified row. The lock is only obtained if the returned RowLock is not null.
-     *
+     * <p/>
      * <p>If the row is already locked, this method does not block but returns immediately. It is
      * up to the caller to retry if necessary.
      */
@@ -32,7 +32,7 @@ public interface RowLocker {
 
     /**
      * Locks the specified row. The lock is only obtained if the returned RowLock is not null.
-     *
+     * <p/>
      * <p>If the row is already locked, this method will retry until the specified timeout has
      * passed. If after that the lock is still not obtained, null is returned.
      */

@@ -1,7 +1,5 @@
 package org.lilyproject.indexer.master;
 
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.util.Collections;
 
@@ -37,6 +35,8 @@ import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkLockException;
+
+import static org.junit.Assert.fail;
 
 public class IndexerMasterTest {
     private static final QName BOOK_RECORD_TYPE = new QName("org.lilyproject.test", "Book");
@@ -97,10 +97,11 @@ public class IndexerMasterTest {
         for (int tries = 0; tries < MAX_TRIES; tries++) {
             boolean tablesExist = checkHTableExistence(DerefMapHbaseImpl.backwardIndexName(indexName), hBaseAdmin) &&
                     checkHTableExistence(DerefMapHbaseImpl.forwardIndexName(indexName), hBaseAdmin);
-            if (tablesExist == shouldExist)
+            if (tablesExist == shouldExist) {
                 return true; // tables existence as expected
-            else
+            } else {
                 Thread.sleep(SLEEP_BETWEEN_TRIES);
+            }
         }
 
         return false; // condition not met after trying long enough

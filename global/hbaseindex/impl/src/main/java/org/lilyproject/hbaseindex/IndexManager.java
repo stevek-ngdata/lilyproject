@@ -35,7 +35,7 @@ import org.lilyproject.util.hbase.LocalHTable;
 
 /**
  * Starting point for all the index and query functionality.
- *
+ * <p/>
  * <p>This class should be instantiated yourself. This class is threadsafe,
  * but on the other hand rather lightweight so it does not harm to have multiple
  * instances.
@@ -156,7 +156,7 @@ public class IndexManager {
 
     /**
      * Deletes an index.
-     *
+     * <p/>
      * <p>This disables the index table and deletes it.
      *
      * @throws IndexNotFoundException if the index does not exist.

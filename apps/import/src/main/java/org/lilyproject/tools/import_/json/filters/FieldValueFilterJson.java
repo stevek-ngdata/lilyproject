@@ -38,6 +38,7 @@ import org.lilyproject.util.json.JsonUtil;
 
 public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValueFilter> {
     private final LinkTransformer defaultLinkTransformer = new DefaultLinkTransformer();
+
     @Override
     public boolean supports(String typeName) {
         return typeName.equals(FieldValueFilter.class.getName());
@@ -45,7 +46,7 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
 
     @Override
     public FieldValueFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
-            RecordFilterJsonConverter<RecordFilter> converter)
+                                     RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
         FieldValueFilter filter = new FieldValueFilter();
 
@@ -78,7 +79,7 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
 
     @Override
     public ObjectNode toJson(FieldValueFilter filter, Namespaces namespaces, Repository repository,
-            RecordFilterJsonConverter<RecordFilter> converter)
+                             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();
 

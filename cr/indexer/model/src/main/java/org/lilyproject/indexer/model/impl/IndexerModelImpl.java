@@ -15,6 +15,7 @@
  */
 package org.lilyproject.indexer.model.impl;
 
+import javax.annotation.PreDestroy;
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -28,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.annotation.PreDestroy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -98,11 +97,10 @@ import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMO
 
 /**
  * Implementation of IndexerModel.
- *
+ * <p/>
  * <p>Usage: typically in an application you will create just one instance of IndexerModel and share it.
  * This is a relatively heavy object which runs threads. IMPORTANT: when done using it, call the stop()
  * method to properly shut down everything.</p>
- *
  */
 public class IndexerModelImpl implements WriteableIndexerModel {
     private final ZooKeeperItf zk;
@@ -178,52 +176,60 @@ public class IndexerModelImpl implements WriteableIndexerModel {
     }
 
     private void assertValid(IndexDefinition index) throws IndexValidityException {
-        if (index.getName() == null || index.getName().length() == 0)
+        if (index.getName() == null || index.getName().length() == 0) {
             throw new IndexValidityException("Name should not be null or zero-length");
+        }
 
-        if (index.getConfiguration() == null)
+        if (index.getConfiguration() == null) {
             throw new IndexValidityException("Configuration should not be null.");
+        }
 
-        if (index.getGeneralState() == null)
+        if (index.getGeneralState() == null) {
             throw new IndexValidityException("General state should not be null.");
+        }
 
-        if (index.getBatchBuildState() == null)
+        if (index.getBatchBuildState() == null) {
             throw new IndexValidityException("Build state should not be null.");
+        }
 
-        if (index.getUpdateState() == null)
+        if (index.getUpdateState() == null) {
             throw new IndexValidityException("Update state should not be null.");
+        }
 
         if (index.getActiveBatchBuildInfo() != null) {
             ActiveBatchBuildInfo info = index.getActiveBatchBuildInfo();
-            if (info.getJobId() == null)
+            if (info.getJobId() == null) {
                 throw new IndexValidityException("Job id of active batch build cannot be null.");
+            }
         }
 
-       boolean hasShards = index.getSolrShards() != null && !index.getSolrShards().isEmpty();
-       boolean hasCollection = index.getSolrCollection() != null;
-       boolean hasZkConnectionString = index.getZkConnectionString() != null && !index.getZkConnectionString().isEmpty();
+        boolean hasShards = index.getSolrShards() != null && !index.getSolrShards().isEmpty();
+        boolean hasCollection = index.getSolrCollection() != null;
+        boolean hasZkConnectionString = index.getZkConnectionString() != null && !index.getZkConnectionString().isEmpty();
 
-       if (hasCollection && hasShards) {
-           throw new IndexValidityException("Ambiguous solr configuration in index defintion. Setting a solr " +
-                   "collection together with solr shards has no use. Set either the solr shards or collection.");
-       }
+        if (hasCollection && hasShards) {
+            throw new IndexValidityException("Ambiguous solr configuration in index defintion. Setting a solr " +
+                    "collection together with solr shards has no use. Set either the solr shards or collection.");
+        }
 
-       if (hasShards && hasZkConnectionString) {
-           throw new IndexValidityException("Ambiguous solr configuration in index defintion. Setting a solr " +
-                   "zookeeper connection together with solr shards has no use. Set either the solr shards or " +
-                   "zookeeper connection.");
-       }
-       if (!hasShards && !hasZkConnectionString) {
-           throw new IndexValidityException("Incomplete solr configuration in index defintion. You need at least " +
-                   "a shard or a zookeeper connection string.");
-       }
+        if (hasShards && hasZkConnectionString) {
+            throw new IndexValidityException("Ambiguous solr configuration in index defintion. Setting a solr " +
+                    "zookeeper connection together with solr shards has no use. Set either the solr shards or " +
+                    "zookeeper connection.");
+        }
+        if (!hasShards && !hasZkConnectionString) {
+            throw new IndexValidityException("Incomplete solr configuration in index defintion. You need at least " +
+                    "a shard or a zookeeper connection string.");
+        }
 
         if (index.getLastBatchBuildInfo() != null) {
             BatchBuildInfo info = index.getLastBatchBuildInfo();
-            if (info.getJobId() == null)
+            if (info.getJobId() == null) {
                 throw new IndexValidityException("Job id of last batch build cannot be null.");
-            if (info.getJobState() == null)
+            }
+            if (info.getJobState() == null) {
                 throw new IndexValidityException("Job state of last batch build cannot be null.");
+            }
         }
 
         for (String shard : index.getSolrShards().values()) {
@@ -252,7 +258,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
             for (String shard : selector.getShards()) {
                 if (!shardNames.contains(shard)) {
                     throw new IndexValidityException("The sharding configuration refers to a shard that is not" +
-                    " in the set of available shards. Shard: " + shard);
+                            " in the set of available shards. Shard: " + shard);
                 }
             }
         }
@@ -406,8 +412,9 @@ public class IndexerModelImpl implements WriteableIndexerModel {
                     }
                 });
 
-                if (success)
+                if (success) {
                     break;
+                }
 
                 tryCount++;
                 if (tryCount > 10) {
@@ -415,8 +422,9 @@ public class IndexerModelImpl implements WriteableIndexerModel {
                 }
             }
         } catch (Throwable t) {
-            if (t instanceof InterruptedException)
+            if (t instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
+            }
             throw new IndexModelException("Failed to delete index " + indexName, t);
         }
     }

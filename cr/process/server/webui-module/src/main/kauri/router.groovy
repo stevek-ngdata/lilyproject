@@ -24,8 +24,8 @@ builder.router {
     }
 
     pages(
-        uri: "",
-        root: "pages"
+            uri: "",
+            root: "pages"
     )
-    
+
 }

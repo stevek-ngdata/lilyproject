@@ -71,7 +71,7 @@ public class BlobIncubatorMonitor {
     private final long runDelay;
 
     public BlobIncubatorMonitor(ZooKeeperItf zk, HBaseTableFactory tableFactory, BlobManager blobManager,
-            TypeManager typeManager, long minimalAge, long monitorDelay, long runDelay) throws IOException, InterruptedException {
+                                TypeManager typeManager, long minimalAge, long monitorDelay, long runDelay) throws IOException, InterruptedException {
         this.zk = zk;
         this.blobManager = blobManager;
         this.typeManager = typeManager;
@@ -168,8 +168,9 @@ public class BlobIncubatorMonitor {
                         log.warn("Failed monitoring BlobIncubatorTable", e);
                         break;
                     }
-                    if (stopRequested)
+                    if (stopRequested) {
                         break;
+                    }
                     Thread.sleep(runDelay);
                 } catch (InterruptedException e) {
                     break;
@@ -188,7 +189,7 @@ public class BlobIncubatorMonitor {
             while (!stopRequested) {
                 Result[] results = scanner.next(100);
                 if (results == null || (results.length == 0)) {
-                   break;
+                    break;
                 }
                 for (Result result : results) {
                     long before = System.currentTimeMillis();
@@ -215,8 +216,8 @@ public class BlobIncubatorMonitor {
             byte[] recordIdBytes = result.getValue(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.RECORD.bytes);
             SchemaId recordId = new SchemaIdImpl(recordIdBytes);
             byte[] blobKey = result.getRow();
-            if (Arrays.equals(recordIdBytes,BlobManagerImpl.INCUBATE)) {
-                    deleteBlob(blobKey, recordId, null);
+            if (Arrays.equals(recordIdBytes, BlobManagerImpl.INCUBATE)) {
+                deleteBlob(blobKey, recordId, null);
             } else {
                 SchemaId fieldId = new SchemaIdImpl(result.getValue(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.FIELD.bytes));
                 Result blobUsage;

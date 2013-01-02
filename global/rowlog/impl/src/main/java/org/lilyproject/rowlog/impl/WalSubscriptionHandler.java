@@ -21,16 +21,15 @@ import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 /**
  * The WalSubscriptionHandler will mark the {@link WalListener} as registered and unregistered itself.
  * It does not depend on the RowLogConfigurationManager to have it registered and unregistered.
- * 
- * <p>This WalSubscriptionHandler should be used together with the {@link WalProcessor}, {@link WalListener} and {@link WalRowLog} 
- *
+ * <p/>
+ * <p>This WalSubscriptionHandler should be used together with the {@link WalProcessor}, {@link WalListener} and {@link WalRowLog}
  */
 public class WalSubscriptionHandler extends LocalListenersSubscriptionHandler {
     public WalSubscriptionHandler(String subscriptionId, MessagesWorkQueue messagesWorkQueue, RowLog rowLog,
-            RowLogConfigurationManager rowLogConfigurationManager) {
+                                  RowLogConfigurationManager rowLogConfigurationManager) {
         super(subscriptionId, messagesWorkQueue, rowLog, rowLogConfigurationManager);
-    } 
-    
+    }
+
     @Override
     public void start() {
         listenerRegistered(WalListener.ID);

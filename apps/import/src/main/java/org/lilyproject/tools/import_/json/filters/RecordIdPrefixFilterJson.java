@@ -34,11 +34,11 @@ public class RecordIdPrefixFilterJson implements RecordFilterJsonConverter<Recor
 
     @Override
     public ObjectNode toJson(RecordIdPrefixFilter filter, Namespaces namespaces, Repository repository,
-            RecordFilterJsonConverter<RecordFilter> converter)
+                             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
-        
+
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();
-        
+
         if (filter.getRecordId() != null) {
             node.put("recordId", filter.getRecordId().toString());
         }
@@ -48,16 +48,16 @@ public class RecordIdPrefixFilterJson implements RecordFilterJsonConverter<Recor
 
     @Override
     public RecordIdPrefixFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
-            RecordFilterJsonConverter<RecordFilter> converter)
+                                         RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
-        
+
         RecordIdPrefixFilter filter = new RecordIdPrefixFilter();
 
         String recordId = JsonUtil.getString(node, "recordId", null);
-        if (recordId != null) {            
+        if (recordId != null) {
             filter.setRecordId(repository.getIdGenerator().fromString(recordId));
         }
-        
+
         return filter;
     }
 }

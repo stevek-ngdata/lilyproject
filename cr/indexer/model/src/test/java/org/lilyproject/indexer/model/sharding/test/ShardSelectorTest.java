@@ -15,6 +15,10 @@
  */
 package org.lilyproject.indexer.model.sharding.test;
 
+import java.util.Collections;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
@@ -24,10 +28,6 @@ import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-
-import java.util.Collections;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import static junit.framework.Assert.*;
 

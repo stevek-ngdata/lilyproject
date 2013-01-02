@@ -20,8 +20,6 @@ import org.lilyproject.util.ArgumentValidator;
  * exactly the given variant properties (i.e. not the records which have these variant properties and some additional
  * ones). If the value of the variant property is specified, it has to match exactly. If the value is
  * <code>null</code>, any value will match.
- *
- *
  */
 public class LilyRecordVariantFilter extends FilterBase {
     private Map<String, String> variantProperties;
@@ -47,8 +45,9 @@ public class LilyRecordVariantFilter extends FilterBase {
     public boolean filterRowKey(byte[] buffer, int offset, int length) {
         // note: return value true means it is NOT a result of the scanner, false otherwise
 
-        if (buffer == null)
+        if (buffer == null) {
             return true;
+        }
 
         final RecordId recordId = idGenerator.fromBytes(new DataInputImpl(buffer, offset, length));
 
@@ -60,7 +59,9 @@ public class LilyRecordVariantFilter extends FilterBase {
 
             // check if the record doesn't have other variant properties
             return variantProperties.size() != recordVariantProperties.size();
-        } else return true;
+        } else {
+            return true;
+        }
     }
 
     private boolean containsAllExpectedDimensions(Map<String, String> recordVariantProperties) {

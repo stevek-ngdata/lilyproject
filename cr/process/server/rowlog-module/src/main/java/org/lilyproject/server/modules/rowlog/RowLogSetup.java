@@ -15,14 +15,13 @@
  */
 package org.lilyproject.server.modules.rowlog;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -72,8 +71,8 @@ public class RowLogSetup {
     private final String hostName;
 
     public RowLogSetup(RowLogConfigurationManager confMgr, ZooKeeperItf zk, Configuration hbaseConf,
-            HBaseTableFactory hbaseTableFactory, Conf rowLogConf, RowLocker rowLocker, LilyInfo lilyInfo,
-            String hostName) {
+                       HBaseTableFactory hbaseTableFactory, Conf rowLogConf, RowLocker rowLocker, LilyInfo lilyInfo,
+                       String hostName) {
         this.confMgr = confMgr;
         this.zk = zk;
         this.hbaseConf = hbaseConf;

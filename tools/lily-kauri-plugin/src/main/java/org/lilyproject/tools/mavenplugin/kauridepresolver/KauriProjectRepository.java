@@ -15,6 +15,10 @@
  */
 package org.lilyproject.tools.mavenplugin.kauridepresolver;
 
+import java.io.File;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -23,16 +27,11 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
-import java.io.File;
-import java.util.List;
-import java.util.Set;
-
 /**
- *
  * @goal assemble-project-repository
  * @requiresDependencyResolution runtime
  * @description Creates a Maven-style repository for Kauri with all the dependencies of a Kauri project,
- *              based upon reading the wiring.xml.
+ * based upon reading the wiring.xml.
  */
 public class KauriProjectRepository extends AbstractMojo {
     /**

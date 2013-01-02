@@ -11,7 +11,7 @@ import org.lilyproject.repository.api.RecordId;
 /**
  * Abstract dependency on a record. Basically a mutable variant of derefmap's DependencyEntry
  * with operations that make sense from the point of view of index mapping evaluation.
- *
+ * <p/>
  * <p>In the simplest and most common form, the dependency is fully described by the
  * id of the record. Only in case of forward-variant deref expressions (of the "+prop" style),
  * one can depend on a set of records which can change over time: i.e. the set of all
@@ -33,7 +33,7 @@ public class Dep {
 
     /**
      * Called for expressions of the kind "-prop".
-     *
+     * <p/>
      * <p>[I guess] this is only of importance when expressions would be like "+prop=>-prop", e.g.
      * the same prop was first forward-dereferenced and then backward-dereferenced, otherwise
      * it would not be in the moreDimensionedVariants map.
@@ -43,7 +43,7 @@ public class Dep {
         Map<String, String> variantProps = Maps.newHashMap(id.getVariantProperties());
         Set<String> newVprops = Sets.newHashSet(vprops);
 
-        for (String prop: vprops) {
+        for (String prop : vprops) {
             variantProps.remove(prop);
             newVprops.remove(prop);
         }
@@ -60,7 +60,7 @@ public class Dep {
         Map<String, String> newVariantProperties = Maps.newHashMap(id.getVariantProperties());
         Set<String> newVprops = Sets.newHashSet(this.moreDimensionedVariants);
 
-        for (String key: propsToAdd.keySet()) {
+        for (String key : propsToAdd.keySet()) {
             String value = propsToAdd.get(key);
             if (value == null) {
                 newVprops.add(key);

@@ -15,6 +15,8 @@
  */
 package org.lilyproject.indexer.master;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -26,8 +28,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -123,10 +123,10 @@ public class IndexerMaster {
     private byte[] fullTableScanConf;
 
     public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Repository repository,
-            Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
-            String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr,
-            LilyInfo lilyInfo, SolrClientConfig solrClientConfig, boolean enableLocking,
-            String hostName, HBaseTableFactory tableFactory, String nodes) {
+                         Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
+                         String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr,
+                         LilyInfo lilyInfo, SolrClientConfig solrClientConfig, boolean enableLocking,
+                         String hostName, HBaseTableFactory tableFactory, String nodes) {
 
         this.zk = zk;
         this.indexerModel = indexerModel;
@@ -169,8 +169,9 @@ public class IndexerMaster {
     @PreDestroy
     public void stop() {
         try {
-            if (leaderElection != null)
+            if (leaderElection != null) {
                 leaderElection.stop();
+            }
         } catch (InterruptedException e) {
             log.info("Interrupted while shutting down leader election.");
         }
@@ -478,8 +479,9 @@ public class IndexerMaster {
                 return;
             }
 
-            if (interrupt)
+            if (interrupt) {
                 thread.interrupt();
+            }
             Logs.logThreadJoin(thread);
             thread.join();
             thread = null;
@@ -598,8 +600,9 @@ public class IndexerMaster {
                 return;
             }
 
-            if (interrupt)
+            if (interrupt) {
                 thread.interrupt();
+            }
             Logs.logThreadJoin(thread);
             thread.join();
             thread = null;

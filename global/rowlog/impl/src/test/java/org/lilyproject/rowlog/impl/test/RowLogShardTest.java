@@ -67,12 +67,11 @@ public class RowLogShardTest {
     }
 
 
-
     @Before
     public void setUp() throws Exception {
-    	rowLog = control.createMock(RowLog.class);
-    	rowLog.getId();
-    	expectLastCall().andReturn("rowLogId").anyTimes();
+        rowLog = control.createMock(RowLog.class);
+        rowLog.getId();
+        expectLastCall().andReturn("rowLogId").anyTimes();
     }
 
     @After
@@ -117,7 +116,7 @@ public class RowLogShardTest {
         shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
         long timestamp1 = System.currentTimeMillis();
         RowLogMessageImpl message1 = new RowLogMessageImpl(timestamp1, Bytes.toBytes("row1"), 0L, null, rowLog);
-        long timestamp2 = System.currentTimeMillis()+1;
+        long timestamp2 = System.currentTimeMillis() + 1;
         RowLogMessageImpl message2 = new RowLogMessageImpl(timestamp2, Bytes.toBytes("row2"), 0L, null, rowLog);
 
         shard.putMessage(message1);
@@ -152,7 +151,7 @@ public class RowLogShardTest {
         }
 
         List<RowLogMessage> messages = shard.next(subscriptionId, batchSize);
-        assertEquals(batchSize , messages.size());
+        assertEquals(batchSize, messages.size());
 
         int i = 0;
         for (RowLogMessage message : messages) {

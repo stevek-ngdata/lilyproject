@@ -15,12 +15,19 @@
  */
 package org.lilyproject.tools.import_.core;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeExistsException;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 
 public class FieldTypeImport {
 
     public static ImportResult<FieldType> importFieldType(FieldType newFieldType, ImportMode impMode,
-            IdentificationMode idMode, QName identifyingName, TypeManager typeManager) throws RepositoryException,
+                                                          IdentificationMode idMode, QName identifyingName, TypeManager typeManager) throws RepositoryException,
             InterruptedException {
 
         if (idMode == IdentificationMode.ID && impMode == ImportMode.CREATE_OR_UPDATE) {
@@ -41,7 +48,7 @@ public class FieldTypeImport {
                 FieldType oldFieldType = null;
                 try {
                     if (idMode == IdentificationMode.ID) {
-                        oldFieldType = typeManager.getFieldTypeById(newFieldType.getId());                        
+                        oldFieldType = typeManager.getFieldTypeById(newFieldType.getId());
                     } else {
                         oldFieldType = typeManager.getFieldTypeByName(identifyingName);
                     }
@@ -60,7 +67,7 @@ public class FieldTypeImport {
                     if (!oldValueType.equals(newValueType)) {
                         return ImportResult.conflict("value type", oldValueType, newValueType);
                     }
-                    
+
                     Scope oldScope = oldFieldType.getScope();
                     Scope newScope = newFieldType.getScope();
                     if (!oldScope.equals(newScope)) {

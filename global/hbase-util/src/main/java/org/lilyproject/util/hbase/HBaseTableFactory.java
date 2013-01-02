@@ -26,14 +26,14 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 public interface HBaseTableFactory {
     /**
      * Gets the HBase table, creating it if necessary, handling concurrent creates.
-     *
+     * <p/>
      * <p>Returned table instance if a {@link LocalHTable}, so threadsafe.
+     *
      * @throws InterruptedException
      */
     HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException, InterruptedException;
 
     /**
-     *
      * @param splitKeys allows the application, rather than the user, to define initial table splits.
      * @throws InterruptedException
      */
@@ -54,7 +54,6 @@ public interface HBaseTableFactory {
     void configure(HTableDescriptor tableDescriptor);
 
     /**
-     *
      * @return the split keys for the table, possibly null.
      */
     byte[][] getSplitKeys(byte[] tableName);

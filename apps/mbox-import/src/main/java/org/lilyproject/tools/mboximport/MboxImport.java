@@ -15,11 +15,29 @@
  */
 package org.lilyproject.tools.mboximport;
 
-import org.apache.commons.cli.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.mime4j.codec.Base64InputStream;
 import org.apache.james.mime4j.codec.QuotedPrintableInputStream;
-import org.apache.james.mime4j.field.*;
+import org.apache.james.mime4j.field.AddressListField;
+import org.apache.james.mime4j.field.DefaultFieldParser;
+import org.apache.james.mime4j.field.FieldName;
+import org.apache.james.mime4j.field.MailboxField;
+import org.apache.james.mime4j.field.MailboxListField;
+import org.apache.james.mime4j.field.ParsedField;
 import org.apache.james.mime4j.field.address.Address;
 import org.apache.james.mime4j.field.address.AddressList;
 import org.apache.james.mime4j.field.address.Mailbox;
@@ -29,15 +47,15 @@ import org.apache.james.mime4j.parser.Field;
 import org.apache.james.mime4j.parser.MimeEntityConfig;
 import org.apache.james.mime4j.parser.MimeTokenStream;
 import org.apache.james.mime4j.util.MimeUtil;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.testclientfw.BaseRepositoryTestTool;
 import org.lilyproject.tools.import_.cli.JsonImport;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.io.Closer;
-
-import java.io.*;
-import java.util.*;
-import java.util.zip.GZIPInputStream;
 
 public class MboxImport extends BaseRepositoryTestTool {
 
@@ -94,8 +112,9 @@ public class MboxImport extends BaseRepositoryTestTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (!cmd.hasOption(schemaOption.getOpt()) && !cmd.hasOption(fileOption.getOpt())) {
             printHelp();
@@ -291,23 +310,30 @@ public class MboxImport extends BaseRepositoryTestTool {
         // we can save additional indexer work (update of dereferenced data) by first creating the messages
         // and then the parts.
         List<RecordId> partRecordIds = new ArrayList<RecordId>(message.parts.size());
-        for (Part part : message.parts)
+        for (Part part : message.parts) {
             partRecordIds.add(idGenerator.newRecordId());
+        }
 
         Record messageRecord = repository.newRecord(idGenerator.newRecordId());
         messageRecord.setRecordType(new QName(NS, "Message"));
-        if (message.subject != null)
+        if (message.subject != null) {
             messageRecord.setField(new QName(NS, "subject"), message.subject);
-        if (message.to != null)
+        }
+        if (message.to != null) {
             messageRecord.setField(new QName(NS, "to"), message.getToAddressesAsStringList());
-        if (message.cc != null)
+        }
+        if (message.cc != null) {
             messageRecord.setField(new QName(NS, "cc"), message.getCcAddressesAsStringList());
-        if (message.from != null)
+        }
+        if (message.from != null) {
             messageRecord.setField(new QName(NS, "from"), message.getFromAddressesAsStringList());
-        if (message.sender != null)
+        }
+        if (message.sender != null) {
             messageRecord.setField(new QName(NS, "sender"), message.getSenderAddressAsString());
-        if (message.listId != null)
+        }
+        if (message.listId != null) {
             messageRecord.setField(new QName(NS, "listId"), message.listId);
+        }
 
         if (messageRecord.getFields().size() == 0 || message.parts.size() == 0) {
             // Message has no useful headers, do not create it.
@@ -410,7 +436,9 @@ public class MboxImport extends BaseRepositoryTestTool {
     private static class Part {
         public Blob blob;
         public RecordId recordId;
-        /** Media type without parameters. */
+        /**
+         * Media type without parameters.
+         */
         public String baseMediaType;
     }
 }

@@ -15,9 +15,6 @@
  */
 package org.lilyproject.indexer.integration;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,6 +65,9 @@ import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Tests the functionality related to intelligent feeding of the MQ: rather than dispatching

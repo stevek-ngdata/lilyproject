@@ -15,20 +15,49 @@
  */
 package org.lilyproject.tools.recordrowvisualizer;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.kauriproject.template.*;
+import org.kauriproject.template.CompiledTemplate;
+import org.kauriproject.template.DefaultTemplateBuilder;
+import org.kauriproject.template.DefaultTemplateContext;
+import org.kauriproject.template.DefaultTemplateExecutor;
+import org.kauriproject.template.DefaultTemplateService;
+import org.kauriproject.template.ExecutionContext;
+import org.kauriproject.template.KauriSaxHandler;
+import org.kauriproject.template.TemplateContext;
+import org.kauriproject.template.TemplateResult;
+import org.kauriproject.template.TemplateResultImpl;
 import org.kauriproject.template.source.ClasspathSourceResolver;
 import org.kauriproject.template.source.Source;
 import org.kauriproject.template.source.SourceResolver;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.cli.BaseZkCliTool;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.EncodingUtil;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
@@ -44,11 +73,6 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.xml.sax.SAXException;
 
 import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
 
 /**
  * Tool to visualize the HBase-storage structure of a Lily record, in the form
@@ -92,9 +116,10 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
     @Override
     public int run(CommandLine cmd) throws Exception {
-        int result =  super.run(cmd);
-        if (result != 0)
+        int result = super.run(cmd);
+        if (result != 0) {
             return result;
+        }
 
         String recordIdString = cmd.getOptionValue(recordIdOption.getOpt());
         if (recordIdString == null) {
@@ -122,7 +147,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         get.setMaxVersions();
         Result row = table.get(get);
 
-        NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long,byte[]>>> root = row.getMap();
+        NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> root = row.getMap();
 
         readColumns(root.get(RecordCf.DATA.bytes));
 
@@ -157,8 +182,9 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
     private boolean isInArray(byte[] key, byte[][] data) {
         for (byte[] item : data) {
-            if (Arrays.equals(item, key))
+            if (Arrays.equals(item, key)) {
                 return true;
+            }
         }
         return false;
     }
@@ -219,12 +245,13 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
     private void readRowLog(Map<RowLogKey, List<ExecutionData>> walStateByKey, Map<RowLogKey,
             List<String>> walPayloadByKey, Map<RowLogKey, List<ExecutionData>> mqStateByKey,
-            Map<RowLogKey, List<String>> mqPayloadByKey, NavigableMap<byte[], NavigableMap<Long, byte[]>> cf)
+                            Map<RowLogKey, List<String>> mqPayloadByKey, NavigableMap<byte[], NavigableMap<Long, byte[]>> cf)
             throws IOException {
 
-        if (cf == null)
+        if (cf == null) {
             return;
-        
+        }
+
         for (Map.Entry<byte[], NavigableMap<Long, byte[]>> rowEntry : cf.entrySet()) {
             byte[] column = rowEntry.getKey();
             // columns start with rowlow-prefix
@@ -238,16 +265,16 @@ public class RecordRowVisualizer extends BaseZkCliTool {
             }
         }
     }
-    
+
     private static final byte PL_BYTE = (byte)1;
     private static final byte ES_BYTE = (byte)2;
     private static final byte[] SEQ_NR = Bytes.toBytes("SEQNR");
-    
+
     private void readRowLog(Map<RowLogKey, List<ExecutionData>> stateByKey, Map<RowLogKey,
             List<String>> payloadByKey, NavigableMap<Long, byte[]> columnCells, byte[] key) throws IOException {
 
         NavigableMap<Long, byte[]> maxSeqNr = null;
-        
+
         if (Arrays.equals(key, SEQ_NR)) { // key could be "SEQNR"
             maxSeqNr = columnCells;
         } else { // or is prefixed by payload or executionState byte
@@ -261,14 +288,14 @@ public class RecordRowVisualizer extends BaseZkCliTool {
                 // TODO unexpected
             }
         }
-        
+
         if (maxSeqNr != null) {
             // TODO
         }
     }
-    
+
     private void readExecutionState(Map<RowLogKey, List<ExecutionData>> stateByKey,
-            NavigableMap<Long, byte[]> columnCells, long seqNr, long timestamp) throws IOException {
+                                    NavigableMap<Long, byte[]> columnCells, long seqNr, long timestamp) throws IOException {
 
         for (Map.Entry<Long, byte[]> columnEntry : columnCells.entrySet()) {
             RowLogKey key = new RowLogKey(seqNr, timestamp, columnEntry.getKey());
@@ -293,7 +320,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     }
 
     private void readPayload(Map<RowLogKey, List<String>> payloadByKey, NavigableMap<Long, byte[]> columnCells,
-            long seqNr, long timestamp) throws UnsupportedEncodingException {
+                             long seqNr, long timestamp) throws UnsupportedEncodingException {
         for (Map.Entry<Long, byte[]> columnEntry : columnCells.entrySet()) {
             RowLogKey key = new RowLogKey(seqNr, timestamp, columnEntry.getKey());
             List<String> payloads = payloadByKey.get(key);
@@ -337,9 +364,10 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
     public static class Base64ValueDecoder implements ValueDecoder<String> {
         public String decode(byte[] bytes) {
-            if (bytes == null)
+            if (bytes == null) {
                 return null;
-            
+            }
+
             char[] result = new char[bytes.length * 2];
 
             for (int i = 0; i < bytes.length; i++) {

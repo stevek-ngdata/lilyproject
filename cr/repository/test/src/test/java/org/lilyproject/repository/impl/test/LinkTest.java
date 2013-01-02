@@ -15,7 +15,8 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import static org.junit.Assert.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,8 +29,7 @@ import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 
-import java.util.HashMap;
-import java.util.Map;
+import static org.junit.Assert.*;
 
 public class LinkTest {
     private IdGenerator idGenerator;
@@ -68,7 +68,8 @@ public class LinkTest {
         assertEquals(2, resolved.getVariantProperties().size());
     }
 
-    @Test public void testFromStringWithDots() {
+    @Test
+    public void testFromStringWithDots() {
         String idStr = "USER.AB\\.CD";
         Link link = Link.fromString(idStr, idGenerator);
         assertEquals("USER.AB\\.CD", link.toString());
@@ -243,7 +244,7 @@ public class LinkTest {
             // ok
         }
     }
-    
+
     @Test
     public void testEquals() {
         RecordId recordId1 = idGenerator.newRecordId("123");
@@ -253,7 +254,7 @@ public class LinkTest {
 
         Assert.assertEquals(link1, link1);
         Assert.assertFalse(link1.equals(link2));
-        
+
         Map<String, String> varProps1 = new HashMap<String, String>();
         varProps1.put("lang", "en");
         varProps1.put("branch", "dev");

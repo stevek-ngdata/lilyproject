@@ -15,12 +15,26 @@
  */
 package org.lilyproject.tools.upgrade;
 
+import java.io.File;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.*;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.kauriproject.conf.Conf;
 import org.kauriproject.conf.XmlConfBuilder;
@@ -31,13 +45,13 @@ import org.lilyproject.repository.impl.compat.Lily11RecordIdDecoder;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.server.modules.general.TableConfigBuilder;
 import org.lilyproject.util.Version;
-import org.lilyproject.util.hbase.*;
+import org.lilyproject.util.hbase.ColumnFamilyConfig;
+import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.TableConfigEntry;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import java.io.File;
-import java.util.*;
 
 import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
@@ -46,7 +60,7 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
     private ZooKeeperItf zk;
     private final String SRC_TABLE_NAME = "record";
     private IdGeneratorImpl idGenerator = new IdGeneratorImpl();
-    
+
     private boolean writeToWal = false;
     private long writeBufferSize = 1024 * 1024 * 10;
     private String destTableName = "record_lily_1_2";
@@ -81,11 +95,11 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
         options.add(confirmOption);
 
         tableConfOption = OptionBuilder
-                        .withArgName("filename")
-                        .hasArg()
-                        .withDescription("Table creation options file, like conf/general/tables.xml")
-                        .withLongOpt("table-options")
-                        .create("to");
+                .withArgName("filename")
+                .hasArg()
+                .withDescription("Table creation options file, like conf/general/tables.xml")
+                .withLongOpt("table-options")
+                .create("to");
         options.add(tableConfOption);
 
         destTableOption = OptionBuilder
@@ -108,8 +122,9 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
 
         zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
@@ -134,7 +149,7 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
         System.out.println("  Table configuration file: " + tableConfFileName);
         System.out.println("  Destination table name: " + destTableName);
         System.out.println();
-        
+
         if (!cmd.hasOption(confirmOption.getOpt())) {
             System.out.println("Please supply the -confirm option to start the upgrade.");
             return 1;
@@ -157,19 +172,19 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
         if (admin.tableExists(destTableName)) {
             System.err.println("Destination table already exists, please drop it or specify another table name: "
                     + destTableName);
-            return 1;            
+            return 1;
         }
 
         System.out.println("Creating destination table " + destTableName);
-        
+
         HBaseTableFactory tableFactory;
-        if (tableConfFileName != null) {        
-            Conf tableConf = XmlConfBuilder.build(new File(tableConfFileName));        
+        if (tableConfFileName != null) {
+            Conf tableConf = XmlConfBuilder.build(new File(tableConfFileName));
             List<TableConfigEntry> tableConfs = TableConfigBuilder.buildTableConfigs(tableConf);
             ColumnFamilyConfig defaultFamilyConf = TableConfigBuilder.buildCfConfig(tableConf.getChild("familyDefaults"));
             tableFactory = new HBaseTableFactoryImpl(conf, tableConfs, defaultFamilyConf);
         } else {
-            tableFactory = new HBaseTableFactoryImpl(conf);            
+            tableFactory = new HBaseTableFactoryImpl(conf);
         }
         tableFactory.getTable(getRecordTableDescriptor(destTableName));
 
@@ -186,10 +201,10 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
         scan.setCacheBlocks(false);
         scan.setMaxVersions();
         ResultScanner scanner = srcTable.getScanner(scan);
-        
+
         int cnt = 0;
         int del = 0; // count of deleted records
-        
+
         System.out.println("Starting...");
         for (Result row : scanner) {
             // Check if the record is marked as deleted, if so, don't bother copying it over
@@ -203,26 +218,26 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
 
                 continue;
             }
-            
+
             RecordId recordId = Lily11RecordIdDecoder.decode(new DataInputImpl(row.getRow()), idGenerator);
 
             Put put = new Put(recordId.toBytes());
-            
+
             put.setWriteToWAL(writeToWal);
 
             for (KeyValue kv : row.raw()) {
                 put.add(kv.getFamily(), kv.getQualifier(), kv.getTimestamp(), kv.getValue());
             }
-            
+
             destTable.put(put);
-            
+
             cnt++;
-            
+
             if ((cnt % 1000) == 0) {
                 System.out.println("Copied records: " + cnt);
             }
         }
-        
+
         destTable.flushCommits();
 
         System.out.println("Done!");
@@ -236,7 +251,7 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
             System.out.println("Since write to wal is false, now triggering a flush on HBase (async operation)");
             admin.flush(destTableName);
         }
-        
+
         System.out.println();
         System.out.println("To finish the upgrade, perform the following operations from the HBase shell:");
         System.out.println("disable '" + destTableName + "'");
@@ -262,7 +277,7 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
         HConnectionManager.deleteAllConnections(true);
         super.cleanup();
     }
-    
+
     private HTableDescriptor getRecordTableDescriptor(String tableName) {
         // Copied from LilyHBaseSchema to allow for changing table name
         HTableDescriptor descriptor = new HTableDescriptor(Bytes.toBytes(tableName));

@@ -61,12 +61,14 @@ public class RecordVariantFilterJson implements RecordFilterJsonConverter<Record
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         String recordId = JsonUtil.getString(node, "recordId", null);
-        if (recordId == null)
+        if (recordId == null) {
             throw new IllegalStateException("expected non null recordId in json input");
+        }
 
         final ObjectNode variantPropertiesNode = JsonUtil.getObject(node, "variantProperties", null);
-        if (variantPropertiesNode == null)
+        if (variantPropertiesNode == null) {
             throw new IllegalStateException("expected non null variantProperties in json input");
+        }
 
         final HashMap<String, String> variantProperties = new HashMap<String, String>();
 

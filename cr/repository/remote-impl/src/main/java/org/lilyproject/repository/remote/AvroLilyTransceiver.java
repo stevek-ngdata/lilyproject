@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import org.apache.avro.ipc.NettyTransceiver;
-
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.NettyTransceiverFactory;

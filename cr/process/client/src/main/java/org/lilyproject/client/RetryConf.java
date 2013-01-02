@@ -27,7 +27,7 @@ public class RetryConf {
     private boolean retryCreate = true;
     private boolean retryCreateRiskDoubles = false;
     private int retryMaxTime = 30000;
-    private int[] retryIntervals = new int[] {10, 10, 50, 50, 200, 300, 600};
+    private int[] retryIntervals = new int[]{10, 10, 50, 50, 200, 300, 600};
 
     public boolean getRetryReads() {
         return retryReads;

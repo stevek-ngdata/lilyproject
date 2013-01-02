@@ -20,8 +20,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.repotestfw.RepositorySetup;
 
 /**
  *
@@ -44,7 +44,7 @@ public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordType
     public static void tearDownAfterClass() throws Exception {
         repoSetup.stop();
     }
- 
+
 
     @Before
     public void setUp() throws Exception {

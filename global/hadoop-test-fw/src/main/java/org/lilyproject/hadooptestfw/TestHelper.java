@@ -15,11 +15,15 @@
  */
 package org.lilyproject.hadooptestfw;
 
-import org.apache.log4j.*;
+import java.io.IOException;
+
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.apache.log4j.spi.Filter;
 import org.apache.log4j.spi.LoggingEvent;
-
-import java.io.IOException;
 
 public class TestHelper {
     private static Logger ROOT_LOGGER;
@@ -45,8 +49,9 @@ public class TestHelper {
         // Maven sets a property basedir, but if the testcases are run outside Maven (e.g. by an IDE),
         // then fall back to the working directory
         String targetDir = System.getProperty("basedir");
-        if (targetDir == null)
+        if (targetDir == null) {
             targetDir = System.getProperty("user.dir");
+        }
         String logFileName = targetDir + "/target/log.txt";
 
         System.out.println("Log output will go to " + logFileName);
@@ -104,7 +109,7 @@ public class TestHelper {
     /**
      * Sets up logging such that errors are logged to the console, and info level
      * logging is sent to a file in target directory.
-     *
+     * <p/>
      * <p>Additionally a set of categories can be specified that will be logged
      * as debug output to the console when a system property -Dlily.test.log is present.
      */

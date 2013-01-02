@@ -15,10 +15,8 @@
  */
 package org.lilyproject.indexer.worker;
 
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
-
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,9 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -75,11 +70,13 @@ import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.*;
+
 /**
  * IndexerWorker is responsible for the incremental indexing updating, thus for starting
  * index updaters on each Lily node for each index that is configured for updating (according
  * to its {@link IndexUpdateState}).
- *
+ * <p/>
  * <p>IndexerWorker does not shut down the index updaters when the ZooKeeper connection is
  * lost. This is in the assumption that if the ZK connection would be lost for a longer
  * period of time, the Lily node will shut down, and that it should not cause harm that

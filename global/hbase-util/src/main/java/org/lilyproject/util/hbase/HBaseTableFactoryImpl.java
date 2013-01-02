@@ -31,7 +31,6 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.util.ByteArrayKey;
 
 public class HBaseTableFactoryImpl implements HBaseTableFactory {
     private Log log = LogFactory.getLog(getClass());
@@ -44,7 +43,7 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
     }
 
     public HBaseTableFactoryImpl(Configuration configuration, List<TableConfigEntry> tableConfigs,
-            ColumnFamilyConfig defaultCfConfig) {
+                                 ColumnFamilyConfig defaultCfConfig) {
         this.configuration = configuration;
         this.tableConfigs = tableConfigs == null ? Collections.<TableConfigEntry>emptyList() : tableConfigs;
         this.defaultCfConfig = defaultCfConfig;
@@ -99,7 +98,8 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
             while (!admin.isTableAvailable(tableDescriptor.getName())) {
                 if (System.currentTimeMillis() - startWait > timeoutMillis) {
                     throw new IOException("Timed out waiting for table " + Bytes.toStringBinary(tableDescriptor.getName()));
-                };
+                }
+                ;
                 Thread.sleep(200);
             }
 
@@ -116,13 +116,15 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
 
         // max file size
         Long maxFileSize = tableConfig.getMaxFileSize();
-        if (maxFileSize != null)
+        if (maxFileSize != null) {
             tableDescriptor.setMaxFileSize(maxFileSize);
+        }
 
         // memstore flush size
         Long memStoreFlushSize = tableConfig.getMemStoreFlushSize();
-        if (memStoreFlushSize != null)
+        if (memStoreFlushSize != null) {
             tableDescriptor.setMemStoreFlushSize(memStoreFlushSize);
+        }
 
         for (HColumnDescriptor column : tableDescriptor.getColumnFamilies()) {
             ColumnFamilyConfig cfConf = tableConfig.getColumnFamilyConfig(column.getNameAsString());

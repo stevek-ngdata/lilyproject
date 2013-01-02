@@ -2,10 +2,10 @@
 <indexer xmlns:bi="batchindex-test">
 
   <records>
-    <record matchNamespace="bi" matchName="*" vtags="last"/>    
+    <record matchNamespace="bi" matchName="*" vtags="last"/>
   </records>
 
-  <fields>    
+  <fields>
     <field name="field1" value="bi:field1"/>
     <field name="derefField" value="bi:linkField=>bi:field1"/>
   </fields>

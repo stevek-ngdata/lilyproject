@@ -19,7 +19,7 @@ import org.lilyproject.repository.api.QName;
 
 /**
  * Filters on the record type of records.
- *
+ * <p/>
  * <p>It is the record type from the non-versioned scope based on which the filtering is performed.</p>
  */
 public class RecordTypeFilter implements RecordFilter {
@@ -28,7 +28,7 @@ public class RecordTypeFilter implements RecordFilter {
 
     public RecordTypeFilter() {
     }
-    
+
     public RecordTypeFilter(QName recordType) {
         this.recordType = recordType;
     }

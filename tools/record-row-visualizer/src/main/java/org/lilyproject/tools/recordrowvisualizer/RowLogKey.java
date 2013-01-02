@@ -50,13 +50,16 @@ public class RowLogKey implements Comparable<RowLogKey> {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        RowLogKey other = (RowLogKey) obj;
+        }
+        RowLogKey other = (RowLogKey)obj;
         return other.sequenceNr == sequenceNr && other.timestamp == timestamp && other.hbaseVersion == hbaseVersion;
     }
 
@@ -67,20 +70,23 @@ public class RowLogKey implements Comparable<RowLogKey> {
 
     @Override
     public int compareTo(RowLogKey o) {
-        if (sequenceNr < o.sequenceNr)
+        if (sequenceNr < o.sequenceNr) {
             return -1;
-        else if (sequenceNr > o.sequenceNr)
+        } else if (sequenceNr > o.sequenceNr) {
             return 1;
+        }
 
-        if (timestamp < o.timestamp)
+        if (timestamp < o.timestamp) {
             return -1;
-        else if (timestamp > o.timestamp)
+        } else if (timestamp > o.timestamp) {
             return 1;
+        }
 
-        if (hbaseVersion < o.hbaseVersion)
+        if (hbaseVersion < o.hbaseVersion) {
             return -1;
-        else if (hbaseVersion > o.hbaseVersion)
+        } else if (hbaseVersion > o.hbaseVersion) {
             return 1;
+        }
 
         return 0;
     }

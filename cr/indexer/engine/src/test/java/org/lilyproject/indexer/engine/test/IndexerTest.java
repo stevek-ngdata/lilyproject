@@ -15,14 +15,7 @@
  */
 package org.lilyproject.indexer.engine.test;
 
-import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
-
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,8 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -112,11 +108,9 @@ import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 public class IndexerTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -229,8 +223,9 @@ public class IndexerTest {
     public static void tearDownAfterClass() throws Exception {
         repoSetup.stop();
 
-        if (SOLR_TEST_UTIL != null)
+        if (SOLR_TEST_UTIL != null) {
             SOLR_TEST_UTIL.stop();
+        }
     }
 
     public static void changeIndexUpdater(String confName) throws Exception {
@@ -296,7 +291,7 @@ public class IndexerTest {
         ValueType dateValueType = typeManager.getValueType("DATE");
 
         ValueType intHierValueType = typeManager.getValueType("PATH<INTEGER>");
-        
+
 
         //
         // Version tag fields
@@ -477,12 +472,12 @@ public class IndexerTest {
         //
         // Test ForEach
         //
-        
+
         String baseProductId = "product29485";
         String linkedProductId = "linkedProduct12345";
         RecordId linkedRecordId = repository.getIdGenerator().newRecordId(linkedProductId);
-        
-        
+
+
         repository.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId(baseProductId))
                 .recordType(new QName(NS, "Alpha"))
@@ -491,7 +486,7 @@ public class IndexerTest {
                 .create();
 
         repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId(baseProductId, 
+                .id(repository.getIdGenerator().newRecordId(baseProductId,
                         Collections.singletonMap("country", "france")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "louche")
@@ -499,13 +494,13 @@ public class IndexerTest {
                 .create();
 
         repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId(baseProductId, 
+                .id(repository.getIdGenerator().newRecordId(baseProductId,
                         Collections.singletonMap("country", "belgium")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "schuimspaan")
                 .field(nvfield2.getName(), "11")
                 .create();
-        
+
         repository.recordBuilder()
                 .id(linkedRecordId)
                 .recordType(new QName(NS, "Alpha"))
@@ -1297,7 +1292,7 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(nvfield1.getName(), "Brussels");
             record1.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record1.getId(), (Long) null, null, nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, record1.getId(), (Long)null, null, nvfield1.getId(), nvTag.getId());
             record1 = repository.create(record1);
 
             Record record2 = repository.newRecord();
@@ -1311,7 +1306,7 @@ public class IndexerTest {
             record3.setRecordType(vRecordType1.getName());
             record3.setField(nvLinkField2.getName(), new Link(record2.getId()));
             record3.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record3.getId(), (Long) null, null, nvLinkField2.getId(), nvTag.getId());
+            expectEvent(CREATE, record3.getId(), (Long)null, null, nvLinkField2.getId(), nvTag.getId());
             record3 = repository.create(record3);
 
             commitIndex();
@@ -2770,62 +2765,62 @@ public class IndexerTest {
             @Override
             public boolean apply(@Nullable MappingNode input) {
                 if (input instanceof IndexField) {
-                    final IndexField indexField = (IndexField) input;
+                    final IndexField indexField = (IndexField)input;
 
                     if ("cc_less_variant_spaces".equals(indexField.getName().getTemplate())) {
-                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        final List<Follow> follows = ((DerefValue)indexField.getValue()).getFollows();
                         assertEquals(1, follows.size());
-                        final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
+                        final Set<String> dimensions = ((VariantFollow)follows.get(0)).getDimensions();
                         assertEquals(1, dimensions.size());
                         assertTrue(dimensions.contains("my branch"));
                     } else if ("cc_less_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
-                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        final List<Follow> follows = ((DerefValue)indexField.getValue()).getFollows();
                         assertEquals(1, follows.size());
-                        final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
+                        final Set<String> dimensions = ((VariantFollow)follows.get(0)).getDimensions();
                         assertEquals(2, dimensions.size());
                         assertTrue(dimensions.contains("my branch"));
                         assertTrue(dimensions.contains("some lang"));
                     } else if ("cc_more_variant_spaces".equals(indexField.getName().getTemplate())) {
-                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        final List<Follow> follows = ((DerefValue)indexField.getValue()).getFollows();
                         assertEquals(1, follows.size());
                         final Map<String, String> dimensions =
-                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                                ((ForwardVariantFollow)follows.get(0)).getDimensions();
                         assertEquals(1, dimensions.size());
                         assertTrue(dimensions.containsKey("my branch"));
                         assertNull(dimensions.get("my branch"));
                     } else if ("cc_more_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
-                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        final List<Follow> follows = ((DerefValue)indexField.getValue()).getFollows();
                         assertEquals(1, follows.size());
                         final Map<String, String> dimensions =
-                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                                ((ForwardVariantFollow)follows.get(0)).getDimensions();
                         assertEquals(2, dimensions.size());
                         assertTrue(dimensions.containsKey("my branch"));
                         assertNull(dimensions.get("my branch"));
                         assertTrue(dimensions.containsKey("some lang"));
                         assertNull(dimensions.get("some lang"));
                     } else if ("cc_more_variant_spaces_value".equals(indexField.getName().getTemplate())) {
-                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        final List<Follow> follows = ((DerefValue)indexField.getValue()).getFollows();
                         assertEquals(1, follows.size());
                         final Map<String, String> dimensions =
-                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                                ((ForwardVariantFollow)follows.get(0)).getDimensions();
                         assertEquals(1, dimensions.size());
                         assertTrue(dimensions.containsKey("branch"));
                         assertEquals("some value", dimensions.get("branch"));
                     } else if ("cc_more_variant_spaces_twice_value".equals(indexField.getName().getTemplate())) {
-                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        final List<Follow> follows = ((DerefValue)indexField.getValue()).getFollows();
                         assertEquals(1, follows.size());
                         final Map<String, String> dimensions =
-                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                                ((ForwardVariantFollow)follows.get(0)).getDimensions();
                         assertEquals(2, dimensions.size());
                         assertTrue(dimensions.containsKey("branch"));
                         assertEquals("some value", dimensions.get("branch"));
                         assertTrue(dimensions.containsKey("lang"));
                         assertEquals("some lang", dimensions.get("lang"));
                     } else if ("cc_more_variant_spaces_key_and_value".equals(indexField.getName().getTemplate())) {
-                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        final List<Follow> follows = ((DerefValue)indexField.getValue()).getFollows();
                         assertEquals(1, follows.size());
                         final Map<String, String> dimensions =
-                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                                ((ForwardVariantFollow)follows.get(0)).getDimensions();
                         assertEquals(2, dimensions.size());
                         assertTrue(dimensions.containsKey("my branch"));
                         assertEquals("some value", dimensions.get("my branch"));
@@ -2844,7 +2839,7 @@ public class IndexerTest {
     private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {
         byte[] mswordblob = readResource(resource);
 
-        Blob blob = new Blob(mediaType, (long) mswordblob.length, fileName);
+        Blob blob = new Blob(mediaType, (long)mswordblob.length, fileName);
         OutputStream os = repository.getOutputStream(blob);
         try {
             os.write(mswordblob);
@@ -2856,7 +2851,7 @@ public class IndexerTest {
     }
 
     private Blob createBlob(byte[] content, String mediaType, String fileName) throws Exception {
-        Blob blob = new Blob(mediaType, (long) content.length, fileName);
+        Blob blob = new Blob(mediaType, (long)content.length, fileName);
         OutputStream os = repository.getOutputStream(blob);
         try {
             os.write(content);
@@ -2944,14 +2939,17 @@ public class IndexerTest {
             event.addUpdatedField(updatedField);
         }
 
-        if (versionCreated != null)
+        if (versionCreated != null) {
             event.setVersionCreated(versionCreated);
+        }
 
-        if (versionUpdated != null)
+        if (versionUpdated != null) {
             event.setVersionUpdated(versionUpdated);
+        }
 
-        if (recordTypeChanged)
+        if (recordTypeChanged) {
             event.setRecordTypeChanged(recordTypeChanged);
+        }
 
         messageVerifier.setExpectedEvent(recordId, event);
     }
@@ -2984,8 +2982,9 @@ public class IndexerTest {
 
         @Override
         public boolean processMessage(RowLogMessage message) {
-            if (!enabled)
+            if (!enabled) {
                 return true;
+            }
 
             // In case of failures we print out "load" messages, the main junit thread is expected to
             // test that the failures variable is 0.

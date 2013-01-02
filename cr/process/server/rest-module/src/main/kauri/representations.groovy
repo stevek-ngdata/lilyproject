@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 builder.representations {
-  exceptions {
-    exception {
-      jsonStatus2()
+    exceptions {
+        exception {
+            jsonStatus2()
+        }
     }
-  }
 
-  errors {
-    error {
-      jsonStatus2()
+    errors {
+        error {
+            jsonStatus2()
+        }
     }
-  }
 }

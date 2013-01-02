@@ -29,7 +29,9 @@ import org.lilyproject.repository.api.SchemaId;
  * Matches records based on certain conditions, i.e. a predicate on record objects.
  */
 public class RecordMatcher {
-    public enum FieldComparator {EQUAL, NOT_EQUAL};
+    public enum FieldComparator {EQUAL, NOT_EQUAL}
+
+    ;
 
     private WildcardPattern recordTypeNamespace;
     private WildcardPattern recordTypeName;
@@ -48,7 +50,7 @@ public class RecordMatcher {
     private final Map<String, String> variantPropsPattern;
 
     public RecordMatcher(WildcardPattern recordTypeNamespace, WildcardPattern recordTypeName, FieldType fieldType,
-            FieldComparator fieldComparator, Object fieldValue, Map<String, String> variantPropsPattern) {
+                         FieldComparator fieldComparator, Object fieldValue, Map<String, String> variantPropsPattern) {
         this.recordTypeNamespace = recordTypeNamespace;
         this.recordTypeName = recordTypeName;
         this.fieldType = fieldType;
@@ -79,8 +81,9 @@ public class RecordMatcher {
             }
 
             for (Map.Entry<String, String> entry : variantPropsPattern.entrySet()) {
-                if (entry.getKey().equals("*"))
+                if (entry.getKey().equals("*")) {
                     continue;
+                }
 
                 String dimVal = varProps.get(entry.getKey());
                 if (dimVal == null) {

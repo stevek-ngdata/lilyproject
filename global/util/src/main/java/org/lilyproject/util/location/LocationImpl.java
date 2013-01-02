@@ -19,9 +19,9 @@
  */
 package org.lilyproject.util.location;
 
-import org.lilyproject.util.ObjectUtils;
-
 import java.io.Serializable;
+
+import org.lilyproject.util.ObjectUtils;
 
 
 /**
@@ -51,8 +51,8 @@ public class LocationImpl implements Location, Serializable {
     /**
      * Build a location for a given URI and line and columb numbers.
      *
-     * @param uri the resource URI
-     * @param line the line number (starts at 1)
+     * @param uri    the resource URI
+     * @param line   the line number (starts at 1)
      * @param column the column number (starts at 1)
      */
     public LocationImpl(String description, String uri, int line, int column) {
@@ -91,7 +91,7 @@ public class LocationImpl implements Location, Serializable {
     /**
      * Obtain a <code>LocationImpl</code> from a {@link Location}. If <code>location</code> is
      * already a <code>LocationImpl</code>, it is returned, otherwise it is copied.
-     * <p>
+     * <p/>
      * This method is useful when an immutable and serializable location is needed, such as in locatable
      * exceptions.
      *
@@ -154,7 +154,7 @@ public class LocationImpl implements Location, Serializable {
         }
 
         if (obj instanceof Location) {
-            Location other = (Location) obj;
+            Location other = (Location)obj;
             return this.line == other.getLineNumber() &&
                     this.column == other.getColumnNumber() &&
                     ObjectUtils.safeEquals(this.uri, other.getURI()) &&
@@ -166,8 +166,12 @@ public class LocationImpl implements Location, Serializable {
 
     public int hashCode() {
         int hash = line ^ column;
-        if (uri != null) hash ^= uri.hashCode();
-        if (description != null) hash ^= description.hashCode();
+        if (uri != null) {
+            hash ^= uri.hashCode();
+        }
+        if (description != null) {
+            hash ^= description.hashCode();
+        }
 
         return hash;
     }

@@ -15,6 +15,8 @@
  */
 package org.lilyproject.rowlock;
 
+import javax.management.ObjectName;
+
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
 import org.apache.hadoop.metrics.MetricsUtil;
@@ -24,8 +26,6 @@ import org.apache.hadoop.metrics.util.MetricsRegistry;
 import org.apache.hadoop.metrics.util.MetricsTimeVaryingLong;
 import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
-
-import javax.management.ObjectName;
 
 public class RowLockerMetrics implements Updater {
     private final MetricsRegistry registry = new MetricsRegistry();
@@ -50,9 +50,9 @@ public class RowLockerMetrics implements Updater {
     @Override
     public void doUpdates(MetricsContext metricsContext) {
         synchronized (this) {
-          for (MetricsBase m : registry.getMetricsList()) {
-            m.pushMetric(metricsRecord);
-          }
+            for (MetricsBase m : registry.getMetricsList()) {
+                m.pushMetric(metricsRecord);
+            }
         }
         metricsRecord.update();
     }
@@ -67,8 +67,9 @@ public class RowLockerMetrics implements Updater {
         }
 
         public void shutdown() {
-            if (mbeanName != null)
+            if (mbeanName != null) {
                 MBeanUtil.unregisterMBean(mbeanName);
+            }
         }
     }
 }

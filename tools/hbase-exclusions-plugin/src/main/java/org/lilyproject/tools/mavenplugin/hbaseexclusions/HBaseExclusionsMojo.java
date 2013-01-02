@@ -15,24 +15,30 @@
  */
 package org.lilyproject.tools.mavenplugin.hbaseexclusions;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-import java.util.*;
 
 /**
  * This is a temporary Maven plugin used in the lily-hbase-client project to check that there are no
  * redundant dependencies. Otherwise prints out the necessary exclusion-statements and fails the build.
- *
+ * <p/>
  * <p>This will be invalidated once there is a solution for this issue:
  * https://issues.apache.org/jira/browse/HBASE-2170
  *
  * @requiresDependencyResolution runtime
  * @goal generate-exclusions
  */
-public class HBaseExclusionsMojo  extends AbstractMojo {
+public class HBaseExclusionsMojo extends AbstractMojo {
     /**
      * @parameter expression="${project}"
      * @readonly
@@ -111,10 +117,11 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
         int artifactIdEnd = artifact.indexOf(':', groupIdEnd + 1);
         String artifactId = artifact.substring(groupIdEnd + 1, artifactIdEnd);
 
-        return new String[] { groupId, artifactId };
+        return new String[]{groupId, artifactId};
     }
 
     private static Set<String> ALLOWED_ARTIFACTS = new HashSet<String>();
+
     static {
         ALLOWED_ARTIFACTS.add("org.apache.hbase:hbase");
         ALLOWED_ARTIFACTS.add("org.apache.hadoop:zookeeper");
@@ -128,7 +135,7 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
         ALLOWED_ARTIFACTS.add("org.apache.hadoop:hadoop-auth");
         ALLOWED_ARTIFACTS.add("com.google.protobuf:protobuf-java");
     }
-    
+
     private boolean isAllowed(String groupId, String artifactId) {
         return ALLOWED_ARTIFACTS.contains(groupId + ":" + artifactId);
     }

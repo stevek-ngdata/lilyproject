@@ -11,7 +11,7 @@
   <indexConfig>
   </indexConfig>
 
-  <jmx />
+  <jmx/>
 
   <updateHandler class="solr.DirectUpdateHandler2">
     <autoCommit>
@@ -54,10 +54,10 @@
   </query>
 
 
-  <requestDispatcher handleSelect="false" >
+  <requestDispatcher handleSelect="false">
     <requestParsers enableRemoteStreaming="true"
-                    multipartUploadLimitInKB="2048000" />
-    <httpCaching never304="true" />
+                    multipartUploadLimitInKB="2048000"/>
+    <httpCaching never304="true"/>
   </requestDispatcher>
 
   <requestHandler name="/select" class="solr.SearchHandler">
@@ -77,7 +77,7 @@
   </requestHandler>
 
   <!-- required for SolrCloud -->
-  <requestHandler name="/replication" class="solr.ReplicationHandler" startup="lazy" />
+  <requestHandler name="/replication" class="solr.ReplicationHandler" startup="lazy"/>
 
   <requestHandler name="/admin/" class="solr.admin.AdminHandlers"/>
 
@@ -90,7 +90,7 @@
     </lst>
   </requestHandler>
 
-  <requestHandler name="/debug/dump" class="solr.DumpRequestHandler" >
+  <requestHandler name="/debug/dump" class="solr.DumpRequestHandler">
     <lst name="defaults">
       <str name="echoParams">explicit</str>
       <str name="echoHandler">true</str>

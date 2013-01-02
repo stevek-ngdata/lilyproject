@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <mapreduce xmlns:conf="http://kauriproject.org/configuration"
-       conf:inherit="deep">
+           conf:inherit="deep">
 
   <!--
      | Base properties, used to connect to job tracker for status information and also

@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
@@ -33,7 +34,7 @@
   <name>Lily: binary distribution</name>
 
   <dependencies>
-   <!-- fixme do we still need to add commons-configuration? -->
+    <!-- fixme do we still need to add commons-configuration? -->
     <!-- This dependency is here because otherwise Maven doesn't include its recursive dependencies. (they are excluded in lily-hbase-client but not in another project (they come in via a dependency of hbase:tests), and in the context here Maven
       decides to take the commons-configuration from lily-hbase-client. Quite annoying.)
     -->
@@ -57,7 +58,7 @@
       </resource>
     </resources>
 
-    <plugins>      
+    <plugins>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>

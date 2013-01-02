@@ -1,8 +1,5 @@
 package org.lilyproject.indexer.engine;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.management.ObjectName;
@@ -13,11 +10,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 
 /**
  * Keeps track of all indexers that have been created. There is one indexer for every index, identified by name.
- *
- *
  */
 public class IndexerRegistry implements IndexerRegistryMBean {
     private final Map<String, Indexer> indexers = new ConcurrentHashMap<String, Indexer>();
@@ -66,7 +64,7 @@ public class IndexerRegistry implements IndexerRegistryMBean {
             jmxObjectName = new ObjectName("Lily:name=Indexer");
             ManagementFactory.getPlatformMBeanServer().registerMBean(this, jmxObjectName);
         } catch (Exception e) {
-            log.warn("Error registering mbean '"+ jmxObjectName, e);
+            log.warn("Error registering mbean '" + jmxObjectName, e);
         }
     }
 
@@ -74,7 +72,7 @@ public class IndexerRegistry implements IndexerRegistryMBean {
         try {
             ManagementFactory.getPlatformMBeanServer().unregisterMBean(jmxObjectName);
         } catch (Exception e) {
-            log.warn("Error unregistering mbean '"+ jmxObjectName, e);
+            log.warn("Error unregistering mbean '" + jmxObjectName, e);
         }
     }
 }

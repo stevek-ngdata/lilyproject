@@ -31,7 +31,9 @@
             <td>System Field</td>
             <td>${sysFieldName}</td>
             <t:forEach var="version" in="${row.allVersions}">
-              <td>${row.systemFields.getValue(sysFieldName, version)}<br/></td>
+              <td>${row.systemFields.getValue(sysFieldName, version)}
+                <br/>
+              </td>
             </t:forEach>
           </tr>
         </t:forEach>
@@ -59,7 +61,8 @@
                   </t:when>
                   <t:when test="${fieldType.valueType.multiValue}">
                     <t:forEach var="item" in="${row.fields.getValue(version, fieldType.id)}">
-                      ${item}<br/>
+                      ${item}
+                      <br/>
                     </t:forEach>
                   </t:when>
                   <t:otherwise>

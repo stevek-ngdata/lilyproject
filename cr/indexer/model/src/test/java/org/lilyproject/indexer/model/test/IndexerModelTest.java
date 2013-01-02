@@ -38,9 +38,7 @@ import org.lilyproject.util.net.NetUtils;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class IndexerModelTest {
     private static MiniZooKeeperCluster ZK_CLUSTER;
@@ -175,7 +173,7 @@ public class IndexerModelTest {
                 assertEquals("Expected number of events", expectedEvents.length, events.size());
             }
 
-            Set<IndexerModelEvent> expectedEventsSet  = new HashSet<IndexerModelEvent>(Arrays.asList(expectedEvents));
+            Set<IndexerModelEvent> expectedEventsSet = new HashSet<IndexerModelEvent>(Arrays.asList(expectedEvents));
 
             for (IndexerModelEvent event : expectedEvents) {
                 if (!events.contains(event)) {

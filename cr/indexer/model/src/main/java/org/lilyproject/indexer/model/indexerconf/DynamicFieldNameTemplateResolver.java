@@ -32,7 +32,7 @@ public class DynamicFieldNameTemplateResolver implements NameTemplateResolver {
                 return cPart.getFalseString();
             }
         } else if (part instanceof VariableTemplatePart) {
-            VariableTemplatePart varPart = (VariableTemplatePart) part;
+            VariableTemplatePart varPart = (VariableTemplatePart)part;
             Object value = values.get(varPart.getVariable());
             if (value == null) {
                 throw new NameTemplateEvaluationException("Variable does not evaluate to a value: " + varPart.getVariable());

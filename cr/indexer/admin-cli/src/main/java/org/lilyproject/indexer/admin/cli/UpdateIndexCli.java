@@ -60,8 +60,9 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (indexName == null) {
             System.out.println("Specify index name with -" + nameOption.getOpt());
@@ -79,7 +80,7 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
 
             boolean changes = false;
 
-            SolrMode oldSolrMode =  SolrMode.CLOUD;
+            SolrMode oldSolrMode = SolrMode.CLOUD;
             if (index.getSolrShards() != null && !index.getSolrShards().isEmpty()) {
                 oldSolrMode = SolrMode.CLASSIC;
             }
@@ -87,7 +88,9 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
                 solrMode = oldSolrMode;
             }
 
-            if (validateSolrOptions(oldSolrMode, solrMode)) return 1;
+            if (validateSolrOptions(oldSolrMode, solrMode)) {
+                return 1;
+            }
 
             if (solrMode != oldSolrMode) {
                 changes = true;
@@ -96,7 +99,7 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
                     // clear solr cloud settings
                     index.setZkConnectionString(null);
                     index.setSolrCollection(null);
-                    
+
                     // shards will be set later
                 } else {
                     // clear solr classic settings
@@ -191,12 +194,13 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
 
     /**
      * Sets the sharding configuration, returning true if any actual changes were made
+     *
      * @param conf
      * @param index
      */
     private boolean setShardingConfiguration(byte[] conf, IndexDefinition index) {
         if (conf != null) {
-            if (index.getShardingConfiguration() == null) { 
+            if (index.getShardingConfiguration() == null) {
                 if (!ObjectUtils.safeEquals(conf, index.getShardingConfiguration())) {
                     index.setShardingConfiguration(conf);
                     return true;

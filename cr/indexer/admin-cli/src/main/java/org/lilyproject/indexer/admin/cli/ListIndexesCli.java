@@ -53,8 +53,9 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         List<IndexDefinition> indexes = new ArrayList<IndexDefinition>(model.getIndexes());
         Collections.sort(indexes, IndexDefinitionNameComparator.INSTANCE);
@@ -87,9 +88,10 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                         (index.getSolrCollection() != null ? index.getSolrCollection() : "none (using solr default)"));
             }
 
-            if (this.printBatchConfiguration)
+            if (this.printBatchConfiguration) {
                 System.out.println("  + Default batch build config : " +
                         prettyPrintJson(index.getDefaultBatchIndexConfiguration(), 4));
+            }
 
             ActiveBatchBuildInfo activeBatchBuild = index.getActiveBatchBuildInfo();
             if (activeBatchBuild != null) {
@@ -97,9 +99,10 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                 System.out.println("    + Hadoop Job ID: " + activeBatchBuild.getJobId());
                 System.out.println("    + Submitted at: " + new DateTime(activeBatchBuild.getSubmitTime()).toString());
                 System.out.println("    + Tracking URL: " + activeBatchBuild.getTrackingUrl());
-                if (this.printBatchConfiguration)
+                if (this.printBatchConfiguration) {
                     System.out.println("    + Batch build config : " +
                             prettyPrintJson(activeBatchBuild.getBatchIndexConfiguration(), 6));
+                }
             }
 
             BatchBuildInfo lastBatchBuild = index.getLastBatchBuildInfo();
@@ -115,9 +118,10 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                 System.out.println("    + Launched map tasks: " + counters.get(COUNTER_TOTAL_LAUNCHED_MAPS));
                 System.out.println("    + Failed map tasks: " + counters.get(COUNTER_NUM_FAILED_MAPS));
                 System.out.println("    + Index failures: " + counters.get(COUNTER_NUM_FAILED_RECORDS));
-                if (this.printBatchConfiguration)
+                if (this.printBatchConfiguration) {
                     System.out.println("    + Batch build config : " +
                             prettyPrintJson(lastBatchBuild.getBatchIndexConfiguration(), 6));
+                }
             }
         }
 

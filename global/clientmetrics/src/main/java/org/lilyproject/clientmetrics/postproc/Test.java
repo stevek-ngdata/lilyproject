@@ -29,7 +29,9 @@ public class Test {
 
     public String description;
 
-    /** Each metric is associated with a number, which is its index in {@link Interval#datas}. */
+    /**
+     * Each metric is associated with a number, which is its index in {@link Interval#datas}.
+     */
     public Map<String, Integer> metricNames = new HashMap<String, Integer>();
 
     public List<Interval> intervals = new ArrayList<Interval>();

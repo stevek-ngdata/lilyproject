@@ -40,9 +40,9 @@ import org.lilyproject.util.io.Closer;
 
 /**
  * The index of links that exist between documents.
- *
+ * <p/>
  * <p>Terminology:
- *
+ * <p/>
  * <ul>
  * <li>referrers = backwards links = incoming links</li>
  * <li>forward links = outgoing links</li>

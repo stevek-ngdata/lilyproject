@@ -23,7 +23,7 @@ public class FieldNotFoundException extends RepositoryRuntimeException {
     public FieldNotFoundException(QName fieldName) {
         this.fieldName = fieldName;
     }
-    
+
     public FieldNotFoundException(SchemaId fieldId) {
         this.fieldId = fieldId;
     }

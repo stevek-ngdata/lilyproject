@@ -15,6 +15,14 @@
  */
 package org.lilyproject.tools.mavenplugin.kauridepresolver;
 
+import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -23,17 +31,9 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProjectBuilder;
-import org.apache.maven.settings.Repository;
 import org.kauriproject.runtime.model.SourceLocations;
 
-import javax.xml.xpath.XPathFactory;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
 /**
- *
  * @goal resolve-project-dependencies
  * @requiresDependencyResolution runtime
  * @description Resolve (download) all the dependencies of a Kauri project starting from wiring.xml.
@@ -149,7 +149,11 @@ public class KauriProjectDependencyResolver extends AbstractMojo {
                         sourceLocationsFile.getAbsolutePath(), e);
             } finally {
                 if (sourceLocationsStream != null) {
-                    try { sourceLocationsStream.close(); } catch (IOException e) { e.printStackTrace(); }
+                    try {
+                        sourceLocationsStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }

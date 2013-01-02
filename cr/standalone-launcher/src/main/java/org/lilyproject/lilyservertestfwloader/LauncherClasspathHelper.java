@@ -15,30 +15,30 @@
  */
 package org.lilyproject.lilyservertestfwloader;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.net.URL;
-import java.net.MalformedURLException;
-import java.net.URLClassLoader;
-import java.io.InputStream;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 public class LauncherClasspathHelper {
 
     public static ClassLoader getClassLoader(String configResource, File repositoryLocation) {
         URL[] classPath = getClassPath(configResource, repositoryLocation);
-        
+
         // Set the classpath also in the system property java.class.path
         // When the MapReduce taskjvm.sh scripts are generated,
         // this property is used to set the classpath in the script.
@@ -51,7 +51,7 @@ public class LauncherClasspathHelper {
             builder.append(pathSeparator);
         }
         System.setProperty("java.class.path", builder.toString());
-        
+
         return new URLClassLoader(classPath, LauncherClasspathHelper.class.getClassLoader());
     }
 
@@ -89,8 +89,9 @@ public class LauncherClasspathHelper {
                 if (node instanceof Element && node.getLocalName().equals("artifact")) {
                     Element artifactEl = (Element)node;
                     URL artifactURL = getArtifactURL(artifactEl, repositoryLocation, kauriVersion);
-                    if (artifactURL != null)
+                    if (artifactURL != null) {
                         artifactURLs.add(artifactURL);
+                    }
                 }
             }
             return artifactURLs.toArray(new URL[0]);
@@ -101,8 +102,9 @@ public class LauncherClasspathHelper {
         String groupId = artifactEl.getAttribute("groupId");
         String artifactId = artifactEl.getAttribute("artifactId");
         String version = artifactEl.getAttribute("version");
-        if (version.equals(""))
+        if (version.equals("")) {
             version = kauriVersion;
+        }
         String classifier = artifactEl.getAttribute("classifier");
 
         String sep = System.getProperty("file.separator");
@@ -122,7 +124,7 @@ public class LauncherClasspathHelper {
             builder.append(classifier);
         }
         builder.append(".jar");
-        
+
         File artifactFile = new File(repositoryLocation, builder.toString());
 
         if (!artifactFile.exists()) {

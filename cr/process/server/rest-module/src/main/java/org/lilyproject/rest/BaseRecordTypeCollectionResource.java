@@ -15,16 +15,14 @@
  */
 package org.lilyproject.rest;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Produces;
+
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RecordTypeExistsException;
 import org.lilyproject.repository.api.TypeManager;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Produces;
-
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.*;
 
 public abstract class BaseRecordTypeCollectionResource extends RepositoryEnabled {
     @GET

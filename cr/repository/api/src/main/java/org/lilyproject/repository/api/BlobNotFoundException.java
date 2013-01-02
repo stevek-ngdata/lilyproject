@@ -21,12 +21,12 @@ import java.util.Map;
 public class BlobNotFoundException extends BlobException {
     private String blob = null;
     private String info = null;
-    
+
     public BlobNotFoundException(String message, Map<String, String> state) {
         this.blob = state.get("blob");
         this.info = state.get("info");
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
@@ -34,27 +34,27 @@ public class BlobNotFoundException extends BlobException {
         state.put("info", info);
         return state;
     }
-    
+
     public BlobNotFoundException(Blob blob, String info, Throwable cause) {
         super(cause);
         this.blob = (blob != null) ? blob.toString() : null;
         this.info = info;
     }
-    
+
     public BlobNotFoundException(Blob blob, String info) {
         this.blob = (blob != null) ? blob.toString() : null;
         this.info = info;
     }
-    
+
     public BlobNotFoundException(String info) {
         this.info = info;
     }
-    
+
     public BlobNotFoundException(String info, Throwable cause) {
         super(cause);
         this.info = info;
     }
-    
+
     @Override
     public String getMessage() {
         if (blob != null) {

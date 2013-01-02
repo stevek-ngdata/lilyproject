@@ -15,19 +15,19 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import com.google.common.base.Splitter;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.base.Splitter;
+
 /**
  * A pattern matching system for {@link org.lilyproject.repository.api.ValueType} names.
- *
+ * <p/>
  * <p>ValueType itself does not define any structural requirements for the type argument,
  * i.e. it is up to each ValueType implementation to interpret the argument.</p>
- *
+ * <p/>
  * <p>The format for the patterns is described in the user documentation.</p>
  */
 public class TypePattern {

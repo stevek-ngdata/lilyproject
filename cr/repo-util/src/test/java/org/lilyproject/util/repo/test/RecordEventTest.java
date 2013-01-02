@@ -15,6 +15,9 @@
  */
 package org.lilyproject.util.repo.test;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 import org.lilyproject.repository.api.IdGenerator;
@@ -22,13 +25,7 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.util.repo.RecordEvent;
 
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 public class RecordEventTest {
     @Test

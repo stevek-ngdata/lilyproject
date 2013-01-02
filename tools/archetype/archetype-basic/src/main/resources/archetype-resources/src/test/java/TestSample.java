@@ -1,4 +1,6 @@
-package ${package};
+package $
+
+{package};
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

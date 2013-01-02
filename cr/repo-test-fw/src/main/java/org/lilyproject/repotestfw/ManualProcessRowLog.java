@@ -59,7 +59,7 @@ public class ManualProcessRowLog implements RowLog {
 
     @Override
     public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put,
-            List<String> subscriptionIds) throws RowLogException, InterruptedException {
+                                    List<String> subscriptionIds) throws RowLogException, InterruptedException {
 
         RowLogMessage msg = delegate.putMessage(rowKey, data, payload, put, subscriptionIds);
         unprocessedMessages.add(msg);

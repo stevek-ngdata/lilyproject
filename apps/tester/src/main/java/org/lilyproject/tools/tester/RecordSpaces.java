@@ -25,8 +25,8 @@ import org.lilyproject.util.json.JsonUtil;
 
 public class RecordSpaces {
 
-    Map<String, RecordSpace> recordSpaces = new HashMap<String, RecordSpace>(); 
-    
+    Map<String, RecordSpace> recordSpaces = new HashMap<String, RecordSpace>();
+
     public RecordSpaces(List<JsonNode> recordSpacesConfig) {
         for (JsonNode recordSpaceNode : recordSpacesConfig) {
             addRecordSpace(recordSpaceNode);
@@ -38,54 +38,59 @@ public class RecordSpaces {
         Integer limit = JsonUtil.getInt(recordSpaceNode, "limit");
         recordSpaces.put(name, new RecordSpace(limit));
     }
-    
+
     public void addRecord(String space, TestRecord record) {
         RecordSpace recordSpace = recordSpaces.get(space);
-        if (recordSpace != null) 
+        if (recordSpace != null) {
             recordSpace.addRecord(record);
+        }
     }
-    
+
     public void removeRecord(String space, TestRecord record) {
         RecordSpace recordSpace = recordSpaces.get(space);
-        if (recordSpace != null) 
+        if (recordSpace != null) {
             recordSpace.removeRecord(record);
+        }
     }
-    
+
     public TestRecord getRecord(String space) {
         RecordSpace recordSpace = recordSpaces.get(space);
-        if (recordSpace != null)
+        if (recordSpace != null) {
             return recordSpace.getRecord();
-        else return null;
+        } else {
+            return null;
+        }
     }
-    
+
     private class RecordSpace {
         private int limit;
         private ListOrderedSet records;
-        
+
         public RecordSpace(int limit) {
             this.limit = limit;
             records = new ListOrderedSet();
         }
-        
+
         public synchronized void addRecord(TestRecord record) {
             if (records.size() < limit) {
                 records.add(record);
             } else {
-                int index = (int) Math.floor(Math.random() * records.size());
-                if (records.remove(index) != null)
+                int index = (int)Math.floor(Math.random() * records.size());
+                if (records.remove(index) != null) {
                     records.add(record);
+                }
             }
         }
-        
+
         public synchronized void removeRecord(TestRecord record) {
             records.remove(record);
         }
-        
+
         public synchronized TestRecord getRecord() {
             TestRecord testRecord;
             int loopCnt = 0;
             do {
-                int index = (int) Math.floor(Math.random() * records.size());
+                int index = (int)Math.floor(Math.random() * records.size());
                 testRecord = (TestRecord)records.get(index);
                 loopCnt++;
                 if ((loopCnt % 100) == 0) {

@@ -15,6 +15,9 @@
  */
 package org.lilyproject.util.repo.test;
 
+import java.math.BigDecimal;
+import java.net.URI;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -24,9 +27,6 @@ import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.util.repo.FieldValueStringConverter;
-
-import java.math.BigDecimal;
-import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;

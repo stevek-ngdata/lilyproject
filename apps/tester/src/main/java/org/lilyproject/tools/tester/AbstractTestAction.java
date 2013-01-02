@@ -44,12 +44,12 @@ public abstract class AbstractTestAction implements TestAction {
         destination = JsonUtil.getString(actionNode, "destination", null);
         this.testActionContext = testActionContext;
     }
-    
+
     @Override
     public TestActionContext getContext() {
         return testActionContext;
     }
-    
+
     @Override
     public int run() {
         failureCount = 0;
@@ -68,11 +68,11 @@ public abstract class AbstractTestAction implements TestAction {
     }
 
     abstract protected void runAction();
-    
+
     protected void report(boolean success, double duration) {
         report(success, duration, null);
     }
-    
+
     protected void report(boolean success, double duration, String subactionName) {
         report(success, duration, null, subactionName);
     }
@@ -96,10 +96,10 @@ public abstract class AbstractTestAction implements TestAction {
             StackTracePrinter.printStackTrace(throwable, testActionContext.errorStream);
             testActionContext.errorStream.println("---------------------------------------------------------------------------");
         }
-        
+
         System.err.println("ATTENTION: an error occurred, check failure output file for details.");
     }
-    
+
     protected TestRecord getNonDeletedRecord(Set<TestRecord> records) {
         if (records == null || records.size() == 0) {
             return null;
@@ -109,7 +109,7 @@ public abstract class AbstractTestAction implements TestAction {
         TestRecord testRecord;
         int loopCnt = 0;
         do {
-            int selectedIndex = (int) Math.floor(Math.random() * records.size());
+            int selectedIndex = (int)Math.floor(Math.random() * records.size());
             testRecord = testRecords[selectedIndex];
             loopCnt++;
             if ((loopCnt % 100) == 0) {

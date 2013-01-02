@@ -15,17 +15,16 @@
  */
 package org.lilyproject.rest.providers.json;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
@@ -39,7 +38,7 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
     @Override
     public Response toResponse(Throwable throwable) {
         if (throwable instanceof ResourceException) {
-            ResourceException re = (ResourceException) throwable;
+            ResourceException re = (ResourceException)throwable;
             return createResponseForResourceException(re);
         } else {
             return createGenericResponse(throwable);
@@ -79,10 +78,11 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
 
         Response.Status statusObject = Response.Status.fromStatusCode(status);
         String description;
-        if (providedDescription == null)
+        if (providedDescription == null) {
             description = (statusObject != null ? statusObject.toString() : null);
-        else
+        } else {
             description = providedDescription;
+        }
 
         if (description != null) {
             msgNode.put("description", description);

@@ -15,15 +15,15 @@
  */
 package org.lilyproject.server.modules.general;
 
-import org.apache.hadoop.net.DNS;
-
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+
+import org.apache.hadoop.net.DNS;
 
 public class NetworkInterfaceInfoImpl implements NetworkInterfaceInfo {
     private String interface_;
     private String nameserver;
-    
+
     private String hostName;
     private String hostAddress;
 

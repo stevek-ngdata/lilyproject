@@ -20,10 +20,10 @@ import org.lilyproject.repository.api.QName;
 
 /**
  * Filters based on the value of a record field.
- *
+ * <p/>
  * <p>Only equals and not-equals comparisons are possible. This is because the comparison happens inside
  * the HBase region servers, on the bytes-encoded field values.</p>
- *
+ * <p/>
  * <p>For versioned fields, the filtering always happens based on the last version of the field values.</p>
  */
 public class FieldValueFilter implements RecordFilter {
@@ -78,7 +78,7 @@ public class FieldValueFilter implements RecordFilter {
 
     /**
      * Sets the value of the field.
-     *
+     * <p/>
      * <p>The provided object should be of the correct type, corresponding
      * to the value type of the field ({@link #setField(QName)}). The expected
      * Java classes for each Lily field type can be found at
@@ -105,9 +105,9 @@ public class FieldValueFilter implements RecordFilter {
 
     /**
      * Set whether the record should be filtered if the record does not have the field.
-     * 
+     * <p/>
      * <p>If true, the record will be skipped if the field is not found. This is the default.
-     * 
+     * <p/>
      * <p>If false, the record will pass if the field is not found.
      */
     public void setFilterIfMissing(boolean filterIfMissing) {
@@ -116,7 +116,7 @@ public class FieldValueFilter implements RecordFilter {
 
     /**
      * Get whether the record should be filtered if the record does not have the field.
-     * 
+     *
      * @return true if record should be skipped if field not found, false if record
      *         should be let through anyways
      */

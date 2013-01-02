@@ -45,7 +45,7 @@ public class BlobStoreAccessConfig {
             limits.put(store, limit);
         }
     }
-    
+
     public byte[] toBytes() {
         ObjectNode node = JsonNodeFactory.instance.objectNode();
         node.put("default", defaultAccess);
@@ -64,22 +64,22 @@ public class BlobStoreAccessConfig {
         ArgumentValidator.notNull(defaultAccess, "defaultAccess");
         this.defaultAccess = defaultAccess;
     }
-    
+
     public void setDefault(String defaultAccess) {
         ArgumentValidator.notNull(defaultAccess, "defaultAccess");
         this.defaultAccess = defaultAccess;
     }
-    
+
     public String getDefault() {
         return this.defaultAccess;
     }
-    
+
     public void setLimit(String access, long limit) {
         limits.put(access, limit);
     }
-    
+
     public Map<String, Long> getLimits() {
         return limits;
     }
-    
+
 }

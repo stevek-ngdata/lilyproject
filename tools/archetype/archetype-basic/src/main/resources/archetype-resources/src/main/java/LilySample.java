@@ -1,4 +1,6 @@
-package ${package};
+package $
+
+{package};
 
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.*;

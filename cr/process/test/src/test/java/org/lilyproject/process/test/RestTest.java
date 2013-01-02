@@ -15,6 +15,14 @@
  */
 package org.lilyproject.process.test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
@@ -24,24 +32,21 @@ import org.joda.time.LocalDate;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
-
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
-import org.restlet.*;
-import org.restlet.data.*;
+import org.restlet.Client;
+import org.restlet.Context;
+import org.restlet.Request;
+import org.restlet.Response;
+import org.restlet.data.MediaType;
+import org.restlet.data.Method;
+import org.restlet.data.Protocol;
+import org.restlet.data.Status;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import static org.junit.Assert.*;
 
 public class RestTest {
     private static String BASE_URI;
@@ -468,7 +473,7 @@ public class RestTest {
             json = readJson(response.getEntity());
             assertEquals(1L, json.get("fields").size());
             assertEquals(2L, json.get("version").getLongValue());
-        }        
+        }
     }
 
     /**
@@ -1139,87 +1144,87 @@ public class RestTest {
         response = post(BASE_URI + "/record/USER.ConDel", body);
         assertStatus(Status.SUCCESS_NO_CONTENT, response);
     }
-    
-    private void setupRecordScannerTest () throws Exception{
+
+    private void setupRecordScannerTest() throws Exception {
         makeBookSchema();
 
         // Create a record using PUT and a user ID
         String body = json("{ type: 'b$book', fields: { 'b$title' : 'Faster Fishing' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
-        Response response = put(BASE_URI + "/record/USER.scan_faster_fishing", body);        
+        Response response = put(BASE_URI + "/record/USER.scan_faster_fishing", body);
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Fister Fashing' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.scan_fister_fashing", body);
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Fly fishing with Flash' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.scan_fly_fishing_with_flash", body);
     }
-    
-    @Test 
+
+    @Test
     public void testRecordScanPost() throws Exception {
         setupRecordScannerTest();
-        
+
         // Create a scanner to see if it gest created. Check the location header
         String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', " +
                 "'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
         Response response = post(BASE_URI + "/scan", body);
         assertStatus(Status.SUCCESS_CREATED, response);
         String location = response.getLocationRef().toUri().toString();
-        assertTrue(location.contains("/repository/scan/"));          
+        assertTrue(location.contains("/repository/scan/"));
     }
-    
-    @Test 
+
+    @Test
     public void testRecordScanGet() throws Exception {
         setupRecordScannerTest();
-        
-     // Create a scanner to see if it gest created. Check the location header
+
+        // Create a scanner to see if it gest created. Check the location header
         String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', " +
                 "'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
         Response response = post(BASE_URI + "/scan", body);
         assertStatus(Status.SUCCESS_CREATED, response);
         String location = response.getLocationRef().toUri().toString();
 
-     // Check if the scanner can be retrieved. Retrieve 1 record by default
+        // Check if the scanner can be retrieved. Retrieve 1 record by default
         response = get(location);
         assertStatus(Status.SUCCESS_OK, response);
         JsonNode json = readJson(response.getEntity());
         assertTrue(json.get("results").size() == 1);
-        
+
         // Check to see if the batch parameter gets more records
         response = get(location + "?batch=2");
         assertStatus(Status.SUCCESS_OK, response);
         json = readJson(response.getEntity());
         assertTrue(json.get("results").size() == 2);
-        
+
         // When the scanner runs out send 204 NO CONTENT
         response = get(location);
-        assertStatus(Status.SUCCESS_NO_CONTENT, response);        
-        
+        assertStatus(Status.SUCCESS_NO_CONTENT, response);
+
         // GETs on non existing scanners get 404
         response = get(location + "blablabla");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response); 
-        
+        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+
     }
-    
+
     @Test
     public void testRecordScanDelete() throws Exception {
         setupRecordScannerTest();
-        
+
         // Create a scanner to see if it gest created. Check the location header
         String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', " +
                 "'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
         Response response = post(BASE_URI + "/scan", body);
         assertStatus(Status.SUCCESS_CREATED, response);
         String location = response.getLocationRef().toUri().toString();
-        
+
         // Delete scanner
         response = delete(location);
         assertStatus(Status.SUCCESS_OK, response);
-        
+
         // Check that scanner is gone
         response = get(location);
         assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
 
         // Delete a non existing scanner gets a 404
         response = delete(location + "not_here");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);    
+        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
     }
 
     private JsonNode getFieldValue(JsonNode recordJson, String fieldName) {
@@ -1250,7 +1255,7 @@ public class RestTest {
             System.err.println(response.getEntityAsText());
         }
     }
-    
+
     private Response post(String uri, String body) {
         Request req = new Request(Method.POST, uri);
         req.setEntity(body, MediaType.APPLICATION_JSON);

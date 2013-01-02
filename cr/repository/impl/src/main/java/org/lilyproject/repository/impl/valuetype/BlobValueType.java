@@ -20,7 +20,10 @@ import java.util.Comparator;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.hbaseext.ContainsValueComparator;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class BlobValueType extends AbstractValueType implements ValueType {
     public final static String NAME = "BLOB";
@@ -29,7 +32,7 @@ public class BlobValueType extends AbstractValueType implements ValueType {
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
@@ -64,7 +67,7 @@ public class BlobValueType extends AbstractValueType implements ValueType {
      * - Blob Media Type : UTF (which starts with an int of 4 bytes indicating its length)
      * - Blob size : long of 8 bytes
      * - Blob name : UTF (which starts with an int of 4 bytes indicating its length)
-     * 
+     * <p/>
      * <p> IMPORTANT: Any changes on this format has an impact on the {@link ContainsValueComparator}
      */
     @Override
@@ -107,12 +110,15 @@ public class BlobValueType extends AbstractValueType implements ValueType {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         return true;
     }
 
@@ -122,10 +128,10 @@ public class BlobValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new BlobValueTypeFactory();
     }
-    
+
     public static class BlobValueTypeFactory implements ValueTypeFactory {
         private static BlobValueType instance = new BlobValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

@@ -1,9 +1,5 @@
 package org.lilyproject.indexer.derefmap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,11 +22,11 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.io.Closer;
 
+import static org.junit.Assert.*;
+
 /**
  * This tests the functionality of the {@link DerefMapHbaseImpl}. Note there is also a DerefMapIndexTest which
  * tests it in real indexing scenario's.
- *
- *
  */
 public class DerefMapBasicTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -51,7 +47,7 @@ public class DerefMapBasicTest {
         repository = repoSetup.getRepository();
         ids = repository.getIdGenerator();
 
-        derefMap = (DerefMapHbaseImpl) DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), null, ids);
+        derefMap = (DerefMapHbaseImpl)DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), null, ids);
     }
 
     @AfterClass

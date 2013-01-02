@@ -21,30 +21,30 @@ import org.lilyproject.bytes.api.DataOutput;
 
 /**
  * The id of a {@link Record}. This uniquely identifies a record.
- *
+ * <p/>
  * <p>A record ID consists of two parts: a mater record ID, and optionally variant properties.
- * 
+ * <p/>
  * <p>A string or byte[] representation can be requested of the Id.
  */
 public interface RecordId {
 
     /**
      * Returns a string representation of this record id.
-     * 
+     * <p/>
      * <p>The format for a master record id is as follows:
-     *
+     * <p/>
      * <pre>{record id type}.{master record id}</pre>
-     *
+     * <p/>
      * <p>Where the record id type is UUID or USER. For example:
-     *
+     * <p/>
      * <pre>USER.2354236523</pre>
-     *
+     * <p/>
      * <pre>A variant record id starts of the same, with the variant properties appended.
-     *
+     * <p/>
      * <pre>{record id type}.{master record id}.varprop1=value1,varprop2=value2</pre>
-     *
+     * <p/>
      * <p>The variant properties are sorted in lexicographic order.
-     *
+     * <p/>
      * <p>Reserved characters, in the id itself or in the variant property key and value
      * should be escaped with backslash. Reserved characters are dot, comma and equals
      * (and backslash itself).</p>
@@ -53,47 +53,46 @@ public interface RecordId {
 
     /**
      * Returns the byte representation of this record id.
-     *
+     * <p/>
      * <p>The bytes representation of record id's is designed such that they would provide
      * a meaningful row sort order in HBase, and be usable for scan operations. The encoding
      * is such that when an ID in un-encoded form is a prefix of another ID, it remains a
      * prefix when encoded as bytes. This allows for prefix-scanning a range of records.
      * (Of course, this only applies to user-specified IDs, not to UUID's).
-     *
+     * <p/>
      * <p>The format for a master record id is as follows:
-     * 
+     * <p/>
      * <pre>{identifier byte}{basic byte representation}</pre>
-     *
+     * <p/>
      * <p>Where the identifier byte is (byte)0 for a USER record id, and (byte)1 for a UUID record id.
-     *
+     * <p/>
      * <p>The {identifier byte} is put at the start because otherwise UUIDs
      * and USER-id's would be intermingled, preventing meaningful scan operations
      * on USER id's.</p>
-     *
+     * <p/>
      * <p>In case there are variant properties:</p>
-     *
+     * <p/>
      * <ul>
-     *     <li>For USER record id's, a zero byte (NULL character) is appended to mark the end
-     *     of the master record id. By consequence, use of the (non-printable) zero byte is
-     *     forbidden in the master record id. The reason for choosing the zero byte is because
-     *     it sorts before any other byte: this makes that the record id's of variants and
-     *     their master will be sorted together, without any other master record in between.
-     *     Any other master record id would have a byte larger than zero at that position.</li>
-     *     <li>For UUID record id's, there is no separator byte between the master and the
-     *     properties, since the UUID has a fixed length of 16 bytes. This also makes that
-     *     the variant properties do not influence the sort order among the master record id's</li>
+     * <li>For USER record id's, a zero byte (NULL character) is appended to mark the end
+     * of the master record id. By consequence, use of the (non-printable) zero byte is
+     * forbidden in the master record id. The reason for choosing the zero byte is because
+     * it sorts before any other byte: this makes that the record id's of variants and
+     * their master will be sorted together, without any other master record in between.
+     * Any other master record id would have a byte larger than zero at that position.</li>
+     * <li>For UUID record id's, there is no separator byte between the master and the
+     * properties, since the UUID has a fixed length of 16 bytes. This also makes that
+     * the variant properties do not influence the sort order among the master record id's</li>
      * </ul>
-     *
+     * <p/>
      * <p>The variant properties themselves are written as:
-     *
+     * <p/>
      * <pre>({key string utf8 length}{key string in utf8}{value string utf8 length}{value string in utf8})*</pre>
-     *
+     * <p/>
      * <p>There is no separator between the key-value pairs, as this is not needed. The key-value pairs are
      * always sorted by key.</p>
-     *
      */
     byte[] toBytes();
-    
+
     /**
      * Writes the bytes to the DataOutput with the same format as for {@link #toBytes()}
      */

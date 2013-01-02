@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<rowlog  xmlns:conf="http://kauriproject.org/configuration"
-         conf:inherit="deep">
+<rowlog xmlns:conf="http://kauriproject.org/configuration"
+        conf:inherit="deep">
 
   <!-- This is the initial config used at first startup. Afterwards, use lily-update-rowlog
        to change settings. -->
@@ -31,12 +31,12 @@
        secondary actions (in case of the WAL) or distributing messages to listeners (in
        case of the MQ). By setting the enabled flag to false, this Lily instance will
        not be a candidate to run the WAL or MQ processor. If they are disabled on all
-       Lily servers, no processing at all will happen. 
+       Lily servers, no processing at all will happen.
        -->
   <walProcessor enabled="true">
-    <!-- Nodes: A comma-separated list of hostnames on which the rowlog processor 
+    <!-- Nodes: A comma-separated list of hostnames on which the rowlog processor
          for the wal is allowed to run.
-         The leader election algorithm will select one of those nodes to run the 
+         The leader election algorithm will select one of those nodes to run the
          processor on.
          If no nodes are given (default), all lily nodes will be taken into account.
     -->
@@ -44,9 +44,9 @@
   </walProcessor>
 
   <mqProcessor enabled="true">
-    <!-- Nodes: A comma-separated list of hostnames on which the rowlog processor 
+    <!-- Nodes: A comma-separated list of hostnames on which the rowlog processor
          for the message queue is allowed to run.
-         The leader election algorithm will select one of those nodes to run the 
+         The leader election algorithm will select one of those nodes to run the
          processor on.
          If no nodes are given (default), all lily nodes will be taken into account.
     -->

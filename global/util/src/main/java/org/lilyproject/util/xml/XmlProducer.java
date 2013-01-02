@@ -15,31 +15,35 @@
  */
 package org.lilyproject.util.xml;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.sax.SAXResult;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Map;
+
 import org.w3c.dom.Element;
-import org.xml.sax.*;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 import org.xml.sax.ext.LexicalHandler;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.NamespaceSupport;
 
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.sax.SAXResult;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.OutputStream;
-import java.io.InputStream;
-import java.io.IOException;
-import java.util.Map;
-
 /**
  * Helper class for generating pretty-printed XML, with some higher-level methods
  * than what SAX's ContentHandler provides.
- *
+ * <p/>
  * <p>Hint: for attributes, use LinkedHashMap if you want to maintain the order.
  */
 public class XmlProducer {
@@ -55,7 +59,7 @@ public class XmlProducer {
             return transformerFactory;
         }
     };
-    private static char[] LINE_SEP = new char[] {'\n'};
+    private static char[] LINE_SEP = new char[]{'\n'};
     private static int LINE_SEP_LENGTH = LINE_SEP.length;
 
     public XmlProducer(OutputStream outputStream) throws SAXException, TransformerConfigurationException {
@@ -125,8 +129,9 @@ public class XmlProducer {
             attributes = new MapAttributes(attrs);
         }
 
-        if (uri == null)
+        if (uri == null) {
             uri = "";
+        }
         String prefix = getPrefixWithColon(uri);
 
         result.startElement(uri, name, prefix + name, attributes);
@@ -136,10 +141,11 @@ public class XmlProducer {
     private String getPrefixWithColon(String uri) {
         if (uri.length() > 0) {
             String prefix = namespaceSupport.getPrefix(uri);
-            if (prefix == null)
+            if (prefix == null) {
                 return "";
-            else
+            } else {
                 return prefix + ":";
+            }
         }
         return "";
     }
@@ -178,8 +184,9 @@ public class XmlProducer {
     public void closeElement(String uri, String name) throws SAXException {
         namespaceSupport.popContext();
 
-        if (uri == null)
+        if (uri == null) {
             uri = "";
+        }
         String prefix = getPrefixWithColon(uri);
         result.endElement(uri, name, prefix + name);
     }
@@ -244,8 +251,9 @@ public class XmlProducer {
 
         @Override
         public int getIndex(String uri, String localName) {
-            if (uri.length() != 0)
+            if (uri.length() != 0) {
                 return -1;
+            }
 
             for (int i = 0; i < attrList.length; i++) {
                 if (attrList[i].getKey().equals(localName)) {
@@ -272,8 +280,9 @@ public class XmlProducer {
 
         @Override
         public String getValue(String uri, String localName) {
-            if (uri.length() != 0)
+            if (uri.length() != 0) {
                 return null;
+            }
 
             return attrs.get(localName);
         }
@@ -295,8 +304,9 @@ public class XmlProducer {
             return "        ";
         } else {
             StringBuilder spaces = new StringBuilder(count);
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++) {
                 spaces.append(' ');
+            }
             return spaces.toString();
         }
     }

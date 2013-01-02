@@ -15,9 +15,15 @@
  */
 package org.lilyproject.tools.recordrowvisualizer;
 
-import org.lilyproject.repository.api.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import java.util.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 
 public class Fields {
     Map<Long, Map<SchemaId, Object>> values = new HashMap<Long, Map<SchemaId, Object>>();
@@ -27,12 +33,13 @@ public class Fields {
 
     public FieldType registerFieldType(SchemaId fieldId, TypeManager typeMgr) throws Exception {
         for (FieldType entry : fields) {
-            if (entry.getId().equals(fieldId))
+            if (entry.getId().equals(fieldId)) {
                 return entry;
+            }
         }
 
         FieldType fieldType = typeMgr.getFieldTypeById(fieldId);
-        
+
         fields.add(fieldType);
         return fieldType;
     }
@@ -43,8 +50,9 @@ public class Fields {
 
     public Object getValue(long version, SchemaId fieldId) {
         Map<SchemaId, Object> valuesByColumn = values.get(version);
-        if (valuesByColumn == null)
+        if (valuesByColumn == null) {
             return null;
+        }
         return valuesByColumn.get(fieldId);
     }
 

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <dns xmlns:conf="http://kauriproject.org/configuration"
-       conf:inherit="deep">
+     conf:inherit="deep">
 
   <!-- The name of the Network Interface from which
        Lily should report its IP address -->

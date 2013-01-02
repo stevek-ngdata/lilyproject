@@ -15,13 +15,25 @@
  */
 package org.lilyproject.rest;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.lilyproject.repository.api.BlobAccess;
+import org.lilyproject.repository.api.BlobNotFoundException;
+import org.lilyproject.repository.api.FieldNotFoundException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
+
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-
-import org.lilyproject.repository.api.*;
 
 @Path("record/{id}/version/{version:\\d+}/field/{fieldName}/data")
 public class BlobByVersionAndFieldResource extends RepositoryEnabled {
@@ -29,13 +41,13 @@ public class BlobByVersionAndFieldResource extends RepositoryEnabled {
     @GET
     @Produces("*/*")
     public Response get(@PathParam("id") String id, @PathParam("version") String version,
-            @PathParam("fieldName") String fieldName, @Context UriInfo uriInfo) {
+                        @PathParam("fieldName") String fieldName, @Context UriInfo uriInfo) {
         return getBlob(id, version, fieldName, uriInfo, repository);
     }
 
 
     protected static Response getBlob(String id, String version, String fieldName, UriInfo uriInfo,
-            final Repository repository) {
+                                      final Repository repository) {
         final RecordId recordId = repository.getIdGenerator().fromString(id);
 
         final QName fieldQName = ResourceClassUtil.parseQName(fieldName, uriInfo.getQueryParameters());

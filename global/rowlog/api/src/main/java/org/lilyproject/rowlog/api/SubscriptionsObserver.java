@@ -21,7 +21,7 @@ public interface SubscriptionsObserver {
 
     /**
      * Notifies the subscriptions have changed.
-     *
+     * <p/>
      * <p>An observer will never be called from more than one thread concurrently, i.e. all
      * changes are reported sequentially.
      *

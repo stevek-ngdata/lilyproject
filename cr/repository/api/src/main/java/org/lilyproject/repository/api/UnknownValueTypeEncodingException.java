@@ -43,7 +43,7 @@ public class UnknownValueTypeEncodingException extends TypeException {
     public String getMessage() {
         return "Unknown encoding '" + encodingVersion + "' encountered for a field of value type '" + valueType + "'";
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();

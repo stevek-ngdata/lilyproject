@@ -15,11 +15,17 @@
  */
 package org.lilyproject.clientmetrics.postproc;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.zip.GZIPInputStream;
+
 import org.joda.time.DateTime;
 import org.lilyproject.util.io.Closer;
-
-import java.io.*;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Parses a metrics file as produced by {@Metrics}.
@@ -107,7 +113,9 @@ public class MetricsParser {
                 interval.begin = new DateTime(ts);
 
                 // read all heading section lines
-                while ((line = reader.readLine()) != null && line.startsWith("| "));
+                while ((line = reader.readLine()) != null && line.startsWith("| ")) {
+                    ;
+                }
 
                 // read the title lines (we are already positioned at the first one)
                 reader.readLine();

@@ -21,27 +21,27 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 public class RowLock {
     private static Random random = new Random();
-    
+
     private final byte[] rowKey;
     private byte[] permit;
 
     public static RowLock createRowLock(byte[] rowKey) {
         return new RowLock(rowKey, Bytes.add(Bytes.toBytes(System.currentTimeMillis()), Bytes.toBytes(random.nextInt())));
     }
-    
+
     public RowLock(byte[] rowKey, byte[] permit) {
         this.rowKey = rowKey;
         this.permit = permit;
     }
-    
+
     public byte[] getRowKey() {
         return rowKey;
     }
-    
+
     public long getTimestamp() {
         return Bytes.toLong(permit);
     }
-    
+
     public byte[] getPermit() {
         return permit;
     }

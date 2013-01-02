@@ -15,10 +15,6 @@
  */
 package org.lilyproject.repository.remote;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -37,6 +33,8 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
+
+import static org.mockito.Mockito.*;
 
 public class RemoteRepositoryTest {
 

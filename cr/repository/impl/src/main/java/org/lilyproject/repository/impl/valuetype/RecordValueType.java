@@ -15,25 +15,46 @@
  */
 package org.lilyproject.repository.impl.valuetype;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.InvalidRecordException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
+import org.lilyproject.repository.impl.IdRecordImpl;
+import org.lilyproject.repository.impl.RecordImpl;
+import org.lilyproject.repository.impl.RecordRvtImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 
 public class RecordValueType extends AbstractValueType implements ValueType {
 
     public static final String NAME = "RECORD";
     private String fullName;
-    
+
     private static final byte ENCODING_VERSION = (byte)1;
     private static final byte UNDEFINED = (byte)0;
     private static final byte DEFINED = (byte)1;
-    
+
     private final TypeManager typeManager;
     private QName valueTypeRecordTypeName = null;
 
@@ -47,28 +68,28 @@ public class RecordValueType extends AbstractValueType implements ValueType {
             this.fullName = NAME;
         }
     }
-    
+
     @Override
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public String getName() {
         return fullName;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
     public Record read(byte[] data) throws RepositoryException, InterruptedException {
         return new RecordRvtImpl(data, this);
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
     public Record read(DataInput dataInput) throws RepositoryException, InterruptedException {
@@ -96,7 +117,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
 
         return new IdRecordImpl(record, idToQNameMapping, recordTypeIds);
     }
-    
+
     @Override
     public byte[] toBytes(Object value, IdentityRecordStack parentRecords) throws RepositoryException,
             InterruptedException {
@@ -116,19 +137,20 @@ public class RecordValueType extends AbstractValueType implements ValueType {
             throws RepositoryException, InterruptedException {
         if (value instanceof RecordRvtImpl) {
             byte[] bytes = ((RecordRvtImpl)value).getBytes();
-            if (bytes != null) { 
+            if (bytes != null) {
                 dataOutput.writeBytes(bytes);
                 return;
             }
         }
         encodeData(value, dataOutput, parentRecords);
     }
-    
+
     private void encodeData(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException {
         Record record = (Record)value;
-        if (parentRecords.contains(record))
+        if (parentRecords.contains(record)) {
             throw new RecordException("A record may not be nested in itself: " + record.getId());
+        }
 
 
         RecordType recordType;
@@ -136,23 +158,24 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         if (recordRecordTypeName != null) {
             if (valueTypeRecordTypeName != null) {
                 // Validate the same record type is being used
-                if (!valueTypeRecordTypeName.equals(recordRecordTypeName))
-                    throw new RecordException("The record's Record Type '"+ recordRecordTypeName +
+                if (!valueTypeRecordTypeName.equals(recordRecordTypeName)) {
+                    throw new RecordException("The record's Record Type '" + recordRecordTypeName +
                             "' does not match the record value type's record type '" + valueTypeRecordTypeName + "'");
+                }
             }
             recordType = typeManager.getRecordTypeByName(recordRecordTypeName, null);
         } else if (valueTypeRecordTypeName != null) {
-                recordType = typeManager.getRecordTypeByName(valueTypeRecordTypeName, null);
+            recordType = typeManager.getRecordTypeByName(valueTypeRecordTypeName, null);
         } else {
             throw new RecordException("The record '" + record + "' should specify a record type");
         }
-        
+
         // Get and sort the field type entries that should be in the record
         List<FieldType> fieldTypes = getSortedFieldTypes(recordType);
-        
+
         Map<QName, Object> recordFields = record.getFields();
         List<QName> expectedFields = new ArrayList<QName>();
-        
+
         // Write the record type information
         // Encoding:
         // - encoding version : byte (1)
@@ -164,7 +187,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         dataOutput.writeVInt(recordIdBytes.length);
         dataOutput.writeBytes(recordIdBytes);
         dataOutput.writeLong(recordType.getVersion());
-        
+
         // Write the content of the fields
         // Encoding: for each field :
         // - if not present in the record : undefined marker : byte (0)
@@ -174,9 +197,9 @@ public class RecordValueType extends AbstractValueType implements ValueType {
             QName name = fieldType.getName();
             expectedFields.add(name);
             Object fieldValue = recordFields.get(name);
-            if (fieldValue == null) 
+            if (fieldValue == null) {
                 dataOutput.writeByte(UNDEFINED);
-            else {
+            } else {
                 dataOutput.writeByte(DEFINED);
                 parentRecords.push(record);
                 fieldType.getValueType().write(fieldValue, dataOutput, parentRecords);
@@ -184,7 +207,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
             }
         }
 
-        // Check if the record does contain fields that are not defined in the record type  
+        // Check if the record does contain fields that are not defined in the record type
         if (!expectedFields.containsAll(recordFields.keySet())) {
             throw new InvalidRecordException("Record contains fields not part of the record type '" +
                     recordType.getName() + "'", record.getId());
@@ -200,14 +223,14 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         }
         return fieldTypes;
     }
-    
+
     private Collection<FieldTypeEntry> getFieldTypeEntries(RecordType recordType)
             throws RepositoryException, InterruptedException {
-        
+
         // Wrap the list as an array list since we don't know if the collection will actually support the .addAll() methodq
         Collection<FieldTypeEntry> fieldTypeEntries = new ArrayList<FieldTypeEntry>(recordType.getFieldTypeEntries());
         Map<SchemaId, Long> mixins = recordType.getMixins();
-        for (Entry<SchemaId, Long> mixinEntry: mixins.entrySet()) {
+        for (Entry<SchemaId, Long> mixinEntry : mixins.entrySet()) {
             RecordType mixinRecordType = typeManager.getRecordTypeById(mixinEntry.getKey(), mixinEntry.getValue());
             fieldTypeEntries.addAll(getFieldTypeEntries(mixinRecordType));
         }
@@ -234,13 +257,16 @@ public class RecordValueType extends AbstractValueType implements ValueType {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        return fullName.equals(((RecordValueType) obj).fullName);
+        }
+        return fullName.equals(((RecordValueType)obj).fullName);
     }
 
     //
@@ -249,14 +275,14 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory(TypeManager typeManager) {
         return new RecordValueTypeFactory(typeManager);
     }
-    
+
     public static class RecordValueTypeFactory implements ValueTypeFactory {
         private TypeManager typeManager;
-        
+
         public RecordValueTypeFactory(TypeManager typeManager) {
             this.typeManager = typeManager;
         }
-        
+
         @Override
         public ValueType getValueType(String recordName) throws IllegalArgumentException, RepositoryException,
                 InterruptedException {

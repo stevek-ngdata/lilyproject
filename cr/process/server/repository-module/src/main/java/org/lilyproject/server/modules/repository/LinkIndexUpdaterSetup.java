@@ -15,6 +15,10 @@
  */
 package org.lilyproject.server.modules.repository;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.hbaseindex.IndexManager;
@@ -23,12 +27,9 @@ import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.rowlog.api.*;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.util.hbase.HBaseTableFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.io.IOException;
 
 /**
  * Installs the row log listener for the link index updater subscription.

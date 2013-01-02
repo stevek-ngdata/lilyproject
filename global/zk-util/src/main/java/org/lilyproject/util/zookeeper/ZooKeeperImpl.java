@@ -15,20 +15,29 @@
  */
 package org.lilyproject.util.zookeeper;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Date;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.zookeeper.*;
+import org.apache.zookeeper.AsyncCallback;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 
-import java.io.IOException;
-import java.util.*;
-
 /**
  * Default implementation of {@link ZooKeeperItf}.
- *
+ * <p/>
  * <p>To wait until the ZK connection is established, use {@link ZkUtil#connect(String, int)}.
- *
+ * <p/>
  * <p>For a global ZK handle to be used by a ZK-dependent application, see rather
  * {@link org.lilyproject.util.zookeeper.StateWatchingZooKeeper}.
  */

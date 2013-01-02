@@ -20,13 +20,20 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.zookeeper.KeeperException;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeException;
 
 public interface SchemaCache {
 
     /**
      * Starts and initializes the schema cache.
-     * <p>
+     * <p/>
      * This should be called after the repositories it relates to are started,
      * but before those are made available externally.
      */
@@ -34,13 +41,12 @@ public interface SchemaCache {
 
     /**
      * Stops the schema cache.
-     * 
      */
     void close() throws IOException;
 
     /**
      * Updates a field type on the cache.
-     * <p>
+     * <p/>
      * When on the server side, this will also trigger a cache invalidation.
      * After which all caches will refresh themselves.
      */
@@ -48,7 +54,7 @@ public interface SchemaCache {
 
     /**
      * Updates a record type on the cache.
-     * <p>
+     * <p/>
      * When on the server side, this will also trigger a cache invalidation.
      * After which all caches will refresh themselves.
      */
@@ -56,14 +62,14 @@ public interface SchemaCache {
 
     /**
      * Returns a {@link FieldTypes} snapshot object of the field types cache.
-     * 
+     *
      * @throws InterruptedException
      */
     FieldTypes getFieldTypesSnapshot() throws InterruptedException;
 
     /**
      * Returns a list of field types currently in the cache.
-     * 
+     *
      * @throws InterruptedException
      * @throws TypeException
      */
@@ -71,14 +77,14 @@ public interface SchemaCache {
 
     /**
      * Returns a collection of record types currently in the cache.
-     * 
+     *
      * @throws InterruptedException
      */
     Collection<RecordType> getRecordTypes() throws InterruptedException;
 
     /**
      * Returns the record type with the given name from the cache.
-     * 
+     *
      * @return the RecordType or null if not found
      * @throws InterruptedException
      */
@@ -86,17 +92,16 @@ public interface SchemaCache {
 
     /**
      * Returns the record type with the given id from the cache.
-     * 
+     *
      * @return the RecordType or null if not found
      */
     RecordType getRecordType(SchemaId id);
 
     /**
      * Returns the field type with the given name from the cache.
-     * 
+     *
      * @return the FieldType
-     * @throws FieldTypeNotFoundException
-     *             when the field type is not known in the cache.
+     * @throws FieldTypeNotFoundException when the field type is not known in the cache.
      * @throws InterruptedException
      * @throws TypeException
      */
@@ -104,10 +109,9 @@ public interface SchemaCache {
 
     /**
      * Returns the field type with the given id from the cache.
-     * 
+     *
      * @return the FieldType
-     * @throws FieldTypeNotFoundException
-     *             when the field type is not known in the cache.
+     * @throws FieldTypeNotFoundException when the field type is not known in the cache.
      * @throws InterruptedException
      * @throws TypeException
      */

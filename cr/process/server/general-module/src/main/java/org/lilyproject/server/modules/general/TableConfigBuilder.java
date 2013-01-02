@@ -15,6 +15,11 @@
  */
 package org.lilyproject.server.modules.general;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -22,11 +27,6 @@ import org.kauriproject.conf.Conf;
 import org.lilyproject.util.hbase.ColumnFamilyConfig;
 import org.lilyproject.util.hbase.TableConfig;
 import org.lilyproject.util.hbase.TableConfigEntry;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class TableConfigBuilder {
     public static List<TableConfigEntry> buildTableConfigs(Conf conf) {

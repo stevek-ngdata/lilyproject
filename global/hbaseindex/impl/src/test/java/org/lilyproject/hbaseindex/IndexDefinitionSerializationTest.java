@@ -28,7 +28,7 @@ public class IndexDefinitionSerializationTest {
         ObjectNode json = indexDef.toJson();
 
         IndexDefinition newIndexDef = new IndexDefinition("index", json);
-        StringIndexFieldDefinition newField = (StringIndexFieldDefinition) newIndexDef.getField("stringfield");
+        StringIndexFieldDefinition newField = (StringIndexFieldDefinition)newIndexDef.getField("stringfield");
 
         assertEquals(field.getName(), newField.getName());
     }
@@ -40,7 +40,7 @@ public class IndexDefinitionSerializationTest {
         ObjectNode json = indexDef.toJson();
 
         IndexDefinition newIndexDef = new IndexDefinition("index", json);
-        IntegerIndexFieldDefinition newField = (IntegerIndexFieldDefinition) newIndexDef.getField("intfield");
+        IntegerIndexFieldDefinition newField = (IntegerIndexFieldDefinition)newIndexDef.getField("intfield");
 
         assertEquals(field.getName(), newField.getName());
     }
@@ -52,7 +52,7 @@ public class IndexDefinitionSerializationTest {
         ObjectNode json = indexDef.toJson();
 
         IndexDefinition newIndexDef = new IndexDefinition("index", json);
-        FloatIndexFieldDefinition newField = (FloatIndexFieldDefinition) newIndexDef.getField("floatfield");
+        FloatIndexFieldDefinition newField = (FloatIndexFieldDefinition)newIndexDef.getField("floatfield");
 
         assertEquals(field.getName(), newField.getName());
     }
@@ -64,7 +64,7 @@ public class IndexDefinitionSerializationTest {
         ObjectNode json = indexDef.toJson();
 
         final IndexDefinition newIndexDef = new IndexDefinition("index", json);
-        ByteIndexFieldDefinition newField = (ByteIndexFieldDefinition) newIndexDef.getField("bytefield");
+        ByteIndexFieldDefinition newField = (ByteIndexFieldDefinition)newIndexDef.getField("bytefield");
 
         assertEquals(field.getName(), newField.getName());
         assertEquals(field.getLength(), newField.getLength());

@@ -70,7 +70,7 @@ public abstract class AbstractNameTemplateValidator implements NameTemplateValid
         return new PartValidator() {
             @Override
             public void validate(String template, TemplatePart part) throws NameTemplateException {
-                String condition = ((ConditionalTemplatePart) part).getConditional();
+                String condition = ((ConditionalTemplatePart)part).getConditional();
                 if (booleanVariables != null && !booleanVariables.contains(condition)) {
                     throw new NameTemplateException("No such boolean variable: " + condition, template);
                 }
@@ -82,7 +82,7 @@ public abstract class AbstractNameTemplateValidator implements NameTemplateValid
         return new PartValidator() {
             @Override
             public void validate(String template, TemplatePart part) throws NameTemplateException {
-                String var = ((VariableTemplatePart) part).getVariable();
+                String var = ((VariableTemplatePart)part).getVariable();
                 if (variables != null && !variables.contains(var)) {
                     throw new NameTemplateException("No such variable: " + var, template);
                 }
@@ -94,7 +94,7 @@ public abstract class AbstractNameTemplateValidator implements NameTemplateValid
         return new PartValidator() {
             @Override
             public void validate(String template, TemplatePart part) throws NameTemplateException {
-                QName field = ((FieldTemplatePart) part).getFieldName();
+                QName field = ((FieldTemplatePart)part).getFieldName();
                 if (fieldNames != null && !fieldNames.contains(field)) {
                     throw new NameTemplateException("No such field: " + field, template);
                 }
@@ -106,8 +106,8 @@ public abstract class AbstractNameTemplateValidator implements NameTemplateValid
         return new PartValidator() {
             @Override
             public void validate(String template, TemplatePart part) throws NameTemplateException {
-                String variantProperty = ((VariantPropertyTemplatePart) part).getName();
-                 if (variantProperties != null && !variantProperties.contains(variantProperty)) {
+                String variantProperty = ((VariantPropertyTemplatePart)part).getName();
+                if (variantProperties != null && !variantProperties.contains(variantProperty)) {
                     throw new NameTemplateException("No such variant property: " + variantProperty, template);
                 }
             }

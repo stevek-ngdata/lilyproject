@@ -22,19 +22,19 @@ import org.lilyproject.hbaseindex.filter.IndexFilter;
 
 /**
  * Description of query.
- *
+ * <p/>
  * <p>A query is performed by instantiating this object, adding conditions
  * to it, and then passing it to {@link Index#performQuery}.
- *
+ * <p/>
  * <p>A query can contain equals conditions on zero or more fields,
  * and at most one range condition. The range condition should always
  * be on the last used field. A query does not need to use all fields
  * defined in the index, but you have to use them 'left to right'.
- *
+ * <p/>
  * <p>A query can also have an optional {@link IndexFilter}
  * to do some additional filtering on the results, based on the fields and data
  * stored in the index.
- *
+ * <p/>
  * <p>The structural validity of the query will be checked once the
  * query is supplied to {@link Index#performQuery}, not while adding
  * the individual conditions.
@@ -60,7 +60,7 @@ public class Query {
 
     /**
      * Adds an equals condition.
-     *
+     * <p/>
      * <p>The order in which the conditions are added to the query
      * does not matter.
      *
@@ -85,7 +85,7 @@ public class Query {
 
     /**
      * Sets the range condition.
-     *
+     * <p/>
      * <p>The fromValue and toValue can be:
      * <ul>
      * <li>a value of the correct type, corresponding to the index definition

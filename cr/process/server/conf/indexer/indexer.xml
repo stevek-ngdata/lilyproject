@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <indexer xmlns:conf="http://kauriproject.org/configuration"
-               conf:inherit="deep">
+         conf:inherit="deep">
   <!--
     The amount of message queue listeners (index updaters) that should be
     started (on one Lily node) per index.
@@ -66,9 +66,9 @@
     </property>
   </batchJobProperties>
 
-  <!-- MasterNodes: Comma-separated list of hostnames of the nodes on which 
+  <!-- MasterNodes: Comma-separated list of hostnames of the nodes on which
        the IndexerMaster is allowed to run.
-       One of those nodes will be selected by the leader election algorithm 
+       One of those nodes will be selected by the leader election algorithm
        to run the IndexerMaster on.
        If no nodes are given (default), all lily nodes are taken into account.
   -->

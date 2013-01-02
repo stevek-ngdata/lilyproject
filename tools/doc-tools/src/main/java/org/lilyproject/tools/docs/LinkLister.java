@@ -15,22 +15,28 @@
  */
 package org.lilyproject.tools.docs;
 
+import java.io.InputStream;
+import java.util.List;
+import java.util.Locale;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.util.xml.DocumentHelper;
 import org.lilyproject.util.xml.XPathUtils;
-import org.outerj.daisy.repository.*;
+import org.outerj.daisy.repository.Credentials;
 import org.outerj.daisy.repository.Document;
+import org.outerj.daisy.repository.Part;
+import org.outerj.daisy.repository.Repository;
+import org.outerj.daisy.repository.RepositoryManager;
+import org.outerj.daisy.repository.VariantKey;
+import org.outerj.daisy.repository.Version;
 import org.outerj.daisy.repository.clientimpl.RemoteRepositoryManager;
 import org.outerj.daisy.repository.query.QueryManager;
 import org.outerj.daisy.repository.schema.RepositorySchema;
-import org.w3c.dom.*;
-
-import java.io.InputStream;
-import java.util.List;
-import java.util.Locale;
+import org.w3c.dom.Attr;
+import org.w3c.dom.NodeList;
 
 /**
  * Simple tool to output all links that occur in the Lily documentation.
@@ -83,20 +89,23 @@ public class LinkLister extends BaseCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         String collection = cmd.getOptionValue(collectionOption.getOpt());
-        if (collection == null)
+        if (collection == null) {
             collection = DEFFAULT_COLLECTION;
+        }
         String branch = cmd.getOptionValue(branchOption.getOpt());
-        if (branch == null)
+        if (branch == null) {
             branch = DEFFAULT_BRANCH;
+        }
 
         RepositoryManager repositoryManager = new RemoteRepositoryManager(
-            "http://lilyproject.org:9263", new Credentials("guest", "guest"));
+                "http://lilyproject.org:9263", new Credentials("guest", "guest"));
         Repository repository =
-            repositoryManager.getRepository(new Credentials("guest", "guest"));
+                repositoryManager.getRepository(new Credentials("guest", "guest"));
         QueryManager queryManager = repository.getQueryManager();
         RepositorySchema schema = repository.getRepositorySchema();
 

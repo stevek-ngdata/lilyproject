@@ -61,7 +61,9 @@ public class Example {
             admin.createTable(tableDescriptor);
             rowTable = new HTable(configuration, ROW_TABLE);
         } finally {
-            if (admin != null) admin.close();
+            if (admin != null) {
+                admin.close();
+            }
         }
 
         // Setup a zooKeeper connection
@@ -102,7 +104,7 @@ public class Example {
         RowLogProcessor processor = new RowLogProcessorImpl(rowLog, configurationManager, configuration);
         processor.start();
 
-        message  = rowLog.putMessage(row1, Bytes.toBytes("SomeMoreInfo"), Bytes.toBytes("Re-evaluate:AUserField"), null);
+        message = rowLog.putMessage(row1, Bytes.toBytes("SomeMoreInfo"), Bytes.toBytes("Re-evaluate:AUserField"), null);
 
         // Give the processor some time to process the message
         Thread.sleep(10000);
@@ -115,9 +117,9 @@ public class Example {
     private static class FooBarListener implements RowLogMessageListener {
         @Override
         public boolean processMessage(RowLogMessage message) {
-                System.out.println("= Received a message =");
-                System.out.println(Bytes.toString(message.getRowKey()));
-                System.out.println(Bytes.toString(message.getData()));
+            System.out.println("= Received a message =");
+            System.out.println(Bytes.toString(message.getRowKey()));
+            System.out.println(Bytes.toString(message.getData()));
             try {
                 System.out.println(Bytes.toString(message.getPayload()));
             } catch (RowLogException e) {

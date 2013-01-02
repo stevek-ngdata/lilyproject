@@ -15,17 +15,16 @@
  */
 package org.lilyproject.rest.providers.json;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-import java.util.Collection;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.Collection;
 
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.node.ArrayNode;
@@ -35,38 +34,38 @@ import org.lilyproject.indexer.model.impl.IndexDefinitionConverter;
 import org.lilyproject.util.json.JsonFormat;
 
 /**
- * MessageBodyWriter for writing Collection<IndexDefinition> instances  
+ * MessageBodyWriter for writing Collection<IndexDefinition> instances
  */
 @Provider
 public class IndexDefinitionsMessageBodyWriter implements MessageBodyWriter<Collection<IndexDefinition>> {
 
-	@Override
+    @Override
     public long getSize(Collection<IndexDefinition> indices, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType) {
-		return -1;
-	}
+                        Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return -1;
+    }
 
-	@Override
+    @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
-			MediaType mediaType) {
-		if (mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-			return true;
-		}
-		return false;
-	}
+                               MediaType mediaType) {
+        if (mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
+            return true;
+        }
+        return false;
+    }
 
-	@Override
+    @Override
     public void writeTo(Collection<IndexDefinition> indices, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
-			throws IOException, WebApplicationException {
-	    ArrayNode array = JsonNodeFactory.instance.arrayNode();
-	    IndexDefinitionConverter converter = IndexDefinitionConverter.INSTANCE;
-	    
-	    for (IndexDefinition index : indices) {
-	        array.add(converter.toJson(index));
-	    }
-	    
-	    IOUtils.write(JsonFormat.serializeAsBytes(array), outputStream);		
-	}
+                        Type genericType, Annotation[] annotations, MediaType mediaType,
+                        MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
+            throws IOException, WebApplicationException {
+        ArrayNode array = JsonNodeFactory.instance.arrayNode();
+        IndexDefinitionConverter converter = IndexDefinitionConverter.INSTANCE;
+
+        for (IndexDefinition index : indices) {
+            array.add(converter.toJson(index));
+        }
+
+        IOUtils.write(JsonFormat.serializeAsBytes(array), outputStream);
+    }
 }

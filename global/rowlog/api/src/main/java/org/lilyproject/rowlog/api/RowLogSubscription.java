@@ -27,19 +27,22 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
     private int orderNr;
 
     /**
-     * The type of a subscription defines if the listeners of a subscription run locally (VM) or remote (Netty) 
+     * The type of a subscription defines if the listeners of a subscription run locally (VM) or remote (Netty)
      * The WAL type is a special type that should only be used for the {@link WalProcessor}
      */
-    public enum Type {VM, Netty, WAL}
-    
+    public enum Type {
+        VM, Netty, WAL
+    }
+
     /**
      * Constructor
+     *
      * @param rowLogId id of the rowlog to which the subscription belongs
-     * @param id of the subscription
-     * @param type 
-     * @param orderNr a number defining the subscription's position between the other subscriptions of the rowlog
+     * @param id       of the subscription
+     * @param type
+     * @param orderNr  a number defining the subscription's position between the other subscriptions of the rowlog
      */
-    public RowLogSubscription(String rowLogId, String id, Type type,int orderNr) {
+    public RowLogSubscription(String rowLogId, String id, Type type, int orderNr) {
         this.rowLogId = rowLogId;
         this.id = id;
         this.type = type;
@@ -53,15 +56,15 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
     public String getId() {
         return id;
     }
-    
+
     public Type getType() {
         return type;
     }
-    
+
     public int getOrderNr() {
         return orderNr;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -75,21 +78,28 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        RowLogSubscription other = (RowLogSubscription) obj;
-        if (!ObjectUtils.safeEquals(rowLogId, other.rowLogId))
+        }
+        RowLogSubscription other = (RowLogSubscription)obj;
+        if (!ObjectUtils.safeEquals(rowLogId, other.rowLogId)) {
             return false;
-        if (!ObjectUtils.safeEquals(id, other.id))
+        }
+        if (!ObjectUtils.safeEquals(id, other.id)) {
             return false;
-        if (orderNr != other.orderNr)
+        }
+        if (orderNr != other.orderNr) {
             return false;
-        if (!ObjectUtils.safeEquals(type, other.type))
+        }
+        if (!ObjectUtils.safeEquals(type, other.type)) {
             return false;
+        }
         return true;
     }
 

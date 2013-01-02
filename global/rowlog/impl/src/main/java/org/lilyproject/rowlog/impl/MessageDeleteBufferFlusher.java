@@ -15,40 +15,40 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogShard;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogShard;
+
 /**
  * Flushes the rowlog message delete buffers regularly.
- *
+ * <p/>
  * <p>This is only needed for the 'WAL' rowlog case.
- *
+ * <p/>
  * <p>In case of the MQ, all deletes are done in the JVM where the rowlog processor runs, and thus
  * there will only be delete buffers in that JVM. When the rowlog processor performs a scan, it
  * will first flush the delete buffer, so in case of the MQ all outstanding deletes will always
  * be flushed before a scan is done.
- *
+ * <p/>
  * <p>In contrast, for the WAL, the rowlog message processing is done as part of the record CRUD flow,
  * thus there are delete buffers in each JVM, and for each rowlog shard. E.g. if you have 6 nodes
  * and 12 shards, that gives 72 delete buffers in total across the cluster. These delete buffers
  * don't get flushed until they either get a certain size (100) or a certain time is passed (5 min),
  * and they don't get flushed at all if there is no activity.
- *
+ * <p/>
  * <p>Therefore, it would often occur that the WAL
  * processor will scan messages which are in fact already processed, but the delete is still
  * pending in the buffer. As long as the 'orphaned message delay' is not passed, the WAL processor
  * would re-scan the messages, and finally delete them itself if still there after the orphaned
  * message delay, thus leading to double deletes of the same row and possibly continues WAL
  * scan loops if there are more than a full batch of these messages.
- *
+ * <p/>
  * <p>To avoid all this, we let the delete buffers be flushed by a background thread, which runs
  * more frequent than the minimal process delay of the WAL, so that in general, there should
  * not turn up any (or few) already processed rows when the WAL processor scans the global queue.

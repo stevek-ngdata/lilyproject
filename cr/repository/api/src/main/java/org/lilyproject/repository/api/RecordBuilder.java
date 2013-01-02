@@ -19,80 +19,86 @@ import java.util.Map;
 
 /**
  * The RecordBuilder is a builder utility that helps in setting the properties of
- * a record with the goal to create or update it on the repository. 
- * <p>
+ * a record with the goal to create or update it on the repository.
+ * <p/>
  * A new RecordBuilder object should be created by calling {@link Repository#recordBuilder()}
- * <p>
+ * <p/>
  * Each call either returns a new RecordBuilder object on which the next method can
  * be called, or returns an actual Record object.
- * <p>
- * The builder has the same requirements as a record wrt creating or updating 
- * it on the repository, but it does not provide any other functionality that one 
+ * <p/>
+ * The builder has the same requirements as a record wrt creating or updating
+ * it on the repository, but it does not provide any other functionality that one
  * can get from a record. </br>
  * For instance, after creating the record on the repository, the builder
  * object does not contain the id that was generated for the record by the repository.
- * 
  */
 public interface RecordBuilder {
 
     /**
      * Sets the default namespace to use when setting the record type or field by
      * only using the name part of its QName.
-     * @see {@link Record#setDefaultNamespace(String)}
+     *
      * @param namespace the default namespace to set
      * @return the builder
+     * @see {@link Record#setDefaultNamespace(String)}
      */
     RecordBuilder defaultNamespace(String namespace);
 
     /**
      * Sets record type of the record.
-     * @see {@link Record#setRecordType(QName)}
+     *
      * @param name QName of the record type
      * @return the builder
+     * @see {@link Record#setRecordType(QName)}
      */
     RecordBuilder recordType(QName name);
 
     /**
      * Sets record type of the record.
-     * @see {@link Record#setRecordType(QName, Long)}
-     * @param name QName of the record type
+     *
+     * @param name    QName of the record type
      * @param version the version of the record type
      * @return the builder
+     * @see {@link Record#setRecordType(QName, Long)}
      */
     RecordBuilder recordType(QName name, Long version);
 
     /**
      * Sets record type of the record using only the name part of its QName.
-     * @see {@link Record#setDefaultNamespace(String)}
-     * @see {@link Record#setRecordType(String)}
+     *
      * @param name QName of the record type
      * @return the builder
+     * @see {@link Record#setDefaultNamespace(String)}
+     * @see {@link Record#setRecordType(String)}
      */
     RecordBuilder recordType(String name) throws RecordException;
-    
+
     /**
      * Sets record type of the record using only the name part of its QName.
-     * @see {@link Record#setDefaultNamespace(String)}
-     * @see {@link Record#setRecordType(String)}
-     * @param name QName of the record type
+     *
+     * @param name    QName of the record type
      * @param version the version of the record type
      * @return the builder
+     * @see {@link Record#setDefaultNamespace(String)}
+     * @see {@link Record#setRecordType(String)}
      */
     RecordBuilder recordType(String name, Long version) throws RecordException;
-    
+
     /**
      * Sets the version of the record (to be used when performing a mutable update)
-     * @see {@link Record#setVersion(Long)}
+     *
      * @param version the version of the record
      * @return the builder
+     * @see {@link Record#setVersion(Long)}
      */
     RecordBuilder version(Long version);
-    
+
     /**
      * Sets the id of the record (to be used when updating a record)
-     * @see {@link Record#setId(RecordId)}
+     *
      * @param id the RecordId
      * @return the builder
+     * @see {@link Record#setId(RecordId)}
      */
     RecordBuilder id(RecordId id);
 
@@ -136,20 +142,22 @@ public interface RecordBuilder {
 
     /**
      * Adds a field to the record
-     * @see {@link Record#setField(QName, Object)}
-     * @param name the QName of the field
+     *
+     * @param name  the QName of the field
      * @param value the value of the field
      * @return the builder
+     * @see {@link Record#setField(QName, Object)}
      */
     RecordBuilder field(QName name, Object value);
-    
+
     /**
      * Adds a field to the record without specifying its namespace
-     * @see {@link Record#setDefaultNamespace(String)}
-     * @see {@link Record#setField(String, Object)}    
-     * @param name the name part of the QName of the field
+     *
+     * @param name  the name part of the QName of the field
      * @param value the value of the field
      * @return the builder
+     * @see {@link Record#setDefaultNamespace(String)}
+     * @see {@link Record#setField(String, Object)}
      */
     RecordBuilder field(String name, Object value) throws RecordException;
 
@@ -159,7 +167,7 @@ public interface RecordBuilder {
      * record's builders.
      */
     RecordBuilder recordField(String name) throws RecordException;
-    
+
     /**
      * Returns a new, nested, builder to create a record to set as value
      * in a RECORD field. Call {@link #set()} to return to the current
@@ -185,32 +193,35 @@ public interface RecordBuilder {
 
     /**
      * Adds a mutation condition that should be checked when updating a record.
-     * <p>
+     * <p/>
      * When calling this method several times, the order of the method calls
      * defines the order of the mutation conditions.
-     * @see {@link Repository#update(Record, boolean, boolean, java.util.List)}
+     *
      * @param condition the MutationCondition to add
      * @return the builder
+     * @see {@link Repository#update(Record, boolean, boolean, java.util.List)}
      */
     RecordBuilder mutationCondition(MutationCondition condition);
-    
+
     /**
      * Indicates if an update of the record should be a mutable update.
-     * <p>
+     * <p/>
      * When this is put to true, the version of the record to update should also
      * be set.
-     * @see {@link Repository#update(Record, boolean, boolean, java.util.List)}
+     *
      * @param updateVersion true if a specific version of the record should be updated (default: false)
      * @return the builder
+     * @see {@link Repository#update(Record, boolean, boolean, java.util.List)}
      */
     RecordBuilder updateVersion(boolean updateVersion);
-    
+
     /**
      * Indicates if the latest version of the record type should be used when updating
      * the record.
-     * @see {@link Repository#update(Record, boolean, boolean, java.util.List)}
+     *
      * @param latestRT if the latest version of the record type should be used (default: true)
      * @return the builder
+     * @see {@link Repository#update(Record, boolean, boolean, java.util.List)}
      */
     RecordBuilder useLatestRecordType(boolean latestRT);
 
@@ -221,9 +232,10 @@ public interface RecordBuilder {
      * @return the builder
      */
     RecordBuilder attribute(String name, String value);
-    
+
     /**
      * Clears all data from the builder object.
+     *
      * @return the builder
      */
     RecordBuilder reset() throws RecordException;
@@ -231,30 +243,34 @@ public interface RecordBuilder {
     /**
      * Creates a record on the repository using the properties that have been
      * added to the builder.
-     * @see {@link Repository#create(Record)}
+     *
      * @return the created record
+     * @see {@link Repository#create(Record)}
      */
     Record create() throws RepositoryException, InterruptedException;
-    
+
     /**
      * Creates a record on the repository using the properties that have been
      * added to the builder.
-     * @see {@link Repository#createOrUpdate(Record)}
+     *
      * @return the created record
-     */    
+     * @see {@link Repository#createOrUpdate(Record)}
+     */
     Record createOrUpdate() throws RepositoryException, InterruptedException;
-    
+
     /**
      * Updates a record on the repository using the properties that have been
      * added to the builder.
-     * @see {@link Repository#update(Record)}
+     *
      * @return the updated record
-     */ 
+     * @see {@link Repository#update(Record)}
+     */
     Record update() throws RepositoryException, InterruptedException;
-    
+
     /**
      * Returns a record object containing the properties that have been added
      * to the builder without actually creating it on the repository.
+     *
      * @return a record
      */
     Record build();

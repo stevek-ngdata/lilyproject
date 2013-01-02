@@ -15,48 +15,47 @@
  */
 package org.lilyproject.rest.providers.json;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 /**
- * MessageBodyWriter for writing json output (ObjectNode) instances 
+ * MessageBodyWriter for writing json output (ObjectNode) instances
  */
 @Provider
 public class JsonObjectMessageBodyWriter implements MessageBodyWriter<ObjectNode> {
 
-	@Override
+    @Override
     public long getSize(ObjectNode objectNode, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType) {
-		return -1;
-	}
+                        Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return -1;
+    }
 
-	@Override
+    @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
-			MediaType mediaType) {
-		if (mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-			return true;
-		}
-		return false;
-	}
+                               MediaType mediaType) {
+        if (mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
+            return true;
+        }
+        return false;
+    }
 
-	@Override
+    @Override
     public void writeTo(ObjectNode objectNode, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
-			throws IOException, WebApplicationException {
-		new ObjectMapper().writeValue(outputStream, objectNode);
-	}
-	
+                        Type genericType, Annotation[] annotations, MediaType mediaType,
+                        MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
+            throws IOException, WebApplicationException {
+        new ObjectMapper().writeValue(outputStream, objectNode);
+    }
+
 
 }

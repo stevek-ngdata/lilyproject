@@ -15,26 +15,30 @@
  */
 package org.lilyproject.util.xml;
 
-import org.w3c.dom.*;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.InputSource;
-import org.lilyproject.util.location.LocationAttributes;
-import org.lilyproject.util.location.LocatedException;
-import org.lilyproject.util.location.LocatedRuntimeException;
-import org.lilyproject.util.io.IOUtils;
-
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.TransformerConfigurationException;
-import java.io.InputStream;
-import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
+
+import org.lilyproject.util.io.IOUtils;
+import org.lilyproject.util.location.LocatedException;
+import org.lilyproject.util.location.LocatedRuntimeException;
+import org.lilyproject.util.location.LocationAttributes;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 
 /**
  * Utility methods for working with DOM documents.
@@ -65,10 +69,11 @@ public class DocumentHelper {
                 return (Element)node;
             }
         }
-        if (required)
+        if (required) {
             throw new LocatedException("Missing element " + name + " in " + element.getLocalName(), LocationAttributes.getLocation(element));
-        else
+        } else {
             return null;
+        }
     }
 
     public static Element[] getElementChildren(Element element) {
@@ -95,10 +100,11 @@ public class DocumentHelper {
 
     public static String getAttribute(Element element, String name, boolean required) throws Exception {
         if (!element.hasAttribute(name)) {
-            if (required)
+            if (required) {
                 throw new LocatedException("Missing attribute " + name + " on element " + element.getLocalName(), LocationAttributes.getLocation(element));
-            else
+            } else {
                 return null;
+            }
         }
 
         return element.getAttribute(name);
@@ -106,18 +112,20 @@ public class DocumentHelper {
 
     public static boolean getBooleanAttribute(Element element, String name, boolean defaultValue) throws Exception {
         String value = element.getAttribute(name);
-        if (value.equals(""))
+        if (value.equals("")) {
             return defaultValue;
-        else
+        } else {
             return value.equalsIgnoreCase("true");
+        }
     }
 
     public static Boolean getBooleanAttribute(Element element, String name, Boolean defaultValue) throws Exception {
         String value = element.getAttribute(name);
-        if (value.equals(""))
+        if (value.equals("")) {
             return defaultValue;
-        else
+        } else {
             return value.equalsIgnoreCase("true");
+        }
     }
 
     public static int getIntegerAttribute(Element element, String name) throws Exception {
@@ -148,24 +156,27 @@ public class DocumentHelper {
 
     public static boolean getBooleanElement(Element element, String name, boolean defaultValue) throws Exception {
         Element child = getElementChild(element, name, false);
-        if (child == null)
+        if (child == null) {
             return defaultValue;
+        }
 
         return getElementText(child, true).equalsIgnoreCase("true");
     }
 
     public static String getStringElement(Element element, String name, String defaultValue) throws Exception {
         Element child = getElementChild(element, name, false);
-        if (child == null)
+        if (child == null) {
             return defaultValue;
+        }
 
         return getElementText(child, true);
     }
 
     public static int getIntegerElement(Element element, String name, int defaultValue) throws Exception {
         Element child = getElementChild(element, name, false);
-        if (child == null)
+        if (child == null) {
             return defaultValue;
+        }
 
         String text = getElementText(child, true);
         try {
@@ -180,16 +191,18 @@ public class DocumentHelper {
         NodeList nodes = element.getChildNodes();
         for (int i = 0; i < nodes.getLength(); i++) {
             Node node = nodes.item(i);
-            if (node instanceof Text)
+            if (node instanceof Text) {
                 text.append(node.getNodeValue());
+            }
         }
 
-        if (required && text.length() == 0)
+        if (required && text.length() == 0) {
             throw new LocatedException("Missing text content in element " + element.getLocalName(), LocationAttributes.getLocation(element));
-        else if (text.length() == 0)
+        } else if (text.length() == 0) {
             return null;
-        else
+        } else {
             return text.toString();
+        }
     }
 
     public static Document parseDomWithLocationAttributes(File file) throws SAXException, ParserConfigurationException, TransformerConfigurationException, IOException {

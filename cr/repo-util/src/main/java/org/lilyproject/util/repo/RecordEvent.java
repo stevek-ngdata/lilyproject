@@ -38,7 +38,7 @@ import org.lilyproject.util.json.JsonFormat;
 
 /**
  * Represents the payload of an event about a create-update-delete operation on the repository.
- *
+ * <p/>
  * <p>The actual payload is json, this class helps in parsing or constructing that json.
  */
 public class RecordEvent {
@@ -47,10 +47,14 @@ public class RecordEvent {
     private Type type;
     private Set<SchemaId> updatedFields;
     private boolean recordTypeChanged = false;
-    /** For index-type events: affected vtags */
+    /**
+     * For index-type events: affected vtags
+     */
     private Set<SchemaId> vtagsToIndex;
     private IndexRecordFilterData indexRecordFilterData;
-    /** A copy of the attributes supplied via {@link Record#setAttributes(Map)}. */
+    /**
+     * A copy of the attributes supplied via {@link Record#setAttributes(Map)}.
+     */
     private Map<String, String> attributes;
 
     public enum Type {
@@ -124,7 +128,7 @@ public class RecordEvent {
                 }
                 while (jp.nextToken() != JsonToken.END_ARRAY) {
                     addVTagToIndex(idGenerator.getSchemaId(jp.getBinaryValue()));
-                }            
+                }
             } else if (fieldName.equals("attributes")) {
                 if (current != JsonToken.START_OBJECT) {
                     throw new RuntimeException("Attributes is not a JSON object");
@@ -172,14 +176,14 @@ public class RecordEvent {
     public Type getType() {
         return type;
     }
-    
+
     public void setType(Type type) {
         this.type = type;
     }
 
     /**
      * The fields which were updated (= added, deleted or changed), identified by their FieldType ID.
-     *
+     * <p/>
      * <p>In case of a delete event, this list is empty.
      */
     public Set<SchemaId> getUpdatedFields() {
@@ -203,16 +207,16 @@ public class RecordEvent {
         }
         vtagsToIndex.add(vtag);
     }
-    
+
     /**
      * Transient attributes passed on from the Record during create/update operations,
      * see also {@link Record#setAttributes(Map)}.
      *
      * @return A map of Strings containing attributes.
-     */ 
-    public Map<String,String> getAttributes() {
+     */
+    public Map<String, String> getAttributes() {
         if (this.attributes == null) {
-            this.attributes = new HashMap<String,String>();
+            this.attributes = new HashMap<String, String>();
         }
         return this.attributes;
     }
@@ -220,14 +224,14 @@ public class RecordEvent {
     public boolean hasAttributes() {
         return attributes != null && attributes.size() > 0;
     }
-    
+
     /**
      * Transient attributes passed on from the Record during create/update operations,
      * see also {@link Record#setAttributes(Map)}.
      *
      * @param attributes A map of Strings containing attributes.
      */
-    public void setAttributes(Map<String,String> attributes) {
+    public void setAttributes(Map<String, String> attributes) {
         this.attributes = attributes;
     }
 
@@ -273,10 +277,10 @@ public class RecordEvent {
             }
             gen.writeEndArray();
         }
-        
+
         if (attributes != null && attributes.size() > 0) {
             gen.writeObjectFieldStart("attributes");
-            for(String key : attributes.keySet()) {
+            for (String key : attributes.keySet()) {
                 gen.writeStringField(key, attributes.get(key));
             }
             gen.writeEndObject();
@@ -317,34 +321,44 @@ public class RecordEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         RecordEvent other = (RecordEvent)obj;
 
-        if (other.type != this.type)
+        if (other.type != this.type) {
             return false;
+        }
 
-        if (other.recordTypeChanged != this.recordTypeChanged)
+        if (other.recordTypeChanged != this.recordTypeChanged) {
             return false;
+        }
 
-        if (other.versionCreated != this.versionCreated)
+        if (other.versionCreated != this.versionCreated) {
             return false;
+        }
 
-        if (other.versionUpdated != this.versionUpdated)
+        if (other.versionUpdated != this.versionUpdated) {
             return false;
+        }
 
-        if (!ObjectUtils.safeEquals(other.updatedFields, this.updatedFields))
+        if (!ObjectUtils.safeEquals(other.updatedFields, this.updatedFields)) {
             return false;
+        }
 
-        if (!ObjectUtils.safeEquals(other.vtagsToIndex, this.vtagsToIndex))
+        if (!ObjectUtils.safeEquals(other.vtagsToIndex, this.vtagsToIndex)) {
             return false;
-        
-        if(!ObjectUtils.safeEquals(other.attributes, this.attributes))
+        }
+
+        if (!ObjectUtils.safeEquals(other.attributes, this.attributes)) {
             return false;
+        }
 
         // TODO implement equals for IndexRecordFilterData
 
@@ -353,8 +367,8 @@ public class RecordEvent {
 
     @Override
     public int hashCode() {
-        int result = (int) (versionCreated ^ (versionCreated >>> 32));
-        result = 31 * result + (int) (versionUpdated ^ (versionUpdated >>> 32));
+        int result = (int)(versionCreated ^ (versionCreated >>> 32));
+        result = 31 * result + (int)(versionUpdated ^ (versionUpdated >>> 32));
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (updatedFields != null ? updatedFields.hashCode() : 0);
         result = 31 * result + (recordTypeChanged ? 1 : 0);
@@ -365,15 +379,15 @@ public class RecordEvent {
 
     /**
      * Data needed for IndexRecordFilter evaluation.
-     *
+     * <p/>
      * <p>Information needed to decide if an IndexRecordFilter matches a record. Contains both the
      * necessary information both from the old and new record state, so that we know what matched
      * before and what matches now, which enables important optimisations.</p>
-     *
+     * <p/>
      * <p>For example, this information is used by the IndexAwareMQFeeder to only sent events
      * to subscriptions from relevant indexes, as well as by IndexUpdater to know what
      * index inclusion rule matches before & now.</p>
-     *
+     * <p/>
      * <p>At the time of this writing, the indexerconf only allows selection
      * based on record type, on 1 field, and on information that is part of the record id.
      * The model here is already a bit more flexible (can contain info on multiple fields) to allow for

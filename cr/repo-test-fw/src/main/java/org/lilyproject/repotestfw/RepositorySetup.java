@@ -125,8 +125,9 @@ public class RepositorySetup {
     }
 
     public void setupCore() throws Exception {
-        if (coreSetup)
+        if (coreSetup) {
             return;
+        }
         hbaseProxy = new HBaseProxy();
         hbaseProxy.start();
         hadoopConf = hbaseProxy.getConf();
@@ -141,8 +142,9 @@ public class RepositorySetup {
     }
 
     public void setupTypeManager() throws Exception {
-        if (typeManagerSetup)
+        if (typeManagerSetup) {
             return;
+        }
 
         idGenerator = new IdGeneratorImpl();
         typeManager = new HBaseTypeManager(idGenerator, hadoopConf, zk, hbaseTableFactory);
@@ -151,8 +153,9 @@ public class RepositorySetup {
     }
 
     public void setupRepository(boolean withWal) throws Exception {
-        if (repositorySetup)
+        if (repositorySetup) {
             return;
+        }
 
         setupTypeManager();
 
@@ -284,12 +287,13 @@ public class RepositorySetup {
      * trigger synchronous MQ processing.
      */
     public void processMQ() throws RowLogException, InterruptedException {
-        ((ManualProcessRowLog) mq).processMessages();
+        ((ManualProcessRowLog)mq).processMessages();
     }
 
     public void stop() throws InterruptedException {
-        if (mqProcessor != null)
+        if (mqProcessor != null) {
             mqProcessor.stop();
+        }
 
         Closer.close(remoteSchemaCache);
         Closer.close(remoteTypeManager);

@@ -24,7 +24,7 @@ public class LeaderElectionMain implements Runnable {
         t.setDaemon(false);
         t.start();
 
-        while (!Thread.interrupted()){
+        while (!Thread.interrupted()) {
             Thread.sleep(Long.MAX_VALUE);
         }
     }

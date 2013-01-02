@@ -15,11 +15,11 @@
  */
 package org.lilyproject.util.zookeeper;
 
+import java.io.IOException;
+
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-
-import java.io.IOException;
 
 import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
 
@@ -44,7 +44,7 @@ public class ZooKeeperMXBean {
 
     /**
      * Invalidates our ZooKeeper's session. Meant for testing purposes.
-     *
+     * <p/>
      * <p>Note that you can also close connections and sessions through the JMX beans provided by the ZooKeeper
      * server(s), which I find often more practical.
      */
@@ -52,7 +52,7 @@ public class ZooKeeperMXBean {
         // The below is the standard way to invalidate a session from the client.
         // See also http://github.com/phunt/zkexamples/blob/master/src/test_session_expiration/TestSessionExpiration.java
         // where it is mentioned that this could also lead to a session moved exception.
-        
+
         Watcher watcher = new Watcher() {
             public void process(WatchedEvent event) {
             }

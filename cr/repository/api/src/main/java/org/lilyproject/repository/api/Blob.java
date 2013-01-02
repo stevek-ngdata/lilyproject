@@ -22,13 +22,13 @@ import org.lilyproject.util.ArgumentValidator;
 /**
  * A Blob is a {@link ValueType value type} that can be used to store arbitrarily large binary data.
  * Besides the binary data itself, a blob holds some metadata such as the media-type and size.
- *
+ * <p/>
  * <p>Storing and retrieving data to and from the blob happens through {@link java.io.OutputStream} and
  * {@link java.io.InputStream}.
- *
+ * <p/>
  * <p>These streams are available via the Repository through {@link Repository#getOutputStream(Blob)} and
  * {@link Repository#getInputStream(Blob)}.
- *
+ * <p/>
  * <p><b>Important:</b> to add a blob to a record, you first need to upload the data via the OutputStream. Once
  * finished, close the OutputStream using {@link java.io.OutputStream#close()}. This will trigger the update of
  * the {@link #setValue value} of this blob object (which will usually be a pointer to the storage location
@@ -47,9 +47,9 @@ public class Blob implements Cloneable {
      * This is the default constructor to create a Blob.
      *
      * @param mediaType the media type of the data represented by the blob.
-     * @param size the size in number of bytes of the data that will be written. The size is a mandatory parameter.
-     * @param name a name with no extra semantic meaning. Typically used to store a filename, e.g. for when a user
-     *             downloads this blob to her desktop. Optional, can be null.
+     * @param size      the size in number of bytes of the data that will be written. The size is a mandatory parameter.
+     * @param name      a name with no extra semantic meaning. Typically used to store a filename, e.g. for when a user
+     *                  downloads this blob to her desktop. Optional, can be null.
      */
     public Blob(String mediaType, Long size, String name) {
         this(null, mediaType, size, name);
@@ -68,11 +68,11 @@ public class Blob implements Cloneable {
         this.size = size;
         this.name = name;
     }
-    
+
     /**
      * Create a clone of the Blob object.
-     * <p>
-     * Note that this does NOT create a copy of the actual blob-data (e.g. on HDFS). 
+     * <p/>
+     * Note that this does NOT create a copy of the actual blob-data (e.g. on HDFS).
      */
     @Override
     public Blob clone() throws CloneNotSupportedException {
@@ -83,35 +83,35 @@ public class Blob implements Cloneable {
         clone.name = name;
         return clone;
     }
-    
+
     public byte[] getValue() {
         return value;
     }
-    
+
     public void setValue(byte[] value) {
         this.value = value;
     }
-    
+
     public String getMediaType() {
         return mediaType;
     }
-    
+
     public void setMediaType(String mediaType) {
         this.mediaType = mediaType;
     }
-    
+
     public Long getSize() {
         return size;
     }
-    
+
     public void setSize(Long size) {
         this.size = size;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public void setName(String name) {
         this.name = name;
     }
@@ -129,36 +129,46 @@ public class Blob implements Cloneable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        Blob other = (Blob) obj;
+        }
+        Blob other = (Blob)obj;
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false;
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false;
-        if (!Arrays.equals(value, other.value))
+        }
+        if (!Arrays.equals(value, other.value)) {
             return false;
+        }
         if (mediaType == null) {
-            if (other.mediaType != null)
+            if (other.mediaType != null) {
                 return false;
-        } else if (!mediaType.equals(other.mediaType))
+            }
+        } else if (!mediaType.equals(other.mediaType)) {
             return false;
+        }
         if (size == null) {
-            if (other.size != null)
+            if (other.size != null) {
                 return false;
-        } else if (!size.equals(other.size))
+            }
+        } else if (!size.equals(other.size)) {
             return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
         return "Blob [name=" + name + ", mediatype=" + mediaType + ", size=" + size + ", value="
-                        + Arrays.toString(value) + "]";
+                + Arrays.toString(value) + "]";
     }
 }

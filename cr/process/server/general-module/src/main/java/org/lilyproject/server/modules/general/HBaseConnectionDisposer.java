@@ -15,13 +15,13 @@
  */
 package org.lilyproject.server.modules.general;
 
+import javax.annotation.PreDestroy;
+
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.LocalHTable;
-
-import javax.annotation.PreDestroy;
 
 public class HBaseConnectionDisposer {
     private Configuration conf;
@@ -32,9 +32,9 @@ public class HBaseConnectionDisposer {
 
     @PreDestroy
     public void stop() {
-        
+
         try {
-         // LocalHTable keeps HTablePools in static vars: make sure that is cleaned out
+            // LocalHTable keeps HTablePools in static vars: make sure that is cleaned out
             // (to avoid leaks when using resetLilyState)
             LocalHTable.closeAllPools();
 

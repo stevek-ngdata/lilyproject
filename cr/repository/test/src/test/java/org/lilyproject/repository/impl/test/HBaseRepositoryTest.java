@@ -16,18 +16,18 @@
 package org.lilyproject.repository.impl.test;
 
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
-import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.io.Closer;
+
+import static org.junit.Assert.assertEquals;
 
 public class HBaseRepositoryTest extends AbstractRepositoryTest {
 
@@ -50,7 +50,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
     public static void tearDownAfterClass() throws Exception {
         repoSetup.stop();
     }
-    
+
     @Test
     public void testFieldTypeCacheInitialization() throws Exception {
         TypeManager newTypeManager = new HBaseTypeManager(repoSetup.getIdGenerator(), repoSetup.getHadoopConf(),
@@ -58,14 +58,14 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
         assertEquals(fieldType1, newTypeManager.getFieldTypeByName(fieldType1.getName()));
         Closer.close(newTypeManager);
     }
-    
+
     @Test
     public void testUpdateProcessesRemainingMessages() throws Exception {
         HBaseRepositoryTestConsumer.reset();
         RowLogMessageListenerMapping.INSTANCE.put("TestSubscription", new HBaseRepositoryTestConsumer());
         repoSetup.getRowLogConfManager().addSubscription("WAL", "TestSubscription", Type.VM, 2);
         repoSetup.waitForSubscription(repoSetup.getWal(), "TestSubscription");
-        
+
         Record record = repository.newRecord();
         record.setRecordType(recordType1.getName(), recordType1.getVersion());
         record.setField(fieldType1.getName(), "value1");
@@ -79,6 +79,6 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
         repoSetup.getRowLogConfManager().removeSubscription("WAL", "TestSubscription");
         RowLogMessageListenerMapping.INSTANCE.remove("TestSubscription");
     }
-    
-    
+
+
 }

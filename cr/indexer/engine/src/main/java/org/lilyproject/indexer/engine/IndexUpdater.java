@@ -52,9 +52,7 @@ import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
+import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 //
 // About the exception handling strategy
@@ -109,13 +107,13 @@ public class IndexUpdater implements RowLogMessageListener {
     private IdGenerator idGenerator;
 
     /**
-     * @param rowLog this should be the message queue
+     * @param rowLog         this should be the message queue
      * @param subscriptionId ID of the rowlog subscription to which this listener is listening. This is needed
      *                       because the IndexUpdater generates events itself, which should only be sent to
      *                       this subscription.
      */
     public IndexUpdater(Indexer indexer, Repository repository, IndexLocker indexLocker,
-            RowLog rowLog, IndexUpdaterMetrics metrics, DerefMap derefMap, String subscriptionId)
+                        RowLog rowLog, IndexUpdaterMetrics metrics, DerefMap derefMap, String subscriptionId)
             throws RowLogException, IOException {
         this.indexer = indexer;
         this.repository = repository;
@@ -174,8 +172,9 @@ public class IndexUpdater implements RowLogMessageListener {
                 }
 
                 // After this we can go to update denormalized data
-                if (derefMap != null)
+                if (derefMap != null) {
                     updateDenormalizedData(recordId, null, null);
+                }
             } else { // CREATE or UPDATE
                 VTaggedRecord vtRecord;
 

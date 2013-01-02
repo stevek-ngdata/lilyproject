@@ -39,9 +39,7 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.VersionTag;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;
@@ -380,12 +378,15 @@ public class BatchBuildTest {
 
         try {
             IndexDefinition index = model.getMutableIndex(INDEX_NAME);
-            if (defaultConf != null)
+            if (defaultConf != null) {
                 index.setDefaultBatchIndexConfiguration(defaultConf);
-            if (customConf != null)
+            }
+            if (customConf != null) {
                 index.setBatchIndexConfiguration(customConf);
-            if (buildNow)
+            }
+            if (buildNow) {
                 index.setBatchBuildState(IndexBatchBuildState.BUILD_REQUESTED);
+            }
 
             model.updateIndex(index, lock);
         } finally {

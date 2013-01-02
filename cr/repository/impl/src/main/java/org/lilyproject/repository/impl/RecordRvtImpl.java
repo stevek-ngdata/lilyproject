@@ -19,7 +19,17 @@ import java.util.List;
 import java.util.Map;
 
 import org.lilyproject.bytes.impl.DataInputImpl;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldNotFoundException;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.impl.valuetype.RecordValueType;
 
 public class RecordRvtImpl implements IdRecord, Cloneable {
@@ -27,14 +37,13 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
     private IdRecord delegate;
     private byte[] bytes;
     private RecordValueType recordValueType;
-    
+
     public RecordRvtImpl(byte[] bytes, RecordValueType recordValueType) {
         this.bytes = bytes;
         this.recordValueType = recordValueType;
     }
 
     /**
-     *
      * @param clearBytes should be false for read operations, true for write operations.
      *                   The idea is that as long as the record is not modified, the
      *                   existing bytes can be reused.
@@ -49,14 +58,15 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
                 Thread.currentThread().interrupt();
             }
         }
-        if (clearBytes)
+        if (clearBytes) {
             bytes = null;
+        }
     }
-    
+
     public byte[] getBytes() {
         return bytes;
     }
-    
+
     @Override
     public void addFieldsToDelete(List<QName> fieldNames) {
         decode(true);
@@ -251,7 +261,7 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
         decode(false);
         return delegate.softEquals(obj);
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         decode(false);
@@ -321,6 +331,6 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
     @Override
     public void setAttributes(Map<String, String> attributes) {
         decode(true);
-        delegate.setAttributes(attributes);        
+        delegate.setAttributes(attributes);
     }
 }

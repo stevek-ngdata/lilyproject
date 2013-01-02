@@ -15,11 +15,11 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.util.Set;
+
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.Pair;
-
-import java.util.Set;
 
 public class DynamicIndexField {
     private WildcardPattern namespace;
@@ -34,7 +34,7 @@ public class DynamicIndexField {
     private String formatter;
 
     public DynamicIndexField(WildcardPattern namespace, WildcardPattern name, TypePattern typePattern,
-            Set<Scope> scopes, NameTemplate nameTemplate, boolean extractContext, boolean continue_, String formatter) {
+                             Set<Scope> scopes, NameTemplate nameTemplate, boolean extractContext, boolean continue_, String formatter) {
         this.namespace = namespace;
         this.name = name;
         this.typePattern = typePattern;

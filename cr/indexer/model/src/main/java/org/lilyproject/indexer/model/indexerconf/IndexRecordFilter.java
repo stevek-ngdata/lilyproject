@@ -15,11 +15,14 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.util.Pair;
-
-import java.util.*;
 
 /**
  * Decides what records to include in an index based on inclusion/exclusion rules.

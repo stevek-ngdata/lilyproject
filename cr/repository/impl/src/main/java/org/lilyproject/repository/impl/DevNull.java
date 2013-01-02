@@ -19,7 +19,7 @@ import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 
 public class DevNull implements RowLogMessageListener {
-    
+
     public DevNull() {
     }
 

@@ -19,12 +19,11 @@
  */
 package org.lilyproject.util.location;
 
+import javax.xml.transform.SourceLocator;
+import javax.xml.transform.TransformerException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.xml.transform.SourceLocator;
-import javax.xml.transform.TransformerException;
 
 import org.xml.sax.Locator;
 import org.xml.sax.SAXParseException;
@@ -51,7 +50,8 @@ public class LocationUtils {
     public interface LocationFinder {
         /**
          * Get the location of an object
-         * @param obj the object for which to find a location
+         *
+         * @param obj         the object for which to find a location
          * @param description and optional description to be added to the object's location
          * @return the object's location or <code>null</code> if object's class isn't handled
          *         by this finder.
@@ -136,7 +136,7 @@ public class LocationUtils {
                     return LocationImpl.UNKNOWN;
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             // Ignore: handled below
         }
 
@@ -166,7 +166,7 @@ public class LocationUtils {
     /**
      * Add a {@link LocationFinder} to the list of finders that will be queried for an object's
      * location by {@link #getLocation(Object, String)}.
-     * <p>
+     * <p/>
      * <b>Important:</b> LocationUtils internally stores a weak reference to the finder. This
      * avoids creating strong links between the classloader holding this class and the finder's
      * classloader, which can cause some weird memory leaks if the finder's classloader is to
@@ -192,7 +192,7 @@ public class LocationUtils {
             return;
         }
 
-        synchronized(LocationFinder.class) {
+        synchronized (LocationFinder.class) {
             // Update a clone of the current finder list to avoid breaking
             // any iteration occuring in another thread.
             List newFinders = new ArrayList(finders);
@@ -216,9 +216,9 @@ public class LocationUtils {
      * Get the location of an object. Some well-known located classes built in the JDK are handled
      * by this method. Handling of other located classes can be handled by adding new location finders.
      *
-     * @param obj the object of which to get the location
+     * @param obj         the object of which to get the location
      * @param description an optional description of the object's location, used if a Location object
-     *        has to be created.
+     *                    has to be created.
      * @return the object's location, or {@link Location#UNKNOWN} if no location could be found
      */
     public static Location getLocation(Object obj, String description) {
@@ -262,7 +262,7 @@ public class LocationUtils {
             LocationFinder finder = (LocationFinder)ref.get();
             if (finder == null) {
                 // This finder was garbage collected: update finders
-                synchronized(LocationFinder.class) {
+                synchronized (LocationFinder.class) {
                     // Update a clone of the current list to avoid breaking current iterations
                     List newFinders = new ArrayList(finders);
                     newFinders.remove(ref);

@@ -27,15 +27,15 @@ public class RowLogRemoteEndToEndTest extends AbstractRowLogEndToEndTest {
 
     private RemoteListenerHandler remoteListener;
     private long t0;
-    
+
     // Not in separate VM yet, but at least communication goes over channels.
     @Before
     public void setUp() throws Exception {
         t0 = System.currentTimeMillis();
-        System.out.println(">>RowLogRemoteEndToEndTest#"+name.getMethodName());
+        System.out.println(">>RowLogRemoteEndToEndTest#" + name.getMethodName());
         validationListener = new ValidationMessageListener("VML1", subscriptionId, rowLog);
         subscriptionId = "Test";
-        rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId,  RowLogSubscription.Type.Netty, 1);
+        rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId, RowLogSubscription.Type.Netty, 1);
         waitForSubscription(rowLog, subscriptionId);
         remoteListener = new RemoteListenerHandler(rowLog, subscriptionId, validationListener,
                 rowLogConfigurationManager, "localhost");
@@ -44,18 +44,19 @@ public class RowLogRemoteEndToEndTest extends AbstractRowLogEndToEndTest {
 
     @After
     public void tearDown() throws Exception {
-        System.out.println(">>RowLogRemoteEndToEndTest#"+name.getMethodName() + " teardown start ");
-        if (remoteListener != null)
+        System.out.println(">>RowLogRemoteEndToEndTest#" + name.getMethodName() + " teardown start ");
+        if (remoteListener != null) {
             remoteListener.stop();
+        }
         rowLogConfigurationManager.removeSubscription(rowLog.getId(), subscriptionId);
-        System.out.println(">>RowLogRemoteEndToEndTest#"+name.getMethodName() + " teardown done " + (System.currentTimeMillis() - t0));
+        System.out.println(">>RowLogRemoteEndToEndTest#" + name.getMethodName() + " teardown done " + (System.currentTimeMillis() - t0));
     }
 
-    @Test(timeout=270000)
+    @Test(timeout = 270000)
     public void testMultipleSubscriptions() throws Exception {
         String subscriptionId2 = "Test2";
         ValidationMessageListener validationListener2 = new ValidationMessageListener("VML2", subscriptionId2, rowLog);
-        rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId2, RowLogSubscription.Type.Netty,  2);
+        rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId2, RowLogSubscription.Type.Netty, 2);
         waitForSubscription(rowLog, subscriptionId2);
         RemoteListenerHandler remoteListener2 = new RemoteListenerHandler(rowLog, subscriptionId2, validationListener2,
                 rowLogConfigurationManager, "localhost");

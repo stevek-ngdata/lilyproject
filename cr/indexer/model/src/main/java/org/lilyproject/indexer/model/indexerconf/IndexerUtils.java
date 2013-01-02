@@ -27,7 +27,7 @@ public class IndexerUtils {
         // build a variant properties map which is a combination of dep.id.variantProperties + dep.moreDimensionedVariants
         final Map<String, String> varProps = new HashMap<String, String>(newDep.id.getVariantProperties());
         varProps.putAll(newDep.id.getVariantProperties());
-        for (String vprop: newDep.moreDimensionedVariants) {
+        for (String vprop : newDep.moreDimensionedVariants) {
             varProps.put(vprop, null);
         }
 
@@ -56,6 +56,7 @@ public class IndexerUtils {
     /**
      * Extracts the given field value from the record and transforms it into a flat (java) list,
      * regardless of the valueType of the field.
+     *
      * @param record
      * @param fieldType
      * @return
@@ -74,7 +75,7 @@ public class IndexerUtils {
                 return (List)value;
             } else {
                 List result = Lists.newArrayList();
-                for (Object nValue: (List)value) {
+                for (Object nValue : (List)value) {
                     result.addAll(flatList(nValue, type.getNestedValueType()));
                 }
                 return result;

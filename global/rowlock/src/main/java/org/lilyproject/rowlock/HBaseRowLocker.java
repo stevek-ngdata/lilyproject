@@ -17,7 +17,11 @@ package org.lilyproject.rowlock;
 
 import java.io.IOException;
 
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class HBaseRowLocker implements RowLocker {
@@ -43,7 +47,7 @@ public class HBaseRowLocker implements RowLocker {
         this.timeout = timeout;
         this.metrics = metrics;
     }
-    
+
     @Override
     public RowLock lockRow(byte[] rowKey) throws IOException {
         RowLock rowLock = lockRow(rowKey, null);
@@ -66,7 +70,7 @@ public class HBaseRowLocker implements RowLocker {
             }
         }
 
-        if ((previousTimestamp == -1) || (previousTimestamp + timeout  < System.currentTimeMillis())) {
+        if ((previousTimestamp == -1) || (previousTimestamp + timeout < System.currentTimeMillis())) {
             rowLock = lockRow(rowKey, previousPermit);
             if (rowLock != null) {
                 return rowLock;
@@ -112,7 +116,7 @@ public class HBaseRowLocker implements RowLocker {
         put.add(family, qualifier, 1L, null);
         return table.checkAndPut(rowKey, family, qualifier, lock.getPermit(), put); // If it fails, we already lost the lock
     }
-    
+
     @Override
     public boolean isLocked(byte[] rowKey) throws IOException {
         long now = System.currentTimeMillis();
@@ -120,28 +124,34 @@ public class HBaseRowLocker implements RowLocker {
         get.addColumn(family, qualifier);
         Result result = table.get(get);
 
-        if (result.isEmpty()) return false;
-        
+        if (result.isEmpty()) {
+            return false;
+        }
+
         byte[] previousPermit = result.getValue(family, qualifier);
-        if (previousPermit == null || previousPermit.length == 0) return false;
-        
+        if (previousPermit == null || previousPermit.length == 0) {
+            return false;
+        }
+
         RowLock previousRowLock = new RowLock(rowKey, previousPermit);
         long previousTimestamp = previousRowLock.getTimestamp();
         return previousTimestamp + timeout >= now;
 
     }
-    
+
     @Override
     public boolean put(Put put, RowLock lock) throws IOException {
-        if (!Bytes.equals(put.getRow(), lock.getRowKey()))
-                return false;
+        if (!Bytes.equals(put.getRow(), lock.getRowKey())) {
+            return false;
+        }
         return table.checkAndPut(lock.getRowKey(), family, qualifier, lock.getPermit(), put);
     }
-    
+
     @Override
     public boolean delete(Delete delete, RowLock lock) throws IOException {
-        if (!Bytes.equals(delete.getRow(), lock.getRowKey()))
-                return false;
+        if (!Bytes.equals(delete.getRow(), lock.getRowKey())) {
+            return false;
+        }
         return table.checkAndDelete(lock.getRowKey(), family, qualifier, lock.getPermit(), delete);
     }
 }

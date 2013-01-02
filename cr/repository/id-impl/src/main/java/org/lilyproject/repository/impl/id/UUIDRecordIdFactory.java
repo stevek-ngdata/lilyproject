@@ -28,10 +28,10 @@ public class UUIDRecordIdFactory implements RecordIdFactory {
     public DataInput[] splitInMasterAndVariant(DataInput dataInput) {
         if (dataInput.getSize() - dataInput.getPosition() > UUID_LENGTH) {
 
-            DataInput keyInput = new DataInputImpl(((DataInputImpl) dataInput), dataInput.getPosition(),
+            DataInput keyInput = new DataInputImpl(((DataInputImpl)dataInput), dataInput.getPosition(),
                     dataInput.getPosition() + 16);
 
-            DataInput variantInput = new DataInputImpl(((DataInputImpl) dataInput), dataInput.getPosition() + 16,
+            DataInput variantInput = new DataInputImpl(((DataInputImpl)dataInput), dataInput.getPosition() + 16,
                     dataInput.getSize());
 
             return new DataInput[]{keyInput, variantInput};

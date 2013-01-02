@@ -15,9 +15,21 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldNotFoundException;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
 
 public class IdRecordImpl implements IdRecord, Cloneable {
     private Record record;
@@ -65,7 +77,7 @@ public class IdRecordImpl implements IdRecord, Cloneable {
 
         return fieldsById;
     }
-    
+
     @Override
     public Map<SchemaId, QName> getFieldIdToNameMapping() {
         return mapping;
@@ -105,7 +117,7 @@ public class IdRecordImpl implements IdRecord, Cloneable {
     public Long getVersion() {
         return record.getVersion();
     }
-    
+
     @Override
     public void setRecordType(QName name, Long version) {
         record.setRecordType(name, version);
@@ -211,7 +223,7 @@ public class IdRecordImpl implements IdRecord, Cloneable {
                 new EnumMap<Scope, SchemaId>(recordTypeIds));
         return clone;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         return record.equals(obj);
@@ -231,7 +243,7 @@ public class IdRecordImpl implements IdRecord, Cloneable {
     public void setDefaultNamespace(String namespace) {
         record.setDefaultNamespace(namespace);
     }
-    
+
     @Override
     public void setRecordType(String recordTypeName) throws RecordException {
         record.setRecordType(recordTypeName);
@@ -257,12 +269,12 @@ public class IdRecordImpl implements IdRecord, Cloneable {
         // The cast to (T) is only needed for a bug in JDK's < 1.6u24
         return (T)record.getField(fieldName);
     }
-    
+
     @Override
     public void delete(String fieldName, boolean addFieldsToDelete) throws RecordException {
         record.delete(fieldName, addFieldsToDelete);
     }
-    
+
     @Override
     public boolean hasField(String fieldName) throws RecordException {
         return record.hasField(fieldName);
@@ -282,6 +294,6 @@ public class IdRecordImpl implements IdRecord, Cloneable {
     public void setAttributes(Map<String, String> attributes) {
         record.setAttributes(attributes);
     }
-    
-    
+
+
 }

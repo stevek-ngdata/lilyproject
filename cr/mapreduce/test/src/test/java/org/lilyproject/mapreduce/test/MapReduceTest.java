@@ -15,19 +15,14 @@
  */
 package org.lilyproject.mapreduce.test;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnectionManager;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
-import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.junit.AfterClass;
@@ -37,12 +32,15 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.mapreduce.testjobs.Test1Mapper;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.test.TestHomeUtil;
-
-import java.io.File;
-import java.io.IOException;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -53,11 +51,11 @@ public class MapReduceTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         lilyProxy = new LilyProxy();
-        
+
         //
         // Make multiple record table splits, so that our MR job will have multiple map tasks
         //
-        
+
         if (lilyProxy.getMode() == LilyProxy.Mode.CONNECT || lilyProxy.getMode() == LilyProxy.Mode.HADOOP_CONNECT) {
             // The record table will likely already exist and not be recreated, hence we won't be able to change
             // the number of regions. Therefore, drop the table.
@@ -99,8 +97,9 @@ public class MapReduceTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        if (lilyProxy != null)
+        if (lilyProxy != null) {
             lilyProxy.stop();
+        }
         TestHomeUtil.cleanupTestHome(tmpDir);
 
         if (lilyProxy.getMode() == LilyProxy.Mode.CONNECT || lilyProxy.getMode() == LilyProxy.Mode.HADOOP_CONNECT) {
@@ -144,15 +143,15 @@ public class MapReduceTest {
         Repository repository = client.getRepository();
         TypeManager typeManager = repository.getTypeManager();
         IdGenerator idGenerator = repository.getIdGenerator();
-        
+
         FieldType ft1 = typeManager.createFieldType("STRING", new QName("test", "field1"), Scope.NON_VERSIONED);
-        
+
         RecordType rt1 = typeManager.recordTypeBuilder()
                 .defaultNamespace("test")
                 .name("rt1")
                 .fieldEntry().use(ft1).add()
                 .create();
-        
+
         for (int i = 0; i < 100; i++) {
             repository.recordBuilder()
                     .id(String.format("%1$03d", i))
@@ -190,8 +189,8 @@ public class MapReduceTest {
             assertEquals("Number of launched map tasks", 5L, getTotalLaunchedMaps(job));
             assertEquals("Number of input records", 100L, getTotalInputRecords(job));
         }
-        
-        
+
+
         //
         // Launch a job with a custom scan
         //
@@ -235,11 +234,11 @@ public class MapReduceTest {
         }
 
     }
-    
+
     private long getTotalLaunchedMaps(Job job) throws IOException {
         return job.getCounters().findCounter("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_MAPS").getValue();
     }
-    
+
     private long getTotalInputRecords(Job job) throws IOException {
         return job.getCounters().findCounter("org.apache.hadoop.mapreduce.TaskCounter", "MAP_INPUT_RECORDS").getValue();
     }

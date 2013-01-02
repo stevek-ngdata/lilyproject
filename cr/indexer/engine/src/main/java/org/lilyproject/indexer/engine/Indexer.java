@@ -99,7 +99,7 @@ public class Indexer {
     /**
      * Performs a complete indexing of the given record, supposing the record is not yet indexed
      * (existing entries are not explicitly removed).
-     *
+     * <p/>
      * <p>This method requires you obtained the {@link IndexLocker} for the record.
      *
      * @param recordId
@@ -142,7 +142,7 @@ public class Indexer {
 
     /**
      * Indexes a record for a set of vtags.
-     *
+     * <p/>
      * <p>This method requires you obtained the {@link IndexLocker} for the record.
      *
      * @param vtagsToIndex all vtags for which to index the record, not all vtags need to exist on the record,
@@ -256,9 +256,10 @@ public class Indexer {
                 solrShardMgr.getSolrClient(record.getId()).deleteById(getIndexId(record.getId(), vtag));
                 metrics.deletesById.inc();
 
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug(String.format("Record %1$s, vtag %2$s: no index fields produced output, " +
                             "removed from index if present", record.getId(), safeLoadTagName(vtag)));
+                }
 
                 processDependencies(record, vtag, solrDocumentBuilder);
             } else {
@@ -285,8 +286,9 @@ public class Indexer {
             logDependencies(record.getId(), solrDocumentBuilder.getDependencies());
         }
 
-        if (derefMap != null)
+        if (derefMap != null) {
             derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
+        }
     }
 
     private void logDependencies(RecordId recordId, Map<DependencyEntry, Set<SchemaId>> dependencies) {
@@ -337,8 +339,9 @@ public class Indexer {
         StringBuilder builder = new StringBuilder();
 
         while (valueType != null) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append("_");
+            }
             builder.append(valueType.getBaseName().toLowerCase());
             valueType = valueType.getNestedValueType();
         }
@@ -348,7 +351,7 @@ public class Indexer {
 
     /**
      * Deletes all index entries (for all vtags) for the given record.
-     *
+     * <p/>
      * <p>This method requires you obtained the {@link IndexLocker} for the record.
      */
     public void delete(RecordId recordId) throws SolrClientException, ShardSelectorException,
@@ -411,8 +414,9 @@ public class Indexer {
      * Lookup name of field type, for use in debug logs. Beware, this might be slow.
      */
     protected String safeLoadTagName(SchemaId fieldTypeId) {
-        if (fieldTypeId == null)
+        if (fieldTypeId == null) {
             return "null";
+        }
 
         try {
             return typeManager.getFieldTypeById(fieldTypeId).getName().getName();
@@ -424,8 +428,9 @@ public class Indexer {
     protected String vtagSetToNameString(Set<SchemaId> vtags) {
         StringBuilder builder = new StringBuilder();
         for (SchemaId vtag : vtags) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append(", ");
+            }
             builder.append(safeLoadTagName(vtag));
         }
         return builder.toString();
@@ -443,10 +448,14 @@ public class Indexer {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
-        Indexer indexer = (Indexer) o;
+        Indexer indexer = (Indexer)o;
 
         return !(indexName != null ? !indexName.equals(indexer.indexName) : indexer.indexName != null);
     }

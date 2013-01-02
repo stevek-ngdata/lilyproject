@@ -15,8 +15,13 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,12 +34,12 @@ public class SizeBasedBlobStoreAccessFactory implements BlobStoreAccessFactory {
 
     private final Map<String, BlobStoreAccess> blobStoreAccesses = new HashMap<String, BlobStoreAccess>();
     private final SortedMap<Long, BlobStoreAccess> usedBlobStoreAccesses = new TreeMap<Long, BlobStoreAccess>();
-    
+
     public SizeBasedBlobStoreAccessFactory(List<BlobStoreAccess> availableBlobStoreAccesses, BlobStoreAccessConfig blobStoreAccessConfig) {
         for (BlobStoreAccess blobStoreAccess : availableBlobStoreAccesses) {
             blobStoreAccesses.put(blobStoreAccess.getId(), blobStoreAccess);
         }
-        
+
         BlobStoreAccess defaultBlobStoreAccess = blobStoreAccesses.get(blobStoreAccessConfig.getDefault());
         usedBlobStoreAccesses.put(Long.MAX_VALUE, defaultBlobStoreAccess);
         log.info("Setting default blobstore " + defaultBlobStoreAccess.getId());
@@ -46,20 +51,20 @@ public class SizeBasedBlobStoreAccessFactory implements BlobStoreAccessFactory {
 
     private void addBlobStoreAccess(long upperLimit, BlobStoreAccess blobStoreAccess) {
         usedBlobStoreAccesses.put(upperLimit, blobStoreAccess);
-        log.info("Setting limit "+ upperLimit+ " for blobstore " +blobStoreAccess.getId());
+        log.info("Setting limit " + upperLimit + " for blobstore " + blobStoreAccess.getId());
     }
-    
+
     @Override
     public BlobStoreAccess get(Blob blob) {
         Long size = blob.getSize();
-        for (Long upperLimit: usedBlobStoreAccesses.keySet()) {
+        for (Long upperLimit : usedBlobStoreAccesses.keySet()) {
             if (size <= upperLimit) {
-                 return usedBlobStoreAccesses.get(upperLimit);
+                return usedBlobStoreAccesses.get(upperLimit);
             }
         }
         return usedBlobStoreAccesses.get(Long.MAX_VALUE);
     }
-    
+
     @Override
     public Collection<BlobStoreAccess> getAll() {
         return usedBlobStoreAccesses.values();

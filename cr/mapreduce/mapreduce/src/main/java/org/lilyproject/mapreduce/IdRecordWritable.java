@@ -22,7 +22,7 @@ import java.io.IOException;
 import org.apache.hadoop.io.Writable;
 import org.lilyproject.repository.api.IdRecord;
 
-public class IdRecordWritable implements Writable {    
+public class IdRecordWritable implements Writable {
     private IdRecord idRecord;
 
     protected IdRecordWritable() {

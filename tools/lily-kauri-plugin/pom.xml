@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
@@ -81,8 +82,11 @@
             </goals>
             <configuration>
               <tasks>
-                <mkdir dir="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/" />
-                <echo file="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/kauri.properties" encoding="utf8">kauri.version=${version.kauri}</echo>
+                <mkdir dir="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/"/>
+                <echo
+                    file="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/kauri.properties"
+                    encoding="utf8">kauri.version=${version.kauri}
+                </echo>
               </tasks>
             </configuration>
           </execution>

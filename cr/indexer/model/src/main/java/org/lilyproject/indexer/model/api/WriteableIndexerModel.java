@@ -30,7 +30,7 @@ public interface WriteableIndexerModel extends IndexerModel {
 
     /**
      * Loads an index definition and returns it in a mutable way.
-     *
+     * <p/>
      * <p>This differs from {@link #getIndex(String)} in that the returned index definition
      * is mutable (updateable) and it is also freshly loaded from storage.
      */
@@ -38,7 +38,7 @@ public interface WriteableIndexerModel extends IndexerModel {
 
     /**
      * Updates an index.
-     *
+     * <p/>
      * <p>The update will only succeed if it was not modified since it was read. This situation can be avoided
      * by taking a lock on the index before reading it. In fact, you are obliged to do so, and to pass your lock,
      * of which it will be validated that it really is the owner of the index lock.
@@ -57,9 +57,9 @@ public interface WriteableIndexerModel extends IndexerModel {
 
     /**
      * Takes a lock on this index.
-     *
+     * <p/>
      * <p>Taking a lock can avoid concurrent modification exceptions when updating the index.
-     *
+     * <p/>
      * <p>TODO: can/should clients use this lock for their own purposes?
      */
     String lockIndex(String indexName) throws ZkLockException, IndexNotFoundException, InterruptedException,

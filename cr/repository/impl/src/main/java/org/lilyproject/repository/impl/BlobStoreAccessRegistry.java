@@ -89,7 +89,7 @@ public class BlobStoreAccessRegistry {
     }
 
     public void delete(byte[] blobKey) throws BlobException {
-        Pair<String,byte[]> decodedKey = decode(blobKey);
+        Pair<String, byte[]> decodedKey = decode(blobKey);
         BlobStoreAccess blobStoreAccess = registry.get(decodedKey.getV1());
         blobStoreAccess.delete(decodedKey.getV2());
     }
@@ -103,7 +103,7 @@ public class BlobStoreAccessRegistry {
         return bytes;
     }
 
-    static private Pair<String, byte[]>  decode(byte[] key) {
+    static private Pair<String, byte[]> decode(byte[] key) {
         int sizeofInt = Bytes.SIZEOF_INT;
         int idLength = Bytes.toInt(key, key.length - sizeofInt, sizeofInt);
         String id = Bytes.toString(key, key.length - sizeofInt - idLength, idLength);

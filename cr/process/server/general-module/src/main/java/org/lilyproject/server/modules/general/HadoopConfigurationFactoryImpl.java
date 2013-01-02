@@ -15,6 +15,8 @@
  */
 package org.lilyproject.server.modules.general;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -27,8 +29,6 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.kauriproject.conf.Conf;
 import org.lilyproject.util.io.Closer;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactory {
     private Conf hadoopConf;
@@ -43,7 +43,7 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
     private static AtomicInteger hbaseConfCounter = new AtomicInteger();
 
     public HadoopConfigurationFactoryImpl(Conf hadoopConf, Conf hbaseConf, Conf mrConf, String zkConnectString,
-            int zkSessionTimeout) throws Exception {
+                                          int zkSessionTimeout) throws Exception {
         this.hadoopConf = hadoopConf;
         this.hbaseConf = hbaseConf;
         this.mrConf = mrConf;

@@ -57,7 +57,7 @@ class ScannerQueryResult extends BaseQueryResult {
         }
 
         // read the last field (i.e. the identifier)
-        return (byte[]) iterator.next();
+        return (byte[])iterator.next();
     }
 
     @Override

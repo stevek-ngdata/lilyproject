@@ -1,4 +1,5 @@
-<?xml version="1.0"?> <wiring>
+<?xml version="1.0"?>
+<wiring>
   <modules>
     <artifact id="pluginregistry" groupId="org.lilyproject" artifactId="lily-pluginregistry-impl"
               version="1.4-SNAPSHOT">
@@ -10,8 +11,10 @@
     <artifact id="rowlog" groupId="org.lilyproject" artifactId="lily-rowlog-module" version="1.4-SNAPSHOT">
     </artifact>
 
-    <artifact id="indexer-integration" groupId="org.lilyproject" artifactId="lily-indexer-integration-module" version="1.4-SNAPSHOT">
-      <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
+    <artifact id="indexer-integration" groupId="org.lilyproject" artifactId="lily-indexer-integration-module"
+              version="1.4-SNAPSHOT">
+      <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog"
+                          ref="rowlog:messageQueue"/>
     </artifact>
 
     <!-- lily.plugin.dir:
@@ -25,13 +28,17 @@
     <directory id="plugin" basePath="${lily.plugin.dir}" path="load-before-repository"/>
 
     <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="1.4-SNAPSHOT">
-      <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
-      <inject-javaservice name="writeAheadLog" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:writeAheadLog"/>
+      <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog"
+                          ref="rowlog:messageQueue"/>
+      <inject-javaservice name="writeAheadLog" service="org.lilyproject.rowlog.api.RowLog"
+                          ref="rowlog:writeAheadLog"/>
     </artifact>
 
     <artifact id="indexer" groupId="org.lilyproject" artifactId="lily-indexer-module" version="1.4-SNAPSHOT">
-      <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
-      <inject-javaservice name="writeAheadLog" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:writeAheadLog"/>
+      <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog"
+                          ref="rowlog:messageQueue"/>
+      <inject-javaservice name="writeAheadLog" service="org.lilyproject.rowlog.api.RowLog"
+                          ref="rowlog:writeAheadLog"/>
     </artifact>
 
     <artifact id="avro" groupId="org.lilyproject" artifactId="lily-rpc-module" version="1.4-SNAPSHOT">

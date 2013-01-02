@@ -15,6 +15,10 @@
  */
 package org.lilyproject.rowlog.impl;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
@@ -24,10 +28,6 @@ import org.lilyproject.util.zookeeper.LeaderElection;
 import org.lilyproject.util.zookeeper.LeaderElectionCallback;
 import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.io.IOException;
 
 /**
  * Starts and stops a RowLogProcessor based on ZooKeeper-based leader election.

@@ -15,8 +15,6 @@
  */
 package org.lilyproject.tools.import_.json;
 
-import static org.lilyproject.util.json.JsonUtil.getString;
-
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.FieldType;
@@ -29,6 +27,8 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.repo.VersionTag;
+
+import static org.lilyproject.util.json.JsonUtil.getString;
 
 public class FieldTypeReader implements EntityReader<FieldType> {
     public static EntityReader<FieldType> INSTANCE = new FieldTypeReader();
@@ -71,17 +71,20 @@ public class FieldTypeReader implements EntityReader<FieldType> {
 
         String idString = getString(node, "id", null);
         SchemaId id = null;
-        if (idString != null)
+        if (idString != null) {
             id = new SchemaIdImpl(idString);
+        }
         fieldType.setId(id);
 
         // Some sanity checks for version tag fields
         if (fieldType.getName().getNamespace().equals(VersionTag.NAMESPACE)) {
-            if (fieldType.getScope() != Scope.NON_VERSIONED)
+            if (fieldType.getScope() != Scope.NON_VERSIONED) {
                 throw new JsonFormatException("vtag fields should be in the non-versioned scope");
+            }
 
-            if (!fieldType.getValueType().getBaseName().equals("LONG"))
+            if (!fieldType.getValueType().getBaseName().equals("LONG")) {
                 throw new JsonFormatException("vtag fields should be of type LONG");
+            }
         }
 
         return fieldType;
@@ -102,7 +105,7 @@ public class FieldTypeReader implements EntityReader<FieldType> {
 
     @Override
     public FieldType fromJson(JsonNode node, Namespaces namespaces, Repository repository,
-            LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
+                              LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(node, namespaces, repository);
     }
 }

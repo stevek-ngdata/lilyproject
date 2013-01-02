@@ -17,6 +17,7 @@ package org.lilyproject.tools.import_.json;
 
 public class WriteOptions {
     public static final WriteOptions INSTANCE;
+
     static {
         INSTANCE = new WriteOptions();
         INSTANCE.makeImmutable();
@@ -24,7 +25,9 @@ public class WriteOptions {
 
     private boolean immutable = false;
 
-    /** For records, should schema information about the fields in the records be included? */
+    /**
+     * For records, should schema information about the fields in the records be included?
+     */
     private boolean includeSchema = false;
 
     public boolean getIncludeSchema() {
@@ -32,8 +35,9 @@ public class WriteOptions {
     }
 
     public void setIncludeSchema(boolean includeSchema) {
-        if (immutable)
+        if (immutable) {
             throw new RuntimeException("This WriteOptions instance is immutable.");
+        }
 
         this.includeSchema = includeSchema;
     }

@@ -23,7 +23,7 @@ public abstract class BaseShardSelector implements ShardSelector {
     public BaseShardSelector(ShardingKey shardingKey) {
         this.shardingKey = shardingKey;
     }
-    
+
     @Override
     public String getShard(RecordId recordId) throws ShardSelectorException {
         Comparable key = shardingKey.getShardingKey(recordId);

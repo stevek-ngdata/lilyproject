@@ -15,12 +15,21 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeBucket;
 
 public class RecordTypesCache {
     private Log log = LogFactory.getLog(getClass());
@@ -62,8 +71,9 @@ public class RecordTypesCache {
                     // Re-initialize the nameCache
                     Map<QName, RecordType> newNameCache = new HashMap<QName, RecordType>();
                     for (Map<SchemaId, RecordType> bucket : buckets.values()) {
-                        for (RecordType recordType : bucket.values())
+                        for (RecordType recordType : bucket.values()) {
                             newNameCache.put(recordType.getName(), recordType);
+                        }
                     }
                     nameCache = newNameCache;
                     nameCacheOutOfDate = false;
@@ -97,7 +107,7 @@ public class RecordTypesCache {
 
     /**
      * Return the monitor of a bucket and create it if it does not exist yet.
-     * 
+     *
      * @param bucketId
      * @return
      */
@@ -123,7 +133,7 @@ public class RecordTypesCache {
     /**
      * Return all record types in the cache. To avoid inconsistencies between
      * buckets, we get the nameCache first.
-     * 
+     *
      * @return
      * @throws InterruptedException
      */
@@ -137,7 +147,7 @@ public class RecordTypesCache {
 
     /**
      * Return the record type based on its name
-     * 
+     *
      * @param name
      * @return
      * @throws InterruptedException
@@ -148,21 +158,22 @@ public class RecordTypesCache {
 
     /**
      * Get the record type based on its id
-     * 
+     *
      * @param id
      * @return
      */
     public RecordType getRecordType(SchemaId id) {
         String bucketId = AbstractSchemaCache.encodeHex(id.getBytes());
         Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
-        if (bucket == null)
+        if (bucket == null) {
             return null;
+        }
         return bucket.get(id);
     }
 
     /**
      * Refreshes the whole cache to contain the given list of record types.
-     * 
+     *
      * @param recordTypes
      * @throws InterruptedException
      */
@@ -197,7 +208,7 @@ public class RecordTypesCache {
 
     /**
      * Refresh one bucket with the record types contained in the TypeBucket
-     * 
+     *
      * @param typeBucket
      */
     public void refreshRecordTypeBucket(TypeBucket typeBucket) {
@@ -230,7 +241,7 @@ public class RecordTypesCache {
 
     /**
      * Update the cache to contain the new recordType
-     * 
+     *
      * @param recordType
      */
     public void update(RecordType recordType) {
@@ -257,7 +268,7 @@ public class RecordTypesCache {
         // Decrement the number of buckets that are being updated again.
         decCount();
     }
-    
+
     // Add the id of a record type that has been updated locally
     // in a bucket. This record type will be skipped in a next
     // cache refresh sequence.
@@ -285,7 +296,7 @@ public class RecordTypesCache {
 
     public void clear() {
         nameCache.clear();
-        
+
         for (Map bucket : buckets.values()) {
             bucket.clear();
         }

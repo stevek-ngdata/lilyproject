@@ -109,7 +109,7 @@ public class SolrClientImpl implements SolrClient {
 
     @Override
     public UpdateResponse deleteByQuery(String query) throws SolrClientException {
-        
+
         UpdateRequest request = new UpdateRequest();
         request.deleteByQuery(query);
         if (collection != null) {
@@ -125,7 +125,7 @@ public class SolrClientImpl implements SolrClient {
     @Override
     public UpdateResponse commit(boolean waitFlush, boolean waitSearcher) throws SolrClientException {
         UpdateRequest request = new UpdateRequest();
-        request.setAction( UpdateRequest.ACTION.COMMIT, waitFlush, waitSearcher);
+        request.setAction(UpdateRequest.ACTION.COMMIT, waitFlush, waitSearcher);
         if (collection != null) {
             request.setParam("collection", collection);
         }
@@ -149,7 +149,7 @@ public class SolrClientImpl implements SolrClient {
             params = SolrParams.wrapAppended(SolrParams.toSolrParams(nl), params);
         }
         try {
-            return  new QueryRequest(params).process(solrServer);
+            return new QueryRequest(params).process(solrServer);
         } catch (Exception e) {
             throw new SolrClientException(description, e);
         }

@@ -17,27 +17,26 @@ package org.lilyproject.rowlog.api;
 
 /**
  * A RowLogMessageConsumer is responsible for processing a message coming from the {@link RowLog}.
- * 
- * <p> RowLogMessageConsumers should be registered on the {@link RowLog}. 
+ * <p/>
+ * <p> RowLogMessageConsumers should be registered on the {@link RowLog}.
  * A consumer can be asked to process a message, either by the {@link RowLog} itself when it is asked to process a message,
  * or by a {@link RowLogProcessor} that picks up a next message to be processed by a specific consumer.
  * A {@link RowLogProcessor} will only ask a consumer to process a message if the RowLogMessageConsumer was registered
- * with the {@link RowLog} before the message was put on the {@link RowLog}. 
- *
+ * with the {@link RowLog} before the message was put on the {@link RowLog}.
  */
 public interface RowLogMessageListener {
     /**
-     * Request a consumer to process a {@link RowLogMessage}. 
-     * 
+     * Request a consumer to process a {@link RowLogMessage}.
+     * <p/>
      * <p>The listener is itself responsible for retrying a message if it failed to be processed.
-     * It can decide to drop the message, but then the result of this call should be true. When 
+     * It can decide to drop the message, but then the result of this call should be true. When
      * false is returned, the message will later be picked up again by the RowLogProcessor and offered
      * again to the listener for processing.
-     *  
+     *
      * @param message the {@link RowLogMessage} to process
-     * @return true if the listener processed the message and it should not be offered again for processing, 
-     * false if the message should be re-offered again later 
-     * @throws InterruptedException 
+     * @return true if the listener processed the message and it should not be offered again for processing,
+     *         false if the message should be re-offered again later
+     * @throws InterruptedException
      */
     boolean processMessage(RowLogMessage message) throws InterruptedException;
 }

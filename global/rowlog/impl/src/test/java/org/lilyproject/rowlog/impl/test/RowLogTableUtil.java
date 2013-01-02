@@ -28,7 +28,7 @@ import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.LocalHTable;
 
 public class RowLogTableUtil {
-    
+
     private static final byte[] ROW_TABLE = Bytes.toBytes("rowTable");
     public static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("DATACF");
     public static final byte[] ROWLOG_COLUMN_FAMILY = Bytes.toBytes("ROWLOGCF");

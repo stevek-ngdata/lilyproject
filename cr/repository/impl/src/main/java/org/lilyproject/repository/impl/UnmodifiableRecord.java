@@ -15,9 +15,18 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldNotFoundException;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.repository.api.Scope;
 
 /**
  * Wrapper around Record that disallows updates.
@@ -166,12 +175,12 @@ public class UnmodifiableRecord implements Record, Cloneable {
     public boolean softEquals(Object obj) {
         return delegate.softEquals(obj);
     }
-    
+
     @Override
     public void setDefaultNamespace(String namespace) {
         throw new RuntimeException(MSG);
     }
-    
+
     @Override
     public void setRecordType(String recordTypeName) {
         throw new RuntimeException(MSG);
@@ -186,7 +195,7 @@ public class UnmodifiableRecord implements Record, Cloneable {
     public void setRecordType(Scope scope, String recordTypeName, Long version) {
         throw new RuntimeException(MSG);
     }
-    
+
     @Override
     public void setField(String fieldName, Object value) {
         throw new RuntimeException(MSG);
@@ -197,12 +206,12 @@ public class UnmodifiableRecord implements Record, Cloneable {
         // The cast to (T) is only needed for a bug in JDK's < 1.6u24
         return (T)delegate.getField(fieldName);
     }
-    
+
     @Override
     public void delete(String fieldName, boolean addToFieldsToDelete) {
         throw new RuntimeException(MSG);
     }
-    
+
     @Override
     public boolean hasField(String fieldName) throws RecordException {
         return delegate.hasField(fieldName);
@@ -222,6 +231,6 @@ public class UnmodifiableRecord implements Record, Cloneable {
     public void setAttributes(Map<String, String> attributes) {
         throw new RuntimeException(MSG);
     }
-    
-    
+
+
 }

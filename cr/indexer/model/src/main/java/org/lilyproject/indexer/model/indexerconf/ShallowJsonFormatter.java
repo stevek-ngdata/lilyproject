@@ -18,6 +18,7 @@ package org.lilyproject.indexer.model.indexerconf;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Map;
+
 import org.codehaus.jackson.JsonGenerator;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -29,20 +30,21 @@ import org.lilyproject.util.json.JsonFormat;
 
 /**
  * A formatter which renders a record as json.
- *
+ * <p/>
  * <p>This is useful when you want to retrieve records directly from SOLR</p>.
- * 
+ * <p/>
  * <p>Limitation: Only shallow serialization is done: If a record has LIST or PATH members,
- *   the values will be serialized according to the nested valuetype, joined by " " or "/" respectively.</p>
+ * the values will be serialized according to the nested valuetype, joined by " " or "/" respectively.</p>
  */
 public class ShallowJsonFormatter extends DefaultFormatter {
 
     @Override
     protected ValueFormatter getFormatter(ValueType valueType) {
-        if ("RECORD".equals(valueType.getBaseName()))
+        if ("RECORD".equals(valueType.getBaseName())) {
             return RECORD_KEY_VALUE_FORMATTER;
-        else
+        } else {
             return super.getFormatter(valueType);
+        }
 
     }
 
@@ -56,7 +58,7 @@ public class ShallowJsonFormatter extends DefaultFormatter {
                 JsonGenerator gen = JsonFormat.JSON_FACTORY.createJsonGenerator(writer);
 
                 gen.writeStartObject();
-                for (Map.Entry<QName, Object> field : ((Record) record).getFields().entrySet()) {
+                for (Map.Entry<QName, Object> field : ((Record)record).getFields().entrySet()) {
                     ValueType fieldValueType;
                     try {
                         fieldValueType = typeManager.getFieldTypeByName(field.getKey()).getValueType();

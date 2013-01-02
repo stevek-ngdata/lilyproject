@@ -15,8 +15,8 @@
  */
 package org.lilyproject.util.xml;
 
-import javax.xml.xpath.XPathFactory;
 import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathFactory;
 
 /**
  * Serves a similar purpose as {@link LocalDocumentBuilderFactory}.

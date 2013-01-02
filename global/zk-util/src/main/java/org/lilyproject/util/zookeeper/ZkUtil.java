@@ -20,7 +20,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.zookeeper.*;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Stat;
 
@@ -28,7 +31,7 @@ import org.apache.zookeeper.data.Stat;
  * Various ZooKeeper utility methods.
  */
 public class ZkUtil {
-    
+
     public static ZooKeeperItf connect(String connectString, int sessionTimeout) throws ZkConnectException {
         ZooKeeperImpl zooKeeper;
         try {
@@ -65,18 +68,20 @@ public class ZkUtil {
     /**
      * Creates a persistent path on zookeeper if it does not exist yet, including any parents.
      * Keeps retrying in case of connection loss.
-     *
+     * <p/>
      * <p>The supplied data is used for the last node in the path. If the path already exists,
      * the data is updated if necessary.
      */
     public static void createPath(final ZooKeeperItf zk, final String path, final byte[] data)
             throws InterruptedException, KeeperException {
 
-        if (!path.startsWith("/"))
+        if (!path.startsWith("/")) {
             throw new IllegalArgumentException("Path should start with a slash.");
+        }
 
-        if (path.endsWith("/"))
+        if (path.endsWith("/")) {
             throw new IllegalArgumentException("Path should not end on a slash.");
+        }
 
         String[] parts = path.substring(1).split("/");
 
@@ -122,12 +127,12 @@ public class ZkUtil {
 
     /**
      * Updates data on a zookeeper node.
-     * 
-     * <p>
+     * <p/>
+     * <p/>
      * The supplied data is used for the last node in the path. The path must
      * already exist. It is not checked if the data is changed or not. This will
      * cause the version of the node to be increased.
-     * <p>
+     * <p/>
      * This operation is retried until it succeeds.
      */
     public static void update(final ZooKeeperItf zk, final String path, final byte[] data, final int version)
@@ -143,7 +148,7 @@ public class ZkUtil {
 
     /**
      * Gets data from a zookeeper node.
-     * <p>
+     * <p/>
      * This operation is retried until it succeeds.
      */
     public static byte[] getData(final ZooKeeperItf zk, final String path, final Watcher watcher, final Stat stat)

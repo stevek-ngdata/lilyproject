@@ -15,7 +15,11 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -25,20 +29,20 @@ import org.lilyproject.util.ByteArrayKey;
 
 public class MessagesWorkQueue {
     private final int maxMessages;
-    
+
     private final List<RowLogMessage> messageList;
-    
+
     private final Set<RowLogMessage> messagesWorkingOn = new HashSet<RowLogMessage>();
 
     private final Set<ByteArrayKey> rowsWorkingOn = new HashSet<ByteArrayKey>();
-    
+
     /**
      * This lock must be obtained by anyone modifying the above lists, or of course when waiting/signalling
      * the conditions associated with this lock.
      */
     private final Lock lock = new ReentrantLock();
 
-    private final Condition notFull  = lock.newCondition();
+    private final Condition notFull = lock.newCondition();
 
     private final Condition notEmpty = lock.newCondition();
 
@@ -110,7 +114,7 @@ public class MessagesWorkQueue {
             }
         }
     }
-    
+
     public void done(RowLogMessage message) {
         lock.lock();
         try {
@@ -122,9 +126,9 @@ public class MessagesWorkQueue {
             lock.unlock();
         }
     }
-    
+
     public int size() {
-    	return messageList.size();
+        return messageList.size();
     }
 
     public void waitOnRefillThreshold() throws InterruptedException {

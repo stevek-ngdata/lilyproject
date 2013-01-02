@@ -15,13 +15,12 @@
  */
 package org.lilyproject.server.modules.repository;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 import org.apache.zookeeper.KeeperException;
 import org.kauriproject.conf.Conf;
@@ -43,7 +42,7 @@ public class BlobIncubatorMonitorSetup {
     private final String hostName;
 
     public BlobIncubatorMonitorSetup(ZooKeeperItf zookeeper, HBaseTableFactory hbaseTableFactory,
-            BlobManager blobManager, TypeManager typeManager, Conf blobManagerConf, String hostName) throws IOException {
+                                     BlobManager blobManager, TypeManager typeManager, Conf blobManagerConf, String hostName) throws IOException {
         this.zookeeper = zookeeper;
         this.hbaseTableFactory = hbaseTableFactory;
         this.blobManager = blobManager;
@@ -71,10 +70,10 @@ public class BlobIncubatorMonitorSetup {
             blobIncubatorMonitor.start();
         }
     }
-    
+
     @PreDestroy
     public void stop() {
         blobIncubatorMonitor.stop();
     }
-    
+
 }

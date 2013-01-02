@@ -15,11 +15,11 @@
  */
 package org.lilyproject.util.xml;
 
-import org.w3c.dom.Document;
-
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
 
 /**
  * Since lookup of DocumentBuilderFactory is slow, and DocumentBuilderFactory

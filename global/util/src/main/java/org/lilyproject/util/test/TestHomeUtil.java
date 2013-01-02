@@ -49,7 +49,7 @@ public class TestHomeUtil {
             return;
         }
 
-        File[] children  = file.listFiles();
+        File[] children = file.listFiles();
         if (children != null) {
             for (File child : children) {
                 if (child.isDirectory()) {

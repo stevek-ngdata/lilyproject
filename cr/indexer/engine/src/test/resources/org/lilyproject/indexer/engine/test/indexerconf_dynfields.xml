@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<indexer xmlns:dyn1="org.lilyproject.indexer.test.dyn1" xmlns:dyn2="org.lilyproject.indexer.test.dyn2">
+<indexer xmlns:dyn2="org.lilyproject.indexer.test.dyn2">
 
   <records>
     <record matchNamespace="dyn1" matchName="RecordType" matchVariant="*" vtags="last"/>
@@ -12,36 +12,36 @@
 
   <dynamicFields>
     <dynamicField matchNamespace="org.lilyproject.indexer.test.dyn1"
-        name="dyn1_${name}_${baseType}${list?_mv}"/>
+                  name="dyn1_${name}_${baseType}${list?_mv}"/>
 
     <dynamicField matchName="name_*"
-        name="nameMatch_${nameMatch}_${nestedBaseType}${list?_mv}"/>
+                  name="nameMatch_${nameMatch}_${nestedBaseType}${list?_mv}"/>
 
     <dynamicField matchName="scope_*" matchScope="NON_VERSIONED"
-        name="scopeMatch_${nameMatch}_${baseType}${list?_mv}"/>
+                  name="scopeMatch_${nameMatch}_${baseType}${list?_mv}"/>
 
     <!-- Just as an extra, the following rule test the ability to specify the namespace prefix
          instead of the namespace. -->
     <dynamicField matchNamespace="dyn2" matchType="DATE"
-        name="typeMatch_${name}_${baseType}"/>
+                  name="typeMatch_${name}_${baseType}"/>
 
     <dynamicField matchName="mv_*" matchType="LIST&lt;+>"
-        name="multiValueMatch_${nameMatch}_${deepestNestedBaseType}_mv"/>
+                  name="multiValueMatch_${nameMatch}_${deepestNestedBaseType}_mv"/>
 
     <dynamicField matchName="hier_*" matchType="PATH&lt;+>"
-        name="hierarchicalMatch_${nameMatch}_hier_literal"/>
+                  name="hierarchicalMatch_${nameMatch}_hier_literal"/>
 
     <!-- versioned mutable scope -->
     <dynamicField matchName="field12" matchType="*"
-        name="field12_string"/>
+                  name="field12_string"/>
 
     <!-- blob field without extractContent -->
     <dynamicField matchName="field13" matchType="BLOB"
-        name="field13_string"/>
+                  name="field13_string"/>
 
     <!-- blob field with extractContent -->
     <dynamicField matchName="field14" matchType="BLOB"
-        name="field14_string" extractContent="true"/>
+                  name="field14_string" extractContent="true"/>
   </dynamicFields>
 
 </indexer>

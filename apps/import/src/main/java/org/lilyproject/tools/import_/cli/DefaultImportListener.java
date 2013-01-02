@@ -31,7 +31,7 @@ public class DefaultImportListener implements ImportListener {
     private LoadingCache<EntityType, AtomicInteger> counters;
 
     private Set<EntityType> suppressedTypes;
-    
+
     public DefaultImportListener() {
         this(System.out);
     }

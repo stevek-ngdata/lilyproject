@@ -33,15 +33,15 @@ public class LilyScanRecordReader extends RecordReader<RecordIdWritable, RecordW
     private LilyClient lilyClient;
     private RecordScanner scanner;
     private Record currentRecord;
-    
+
     private RecordIdWritable recordId = new RecordIdWritable();
     private RecordWritable record = new RecordWritable();
-    
+
     public LilyScanRecordReader(LilyClient lilyClient, RecordScanner scanner) {
         this.lilyClient = lilyClient;
-        this.scanner = scanner;        
+        this.scanner = scanner;
     }
-    
+
     @Override
     public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
             throws IOException, InterruptedException {

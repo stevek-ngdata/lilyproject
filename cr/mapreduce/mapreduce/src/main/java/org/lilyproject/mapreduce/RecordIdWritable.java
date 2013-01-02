@@ -15,6 +15,10 @@
  */
 package org.lilyproject.mapreduce;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import org.apache.hadoop.io.BinaryComparable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
@@ -23,23 +27,19 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 /**
  * A Hadoop WritableComparable for Lily RecordId's.
- *
+ * <p/>
  * <p>Stores the length of the record id as a vint, followed by the normal binary
  * representation of the record id (= the same as used as row key in the HBase table).</p>
  */
 public class RecordIdWritable extends BinaryComparable implements WritableComparable<BinaryComparable> {
     private RecordId recordId;
     private static final IdGenerator ID_GENERATOR = new IdGeneratorImpl();
-    
-    public RecordIdWritable() {        
+
+    public RecordIdWritable() {
     }
-    
+
     public RecordIdWritable(RecordId recordId) {
         this.recordId = recordId;
     }
@@ -62,11 +62,11 @@ public class RecordIdWritable extends BinaryComparable implements WritableCompar
         }
 
         public int compare(byte[] b1, int s1, int l1,
-                byte[] b2, int s2, int l2) {
+                           byte[] b2, int s2, int l2) {
             // don't include the vint length in the comparison
             int n1 = WritableUtils.decodeVIntSize(b1[s1]);
             int n2 = WritableUtils.decodeVIntSize(b2[s2]);
-            return compareBytes(b1, s1+n1, l1-n1, b2, s2+n2, l2-n2);
+            return compareBytes(b1, s1 + n1, l1 - n1, b2, s2 + n2, l2 - n2);
         }
     }
 

@@ -15,11 +15,11 @@
  */
 package org.lilyproject.util.hbase;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.hadoop.hbase.util.Bytes;
 
 public class TableConfig {
     private Integer regionCount;
@@ -34,8 +34,8 @@ public class TableConfig {
     }
 
     /**
-     * @param splitKeys (optional, can be null) comma-separated list of split keys. If this is specified, it takes
-     *                   precedence over the nrOfRegions parameter.
+     * @param splitKeys   (optional, can be null) comma-separated list of split keys. If this is specified, it takes
+     *                    precedence over the nrOfRegions parameter.
      * @param regionCount (optional, can be null) number of regions. Creates splits suited for row keys that are
      *                    random UUIDs.
      */
@@ -81,7 +81,7 @@ public class TableConfig {
             // one region requested, no need to define splits
         } else if (regionCount != null) {
             byte[] startBytes = splitKeyPrefix.length > 0 ? splitKeyPrefix : new byte[]{(byte)0};
-            byte[] endBytes =  new byte[splitKeyPrefix.length + 16];
+            byte[] endBytes = new byte[splitKeyPrefix.length + 16];
             System.arraycopy(splitKeyPrefix, 0, endBytes, 0, splitKeyPrefix.length);
             for (int i = splitKeyPrefix.length; i < endBytes.length; i++) {
                 endBytes[i] = (byte)0xFF;

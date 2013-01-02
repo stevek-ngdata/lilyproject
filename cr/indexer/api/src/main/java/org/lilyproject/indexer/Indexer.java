@@ -7,7 +7,6 @@ import org.lilyproject.repository.api.RecordId;
 /**
  * The indexer provides access to the indexing functionality of Lily. It allows things like explicitly indexing a
  * record.
- *
  */
 public interface Indexer {
 
@@ -17,7 +16,7 @@ public interface Indexer {
      * matches the current state of the record. If indexing fails on one of the indexes, the implementation
      * will fail fast (throws an exception) and will not continue with other matching indexes. Note that clients can
      * retry the whole operation.
-     *
+     * <p/>
      * <p>Synchronous indexing only indexes the specified record: it does not update information denormalized
      * into the index entries of other records.</p>
      *

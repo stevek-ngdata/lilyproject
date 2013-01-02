@@ -19,16 +19,22 @@ public class SubscriptionKey {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SubscriptionKey that = (SubscriptionKey)o;
 
-        if (rowLogId != null ? !rowLogId.equals(that.rowLogId) : that.rowLogId != null)
+        if (rowLogId != null ? !rowLogId.equals(that.rowLogId) : that.rowLogId != null) {
             return false;
+        }
 
-        if (subscriptionId != null ? !subscriptionId.equals(that.subscriptionId) : that.subscriptionId != null)
+        if (subscriptionId != null ? !subscriptionId.equals(that.subscriptionId) : that.subscriptionId != null) {
             return false;
+        }
 
         return true;
     }

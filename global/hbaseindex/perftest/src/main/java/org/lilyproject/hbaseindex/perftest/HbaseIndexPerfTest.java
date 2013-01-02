@@ -99,8 +99,9 @@ public class HbaseIndexPerfTest extends BaseTestTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         Configuration hbaseConf = getHBaseConf();
 
@@ -176,7 +177,7 @@ public class HbaseIndexPerfTest extends BaseTestTool {
                 for (int i = 0; i < amount; i++) {
                     IndexEntry entry = new IndexEntry(index.getDefinition());
                     entry.addField("word", Words.get());
-                    entry.addField("number", (long) Math.floor(Math.random() * Long.MAX_VALUE));
+                    entry.addField("number", (long)Math.floor(Math.random() * Long.MAX_VALUE));
                     entry.setIdentifier(idGenerator.newRecordId().toBytes());
                     entries.add(entry);
                 }
@@ -220,8 +221,9 @@ public class HbaseIndexPerfTest extends BaseTestTool {
         public void run() {
             try {
                 String word = "";
-                while (word.length() < 3)
+                while (word.length() < 3) {
                     word = Words.get();
+                }
 
                 String prefix = word.substring(0, 3);
 

@@ -15,16 +15,24 @@
  */
 package org.lilyproject.indexer.integration;
 
-import org.lilyproject.indexer.model.util.IndexInfo;
-import org.lilyproject.indexer.model.util.IndexesInfo;
-import org.lilyproject.plugin.PluginRegistry;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.spi.RecordUpdateHook;
-import org.lilyproject.util.repo.RecordEvent;
-
 import javax.annotation.PreDestroy;
 import java.util.Collection;
 import java.util.Set;
+
+import org.lilyproject.indexer.model.util.IndexInfo;
+import org.lilyproject.indexer.model.util.IndexesInfo;
+import org.lilyproject.plugin.PluginRegistry;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.spi.RecordUpdateHook;
+import org.lilyproject.util.repo.RecordEvent;
 
 /**
  * A record update hook that adds information to the RecordEvent needed to evaluate the
@@ -62,7 +70,7 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
 
     @Override
     public void beforeUpdate(Record record, Record originalRecord, Repository repository, FieldTypes fieldTypes,
-            RecordEvent recordEvent) throws RepositoryException, InterruptedException {
+                             RecordEvent recordEvent) throws RepositoryException, InterruptedException {
         Collection<IndexInfo> indexInfos = indexesInfo.getIndexInfos();
         if (indexInfos.size() > 0) {
             TypeManager typeMgr = repository.getTypeManager();
@@ -131,7 +139,7 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
 
     @Override
     public void beforeDelete(Record originalRecord, Repository repository, FieldTypes fieldTypes,
-            RecordEvent recordEvent) throws RepositoryException, InterruptedException {
+                             RecordEvent recordEvent) throws RepositoryException, InterruptedException {
         Collection<IndexInfo> indexInfos = indexesInfo.getIndexInfos();
         if (indexInfos.size() > 0) {
             TypeManager typeMgr = repository.getTypeManager();

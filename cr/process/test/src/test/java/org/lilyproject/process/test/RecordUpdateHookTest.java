@@ -15,21 +15,27 @@
  */
 package org.lilyproject.process.test;
 
+import java.io.File;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.repository.api.*;
-
-import java.io.File;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
 
 import static org.junit.Assert.assertEquals;
 
 /**
  * Tests the record update hook feature.
- *
+ * <p/>
  * <p>This test relies on test-updatehook being installed in the local maven repository, hence
  * requires that the build is done with "mvn install".</p>
  */
@@ -67,8 +73,9 @@ public class RecordUpdateHookTest {
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         try {
-           if (lilyProxy != null)
-               lilyProxy.stop();
+            if (lilyProxy != null) {
+                lilyProxy.stop();
+            }
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -89,7 +96,7 @@ public class RecordUpdateHookTest {
         String projectVersion = System.getProperty("project.version");
         if (projectVersion == null) {
             throw new Exception("This test relies on a system property project.version being set. Probably you " +
-                "are running this test outside of Maven? Try adding -Dproject.version=...");
+                    "are running this test outside of Maven? Try adding -Dproject.version=...");
         }
 
         String wiringXml = "<wiring>\n" +

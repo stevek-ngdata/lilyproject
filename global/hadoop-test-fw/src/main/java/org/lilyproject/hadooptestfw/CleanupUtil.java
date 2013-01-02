@@ -52,10 +52,12 @@ public class CleanupUtil {
     private String zkConnectString;
 
     private static Set<String> RETAIN_TABLES = new HashSet<String>();
+
     static {
     }
 
     private static Map<String, byte[]> DEFAULT_TIMESTAMP_REUSING_TABLES = new HashMap<String, byte[]>();
+
     static {
         DEFAULT_TIMESTAMP_REUSING_TABLES.put("record", Bytes.toBytes("data"));
         DEFAULT_TIMESTAMP_REUSING_TABLES.put("type", Bytes.toBytes("fieldtype-entry"));
@@ -154,8 +156,9 @@ public class CleanupUtil {
 
         for (HTableDescriptor table : tables) {
             if (RETAIN_TABLES.contains(table.getNameAsString())) {
-                if (retainReport.length() > 0)
+                if (retainReport.length() > 0) {
                     retainReport.append(", ");
+                }
                 retainReport.append(table.getNameAsString());
                 continue;
             }
@@ -170,8 +173,9 @@ public class CleanupUtil {
 
             int totalCount = clearTable(htable);
 
-            if (truncateReport.length() > 0)
+            if (truncateReport.length() > 0) {
                 truncateReport.append(", ");
+            }
             truncateReport.append(table.getNameAsString()).append(" (").append(totalCount).append(")");
 
             htable.close();
@@ -219,7 +223,7 @@ public class CleanupUtil {
         byte[] COL = Bytes.toBytes("DummyColumn");
         Put put = new Put(tmpRowKey);
         // put a value with a fixed timestamp
-        put.add(family, COL, 1, new byte[] { 0 });
+        put.add(family, COL, 1, new byte[]{0});
 
         htable.put(put);
     }
@@ -236,7 +240,9 @@ public class CleanupUtil {
                 // Delete our dummy row again
                 htable.delete(new Delete(tmpRowKey));
             } finally {
-                if (htable != null) htable.close();
+                if (htable != null) {
+                    htable.close();
+                }
             }
 
         }
@@ -252,7 +258,7 @@ public class CleanupUtil {
             byte[] value = null;
             while (value == null) {
                 Put put = new Put(tmpRowKey);
-                put.add(CF, COL, 1, new byte[] { 0 });
+                put.add(CF, COL, 1, new byte[]{0});
                 htable.put(put);
 
                 Get get = new Get(tmpRowKey);
@@ -266,13 +272,16 @@ public class CleanupUtil {
             }
             return tmpRowKey;
         } finally {
-            if (htable != null) htable.close();
+            if (htable != null) {
+                htable.close();
+            }
         }
     }
 
-    /** Force a major compaction and wait for it to finish.
-     *  This method can be used in a test to avoid issue HBASE-2256 after performing a delete operation
-     *  Uses same principle as {@link #cleanTables}
+    /**
+     * Force a major compaction and wait for it to finish.
+     * This method can be used in a test to avoid issue HBASE-2256 after performing a delete operation
+     * Uses same principle as {@link #cleanTables}
      */
     public void majorCompact(String tableName, String[] columnFamilies) throws Exception {
         byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
@@ -286,7 +295,7 @@ public class CleanupUtil {
             for (String columnFamily : columnFamilies) {
                 byte[] CF = Bytes.toBytes(columnFamily);
                 Put put = new Put(tmpRowKey);
-                put.add(CF, COL, 1, new byte[] { 0 });
+                put.add(CF, COL, 1, new byte[]{0});
                 htable.put(put);
                 // Delete the value again
                 Delete delete = new Delete(tmpRowKey);

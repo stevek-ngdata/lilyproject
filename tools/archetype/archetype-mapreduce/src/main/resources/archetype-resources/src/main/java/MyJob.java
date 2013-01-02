@@ -1,4 +1,6 @@
-package ${package};
+package $
+
+{package};
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;

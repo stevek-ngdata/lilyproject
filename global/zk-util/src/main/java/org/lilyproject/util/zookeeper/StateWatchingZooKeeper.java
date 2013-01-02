@@ -15,33 +15,32 @@
  */
 package org.lilyproject.util.zookeeper;
 
+import javax.annotation.PreDestroy;
+import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import static org.apache.zookeeper.ZooKeeper.States.*;
-
-import javax.annotation.PreDestroy;
 
 import static org.apache.zookeeper.Watcher.Event.KeeperState.*;
-
-import java.io.IOException;
+import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
 
 /**
  * This implementation of {@link ZooKeeperItf} is meant for use as a global ZooKeeper handle
  * within a ZK-dependent application.
- *
+ * <p/>
  * <p>It will:
- *
+ * <p/>
  * <ul>
- *   <li>on startup (= constructor) wait for the ZK connection to come up, if it does not
- *       come up within the session timeout an exception will be thrown. This avoids the
- *       remainder of the application starting up in the absence of a valid ZK connection.
- *   <li>when the session expires or the ZK connection is lost for longer than the session
- *       timeout, it will shut down the application.
+ * <li>on startup (= constructor) wait for the ZK connection to come up, if it does not
+ * come up within the session timeout an exception will be thrown. This avoids the
+ * remainder of the application starting up in the absence of a valid ZK connection.
+ * <li>when the session expires or the ZK connection is lost for longer than the session
+ * timeout, it will shut down the application.
  * </ul>
- *
+ * <p/>
  * <p>So this is a good solution for applications which can not function in absence of ZooKeeper.
  */
 public class StateWatchingZooKeeper extends ZooKeeperImpl {
@@ -126,8 +125,9 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
     }
 
     private void endProcess(String message) {
-        if (stopping)
+        if (stopping) {
             return;
+        }
 
         if (endProcessHook != null) {
             endProcessHook.run();

@@ -35,10 +35,7 @@ public class MatchNode extends ContainerMappingNode {
     }
 
     /**
-     *
-     *
      * If the conditions match, we need to evaluate all children
-     *
      */
     @Override
     public boolean isIndexAffectedByUpdate(VTaggedRecord vtRecord, Scope scope) throws InterruptedException,
@@ -51,7 +48,7 @@ public class MatchNode extends ContainerMappingNode {
         }
 
         // If the matcher uses fields and any of the fields were changed, we must reindex.
-        for (FieldType ft: vtRecord.getRecordEventHelper().getUpdatedFieldsByScope().get(scope)) {
+        for (FieldType ft : vtRecord.getRecordEventHelper().getUpdatedFieldsByScope().get(scope)) {
             if (recordMatcher.getFieldDependencies().contains(ft.getName())) {
                 return true;
             }
@@ -64,8 +61,8 @@ public class MatchNode extends ContainerMappingNode {
         }
     }
 
-    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException  {
-        for (SchemaId fieldId: recordMatcher.getFieldDependencyIds()) {
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException {
+        for (SchemaId fieldId : recordMatcher.getFieldDependencyIds()) {
             indexUpdateBuilder.addDependency(fieldId);
         }
         if (recordMatcher.matches(indexUpdateBuilder.getRecordContext().record)) {

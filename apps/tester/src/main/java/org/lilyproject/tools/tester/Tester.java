@@ -124,8 +124,9 @@ public class Tester extends BaseRepositoryTestTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (cmd.hasOption(dumpSampleConfigOption.getOpt())) {
             return dumpSampleConfig();
@@ -188,7 +189,7 @@ public class Tester extends BaseRepositoryTestTool {
             current = jp.nextToken(); // move from field name to field value
             if (fieldName.equals("namespaces")) {
                 if (current == JsonToken.START_OBJECT) {
-                    jsonImport.readNamespaces((ObjectNode) jp.readValueAsTree());
+                    jsonImport.readNamespaces((ObjectNode)jp.readValueAsTree());
                 } else {
                     System.out.println("Error: namespaces property should be an object. Skipping.");
                     jp.skipChildren();
@@ -239,7 +240,7 @@ public class Tester extends BaseRepositoryTestTool {
                 }
             } else if (fieldName.equals("stopConditions")) {
                 if (current == JsonToken.START_OBJECT) {
-                    readStopConditions((ObjectNode) jp.readValueAsTree());
+                    readStopConditions((ObjectNode)jp.readValueAsTree());
                 } else {
                     System.out.println("Error: stopConditions property should be an object. Skipping.");
                     jp.skipChildren();
@@ -414,7 +415,9 @@ public class Tester extends BaseRepositoryTestTool {
                 for (TestAction testAction : testActions) {
                     incFailureCount(testAction.run());
                 }
-                if (checkStopConditions()) return;
+                if (checkStopConditions()) {
+                    return;
+                }
             }
         }
 
@@ -434,7 +437,7 @@ public class Tester extends BaseRepositoryTestTool {
             return true;
         }
 
-        int ran = (int) Math.floor((System.currentTimeMillis() - startTime) / 1000 / 60);
+        int ran = (int)Math.floor((System.currentTimeMillis() - startTime) / 1000 / 60);
         if (ran >= maximumRunTime) {
             System.out.println("Stopping because maximum running time is reached: " + maximumRunTime + " minutes.");
             return true;

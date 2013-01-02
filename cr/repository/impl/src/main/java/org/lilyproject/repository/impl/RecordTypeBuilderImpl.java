@@ -15,7 +15,16 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 
 public class RecordTypeBuilderImpl implements RecordTypeBuilder {
 
@@ -23,7 +32,7 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
     private RecordType recordType;
     private String defaultNamespace;
     private Scope defaultScope = Scope.NON_VERSIONED;
-    
+
     public RecordTypeBuilderImpl(TypeManager typeManager) throws TypeException {
         this.typeManager = typeManager;
         recordType = typeManager.newRecordType(null);
@@ -64,7 +73,7 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
         recordType.setId(id);
         return this;
     }
-    
+
     @Override
     public RecordTypeBuilder field(SchemaId id, boolean mandatory) {
         recordType.addFieldTypeEntry(id, mandatory);
@@ -108,12 +117,14 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
     }
 
     private QName resolveNamespace(String name) {
-        if (defaultNamespace != null)
+        if (defaultNamespace != null) {
             return new QName(defaultNamespace, name);
+        }
 
         QName recordTypeName = recordType.getName();
-        if (recordTypeName != null)
+        if (recordTypeName != null) {
             return new QName(recordTypeName.getNamespace(), name);
+        }
 
         throw new IllegalStateException("Namespace could not be resolved for name '" + name +
                 "' since no default namespace was given and no record type name is set.");

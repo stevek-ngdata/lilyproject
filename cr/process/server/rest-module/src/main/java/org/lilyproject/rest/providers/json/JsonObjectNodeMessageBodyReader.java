@@ -15,16 +15,15 @@
  */
 package org.lilyproject.rest.providers.json;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
@@ -34,19 +33,20 @@ public class JsonObjectNodeMessageBodyReader implements MessageBodyReader<Object
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
-            if (type.isAssignableFrom(ObjectNode.class))
-                    return true;
+            if (type.isAssignableFrom(ObjectNode.class)) {
+                return true;
+            }
         }
         return false;
     }
 
-	@Override
+    @Override
     public ObjectNode readFrom(Class<ObjectNode> clazz, Type type,
-			Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, String> params, InputStream inputStream)
-			throws IOException, WebApplicationException {
-		ObjectMapper m = new ObjectMapper();
-		return (ObjectNode)m.readTree(inputStream);
-	}
+                               Annotation[] annotations, MediaType mediaType,
+                               MultivaluedMap<String, String> params, InputStream inputStream)
+            throws IOException, WebApplicationException {
+        ObjectMapper m = new ObjectMapper();
+        return (ObjectNode)m.readTree(inputStream);
+    }
 
 }

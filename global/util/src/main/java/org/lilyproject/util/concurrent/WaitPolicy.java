@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * This file was copied from Mule: Copyright (c) MuleSource, Inc. All rights reserved. http://www.mulesource.com
- *
+ * <p/>
  * A handler for unexecutable tasks that waits until the task can be submitted for
  * execution or times out. Generously snipped from the jsr166 repository at: <a
  * HREF="http://gee.cs.oswego.edu/cgi-bin/viewcvs.cgi/jsr166/src/main/java/util/concurrent/ThreadPoolExecutor.java"></a>.
@@ -56,8 +56,7 @@ public class WaitPolicy implements RejectedExecutionHandler {
             if (e.isShutdown() || !e.getQueue().offer(r, _time, _timeUnit)) {
                 throw new RejectedExecutionException();
             }
-        }
-        catch (InterruptedException ie) {
+        } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             throw new RejectedExecutionException(ie);
         }

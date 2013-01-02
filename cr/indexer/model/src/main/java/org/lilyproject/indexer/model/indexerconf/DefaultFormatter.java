@@ -15,12 +15,23 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.lilyproject.repository.api.*;
-
-import java.util.*;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 
 /**
  * A default implementation of a formatter than is able to treat any value.
@@ -28,6 +39,7 @@ import java.util.*;
 public class DefaultFormatter implements Formatter {
 
     private static final Map<String, ValueFormatter> FORMATTERS;
+
     static {
         FORMATTERS = new HashMap<String, ValueFormatter>();
         FORMATTERS.put("LIST", new ListFormatter());
@@ -36,6 +48,7 @@ public class DefaultFormatter implements Formatter {
         FORMATTERS.put("DATE", new DateFormatter());
         FORMATTERS.put("DATETIME", new DateTimeFormatter());
     }
+
     private static final ValueFormatter ALL_FORMATTER = new AllFormatter();
 
     @Override
@@ -130,8 +143,9 @@ public class DefaultFormatter implements Formatter {
                 String formatted = formatCtx.format(value, valueType.getNestedValueType(), formatCtx);
 
                 // separate the values by a space
-                if (builder.length() > 0)
+                if (builder.length() > 0) {
                     builder.append(" ");
+                }
                 builder.append(formatted);
             }
 
@@ -171,8 +185,9 @@ public class DefaultFormatter implements Formatter {
 
                 String result = formatCtx.format(field.getValue(), fieldValueType, formatCtx);
                 if (result != null) {
-                    if (builder.length() > 0)
+                    if (builder.length() > 0) {
                         builder.append(" ");
+                    }
                     builder.append(result);
                 }
             }

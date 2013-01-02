@@ -15,11 +15,11 @@
  */
 package org.lilyproject.linkindex;
 
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.SchemaId;
-
 import java.util.HashSet;
 import java.util.Set;
+
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.SchemaId;
 
 public class LinkCollector {
     private Set<FieldedLink> links = new HashSet<FieldedLink>();

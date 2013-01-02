@@ -66,15 +66,15 @@ public class BalancingAndRetryingLilyConnection {
     public static BalancingAndRetryingLilyConnection getInstance(LilyClient lilyClient) {
 
         InvocationHandler typeManagerHandler = new TypeManagerInvocationHandler(lilyClient);
-        TypeManager typeManager = (TypeManager) Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
+        TypeManager typeManager = (TypeManager)Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
                 new Class[]{TypeManager.class}, typeManagerHandler);
 
         InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, typeManager);
-        Repository repository = (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),
+        Repository repository = (Repository)Proxy.newProxyInstance(Repository.class.getClassLoader(),
                 new Class[]{Repository.class}, repositoryHandler);
 
         InvocationHandler indexerHandler = new IndexerInvocationHandler(lilyClient);
-        Indexer indexer = (Indexer) Proxy.newProxyInstance(Indexer.class.getClassLoader(),
+        Indexer indexer = (Indexer)Proxy.newProxyInstance(Indexer.class.getClassLoader(),
                 new Class[]{Indexer.class}, indexerHandler);
 
         return new BalancingAndRetryingLilyConnection(repository, typeManager, indexer);
@@ -226,8 +226,9 @@ public class BalancingAndRetryingLilyConnection {
         protected void handleThrowable(Throwable throwable, Method method, long startedAt, int attempt,
                                        OperationType opType) throws Throwable {
 
-            if (throwable instanceof InvocationTargetException)
-                throwable = ((InvocationTargetException) throwable).getTargetException();
+            if (throwable instanceof InvocationTargetException) {
+                throwable = ((InvocationTargetException)throwable).getTargetException();
+            }
 
             if (throwable instanceof IORecordException || throwable instanceof IOBlobException ||
                     throwable instanceof IOTypeException || throwable instanceof RecordLockedException) {

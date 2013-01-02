@@ -36,7 +36,7 @@ public class SubscriptionExecutionState implements ExecutionState {
         this.subscriptionIds = subscriptionIds;
         this.doneFlags = new boolean[subscriptionIds.length];
     }
-    
+
     public SubscriptionExecutionState(long timestamp, String[] subscriptionIds, boolean[] doneFlags) {
         this.timestamp = timestamp;
         this.subscriptionIds = subscriptionIds;
@@ -61,7 +61,7 @@ public class SubscriptionExecutionState implements ExecutionState {
         // We should never get here, since getState() returns true for unknown subscriptions
         throw new RuntimeException("setState called for undefined subscription: " + subscriptionId);
     }
-    
+
     public boolean getState(String subscriptionId) {
         for (int i = 0; i < subscriptionIds.length; i++) {
             if (subscriptionIds[i].equals(subscriptionId)) {
@@ -111,8 +111,9 @@ public class SubscriptionExecutionState implements ExecutionState {
 
     public boolean allDone() {
         for (int i = 0; i < doneFlags.length; i++) {
-            if (!doneFlags[i])
+            if (!doneFlags[i]) {
                 return false;
+            }
         }
         return true;
     }

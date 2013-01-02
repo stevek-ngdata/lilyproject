@@ -15,9 +15,18 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordBuilder;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.ArgumentValidator;
 
 /**
@@ -37,6 +46,7 @@ public class RecordBuilderImpl implements RecordBuilder {
     private QName parentField;
     private Mode mode;
     private List<Record> records;
+
     private enum Mode {ROOT_RECORD, NESTED_RECORD, NESTED_RECORD_LIST}
 
     public RecordBuilderImpl(Repository repository) throws RecordException {
@@ -44,7 +54,7 @@ public class RecordBuilderImpl implements RecordBuilder {
         this.mode = Mode.ROOT_RECORD;
         this.record = repository.newRecord();
     }
-    
+
     public RecordBuilderImpl(RecordBuilderImpl parent, QName parentField, Mode mode) throws RecordException {
         this.repository = parent.repository;
         this.mode = mode;
@@ -125,7 +135,7 @@ public class RecordBuilderImpl implements RecordBuilder {
     public RecordBuilder recordType(QName name) {
         return recordType(name, null);
     }
-    
+
     @Override
     public RecordBuilder recordType(QName name, Long version) {
         record.setRecordType(name, version);
@@ -136,13 +146,13 @@ public class RecordBuilderImpl implements RecordBuilder {
     public RecordBuilder recordType(String name) throws RecordException {
         return recordType(name, null);
     }
-    
+
     @Override
     public RecordBuilder recordType(String name, Long version) throws RecordException {
-        record.setRecordType(name, version);    
+        record.setRecordType(name, version);
         return this;
     }
-    
+
     @Override
     public RecordBuilder updateVersion(boolean updateVersion) {
         this.updateVersion = updateVersion;
@@ -206,7 +216,7 @@ public class RecordBuilderImpl implements RecordBuilder {
             throw new IllegalStateException("update should only be called for root records, current mode is " + mode);
         }
     }
-    
+
     @Override
     public Record createOrUpdate() throws RepositoryException, InterruptedException {
         if (mode == Mode.ROOT_RECORD) {
@@ -286,14 +296,16 @@ public class RecordBuilderImpl implements RecordBuilder {
     }
 
     protected QName resolveNamespace(String name) {
-        if (defaultNamespace != null)
+        if (defaultNamespace != null) {
             return new QName(defaultNamespace, name);
+        }
 
         QName recordTypeName = record.getRecordTypeName();
-        if (recordTypeName != null)
+        if (recordTypeName != null) {
             return new QName(recordTypeName.getNamespace(), name);
+        }
 
         throw new IllegalStateException("Namespace could not be resolved for name '" + name +
-            "' since no default namespace was given and no record type is set.");
+                "' since no default namespace was given and no record type is set.");
     }
 }

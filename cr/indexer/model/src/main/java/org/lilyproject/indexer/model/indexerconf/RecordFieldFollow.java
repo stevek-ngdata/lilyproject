@@ -24,7 +24,7 @@ public class RecordFieldFollow implements Follow {
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
         if (ctx.record != null) {
             List records = IndexerUtils.flatList(ctx.record, fieldType);
-            for (Record record: (List<Record>)records) {
+            for (Record record : (List<Record>)records) {
                 indexUpdateBuilder.push(record, ctx.contextRecord, ctx.dep); // TODO: pass null instead of ctx.dep?
                 followCallback.call();
                 indexUpdateBuilder.pop();

@@ -39,14 +39,14 @@ public interface IdGenerator {
     /**
      * Creates a new record id containing a new generated master record id and the given variant
      * properties.
-     *
+     * <p/>
      * <p>This is a shortcut for IdGenerator.newRecordId(IdGenerator.newRecordId(), variantProperties).
      */
     RecordId newRecordId(Map<String, String> variantProperties);
 
     /**
      * Creates a new record id based on a string provided by the user.
-     *
+     * <p/>
      * <p>If this record id will be used to create a new record, it is the user's responsibility to assure the
      * uniqueness of the ID.
      */
@@ -55,7 +55,7 @@ public interface IdGenerator {
     /**
      * Creates a new record id based on a string provided by the user, and with the given
      * variant properties.
-     *
+     * <p/>
      * <p>This is a shortcut for IdGenerator.newRecordId(IdGenerator.newRecordId(userProvidedId), variantProperties).
      */
     RecordId newRecordId(String userProvidedId, Map<String, String> variantProperties);
@@ -77,7 +77,7 @@ public interface IdGenerator {
 
     /**
      * Creates a RecordId based on the provided String.
-     *
+     * <p/>
      * <p>The format of the string is described at {@link RecordId#toString}. The parsing is however a
      * bit more lenient: it is not required that the variant properties are specified in lexicographic order,
      * and whitespace around the individual components will be stripped.
@@ -89,21 +89,23 @@ public interface IdGenerator {
 
     /**
      * Creates a SchemaId based on the provided byte[] representation of the id.
+     *
      * @return a SchemaId
      */
     SchemaId getSchemaId(byte[] id);
-    
+
     /**
      * Creates a SchemaId based on the provided String representation of the id.
+     *
      * @return a SchemaId
      */
     SchemaId getSchemaId(String id);
-    
+
     /**
      * Creates a SchemaId based on the provided UUID representation of the id.
-     * 
+     * <p/>
      * <p>Important : Should only be used in test cases.
-     *  
+     *
      * @return a SchemaId
      */
     SchemaId getSchemaId(UUID id);

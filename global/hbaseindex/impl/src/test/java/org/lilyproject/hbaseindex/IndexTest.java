@@ -27,10 +27,7 @@ import org.junit.Test;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 // Important: while not done in these testcases, it is recommended to call QueryResult.close()
 // when done using the QueryResult.
@@ -114,7 +111,7 @@ public class IndexTest {
         int[] values = new int[COUNT];
 
         for (int i = 0; i < COUNT; i++) {
-            values[i] = (int) (Math.random() * MAXVALUE);
+            values[i] = (int)(Math.random() * MAXVALUE);
         }
 
         for (int value : values) {

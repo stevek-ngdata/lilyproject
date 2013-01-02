@@ -32,7 +32,7 @@ public class RecordTypeExistsException extends TypeException {
         state.put("recordType", recordType);
         return state;
     }
-    
+
     public RecordTypeExistsException(RecordType recordType) {
         this.recordType = recordType != null ? recordType.getName().toString() : null;
     }

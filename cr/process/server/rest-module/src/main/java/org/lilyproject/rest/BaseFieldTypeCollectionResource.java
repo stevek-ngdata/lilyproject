@@ -15,14 +15,14 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.*;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeExistsException;
+import org.lilyproject.repository.api.TypeManager;
+
+import static javax.ws.rs.core.Response.Status.*;
 
 public abstract class BaseFieldTypeCollectionResource extends RepositoryEnabled {
     @GET

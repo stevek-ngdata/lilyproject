@@ -20,10 +20,10 @@ import org.lilyproject.bytes.api.DataInput;
 /**
  * Implementation of {@link DataInput} which reads primitve values from an underlying byte[].
  * The byte[] should have been created, encoded by the related to {@link DataOutputImpl}.
- *
+ * <p/>
  * <p>The position within the underlying byte[] is maintained so that each read
  * call will return the next value in the byte[].
- *
+ * <p/>
  * <p>This implementation (especially #readUTF()) is based on (and some pieces are copied from) the work
  * done by Lucene in the methods <code>UTF16toUTF8</code> and <code>UTF8toUTF16</code>
  * in <code>org.apache.lucene.util.UnicodeUtil.java</code> (revision 1030754),
@@ -32,7 +32,7 @@ import org.lilyproject.bytes.api.DataInput;
  * <code>org.elasticsearch.common.io.stream.BytesStreamOutput.java</code>,
  * <code>org.elasticsearch.common.io.stream.StreamInput.java</code>,
  * <code>org.elasticsearch.common.io.stream.StreamOutput.java</code>.
- *
+ * <p/>
  * <p>See also <a href=http://en.wikipedia.org/wiki/UTF-16/UCS-2>http://en.wikipedia.org/wiki/UTF-16/UCS-2</a>
  */
 public class DataInputImpl implements DataInput {
@@ -125,10 +125,12 @@ public class DataInputImpl implements DataInput {
 
     @Override
     public String readUTF(int utflen) {
-        if (utflen == -1)
+        if (utflen == -1) {
             return null;
-        if (utflen == 0)
+        }
+        if (utflen == 0) {
             return new String();
+        }
         int count = pos;
         int endPos = pos + utflen;
         // Resize the chararr if it is not large enough.
@@ -144,8 +146,9 @@ public class DataInputImpl implements DataInput {
         // This will be most likely the case for most strings.
         while (count < endPos) {
             b = source[count] & 0xff;
-            if (!(b < 0xc0))
+            if (!(b < 0xc0)) {
                 break; // Once a character is encountered which is encoded with multiple bytes, jump to the next loop
+            }
             count++;
             assert b < 0x80;
             ch = b;
@@ -178,11 +181,11 @@ public class DataInputImpl implements DataInput {
     private int putChar(int chararr_count, int ch) {
         if (ch <= UNI_MAX_BMP) {
             // target is a character <= 0xFFFF
-            chararr[chararr_count++] = (char) ch;
+            chararr[chararr_count++] = (char)ch;
         } else {
             // target is a character in range 0xFFFF - 0x10FFFF
-            chararr[chararr_count++] = (char) ((ch >> HALF_SHIFT) + 0xD7C0 /* UNI_SUR_HIGH_START - 64 */);
-            chararr[chararr_count++] = (char) ((ch & HALF_MASK) + UNI_SUR_LOW_START);
+            chararr[chararr_count++] = (char)((ch >> HALF_SHIFT) + 0xD7C0 /* UNI_SUR_HIGH_START - 64 */);
+            chararr[chararr_count++] = (char)((ch & HALF_MASK) + UNI_SUR_LOW_START);
         }
         return chararr_count;
     }
@@ -207,12 +210,12 @@ public class DataInputImpl implements DataInput {
 
     @Override
     public long readLong() {
-        return (((long) readInt()) << 32) | (readInt() & 0xFFFFFFFFL);
+        return (((long)readInt()) << 32) | (readInt() & 0xFFFFFFFFL);
     }
 
     @Override
     public int readShort() {
-        return (short) (((readByte() & 0xFF) << 8) | (readByte() & 0xFF));
+        return (short)(((readByte() & 0xFF) << 8) | (readByte() & 0xFF));
     }
 
     @Override

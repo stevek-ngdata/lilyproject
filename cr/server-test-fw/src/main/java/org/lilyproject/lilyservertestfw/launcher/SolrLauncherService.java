@@ -59,19 +59,19 @@ public class SolrLauncherService implements LauncherService {
         options.add(schemaOption);
 
         commitOption = OptionBuilder
-            .withArgName("seconds")
-            .hasArg()
-            .withDescription("Auto commit index within this amount of seconds (default: no auto commit)")
-            .withLongOpt("commit")
-            .create("c");
+                .withArgName("seconds")
+                .hasArg()
+                .withDescription("Auto commit index within this amount of seconds (default: no auto commit)")
+                .withLongOpt("commit")
+                .create("c");
         options.add(commitOption);
 
         solrConfigOption = OptionBuilder
-            .withArgName("solrconfig")
-            .hasArg()
-            .withDescription("Custom solrconfig file")
-            .withLongOpt("solrconfig")
-            .create("sc");
+                .withArgName("solrconfig")
+                .hasArg()
+                .withDescription("Custom solrconfig file")
+                .withLongOpt("solrconfig")
+                .create("sc");
         options.add(solrConfigOption);
 
         solrCloudModeOption = OptionBuilder
@@ -90,15 +90,17 @@ public class SolrLauncherService implements LauncherService {
         schema = cmd.getOptionValue(schemaOption.getOpt());
         if (schema != null) {
             int result = checkSolrSchema(schema);
-            if (result != 0)
+            if (result != 0) {
                 return result;
+            }
         }
 
         solrConfig = cmd.getOptionValue(solrConfigOption.getOpt());
         if (solrConfig != null) {
             int result = checkSolrConfig(solrConfig);
-            if (result != 0)
+            if (result != 0) {
                 return result;
+            }
         }
 
         autoCommitSetting = "";

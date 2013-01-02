@@ -15,7 +15,8 @@
  */
 package org.lilyproject.rowlog.admin.cli;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.cli.CommandLine;
@@ -25,7 +26,7 @@ import org.lilyproject.rowlog.api.RowLogSubscription;
 
 /**
  * Command-line command to show all known rowlogs.
- * 
+ * <p/>
  * <p>For each rowlog its properties are shown and a list of the registered subscriptions is shown.
  * <br>For each subscription its properties are shown and a list of the registered listeners.
  */
@@ -48,8 +49,9 @@ public class ListRowLogsCli extends BaseRowLogAdminCli {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         Map<String, RowLogConfig> rowLogs = rowLogConfigurationManager.getRowLogs();
         System.out.println("Number of rowlogs: " + rowLogs.size());

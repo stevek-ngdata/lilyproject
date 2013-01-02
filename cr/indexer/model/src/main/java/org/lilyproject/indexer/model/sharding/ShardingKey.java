@@ -15,26 +15,30 @@
  */
 package org.lilyproject.indexer.model.sharding;
 
-import org.lilyproject.repository.api.RecordId;
-
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.lilyproject.repository.api.RecordId;
+
 public class ShardingKey {
     private ShardingKeyValue value;
 
-    /** True if hash should be calculated. */
+    /**
+     * True if hash should be calculated.
+     */
     private boolean hash;
 
-    /** If > 0, calculate modulus after hash. */
+    /**
+     * If > 0, calculate modulus after hash.
+     */
     private int modulus;
 
     private KeyType keyType;
 
     private final MessageDigest mdAlgorithm;
 
-    enum KeyType { STRING, LONG }
+    enum KeyType {STRING, LONG}
 
     private ShardingKey(ShardingKeyValue value, boolean hash, int modulus, KeyType keyType) {
         this.value = value;

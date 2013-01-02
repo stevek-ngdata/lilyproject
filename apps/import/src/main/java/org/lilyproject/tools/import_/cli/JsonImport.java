@@ -15,20 +15,41 @@
  */
 package org.lilyproject.tools.import_.cli;
 
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.tools.import_.core.*;
-import org.lilyproject.tools.import_.json.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.tools.import_.core.FieldTypeImport;
+import org.lilyproject.tools.import_.core.IdentificationMode;
+import org.lilyproject.tools.import_.core.ImportMode;
+import org.lilyproject.tools.import_.core.ImportResult;
+import org.lilyproject.tools.import_.core.RecordImport;
+import org.lilyproject.tools.import_.core.RecordTypeImport;
+import org.lilyproject.tools.import_.json.FieldTypeReader;
+import org.lilyproject.tools.import_.json.JsonFormatException;
+import org.lilyproject.tools.import_.json.Namespaces;
+import org.lilyproject.tools.import_.json.NamespacesConverter;
+import org.lilyproject.tools.import_.json.NamespacesImpl;
+import org.lilyproject.tools.import_.json.RecordReader;
+import org.lilyproject.tools.import_.json.RecordTypeReader;
+import org.lilyproject.tools.import_.json.UnmodifiableNamespaces;
 import org.lilyproject.util.concurrent.WaitPolicy;
 import org.lilyproject.util.json.JsonFormat;
-
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
 
 public class JsonImport {
     private Namespaces namespaces = new NamespacesImpl();
@@ -53,7 +74,7 @@ public class JsonImport {
     }
 
     public static void load(Repository repository, ImportListener importListener, InputStream is, boolean schemaOnly,
-            int threadCount) throws Exception {
+                            int threadCount) throws Exception {
         new JsonImport(repository, importListener, threadCount).load(is, schemaOnly);
     }
 
@@ -199,7 +220,7 @@ public class JsonImport {
             throw new ImportException("Field type should be specified as object node.");
         }
 
-        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson((ObjectNode) node, namespaces, repository);
+        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson((ObjectNode)node, namespaces, repository);
 
         if (fieldType.getName() == null) {
             throw new ImportException("Missing name property on field type.");
@@ -213,20 +234,20 @@ public class JsonImport {
             FieldType newFieldType = result.getEntity();
 
             switch (result.getResultType()) {
-            case CREATED:
-                importListener.created(EntityType.FIELD_TYPE, newFieldType.getName().toString(), newFieldType.getId()
-                        .toString());
-                break;
-            case UP_TO_DATE:
-                importListener.existsAndEqual(EntityType.FIELD_TYPE, newFieldType.getName().toString(), null);
-                break;
-            case CONFLICT:
-                importListener.conflict(EntityType.FIELD_TYPE, ftToCreate.getName().toString(),
-                        result.getConflictingProperty(), result.getConflictingOldValue(),
-                        result.getConflictingNewValue());
-                break;
-            default:
-                throw new ImportException("Unexpected import result type for field type: " + result.getResultType());
+                case CREATED:
+                    importListener.created(EntityType.FIELD_TYPE, newFieldType.getName().toString(), newFieldType.getId()
+                            .toString());
+                    break;
+                case UP_TO_DATE:
+                    importListener.existsAndEqual(EntityType.FIELD_TYPE, newFieldType.getName().toString(), null);
+                    break;
+                case CONFLICT:
+                    importListener.conflict(EntityType.FIELD_TYPE, ftToCreate.getName().toString(),
+                            result.getConflictingProperty(), result.getConflictingOldValue(),
+                            result.getConflictingNewValue());
+                    break;
+                default:
+                    throw new ImportException("Unexpected import result type for field type: " + result.getResultType());
             }
             newFieldTypes.add(newFieldType);
         }

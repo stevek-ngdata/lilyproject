@@ -25,7 +25,7 @@ public class RecordException extends RepositoryException {
     public RecordException(String message, Map<String, String> params) {
         super(message, params);
     }
-    
+
     public RecordException() {
         super();
     }

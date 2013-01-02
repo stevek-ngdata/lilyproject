@@ -53,11 +53,11 @@ public class DerefValue extends BaseValue {
     protected void init(TypeManager typeManager) throws RepositoryException, InterruptedException {
         follows = Collections.unmodifiableList(follows);
 
-        for (Follow follow: follows) {
+        for (Follow follow : follows) {
             if (follow instanceof MasterFollow
-                  || follow instanceof VariantFollow
-                  || follow instanceof ForwardVariantFollow
-                  || follow instanceof LinkFieldFollow) {
+                    || follow instanceof VariantFollow
+                    || follow instanceof ForwardVariantFollow
+                    || follow instanceof LinkFieldFollow) {
                 crossRecordFollows.add(follow);
             }
         }
@@ -78,7 +78,7 @@ public class DerefValue extends BaseValue {
             if (i == follows.size() - 1) {
                 lastRealField = targetField;
             } else {
-                lastRealField = ((RecordFieldFollow) follows.get(i + 1)).getFieldType();
+                lastRealField = ((RecordFieldFollow)follows.get(i + 1)).getFieldType();
             }
             break;
         }
@@ -90,7 +90,7 @@ public class DerefValue extends BaseValue {
         for (Follow follow : follows) {
             if (follow instanceof LinkFieldFollow) {
                 if (currentRootRecordFieldFollow != null) {
-                    ((LinkFieldFollow) follow).setOwnerFieldType(currentRootRecordFieldFollow.getFieldType());
+                    ((LinkFieldFollow)follow).setOwnerFieldType(currentRootRecordFieldFollow.getFieldType());
                 }
                 currentRootRecordFieldFollow = null;
             } else if (follow instanceof MasterFollow || follow instanceof VariantFollow ||
@@ -102,7 +102,7 @@ public class DerefValue extends BaseValue {
                 currentRootRecordFieldFollow = null;
             } else if (follow instanceof RecordFieldFollow) {
                 if (currentRootRecordFieldFollow == null) {
-                    currentRootRecordFieldFollow = (RecordFieldFollow) follow;
+                    currentRootRecordFieldFollow = (RecordFieldFollow)follow;
                 }
             } else {
                 throw new RuntimeException("Unexpected follow impl: " + follow.getClass().getName());
@@ -165,7 +165,7 @@ public class DerefValue extends BaseValue {
     @Override
     public SchemaId getFieldDependency() {
         if (follows.get(0) instanceof LinkFieldFollow) {
-            return ((LinkFieldFollow) follows.get(0)).getFieldType().getId();
+            return ((LinkFieldFollow)follows.get(0)).getFieldType().getId();
         } else {
             // A follow-variant is like a link to another document, but the link can never change as the
             // identity of the document never changes. Therefore, there is no dependency on a field.

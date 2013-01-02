@@ -17,10 +17,10 @@ package org.lilyproject.repository.api;
 
 /**
  * Enumeration of the version scopes to which a field can belong.
- *
+ * <p/>
  * <p>The scopes define versioning-related behavior of a {@link FieldType}. For more background information, please
  * refer to the Lily repository model documentation.
  */
 public enum Scope {
-    NON_VERSIONED, VERSIONED, VERSIONED_MUTABLE 
+    NON_VERSIONED, VERSIONED, VERSIONED_MUTABLE
 }

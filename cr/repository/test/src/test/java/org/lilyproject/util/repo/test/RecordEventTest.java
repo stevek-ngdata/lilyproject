@@ -26,15 +26,15 @@ import org.lilyproject.util.repo.RecordEvent;
 
 public class RecordEventTest {
     private static final String NS = "org.lilyproject.util.repo.test";
-    
+
     private final static RepositorySetup repoSetup = new RepositorySetup();
-    
+
     private static Repository repository;
     private static IdGenerator idGenerator;
     private static TypeManager typeManager;
     private static RecordType rt1;
     private static FieldType field1;
-    
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         repoSetup.setupCore();
@@ -43,35 +43,35 @@ public class RecordEventTest {
         repository = repoSetup.getRepository();
         typeManager = repoSetup.getTypeManager();
         idGenerator = repository.getIdGenerator();
-        
+
         setupSchema();
     }
 
     @Test
-    public void testRecordEventAttributes() throws Exception{
-        final Map<String,String> attr = new HashMap<String,String>();
+    public void testRecordEventAttributes() throws Exception {
+        final Map<String, String> attr = new HashMap<String, String>();
         attr.put("one", "one");
-        attr.put("two", "two");        
-        
-        
+        attr.put("two", "two");
+
+
         CountingMessageVerifier messageVerifier = new CountingMessageVerifier();
-        
+
         RowLogConfigurationManager rowLogConfMgr = repoSetup.getRowLogConfManager();
         rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 1);
 
         repoSetup.waitForSubscription(repoSetup.getWal(), "MessageVerifier");
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
-        
+
         // test create
         messageVerifier.setExpectedAttributes(attr);
         Record record = repository.newRecord();
         record.setRecordType(rt1.getName());
         record.setField(field1.getName(), "something");
-        record.setAttributes(attr);        
+        record.setAttributes(attr);
         record = repository.create(record);
         Assert.assertTrue(record.getAttributes().isEmpty());
         Assert.assertEquals(1, messageVerifier.getMessageCount());
-        
+
         // test update
         attr.clear();
         attr.put("update", "update");
@@ -79,13 +79,12 @@ public class RecordEventTest {
         record.setAttributes(attr);
         repository.update(record);
         Assert.assertEquals(2, messageVerifier.getMessageCount());
-        
+
         // test read : attr empty
         record = repository.read(record.getId(), field1.getName());
         Assert.assertTrue(record.getAttributes().isEmpty());
-        
-        
-        
+
+
         // test delete
         attr.clear();
         attr.put("delete", "deletevalue");
@@ -94,20 +93,21 @@ public class RecordEventTest {
         repository.delete(record);
         Assert.assertEquals(3, messageVerifier.getMessageCount());
     }
-    
-    private static void setupSchema () throws Exception{
+
+    private static void setupSchema() throws Exception {
         QName field1Name = new QName(NS, "field1");
         field1 = typeManager.newFieldType(typeManager.getValueType("STRING"), field1Name, Scope.VERSIONED);
         field1 = typeManager.createFieldType(field1);
-        
+
         rt1 = typeManager.newRecordType(new QName(NS, "NVRecordType1"));
         rt1 = typeManager.createRecordType(rt1);
 
     }
-    
+
     private class CountingMessageVerifier implements RowLogMessageListener {
         private int messageCounter = 0;
-        private Map<String,String> attr;
+        private Map<String, String> attr;
+
         @Override
         public boolean processMessage(RowLogMessage message) throws InterruptedException {
             try {
@@ -119,14 +119,14 @@ public class RecordEventTest {
             } catch (RowLogException e) {
                 Assert.fail(e.getMessage());
             }
-            
+
             return true;
         }
-        
-        public void setExpectedAttributes(Map<String,String> attr) {
+
+        public void setExpectedAttributes(Map<String, String> attr) {
             this.attr = attr;
         }
-        
+
         public int getMessageCount() {
             return this.messageCounter;
         }

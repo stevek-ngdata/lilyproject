@@ -39,7 +39,7 @@ import org.codehaus.jackson.node.ObjectNode;
 
 /**
  * Defines the structure of an index.
- *
+ * <p/>
  * <p>An index is defined by instantiating an object of this class, adding one
  * or more fields to it using the methods like {@link #addStringField},
  * {@link #addIntegerField}, etc. Finally the index is created by calling
@@ -68,19 +68,20 @@ public class IndexDefinition implements Writable {
     public IndexDefinition(String name, ObjectNode jsonObject) {
         this.name = name;
 
-        if (jsonObject.get("identifierOrder") != null)
+        if (jsonObject.get("identifierOrder") != null) {
             setIdentifierOrder(Order.valueOf(jsonObject.get("identifierOrder").getTextValue()));
-        else
+        } else {
             setIdentifierOrder(Order.ASCENDING);
+        }
 
         try {
-            ObjectNode fields = (ObjectNode) jsonObject.get("fields");
+            ObjectNode fields = (ObjectNode)jsonObject.get("fields");
             Iterator<Map.Entry<String, JsonNode>> fieldsIt = fields.getFields();
             while (fieldsIt.hasNext()) {
                 Map.Entry<String, JsonNode> entry = fieldsIt.next();
                 String className = entry.getValue().get("class").getTextValue();
                 Class<IndexFieldDefinition> clazz =
-                        (Class<IndexFieldDefinition>) getClass().getClassLoader().loadClass(className);
+                        (Class<IndexFieldDefinition>)getClass().getClassLoader().loadClass(className);
                 Constructor<IndexFieldDefinition> constructor = clazz.getConstructor(String.class, ObjectNode.class);
                 IndexFieldDefinition field = constructor.newInstance(entry.getKey(), entry.getValue());
                 add(field);
@@ -254,23 +255,29 @@ public class IndexDefinition implements Writable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
 
-        IndexDefinition other = (IndexDefinition) obj;
+        IndexDefinition other = (IndexDefinition)obj;
 
-        if (!name.equals(other.name))
+        if (!name.equals(other.name)) {
             return false;
+        }
 
-        if (identifierIndexFieldDefinition != other.identifierIndexFieldDefinition)
+        if (identifierIndexFieldDefinition != other.identifierIndexFieldDefinition) {
             return false;
+        }
 
-        if (!fields.equals(other.fields))
+        if (!fields.equals(other.fields)) {
             return false;
+        }
 
         return true;
     }
@@ -311,14 +318,14 @@ public class IndexDefinition implements Writable {
         for (int i = 0; i < fieldsSize; i++) {
             final String indexFieldDefinitionClassName = in.readUTF();
             final IndexFieldDefinition indexFieldDefinition =
-                    (IndexFieldDefinition) tryInstantiateClass(indexFieldDefinitionClassName);
+                    (IndexFieldDefinition)tryInstantiateClass(indexFieldDefinitionClassName);
             indexFieldDefinition.readFields(in);
             fields.add(indexFieldDefinition);
         }
 
         final String identifierIndexFieldDefinitionClassName = in.readUTF();
         identifierIndexFieldDefinition =
-                (IndexFieldDefinition) tryInstantiateClass(identifierIndexFieldDefinitionClassName);
+                (IndexFieldDefinition)tryInstantiateClass(identifierIndexFieldDefinitionClassName);
         identifierIndexFieldDefinition.readFields(in);
         refreshFieldsByName();
     }

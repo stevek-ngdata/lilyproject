@@ -15,14 +15,14 @@
  */
 package org.lilyproject.rowlog.impl;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.json.JsonUtil;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 
 public class SubscriptionConverter {
     public static SubscriptionConverter INSTANCE = new SubscriptionConverter();

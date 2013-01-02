@@ -15,6 +15,7 @@
  */
 package org.lilyproject.indexer.model.util;
 
+import javax.annotation.PreDestroy;
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,8 +26,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PreDestroy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,7 +55,9 @@ public class IndexesInfoImpl implements IndexesInfo {
     private final ExecutorService executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<Runnable>(1), new ThreadPoolExecutor.DiscardPolicy());
 
-    /** Has the initial load of the indexes been done? */
+    /**
+     * Has the initial load of the indexes been done?
+     */
     private volatile boolean initialized = false;
 
     public IndexesInfoImpl(IndexerModel indexerModel, Repository repository) {

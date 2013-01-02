@@ -15,11 +15,11 @@
  */
 package org.lilyproject.util.json;
 
+import java.io.IOException;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
-
-import java.io.IOException;
 
 public class JsonUtil {
     public static JsonNode getNode(JsonNode node, String prop) throws JsonFormatException {

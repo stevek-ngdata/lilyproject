@@ -15,7 +15,14 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeBuilder;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 
 public class FieldTypeBuilderImpl implements FieldTypeBuilder {
     private SchemaId id;

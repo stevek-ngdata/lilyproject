@@ -15,22 +15,34 @@
  */
 package org.lilyproject.rowlog.impl.test;
 
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
-import org.lilyproject.rowlog.api.*;
-import org.lilyproject.rowlog.impl.*;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfig;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogProcessor;
+import org.lilyproject.rowlog.api.RowLogShard;
+import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
+import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
+import org.lilyproject.rowlog.impl.RowLogImpl;
+import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
+import org.lilyproject.rowlog.impl.RowLogShardSetup;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -44,7 +56,8 @@ public abstract class AbstractRowLogEndToEndTest {
     private static Configuration configuration;
     protected static ZooKeeperItf zooKeeper;
 
-    @Rule public TestName name = new TestName();
+    @Rule
+    public TestName name = new TestName();
     private static HTableInterface rowTable;
 
     @BeforeClass
@@ -65,8 +78,8 @@ public abstract class AbstractRowLogEndToEndTest {
                 (byte)1, rowLogConfigurationManager, null, new RowLogHashShardRouter());
         RowLogShardSetup.setupShards(1, rowLog, new HBaseTableFactoryImpl(configuration));
         processor = new RowLogProcessorImpl(rowLog, rowLogConfigurationManager, configuration);
-    }    
-    
+    }
+
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         Closer.close(processor);
@@ -75,8 +88,8 @@ public abstract class AbstractRowLogEndToEndTest {
         Closer.close(zooKeeper);
         HBASE_PROXY.stop();
     }
-    
-    @Test(timeout=150000)
+
+    @Test(timeout = 150000)
     public void testSingleMessage() throws Exception {
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
         validationListener.expectMessage(message);
@@ -89,7 +102,7 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.validate();
     }
 
-    @Test(timeout=150000)
+    @Test(timeout = 150000)
     public void testRemovalFromShardFailed() throws Exception {
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
         validationListener.expectMessage(message);
@@ -114,7 +127,7 @@ public abstract class AbstractRowLogEndToEndTest {
                 shard.next(subscriptionId, 20).isEmpty());
     }
 
-    @Test(timeout=150000)
+    @Test(timeout = 150000)
     public void testAtomicMessage() throws Exception {
         byte[] rowKey = Bytes.toBytes("row1");
         Put put = new Put(rowKey);
@@ -131,7 +144,7 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.validate();
     }
 
-    @Test(timeout=150000)
+    @Test(timeout = 150000)
     public void testAtomicMessageFailingPut() throws Exception {
         byte[] rowKey = Bytes.toBytes("row1");
         Put put = new Put(rowKey);
@@ -152,24 +165,24 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.validate();
     }
 
-    @Test(timeout=150000)
+    @Test(timeout = 150000)
     public void testSingleMessageProcessorStartsFirst() throws Exception {
         validationListener.expectMessages(1);
         processor.start();
-        System.out.println(">>RowLogEndToEndTest#"+name.getMethodName()+": processor started");
+        System.out.println(">>RowLogEndToEndTest#" + name.getMethodName() + ": processor started");
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row2"), null, null, null);
         validationListener.expectMessage(message);
-        System.out.println(">>RowLogEndToEndTest#"+name.getMethodName()+": waiting for message to be processed");
+        System.out.println(">>RowLogEndToEndTest#" + name.getMethodName() + ": waiting for message to be processed");
         validationListener.waitUntilMessagesConsumed(120000);
-        System.out.println(">>RowLogEndToEndTest#"+name.getMethodName()+": message processed");
+        System.out.println(">>RowLogEndToEndTest#" + name.getMethodName() + ": message processed");
         // Sleep to allow processor to finish message processing (messageDone marking)
         Thread.sleep(2000);
         processor.stop();
-        System.out.println(">>RowLogEndToEndTest#"+name.getMethodName()+": processor stopped");
+        System.out.println(">>RowLogEndToEndTest#" + name.getMethodName() + ": processor stopped");
         validationListener.validate();
     }
 
-    @Test(timeout=150000)
+    @Test(timeout = 150000)
     public void testMultipleMessagesSameRow() throws Exception {
         RowLogMessage message;
         validationListener.expectMessages(10);
@@ -186,7 +199,7 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.validate();
     }
 
-    @Test(timeout=150000)
+    @Test(timeout = 150000)
     public void testMultipleMessagesMultipleRows() throws Exception {
         RowLogMessage message;
         validationListener.expectMessages(25);

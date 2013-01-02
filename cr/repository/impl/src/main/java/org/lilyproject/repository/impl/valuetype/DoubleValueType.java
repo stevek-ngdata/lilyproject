@@ -38,7 +38,7 @@ public class DoubleValueType extends AbstractValueType implements ValueType {
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
@@ -75,12 +75,15 @@ public class DoubleValueType extends AbstractValueType implements ValueType {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         return true;
     }
 
@@ -90,10 +93,10 @@ public class DoubleValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new DoubleValueTypeFactory();
     }
-    
+
     public static class DoubleValueTypeFactory implements ValueTypeFactory {
         private static DoubleValueType instance = new DoubleValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

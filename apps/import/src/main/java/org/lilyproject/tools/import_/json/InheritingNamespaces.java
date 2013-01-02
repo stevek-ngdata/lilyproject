@@ -22,7 +22,7 @@ import java.util.Map;
  * Combines globally and locally defined namespaces into one namespaces context, i.e. provides
  * for one level of namespace inheritance. (Just one level because that is enough, could be easily
  * extended to supporting any level if necessary).
- *
+ * <p/>
  * <p>This should typically be used in reading-situations, not in writing-situations.</p>
  */
 public class InheritingNamespaces implements Namespaces {

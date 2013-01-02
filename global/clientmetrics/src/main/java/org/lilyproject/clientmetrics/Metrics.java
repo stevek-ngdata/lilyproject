@@ -15,26 +15,33 @@
  */
 package org.lilyproject.clientmetrics;
 
-import org.joda.time.DateTime;
-
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
+
+import org.joda.time.DateTime;
 
 /**
  * Simple system for collecting metrics in client/test applications.
- *
+ * <p/>
  * <p>The intention is that metrics are immediately interpretable while the test is running. For this purpose,
  * each 30 second interval, a summary table is printed with the metric values of the last 30 seconds, as well
  * as the running total averages.
- *
+ * <p/>
  * <p>This class in itself is usable in any context, independent of Lily. Besides the metrics that you report
  * yourself, it is also possible to collect some system/HBase metrics at the end of each interval. These
  * are retrieved via HBaseAdmin & JMX. See {@link HBaseMetricsPlugin}.
- *
+ * <p/>
  * <p>If afterwards you'd like some charts of the metrics, check out
  * {@link org.lilyproject.clientmetrics.postproc.MetricsReportTool}.
- *
+ * <p/>
  * <p>The metrics files produced by this class are human readable but also machine readable, they can
  * be parsed using {@link org.lilyproject.clientmetrics.postproc.MetricsParser}.
  */
@@ -152,18 +159,17 @@ public class Metrics {
     }
 
     /**
-     *
-     * @param name a name for this metric. Can contain any character but colon. The symbol '@' has a special
-     *             meaning towards post-processing tools such as
-     *             {@link org.lilyproject.clientmetrics.postproc.MetricsReportTool}: it will group metrics with
-     *             the same text before the @ symbol.
-     * @param type optional, can be null. If specified, number of operations per second will be summarized
-     *             for all metrics of the same type. The value must represent a timing in milliseconds. Only
-     *             alphanumeric characters allowed.
+     * @param name       a name for this metric. Can contain any character but colon. The symbol '@' has a special
+     *                   meaning towards post-processing tools such as
+     *                   {@link org.lilyproject.clientmetrics.postproc.MetricsReportTool}: it will group metrics with
+     *                   the same text before the @ symbol.
+     * @param type       optional, can be null. If specified, number of operations per second will be summarized
+     *                   for all metrics of the same type. The value must represent a timing in milliseconds. Only
+     *                   alphanumeric characters allowed.
      * @param operations the number of operations performed, usually 1, but sometimes operations are performed
      *                   in groups
-     * @param value the value for the metric, such as a duration (typically in ms), an operation count, or whatever
-     *              quantity you want to keep track of such as free memory, cpu load, ...
+     * @param value      the value for the metric, such as a duration (typically in ms), an operation count, or whatever
+     *                   quantity you want to keep track of such as free memory, cpu load, ...
      */
     public synchronized void increment(String name, String type, int operations, double value) {
         if (type != null && !NAME_PATTERN.matcher(type).matches()) {
@@ -256,8 +262,9 @@ public class Metrics {
         if (statByType.size() > 0) {
             int i = 0;
             for (Map.Entry<String, CountAndValue> entry : statByType.entrySet()) {
-                if (entry.getValue().count == 0)
+                if (entry.getValue().count == 0) {
                     continue;
+                }
 
                 i++;
 
@@ -282,8 +289,9 @@ public class Metrics {
     }
 
     private void printGlobalOpsPerSec() {
-        if (startedAt == null)
+        if (startedAt == null) {
             return;
+        }
 
         double testDuration = System.currentTimeMillis() - startedAt.getMillis();
 
@@ -308,8 +316,9 @@ public class Metrics {
             reportStream.println();
             reportStream.println("Global ops/sec of the test:");
             for (Map.Entry<String, CountAndValue> entry : statByType.entrySet()) {
-                if (entry.getValue().count == 0)
+                if (entry.getValue().count == 0) {
                     continue;
+                }
 
                 double opsPerSec = (((double)entry.getValue().count) / (entry.getValue().value)) * 1000d;
                 double opsPerSecInt = (((double)entry.getValue().count) / (testDuration)) * 1000d;
@@ -339,7 +348,7 @@ public class Metrics {
         private List<Double> values = new ArrayList<Double>(1000);
 
         String type;
-        
+
         int intervalCount;
         double intervalValue;
         double intervalMin;
@@ -353,12 +362,12 @@ public class Metrics {
         }
 
         /**
-         *
          * @param value will most often be a duration in ms, but could be other kinds of values as well.
          */
         public void add(int operations, double value) {
-            if (operations == 0)
+            if (operations == 0) {
                 return;
+            }
 
             intervalCount += operations;
             intervalValue += value;
@@ -367,11 +376,13 @@ public class Metrics {
 
             double valuePerOp = value / (double)operations;
 
-            if (valuePerOp < intervalMin)
+            if (valuePerOp < intervalMin) {
                 intervalMin = valuePerOp;
+            }
 
-            if (valuePerOp > intervalMax)
+            if (valuePerOp > intervalMax) {
                 intervalMax = valuePerOp;
+            }
 
             values.add(valuePerOp);
         }
@@ -417,8 +428,9 @@ public class Metrics {
         }
 
         public double getIntervalMedian() {
-            if (values.size() == 0)
+            if (values.size() == 0) {
                 return 0;
+            }
 
             Collections.sort(values);
             int middle = values.size() / 2;

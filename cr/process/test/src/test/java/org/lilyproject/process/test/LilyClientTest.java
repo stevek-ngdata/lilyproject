@@ -53,8 +53,9 @@ public class LilyClientTest {
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         try {
-            if (lilyProxy != null)
+            if (lilyProxy != null) {
                 lilyProxy.stop();
+            }
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -88,7 +89,7 @@ public class LilyClientTest {
         // Upload a blob that, based upon the current default config, should end up in HBase
         //  (> 5000 bytes and < 200000 bytes)
         byte[] data = makeBlobData(10000);
-        Blob blob = new Blob("application/octet-stream", (long) data.length, null);
+        Blob blob = new Blob("application/octet-stream", (long)data.length, null);
         OutputStream blobStream = repository.getOutputStream(blob);
         IOUtils.copy(new ByteArrayInputStream(data), blobStream);
         blobStream.close();

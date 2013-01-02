@@ -15,16 +15,22 @@
  */
 package org.lilyproject.process.updatehook;
 
+import javax.annotation.PreDestroy;
+
 import org.lilyproject.plugin.PluginRegistry;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.util.repo.RecordEvent;
 
-import javax.annotation.PreDestroy;
-
 public class TestRecordUpdateHook implements RecordUpdateHook {
     private PluginRegistry pluginRegistry;
-    /** Name should be unique among all RecordUpdateHook's */
+    /**
+     * Name should be unique among all RecordUpdateHook's
+     */
     private String NAME = "test-updatehook";
 
     public TestRecordUpdateHook(PluginRegistry pluginRegistry) {
@@ -40,7 +46,7 @@ public class TestRecordUpdateHook implements RecordUpdateHook {
 
     @Override
     public void beforeUpdate(Record record, Record originalRecord, Repository repository, FieldTypes fieldTypes,
-            RecordEvent recordEvent) throws RepositoryException, InterruptedException {
+                             RecordEvent recordEvent) throws RepositoryException, InterruptedException {
         QName name = new QName("ns", "f1");
         String currentValue = (String)record.getField(name);
         record.setField(name, currentValue + "-update-hook");
@@ -56,6 +62,6 @@ public class TestRecordUpdateHook implements RecordUpdateHook {
 
     @Override
     public void beforeDelete(Record originalRecord, Repository repository, FieldTypes fieldTypes,
-            RecordEvent recordEvent) throws RepositoryException, InterruptedException {
+                             RecordEvent recordEvent) throws RepositoryException, InterruptedException {
     }
 }

@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
@@ -35,22 +36,22 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-rowlog-api</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-rowlock</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-hbase-client</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-util</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-bytes</artifactId>
@@ -60,7 +61,7 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-hbase-util</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-zk-util</artifactId>
@@ -75,7 +76,7 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-hadoop-test-fw</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-core-asl</artifactId>
@@ -85,7 +86,7 @@
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -94,21 +95,21 @@
     <dependency>
       <groupId>org.easymock</groupId>
       <artifactId>easymock</artifactId>
-    </dependency>    
+    </dependency>
 
     <dependency>
       <groupId>org.easymock</groupId>
       <artifactId>easymockclassextension</artifactId>
-    </dependency>  
-    
+    </dependency>
+
     <dependency>
       <groupId>org.jboss.netty</groupId>
       <artifactId>netty</artifactId>
-    </dependency>  
-    
+    </dependency>
+
   </dependencies>
-  
+
   <build>
   </build>
-  
+
 </project>

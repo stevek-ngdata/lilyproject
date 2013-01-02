@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 -->
-<beans              xmlns = "http://www.springframework.org/schema/beans"
-                xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
-              xmlns:kauri = "http://kauriproject.org/runtime/1.0#springext"
-            xmlns:context = "http://www.springframework.org/schema/context"
-       xsi:schemaLocation = "http://www.springframework.org/schema/beans
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:kauri="http://kauriproject.org/runtime/1.0#springext"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
                              http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
                              http://www.springframework.org/schema/context
                              http://www.springframework.org/schema/context/spring-context-2.5.xsd
@@ -46,7 +46,7 @@
   <kauri:export-service
       ref="hbaseTableFactory"
       service="org.lilyproject.util.hbase.HBaseTableFactory"/>
-  
+
   <kauri:export-service
       ref="lilyInfo"
       service="org.lilyproject.util.LilyInfo"/>
@@ -70,18 +70,26 @@
   <!-- The depends-on zooKeeper is so that Lily's ZooKeeper connection establishment code
        is the reference with regards to waiting until ZooKeeper is available. -->
   <bean id="hbaseConfiguration"
-      class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl"
-      depends-on="zooKeeper">
-    <constructor-arg><kauri:conf path="hadoop"/></constructor-arg>
-    <constructor-arg><kauri:conf path="hbase"/></constructor-arg>
-    <constructor-arg><kauri:conf path="mapreduce"/></constructor-arg>
+        class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl"
+        depends-on="zooKeeper">
+    <constructor-arg>
+      <kauri:conf path="hadoop"/>
+    </constructor-arg>
+    <constructor-arg>
+      <kauri:conf path="hbase"/>
+    </constructor-arg>
+    <constructor-arg>
+      <kauri:conf path="mapreduce"/>
+    </constructor-arg>
     <constructor-arg value="${zookeeper:connectString}"/>
     <constructor-arg value="${zookeeper:sessionTimeout}"/>
   </bean>
 
   <bean id="metrics"
-      class="org.lilyproject.server.modules.general.Metrics">
-    <constructor-arg><kauri:conf path="metrics"/></constructor-arg>
+        class="org.lilyproject.server.modules.general.Metrics">
+    <constructor-arg>
+      <kauri:conf path="metrics"/>
+    </constructor-arg>
   </bean>
 
   <bean id="networkItfInfo" class="org.lilyproject.server.modules.general.NetworkInterfaceInfoImpl">
@@ -97,20 +105,24 @@
   </bean>
 
   <bean id="hbaseConf"
-      factory-bean="hbaseConfiguration"
-      factory-method="getHBaseConf"/>
-      
+        factory-bean="hbaseConfiguration"
+        factory-method="getHBaseConf"/>
+
   <bean id="hbaseTableFactory"
         class="org.lilyproject.util.hbase.HBaseTableFactoryImpl">
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg>
       <bean class="org.lilyproject.server.modules.general.TableConfigBuilder" factory-method="buildTableConfigs">
-        <constructor-arg><kauri:conf path="tables"/></constructor-arg>
+        <constructor-arg>
+          <kauri:conf path="tables"/>
+        </constructor-arg>
       </bean>
     </constructor-arg>
     <constructor-arg>
       <bean class="org.lilyproject.server.modules.general.TableConfigBuilder" factory-method="buildCfConfig">
-        <constructor-arg><kauri:conf path="tables" select="familyDefaults" type="node"/></constructor-arg>
+        <constructor-arg>
+          <kauri:conf path="tables" select="familyDefaults" type="node"/>
+        </constructor-arg>
       </bean>
     </constructor-arg>
   </bean>

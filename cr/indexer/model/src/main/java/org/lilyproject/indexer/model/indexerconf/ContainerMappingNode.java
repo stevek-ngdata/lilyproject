@@ -36,7 +36,7 @@ public abstract class ContainerMappingNode implements MappingNode {
     }
 
     public boolean childrenAffectedByUpdate(VTaggedRecord record, Scope scope) throws InterruptedException, RepositoryException {
-        for (MappingNode child: getChildren()) {
+        for (MappingNode child : getChildren()) {
             if (child.isIndexAffectedByUpdate(record, scope)) {
                 return true;
             }
@@ -46,14 +46,14 @@ public abstract class ContainerMappingNode implements MappingNode {
 
     @Override
     public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException {
-        for (MappingNode child: getChildren()) {
+        for (MappingNode child : getChildren()) {
             child.collectIndexUpdate(indexUpdateBuilder);
         }
     }
 
     public void visitAll(Predicate<MappingNode> predicate) {
         if (predicate.apply(this)) {
-            for (MappingNode child: children) {
+            for (MappingNode child : children) {
                 child.visitAll(predicate);
             }
         }

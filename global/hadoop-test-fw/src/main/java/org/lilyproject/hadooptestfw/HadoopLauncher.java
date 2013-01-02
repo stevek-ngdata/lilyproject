@@ -15,6 +15,8 @@
  */
 package org.lilyproject.hadooptestfw;
 
+import java.io.File;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -22,8 +24,6 @@ import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
-
-import java.io.File;
 
 /**
  * Utility to easily launch a full HBase with a temporary storage. Intended to be used to run testcases
@@ -50,8 +50,9 @@ public class HadoopLauncher extends BaseCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         System.out.println("Starting...");
 

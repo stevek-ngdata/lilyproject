@@ -15,14 +15,13 @@
  */
 package org.lilyproject.lilyservertestfw;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
@@ -86,12 +85,13 @@ public class LilyProxy {
             this.mode = mode;
         }
 
-        if (testHome != null)
+        if (testHome != null) {
             setTestHome(testHome);
-        else {
+        } else {
             String testHomeProp = System.getProperty(TESTHOME_PROP_NAME);
-            if (testHomeProp != null)
+            if (testHomeProp != null) {
                 setTestHome(new File(testHomeProp));
+            }
         }
 
         if (clearData != null) {
@@ -155,7 +155,7 @@ public class LilyProxy {
         if (solrSchemaData != null || solrConfigData != null) {
             start(new SolrDefinition(solrSchemaData, solrConfigData));
         } else {
-            start((SolrDefinition) null);
+            start((SolrDefinition)null);
         }
     }
 
@@ -198,11 +198,13 @@ public class LilyProxy {
         }
 
         if (mode == Mode.EMBED || mode == Mode.HADOOP_CONNECT) {
-            if (testHome == null)
+            if (testHome == null) {
                 testHome = TestHomeUtil.createTestHome(TEMP_DIR_PREFIX);
+            }
 
-            if (mode == Mode.EMBED)
+            if (mode == Mode.EMBED) {
                 hbaseProxy.setTestHome(new File(testHome, TemplateDir.HADOOP_DIR));
+            }
             solrProxy.setTestHome(new File(testHome, TemplateDir.SOLR_DIR));
             lilyServerProxy.setTestHome(new File(testHome, TemplateDir.LILYSERVER_DIR));
         }
@@ -253,7 +255,7 @@ public class LilyProxy {
     public void cleanOldTmpDirs() {
         if (clearData) {
             File tempDirectory = FileUtils.getTempDirectory();
-            File[] files = tempDirectory.listFiles((FilenameFilter) new PrefixFileFilter(TEMP_DIR_PREFIX));
+            File[] files = tempDirectory.listFiles((FilenameFilter)new PrefixFileFilter(TEMP_DIR_PREFIX));
             for (File file : files) {
                 FileUtils.deleteQuietly(file);
             }
@@ -281,8 +283,9 @@ public class LilyProxy {
      */
     public boolean waitWalAndMQMessagesProcessed(long timeout, boolean commitSolr) throws Exception {
         boolean result = hbaseProxy.waitWalAndMQMessagesProcessed(timeout);
-        if (commitSolr)
+        if (commitSolr) {
             solrProxy.commit();
+        }
         return result;
     }
 

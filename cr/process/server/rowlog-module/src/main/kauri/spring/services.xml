@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<beans              xmlns = "http://www.springframework.org/schema/beans"
-                xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
-              xmlns:kauri = "http://kauriproject.org/runtime/1.0#springext"
-            xmlns:context = "http://www.springframework.org/schema/context"
-       xsi:schemaLocation = "http://www.springframework.org/schema/beans
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:kauri="http://kauriproject.org/runtime/1.0#springext"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
                              http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
                              http://www.springframework.org/schema/context
                              http://www.springframework.org/schema/context/spring-context-2.5.xsd
@@ -25,7 +25,7 @@
   <kauri:import-service
       id="zooKeeper"
       service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
-      
+
   <kauri:import-service
       id="hbaseTableFactory"
       service="org.lilyproject.util.hbase.HBaseTableFactory"/>
@@ -37,7 +37,7 @@
   <kauri:import-service
       id="rowLocker"
       service="org.lilyproject.rowlock.RowLocker"/>
-      
+
   <kauri:import-service
       id="networkItfInfo"
       service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
@@ -55,8 +55,8 @@
       service="org.lilyproject.rowlog.api.RowLog"/>
 
   <bean id="hbaseConf"
-      factory-bean="hadoopConfFactory"
-      factory-method="getHBaseConf"/>
+        factory-bean="hadoopConfFactory"
+        factory-method="getHBaseConf"/>
 
   <bean id="rowLogConfigurationMgr" class="org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl">
     <constructor-arg ref="zooKeeper"/>
@@ -67,10 +67,14 @@
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="hbaseTableFactory"/>
-    <constructor-arg><kauri:conf path="rowlog"/></constructor-arg>
+    <constructor-arg>
+      <kauri:conf path="rowlog"/>
+    </constructor-arg>
     <constructor-arg ref="rowLocker"/>
     <constructor-arg ref="lilyInfo"/>
-    <constructor-arg><bean factory-bean="networkItfInfo" factory-method="getHostName"/></constructor-arg>
+    <constructor-arg>
+      <bean factory-bean="networkItfInfo" factory-method="getHostName"/>
+    </constructor-arg>
   </bean>
 
   <bean id="messageQueue" factory-bean="rowLogSetup" factory-method="getMessageQueue"/>

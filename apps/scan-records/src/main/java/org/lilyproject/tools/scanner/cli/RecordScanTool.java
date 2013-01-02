@@ -41,15 +41,15 @@ public class RecordScanTool {
     public static void count(Repository repository) throws Exception {
         count(repository, null, null);
     }
-    
+
     public static void count(Repository repository, String startId, String stopId) throws Exception {
         count(repository, startId, stopId, null, null);
     }
-    
+
     public static void count(Repository repository, String startId, String stopId, String recordTypeFilter, File configFile) throws Exception {
         new RecordScanTool(repository).count(startId, stopId, recordTypeFilter, configFile);
     }
-    
+
     public static void print(Repository repository) throws Exception {
         print(repository, -1l);
     }
@@ -57,11 +57,11 @@ public class RecordScanTool {
     public static void print(Repository repository, long limit) throws Exception {
         print(repository, limit, null);
     }
-    
+
     public static void print(Repository repository, long limit, File config) throws Exception {
         print(repository, null, null, limit, null, config);
     }
-    
+
     public static void print(Repository repository, String startId, String stopId, long limit, String recordTypeFilter, File config) throws Exception {
         new RecordScanTool(repository).print(startId, stopId, limit, recordTypeFilter, config);
     }
@@ -82,10 +82,10 @@ public class RecordScanTool {
         Date start = new Date();
         try {
             int i = 0;
-            while ((record = scanner.next()) != null) {                
+            while ((record = scanner.next()) != null) {
                 i++;
                 if (i % 1000 == 0) {
-                    System.out.println("Record no° : " + i + ", Record id : " + record.getId() );
+                    System.out.println("Record no° : " + i + ", Record id : " + record.getId());
                 }
             }
             Date stop = new Date();
@@ -117,7 +117,7 @@ public class RecordScanTool {
 
     private RecordScan createRecordScan(String startId, String stopId, String recordTypeFilter, File scanConfFile) throws Exception {
         RecordScan scan = null;
-        
+
         if (scanConfFile != null) {
             JsonNode jsonNode = JsonFormat.deserializeNonStd(new FileInputStream(scanConfFile));
             scan = RecordScanReader.INSTANCE.fromJson(jsonNode, repository);
@@ -130,18 +130,18 @@ public class RecordScanTool {
         if (startId != null && startId.length() > 0) {
             scan.setStartRecordId(repository.getIdGenerator().fromString(startId));
         }
-        
+
         if (stopId != null && stopId.length() > 0) {
             scan.setStopRecordId(repository.getIdGenerator().fromString(stopId));
-        }  
-        
+        }
+
         if (recordTypeFilter != null && !recordTypeFilter.isEmpty()) {
             RecordFilterList filterList = new RecordFilterList(Operator.MUST_PASS_ONE);
             if (scan.getRecordFilter() != null) {
                 filterList.addFilter(scan.getRecordFilter());
             }
             scan.setRecordFilter(filterList);
-            
+
             String[] recordTypes = recordTypeFilter.split(",");
             for (String recordType : recordTypes) {
                 filterList.addFilter(new RecordTypeFilter(QName.fromString(recordType)));

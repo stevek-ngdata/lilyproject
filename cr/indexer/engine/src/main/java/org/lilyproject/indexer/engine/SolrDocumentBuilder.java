@@ -22,6 +22,10 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.common.SolrInputDocument;
@@ -48,11 +52,6 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.repo.SystemFields;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Sets;
 
 public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
@@ -153,7 +152,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
             RecordContext ctx = contexts.peek();
             //TODO: add dependencies caused by resolving name template variables
             if (part instanceof FieldTemplatePart) {
-                QName fieldName = ((FieldTemplatePart) part).getFieldType().getName();
+                QName fieldName = ((FieldTemplatePart)part).getFieldType().getName();
                 if (ctx.record.hasField(fieldName)) {
                     return ctx.record.getField(fieldName);
                 } else {
@@ -161,10 +160,10 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
                             "Error evaluating name template: Record does not have field " + fieldName);
                 }
             } else if (part instanceof VariantPropertyTemplatePart) {
-                VariantPropertyTemplatePart vpPart = (VariantPropertyTemplatePart) part;
+                VariantPropertyTemplatePart vpPart = (VariantPropertyTemplatePart)part;
                 return contexts.peek().contextRecord.getId().getVariantProperties().get(vpPart.getName());
             } else if (part instanceof LiteralTemplatePart) {
-                return ((LiteralTemplatePart) part).getString();
+                return ((LiteralTemplatePart)part).getString();
             } else {
                 throw new NameTemplateEvaluationException("Unsupported TemplatePart type " + part.getClass().getName());
             }
@@ -207,8 +206,9 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
      * dependency will not trigger 'denormalized data updates'.
      */
     private void warnForUnmatchedDependencies(Record dependency) {
-        if (dependency != null && dependency.getId() != null && this.indexRecordFilter.getIndexCase(dependency) == null)
+        if (dependency != null && dependency.getId() != null && this.indexRecordFilter.getIndexCase(dependency) == null) {
             log.warn(String.format("discovered dependency on record [%s] which will not be matched by the record filter of the index", dependency.getId()));
+        }
     }
 
     @Override
@@ -233,7 +233,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
             // collect dependencies introducted by any 'FieldTemplateParts'
             for (TemplatePart part : nameTemplate.getParts()) {
                 if (part instanceof FieldTemplatePart) {
-                    addDependency(((FieldTemplatePart) part).getFieldType().getId());
+                    addDependency(((FieldTemplatePart)part).getFieldType().getId());
                 }
             }
 

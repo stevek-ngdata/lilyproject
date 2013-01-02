@@ -15,9 +15,9 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.tools.import_.json.WriteOptions;
-
 import javax.ws.rs.core.UriInfo;
+
+import org.lilyproject.tools.import_.json.WriteOptions;
 
 /**
  * Wrapper for an entity that combines the entity with options concerning its serialization.

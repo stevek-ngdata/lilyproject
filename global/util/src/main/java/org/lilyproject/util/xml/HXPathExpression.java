@@ -15,15 +15,15 @@
  */
 package org.lilyproject.util.xml;
 
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathConstants;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * HXPath stands for "helpful" XPath, a small wrapper around
@@ -38,22 +38,25 @@ public class HXPathExpression {
 
     public String evalAsString(Node node) throws XPathExpressionException {
         String result = expr.evaluate(node);
-        if (result.length() == 0)
+        if (result.length() == 0) {
             return null;
+        }
         return result;
     }
 
     public Boolean evalAsBoolean(Node node) throws XPathExpressionException {
         String value = expr.evaluate(node);
-        if (value.length() == 0)
+        if (value.length() == 0) {
             return null;
+        }
         return Boolean.valueOf(value);
     }
 
     public Integer evalAsInteger(Node node) throws XPathExpressionException {
         String value = expr.evaluate(node);
-        if (value.length() == 0)
+        if (value.length() == 0) {
             return null;
+        }
         return Integer.valueOf(value);
     }
 

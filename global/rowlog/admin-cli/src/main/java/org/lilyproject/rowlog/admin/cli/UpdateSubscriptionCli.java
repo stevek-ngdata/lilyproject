@@ -25,10 +25,10 @@ import org.lilyproject.rowlog.api.RowLogSubscription;
 
 /**
  * Command-line command to update the properties of a subscription.
- * 
+ * <p/>
  * <p>Only the properties of the subscription can be updated this way, not the listeners
  * that are registered to the subscritpion.
- * 
+ * <p/>
  * <p>The properties that can be changed are:
  * <br>- subscription type : the type of the subscription VM (in-vm) or Netty (remote)
  * <br>- order nr : the order nr of the subscription wrt the other subscriptions of the same rowlog
@@ -45,8 +45,8 @@ public class UpdateSubscriptionCli extends BaseRowLogAdminCli {
 
     @Override
     public List<Option> getOptions() {
-        List<Option> options =  super.getOptions();
-        
+        List<Option> options = super.getOptions();
+
         options.add(rowLogIdOption);
         options.add(subscriptionIdOption);
         options.add(subscriptionTypeOption);
@@ -54,12 +54,13 @@ public class UpdateSubscriptionCli extends BaseRowLogAdminCli {
 
         return options;
     }
-    
+
     @Override
-    public int run(CommandLine cmd) throws Exception  {
+    public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (rowLogId == null) {
             System.out.println("Specify rowlog ID with -" + rowLogIdOption.getOpt());

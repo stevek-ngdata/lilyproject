@@ -16,7 +16,6 @@
 package org.lilyproject.tools.import_.json;
 
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.filter.RecordFilter;

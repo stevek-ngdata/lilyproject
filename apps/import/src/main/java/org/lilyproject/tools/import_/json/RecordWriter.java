@@ -15,16 +15,24 @@
  */
 package org.lilyproject.tools.import_.json;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.bytes.api.ByteArray;
-import org.lilyproject.repository.api.*;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.ValueType;
 
 public class RecordWriter implements EntityWriter<Record> {
     public static RecordWriter INSTANCE = new RecordWriter();
@@ -93,20 +101,20 @@ public class RecordWriter implements EntityWriter<Record> {
                 }
             }
         }
-        
+
         Map<String, String> attributes = record.getAttributes();
         if (attributes.size() > 0) {
             ObjectNode attributesNode = recordNode.putObject("attributes");
             for (String key : attributes.keySet()) {
                 attributesNode.put(key, attributes.get(key));
-            }            
+            }
         }
 
         return recordNode;
     }
 
     private JsonNode listToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
-            Repository repository) throws RepositoryException, InterruptedException {
+                                Repository repository) throws RepositoryException, InterruptedException {
         List list = (List)value;
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
         for (Object item : list) {
@@ -116,7 +124,7 @@ public class RecordWriter implements EntityWriter<Record> {
     }
 
     private JsonNode pathToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
-            Repository repository) throws RepositoryException, InterruptedException {
+                                Repository repository) throws RepositoryException, InterruptedException {
         HierarchyPath path = (HierarchyPath)value;
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
         for (Object element : path.getElements()) {
@@ -126,7 +134,7 @@ public class RecordWriter implements EntityWriter<Record> {
     }
 
     public JsonNode valueToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
-            Repository repository) throws RepositoryException, InterruptedException {
+                                Repository repository) throws RepositoryException, InterruptedException {
         String name = valueType.getBaseName();
 
         JsonNodeFactory factory = JsonNodeFactory.instance;
@@ -154,10 +162,10 @@ public class RecordWriter implements EntityWriter<Record> {
         } else if (name.equals("BLOB")) {
             Blob blob = (Blob)value;
             result = BlobConverter.toJson(blob);
-        } else if (name.equals("RECORD")){
+        } else if (name.equals("RECORD")) {
             result = toJson((Record)value, options, namespaces, repository);
         } else if (name.equals("BYTEARRAY")) {
-            result = factory.binaryNode(((ByteArray) value).getBytes());
+            result = factory.binaryNode(((ByteArray)value).getBytes());
         } else {
             throw new RuntimeException("Unsupported value type: " + name);
         }
@@ -170,8 +178,9 @@ public class RecordWriter implements EntityWriter<Record> {
         ObjectNode jsonType = factory.objectNode();
 
         jsonType.put("name", QNameConverter.toJson(name, namespaces));
-        if (version != null)
+        if (version != null) {
             jsonType.put("version", version);
+        }
 
         return jsonType;
     }

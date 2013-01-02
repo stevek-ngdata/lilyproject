@@ -7,8 +7,6 @@ import org.lilyproject.repository.api.RecordId;
 
 /**
  * Implementation of {@link org.lilyproject.indexer.derefmap.DependantRecordIdsIterator}.
- *
- *
  */
 final class DependantRecordIdsIteratorImpl implements DependantRecordIdsIterator {
     private final QueryResult queryResult;
@@ -30,10 +28,11 @@ final class DependantRecordIdsIteratorImpl implements DependantRecordIdsIterator
         // the identifier is the record id of the record that depends on the queried record
 
         final byte[] nextIdentifier = queryResult.next();
-        if (nextIdentifier == null)
+        if (nextIdentifier == null) {
             return null;
-        else
+        } else {
             return serializationUtil.deserializeRecordId(nextIdentifier);
+        }
     }
 
     @Override

@@ -16,7 +16,12 @@
 package org.lilyproject.repository.impl;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public class FieldTypeImpl implements FieldType, Cloneable {
@@ -29,6 +34,7 @@ public class FieldTypeImpl implements FieldType, Cloneable {
 
     /**
      * This constructor should not be called directly.
+     *
      * @use {@link TypeManager#newFieldType} instead
      */
     public FieldTypeImpl(SchemaId id, ValueType valueType, QName name, Scope scope) {
@@ -38,8 +44,9 @@ public class FieldTypeImpl implements FieldType, Cloneable {
         this.scope = scope;
     }
 
-    private FieldTypeImpl(){}
-    
+    private FieldTypeImpl() {
+    }
+
     @Override
     public QName getName() {
         return name;
@@ -49,7 +56,7 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     public SchemaId getId() {
         return id;
     }
-    
+
     public byte[] getQualifier() {
         if (idQualifier == null) {
             this.idQualifier = Bytes.add(new byte[]{RecordColumn.DATA_PREFIX}, id.getBytes());
@@ -71,7 +78,7 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     public void setId(SchemaId id) {
         this.id = id;
     }
-    
+
     @Override
     public void setName(QName name) {
         this.name = name;
@@ -86,7 +93,7 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     public void setScope(Scope scope) {
         this.scope = scope;
     }
-    
+
     @Override
     public FieldType clone() {
         FieldTypeImpl newFieldType = new FieldTypeImpl();
@@ -110,32 +117,40 @@ public class FieldTypeImpl implements FieldType, Cloneable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        FieldTypeImpl other = (FieldTypeImpl) obj;
+        }
+        FieldTypeImpl other = (FieldTypeImpl)obj;
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false;
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false;
+        }
         if (id == null) {
-            if (other.id != null)
+            if (other.id != null) {
                 return false;
-        } else if (!id.equals(other.id))
+            }
+        } else if (!id.equals(other.id)) {
             return false;
+        }
         if (valueType == null) {
-            if (other.valueType != null)
+            if (other.valueType != null) {
                 return false;
-        } else if (!valueType.equals(other.valueType))
+            }
+        } else if (!valueType.equals(other.valueType)) {
             return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
         return "FieldTypeImpl [id=" + id + ", name=" + name
-                        + ", valueType=" + valueType + "]";
+                + ", valueType=" + valueType + "]";
     }
 }

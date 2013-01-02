@@ -19,11 +19,11 @@ import org.lilyproject.repository.api.QName;
 
 public class QNameConverter {
     public static QName fromJson(String name, Namespaces namespaces) throws JsonFormatException {
-        
+
         if (name.startsWith("{")) {
             return QName.fromString(name);
         }
-        
+
         int pos = name.indexOf('$');
         if (pos == -1) {
             throw new JsonFormatException("Invalid qualified name, does not contain a $: " + name);

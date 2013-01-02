@@ -45,9 +45,9 @@ import org.lilyproject.util.test.TestHomeUtil;
 
 /**
  * Provides access to HBase, either by starting an embedded HBase or by connecting to a running HBase.
- *
+ * <p/>
  * <p>This is intended for usage in test cases.
- *
+ * <p/>
  * <p><b>VERY VERY IMPORTANT</b>: when connecting to an existing HBase, this class will DELETE ALL ROWS
  * FROM ALL TABLES!
  */
@@ -111,8 +111,9 @@ public class HBaseProxy {
             testHome = TestHomeUtil.createTestHome("lily-hbaseproxy-");
         }
 
-        if (!testHome.exists())
+        if (!testHome.exists()) {
             format = true; // A new directory: the NameNode and DataNodes will have to be formatted first
+        }
         FileUtils.forceMkdir(testHome);
     }
 
@@ -208,8 +209,9 @@ public class HBaseProxy {
     private void writeConfiguration(File testHome, Configuration conf) throws IOException {
         final File confDir = new File(testHome, "conf");
         final boolean confDirCreated = confDir.mkdir();
-        if (!confDirCreated)
+        if (!confDirCreated) {
             throw new IOException("failed to create " + confDir);
+        }
 
         // dumping everything into multiple xxx-site.xml files.. so that the expected files are definitely there
         for (String filename : Arrays.asList("core-site.xml", "mapred-site.xml")) {
@@ -322,7 +324,7 @@ public class HBaseProxy {
 
     /**
      * Cleans all data from the hbase tables.
-     *
+     * <p/>
      * <p>Should only be called when lily-server is not running.
      */
     public void cleanTables() throws Exception {
@@ -331,7 +333,7 @@ public class HBaseProxy {
 
     /**
      * Cleans all blobs from the hdfs blobstore
-     *
+     * <p/>
      * <p>Should only be called when lily-server is not running.
      */
     public void cleanBlobStore() throws Exception {
@@ -346,8 +348,9 @@ public class HBaseProxy {
      */
     public boolean waitWalAndMQMessagesProcessed(long timeout) throws Exception {
         long before = System.currentTimeMillis();
-        if (!waitWalMessagesProcessed(timeout))
+        if (!waitWalMessagesProcessed(timeout)) {
             return false;
+        }
         long duration = System.currentTimeMillis() - before;
         return waitMQMessagesProcessed(timeout - duration);
     }

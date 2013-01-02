@@ -308,8 +308,9 @@ public class AvroConverter {
     }
 
     public AvroValueType convert(ValueType valueType) {
-        if (valueType == null)
+        if (valueType == null) {
             return null;
+        }
 
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.setValueType(valueType.getName());
@@ -317,14 +318,16 @@ public class AvroConverter {
     }
 
     public QName convert(AvroQName name) {
-        if (name == null)
+        if (name == null) {
             return null;
+        }
         return new QName(name.getNamespace(), name.getName());
     }
 
     public AvroQName convert(QName name) {
-        if (name == null)
+        if (name == null) {
             return null;
+        }
 
         AvroQName avroQName = new AvroQName();
         avroQName.setNamespace(name.getNamespace());
@@ -369,7 +372,7 @@ public class AvroConverter {
             if (RuntimeException.class.isAssignableFrom(exceptionClass)) {
                 Constructor constructor = exceptionClass.getConstructor(String.class);
                 constructor.setAccessible(true);
-                RuntimeException runtimeException = (RuntimeException) constructor.newInstance(
+                RuntimeException runtimeException = (RuntimeException)constructor.newInstance(
                         avroException.getMessage$());
                 restoreCauses(avroException.getRemoteCauses(), runtimeException);
                 return runtimeException;
@@ -401,7 +404,7 @@ public class AvroConverter {
         try {
             Class exceptionClass = Class.forName(avroException.getExceptionClass());
             Constructor constructor = exceptionClass.getConstructor(String.class, Map.class);
-            RepositoryException repositoryException = (RepositoryException) constructor.newInstance(
+            RepositoryException repositoryException = (RepositoryException)constructor.newInstance(
                     avroException.getMessage$(), avroException.getParams());
             restoreCauses(avroException.getRemoteCauses(), repositoryException);
             return repositoryException;
@@ -426,7 +429,7 @@ public class AvroConverter {
         try {
             Class exceptionClass = Class.forName(avroException.getExceptionClass());
             Constructor constructor = exceptionClass.getConstructor(String.class);
-            IndexerException indexerException = (IndexerException) constructor.newInstance(avroException.getMessage$());
+            IndexerException indexerException = (IndexerException)constructor.newInstance(avroException.getMessage$());
             restoreCauses(avroException.getRemoteCauses(), indexerException);
             return indexerException;
         } catch (Exception e) {
@@ -451,19 +454,23 @@ public class AvroConverter {
     }
 
     public ByteBuffer convert(RecordId recordId) {
-        if (recordId == null) return null;
+        if (recordId == null) {
+            return null;
+        }
         return ByteBuffer.wrap(recordId.toBytes());
     }
 
     public Long convertAvroVersion(long avroVersion) {
-        if (avroVersion == -1)
+        if (avroVersion == -1) {
             return null;
+        }
         return avroVersion;
     }
 
     public long convertVersion(Long version) {
-        if (version == null)
+        if (version == null) {
             return -1;
+        }
         return version;
     }
 
@@ -607,20 +614,24 @@ public class AvroConverter {
     }
 
     public SchemaId convert(AvroSchemaId avroSchemaId) {
-        if (avroSchemaId == null)
+        if (avroSchemaId == null) {
             return null;
+        }
         byte[] idBytes = null;
-        if (avroSchemaId.getIdBytes() != null)
+        if (avroSchemaId.getIdBytes() != null) {
             idBytes = avroSchemaId.getIdBytes().array();
+        }
         return new SchemaIdImpl(idBytes);
     }
 
     public AvroSchemaId convert(SchemaId schemaId) {
-        if (schemaId == null)
+        if (schemaId == null) {
             return null;
+        }
         AvroSchemaId avroSchemaId = new AvroSchemaId();
-        if (schemaId.getBytes() != null)
+        if (schemaId.getBytes() != null) {
             avroSchemaId.setIdBytes(ByteBuffer.wrap(schemaId.getBytes()));
+        }
         return avroSchemaId;
     }
 

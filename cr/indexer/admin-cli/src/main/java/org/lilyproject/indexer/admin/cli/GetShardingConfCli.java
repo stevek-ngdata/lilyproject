@@ -15,13 +15,13 @@
  */
 package org.lilyproject.indexer.admin.cli;
 
+import java.io.OutputStream;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.io.IOUtils;
 import org.lilyproject.indexer.model.api.IndexDefinition;
-
-import java.io.OutputStream;
-import java.util.List;
 
 public class GetShardingConfCli extends BaseIndexerAdminCli {
     @Override
@@ -47,8 +47,9 @@ public class GetShardingConfCli extends BaseIndexerAdminCli {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (indexName == null) {
             System.out.println("Specify index name with -" + nameOption.getOpt());

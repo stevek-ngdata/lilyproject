@@ -23,7 +23,7 @@ public class RowLogProcessorSettings {
     private int msgTimestampMargin = RowLogProcessor.DEFAULT_MSG_TIMESTAMP_MARGIN;
 
     private int scanBatchSize = 1000;
-    
+
     private int messagesWorkQueueSize = 1000;
 
     public int getScanThreadCount() {
@@ -32,7 +32,7 @@ public class RowLogProcessorSettings {
 
     /**
      * The scan thread count configured by the user, values < 1 mean it will be determined
-     *  automatically.
+     * automatically.
      */
     public void setScanThreadCount(int scanThreadCount) {
         this.scanThreadCount = scanThreadCount;

@@ -40,7 +40,7 @@ import org.lilyproject.util.ByteArrayKey;
 
 /**
  * Allows to query an index, and add entries to it or remove entries from it.
- *
+ * <p/>
  * <p>An Index instance can be obtained from {@link IndexManager#getIndex(String)}.
  */
 public class Index {
@@ -136,9 +136,9 @@ public class Index {
 
     /**
      * Build the index row key.
-     *
+     * <p/>
      * <p>The format is as follows:
-     *
+     * <p/>
      * <pre>
      * ([encoded value][terminator for variable length fields])*[identifier]
      * </pre>
@@ -267,8 +267,9 @@ public class Index {
         Filter toFilter = new RowFilter(op, new BinaryPrefixComparator(toKey));
 
         FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL);
-        if (query.getIndexFilter() != null)
+        if (query.getIndexFilter() != null) {
             filters.addFilter(new IndexFilterHbaseImpl(query.getIndexFilter(), definition));
+        }
 
         if (rangeCondSet && !rangeCond.isLowerBoundInclusive()) {
             // TODO: optimize the performance hit caused by the extra filter
@@ -290,7 +291,7 @@ public class Index {
 
     /**
      * Validates that all fields used in the query actually exist in the index definition.
-     *
+     * <p/>
      * TODO: shouldn't we also validate that the requested sort order corresponds with the indexed order etc?
      *
      * @param query query to validate

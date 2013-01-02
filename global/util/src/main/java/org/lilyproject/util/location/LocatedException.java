@@ -31,7 +31,7 @@ import java.util.List;
  * @since 2.1.8
  */
 public class LocatedException extends Exception
-                              implements LocatableException, MultiLocatable {
+        implements LocatableException, MultiLocatable {
 
     private List locations;
 
@@ -55,10 +55,11 @@ public class LocatedException extends Exception
     }
 
     private static Method INIT_CAUSE_METHOD = null;
+
     static {
         try {
-            INIT_CAUSE_METHOD = Throwable.class.getMethod("initCause", new Class[] { Throwable.class} );
-        } catch(Exception e) {
+            INIT_CAUSE_METHOD = Throwable.class.getMethod("initCause", new Class[]{Throwable.class});
+        } catch (Exception e) {
             // JDK < 1.4: ignore
         }
     }
@@ -91,14 +92,14 @@ public class LocatedException extends Exception
      * Add to the location stack all locations of an exception chain. This allows to have all possible
      * location information in the stacktrace, as some exceptions like SAXParseException don't output
      * their location in printStackTrace().
-     * <p>
+     * <p/>
      * Traversal of the call chain stops at the first <code>Locatable</code> exception which is supposed
      * to handle the loction of its causes by itself.
-     * <p>
+     * <p/>
      * This method is static as a convenience for {@link LocatedRuntimeException other implementations}
      * of locatable exceptions.
      *
-     * @param self the current locatable exception
+     * @param self  the current locatable exception
      * @param cause a cause of <code>self</code>
      */
     public static void addCauseLocations(MultiLocatable self, Throwable cause) {
@@ -116,7 +117,7 @@ public class LocatedException extends Exception
             String name = cause.getClass().getName();
             int pos = name.lastIndexOf('.');
             if (pos != -1) {
-                name = name.substring(pos+1);
+                name = name.substring(pos + 1);
             }
             loc = new LocationImpl("[" + name + "]", loc.getURI(), loc.getLineNumber(), loc.getColumnNumber());
             self.addLocation(loc);
@@ -125,7 +126,7 @@ public class LocatedException extends Exception
 
     @Override
     public Location getLocation() {
-        return locations == null ? null : (Location) locations.get(0);
+        return locations == null ? null : (Location)locations.get(0);
     }
 
     @Override
@@ -142,9 +143,8 @@ public class LocatedException extends Exception
      * Standard way of building the message of a {@link LocatableException}, as a Java-like
      * stack trace of locations.
      *
-     * @param message the exception's message, given by <code>super.getMessage()</code> (can be null)
+     * @param message   the exception's message, given by <code>super.getMessage()</code> (can be null)
      * @param locations the location list (can be null)
-     *
      * @return the message, or <code>null</code> no message and locations were given.
      */
     public static String getMessage(String message, List locations) {

@@ -15,6 +15,12 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -26,12 +32,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.xml.XMLConstants;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
@@ -165,8 +165,9 @@ public class IndexerConfBuilder {
                 // happens to be an existing namespace prefix, than substitute the prefix for the full URI.
                 if (!WildcardPattern.isWildcardExpression(matchNamespaceAttr)) {
                     String uri = caseEl.lookupNamespaceURI(matchNamespaceAttr);
-                    if (uri != null)
+                    if (uri != null) {
                         matchNamespaceAttr = uri;
+                    }
                 }
                 matchNamespace = new WildcardPattern(matchNamespaceAttr);
             }
@@ -285,7 +286,7 @@ public class IndexerConfBuilder {
         }
 
         try {
-            return (Formatter) formatterClass.newInstance();
+            return (Formatter)formatterClass.newInstance();
         } catch (Exception e) {
             throw new IndexerConfException("Error instantiating formatter class " + className, e);
         }
@@ -294,8 +295,9 @@ public class IndexerConfBuilder {
     private Map<String, String> parseVariantPropertiesPattern(Element caseEl, String attrName) throws Exception {
         String variant = DocumentHelper.getAttribute(caseEl, attrName, false);
 
-        if (variant == null)
+        if (variant == null) {
             return null;
+        }
 
         Map<String, String> varPropsPattern = new HashMap<String, String>();
 
@@ -321,8 +323,9 @@ public class IndexerConfBuilder {
     private Set<SchemaId> parseVersionTags(String vtagsSpec) throws IndexerConfException, InterruptedException {
         Set<SchemaId> vtags = new HashSet<SchemaId>();
 
-        if (vtagsSpec == null)
+        if (vtagsSpec == null) {
             return vtags;
+        }
 
         for (String tag : COMMA_SPLITTER.split(vtagsSpec)) {
             try {
@@ -401,7 +404,7 @@ public class IndexerConfBuilder {
     public void addChildNodes(Element el, ContainerMappingNode parent, String... allowedTagNames) throws Exception {
         Set<String> allowed = Sets.newHashSet(allowedTagNames);
 
-        for (Element childEl: DocumentHelper.getElementChildren(el)) {
+        for (Element childEl : DocumentHelper.getElementChildren(el)) {
             String name = childEl.getTagName();
 
             if (!allowed.contains(name)) {
@@ -414,8 +417,8 @@ public class IndexerConfBuilder {
                 parent.addChildNode(buildMatchNode(childEl));
             } else if (name.equals("field")) {
                 final IndexField indexField;
-                if (parent instanceof ForEachNode && ((ForEachNode) parent).getFollow() instanceof ForwardVariantFollow) {
-                    indexField = buildIndexField(childEl, ((ForwardVariantFollow) ((ForEachNode)parent).getFollow()).getDimensions().keySet());
+                if (parent instanceof ForEachNode && ((ForEachNode)parent).getFollow() instanceof ForwardVariantFollow) {
+                    indexField = buildIndexField(childEl, ((ForwardVariantFollow)((ForEachNode)parent).getFollow()).getDimensions().keySet());
                 } else {
                     indexField = buildIndexField(childEl, null);
                 }
@@ -443,8 +446,9 @@ public class IndexerConfBuilder {
                 // happens to be an existing namespace prefix, than substitute the prefix for the full URI.
                 if (!WildcardPattern.isWildcardExpression(matchNamespaceAttr)) {
                     String uri = fieldEl.lookupNamespaceURI(matchNamespaceAttr);
-                    if (uri != null)
+                    if (uri != null) {
                         matchNamespaceAttr = uri;
+                    }
                 }
                 matchNamespace = new WildcardPattern(matchNamespaceAttr);
             }
@@ -487,10 +491,12 @@ public class IndexerConfBuilder {
             variables.add("nestedType");
             variables.add("nestedBaseType");
             variables.add("deepestNestedBaseType");
-            if (matchName != null && matchName.hasWildcard())
+            if (matchName != null && matchName.hasWildcard()) {
                 variables.add("nameMatch");
-            if (matchNamespace != null && matchNamespace.hasWildcard())
+            }
+            if (matchNamespace != null && matchNamespace.hasWildcard()) {
                 variables.add("namespaceMatch");
+            }
 
             NameTemplate name;
             try {
@@ -571,14 +577,14 @@ public class IndexerConfBuilder {
         final Value value = buildValue(fieldEl, derefParts[derefParts.length - 1]);
 
         boolean lastFollowIsRecord = false;
-        for (Follow follow: follows) {
+        for (Follow follow : follows) {
             if (lastFollowIsRecord) {
                 if (follow instanceof VariantFollow ||
                         follow instanceof ForwardVariantFollow ||
                         follow instanceof MasterFollow) {
                     String locationString = LocationAttributes.getLocationString(fieldEl);
                     throw new IndexerConfException("In deref expressions, a variant(+/-/master) follow" +
-                    		" cannot follow after a record field. Location: " + locationString);
+                            " cannot follow after a record field. Location: " + locationString);
                 }
             }
             if (follow instanceof RecordFieldFollow) {
@@ -718,8 +724,9 @@ public class IndexerConfBuilder {
                 break;
             }
         }
-        if (dimensions.size() == 0)
+        if (dimensions.size() == 0) {
             validConfig = false;
+        }
 
         if (!validConfig) {
             throw new IndexerConfException("Invalid specification of variants to follow: '" + derefPart);
@@ -755,8 +762,9 @@ public class IndexerConfBuilder {
                 break;
             }
         }
-        if (dimensions.size() == 0)
+        if (dimensions.size() == 0) {
             validConfig = false;
+        }
 
         if (!validConfig) {
             throw new IndexerConfException("Invalid specification of variants to follow: '" + derefPart);
@@ -827,8 +835,9 @@ public class IndexerConfBuilder {
         }
 
         private void addException(SAXParseException exception) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append("\n");
+            }
 
             builder.append("[").append(exception.getLineNumber()).append(":").append(exception.getColumnNumber());
             builder.append("] ").append(exception.getMessage());

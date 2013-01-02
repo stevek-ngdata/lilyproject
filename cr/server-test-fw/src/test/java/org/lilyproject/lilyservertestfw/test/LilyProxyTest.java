@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -47,7 +46,7 @@ import org.lilyproject.repository.api.TypeManager;
 
 public class LilyProxyTest {
     private static final QName RECORDTYPE1 = new QName("org.lilyproject.lilytestutility", "TestRecordType");
-    private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility","name");
+    private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility", "name");
     private static LilyProxy lilyProxy;
     private static LilyClient lilyClient;
     private Repository repository;
@@ -97,8 +96,8 @@ public class LilyProxyTest {
 
         Assert.assertTrue(recordIds.contains(record.getId()));
 
-        System.out.println("Original record:" +record.getId().toString());
-        System.out.println("Queried record:" +recordIds.get(0).toString());
+        System.out.println("Original record:" + record.getId().toString());
+        System.out.println("Queried record:" + recordIds.get(0).toString());
 
         //
         // Batch index build scenario
@@ -145,8 +144,8 @@ public class LilyProxyTest {
     private List<RecordId> querySolr(String name) throws SolrServerException {
         SolrServer solr = lilyProxy.getSolrProxy().getSolrServer();
         SolrQuery solrQuery = new SolrQuery();
-      //set default search field (no longer supported in schema.xml
-        solrQuery.set("df","name");
+        //set default search field (no longer supported in schema.xml
+        solrQuery.set("df", "name");
         solrQuery.setQuery(name);
         solrQuery.set("fl", "lily.id");
         QueryResponse response = solr.query(solrQuery);
@@ -154,7 +153,7 @@ public class LilyProxyTest {
         SolrDocumentList solrDocumentList = response.getResults();
         List<RecordId> recordIds = new ArrayList<RecordId>();
         for (SolrDocument solrDocument : solrDocumentList) {
-            String recordId = (String) solrDocument.getFirstValue("lily.id");
+            String recordId = (String)solrDocument.getFirstValue("lily.id");
             recordIds.add(repository.getIdGenerator().fromString(recordId));
         }
         return recordIds;

@@ -15,6 +15,8 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.util.Arrays;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -26,8 +28,6 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.lilyproject.util.zookeeper.ZooKeeperOperation;
-
-import java.util.Arrays;
 
 // About the IndexLocker:
 //
@@ -71,7 +71,7 @@ public class IndexLocker {
 
     private Log log = LogFactory.getLog(getClass());
 
-    private static final String LOCK_PATH = "/lily/indexer/recordlock";        
+    private static final String LOCK_PATH = "/lily/indexer/recordlock";
 
     public IndexLocker(ZooKeeperItf zk, boolean enabled) throws InterruptedException, KeeperException {
         this.zk = zk;
@@ -89,7 +89,7 @@ public class IndexLocker {
     /**
      * Obtain a lock for the given record. The lock is thread-based, i.e. it is re-entrant, obtaining
      * a lock for the same record twice from the same {ZK session, thread} will silently succeed.
-     *
+     * <p/>
      * <p>If this method returns without failure, you obtained the lock
      *
      * @throws IndexLockTimeoutException if the lock could not be obtained within the given timeout.
@@ -153,8 +153,9 @@ public class IndexLocker {
                 Thread.sleep(waitBetweenTries);
             }
         } catch (Throwable throwable) {
-            if (throwable instanceof IndexLockException)
+            if (throwable instanceof IndexLockException) {
                 throw (IndexLockException)throwable;
+            }
             throw new IndexLockException("Error taking index lock on record " + recordId, throwable);
         }
     }

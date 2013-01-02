@@ -24,14 +24,14 @@ import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.Namespaces;
 
 public interface RecordFilterJsonConverter<T extends RecordFilter> {
-    
+
     boolean supports(String typeName);
 
     ObjectNode toJson(T filter, Namespaces namespaces, Repository repository,
-            RecordFilterJsonConverter<RecordFilter> converter)
+                      RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException;
 
     T fromJson(JsonNode node, Namespaces namespaces, Repository repository,
-            RecordFilterJsonConverter<RecordFilter> converter)
+               RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException;
 }

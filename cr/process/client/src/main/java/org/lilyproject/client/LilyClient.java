@@ -70,7 +70,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 /**
  * Provides remote repository implementations.
- *
+ * <p/>
  * <p>Connects to zookeeper to find out available repository nodes.
  */
 public class LilyClient implements Closeable {
@@ -181,7 +181,7 @@ public class LilyClient implements Closeable {
             throw new NoServersException("No servers available");
         }
 
-        int pos = (int) Math.floor(Math.random() * servers.size());
+        int pos = (int)Math.floor(Math.random() * servers.size());
         ServerNode server = servers.get(pos);
         if (server.repository == null) {
             constructRepository(server);
@@ -196,7 +196,7 @@ public class LilyClient implements Closeable {
     /**
      * Returns a repository instance which will automatically balance requests over the available
      * Lily servers, and will retry operations according to what is specified in {@link RetryConf}.
-     *
+     * <p/>
      * <p>To see some information when the client goes into retry mode, enable INFO logging for
      * the category org.lilyproject.client.
      */
@@ -226,7 +226,7 @@ public class LilyClient implements Closeable {
     /**
      * Returns an indexer instance which will automatically balance requests over the available
      * Lily servers, and will retry operations according to what is specified in {@link RetryConf}.
-     *
+     * <p/>
      * <p>To see some information when the client goes into retry mode, enable INFO logging for
      * the category org.lilyproject.client.
      */
@@ -317,7 +317,7 @@ public class LilyClient implements Closeable {
             configuration.set(HConstants.HBASE_CLIENT_INSTANCE_ID, String.valueOf("lilyclient-" + hbaseConfCounter.incrementAndGet()));
 
             byte[] data = zk.getData(hbaseConfigPath, false, new Stat());
-            ObjectNode propertiesNode = (ObjectNode) JsonFormat.deserializeSoft(data, "HBase configuration");
+            ObjectNode propertiesNode = (ObjectNode)JsonFormat.deserializeSoft(data, "HBase configuration");
             Iterator<Map.Entry<String, JsonNode>> it = propertiesNode.getFields();
             while (it.hasNext()) {
                 Map.Entry<String, JsonNode> entry = it.next();

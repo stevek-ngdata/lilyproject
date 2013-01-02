@@ -20,15 +20,15 @@ package org.lilyproject.repository.api;
  * types. It makes use of method-chaining to define a sort of mini internal DSL
  * / fluent API. The intention is to have easier to read and write Java code,
  * functionally it offers nothing more than the core {@link TypeManager} API.
- *
+ * <p/>
  * <p>Alternatively you should consider declaring the schema in an external
  * file and importing that, as is provided by Lily's JSON import tool.</p>
- *
+ * <p/>
  * <p>A new RecordTypeBuilder object can be obtained by calling {@link TypeManager#recordTypeBuilder()}
- *
+ * <p/>
  * <p>Each method either returns a new RecordTypeBuilder object on which the next method can
  * be called, or returns an actual RecordType object.
- *
+ * <p/>
  * <p>For a tutorial on using this builder, see the Lily documentation.
  */
 public interface RecordTypeBuilder {
@@ -61,7 +61,7 @@ public interface RecordTypeBuilder {
      * Sets the name of the record type.
      */
     RecordTypeBuilder name(QName name);
-    
+
     /**
      * Sets the id of the record type. This is only relevant when you want
      * to update an existing record type, and even then the ID is only
@@ -69,14 +69,14 @@ public interface RecordTypeBuilder {
      * you prefer to rely on the unchangeable ID to identify the record type.
      */
     RecordTypeBuilder id(SchemaId id);
-    
+
     /**
      * Adds a field type to the record type.
-     *
+     * <p/>
      * <p>Alternatively, you can use the dedicated builder provided through
      * {@link #fieldEntry()} which offers more possibilities.
      *
-     * @param id SchemaId of the field type
+     * @param id        SchemaId of the field type
      * @param mandatory true if it is a mandatory field
      */
     RecordTypeBuilder field(SchemaId id, boolean mandatory);
@@ -103,35 +103,35 @@ public interface RecordTypeBuilder {
     /**
      * Creates a new record type on the repository with the properties
      * that were added to the builder.
-     *
+     * <p/>
      * <p>This will give an exception if a record type with the given
      * name already exists, use {@link #createOrUpdate()} to dynamically
      * switch between create and update.
      *
-     * @see {@link TypeManager#createRecordType(RecordType)}
      * @return the created record type
+     * @see {@link TypeManager#createRecordType(RecordType)}
      */
     RecordType create() throws RepositoryException, InterruptedException;
 
     /**
      * Performs a createOrUpdateRecordType operation on {@link TypeManager}.
-     *
+     * <p/>
      * <p>This method is interesting in case you don't know if the type </p>
      *
-     * @see {@link TypeManager#createOrUpdateRecordType(RecordType)}
      * @return the created or updated record type
+     * @see {@link TypeManager#createOrUpdateRecordType(RecordType)}
      */
     RecordType createOrUpdate() throws RepositoryException, InterruptedException;
-    
+
     /**
      * Updates a record type on the repository with the properties
      * that were added to the builder..
      *
-     * @see {@link TypeManager#updateRecordType(RecordType)}
      * @return the updated record type
+     * @see {@link TypeManager#updateRecordType(RecordType)}
      */
     RecordType update() throws RepositoryException, InterruptedException;
-    
+
     /**
      * Returns a RecordType object containing the properties that were added
      * to the builder without actually creating it on the repository.

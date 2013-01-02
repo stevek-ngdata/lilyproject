@@ -15,6 +15,8 @@
  */
 package org.lilyproject.util.zookeeper.test;
 
+import java.io.File;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -27,9 +29,6 @@ import org.lilyproject.util.net.NetUtils;
 import org.lilyproject.util.zookeeper.ZkLock;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-
-import java.io.File;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -60,7 +59,7 @@ public class ZkLockTest {
     public static void tearDownAfterClass() throws Exception {
         Closer.close(ZK);
         if (ZK_CLUSTER != null) {
-            ZK_CLUSTER.shutdown();            
+            ZK_CLUSTER.shutdown();
         }
     }
 
@@ -74,6 +73,7 @@ public class ZkLockTest {
     /**
      * Tests the following: first user takes lock, then second user tries to take lock before first has released
      * it. Then first releases it, after this second user gets the lock.
+     *
      * @throws Exception
      */
     @Test

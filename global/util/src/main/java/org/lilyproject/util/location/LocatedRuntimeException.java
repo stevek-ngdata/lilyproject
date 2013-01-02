@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * A cascading and located <code>RuntimeException</code>. It is also {@link MultiLocatable} to easily build
  * location stack traces.
- * <p>
+ * <p/>
  * If a <code>LocatedRuntimeException</code> is built with a location and a cause which is also a
  * <code>LocatedRuntimeException</code>, then the default behavior is to add the location to the cause
  * exception and immediately rethrow the cause. This avoids exception nesting and builds a location
@@ -36,7 +36,7 @@ import java.util.List;
  * @since 2.1.8
  */
 public class LocatedRuntimeException extends RuntimeException
-                                     implements LocatableException, MultiLocatable {
+        implements LocatableException, MultiLocatable {
 
     private List locations;
 
@@ -45,7 +45,7 @@ public class LocatedRuntimeException extends RuntimeException
     }
 
     public LocatedRuntimeException(String message, Throwable cause)
-    throws LocatedRuntimeException {
+            throws LocatedRuntimeException {
         this(message, cause, null, true);
     }
 
@@ -54,12 +54,12 @@ public class LocatedRuntimeException extends RuntimeException
     }
 
     public LocatedRuntimeException(String message, Throwable cause, Location location)
-    throws LocatedRuntimeException {
+            throws LocatedRuntimeException {
         this(message, cause, location, true);
     }
 
     public LocatedRuntimeException(String message, Throwable cause, Location location, boolean rethrowLocated)
-    throws LocatedRuntimeException {
+            throws LocatedRuntimeException {
         super(message, cause);
         if (rethrowLocated && cause instanceof LocatedRuntimeException) {
             LocatedRuntimeException lreCause = (LocatedRuntimeException)cause;
@@ -75,7 +75,7 @@ public class LocatedRuntimeException extends RuntimeException
 
     @Override
     public Location getLocation() {
-        return locations == null ? null : (Location) locations.get(0);
+        return locations == null ? null : (Location)locations.get(0);
     }
 
     @Override

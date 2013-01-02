@@ -135,7 +135,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withArgName("batchconfig.json")
                 .hasOptionalArg()
                 .withDescription("Default configuration for batch builds in this index. If no value is provided" +
-                		"then the default batch index configuration will be removed.")
+                        "then the default batch index configuration will be removed.")
                 .withLongOpt("default-batch-config")
                 .create("dbi");
 
@@ -143,7 +143,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withArgName("batchconfig.json")
                 .hasArg()
                 .withDescription("Configuration for the current batch build of this index. Build state must be set" +
-                		" to BUILD_REQUESTED.")
+                        " to BUILD_REQUESTED.")
                 .withLongOpt("batch-config")
                 .create("bi");
 
@@ -185,14 +185,14 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withDescription("Print the sharding configuration.")
                 .create("pp");
 
-        solrCollectionOption =  OptionBuilder
+        solrCollectionOption = OptionBuilder
                 .withArgName("collection")
                 .hasArg()
                 .withDescription("Solr collection")
                 .withLongOpt("collection")
                 .create("sc");
 
-        solrZkOption =  OptionBuilder
+        solrZkOption = OptionBuilder
                 .withArgName("Zookeeper connection string")
                 .hasArg()
                 .withDescription("Zookeeper connection string for Solr")
@@ -206,7 +206,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withLongOpt("solr-mode")
                 .create("sm");
 
-        enableDerefMapOption =  OptionBuilder
+        enableDerefMapOption = OptionBuilder
                 .withArgName("enable deref map")
                 .hasArg()
                 .withDescription("By default a deref map is maintained in HBase to resolve dependencies " +
@@ -262,8 +262,9 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int result = super.processOptions(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (cmd.hasOption(nameOption.getOpt())) {
             indexName = cmd.getOptionValue(nameOption.getOpt());
@@ -333,7 +334,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
             String optionValue = cmd.getOptionValue(shardingConfigurationOption.getOpt());
             if (optionValue != null) {
                 File configurationFile = new File(optionValue);
-    
+
                 if (!configurationFile.exists()) {
                     System.out.println("Specified sharding configuration file not found:");
                     System.out.println(configurationFile.getAbsolutePath());
@@ -492,8 +493,9 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
 
@@ -526,8 +528,9 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
             Collection<IndexDefinition> indexes = model.getIndexes();
             for (String uri : solrShards.values()) {
                 for (IndexDefinition index : indexes) {
-                    if (indexName != null && index.getName().equals(indexName))
+                    if (indexName != null && index.getName().equals(indexName)) {
                         continue;
+                    }
 
                     for (String uri2 : index.getSolrShards().values()) {
                         if (uri.equals(uri2)) {
@@ -562,8 +565,9 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     private String getStates(Enum[] values) {
         StringBuilder builder = new StringBuilder();
         for (Enum value : values) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append(", ");
+            }
             builder.append(value);
         }
         return builder.toString();

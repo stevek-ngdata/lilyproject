@@ -15,13 +15,17 @@
  */
 package org.lilyproject.repository.api;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * A hierarchical path value. This kind of value specifies a hierarchical path consisting of path segments.
- *
+ * <p/>
  * <p>See {@link ValueType}.
- *
  */
 public class HierarchyPath implements List<Object>, Cloneable {
 
@@ -31,11 +35,11 @@ public class HierarchyPath implements List<Object>, Cloneable {
         this.elements = new ArrayList<Object>(elements.length);
         Collections.addAll(this.elements, elements);
     }
-    
+
     public Object[] getElements() {
         return toArray();
     }
-    
+
     public int length() {
         return size();
     }

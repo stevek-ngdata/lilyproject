@@ -17,45 +17,48 @@ package org.lilyproject.bytes.impl.test;
 
 import java.util.Random;
 
+import junit.framework.TestCase;
 import org.junit.Assert;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 
-import junit.framework.TestCase;
-
 /**
  * Test the encodings used in DataInputImpl and DataOutputImpl
- * 
+ * <p/>
  * <p>The code to generate the randomUnicodeString has been based on code from Lucene class :
- * <code>org.apache.lucene.util._TestUtil.java</code> 
+ * <code>org.apache.lucene.util._TestUtil.java</code>
  */
 public class TestDataInputOutput extends TestCase {
     private Random random = new Random(System.currentTimeMillis());
 
-    /** start and end are BOTH inclusive */
+    /**
+     * start and end are BOTH inclusive
+     */
     public int nextInt(int start, int end) {
-      return start + random.nextInt(end-start+1);
+        return start + random.nextInt(end - start + 1);
     }
 
-    /** Returns random string, including full unicode range. */
+    /**
+     * Returns random string, including full unicode range.
+     */
     public String randomUnicodeString() {
-      return randomUnicodeString(20);
+        return randomUnicodeString(20);
     }
 
     /**
      * Returns a random string up to a certain length.
      */
     public String randomUnicodeString(int maxLength) {
-      final int end = random.nextInt(maxLength);
-      if (end == 0) {
-        // allow 0 length
-        return "";
-      }
-      final char[] buffer = new char[end];
-      randomFixedLengthUnicodeString(buffer, 0, buffer.length);
-      return new String(buffer, 0, end);
+        final int end = random.nextInt(maxLength);
+        if (end == 0) {
+            // allow 0 length
+            return "";
+        }
+        final char[] buffer = new char[end];
+        randomFixedLengthUnicodeString(buffer, 0, buffer.length);
+        return new String(buffer, 0, end);
     }
 
     /**
@@ -63,28 +66,28 @@ public class TestDataInputOutput extends TestCase {
      * unit sequence.
      */
     public void randomFixedLengthUnicodeString(char[] chars, int offset, int length) {
-      int i = offset;
-      final int end = offset + length;
-      while(i < end) {
-        final int t = random.nextInt(5);
-        if (0 == t && i < length - 1) {
-          // Make a surrogate pair
-          // High surrogate
-          chars[i++] = (char) nextInt(0xd800, 0xdbff);
-          // Low surrogate
-          chars[i++] = (char) nextInt(0xdc00, 0xdfff);
-        } else if (t <= 1) {
-          chars[i++] = (char) random.nextInt(0x80);
-        } else if (2 == t) {
-          chars[i++] = (char) nextInt(0x80, 0x800);
-        } else if (3 == t) {
-          chars[i++] = (char) nextInt(0x800, 0xd7ff);
-        } else if (4 == t) {
-          chars[i++] = (char) nextInt(0xe000, 0xffff);
+        int i = offset;
+        final int end = offset + length;
+        while (i < end) {
+            final int t = random.nextInt(5);
+            if (0 == t && i < length - 1) {
+                // Make a surrogate pair
+                // High surrogate
+                chars[i++] = (char)nextInt(0xd800, 0xdbff);
+                // Low surrogate
+                chars[i++] = (char)nextInt(0xdc00, 0xdfff);
+            } else if (t <= 1) {
+                chars[i++] = (char)random.nextInt(0x80);
+            } else if (2 == t) {
+                chars[i++] = (char)nextInt(0x80, 0x800);
+            } else if (3 == t) {
+                chars[i++] = (char)nextInt(0x800, 0xd7ff);
+            } else if (4 == t) {
+                chars[i++] = (char)nextInt(0xe000, 0xffff);
+            }
         }
-      }
     }
-    
+
     public void testRandomString() {
         for (int i = 0; i < 1000; i++) {
             String string = randomUnicodeString();
@@ -114,17 +117,17 @@ public class TestDataInputOutput extends TestCase {
         int i = 0;
         // Make a surrogate pair
         // High surrogate
-        chars[i++] = (char) nextInt(0xd800, 0xdbff);
+        chars[i++] = (char)nextInt(0xd800, 0xdbff);
         // Low surrogate
-        chars[i++] = (char) nextInt(0xdc00, 0xdfff);
+        chars[i++] = (char)nextInt(0xdc00, 0xdfff);
         // 1
-        chars[i++] = (char) random.nextInt(0x80);
+        chars[i++] = (char)random.nextInt(0x80);
         // 2
-        chars[i++] = (char) nextInt(0x80, 0x800);
+        chars[i++] = (char)nextInt(0x80, 0x800);
         // 3
-        chars[i++] = (char) nextInt(0x800, 0xd7ff);
+        chars[i++] = (char)nextInt(0x800, 0xd7ff);
         // 4
-        chars[i++] = (char) nextInt(0xe000, 0xffff);
+        chars[i++] = (char)nextInt(0xe000, 0xffff);
         String string = new String(chars);
         DataOutputImpl dataOutputImpl = new DataOutputImpl();
         dataOutputImpl.writeUTF(string);
@@ -143,7 +146,7 @@ public class TestDataInputOutput extends TestCase {
         String readUTF = dataInputImpl.readUTF();
         Assert.assertEquals(string, readUTF);
     }
-    
+
     public void testRussian() {
         DataOutputImpl dataOutputImpl = new DataOutputImpl();
         String string = "ТЕСТ"; // Note, these are russian characters
@@ -153,7 +156,7 @@ public class TestDataInputOutput extends TestCase {
         String readUTF = dataInputImpl.readUTF();
         Assert.assertEquals(string, readUTF);
     }
-    
+
     public void testAllTypes() {
         DataOutput dataOutput = new DataOutputImpl();
         boolean b = random.nextBoolean();
@@ -176,7 +179,7 @@ public class TestDataInputOutput extends TestCase {
         dataOutput.writeUTF(string);
         dataOutput.writeVInt(Math.abs(i));
         dataOutput.writeVLong(Math.abs(l));
-        
+
         byte[] data = dataOutput.toByteArray();
         DataInput dataInput = new DataInputImpl(data);
         Assert.assertEquals(b, dataInput.readBoolean());

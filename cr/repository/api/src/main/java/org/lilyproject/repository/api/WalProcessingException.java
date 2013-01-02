@@ -27,7 +27,7 @@ public class WalProcessingException extends RepositoryException {
         this.recordId = state.get("recordId");
         this.info = state.get("info");
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
@@ -35,7 +35,7 @@ public class WalProcessingException extends RepositoryException {
         state.put("info", info);
         return state;
     }
-    
+
     public WalProcessingException(RecordId recordId, String info) {
         this.info = info;
         this.recordId = recordId != null ? recordId.toString() : null;

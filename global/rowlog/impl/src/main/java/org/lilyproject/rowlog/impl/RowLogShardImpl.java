@@ -19,7 +19,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
@@ -40,7 +45,7 @@ public class RowLogShardImpl implements RowLogShard {
     private final List<Delete> messagesToDelete;
     private long lastDelete;
     // while 0 is a valid unicode codepoint, it will only occur in utf-8 when using the NULL char
-    private byte[] END_OF_SUBSCRIPTION_NAME_MARKER = new byte[] { (byte)0 };
+    private byte[] END_OF_SUBSCRIPTION_NAME_MARKER = new byte[]{(byte)0};
 
     public RowLogShardImpl(String id, byte[] rowKeyPrefix, HTableInterface table, RowLog rowLog, int deleteBufferSize)
             throws IOException {
@@ -86,11 +91,11 @@ public class RowLogShardImpl implements RowLogShard {
 
     /**
      * Removing a message is batched.
-     *
+     * <p/>
      * <p>A message will only be removed, either when the deleteBufferSize is reached, the last time messages were
      * removed was 5 minutes ago or new batch of messages is requested from the shard. See {@link #next(String, Long, int)}.
      * In case many messages are being processed, this will reduce the number of delete calls on the HBase table to approximately 1
-     * per batch. 
+     * per batch.
      */
     @Override
     public void removeMessage(RowLogMessage message, String subscription) throws RowLogException {
@@ -128,7 +133,9 @@ public class RowLogShardImpl implements RowLogShard {
         }
         try {
             if ((deletes != null) && !deletes.isEmpty()) // Avoid unnecessary deletes
+            {
                 table.delete(deletes);
+            }
         } catch (IOException e) {
             throw new RowLogException("Failed to remove messages from RowLogShard", e);
         }
@@ -145,8 +152,9 @@ public class RowLogShardImpl implements RowLogShard {
         flushMessageDeleteBuffer();
         byte[] rowPrefix = Bytes.add(rowKeyPrefix, Bytes.toBytes(subscription), END_OF_SUBSCRIPTION_NAME_MARKER);
         byte[] startRow = rowPrefix;
-        if (minimalTimestamp != null) 
+        if (minimalTimestamp != null) {
             startRow = Bytes.add(startRow, Bytes.toBytes(minimalTimestamp));
+        }
         try {
             List<RowLogMessage> rowLogMessages = new ArrayList<RowLogMessage>();
             Scan scan = new Scan(startRow);
@@ -169,8 +177,9 @@ public class RowLogShardImpl implements RowLogShard {
 
             for (int i = 0; i < batchSize; i++) {
                 Result result = scanner.next();
-                if (result == null)
+                if (result == null) {
                     break;
+                }
 
                 byte[] rowKey = result.getRow();
                 // This check should be unnecessary because the scan should only return relevant messages
@@ -199,11 +208,11 @@ public class RowLogShardImpl implements RowLogShard {
 
         byte[] rowKey = new byte[
                 rowKeyPrefix.length +
-                subscriptionBytes.length +
-                END_OF_SUBSCRIPTION_NAME_MARKER.length +
-                Bytes.SIZEOF_LONG +
-                Bytes.SIZEOF_LONG +
-                msgRowkey.length];
+                        subscriptionBytes.length +
+                        END_OF_SUBSCRIPTION_NAME_MARKER.length +
+                        Bytes.SIZEOF_LONG +
+                        Bytes.SIZEOF_LONG +
+                        msgRowkey.length];
 
         System.arraycopy(rowKeyPrefix, 0, rowKey, 0, rowKeyPrefix.length);
         int offset = rowKeyPrefix.length;
@@ -227,7 +236,7 @@ public class RowLogShardImpl implements RowLogShard {
     private RowLogMessage decodeMessage(byte[] messageId, byte[] data) {
         long timestamp = Bytes.toLong(messageId);
         long seqNr = Bytes.toLong(messageId, Bytes.SIZEOF_LONG);
-        byte[] rowKey = Bytes.tail(messageId, messageId.length - (2*Bytes.SIZEOF_LONG));
+        byte[] rowKey = Bytes.tail(messageId, messageId.length - (2 * Bytes.SIZEOF_LONG));
         return new RowLogMessageImpl(timestamp, rowKey, seqNr, data, rowLog);
     }
 

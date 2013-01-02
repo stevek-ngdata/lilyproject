@@ -89,8 +89,9 @@ public class VTaggedRecord {
         this.typeManager = repository.getTypeManager();
         this.record = idRecord;
         this.recordEventHelper = eventHelper;
-        if (eventHelper != null)
+        if (eventHelper != null) {
             this.recordEvent = eventHelper.getEvent();
+        }
     }
 
     public RecordId getId() {
@@ -129,7 +130,7 @@ public class VTaggedRecord {
 
     /**
      * The set of vtags defined on the record, including the last vtag.
-     *
+     * <p/>
      * <p>Note that version numbers do not necessarily correspond to existing versions, a user might
      * have defined invalid vtags.
      */
@@ -156,7 +157,7 @@ public class VTaggedRecord {
             }
 
             if (VersionTag.isVersionTag(fieldType)) {
-                vtags.put(fieldType.getId(), (Long) field.getValue());
+                vtags.put(fieldType.getId(), (Long)field.getValue());
             }
         }
 
@@ -258,7 +259,7 @@ public class VTaggedRecord {
 
     /**
      * Removes any versioned information from the supplied record object.
-     *
+     * <p/>
      * <p>This method can be removed once we have a repository method that is able to filter this when loading
      * the record.
      */
@@ -282,7 +283,7 @@ public class VTaggedRecord {
         }
 
         // Remove versioned record type info
-        record.setRecordType(Scope.VERSIONED, (QName) null, null);
-        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName) null, null);
+        record.setRecordType(Scope.VERSIONED, (QName)null, null);
+        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName)null, null);
     }
 }

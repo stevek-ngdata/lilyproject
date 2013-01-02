@@ -33,7 +33,7 @@ public class HBaseRecordIdPrefixFilter implements HBaseRecordFilterFactory {
             return null;
         }
 
-        RecordIdPrefixFilter filter = (RecordIdPrefixFilter) uncastFilter;
+        RecordIdPrefixFilter filter = (RecordIdPrefixFilter)uncastFilter;
 
         if (filter.getRecordId() == null) {
             throw new IllegalArgumentException("Record ID should be specified in RecordIdPrefixFilter");

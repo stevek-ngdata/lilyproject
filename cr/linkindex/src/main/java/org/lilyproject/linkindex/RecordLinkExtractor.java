@@ -15,10 +15,20 @@
  */
 package org.lilyproject.linkindex;
 
-import org.lilyproject.repository.api.*;
-
 import java.util.List;
 import java.util.Map;
+
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.ValueType;
 
 public class RecordLinkExtractor {
     /**
@@ -43,7 +53,7 @@ public class RecordLinkExtractor {
      * This is for link extraction from nested records.
      */
     private static void extractRecord(Record record, LinkCollector collector, FieldType ctxField, RecordId ctxRecord,
-            Repository repository)
+                                      Repository repository)
             throws RepositoryException, InterruptedException {
         for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
             FieldType fieldType;
@@ -62,7 +72,7 @@ public class RecordLinkExtractor {
     }
 
     private static void extract(Object value, FieldType fieldType, LinkCollector collector, FieldType ctxField,
-            RecordId ctxRecord, Repository repository) throws RepositoryException, InterruptedException {
+                                RecordId ctxRecord, Repository repository) throws RepositoryException, InterruptedException {
 
         ValueType valueType = fieldType.getValueType();
 
@@ -74,7 +84,7 @@ public class RecordLinkExtractor {
     }
 
     private static void extract(Object value, LinkCollector collector, FieldType ctxField, RecordId ctxRecord,
-            Repository repository) throws RepositoryException, InterruptedException {
+                                Repository repository) throws RepositoryException, InterruptedException {
 
         if (value instanceof List) {
             List list = (List)value;

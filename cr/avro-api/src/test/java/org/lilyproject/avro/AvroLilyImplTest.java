@@ -15,10 +15,6 @@
  */
 package org.lilyproject.avro;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +29,8 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.TypeManager;
+
+import static org.mockito.Mockito.*;
 
 public class AvroLilyImplTest {
 

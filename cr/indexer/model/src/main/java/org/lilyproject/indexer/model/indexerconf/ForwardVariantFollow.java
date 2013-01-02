@@ -49,7 +49,7 @@ public class ForwardVariantFollow implements Follow {
                 callback.call();
                 indexUpdateBuilder.pop();
             } else {
-                for (Record record: result) {
+                for (Record record : result) {
                     indexUpdateBuilder.push(record, newDep);
                     callback.call();
                     indexUpdateBuilder.pop();

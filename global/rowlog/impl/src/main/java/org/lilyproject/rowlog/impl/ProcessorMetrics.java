@@ -15,6 +15,8 @@
  */
 package org.lilyproject.rowlog.impl;
 
+import javax.management.ObjectName;
+
 import org.apache.hadoop.hbase.metrics.MetricsRate;
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
@@ -26,8 +28,6 @@ import org.apache.hadoop.metrics.util.MetricsTimeVaryingRate;
 import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 import org.lilyproject.util.hbase.metrics.MetricsNonTimeRate;
-
-import javax.management.ObjectName;
 
 public class ProcessorMetrics implements Updater {
     private final String subscriptionId;
@@ -60,9 +60,9 @@ public class ProcessorMetrics implements Updater {
     @Override
     public void doUpdates(MetricsContext metricsContext) {
         synchronized (this) {
-          for (MetricsBase m : registry.getMetricsList()) {
-            m.pushMetric(metricsRecord);
-          }
+            for (MetricsBase m : registry.getMetricsList()) {
+                m.pushMetric(metricsRecord);
+            }
         }
         metricsRecord.update();
     }
@@ -77,8 +77,9 @@ public class ProcessorMetrics implements Updater {
         }
 
         public void shutdown() {
-            if (mbeanName != null)
+            if (mbeanName != null) {
                 MBeanUtil.unregisterMBean(mbeanName);
+            }
         }
     }
 }

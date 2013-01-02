@@ -15,10 +15,6 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
@@ -27,10 +23,25 @@ import java.util.List;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
+
+import static org.junit.Assert.*;
 
 public class RecordTest {
 
@@ -65,92 +76,92 @@ public class RecordTest {
     @After
     public void tearDown() throws Exception {
     }
-    
-  @Test
-  public void testCloneRecord() throws Exception {
-      String namespace = "testCloneRecord";
-      QName stringFieldName = new QName(namespace, "stringField");
-      QName integerFieldName = new QName(namespace, "integerField");
-      QName longFieldName = new QName(namespace, "longField");
-      QName doubleFieldName = new QName(namespace, "doubleField");
-      QName decimalFieldName = new QName(namespace, "decimalField");
-      QName booleanFieldName = new QName(namespace, "booleanField");
-      QName dateFieldName = new QName(namespace, "dateField");
-      QName dateTimeFieldName = new QName(namespace, "dateTimeField");
-      QName linkFieldName = new QName(namespace, "linkField");
-      QName blobFieldName = new QName(namespace, "blobField");
-      QName uriFieldName = new QName(namespace, "uriField");
-      QName listFieldName = new QName(namespace, "listField");
-      QName pathFieldName = new QName(namespace, "pathField");
-      QName recordFieldName = new QName(namespace, "recordField");
-      QName recordFieldName2 = new QName(namespace, "recordField2");
 
-      
-      String stringValue = "abc";
-      Integer integerValue = 123;
-      Long longValue = 123L;
-      Double doubleValue = new Double(2.2d);
-      BigDecimal decimalValue = BigDecimal.valueOf(Double.MIN_EXPONENT);
-      Boolean booleanValue = true;
-      LocalDate dateValue = new LocalDate(2900, 10, 14);
-      DateTime dateTimeValue = new DateTime(Long.MAX_VALUE);
-      Link linkValue = new Link(idGenerator.newRecordId());
-      Blob blobValue = new Blob(Bytes.toBytes("anotherKey"), "image/jpeg", Long.MIN_VALUE, "images/image.jpg");
-      URI uriValue = URI.create("http://foo.com/bar");
-      List<String> listValue = new ArrayList<String>();
-      listValue.add("abc");
-      HierarchyPath pathValue = new HierarchyPath("abc");
-      Record recordValue = repository.recordBuilder().field(stringFieldName, "foo").build();
-      
-      Record record = repository.recordBuilder()
-          .field(stringFieldName, stringValue)
-          .field(integerFieldName, integerValue)
-          .field(longFieldName, longValue)
-          .field(doubleFieldName, doubleValue)
-          .field(decimalFieldName, decimalValue)
-          .field(booleanFieldName, booleanValue)
-          .field(dateFieldName, dateValue)
-          .field(dateTimeFieldName, dateTimeValue)
-          .field(linkFieldName, linkValue)
-          .field(blobFieldName, blobValue)
-          .field(uriFieldName, uriValue)
-          .field(listFieldName, listValue)
-          .field(pathFieldName, pathValue)
-          .field(recordFieldName, recordValue)
-          .build();
-      
-      // Clone record
+    @Test
+    public void testCloneRecord() throws Exception {
+        String namespace = "testCloneRecord";
+        QName stringFieldName = new QName(namespace, "stringField");
+        QName integerFieldName = new QName(namespace, "integerField");
+        QName longFieldName = new QName(namespace, "longField");
+        QName doubleFieldName = new QName(namespace, "doubleField");
+        QName decimalFieldName = new QName(namespace, "decimalField");
+        QName booleanFieldName = new QName(namespace, "booleanField");
+        QName dateFieldName = new QName(namespace, "dateField");
+        QName dateTimeFieldName = new QName(namespace, "dateTimeField");
+        QName linkFieldName = new QName(namespace, "linkField");
+        QName blobFieldName = new QName(namespace, "blobField");
+        QName uriFieldName = new QName(namespace, "uriField");
+        QName listFieldName = new QName(namespace, "listField");
+        QName pathFieldName = new QName(namespace, "pathField");
+        QName recordFieldName = new QName(namespace, "recordField");
+        QName recordFieldName2 = new QName(namespace, "recordField2");
+
+
+        String stringValue = "abc";
+        Integer integerValue = 123;
+        Long longValue = 123L;
+        Double doubleValue = new Double(2.2d);
+        BigDecimal decimalValue = BigDecimal.valueOf(Double.MIN_EXPONENT);
+        Boolean booleanValue = true;
+        LocalDate dateValue = new LocalDate(2900, 10, 14);
+        DateTime dateTimeValue = new DateTime(Long.MAX_VALUE);
+        Link linkValue = new Link(idGenerator.newRecordId());
+        Blob blobValue = new Blob(Bytes.toBytes("anotherKey"), "image/jpeg", Long.MIN_VALUE, "images/image.jpg");
+        URI uriValue = URI.create("http://foo.com/bar");
+        List<String> listValue = new ArrayList<String>();
+        listValue.add("abc");
+        HierarchyPath pathValue = new HierarchyPath("abc");
+        Record recordValue = repository.recordBuilder().field(stringFieldName, "foo").build();
+
+        Record record = repository.recordBuilder()
+                .field(stringFieldName, stringValue)
+                .field(integerFieldName, integerValue)
+                .field(longFieldName, longValue)
+                .field(doubleFieldName, doubleValue)
+                .field(decimalFieldName, decimalValue)
+                .field(booleanFieldName, booleanValue)
+                .field(dateFieldName, dateValue)
+                .field(dateTimeFieldName, dateTimeValue)
+                .field(linkFieldName, linkValue)
+                .field(blobFieldName, blobValue)
+                .field(uriFieldName, uriValue)
+                .field(listFieldName, listValue)
+                .field(pathFieldName, pathValue)
+                .field(recordFieldName, recordValue)
+                .build();
+
+        // Clone record
         record = record.cloneRecord();
-      
-      // Change mutable values
-      listValue.add("def");
-      pathValue.getElements()[0] = "def";
-      blobValue.setSize(0L);
-      recordValue.setField(integerFieldName, 777);
-               
-      // Validate cloned record does not contain mutations
-      List<String> list = record.getField(listFieldName);
-      assertTrue(list.size() == 1);
-      assertEquals("abc", list.get(0));
-      
-      HierarchyPath path = record.getField(pathFieldName);
-      assertEquals("abc", path.getElements()[0]);
-      
-      Blob blob = record.getField(blobFieldName);
-      assertTrue(Long.MIN_VALUE == blob.getSize());
-      
-      Record recordField = record.getField(recordFieldName);
-      assertFalse(recordField.hasField(integerFieldName));
-      
-      // Put a record in itself
-      // This should normally not be done, but we need to test that the clone method does not choke on this.
 
-      record.setField(recordFieldName2, record);
+        // Change mutable values
+        listValue.add("def");
+        pathValue.getElements()[0] = "def";
+        blobValue.setSize(0L);
+        recordValue.setField(integerFieldName, 777);
+
+        // Validate cloned record does not contain mutations
+        List<String> list = record.getField(listFieldName);
+        assertTrue(list.size() == 1);
+        assertEquals("abc", list.get(0));
+
+        HierarchyPath path = record.getField(pathFieldName);
+        assertEquals("abc", path.getElements()[0]);
+
+        Blob blob = record.getField(blobFieldName);
+        assertTrue(Long.MIN_VALUE == blob.getSize());
+
+        Record recordField = record.getField(recordFieldName);
+        assertFalse(recordField.hasField(integerFieldName));
+
+        // Put a record in itself
+        // This should normally not be done, but we need to test that the clone method does not choke on this.
+
+        record.setField(recordFieldName2, record);
         try {
             record = record.cloneRecord();
             Assert.fail("A record should not be nested in itself");
         } catch (RecordException expected) {
         }
-  }
-    
+    }
+
 }

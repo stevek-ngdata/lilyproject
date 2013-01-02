@@ -14,8 +14,6 @@ import org.lilyproject.hbaseindex.IndexFieldDefinition;
 
 /**
  * Actual implementation of {@link IndexFilter} as an HBase filter.
- *
- *
  */
 public class IndexFilterHbaseImpl extends FilterBase {
 
@@ -90,11 +88,11 @@ public class IndexFilterHbaseImpl extends FilterBase {
     @Override
     public void readFields(DataInput in) throws IOException {
         final String indexDefinitionClassName = in.readUTF();
-        indexDefinition = (IndexDefinition) tryInstantiateClass(indexDefinitionClassName);
+        indexDefinition = (IndexDefinition)tryInstantiateClass(indexDefinitionClassName);
         indexDefinition.readFields(in);
 
         final String indexFilterClassName = in.readUTF();
-        indexFilter = (IndexFilter) tryInstantiateClass(indexFilterClassName);
+        indexFilter = (IndexFilter)tryInstantiateClass(indexFilterClassName);
         indexFilter.readFields(in);
     }
 

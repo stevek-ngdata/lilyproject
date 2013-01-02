@@ -15,28 +15,29 @@
  */
 package org.lilyproject.indexer.engine.test;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.engine.IndexLockTimeoutException;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.net.NetUtils;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import java.io.File;
-import java.util.*;
-
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class IndexLockerTest {
     private static MiniZooKeeperCluster ZK_CLUSTER;
@@ -166,7 +167,7 @@ public class IndexLockerTest {
         // Check that no 2 threads had the lock at the same time
         for (int i = 1; i < infos.size(); i++) {
             assertTrue(infos.get(i).lockObtainTime >= infos.get(i - 1).lockReleaseTime);
-        }        
+        }
     }
 
     private static class Locker implements Runnable {

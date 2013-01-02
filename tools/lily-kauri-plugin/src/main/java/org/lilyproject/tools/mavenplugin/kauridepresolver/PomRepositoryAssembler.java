@@ -39,102 +39,101 @@ import org.sonatype.aether.util.filter.ScopeDependencyFilter;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 /**
- *
  * @goal assemble-pom-repository
  * @requiresDependencyResolution runtime
  * @description Resolve (download) a list of artifacts and their (transitive) runtime dependencies to a m2 repository layout dir.
  */
 public class PomRepositoryAssembler extends AbstractMojo {
 
-        /**
-         * The entry point to Aether, i.e. the component doing all the work.
-         *
-         * @component
-         */
-        private RepositorySystem repoSystem;
+    /**
+     * The entry point to Aether, i.e. the component doing all the work.
+     *
+     * @component
+     */
+    private RepositorySystem repoSystem;
 
-        /**
-         * The current repository/network configuration of Maven.
-         *
-         * @parameter default-value="${repositorySystemSession}"
-         * @readonly
-         */
-        private RepositorySystemSession repoSession;
+    /**
+     * The current repository/network configuration of Maven.
+     *
+     * @parameter default-value="${repositorySystemSession}"
+     * @readonly
+     */
+    private RepositorySystemSession repoSession;
 
-        /**
-         * The project's remote repositories to use for the resolution of plugins and their dependencies.
-         *
-         * @parameter default-value="${project.remotePluginRepositories}"
-         * @readonly
-         */
-        private List<RemoteRepository> remoteRepos;
+    /**
+     * The project's remote repositories to use for the resolution of plugins and their dependencies.
+     *
+     * @parameter default-value="${project.remotePluginRepositories}"
+     * @readonly
+     */
+    private List<RemoteRepository> remoteRepos;
 
-        /**
-         * @parameter
-         */
-        private List<String> artifacts;
+    /**
+     * @parameter
+     */
+    private List<String> artifacts;
 
-        /**
-         * @parameter default-value="${basedir}/target/kauri-repository"
-         * @parameter
-         */
-        private String targetDirectory;
+    /**
+     * @parameter default-value="${basedir}/target/kauri-repository"
+     * @parameter
+     */
+    private String targetDirectory;
 
-        @Override
-        public void execute() throws MojoExecutionException, MojoFailureException {
-            List<Artifact> result = Lists.newArrayList();
-            for (String artifact: artifacts) {
-                result.addAll(getArtifacts(artifact));
-            }
-
-            Set<Artifact> artifacts = new HashSet<Artifact>(result);
-            AetherRepositoryWriter.write(artifacts, targetDirectory);
-
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        List<Artifact> result = Lists.newArrayList();
+        for (String artifact : artifacts) {
+            result.addAll(getArtifacts(artifact));
         }
 
-        private List<Artifact> getArtifacts(String artifact) throws MojoExecutionException {
-            Dependency dependency =
-                new Dependency( new DefaultArtifact( artifact ), "runtime" );
+        Set<Artifact> artifacts = new HashSet<Artifact>(result);
+        AetherRepositoryWriter.write(artifacts, targetDirectory);
 
-            CollectRequest collectRequest = new CollectRequest();
-            collectRequest.setRoot( dependency );
-            //collectRequest.addRepository( remoteRepos );
+    }
 
-            DependencyNode node;
-            try {
-                node = repoSystem.collectDependencies( repoSession, collectRequest ).getRoot();
-            } catch (DependencyCollectionException e) {
-              throw new MojoExecutionException( e.getMessage(), e );
-            }
+    private List<Artifact> getArtifacts(String artifact) throws MojoExecutionException {
+        Dependency dependency =
+                new Dependency(new DefaultArtifact(artifact), "runtime");
 
-            DependencyRequest dependencyRequest = new DependencyRequest( node, null );
-            Set<String> included = Collections.singleton("runtime");
-            dependencyRequest.setFilter(new ScopeDependencyFilter(included, Collections.EMPTY_SET));
+        CollectRequest collectRequest = new CollectRequest();
+        collectRequest.setRoot(dependency);
+        //collectRequest.addRepository( remoteRepos );
 
-            try {
-                repoSystem.resolveDependencies( repoSession, dependencyRequest  );
-            } catch (DependencyResolutionException e) {
-                throw new MojoExecutionException( e.getMessage(), e );
-            }
-
-            PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
-            node.accept( nlg );
-            getLog().info( "" + nlg.getClassPath() );
-
-            return nlg.getArtifacts(false);
+        DependencyNode node;
+        try {
+            node = repoSystem.collectDependencies(repoSession, collectRequest).getRoot();
+        } catch (DependencyCollectionException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
         }
 
-        private List<Dependency> collectDependencies(DependencyNode node) {
-            List<Dependency> result = Lists.newArrayList();
-            collectDependencies(node, result);
-            return result;
+        DependencyRequest dependencyRequest = new DependencyRequest(node, null);
+        Set<String> included = Collections.singleton("runtime");
+        dependencyRequest.setFilter(new ScopeDependencyFilter(included, Collections.EMPTY_SET));
+
+        try {
+            repoSystem.resolveDependencies(repoSession, dependencyRequest);
+        } catch (DependencyResolutionException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
         }
 
-        private void collectDependencies(DependencyNode node, List<Dependency>result) {
-            result.add(node.getDependency());
-            for (DependencyNode child: node.getChildren()) {
-                collectDependencies(child);
-            }
+        PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
+        node.accept(nlg);
+        getLog().info("" + nlg.getClassPath());
+
+        return nlg.getArtifacts(false);
+    }
+
+    private List<Dependency> collectDependencies(DependencyNode node) {
+        List<Dependency> result = Lists.newArrayList();
+        collectDependencies(node, result);
+        return result;
+    }
+
+    private void collectDependencies(DependencyNode node, List<Dependency> result) {
+        result.add(node.getDependency());
+        for (DependencyNode child : node.getChildren()) {
+            collectDependencies(child);
         }
+    }
 
 }

@@ -15,9 +15,21 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.CompareOp;
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.util.repo.SystemFields;
 
 public class MutationConditionVerifier {
@@ -26,13 +38,12 @@ public class MutationConditionVerifier {
      * status in the supplied record object to conflict, as well as reduces the fields to those
      * that were submitted.
      *
-     * @param record the complete record state as currently stored in the repository
+     * @param record     the complete record state as currently stored in the repository
      * @param conditions the conditions that should be satisfied
-     *
      * @return null if conditions are satisfied, a Record object if not.
      */
     public static Record checkConditions(Record record, List<MutationCondition> conditions, Repository repository,
-            Record newRecord) throws RepositoryException, InterruptedException {
+                                         Record newRecord) throws RepositoryException, InterruptedException {
 
         if (conditions == null) {
             return null;

@@ -28,9 +28,9 @@ public class RecordTypeNotFoundException extends TypeException {
         this.id = state.get("id");
         this.name = state.get("name");
         String version = state.get("version");
-        this.version = version != null ? Long.valueOf(version) : null; 
+        this.version = version != null ? Long.valueOf(version) : null;
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
@@ -39,19 +39,19 @@ public class RecordTypeNotFoundException extends TypeException {
         state.put("version", version != null ? version.toString() : null);
         return state;
     }
-    
+
     public RecordTypeNotFoundException(SchemaId id, Long version) {
         this.id = id != null ? id.toString() : null;
         this.name = null;
         this.version = version;
     }
-    
+
     public RecordTypeNotFoundException(QName name, Long version) {
         this.id = null;
         this.name = name != null ? name.toString() : null;
         this.version = version;
     }
-    
+
     @Override
     public String getMessage() {
         StringBuilder stringBuilder = new StringBuilder();
