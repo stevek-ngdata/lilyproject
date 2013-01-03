@@ -25,7 +25,10 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.util.repo.RecordEvent;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class RecordEventTest {
     @Test

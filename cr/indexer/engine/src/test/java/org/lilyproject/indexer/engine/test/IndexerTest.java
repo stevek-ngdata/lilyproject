@@ -109,8 +109,12 @@ import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
 import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.*;
-import static org.lilyproject.util.repo.RecordEvent.Type.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
 
 public class IndexerTest {
     private static final RepositorySetup repoSetup = new RepositorySetup();

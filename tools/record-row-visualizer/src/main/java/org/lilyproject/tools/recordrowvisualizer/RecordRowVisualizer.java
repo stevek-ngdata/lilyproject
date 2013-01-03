@@ -72,7 +72,9 @@ import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.xml.sax.SAXException;
 
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 /**
  * Tool to visualize the HBase-storage structure of a Lily record, in the form

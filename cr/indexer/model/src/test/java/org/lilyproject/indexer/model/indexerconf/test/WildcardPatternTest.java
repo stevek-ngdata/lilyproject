@@ -19,7 +19,10 @@ import org.junit.Test;
 import org.lilyproject.indexer.model.indexerconf.WildcardPattern;
 import org.lilyproject.util.Pair;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class WildcardPatternTest {
     @Test

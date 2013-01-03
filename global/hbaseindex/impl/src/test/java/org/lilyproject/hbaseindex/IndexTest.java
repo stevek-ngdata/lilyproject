@@ -27,7 +27,10 @@ import org.junit.Test;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 // Important: while not done in these testcases, it is recommended to call QueryResult.close()
 // when done using the QueryResult.

@@ -31,7 +31,9 @@ import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.impl.FieldTypeImpl;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 
 public class HBaseFieldValueFilter implements HBaseRecordFilterFactory {
     @Override

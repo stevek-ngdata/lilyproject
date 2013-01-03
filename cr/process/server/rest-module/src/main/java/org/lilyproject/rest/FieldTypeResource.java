@@ -36,7 +36,9 @@ import org.lilyproject.tools.import_.core.ImportMode;
 import org.lilyproject.tools.import_.core.ImportResult;
 import org.lilyproject.tools.import_.core.ImportResultType;
 
-import static javax.ws.rs.core.Response.Status.*;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("schema/fieldType/{name}")
 public class FieldTypeResource extends RepositoryEnabled {

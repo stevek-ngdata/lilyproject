@@ -24,7 +24,9 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 
-import static org.apache.zookeeper.Watcher.Event.KeeperState.*;
+import static org.apache.zookeeper.Watcher.Event.KeeperState.Disconnected;
+import static org.apache.zookeeper.Watcher.Event.KeeperState.Expired;
+import static org.apache.zookeeper.Watcher.Event.KeeperState.SyncConnected;
 import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
 
 /**

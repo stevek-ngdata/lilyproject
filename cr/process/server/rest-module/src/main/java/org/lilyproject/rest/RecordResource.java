@@ -40,7 +40,11 @@ import org.lilyproject.tools.import_.core.ImportResult;
 import org.lilyproject.tools.import_.core.ImportResultType;
 import org.lilyproject.tools.import_.core.RecordImport;
 
-import static javax.ws.rs.core.Response.Status.*;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 
 @Path("record/{id}")
 public class RecordResource extends RepositoryEnabled {

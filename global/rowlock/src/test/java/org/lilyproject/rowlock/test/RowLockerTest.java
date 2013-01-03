@@ -37,7 +37,9 @@ import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLock;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class RowLockerTest {
     private static HBaseProxy HBASE_PROXY;

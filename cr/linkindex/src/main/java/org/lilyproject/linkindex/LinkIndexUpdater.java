@@ -41,7 +41,9 @@ import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.RowLogContext;
 import org.lilyproject.util.repo.VTaggedRecord;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.*;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
 
 // TODO think more about error processing:
 //      Some kinds of errors might be temporary in nature and be solved by retrying after some time.
