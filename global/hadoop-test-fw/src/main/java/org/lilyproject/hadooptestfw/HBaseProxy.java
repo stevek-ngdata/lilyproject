@@ -60,7 +60,6 @@ public class HBaseProxy {
     private boolean cleanStateOnConnect = true;
     private boolean enableMapReduce = false;
     private boolean clearData = true;
-    private boolean format;
     private Log log = LogFactory.getLog(getClass());
 
     public enum Mode { EMBED, CONNECT }
@@ -111,9 +110,6 @@ public class HBaseProxy {
             testHome = TestHomeUtil.createTestHome("lily-hbaseproxy-");
         }
 
-        if (!testHome.exists()) {
-            format = true; // A new directory: the NameNode and DataNodes will have to be formatted first
-        }
         FileUtils.forceMkdir(testHome);
     }
 

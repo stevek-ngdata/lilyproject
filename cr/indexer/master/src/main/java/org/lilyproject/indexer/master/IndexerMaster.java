@@ -186,7 +186,7 @@ public class IndexerMaster {
         return jobClient;
     }
 
-    private static class MyLeaderElectionCallback implements LeaderElectionCallback {
+    private class MyLeaderElectionCallback implements LeaderElectionCallback {
         @Override
         public void activateAsLeader() throws Exception {
             log.info("Starting up as indexer master.");

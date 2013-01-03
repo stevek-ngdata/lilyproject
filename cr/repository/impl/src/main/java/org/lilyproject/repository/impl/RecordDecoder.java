@@ -109,7 +109,7 @@ public class RecordDecoder {
 
         // If the version is null, this means the record has no version an thus only contains non-versioned fields (if any)
         // All non-versioned fields are stored at version 1, so we extract the fields at version 1
-        Long versionToRead = (requestedVersion == null) ? 1L : requestedVersion;
+        Long versionToRead = (requestedVersion == null) ? new Long(1L) : requestedVersion;
 
         // Get a map of all fields with their values for each (cell-)version
         NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(RecordCf.DATA.bytes);

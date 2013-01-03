@@ -49,7 +49,7 @@ public class MessagesWorkQueue {
     /**
      * If the queue contains less than this amount of messages, we'll notify that we want some fresh messages.
      */
-    private final int refillThreshold = 5;
+    private static final int refillThreshold = 5;
 
     private final Object refillTrigger = new Object();
 

@@ -21,9 +21,6 @@ import java.net.UnknownHostException;
 import org.apache.hadoop.net.DNS;
 
 public class NetworkInterfaceInfoImpl implements NetworkInterfaceInfo {
-    private String interface_;
-    private String nameserver;
-
     private String hostName;
     private String hostAddress;
 

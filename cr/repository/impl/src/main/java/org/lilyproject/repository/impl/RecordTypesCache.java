@@ -32,8 +32,6 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeBucket;
 
 public class RecordTypesCache {
-    private Log log = LogFactory.getLog(getClass());
-
     // A lock on the monitor needs to be taken when changes are to be made on
     // the nameCache, on the count variable, on the nameCacheOutOfDate boolean
     // or if a bucket monitor needs to be added.

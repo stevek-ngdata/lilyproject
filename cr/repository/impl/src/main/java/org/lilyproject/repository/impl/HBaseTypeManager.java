@@ -79,9 +79,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
     public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration, ZooKeeperItf zooKeeper, HBaseTableFactory hbaseTableFactory)
             throws IOException, InterruptedException, KeeperException, RepositoryException {
-        super(zooKeeper);
         schemaCache = new LocalSchemaCache(zooKeeper, this);
-        log = LogFactory.getLog(getClass());
         this.idGenerator = idGenerator;
 
         this.typeTable = LilyHBaseSchema.getTypeTable(hbaseTableFactory);

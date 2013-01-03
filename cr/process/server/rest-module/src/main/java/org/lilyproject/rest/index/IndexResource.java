@@ -93,7 +93,7 @@ public class IndexResource extends RepositoryEnabled {
         json.put("zkDataVersion", index.getZkDataVersion());
         json.put("config", index.getConfiguration());
 
-        return Response.ok(new StringRepresentation(new String(JsonFormat.serializeAsBytes(json)))).build();
+        return Response.ok(new StringRepresentation(new String(JsonFormat.serializeAsBytes(json), "UTF-8"))).build();
     }
 
     /**

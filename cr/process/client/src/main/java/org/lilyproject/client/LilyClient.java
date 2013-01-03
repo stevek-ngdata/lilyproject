@@ -250,7 +250,7 @@ public class LilyClient implements Closeable {
         AvroConverter remoteConverter = new AvroConverter();
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
         RemoteTypeManager typeManager = new RemoteTypeManager(parseAddressAndPort(server.lilyAddressAndPort),
-                remoteConverter, idGenerator, zk, schemaCache);
+                remoteConverter, idGenerator, schemaCache);
 
         final Configuration hbaseConf = getNewOrExistingConfiguration(zk);
 

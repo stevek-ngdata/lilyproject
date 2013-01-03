@@ -23,8 +23,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.QName;

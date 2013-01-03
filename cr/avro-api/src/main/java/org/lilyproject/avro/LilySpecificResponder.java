@@ -41,7 +41,6 @@ public class LilySpecificResponder extends GenericResponder {
     private Object impl;
     private SpecificData data;
     private AvroConverter converter;
-    private Log log = LogFactory.getLog(getClass());
 
     public LilySpecificResponder(Class iface, Object impl, AvroConverter converter) {
         this(SpecificData.get().getProtocol(iface), impl);

@@ -29,7 +29,7 @@ import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 public class SolrTestingUtility {
-    private final int solrPort = 8983;
+    private static final int solrPort = 8983;
     private Server server;
     private SolrDefinition solrDef;
     private String autoCommitSetting;

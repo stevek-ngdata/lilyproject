@@ -56,17 +56,12 @@ import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public abstract class AbstractTypeManager implements TypeManager {
-    protected Log log;
-
     protected Map<String, ValueTypeFactory> valueTypeFactories = new HashMap<String, ValueTypeFactory>();
     protected IdGenerator idGenerator;
 
-    protected ZooKeeperItf zooKeeper;
-
     protected SchemaCache schemaCache;
 
-    public AbstractTypeManager(ZooKeeperItf zooKeeper) {
-        this.zooKeeper = zooKeeper;
+    public AbstractTypeManager() {
     }
 
     @Override

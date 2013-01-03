@@ -68,6 +68,13 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
         if (theirValue == null && ourStoreKey == null) {
             return 0;
         }
+
+        // This was added to avoid an NPE. The 'compareTo' contract could be violated here
+        // A more in-depth analysis would be needed to truly fix this.
+        if (theirValue == null || ourStoreKey == null) {
+            return -1;
+        }
+
         if (theirValue.length == 0 && ourStoreKey.length == 0) {
             return 0;
         }

@@ -161,7 +161,7 @@ public class VTaggedRecord {
             }
         }
 
-        vtags.put(getLastVTag(), record.getVersion() == null ? 0 : record.getVersion());
+        vtags.put(getLastVTag(), record.getVersion() == null ? new Long(0) : record.getVersion());
 
         return vtags;
     }

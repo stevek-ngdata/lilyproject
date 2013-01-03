@@ -227,7 +227,7 @@ public class RepositorySetup {
         final InetSocketAddress remoteAddr = new InetSocketAddress(lilyServer.getPort());
 
         remoteSchemaCache = new RemoteTestSchemaCache(zk);
-        remoteTypeManager = new RemoteTypeManager(remoteAddr, remoteConverter, idGenerator, zk, remoteSchemaCache);
+        remoteTypeManager = new RemoteTypeManager(remoteAddr, remoteConverter, idGenerator, remoteSchemaCache);
         remoteSchemaCache.setTypeManager(remoteTypeManager);
 
         remoteBlobStoreAccessFactory = createBlobAccess();

@@ -29,7 +29,6 @@ import org.lilyproject.repository.api.TypeManager;
 public class DerefValue extends BaseValue {
     private List<Follow> follows = new ArrayList<Follow>();
     private List<Follow> crossRecordFollows = new ArrayList<Follow>();
-    private Value value;
     private FieldType targetField;
     private FieldType lastRealField;
 
@@ -43,7 +42,6 @@ public class DerefValue extends BaseValue {
         // so it doesn't matter which ones are used by the ValueEvaluator
 
         this.follows = follows;
-        this.value = value;
         this.targetField = targetField;
     }
 
