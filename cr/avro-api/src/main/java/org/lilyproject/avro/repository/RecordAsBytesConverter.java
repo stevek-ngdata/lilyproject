@@ -49,14 +49,14 @@ public class RecordAsBytesConverter {
     private static final byte NOT_NULL_MARKER = 1;
     private static final int VERSION_1 = 1;
 
-    public static final byte[] write(Record record, Repository repository)
+    public static byte[] write(Record record, Repository repository)
             throws RepositoryException, InterruptedException {
         DataOutput output = new DataOutputImpl();
         write(record, output, repository);
         return output.toByteArray();
     }
 
-    public static final void write(Record record, DataOutput output, Repository repository)
+    public static void write(Record record, DataOutput output, Repository repository)
             throws RepositoryException, InterruptedException {
         // Write serialization format version
         output.writeShort(VERSION_1);
@@ -119,7 +119,7 @@ public class RecordAsBytesConverter {
         writeNullOrVInt(record.getResponseStatus() != null ? record.getResponseStatus().ordinal() : null, output);
     }
 
-    public static final Record read(DataInput input, Repository repository)
+    public static Record read(DataInput input, Repository repository)
             throws RepositoryException, InterruptedException {
         // Read & check version
         int version = input.readShort();
@@ -180,14 +180,14 @@ public class RecordAsBytesConverter {
         return record;
     }
 
-    public static final byte[] writeIdRecord(IdRecord record, Repository repository)
+    public static byte[] writeIdRecord(IdRecord record, Repository repository)
             throws RepositoryException, InterruptedException {
         DataOutput output = new DataOutputImpl();
         writeIdRecord(record, output, repository);
         return output.toByteArray();
     }
 
-    public static final void writeIdRecord(IdRecord record, DataOutput output, Repository repository)
+    public static void writeIdRecord(IdRecord record, DataOutput output, Repository repository)
             throws RepositoryException, InterruptedException {
         write(record, output, repository);
 
@@ -203,7 +203,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    public static final IdRecord readIdRecord(DataInput input, Repository repository)
+    public static IdRecord readIdRecord(DataInput input, Repository repository)
             throws RepositoryException, InterruptedException {
         Record record = read(input, repository);
 
@@ -231,18 +231,18 @@ public class RecordAsBytesConverter {
         return new IdRecordImpl(record, idToQNameMapping, recordTypeIds);
     }
 
-    private static final void writeQName(QName name, DataOutput output) {
+    private static void writeQName(QName name, DataOutput output) {
         output.writeUTF(name.getNamespace());
         output.writeUTF(name.getName());
     }
 
-    private static final QName readQName(DataInput input) {
+    private static QName readQName(DataInput input) {
         String namespace = input.readUTF();
         String name = input.readUTF();
         return new QName(namespace, name);
     }
 
-    private static final void writeNullOrQName(QName name, DataOutput output) {
+    private static void writeNullOrQName(QName name, DataOutput output) {
         if (name == null) {
             output.writeByte(NULL_MARKER);
         } else {
@@ -251,7 +251,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final QName readNullOrQName(DataInput input) {
+    private static QName readNullOrQName(DataInput input) {
         byte nullMarker = input.readByte();
         if (nullMarker == NULL_MARKER) {
             return null;
@@ -260,17 +260,17 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final void writeBytes(byte[] bytes, DataOutput output) {
+    private static void writeBytes(byte[] bytes, DataOutput output) {
         output.writeVInt(bytes.length);
         output.writeBytes(bytes);
     }
 
-    private static final byte[] readBytes(DataInput input) {
+    private static byte[] readBytes(DataInput input) {
         int length = input.readVInt();
         return input.readBytes(length);
     }
 
-    private static final void writeNullOrBytes(byte[] bytes, DataOutput output) {
+    private static void writeNullOrBytes(byte[] bytes, DataOutput output) {
         if (bytes == null) {
             output.writeByte(NULL_MARKER);
         } else {
@@ -279,7 +279,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final byte[] readNullOrBytes(DataInput input) {
+    private static byte[] readNullOrBytes(DataInput input) {
         byte nullMarker = input.readByte();
         if (nullMarker == NULL_MARKER) {
             return null;
@@ -288,7 +288,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final void writeNullOrVLong(Long value, DataOutput output) {
+    private static void writeNullOrVLong(Long value, DataOutput output) {
         if (value == null) {
             output.writeByte(NULL_MARKER);
         } else {
@@ -297,7 +297,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final Long readNullOrVLong(DataInput input) {
+    private static Long readNullOrVLong(DataInput input) {
         byte nullMarker = input.readByte();
         if (nullMarker == NULL_MARKER) {
             return null;
@@ -306,7 +306,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final void writeNullOrVInt(Integer value, DataOutput output) {
+    private static void writeNullOrVInt(Integer value, DataOutput output) {
         if (value == null) {
             output.writeByte(NULL_MARKER);
         } else {
@@ -315,7 +315,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final Integer readNullOrVInt(DataInput input) {
+    private static Integer readNullOrVInt(DataInput input) {
         byte nullMarker = input.readByte();
         if (nullMarker == NULL_MARKER) {
             return null;
@@ -324,7 +324,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final void writeNullOrString(String value, DataOutput output) {
+    private static void writeNullOrString(String value, DataOutput output) {
         if (value == null) {
             output.writeByte(NULL_MARKER);
         } else {
