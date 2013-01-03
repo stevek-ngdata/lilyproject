@@ -65,7 +65,7 @@ public class HBaseProxy {
 
     public enum Mode { EMBED, CONNECT }
 
-    public static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
+    public static final String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
 
     public HBaseProxy() throws IOException {
         this(null);

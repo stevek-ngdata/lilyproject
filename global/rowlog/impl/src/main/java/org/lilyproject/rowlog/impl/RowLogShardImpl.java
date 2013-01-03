@@ -45,7 +45,7 @@ public class RowLogShardImpl implements RowLogShard {
     private final List<Delete> messagesToDelete;
     private long lastDelete;
     // while 0 is a valid unicode codepoint, it will only occur in utf-8 when using the NULL char
-    private byte[] END_OF_SUBSCRIPTION_NAME_MARKER = new byte[]{(byte)0};
+    private static final byte[] END_OF_SUBSCRIPTION_NAME_MARKER = new byte[]{(byte)0};
 
     public RowLogShardImpl(String id, byte[] rowKeyPrefix, HTableInterface table, RowLog rowLog, int deleteBufferSize)
             throws IOException {

@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class RowLogMessageListenerMapping {
 
-    public static RowLogMessageListenerMapping INSTANCE = new RowLogMessageListenerMapping();
+    public static final RowLogMessageListenerMapping INSTANCE = new RowLogMessageListenerMapping();
 
     private Map<String, RowLogMessageListener> mapping = Collections.synchronizedMap(new HashMap<String, RowLogMessageListener>());
 

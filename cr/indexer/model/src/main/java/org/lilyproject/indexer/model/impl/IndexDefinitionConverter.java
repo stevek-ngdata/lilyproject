@@ -37,7 +37,7 @@ import org.lilyproject.util.json.JsonFormatException;
 import org.lilyproject.util.json.JsonUtil;
 
 public class IndexDefinitionConverter {
-    public static IndexDefinitionConverter INSTANCE = new IndexDefinitionConverter();
+    public static final IndexDefinitionConverter INSTANCE = new IndexDefinitionConverter();
 
     public void fromJsonBytes(byte[] json, IndexDefinitionImpl index) {
         ObjectNode node;

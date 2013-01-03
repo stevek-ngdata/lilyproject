@@ -25,7 +25,7 @@ import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.json.JsonUtil;
 
 public class RowLogConfigConverter {
-    public static RowLogConfigConverter INSTANCE = new RowLogConfigConverter();
+    public static final RowLogConfigConverter INSTANCE = new RowLogConfigConverter();
 
     public RowLogConfig fromJsonBytes(String rowLogId, byte[] json) {
         ObjectNode node;

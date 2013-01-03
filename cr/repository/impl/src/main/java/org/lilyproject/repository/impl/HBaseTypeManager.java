@@ -988,7 +988,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     // ValueType encoding
-    public static byte valueTypeEncodingVersion = (byte)1;
+    public static final byte valueTypeEncodingVersion = (byte)1;
 
     public static byte[] encodeValueType(ValueType valueType) {
         return encodeValueType(valueType.getName());

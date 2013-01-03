@@ -25,7 +25,7 @@ import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.json.JsonUtil;
 
 public class SubscriptionConverter {
-    public static SubscriptionConverter INSTANCE = new SubscriptionConverter();
+    public static final SubscriptionConverter INSTANCE = new SubscriptionConverter();
 
     public RowLogSubscription fromJsonBytes(String rowLogId, String subscriptionId, byte[] json) {
         ObjectNode node;

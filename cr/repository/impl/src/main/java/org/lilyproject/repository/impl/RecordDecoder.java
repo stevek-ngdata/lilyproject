@@ -55,8 +55,8 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
  * {@link LilyHBaseSchema.RecordColumn#DELETED} flag is false.</p>
  */
 public class RecordDecoder {
-    public static Map<Scope, byte[]> RECORD_TYPE_ID_QUALIFIERS = new EnumMap<Scope, byte[]>(Scope.class);
-    public static Map<Scope, byte[]> RECORD_TYPE_VERSION_QUALIFIERS = new EnumMap<Scope, byte[]>(Scope.class);
+    public static final Map<Scope, byte[]> RECORD_TYPE_ID_QUALIFIERS = new EnumMap<Scope, byte[]>(Scope.class);
+    public static final Map<Scope, byte[]> RECORD_TYPE_VERSION_QUALIFIERS = new EnumMap<Scope, byte[]>(Scope.class);
 
     static {
         RECORD_TYPE_ID_QUALIFIERS.put(Scope.NON_VERSIONED, RecordColumn.NON_VERSIONED_RT_ID.bytes);
@@ -68,7 +68,7 @@ public class RecordDecoder {
         RECORD_TYPE_VERSION_QUALIFIERS.put(Scope.VERSIONED_MUTABLE, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
     }
 
-    public static List<byte[]> SYSTEM_FIELDS = new ArrayList<byte[]>();
+    public static final List<byte[]> SYSTEM_FIELDS = new ArrayList<byte[]>();
 
     static {
         SYSTEM_FIELDS.add(RecordColumn.DELETED.bytes);

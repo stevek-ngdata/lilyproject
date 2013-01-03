@@ -35,8 +35,8 @@ public class ReturnFields {
     private List<QName> fields;
     private Type type = Type.ALL;
 
-    public static ReturnFields ALL = new ReturnFields(Type.ALL);
-    public static ReturnFields NONE = new ReturnFields(Type.NONE);
+    public static final ReturnFields ALL = new ReturnFields(Type.ALL);
+    public static final ReturnFields NONE = new ReturnFields(Type.NONE);
 
     public enum Type {
         ALL, NONE, ENUM

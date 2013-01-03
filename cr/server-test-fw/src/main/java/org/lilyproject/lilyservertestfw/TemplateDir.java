@@ -23,9 +23,9 @@ import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
 
 public class TemplateDir {
-    public static String HADOOP_DIR = "hadoop";
-    public static String SOLR_DIR = "solr";
-    public static String LILYSERVER_DIR = "lilyserver";
+    public static final String HADOOP_DIR = "hadoop";
+    public static final String SOLR_DIR = "solr";
+    public static final String LILYSERVER_DIR = "lilyserver";
 
     public static void restoreTemplateDir(File testHome) throws IOException {
         File templateDir = getTemplateDir();

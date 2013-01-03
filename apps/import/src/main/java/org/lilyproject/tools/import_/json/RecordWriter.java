@@ -35,7 +35,7 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.ValueType;
 
 public class RecordWriter implements EntityWriter<Record> {
-    public static RecordWriter INSTANCE = new RecordWriter();
+    public static final RecordWriter INSTANCE = new RecordWriter();
 
     @Override
     public ObjectNode toJson(Record record, WriteOptions options, Repository repository) throws RepositoryException,

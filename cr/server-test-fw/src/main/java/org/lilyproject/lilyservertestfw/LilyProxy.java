@@ -47,10 +47,10 @@ public class LilyProxy {
 
     public enum Mode { EMBED, CONNECT, HADOOP_CONNECT }
 
-    public static String MODE_PROP_NAME = "lily.lilyproxy.mode";
-    public static String TESTHOME_PROP_NAME = "lily.lilyproxy.dir";
-    public static String CLEARDATA_PROP_NAME = "lily.lilyproxy.clear";
-    public static String RESTORE_TEMPLATE_DIR_PROP_NAME = "lily.lilyproxy.restoretemplatedir";
+    public static final String MODE_PROP_NAME = "lily.lilyproxy.mode";
+    public static final String TESTHOME_PROP_NAME = "lily.lilyproxy.dir";
+    public static final String CLEARDATA_PROP_NAME = "lily.lilyproxy.clear";
+    public static final String RESTORE_TEMPLATE_DIR_PROP_NAME = "lily.lilyproxy.restoretemplatedir";
 
     public LilyProxy() throws IOException {
         this(null);

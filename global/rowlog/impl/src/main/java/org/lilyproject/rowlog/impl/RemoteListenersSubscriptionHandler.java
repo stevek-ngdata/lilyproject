@@ -83,7 +83,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         }
 
         private Channel getListenerChannel(String host, int triesRemaining) throws RemoteListenerIOException, InterruptedException {
-            String listenerHostAndPort[] = host.split(":");
+            String[] listenerHostAndPort = host.split(":");
             ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(listenerHostAndPort[0],
                     Integer.valueOf(listenerHostAndPort[1])));
             connectFuture.await();

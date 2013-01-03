@@ -33,7 +33,7 @@ import org.lilyproject.rowlog.api.RowLogMessageListener;
  * <p>This WalProcessor should be used together with the {@link WalRowLog}, {@link WalProcessor} and {@link WalSubscriptionHandler}
  */
 public class WalListener implements RowLogMessageListener {
-    public static String ID = "WAL";
+    public static final String ID = "WAL";
 
     private RowLog rowLog;
     private Log log = LogFactory.getLog(getClass());

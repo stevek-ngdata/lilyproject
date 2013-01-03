@@ -29,7 +29,7 @@ import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import static org.lilyproject.util.json.JsonUtil.*;
 
 public class RecordTypeReader implements EntityReader<RecordType> {
-    public static EntityReader<RecordType> INSTANCE = new RecordTypeReader();
+    public static final EntityReader<RecordType> INSTANCE = new RecordTypeReader();
 
     @Override
     public RecordType fromJson(JsonNode node, Repository repository) throws JsonFormatException, RepositoryException,

@@ -29,7 +29,7 @@ public class Fields {
     Map<Long, Map<SchemaId, Object>> values = new HashMap<Long, Map<SchemaId, Object>>();
     List<FieldType> fields = new ArrayList<FieldType>();
 
-    public static Object DELETED = new Object();
+    public static final Object DELETED = new Object();
 
     public FieldType registerFieldType(SchemaId fieldId, TypeManager typeMgr) throws Exception {
         for (FieldType entry : fields) {
