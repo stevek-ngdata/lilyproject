@@ -37,7 +37,6 @@ import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.concurrent.WaitPolicy;
 
 public class AvroServer {
-    private String bindAddress;
     private Repository repository;
     private Indexer indexer;
     private int port;
@@ -49,8 +48,7 @@ public class AvroServer {
     private static final int THREAD_POOL_SIZE_RATIO = 3; // the thread pool's max size will be THREAD_RATIO times the pool's core size
     private static final int THREAD_KEEP_ALIVE_SECONDS = 60;
 
-    public AvroServer(String bindAddress, Repository repository, Indexer indexer, int port, int maxServerThreads) {
-        this.bindAddress = bindAddress;
+    public AvroServer(Repository repository, Indexer indexer, int port, int maxServerThreads) {
         this.repository = repository;
         this.indexer = indexer;
         this.port = port;
