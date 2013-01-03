@@ -46,6 +46,8 @@ public class AvroServer {
     private ExecutorService executorService;
 
     private Server server;
+    private static final int THREAD_POOL_SIZE_RATIO = 3; // the thread pool's max size will be THREAD_RATIO times the pool's core size
+    private static final int THREAD_KEEP_ALIVE_SECONDS = 60;
 
     public AvroServer(String bindAddress, Repository repository, Indexer indexer, int port, int maxServerThreads) {
         this.bindAddress = bindAddress;
@@ -68,8 +70,8 @@ public class AvroServer {
             executorService = Executors.newCachedThreadPool(threadFactory);
             executionHandler = new ExecutionHandler(executorService);
         } else {
-            executorService = new ThreadPoolExecutor(maxServerThreads / 3, maxServerThreads,
-                    60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), threadFactory, new WaitPolicy());
+            executorService = new ThreadPoolExecutor(maxServerThreads / THREAD_POOL_SIZE_RATIO, maxServerThreads,
+                    THREAD_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), threadFactory, new WaitPolicy());
             executionHandler = new ExecutionHandler(executorService);
         }
 
