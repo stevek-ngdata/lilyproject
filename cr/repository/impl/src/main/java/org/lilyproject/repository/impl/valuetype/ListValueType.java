@@ -32,7 +32,7 @@ import org.lilyproject.util.ArgumentValidator;
 
 public class ListValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "LIST";
+    public static final String NAME = "LIST";
 
     private ValueType valueType;
 

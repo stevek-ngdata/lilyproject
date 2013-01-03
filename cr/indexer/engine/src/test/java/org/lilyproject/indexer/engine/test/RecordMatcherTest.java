@@ -41,7 +41,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class RecordMatcherTest {
-    private final static RepositorySetup repoSetup = new RepositorySetup();
+    private static final RepositorySetup repoSetup = new RepositorySetup();
     private static Repository repository;
     private static TypeManager typeManager;
 

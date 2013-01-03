@@ -28,7 +28,7 @@ import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class DateTimeValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "DATETIME";
+    public static final String NAME = "DATETIME";
 
     private static final Comparator<DateTime> COMPARATOR = new Comparator<DateTime>() {
         @Override

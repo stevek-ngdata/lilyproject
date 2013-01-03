@@ -44,7 +44,7 @@ public class IndexerMasterTest {
     private static final QName BOOK_TO_AUTHOR_LINK = new QName("org.lilyproject.test", "authorLink");
     private static final QName NAME = new QName("org.lilyproject.test", "name");
 
-    private final static RepositorySetup repoSetup = new RepositorySetup();
+    private static final RepositorySetup repoSetup = new RepositorySetup();
     private Repository repository;
     private HBaseAdmin hBaseAdmin;
     private IndexesInfo indexesInfo;

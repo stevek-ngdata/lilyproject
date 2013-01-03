@@ -86,7 +86,7 @@ public class IndexAwareMQFeederTest {
     protected static List<CountingSolrClient> solrClients = new ArrayList<CountingSolrClient>();
     protected static List<CountingIndexUpdater> indexUpdaters = new ArrayList<CountingIndexUpdater>();
 
-    protected final static RepositorySetup repoSetup = new RepositorySetup() {
+    protected static final RepositorySetup repoSetup = new RepositorySetup() {
         @Override
         public RowLogMessageListener createMQFeeder(RowLog mq) {
             if (indexesInfo == null) {

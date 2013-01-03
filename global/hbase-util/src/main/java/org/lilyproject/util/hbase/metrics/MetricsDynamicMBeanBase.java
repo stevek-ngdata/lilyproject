@@ -30,11 +30,11 @@ import org.apache.hadoop.metrics.util.MetricsTimeVaryingRate;
  * This class was copied from Hadoop and extended to support some new types of metrics.
  */
 public abstract class MetricsDynamicMBeanBase implements DynamicMBean {
-    private final static String AVG_TIME = "AvgTime";
-    private final static String MIN_TIME = "MinTime";
-    private final static String MAX_TIME = "MaxTime";
-    private final static String NUM_OPS = "NumOps";
-    private final static String RESET_ALL_MIN_MAX_OP = "resetAllMinMax";
+    private static final String AVG_TIME = "AvgTime";
+    private static final String MIN_TIME = "MinTime";
+    private static final String MAX_TIME = "MaxTime";
+    private static final String NUM_OPS = "NumOps";
+    private static final String RESET_ALL_MIN_MAX_OP = "resetAllMinMax";
     private MetricsRegistry metricsRegistry;
     private MBeanInfo mbeanInfo;
     private Map<String, MetricsBase> metricsRateAttributeMod;

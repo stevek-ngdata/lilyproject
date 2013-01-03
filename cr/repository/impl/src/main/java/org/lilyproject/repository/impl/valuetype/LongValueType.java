@@ -25,7 +25,7 @@ import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class LongValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "LONG";
+    public static final String NAME = "LONG";
 
     private static final Comparator<Long> COMPARATOR = new Comparator<Long>() {
         @Override

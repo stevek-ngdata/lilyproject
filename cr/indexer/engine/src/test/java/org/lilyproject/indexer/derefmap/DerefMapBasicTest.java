@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
  * tests it in real indexing scenario's.
  */
 public class DerefMapBasicTest {
-    private final static RepositorySetup repoSetup = new RepositorySetup();
+    private static final RepositorySetup repoSetup = new RepositorySetup();
 
     private static Repository repository;
     private static IdGenerator ids;

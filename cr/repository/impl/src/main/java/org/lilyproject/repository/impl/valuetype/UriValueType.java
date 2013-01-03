@@ -26,7 +26,7 @@ import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class UriValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "URI";
+    public static final String NAME = "URI";
 
     @Override
     public String getBaseName() {

@@ -33,7 +33,7 @@ import org.lilyproject.util.ArgumentValidator;
 
 public class PathValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "PATH";
+    public static final String NAME = "PATH";
 
     private ValueType valueType;
 

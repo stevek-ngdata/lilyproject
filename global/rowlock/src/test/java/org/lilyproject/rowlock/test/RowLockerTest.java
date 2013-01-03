@@ -41,9 +41,9 @@ import static org.junit.Assert.*;
 
 public class RowLockerTest {
     private static HBaseProxy HBASE_PROXY;
-    private final static byte[] family = Bytes.toBytes("RowLockerCF");
-    private final static byte[] qualifier = Bytes.toBytes("RowLockerQ");
-    private final static String tableName = "RowLockerTable";
+    private static final byte[] family = Bytes.toBytes("RowLockerCF");
+    private static final byte[] qualifier = Bytes.toBytes("RowLockerQ");
+    private static final String tableName = "RowLockerTable";
     private static HTable table;
 
     @BeforeClass

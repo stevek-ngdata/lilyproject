@@ -113,7 +113,7 @@ import static org.junit.Assert.*;
 import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 public class IndexerTest {
-    private final static RepositorySetup repoSetup = new RepositorySetup();
+    private static final RepositorySetup repoSetup = new RepositorySetup();
     private static IndexerConf INDEXER_CONF;
     private static SolrTestingUtility SOLR_TEST_UTIL;
     private static Repository repository;

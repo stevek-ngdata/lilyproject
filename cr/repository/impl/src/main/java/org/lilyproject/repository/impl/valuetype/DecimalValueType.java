@@ -26,7 +26,7 @@ import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class DecimalValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "DECIMAL";
+    public static final String NAME = "DECIMAL";
 
     private static final Comparator<BigDecimal> COMPARATOR = new Comparator<BigDecimal>() {
         @Override

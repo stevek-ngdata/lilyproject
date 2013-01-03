@@ -33,7 +33,7 @@ import org.lilyproject.repository.api.ValueTypeFactory;
  */
 public class ByteArrayValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "BYTEARRAY";
+    public static final String NAME = "BYTEARRAY";
 
     private static final Comparator<ByteArray> COMPARATOR = new Comparator<ByteArray>() {
         @Override

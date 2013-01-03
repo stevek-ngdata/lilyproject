@@ -41,7 +41,7 @@ import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class Example {
-    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+    private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
     public static void main(String[] args) throws Exception {
         TEST_UTIL.startMiniCluster(1);

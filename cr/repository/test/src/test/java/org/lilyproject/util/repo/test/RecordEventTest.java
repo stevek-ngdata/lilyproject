@@ -27,7 +27,7 @@ import org.lilyproject.util.repo.RecordEvent;
 public class RecordEventTest {
     private static final String NS = "org.lilyproject.util.repo.test";
 
-    private final static RepositorySetup repoSetup = new RepositorySetup();
+    private static final RepositorySetup repoSetup = new RepositorySetup();
 
     private static Repository repository;
     private static IdGenerator idGenerator;

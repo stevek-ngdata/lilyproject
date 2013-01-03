@@ -25,7 +25,7 @@ import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class BooleanValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "BOOLEAN";
+    public static final String NAME = "BOOLEAN";
 
     private static final Comparator<Boolean> COMPARATOR = new Comparator<Boolean>() {
         @Override

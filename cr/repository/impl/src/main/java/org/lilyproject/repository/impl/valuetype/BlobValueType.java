@@ -26,7 +26,7 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class BlobValueType extends AbstractValueType implements ValueType {
-    public final static String NAME = "BLOB";
+    public static final String NAME = "BLOB";
 
     @Override
     public String getBaseName() {

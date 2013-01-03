@@ -25,7 +25,7 @@ import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class DoubleValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "DOUBLE";
+    public static final String NAME = "DOUBLE";
 
     private static final Comparator<Double> COMPARATOR = new Comparator<Double>() {
         @Override

@@ -62,7 +62,7 @@ import org.lilyproject.util.json.JsonFormat;
 import static org.junit.Assert.*;
 
 public class JsonConversionTest {
-    private final static RepositorySetup repoSetup = new RepositorySetup();
+    private static final RepositorySetup repoSetup = new RepositorySetup();
     private static Repository repository;
     private RecordScanWriter writer;
     private RecordScanReader reader;

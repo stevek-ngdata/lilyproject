@@ -31,7 +31,7 @@ import org.lilyproject.repository.impl.compat.Lily11RecordIdDecoder;
 
 public class LinkValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "LINK";
+    public static final String NAME = "LINK";
     private String fullName;
 
     private final IdGenerator idGenerator;

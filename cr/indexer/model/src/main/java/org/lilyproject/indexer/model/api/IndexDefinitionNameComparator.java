@@ -18,7 +18,7 @@ package org.lilyproject.indexer.model.api;
 import java.util.Comparator;
 
 public class IndexDefinitionNameComparator implements Comparator<IndexDefinition> {
-    public final static IndexDefinitionNameComparator INSTANCE = new IndexDefinitionNameComparator();
+    public static final IndexDefinitionNameComparator INSTANCE = new IndexDefinitionNameComparator();
 
     @Override
     public int compare(IndexDefinition o1, IndexDefinition o2) {

@@ -27,7 +27,7 @@ import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class DateValueType extends AbstractValueType implements ValueType {
 
-    public final static String NAME = "DATE";
+    public static final String NAME = "DATE";
 
     private static final Comparator<LocalDate> COMPARATOR = new Comparator<LocalDate>() {
         @Override

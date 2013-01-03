@@ -38,7 +38,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class IndexerApiTest {
 
-    private final static RepositorySetup repoSetup = new RepositorySetup();
+    private static final RepositorySetup repoSetup = new RepositorySetup();
 
     private static final String NS = "org.lilyproject.indexer.test";
 

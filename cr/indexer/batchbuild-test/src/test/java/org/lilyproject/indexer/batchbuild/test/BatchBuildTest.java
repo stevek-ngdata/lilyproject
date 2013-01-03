@@ -56,7 +56,7 @@ public class BatchBuildTest {
     private FieldType ft2;
     private RecordType rt1;
 
-    private final static String INDEX_NAME = "batchtest";
+    private static final String INDEX_NAME = "batchtest";
     private static final String COUNTER_NUM_FAILED_RECORDS =
             "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
 

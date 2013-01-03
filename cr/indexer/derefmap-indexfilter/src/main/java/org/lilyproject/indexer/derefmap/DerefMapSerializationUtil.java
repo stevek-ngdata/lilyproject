@@ -23,7 +23,7 @@ import org.lilyproject.repository.api.SchemaId;
  */
 final class DerefMapSerializationUtil {
 
-    final static int SCHEMA_ID_BYTE_LENGTH = 16; // see SchemaIdImpl
+    static final int SCHEMA_ID_BYTE_LENGTH = 16; // see SchemaIdImpl
 
     private final IdGenerator idGenerator;
 
