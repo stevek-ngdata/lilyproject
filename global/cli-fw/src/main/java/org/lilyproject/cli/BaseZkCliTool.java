@@ -26,6 +26,7 @@ import org.apache.commons.cli.OptionBuilder;
  */
 public abstract class BaseZkCliTool extends BaseCliTool {
     private static final String DEFAULT_ZK_CONNECT = "localhost";
+    private static final String ZK_ENV_VAR = "LILY_CLI_ZK";
 
     protected String zkConnectionString;
 
@@ -56,11 +57,19 @@ public abstract class BaseZkCliTool extends BaseCliTool {
             return result;
 
         if (!cmd.hasOption(zkOption.getOpt())) {
+            String message;
+            zkConnectionString = System.getenv(ZK_ENV_VAR);
+            if (zkConnectionString != null) {
+                message = "Using ZooKeeper connection string specified in " + ZK_ENV_VAR + ": " + zkConnectionString;
+            } else {
+                zkConnectionString = DEFAULT_ZK_CONNECT;
+                message = "ZooKeeper connection string not specified, using default: " + DEFAULT_ZK_CONNECT;
+            }
+
             // to stderr: makes that sample config dumps of e.g. tester tool do not start with this line, and
             // can thus be redirected to a file without further editing.
-            System.err.println("ZooKeeper connection string not specified, using default: " + DEFAULT_ZK_CONNECT);
+            System.err.println(message);
             System.err.println();
-            zkConnectionString = DEFAULT_ZK_CONNECT;
         } else {
             zkConnectionString = cmd.getOptionValue(zkOption.getOpt());
         }
