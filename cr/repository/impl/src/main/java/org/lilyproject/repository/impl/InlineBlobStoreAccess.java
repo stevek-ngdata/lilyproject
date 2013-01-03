@@ -58,7 +58,7 @@ public class InlineBlobStoreAccess implements BlobStoreAccess {
         return false;
     }
 
-    private class InlineBlobOutputStream extends ByteArrayOutputStream {
+    private static class InlineBlobOutputStream extends ByteArrayOutputStream {
 
         private final Blob blob;
 

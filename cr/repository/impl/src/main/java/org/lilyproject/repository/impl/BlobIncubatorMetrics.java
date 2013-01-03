@@ -63,7 +63,7 @@ public class BlobIncubatorMetrics implements Updater {
         metricsRecord.update();
     }
 
-    public class BlobIncubatorMetricsMXBean extends MetricsDynamicMBeanBase {
+    public static class BlobIncubatorMetricsMXBean extends MetricsDynamicMBeanBase {
         private final ObjectName mbeanName;
 
         public BlobIncubatorMetricsMXBean(MetricsRegistry registry) {

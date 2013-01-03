@@ -50,8 +50,6 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
 
     private ConcurrentHashMap<String, Set<SchemaId>> localUpdateBuckets = new ConcurrentHashMap<String, Set<SchemaId>>();
 
-    private Log log = LogFactory.getLog(getClass());
-
     public FieldTypesCache() {
         super();
         for (String bucketId : buckets.keySet()) {

@@ -120,7 +120,7 @@ public class BlobIncubatorMonitor {
         }
     }
 
-    private class MyLeaderElectionCallback implements LeaderElectionCallback {
+    private static class MyLeaderElectionCallback implements LeaderElectionCallback {
         private final BlobIncubatorMonitor blobIncubatorMonitor;
 
         public MyLeaderElectionCallback(BlobIncubatorMonitor blobIncubatorMonitor) {

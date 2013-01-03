@@ -46,7 +46,6 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
     private static final byte[] BLOBS_COLUMN_FAMILY_BYTES = Bytes.toBytes(BLOBS_COLUMN_FAMILY);
     private static final byte[] BLOB_COLUMN = Bytes.toBytes("b");
 
-    private boolean clientMode = false;
     private HTableInterface table;
 
     public HBaseBlobStoreAccess(Configuration hbaseConf) throws IOException, InterruptedException {

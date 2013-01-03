@@ -31,8 +31,6 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ArgumentValidator;
 
 public class FieldTypesImpl implements FieldTypes {
-    private Log log = LogFactory.getLog(getClass());
-
     // Always use getNameCache() instead of this variable directly, to make sure
     // this is the up-to-date nameCache (in case of FieldTypesCache).
     protected Map<QName, FieldType> nameCache;

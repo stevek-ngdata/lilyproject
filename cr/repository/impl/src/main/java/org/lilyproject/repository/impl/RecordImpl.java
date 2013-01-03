@@ -231,49 +231,6 @@ public class RecordImpl implements Record, Cloneable {
         }
     }
 
-    private boolean detectRecordRecursion(List<Record> parentRecords) {
-        for (Entry<QName, Object> entry : fields.entrySet()) {
-            if (detectRecordRecursion(entry.getValue(), parentRecords)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean detectRecordRecursion(Object value, List<Record> parentRecords) {
-        if (value instanceof HierarchyPath) {
-            Object[] elements = ((HierarchyPath)value).getElements();
-            for (Object object : elements) {
-                if (detectRecordRecursion(object, parentRecords)) {
-                    return true;
-                }
-            }
-        }
-        if (value instanceof List) {
-            List<Object> values = (List<Object>)value;
-            for (Object object : values) {
-                if (detectRecordRecursion(object, parentRecords)) {
-                    return true;
-                }
-            }
-        }
-        if (value instanceof Record) {
-            if (parentRecords.contains(value)) {
-                return true;
-            }
-            Record record = (Record)value;
-            parentRecords.add(record);
-            Map<QName, Object> fields = record.getFields();
-            for (Entry<QName, Object> entry : fields.entrySet()) {
-                if (detectRecordRecursion(entry.getValue(), parentRecords)) {
-                    return true;
-                }
-            }
-            parentRecords.remove(record);
-        }
-        return false; // Skip all other values
-    }
-
     private Object cloneValue(Object value, IdentityRecordStack parentRecords)
             throws RecordException, CloneNotSupportedException {
         if (value instanceof HierarchyPath) {
