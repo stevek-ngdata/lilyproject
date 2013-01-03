@@ -95,7 +95,9 @@
     <!--
     <module name="JavadocVariable"/>
     -->
-    <module name="JavadocStyle"/>
+    <module name="JavadocStyle">
+      <property name="checkFirstSentence" value="false"/>
+    </module>
 
 
     <!-- Checks for Naming Conventions.                  -->
@@ -138,7 +140,9 @@
       <property name="tokens" value="ARRAY_INIT, BNOT, DEC, DOT, INC, LNOT, UNARY_MINUS, UNARY_PLUS, TYPECAST"/>
     </module>
     <module name="NoWhitespaceBefore"/>
-    <module name="OperatorWrap"/>
+    <module name="OperatorWrap">
+      <property name="option" value="eol"/>
+    </module>
     <module name="ParenPad"/>
     <module name="TypecastParenPad"/>
     <module name="WhitespaceAfter">

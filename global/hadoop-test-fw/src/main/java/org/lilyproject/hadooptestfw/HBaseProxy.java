@@ -63,7 +63,7 @@ public class HBaseProxy {
     private boolean format;
     private Log log = LogFactory.getLog(getClass());
 
-    public enum Mode {EMBED, CONNECT}
+    public enum Mode { EMBED, CONNECT }
 
     public static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
 

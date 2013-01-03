@@ -49,7 +49,7 @@ public class HBaseMetrics {
     private static final String HBASE_JMX_PORT = "10102";
 
     private ObjectName regionServerStats = new ObjectName("hadoop:service=RegionServer,name=RegionServerStatistics");
-    ;
+
     private ObjectName operationSystem = new ObjectName("java.lang:type=OperatingSystem");
     private ObjectName memory = new ObjectName("java.lang:type=Memory");
     private ObjectName threading = new ObjectName("java.lang:type=Threading");

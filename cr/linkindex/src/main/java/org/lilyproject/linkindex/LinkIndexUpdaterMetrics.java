@@ -29,11 +29,8 @@ import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 
 public class LinkIndexUpdaterMetrics implements Updater {
-    public enum Action {
-        UPDATE, EXTRACT
-    }
+    public enum Action { UPDATE, EXTRACT }
 
-    ;
     private final MetricsRegistry registry = new MetricsRegistry();
     private final MetricsRecord metricsRecord;
     private final MetricsContext context;

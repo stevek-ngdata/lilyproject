@@ -61,7 +61,7 @@ public class LilyServerProxy {
 
     private Mode mode;
 
-    public enum Mode {EMBED, CONNECT}
+    public enum Mode { EMBED, CONNECT }
 
     private static String LILY_MODE_PROP_NAME = "lily.lilyserverproxy.mode";
 

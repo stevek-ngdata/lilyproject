@@ -47,7 +47,7 @@ public class RecordBuilderImpl implements RecordBuilder {
     private Mode mode;
     private List<Record> records;
 
-    private enum Mode {ROOT_RECORD, NESTED_RECORD, NESTED_RECORD_LIST}
+    private enum Mode { ROOT_RECORD, NESTED_RECORD, NESTED_RECORD_LIST }
 
     public RecordBuilderImpl(Repository repository) throws RecordException {
         this.repository = repository;

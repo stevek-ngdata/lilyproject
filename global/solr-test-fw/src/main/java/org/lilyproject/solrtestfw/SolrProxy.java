@@ -47,7 +47,7 @@ import org.xml.sax.SAXException;
 public class SolrProxy {
     private Mode mode;
 
-    public enum Mode {EMBED, CONNECT}
+    public enum Mode { EMBED, CONNECT }
 
     public static String SOLR_MODE_PROP_NAME = "lily.solrproxy.mode";
 

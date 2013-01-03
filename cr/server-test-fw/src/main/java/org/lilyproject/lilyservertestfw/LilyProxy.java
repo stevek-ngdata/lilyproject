@@ -45,7 +45,7 @@ public class LilyProxy {
     private boolean hasBeenStarted = false;
     private boolean clearData = true;
 
-    public enum Mode {EMBED, CONNECT, HADOOP_CONNECT}
+    public enum Mode { EMBED, CONNECT, HADOOP_CONNECT }
 
     public static String MODE_PROP_NAME = "lily.lilyproxy.mode";
     public static String TESTHOME_PROP_NAME = "lily.lilyproxy.dir";

@@ -67,15 +67,15 @@ public class BalancingAndRetryingLilyConnection {
 
         InvocationHandler typeManagerHandler = new TypeManagerInvocationHandler(lilyClient);
         TypeManager typeManager = (TypeManager)Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
-                new Class[]{TypeManager.class}, typeManagerHandler);
+                new Class[]{ TypeManager.class }, typeManagerHandler);
 
         InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, typeManager);
         Repository repository = (Repository)Proxy.newProxyInstance(Repository.class.getClassLoader(),
-                new Class[]{Repository.class}, repositoryHandler);
+                new Class[]{ Repository.class }, repositoryHandler);
 
         InvocationHandler indexerHandler = new IndexerInvocationHandler(lilyClient);
         Indexer indexer = (Indexer)Proxy.newProxyInstance(Indexer.class.getClassLoader(),
-                new Class[]{Indexer.class}, indexerHandler);
+                new Class[]{ Indexer.class }, indexerHandler);
 
         return new BalancingAndRetryingLilyConnection(repository, typeManager, indexer);
     }
@@ -213,7 +213,7 @@ public class BalancingAndRetryingLilyConnection {
         }
     }
 
-    private enum OperationType {RECORD, TYPE, BLOB}
+    private enum OperationType { RECORD, TYPE, BLOB }
 
     private static class RetryBase {
         private Log log = LogFactory.getLog(getClass());

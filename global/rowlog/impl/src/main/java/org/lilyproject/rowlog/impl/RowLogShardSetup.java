@@ -36,7 +36,7 @@ public class RowLogShardSetup {
         // Create the rowlog table with its splits (if it does not exist yet)
         //
         byte[][] splits = new byte[shardCount - 1][];
-        for (int i = 0; i < shardCount - 1 /* HBase adds last shard automatically (up to 'null' key) */ ; i++) {
+        for (int i = 0; i < shardCount - 1 /* HBase adds last shard automatically (up to 'null' key) */; i++) {
             // region end keys are exclusive (everything lower than the end key is in the region)
             byte[] endKey = new byte[]{(byte)(i + 1)};
             splits[i] = endKey;

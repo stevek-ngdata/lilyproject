@@ -27,7 +27,7 @@ public class Util {
     public static File getOutputFileRollOldOne(String name) throws IOException {
         File file = new File(name);
         if (file.exists()) {
-            for (int i = 1; ; i++) {
+            for (int i = 1; true; i++) {
                 File rollFile = new File(name + "-" + i);
                 if (!rollFile.exists()) {
                     FileUtils.copyFile(file, rollFile);

@@ -32,7 +32,7 @@ public class WildcardPattern {
     private final Type type;
     private final String string;
 
-    enum Type {EQUALS, STARTS_WITH, ENDS_WITH}
+    enum Type { EQUALS, STARTS_WITH, ENDS_WITH }
 
     public WildcardPattern(String pattern) {
         // We require the pattern length to be at least 2, so that a star on itself

@@ -29,7 +29,7 @@ import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 
 public class LinkIndexMetrics implements Updater {
-    public enum Action {DELETE_LINKS, DELETE_LINKS_VTAG, UPDATE_LINKS, GET_REFERRERS, GET_FIELDED_REFERRERS, GET_ALL_FW_LINKS, GET_FW_LINKS}
+    public enum Action { DELETE_LINKS, DELETE_LINKS_VTAG, UPDATE_LINKS, GET_REFERRERS, GET_FIELDED_REFERRERS, GET_ALL_FW_LINKS, GET_FW_LINKS }
 
     ;
     private final MetricsRegistry registry = new MetricsRegistry();

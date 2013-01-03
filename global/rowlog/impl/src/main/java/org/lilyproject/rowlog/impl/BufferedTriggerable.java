@@ -26,7 +26,7 @@ import org.apache.commons.logging.LogFactory;
  * see {@link #stop}.</p>
  */
 public class BufferedTriggerable implements Triggerable {
-    enum Mode {BUFFERING, SLEEPING}
+    enum Mode { BUFFERING, SLEEPING }
 
     private long delay;
     private Mode mode = Mode.SLEEPING;

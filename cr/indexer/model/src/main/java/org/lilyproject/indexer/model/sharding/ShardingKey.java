@@ -38,7 +38,7 @@ public class ShardingKey {
 
     private final MessageDigest mdAlgorithm;
 
-    enum KeyType {STRING, LONG}
+    enum KeyType { STRING, LONG }
 
     private ShardingKey(ShardingKeyValue value, boolean hash, int modulus, KeyType keyType) {
         this.value = value;

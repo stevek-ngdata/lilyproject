@@ -436,7 +436,7 @@ public class Link {
         }
     }
 
-    public enum PropertyMode {SET, COPY, REMOVE}
+    public enum PropertyMode { SET, COPY, REMOVE }
 
     public static class PropertyValue {
         private PropertyMode mode;
