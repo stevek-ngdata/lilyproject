@@ -97,7 +97,6 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
                     new WriteOptions(), namespaces, repository);
 
             node.put("fieldValue", valueAsJson);
-            ObjectNode valueNode = node.putObject("value");
         }
 
         if (filter.getCompareOp() != null) {
