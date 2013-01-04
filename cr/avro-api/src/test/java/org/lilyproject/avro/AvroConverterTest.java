@@ -203,7 +203,7 @@ public class AvroConverterTest {
         QName name = new QName("aNamespace", "aName");
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(id, name);
-        typeManager.newRecordType(id, name);
+        typeManager.newRecordType(id, name, null);
         expectLastCall().andReturn(recordType);
 
         control.replay();
@@ -230,8 +230,8 @@ public class AvroConverterTest {
     public void testRecordTypeVersion() throws Exception {
         QName name = new QName("aNamespace", "aName");
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
-        RecordType recordType = new RecordTypeImpl(id, name);
-        typeManager.newRecordType(id, name);
+        RecordType recordType = new RecordTypeImpl(id, name, (long) 1);
+        typeManager.newRecordType(id, name, (long) 1);
         expectLastCall().andReturn(recordType);
 
         control.replay();
@@ -261,7 +261,7 @@ public class AvroConverterTest {
         QName name = new QName("aNamespace", "aName");
         SchemaId recordTypeId = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(recordTypeId, name);
-        typeManager.newRecordType(recordTypeId, name);
+        typeManager.newRecordType(recordTypeId, name, null);
         expectLastCall().andReturn(recordType);
 
         SchemaId fieldTypeId1 = new SchemaIdImpl(UUID.randomUUID());
@@ -322,7 +322,7 @@ public class AvroConverterTest {
         QName name = new QName("aNamespace", "aName");
         SchemaId recordTypeId = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(recordTypeId, name);
-        typeManager.newRecordType(recordTypeId, name);
+        typeManager.newRecordType(recordTypeId, name, null);
         expectLastCall().andReturn(recordType);
 
         control.replay();
