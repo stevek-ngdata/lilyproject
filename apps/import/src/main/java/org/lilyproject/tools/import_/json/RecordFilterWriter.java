@@ -27,11 +27,13 @@ public class RecordFilterWriter implements EntityWriter<RecordFilter> {
     @Override
     public ObjectNode toJson(RecordFilter entity, WriteOptions options, Repository repository)
             throws RepositoryException, InterruptedException {
-        Namespaces namespaces = new NamespacesImpl();
+        Namespaces namespaces = new NamespacesImpl(options.getUseNamespacePrefixes());
 
         ObjectNode node = toJson(entity, options, namespaces, repository);
 
-        node.put("namespaces", NamespacesConverter.toJson(namespaces));
+        if (namespaces.usePrefixes()) {
+            node.put("namespaces", NamespacesConverter.toJson(namespaces));
+        }
 
         return node;
     }

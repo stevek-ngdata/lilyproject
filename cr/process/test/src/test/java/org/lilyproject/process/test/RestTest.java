@@ -344,6 +344,14 @@ public class RestTest {
         assertNotNull(json.get("schema"));
         assertEquals(1L, json.get("schema").size());
 
+        // Read the record without namespace prefixes
+        response = get(BASE_URI + "/record/USER.faster_fishing?nsprefixes=false");
+        assertStatus(Status.SUCCESS_OK, response);
+
+        // Verify content
+        json = readJson(response.getEntity());
+        assertEquals("Faster Fishing", json.get("fields").get("{org.lilyproject.resttest}title").getTextValue());
+
         // Read the record as specific version
         response = get(BASE_URI + "/record/USER.faster_fishing/version/1");
         assertStatus(Status.SUCCESS_OK, response);

@@ -19,7 +19,9 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.tools.import_.core.*;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -28,10 +30,10 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
 
     @GET
     @Produces("application/json")
-    public Entity<FieldType> get(@PathParam("id") String id) {
+    public Entity<FieldType> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
         try {
             SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
-            return Entity.create(repository.getTypeManager().getFieldTypeById(schemaId));
+            return Entity.create(repository.getTypeManager().getFieldTypeById(schemaId), uriInfo);
         } catch (FieldTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -42,7 +44,7 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
     @PUT
     @Produces("application/json")
     @Consumes("application/json")
-    public Response put(@PathParam("id") String id, FieldType fieldType) {
+    public Response put(@PathParam("id") String id, FieldType fieldType, @Context UriInfo uriInfo) {
         SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
 
         if (fieldType.getId() != null && !fieldType.getId().equals(schemaId)) {
@@ -67,7 +69,7 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
         switch (resultType) {
             case UPDATED:
             case UP_TO_DATE:
-                response = Response.ok(Entity.create(fieldType)).build();
+                response = Response.ok(Entity.create(fieldType, uriInfo)).build();
                 break;
             case CANNOT_UPDATE_DOES_NOT_EXIST:
                 throw new ResourceException("Field type not found: " + id, NOT_FOUND.getStatusCode());

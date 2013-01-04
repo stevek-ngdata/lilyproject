@@ -19,7 +19,9 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.tools.import_.core.*;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -28,10 +30,10 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
 
     @GET
     @Produces("application/json")
-    public Entity<RecordType> get(@PathParam("id") String id) {
+    public Entity<RecordType> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
         try {
             SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
-            return Entity.create(repository.getTypeManager().getRecordTypeById(schemaId, null));
+            return Entity.create(repository.getTypeManager().getRecordTypeById(schemaId, null), uriInfo);
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -42,7 +44,7 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
     @PUT
     @Produces("application/json")
     @Consumes("application/json")
-    public Response put(@PathParam("id") String id, RecordType recordType) {
+    public Response put(@PathParam("id") String id, RecordType recordType, @Context UriInfo uriInfo) {
         SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
 
         if (recordType.getId() != null && !recordType.getId().equals(schemaId)) {
@@ -67,7 +69,7 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
         switch (resultType) {
             case UPDATED:
             case UP_TO_DATE:
-                response = Response.ok(Entity.create(recordType)).build();
+                response = Response.ok(Entity.create(recordType, uriInfo)).build();
                 break;
             case CANNOT_UPDATE_DOES_NOT_EXIST:
                 throw new ResourceException("Record type not found: " + id, NOT_FOUND.getStatusCode());

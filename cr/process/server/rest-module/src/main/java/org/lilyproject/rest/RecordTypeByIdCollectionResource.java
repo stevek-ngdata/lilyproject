@@ -18,8 +18,10 @@ package org.lilyproject.rest;
 import org.lilyproject.repository.api.*;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
 @Path("schema/recordTypeById")
@@ -28,10 +30,10 @@ public class RecordTypeByIdCollectionResource extends BaseRecordTypeCollectionRe
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    public Response post(PostAction<RecordType> postAction) {
+    public Response post(PostAction<RecordType> postAction, @Context UriInfo uriInfo) {
         RecordType recordType = processPost(postAction);
         URI uri = UriBuilder.fromResource(RecordTypeByIdResource.class).build(recordType.getId());
-        return Response.created(uri).entity(Entity.create(recordType)).build();
+        return Response.created(uri).entity(Entity.create(recordType, uriInfo)).build();
     }
 
 }

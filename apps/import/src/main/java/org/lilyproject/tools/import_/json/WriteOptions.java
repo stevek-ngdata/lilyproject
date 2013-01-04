@@ -27,6 +27,12 @@ public class WriteOptions {
     /** For records, should schema information about the fields in the records be included? */
     private boolean includeSchema = false;
 
+    /**
+     * Should the generated JSON make use of namespace prefixes? Only applies when not passing a custom
+     * {@link Namespaces} objects, in which case the behavior is determined through {@link Namespaces#usePrefixes()}.
+     * */
+    private boolean useNamespacePrefixes = true;
+
     public boolean getIncludeSchema() {
         return includeSchema;
     }
@@ -40,5 +46,13 @@ public class WriteOptions {
 
     public void makeImmutable() {
         immutable = true;
+    }
+
+    public boolean getUseNamespacePrefixes() {
+        return useNamespacePrefixes;
+    }
+
+    public void setUseNamespacePrefixes(boolean useNamespacePrefixes) {
+        this.useNamespacePrefixes = useNamespacePrefixes;
     }
 }

@@ -18,8 +18,10 @@ package org.lilyproject.rest;
 import org.lilyproject.repository.api.*;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import java.net.URI;
 
@@ -29,10 +31,10 @@ public class FieldTypeByIdCollectionResource extends BaseFieldTypeCollectionReso
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    public Response post(PostAction<FieldType> postAction) {
+    public Response post(PostAction<FieldType> postAction, @Context UriInfo uriInfo) {
         FieldType fieldType = processPost(postAction);
         URI uri = UriBuilder.fromResource(FieldTypeByIdResource.class).build(fieldType.getId());
-        return Response.created(uri).entity(Entity.create(fieldType)).build();
+        return Response.created(uri).entity(Entity.create(fieldType, uriInfo)).build();
     }
 
 }

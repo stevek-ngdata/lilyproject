@@ -36,7 +36,7 @@ public class RecordTypeByVersionResource extends RepositoryEnabled {
     public Entity<RecordType> get(@PathParam("name") String name, @PathParam("version") Long version, @Context UriInfo uriInfo) {
         QName qname = ResourceClassUtil.parseQName(name, uriInfo.getQueryParameters());
         try {
-            return Entity.create(repository.getTypeManager().getRecordTypeByName(qname, version));
+            return Entity.create(repository.getTypeManager().getRecordTypeByName(qname, version), uriInfo);
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {

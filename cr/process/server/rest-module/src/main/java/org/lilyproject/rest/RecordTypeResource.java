@@ -36,7 +36,7 @@ public class RecordTypeResource extends RepositoryEnabled {
     public Entity<RecordType> get(@PathParam("name") String name, @Context UriInfo uriInfo) {
         QName qname = ResourceClassUtil.parseQName(name, uriInfo.getQueryParameters());
         try {
-            return Entity.create(repository.getTypeManager().getRecordTypeByName(qname, null));
+            return Entity.create(repository.getTypeManager().getRecordTypeByName(qname, null), uriInfo);
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -71,7 +71,7 @@ public class RecordTypeResource extends RepositoryEnabled {
                 URI uri = UriBuilder.fromResource(RecordTypeResource.class).
                         queryParam("ns.n", recordType.getName().getNamespace()).
                         build("n$" + recordType.getName().getName());
-                response = Response.created(uri).entity(Entity.create(recordType)).build();
+                response = Response.created(uri).entity(Entity.create(recordType, uriInfo)).build();
                 break;
             case UPDATED:
             case UP_TO_DATE:
@@ -82,9 +82,9 @@ public class RecordTypeResource extends RepositoryEnabled {
                             build("n$" + recordType.getName().getName());
 
                     return Response.status(Response.Status.MOVED_PERMANENTLY).header("Location", uri).
-                            entity(Entity.create(recordType)).build();
+                            entity(Entity.create(recordType, uriInfo)).build();
                 } else {
-                    response = Response.ok(Entity.create(recordType)).build();
+                    response = Response.ok(Entity.create(recordType, uriInfo)).build();
                 }
                 break;
             default:

@@ -23,6 +23,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,7 @@ public class RecordVariantCollectionResource extends RepositoryEnabled {
 
     @GET
     @Produces("application/json")
-    public EntityList<Record> get(@PathParam("id") String id) {
+    public EntityList<Record> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
         RecordId recordId = repository.getIdGenerator().fromString(id);
         try {
             Set<RecordId> recordIds = repository.getVariants(recordId);
@@ -44,7 +46,7 @@ public class RecordVariantCollectionResource extends RepositoryEnabled {
             for (RecordId variant : recordIds) {
                 records.add(repository.newRecord(variant));
             }
-            return new EntityList<Record>(records);
+            return EntityList.create(records, uriInfo);
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {

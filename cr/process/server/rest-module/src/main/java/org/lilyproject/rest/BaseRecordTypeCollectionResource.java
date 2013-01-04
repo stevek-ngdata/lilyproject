@@ -21,6 +21,8 @@ import org.lilyproject.repository.api.TypeManager;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -29,9 +31,9 @@ import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 public abstract class BaseRecordTypeCollectionResource extends RepositoryEnabled {
     @GET
     @Produces("application/json")
-    public EntityList<RecordType> get() {
+    public EntityList<RecordType> get(@Context UriInfo uriInfo) {
         try {
-            return new EntityList<RecordType>(repository.getTypeManager().getRecordTypes());
+            return EntityList.create(repository.getTypeManager().getRecordTypes(), uriInfo);
         } catch (Exception e) {
             throw new ResourceException("Error loading record type list.", e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
