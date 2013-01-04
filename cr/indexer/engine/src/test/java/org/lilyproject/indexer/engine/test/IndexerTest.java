@@ -30,12 +30,18 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -81,6 +87,7 @@ import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.indexer.model.util.IndexesInfoImpl;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
 import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
@@ -111,12 +118,6 @@ import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 public class IndexerTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -296,7 +297,7 @@ public class IndexerTest {
         ValueType dateValueType = typeManager.getValueType("DATE");
 
         ValueType intHierValueType = typeManager.getValueType("PATH<INTEGER>");
-        
+
 
         //
         // Version tag fields
@@ -341,8 +342,8 @@ public class IndexerTest {
         nvLinkField2 = typeManager.newFieldType(linkValueType, linkField2Name, Scope.NON_VERSIONED);
         nvLinkField2 = typeManager.createFieldType(nvLinkField2);
 
-        nvRecordType1 = typeManager.newRecordType(new QName(NS, "NVRecordType1"));
-        addNvFieldTypes(nvRecordType1);
+        nvRecordType1 = typeManager
+                .newRecordType(new QName(NS, "NVRecordType1"), Collections.<SchemaId, Long>emptyMap(), nvFieldTypes());
         nvRecordType1 = typeManager.createRecordType(nvRecordType1);
 
         //
@@ -396,16 +397,16 @@ public class IndexerTest {
         vIntHierField = typeManager.newFieldType(intHierValueType, vIntHierFieldName, Scope.VERSIONED);
         vIntHierField = typeManager.createFieldType(vIntHierField);
 
-        vRecordType1 = typeManager.newRecordType(new QName(NS2, "VRecordType1"));
-        addVFieldTypes(vRecordType1);
+        vRecordType1 = typeManager
+                .newRecordType(new QName(NS2, "VRecordType1"), Collections.<SchemaId, Long>emptyMap(), vFieldTypes());
         vRecordType1 = typeManager.createRecordType(vRecordType1);
 
         //
         // Schema types for testing last tag
         //
         lastRecordType = typeManager.newRecordType(new QName(NS2, "LastRecordType"));
-        lastRecordType.addFieldTypeEntry(vfield1.getId(), false);
-        lastRecordType.addFieldTypeEntry(nvfield1.getId(), false);
+        lastRecordType = lastRecordType.withFieldTypeEntry(vfield1.getId(), false);
+        lastRecordType = lastRecordType.withFieldTypeEntry(nvfield1.getId(), false);
         lastRecordType = typeManager.createRecordType(lastRecordType);
 
         //
@@ -421,52 +422,60 @@ public class IndexerTest {
         }
         for (QName name : new QName[]{new QName(NS, "Alpha"), new QName(NS, "Beta"), new QName(NS2, "Alpha"),
                 new QName(NS2, "Beta")}) {
-            RecordType recordType = typeManager.newRecordType(name);
-            addNvFieldTypes(recordType);
-            addVFieldTypes(recordType);
+            final HashSet<FieldTypeEntry> fieldTypeEntries = new HashSet<FieldTypeEntry>();
+            fieldTypeEntries.addAll(nvFieldTypes());
+            fieldTypeEntries.addAll(vFieldTypes());
+            RecordType recordType =
+                    typeManager.newRecordType(name, Collections.<SchemaId, Long>emptyMap(), fieldTypeEntries);
             for (int i = 1; i <= 6; i++) {
-                recordType
-                        .addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS, "nvmatch" + i)).getId(), false);
-                recordType
-                        .addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS2, "match" + i)).getId(), false);
+                recordType = recordType.withFieldTypeEntry(
+                        typeManager.getFieldTypeByName(new QName(NS, "nvmatch" + i)).getId(), false);
+                recordType = recordType
+                        .withFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS2, "match" + i)).getId(), false);
             }
             // Link fields
             for (int i = 1; i <= 2; i++) {
-                recordType.addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS, "nv_linkfield" + i)).getId(),
-                        false);
-                recordType.addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS2, "v_linkfield" + i)).getId(),
-                        false);
+                recordType = recordType
+                        .withFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS, "nv_linkfield" + i)).getId(),
+                                false);
+                recordType = recordType
+                        .withFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS2, "v_linkfield" + i)).getId(),
+                                false);
             }
             typeManager.createRecordType(recordType);
         }
 
     }
 
-    private static void addVFieldTypes(RecordType recordType) {
-        recordType.addFieldTypeEntry(vfield1.getId(), false);
-        recordType.addFieldTypeEntry(liveTag.getId(), false);
-        recordType.addFieldTypeEntry(latestTag.getId(), false);
-        recordType.addFieldTypeEntry(previewTag.getId(), false);
-        recordType.addFieldTypeEntry(vLinkField1.getId(), false);
-        recordType.addFieldTypeEntry(nvLinkField2.getId(), false);
-        recordType.addFieldTypeEntry(vStringMvField.getId(), false);
-        recordType.addFieldTypeEntry(vLongField.getId(), false);
-        recordType.addFieldTypeEntry(vBlobField.getId(), false);
-        recordType.addFieldTypeEntry(vBlobMvHierField.getId(), false);
-        recordType.addFieldTypeEntry(vBlobNestedField.getId(), false);
-        recordType.addFieldTypeEntry(vDateTimeField.getId(), false);
-        recordType.addFieldTypeEntry(vDateField.getId(), false);
-        recordType.addFieldTypeEntry(vIntHierField.getId(), false);
+    private static Set<FieldTypeEntry> vFieldTypes() {
+        final HashSet<FieldTypeEntry> fieldTypeEntries = new HashSet<FieldTypeEntry>();
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(vfield1.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(liveTag.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(latestTag.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(previewTag.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(vLinkField1.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(nvLinkField2.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(vStringMvField.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(vLongField.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(vBlobField.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(vBlobMvHierField.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(vBlobNestedField.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(vDateTimeField.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(vDateField.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(vIntHierField.getId(), false));
+        return fieldTypeEntries;
     }
 
-    private static void addNvFieldTypes(RecordType recordType) {
-        recordType.addFieldTypeEntry(nvfield1.getId(), false);
-        recordType.addFieldTypeEntry(nvfield2.getId(), false);
-        recordType.addFieldTypeEntry(liveTag.getId(), false);
-        recordType.addFieldTypeEntry(latestTag.getId(), false);
-        recordType.addFieldTypeEntry(previewTag.getId(), false);
-        recordType.addFieldTypeEntry(nvLinkField1.getId(), false);
-        recordType.addFieldTypeEntry(nvLinkField2.getId(), false);
+    private static Set<FieldTypeEntry> nvFieldTypes() {
+        final HashSet<FieldTypeEntry> fieldTypeEntries = new HashSet<FieldTypeEntry>();
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(nvfield1.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(nvfield2.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(liveTag.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(latestTag.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(previewTag.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(nvLinkField1.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(nvLinkField2.getId(), false));
+        return fieldTypeEntries;
     }
 
     @Test
@@ -477,12 +486,12 @@ public class IndexerTest {
         //
         // Test ForEach
         //
-        
+
         String baseProductId = "product29485";
         String linkedProductId = "linkedProduct12345";
         RecordId linkedRecordId = repository.getIdGenerator().newRecordId(linkedProductId);
-        
-        
+
+
         repository.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId(baseProductId))
                 .recordType(new QName(NS, "Alpha"))
@@ -491,7 +500,7 @@ public class IndexerTest {
                 .create();
 
         repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId(baseProductId, 
+                .id(repository.getIdGenerator().newRecordId(baseProductId,
                         Collections.singletonMap("country", "france")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "louche")
@@ -499,13 +508,13 @@ public class IndexerTest {
                 .create();
 
         repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId(baseProductId, 
+                .id(repository.getIdGenerator().newRecordId(baseProductId,
                         Collections.singletonMap("country", "belgium")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "schuimspaan")
                 .field(nvfield2.getName(), "11")
                 .create();
-        
+
         repository.recordBuilder()
                 .id(linkedRecordId)
                 .recordType(new QName(NS, "Alpha"))
@@ -1952,17 +1961,17 @@ public class IndexerTest {
 
         // Create a record type with two versions
         RecordType rt = typeManager.newRecordType(new QName(NS, "sf_rt"));
-        rt.addFieldTypeEntry(field1.getId(), false);
-        rt.addFieldTypeEntry(field2.getId(), false);
-        rt.addMixin(mixin1.getId());
+        rt = rt.withFieldTypeEntry(field1.getId(), false);
+        rt = rt.withFieldTypeEntry(field2.getId(), false);
+        rt = rt.withMixin(mixin1.getId());
         rt = typeManager.createRecordType(rt);
 
-        rt.addMixin(mixin2.getId(), mixin2.getVersion());
+        rt = rt.withMixin(mixin2.getId(), mixin2.getVersion());
         rt = typeManager.updateRecordType(rt);
 
         RecordType rt2 = typeManager.newRecordType(new QName(NS, "sf_rt2"));
-        rt2.addFieldTypeEntry(field1.getId(), false);
-        rt2.addFieldTypeEntry(field2.getId(), false);
+        rt = rt.withFieldTypeEntry(field1.getId(), false);
+        rt = rt.withFieldTypeEntry(field2.getId(), false);
         rt2 = typeManager.createRecordType(rt2);
 
         //
