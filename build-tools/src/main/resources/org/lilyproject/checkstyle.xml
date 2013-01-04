@@ -72,10 +72,11 @@
 
   <!-- Checks for Headers                                -->
   <!-- See http://checkstyle.sf.net/config_header.html   -->
-  <!-- <module name="Header"> -->
-  <!--   <property name="headerFile" value="${checkstyle.header.file}"/> -->
-  <!--   <property name="fileExtensions" value="java"/> -->
-  <!-- </module> -->
+  <module name="Header">
+     <property name="headerFile" value="${checkstyle.header.file}"/>
+     <property name="ignoreLines" value="2"/>
+     <property name="fileExtensions" value="java"/>
+  </module>
 
   <module name="TreeWalker">
     <property name="tabWidth" value="4"/>
