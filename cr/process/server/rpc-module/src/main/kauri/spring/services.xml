@@ -60,9 +60,6 @@
         factory-method="getHBaseConf"/>
 
   <bean id="avroServer" class="org.lilyproject.avro.AvroServer">
-    <constructor-arg>
-      <bean factory-bean="networkItfInfo" factory-method="getHostAddress"/>
-    </constructor-arg>
     <constructor-arg ref="repository"/>
     <constructor-arg ref="indexer"/>
     <constructor-arg value="${rpc:port}"/>
