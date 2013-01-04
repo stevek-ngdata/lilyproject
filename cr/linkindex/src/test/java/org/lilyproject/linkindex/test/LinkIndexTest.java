@@ -15,6 +15,15 @@
  */
 package org.lilyproject.linkindex.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -23,21 +32,25 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.linkindex.FieldedLink;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class LinkIndexTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -78,7 +91,7 @@ public class LinkIndexTest {
     @Test
     public void testLinkIndex() throws Exception {
         SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
-        
+
         Set<FieldedLink> links1 = new HashSet<FieldedLink>();
         links1.add(new FieldedLink(ids.newRecordId("id1"), field1));
         links1.add(new FieldedLink(ids.newRecordId("id2"), field1));
@@ -143,7 +156,8 @@ public class LinkIndexTest {
         testLinkIndexRetrievalWithProvidedIds(id1, id2, id3, id4);
     }
 
-    private void testLinkIndexRetrievalWithProvidedIds(RecordId id1, RecordId id2, RecordId id3, RecordId id4) throws Exception {
+    private void testLinkIndexRetrievalWithProvidedIds(RecordId id1, RecordId id2, RecordId id3, RecordId id4)
+            throws Exception {
         SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
 
         Set<FieldedLink> links1 = new HashSet<FieldedLink>();
@@ -208,12 +222,15 @@ public class LinkIndexTest {
                 new QName("ns", "complexLinks"), Scope.NON_VERSIONED);
         complexFt = typeManager.createFieldType(complexFt);
 
-        RecordType recordType = typeManager.newRecordType(new QName("ns", "MyRecordType"));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(nonVersionedFt.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(versionedFt.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(versionedMutableFt.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(nestedFt.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(complexFt.getId(), false));
+        final HashSet<FieldTypeEntry> fieldTypeEntries = new HashSet<FieldTypeEntry>();
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(nonVersionedFt.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(versionedFt.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(versionedMutableFt.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(nestedFt.getId(), false));
+        fieldTypeEntries.add(typeManager.newFieldTypeEntry(complexFt.getId(), false));
+        RecordType recordType =
+                typeManager.newRecordType(new QName("ns", "MyRecordType"), Collections.<SchemaId, Long>emptyMap(),
+                        fieldTypeEntries);
         recordType = typeManager.createRecordType(recordType);
 
         SchemaId lastVTag = typeManager.getFieldTypeByName(VersionTag.LAST).getId();
