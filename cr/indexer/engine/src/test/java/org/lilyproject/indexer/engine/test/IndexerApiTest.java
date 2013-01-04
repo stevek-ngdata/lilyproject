@@ -160,11 +160,11 @@ public class IndexerApiTest {
         field1 = typeManager.createFieldType(field1);
 
         matchingRecordType = typeManager.newRecordType(new QName(NS, "RecordType1"));
-        matchingRecordType.addFieldTypeEntry(field1.getId(), true);
+        matchingRecordType = matchingRecordType.withFieldTypeEntry(field1.getId(), true);
         matchingRecordType = typeManager.createRecordType(matchingRecordType);
 
         otherRecordType = typeManager.newRecordType(new QName(NS, "OtherRecordType"));
-        otherRecordType.addFieldTypeEntry(field1.getId(), true);
+        otherRecordType = otherRecordType.withFieldTypeEntry(field1.getId(), true);
         otherRecordType = typeManager.createRecordType(otherRecordType);
     }
 
