@@ -26,7 +26,8 @@ public class FieldTypeWriter implements EntityWriter<FieldType> {
 
     @Override
     public ObjectNode toJson(FieldType fieldType, WriteOptions options, Repository repository) {
-        Namespaces namespaces = new NamespacesImpl(options.getUseNamespacePrefixes());
+        Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
+                        NamespacesImpl.DEFAULT_USE_PREFIXES);
 
         ObjectNode fieldNode = toJson(fieldType, options, namespaces, repository);
 

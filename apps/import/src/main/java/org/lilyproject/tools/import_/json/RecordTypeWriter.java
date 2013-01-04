@@ -27,7 +27,8 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
 
     @Override
     public ObjectNode toJson(RecordType recordType, WriteOptions options, Repository repository) {
-        Namespaces namespaces = new NamespacesImpl(options.getUseNamespacePrefixes());
+        Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
+                        NamespacesImpl.DEFAULT_USE_PREFIXES);
 
         ObjectNode rtNode = toJson(recordType, options, namespaces, repository);
 

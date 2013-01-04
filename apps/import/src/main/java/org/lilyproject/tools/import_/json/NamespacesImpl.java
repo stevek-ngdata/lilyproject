@@ -24,9 +24,10 @@ public class NamespacesImpl implements Namespaces {
     private Map<String, String> prefixToNs = new HashMap<String, String>();
     private int counter = 0;
     private boolean usePrefixes;
+    public static boolean DEFAULT_USE_PREFIXES = true;
 
     public NamespacesImpl() {
-        this.usePrefixes = true;
+        this.usePrefixes = DEFAULT_USE_PREFIXES;
     }
 
     public NamespacesImpl(boolean usePrefixes) {

@@ -30,7 +30,8 @@ public class RecordScanWriter implements EntityWriter<RecordScan> {
     @Override
     public ObjectNode toJson(RecordScan entity, WriteOptions options, Repository repository)
             throws RepositoryException, InterruptedException {
-        Namespaces namespaces = new NamespacesImpl(options.getUseNamespacePrefixes());
+        Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
+                        NamespacesImpl.DEFAULT_USE_PREFIXES);
 
         ObjectNode node = toJson(entity, options, namespaces, repository);
 
