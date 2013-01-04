@@ -41,7 +41,8 @@ public abstract class BaseZkCliTool extends BaseCliTool {
         zkOption = OptionBuilder
                 .withArgName("connection-string")
                 .hasArg()
-                .withDescription("ZooKeeper connection string: hostname1:port,hostname2:port,...")
+                .withDescription("ZooKeeper connection string: hostname1:port,hostname2:port,... Can also be " +
+                        "specified through the environment variable LILY_CLI_ZK")
                 .withLongOpt("zookeeper")
                 .create("z");
 
