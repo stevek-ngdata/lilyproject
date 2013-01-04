@@ -124,7 +124,7 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
 
     @Override
     public RecordType createOrUpdate() throws RepositoryException, InterruptedException {
-        return typeManager.createOrUpdateRecordType(create());
+        return typeManager.createOrUpdateRecordType(build());
     }
 
     @Override
