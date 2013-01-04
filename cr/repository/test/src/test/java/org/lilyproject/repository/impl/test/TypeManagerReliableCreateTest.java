@@ -122,7 +122,7 @@ public class TypeManagerReliableCreateTest {
         // Fake concurrent update
         fakeConcurrentUpdate(qName2);
 
-        typeManager.newRecordType(recordType.getId(), qName2);
+        recordType = typeManager.newRecordType(recordType.getId(), qName2);
         try {
             typeManager.updateRecordType(recordType);
             fail();

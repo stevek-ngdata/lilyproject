@@ -261,7 +261,7 @@ public class SchemaCacheTest {
         RecordType recordType = typeManager.recordTypeBuilder().name(rtName).create();
         for (int i = 0; i < 100; i++) {
             QName newRtName = new QName("testRenameRecordType", "r" + i);
-            typeManager.newRecordType(recordType.getId(), newRtName);
+            recordType = typeManager.newRecordType(recordType.getId(), newRtName);
             recordType = typeManager.updateRecordType(recordType);
             typeManager.getRecordTypeByName(newRtName, null);
         }
