@@ -15,18 +15,38 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.lilyproject.repository.api.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 
 public class RecordTypeBuilderImpl implements RecordTypeBuilder {
 
+    private SchemaId id;
+    private QName name;
+    private Long version;
+    private Map<SchemaId, Long> mixins;
+    private Set<FieldTypeEntry> fieldTypeEntries;
+
     private final TypeManager typeManager;
-    private RecordType recordType;
     private String defaultNamespace;
     private Scope defaultScope = Scope.NON_VERSIONED;
-    
+
     public RecordTypeBuilderImpl(TypeManager typeManager) throws TypeException {
         this.typeManager = typeManager;
-        recordType = typeManager.newRecordType(null);
+        reset();
     }
 
     @Override
@@ -43,31 +63,37 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
 
     @Override
     public RecordTypeBuilder name(String name) {
-        recordType.setName(resolveNamespace(name));
+        this.name = resolveNamespace(name);
         return this;
     }
 
     @Override
     public RecordTypeBuilder name(String namespace, String name) {
-        recordType.setName(new QName(namespace, name));
+        this.name = new QName(namespace, name);
         return this;
     }
 
     @Override
     public RecordTypeBuilder name(QName name) {
-        recordType.setName(name);
+        this.name = name;
+        return this;
+    }
+
+    @Override
+    public RecordTypeBuilder version(Long version) {
+        this.version = version;
         return this;
     }
 
     @Override
     public RecordTypeBuilder id(SchemaId id) {
-        recordType.setId(id);
+        this.id = id;
         return this;
     }
-    
+
     @Override
     public RecordTypeBuilder field(SchemaId id, boolean mandatory) {
-        recordType.addFieldTypeEntry(id, mandatory);
+        fieldTypeEntries.add(new FieldTypeEntryImpl(id, mandatory));
         return this;
     }
 
@@ -78,28 +104,32 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
 
     @Override
     public RecordTypeBuilder reset() throws TypeException {
-        recordType = typeManager.newRecordType(null);
+        this.id = null;
+        this.name = null;
+        this.version = null;
+        this.mixins = new HashMap<SchemaId, Long>();
+        this.fieldTypeEntries = new HashSet<FieldTypeEntry>();
         return this;
     }
 
     @Override
     public RecordType build() {
-        return recordType;
+        return new RecordTypeImpl(this.id, this.name, this.version, this.mixins, this.fieldTypeEntries);
     }
 
     @Override
     public RecordType create() throws RepositoryException, InterruptedException {
-        return typeManager.createRecordType(recordType);
+        return typeManager.createRecordType(build());
     }
 
     @Override
     public RecordType createOrUpdate() throws RepositoryException, InterruptedException {
-        return typeManager.createOrUpdateRecordType(recordType);
+        return typeManager.createOrUpdateRecordType(create());
     }
 
     @Override
     public RecordType update() throws RepositoryException, InterruptedException {
-        return typeManager.updateRecordType(recordType);
+        return typeManager.updateRecordType(build());
     }
 
     @Override
@@ -111,7 +141,7 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
         if (defaultNamespace != null)
             return new QName(defaultNamespace, name);
 
-        QName recordTypeName = recordType.getName();
+        QName recordTypeName = this.name;
         if (recordTypeName != null)
             return new QName(recordTypeName.getNamespace(), name);
 
@@ -166,7 +196,7 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
 
         @Override
         public RecordTypeBuilder add() {
-            recordType.addFieldTypeEntry(id, mandatory);
+            fieldTypeEntries.add(new FieldTypeEntryImpl(id, mandatory));
             return RecordTypeBuilderImpl.this;
         }
 
@@ -289,7 +319,7 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
             if (id == null) {
                 throw new IllegalStateException("Cannot add mixin: record type not set.");
             }
-            recordType.addMixin(id, version);
+            mixins.put(id, version);
             return RecordTypeBuilderImpl.this;
         }
     }

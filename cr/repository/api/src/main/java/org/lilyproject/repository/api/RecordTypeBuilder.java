@@ -61,7 +61,7 @@ public interface RecordTypeBuilder {
      * Sets the name of the record type.
      */
     RecordTypeBuilder name(QName name);
-    
+
     /**
      * Sets the id of the record type. This is only relevant when you want
      * to update an existing record type, and even then the ID is only
@@ -69,14 +69,19 @@ public interface RecordTypeBuilder {
      * you prefer to rely on the unchangeable ID to identify the record type.
      */
     RecordTypeBuilder id(SchemaId id);
-    
+
+    /**
+     * Sets the version of the record type.
+     */
+    RecordTypeBuilder version(Long version);
+
     /**
      * Adds a field type to the record type.
      *
      * <p>Alternatively, you can use the dedicated builder provided through
      * {@link #fieldEntry()} which offers more possibilities.
      *
-     * @param id SchemaId of the field type
+     * @param id        SchemaId of the field type
      * @param mandatory true if it is a mandatory field
      */
     RecordTypeBuilder field(SchemaId id, boolean mandatory);
@@ -108,8 +113,8 @@ public interface RecordTypeBuilder {
      * name already exists, use {@link #createOrUpdate()} to dynamically
      * switch between create and update.
      *
-     * @see {@link TypeManager#createRecordType(RecordType)}
      * @return the created record type
+     * @see {@link TypeManager#createRecordType(RecordType)}
      */
     RecordType create() throws RepositoryException, InterruptedException;
 
@@ -118,20 +123,20 @@ public interface RecordTypeBuilder {
      *
      * <p>This method is interesting in case you don't know if the type </p>
      *
-     * @see {@link TypeManager#createOrUpdateRecordType(RecordType)}
      * @return the created or updated record type
+     * @see {@link TypeManager#createOrUpdateRecordType(RecordType)}
      */
     RecordType createOrUpdate() throws RepositoryException, InterruptedException;
-    
+
     /**
      * Updates a record type on the repository with the properties
      * that were added to the builder..
      *
-     * @see {@link TypeManager#updateRecordType(RecordType)}
      * @return the updated record type
+     * @see {@link TypeManager#updateRecordType(RecordType)}
      */
     RecordType update() throws RepositoryException, InterruptedException;
-    
+
     /**
      * Returns a RecordType object containing the properties that were added
      * to the builder without actually creating it on the repository.

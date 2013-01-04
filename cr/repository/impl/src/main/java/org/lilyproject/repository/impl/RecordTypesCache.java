@@ -15,12 +15,21 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeBucket;
 
 public class RecordTypesCache {
     private Log log = LogFactory.getLog(getClass());
@@ -43,7 +52,8 @@ public class RecordTypesCache {
 
     private Map<QName, RecordType> nameCache;
     private Map<String, Map<SchemaId, RecordType>> buckets;
-    private ConcurrentHashMap<String, Set<SchemaId>> localUpdateBuckets = new ConcurrentHashMap<String, Set<SchemaId>>();
+    private ConcurrentHashMap<String, Set<SchemaId>> localUpdateBuckets =
+            new ConcurrentHashMap<String, Set<SchemaId>>();
 
     public RecordTypesCache() {
         nameCache = new HashMap<QName, RecordType>();
@@ -97,7 +107,7 @@ public class RecordTypesCache {
 
     /**
      * Return the monitor of a bucket and create it if it does not exist yet.
-     * 
+     *
      * @param bucketId
      * @return
      */
@@ -123,21 +133,21 @@ public class RecordTypesCache {
     /**
      * Return all record types in the cache. To avoid inconsistencies between
      * buckets, we get the nameCache first.
-     * 
+     *
      * @return
      * @throws InterruptedException
      */
     public Collection<RecordType> getRecordTypes() throws InterruptedException {
         List<RecordType> recordTypes = new ArrayList<RecordType>();
         for (RecordType recordType : getNameCache().values()) {
-            recordTypes.add(recordType.clone());
+            recordTypes.add(recordType);
         }
         return recordTypes;
     }
 
     /**
      * Return the record type based on its name
-     * 
+     *
      * @param name
      * @return
      * @throws InterruptedException
@@ -148,7 +158,7 @@ public class RecordTypesCache {
 
     /**
      * Get the record type based on its id
-     * 
+     *
      * @param id
      * @return
      */
@@ -162,7 +172,7 @@ public class RecordTypesCache {
 
     /**
      * Refreshes the whole cache to contain the given list of record types.
-     * 
+     *
      * @param recordTypes
      * @throws InterruptedException
      */
@@ -197,7 +207,7 @@ public class RecordTypesCache {
 
     /**
      * Refresh one bucket with the record types contained in the TypeBucket
-     * 
+     *
      * @param typeBucket
      */
     public void refreshRecordTypeBucket(TypeBucket typeBucket) {
@@ -230,13 +240,12 @@ public class RecordTypesCache {
 
     /**
      * Update the cache to contain the new recordType
-     * 
+     *
      * @param recordType
      */
     public void update(RecordType recordType) {
         // Clone the RecordType to avoid changes to it while it is in the cache
-        RecordType rtToCache = recordType.clone();
-        SchemaId id = rtToCache.getId();
+        SchemaId id = recordType.getId();
         String bucketId = AbstractSchemaCache.encodeHex(id.getBytes());
         // First increment the number of buckets that are being updated
         incCount();
@@ -248,7 +257,7 @@ public class RecordTypesCache {
                 bucket = new ConcurrentHashMap<SchemaId, RecordType>(8, .75f, 1);
                 buckets.put(bucketId, bucket);
             }
-            bucket.put(id, rtToCache);
+            bucket.put(id, recordType);
             // Mark that this recordType is updated locally
             // and that the next refresh can be ignored
             // since this refresh can contain an old recordType
@@ -257,7 +266,7 @@ public class RecordTypesCache {
         // Decrement the number of buckets that are being updated again.
         decCount();
     }
-    
+
     // Add the id of a record type that has been updated locally
     // in a bucket. This record type will be skipped in a next
     // cache refresh sequence.
@@ -285,7 +294,7 @@ public class RecordTypesCache {
 
     public void clear() {
         nameCache.clear();
-        
+
         for (Map bucket : buckets.values()) {
             bucket.clear();
         }

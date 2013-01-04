@@ -15,10 +15,14 @@
  */
 package org.lilyproject.repository.impl.test;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -48,6 +52,7 @@ import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
@@ -57,12 +62,10 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 public abstract class AbstractBlobStoreTest {
     private static String namespace = "test";
     protected static final RepositorySetup repoSetup = new RepositorySetup();
+
     static {
         repoSetup.setBlobLimits(50, 1024);
     }
@@ -82,7 +85,7 @@ public abstract class AbstractBlobStoreTest {
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(namespace, "testCreateRT"));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        recordType = recordType.withFieldTypeEntry(fieldTypeEntry);
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = Bytes.toBytes("someBytes");
@@ -120,9 +123,9 @@ public abstract class AbstractBlobStoreTest {
                 Scope.NON_VERSIONED);
         fieldType3 = typeManager.createFieldType(fieldType3);
         RecordType recordType = typeManager.newRecordType(new QName(namespace, "testThreeSizes"));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), true));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), true));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), true));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), true));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), true));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), true));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] small = new byte[10];
@@ -163,9 +166,9 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testForceInlineRT"));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testForceInlineRT"),
+                Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         int size = 4096;
@@ -211,9 +214,9 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testCreateTwoRecordsWithSameBlobRT"));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testCreateTwoRecordsWithSameBlobRT"),
+                Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = Bytes.toBytes("someBytes");
@@ -269,9 +272,9 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testUpdateNonVersionedBlobRT" + size));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testUpdateNonVersionedBlobRT" + size),
+                Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = new byte[size];
@@ -320,9 +323,9 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testDeleteNonVersionedBlobRT" + size));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), false);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testDeleteNonVersionedBlobRT" + size),
+                Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = new byte[size];
@@ -363,9 +366,9 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testUpdateMutableBlobRT" + size));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testUpdateMutableBlobRT" + size),
+                Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = new byte[size];
@@ -415,9 +418,9 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testDeleteMutableBlobRT" + size));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), false);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testDeleteMutableBlobRT" + size),
+                Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = new byte[size];
@@ -475,12 +478,12 @@ public abstract class AbstractBlobStoreTest {
 
     private void testUpdateMutableMultivalueBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName(namespace, "testUpdateMutableMultivalueBlob" + size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST<BLOB>"), fieldName, Scope.VERSIONED_MUTABLE);
+        FieldType fieldType =
+                typeManager.newFieldType(typeManager.getValueType("LIST<BLOB>"), fieldName, Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testUpdateMutableMultivalueBlobRT"
-                + size));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testUpdateMutableMultivalueBlobRT"
+                + size), Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = new byte[size];
@@ -566,10 +569,9 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("PATH<BLOB>"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testUpdateMutableHierarchyBlobRT"
-                + size));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testUpdateMutableHierarchyBlobRT"
+                + size), Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = new byte[size];
@@ -654,10 +656,10 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST<PATH<BLOB>>"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace,
-                "testUpdateMutableMultivalueHierarchyBlobRT" + size));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace,
+                "testUpdateMutableMultivalueHierarchyBlobRT" + size), Collections.<SchemaId, Long>emptyMap(),
+                Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = new byte[size];
@@ -742,9 +744,9 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testDeleteRT"));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testDeleteRT"),
+                Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = new byte[3000];
@@ -762,7 +764,8 @@ public abstract class AbstractBlobStoreTest {
 
     @Test
     public void testDeleteMultivalueHierarchyBlobSmall() throws Exception {
-        testDeleteMultivalueHierarchyBlob(50, false); // An inputstream for the inline blob is created on the blobKey directly
+        testDeleteMultivalueHierarchyBlob(50,
+                false); // An inputstream for the inline blob is created on the blobKey directly
     }
 
     @Test
@@ -780,10 +783,9 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST<PATH<BLOB>>"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testDeleteMultivalueHierarchyBlobRT"
-                + size));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testDeleteMultivalueHierarchyBlobRT"
+                + size), Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         byte[] bytes = new byte[size];
@@ -826,9 +828,9 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testBlobIncubatorMonitorUnusedBlobRT"));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace, "testBlobIncubatorMonitorUnusedBlobRT"),
+                Collections.<SchemaId, Long>emptyMap(), Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         // Incubate blob but never use it
@@ -852,10 +854,10 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace,
-                "testBlobIncubatorMonitorFailureAfterReservationRT"));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace,
+                "testBlobIncubatorMonitorFailureAfterReservationRT"), Collections.<SchemaId, Long>emptyMap(),
+                Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         // This is the failure scenario where creating the record fails after reserving the blob
@@ -885,10 +887,10 @@ public abstract class AbstractBlobStoreTest {
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        RecordType recordType = typeManager.newRecordType(new QName(namespace,
-                "testBlobIncubatorMonitorFailureBeforeRemovingReservation"));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-        recordType.addFieldTypeEntry(fieldTypeEntry);
+        RecordType recordType = typeManager.newRecordType(new QName(namespace,
+                "testBlobIncubatorMonitorFailureBeforeRemovingReservation"), Collections.<SchemaId, Long>emptyMap(),
+                Collections.singleton(fieldTypeEntry));
         recordType = typeManager.createRecordType(recordType);
 
         // This is the failure scenario where creating the record fails after reserving the blob
@@ -907,10 +909,13 @@ public abstract class AbstractBlobStoreTest {
         record = repository.create(record);
 
         // Faking failure
-        HTableInterface blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(repoSetup.getHbaseTableFactory(), true);
+        HTableInterface blobIncubatorTable =
+                LilyHBaseSchema.getBlobIncubatorTable(repoSetup.getHbaseTableFactory(), true);
         Put put = new Put(blob.getValue());
-        put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes, record.getId().toBytes());
-        put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes, fieldType.getId().getBytes());
+        put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes,
+                record.getId().toBytes());
+        put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes,
+                fieldType.getId().getBytes());
         blobIncubatorTable.put(put);
 
         // Give time for the blob to expire
@@ -963,7 +968,7 @@ public abstract class AbstractBlobStoreTest {
         absentField = typeManager.createFieldType(absentField);
 
         RecordType rt = typeManager.newRecordType(new QName(namespace, "NoBlobsRT"));
-        rt.addFieldTypeEntry(nonBlobField.getId(), false);
+        rt = rt.withFieldTypeEntry(nonBlobField.getId(), false);
         rt = typeManager.createRecordType(rt);
 
         Record record = repository.newRecord();
@@ -1010,17 +1015,19 @@ public abstract class AbstractBlobStoreTest {
         }
     }
 
-    private Blob writeBlob(byte[] bytes, String mediaType, String name) throws RepositoryException, InterruptedException,
- IOException {
-        return writeBlob(bytes, mediaType, name, (int)bytes.length);
+    private Blob writeBlob(byte[] bytes, String mediaType, String name)
+            throws RepositoryException, InterruptedException,
+            IOException {
+        return writeBlob(bytes, mediaType, name, (int) bytes.length);
     }
 
     /**
      * @param length The blob site to be used when constructing the blob
-     * (this can be used to control how the blob will be stored)
+     *               (this can be used to control how the blob will be stored)
      */
-    private Blob writeBlob(byte[] bytes, String mediaType, String name, long length) throws RepositoryException, InterruptedException,
- IOException {
+    private Blob writeBlob(byte[] bytes, String mediaType, String name, long length)
+            throws RepositoryException, InterruptedException,
+            IOException {
         Blob blob = new Blob(mediaType, length, name);
         OutputStream outputStream = repository.getOutputStream(blob);
         outputStream.write(bytes);
@@ -1033,7 +1040,7 @@ public abstract class AbstractBlobStoreTest {
         return readBlob(recordId, null, fieldName);
     }
 
-    private byte[] readBlob(RecordId recordId, Long version, QName fieldName, int...indexes)
+    private byte[] readBlob(RecordId recordId, Long version, QName fieldName, int... indexes)
             throws RepositoryException, InterruptedException, IOException {
         InputStream inputStream = repository.getInputStream(recordId, version, fieldName, indexes);
         try {

@@ -15,6 +15,11 @@
  */
 package org.lilyproject.avro;
 
+import static org.easymock.EasyMock.createControl;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertEquals;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -50,11 +55,6 @@ import org.lilyproject.repository.impl.RecordTypeImpl;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repository.impl.valuetype.StringValueType;
-
-import static org.easymock.EasyMock.createControl;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.isA;
-import static org.junit.Assert.assertEquals;
 
 
 public class AvroConverterTest {
@@ -237,7 +237,7 @@ public class AvroConverterTest {
         control.replay();
         converter = new AvroConverter();
         converter.setRepository(repository);
-        recordType.setVersion(1L);
+        recordType = new RecordTypeImpl(recordType.getId(), recordType.getName(), recordType.getVersion());
         AvroRecordType avroRecordType = new AvroRecordType();
         AvroSchemaId avroSchemaId = new AvroSchemaId();
         avroSchemaId.idBytes = ByteBuffer.wrap(id.getBytes());
@@ -276,8 +276,8 @@ public class AvroConverterTest {
         control.replay();
         converter = new AvroConverter();
         converter.setRepository(repository);
-        recordType.addFieldTypeEntry(fieldTypeEntry1);
-        recordType.addFieldTypeEntry(fieldTypeEntry2);
+        recordType = recordType.withFieldTypeEntry(fieldTypeEntry1);
+        recordType = recordType.withFieldTypeEntry(fieldTypeEntry2);
         AvroRecordType avroRecordType = new AvroRecordType();
         AvroSchemaId avroRecordTypeId = new AvroSchemaId();
         avroRecordTypeId.idBytes = ByteBuffer.wrap(recordTypeId.getBytes());
@@ -329,9 +329,9 @@ public class AvroConverterTest {
         converter = new AvroConverter();
         converter.setRepository(repository);
         SchemaId mixinId1 = new SchemaIdImpl(UUID.randomUUID());
-        recordType.addMixin(mixinId1, 1L);
+        recordType = recordType.withMixin(mixinId1, 1L);
         SchemaId mixinId2 = new SchemaIdImpl(UUID.randomUUID());
-        recordType.addMixin(mixinId2, 2L);
+        recordType = recordType.withMixin(mixinId2, 2L);
         AvroRecordType avroRecordType = new AvroRecordType();
         AvroSchemaId avroRecordTypeId = new AvroSchemaId();
         avroRecordTypeId.idBytes = ByteBuffer.wrap(recordTypeId.getBytes());

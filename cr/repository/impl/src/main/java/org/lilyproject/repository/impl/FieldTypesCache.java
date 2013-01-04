@@ -25,7 +25,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeBucket;
 
 public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
     // A lock on the monitor needs to be taken when changes are to be made on
@@ -43,8 +47,9 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
     // count is higher than 0, the nameCache can not be updated since this could
     // lead to an inconsistent state (two types could get the same name).
     private volatile int count = 0;
-    
-    private ConcurrentHashMap<String, Set<SchemaId>> localUpdateBuckets = new ConcurrentHashMap<String, Set<SchemaId>>();
+
+    private ConcurrentHashMap<String, Set<SchemaId>> localUpdateBuckets =
+            new ConcurrentHashMap<String, Set<SchemaId>>();
 
     private Log log = LogFactory.getLog(getClass());
 
@@ -68,7 +73,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                     monitor.wait();
                 }
                 if (nameCacheOutOfDate) {
-                // Re-initialize the nameCache
+                    // Re-initialize the nameCache
                     Map<QName, FieldType> newNameCache = new HashMap<QName, FieldType>();
                     for (Map<SchemaId, FieldType> bucket : buckets.values()) {
                         for (FieldType fieldType : bucket.values())
@@ -106,7 +111,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
 
     /**
      * Return the monitor of a bucket and create it if it does not exist yet.
-     * 
+     *
      * @param bucketId
      * @return
      */
@@ -132,7 +137,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
     /**
      * Take a snapshot of the cache and return it. This snapshot cannot be
      * updated.
-     * 
+     *
      * @return the FieldTypes snapshot
      * @throws InterruptedException
      */
@@ -146,7 +151,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                 Map<SchemaId, FieldType> fieldTypeIdBucket = new HashMap<SchemaId, FieldType>();
                 fieldTypeIdBucket.putAll(bucketEntry.getValue());
                 newFieldTypes.buckets.put(bucketEntry.getKey(), fieldTypeIdBucket);
-                for (FieldType fieldType: bucketEntry.getValue().values()) {
+                for (FieldType fieldType : bucketEntry.getValue().values()) {
                     newFieldTypes.nameCache.put(fieldType.getName(), fieldType);
                 }
             }
@@ -156,7 +161,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
 
     /**
      * Refreshes the whole cache to contain the given list of field types.
-     * 
+     *
      * @param fieldTypes
      * @throws InterruptedException
      */
@@ -191,7 +196,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
 
     /**
      * Refresh one bucket with the field types contained in the TypeBucket
-     * 
+     *
      * @param typeBucket
      */
     public void refreshFieldTypeBucket(TypeBucket typeBucket) {
@@ -224,13 +229,11 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
 
     /**
      * Update the cache to contain the new fieldType
-     * 
+     *
      * @param fieldType
      */
     public void update(FieldType fieldType) {
-        // Clone the FieldType to avoid changes to it while it is in the cache
-        FieldType ftToCache = fieldType.clone();
-        SchemaId id = ftToCache.getId();
+        SchemaId id = fieldType.getId();
         String bucketId = AbstractSchemaCache.encodeHex(id.getBytes());
         // First increment the number of buckets that are being updated
         incCount();
@@ -242,7 +245,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                 bucket = new ConcurrentHashMap<SchemaId, FieldType>(8, .75f, 1);
                 buckets.put(bucketId, bucket);
             }
-            bucket.put(id, ftToCache);
+            bucket.put(id, fieldType);
             // Mark that this fieldType is updated locally
             // and that the next refresh can be ignored
             // since this refresh can contain an old fieldType
@@ -276,7 +279,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
         }
         return localUpdateBucket.remove(id);
     }
-    
+
     public void clear() {
         nameCache.clear();
 

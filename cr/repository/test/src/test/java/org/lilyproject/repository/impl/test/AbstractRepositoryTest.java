@@ -15,10 +15,19 @@
  */
 package org.lilyproject.repository.impl.test;
 
+import static org.easymock.EasyMock.createControl;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +42,7 @@ import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.CompareOp;
 import org.lilyproject.repository.api.FieldNotFoundException;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdRecordScanner;
@@ -65,14 +75,6 @@ import org.lilyproject.repository.api.filter.RecordIdPrefixFilter;
 import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repository.api.filter.RecordVariantFilter;
 import org.lilyproject.repotestfw.RepositorySetup;
-
-import static org.easymock.EasyMock.createControl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public abstract class AbstractRepositoryTest {
 
@@ -134,36 +136,39 @@ public abstract class AbstractRepositoryTest {
     }
 
     private static void setupRecordTypes() throws Exception {
-        recordType1 = typeManager.newRecordType(new QName(namespace, "RT1"));
-        recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        final HashSet<FieldTypeEntry> fieldTypeEntries1 = new HashSet<FieldTypeEntry>();
+        fieldTypeEntries1.add(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        fieldTypeEntries1.add(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        fieldTypeEntries1.add(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        recordType1 = typeManager
+                .newRecordType(new QName(namespace, "RT1"), Collections.<SchemaId, Long>emptyMap(), fieldTypeEntries1);
         recordType1 = typeManager.createRecordType(recordType1);
 
-        recordType1B = recordType1.clone();
-        recordType1B.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1B.getId(), false));
+        recordType1B = recordType1.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1B.getId(), false));
         recordType1B = typeManager.updateRecordType(recordType1B);
 
-        recordType2 = typeManager.newRecordType(new QName(namespace, "RT2"));
 
-        recordType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType4.getId(), false));
-        recordType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType5.getId(), false));
-        recordType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
+        final HashSet<FieldTypeEntry> fieldTypeEntries2 = new HashSet<FieldTypeEntry>();
+        fieldTypeEntries2.add(typeManager.newFieldTypeEntry(fieldType4.getId(), false));
+        fieldTypeEntries2.add(typeManager.newFieldTypeEntry(fieldType5.getId(), false));
+        fieldTypeEntries2.add(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
+        recordType2 = typeManager
+                .newRecordType(new QName(namespace, "RT2"), Collections.<SchemaId, Long>emptyMap(), fieldTypeEntries2);
         recordType2 = typeManager.createRecordType(recordType2);
 
-        recordType3 = typeManager.newRecordType(new QName(namespace, "RT3"));
-        recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        final HashSet<FieldTypeEntry> fieldTypeEntries3 = new HashSet<FieldTypeEntry>();
+        fieldTypeEntries3.add(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        fieldTypeEntries3.add(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        fieldTypeEntries3.add(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        recordType3 = typeManager
+                .newRecordType(new QName(namespace, "RT3"), Collections.<SchemaId, Long>emptyMap(), fieldTypeEntries3);
         recordType3 = typeManager.createRecordType(recordType3);
-        recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), true));
+        recordType3 = recordType3.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), true));
         recordType3 = typeManager.updateRecordType(recordType3);
-        recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), true));
+        recordType3 = recordType3.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), true));
         recordType3 = typeManager.updateRecordType(recordType3);
-        recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
+        recordType3 = recordType3.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
         recordType3 = typeManager.updateRecordType(recordType3);
-
-
     }
 
 
@@ -921,7 +926,7 @@ public abstract class AbstractRepositoryTest {
         } catch (RecordNotFoundException expected) {
         }
     }
-    
+
 
     @Test
     public void testDeleteRecord() throws Exception {
@@ -998,8 +1003,8 @@ public abstract class AbstractRepositoryTest {
         nvfieldtype = typeManager.createFieldType(nvfieldtype);
 
         RecordType rt = typeManager.newRecordType(new QName("reinc", "rt"));
-        rt.addFieldTypeEntry(vfieldtype.getId(), false);
-        rt.addFieldTypeEntry(nvfieldtype.getId(), false);
+        rt = rt.withFieldTypeEntry(vfieldtype.getId(), false);
+        rt = rt.withFieldTypeEntry(nvfieldtype.getId(), false);
         rt = typeManager.createRecordType(rt);
 
         // Create a record with versions
@@ -1039,7 +1044,7 @@ public abstract class AbstractRepositoryTest {
     public void testRecordRecreateOnlyVersionedFields() throws Exception {
         QName versionedOnlyQN = new QName(namespace, "VersionedOnly");
         RecordType versionedOnlyRT = typeManager.newRecordType(versionedOnlyQN);
-        versionedOnlyRT.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        versionedOnlyRT = versionedOnlyRT.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         versionedOnlyRT = typeManager.createRecordType(versionedOnlyRT);
 
         Record record = repository.newRecord();
@@ -1071,7 +1076,7 @@ public abstract class AbstractRepositoryTest {
 
         QName rtName = new QName("recreate", "rtOnlyNonVersioned");
         RecordType rt = typeManager.newRecordType(rtName);
-        rt.addFieldTypeEntry(nvfieldtype.getId(), false);
+        rt = rt.withFieldTypeEntry(nvfieldtype.getId(), false);
         rt = typeManager.createRecordType(rt);
 
         // Create a record with versions
@@ -1335,8 +1340,8 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testMixinLatestVersion() throws Exception {
         RecordType recordType4 = typeManager.newRecordType(new QName(namespace, "RT4"));
-        recordType4.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
-        recordType4.addMixin(recordType1.getId()); // In fact recordType1B should be taken as Mixin
+        recordType4 = recordType4.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
+        recordType4 = recordType4.withMixin(recordType1.getId()); // In fact recordType1B should be taken as Mixin
         recordType4 = typeManager.createRecordType(recordType4);
 
         Record record = repository.newRecord(idGenerator.newRecordId());
@@ -1566,9 +1571,9 @@ public abstract class AbstractRepositoryTest {
 
         // Change record to a different record type
         RecordType recordTypeA = typeManager.newRecordType(new QName("testmut", "RTA"));
-        recordTypeA.addFieldTypeEntry(fieldType4.getId(), false);
-        recordTypeA.addFieldTypeEntry(fieldType5.getId(), false);
-        recordTypeA.addFieldTypeEntry(fieldType6.getId(), false);
+        recordTypeA = recordTypeA.withFieldTypeEntry(fieldType4.getId(), false);
+        recordTypeA = recordTypeA.withFieldTypeEntry(fieldType5.getId(), false);
+        recordTypeA = recordTypeA.withFieldTypeEntry(fieldType6.getId(), false);
         recordTypeA = typeManager.createRecordType(recordTypeA);
 
         // Change the record type of the non-versioned scope (at the time of this writing, could not modify
@@ -1874,7 +1879,8 @@ public abstract class AbstractRepositoryTest {
                         Scope.NON_VERSIONED));
 
         RecordType recordTypeWithLink = typeManager.newRecordType(new QName(namespace, "recordTypeWithLink"));
-        recordTypeWithLink.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
+        recordTypeWithLink = recordTypeWithLink.withFieldTypeEntry(
+                typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
         recordTypeWithLink = typeManager.createRecordType(recordTypeWithLink);
 
         // Create records to link to
@@ -2498,9 +2504,10 @@ public abstract class AbstractRepositoryTest {
         //      will work always, it sometimes will work? Needs more investigation.
         //assertNull(repository.getScanner(scan).next());
     }
-    
+
     /**
      * Tests if record type is set when different settings of returnFields is used.
+     *
      * @throws Exception
      */
     @Test

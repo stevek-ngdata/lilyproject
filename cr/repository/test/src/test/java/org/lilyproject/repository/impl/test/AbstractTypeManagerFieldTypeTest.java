@@ -23,7 +23,15 @@ import static org.junit.Assert.fail;
 import java.util.UUID;
 
 import org.junit.Test;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeExistsException;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.FieldTypeUpdateException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 
 public abstract class AbstractTypeManagerFieldTypeTest {
@@ -31,12 +39,12 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     private static String namespace = "NS";
     protected static TypeManager typeManager;
     protected static boolean avro = false;
-    
+
     @Test
     public void testCreate() throws Exception {
         QName name = new QName(namespace, "testCreate");
         ValueType valueType = typeManager.getValueType("STRING");
-        FieldType fieldType = typeManager.newFieldType(valueType , name, Scope.NON_VERSIONED);
+        FieldType fieldType = typeManager.newFieldType(valueType, name, Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         assertEquals(fieldType, typeManager.getFieldTypeById(fieldType.getId()));
         assertEquals(fieldType, typeManager.getFieldTypeByName(fieldType.getName()));
@@ -47,18 +55,19 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     public void testCreateIgnoresGivenId() throws Exception {
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
         ValueType valueType = typeManager.getValueType("STRING");
-        FieldType fieldType = typeManager.newFieldType(id, valueType , new QName(namespace, "aName"), Scope.VERSIONED_MUTABLE);
+        FieldType fieldType =
+                typeManager.newFieldType(id, valueType, new QName(namespace, "aName"), Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         assertFalse(fieldType.getId().equals(id));
     }
-    
+
     @Test
     public void testCreateSameNameFails() throws Exception {
         QName name = new QName(namespace, "testCreateSameNameFails");
         ValueType valueType = typeManager.getValueType("STRING");
-        FieldType fieldType = typeManager.newFieldType(valueType , name, Scope.NON_VERSIONED);
+        FieldType fieldType = typeManager.newFieldType(valueType, name, Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        
+
         ValueType valueType2 = typeManager.getValueType("INTEGER");
         FieldType fieldType2 = typeManager.newFieldType(valueType2, name, Scope.NON_VERSIONED);
         try {
@@ -74,19 +83,21 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     public void testUpdate() throws Exception {
         QName name = new QName(namespace, "testUpdate");
         ValueType valueType = typeManager.getValueType("STRING");
-        FieldType fieldTypeCreate = typeManager.newFieldType(valueType , name, Scope.VERSIONED);
+        FieldType fieldTypeCreate = typeManager.newFieldType(valueType, name, Scope.VERSIONED);
         fieldTypeCreate = typeManager.createFieldType(fieldTypeCreate);
-        
+
         // Update name
-        FieldType fieldTypeNewName = typeManager.newFieldType(fieldTypeCreate.getId(), valueType , new QName(namespace, "newName"), Scope.VERSIONED);
+        FieldType fieldTypeNewName = typeManager
+                .newFieldType(fieldTypeCreate.getId(), valueType, new QName(namespace, "newName"), Scope.VERSIONED);
         fieldTypeNewName = typeManager.updateFieldType(fieldTypeNewName);
         assertEquals(fieldTypeCreate.getId(), fieldTypeNewName.getId());
         assertEquals(fieldTypeNewName, typeManager.getFieldTypeById(fieldTypeCreate.getId()));
-        assertEquals(typeManager.getFieldTypeById(fieldTypeCreate.getId()), typeManager.getFieldTypeByName(new QName(namespace, "newName")));
-        
+        assertEquals(typeManager.getFieldTypeById(fieldTypeCreate.getId()),
+                typeManager.getFieldTypeByName(new QName(namespace, "newName")));
+
         // Create new fieldType with first name
         ValueType valueType2 = typeManager.getValueType("INTEGER");
-        FieldType fieldType2 = typeManager.newFieldType(valueType2 , name, Scope.NON_VERSIONED);
+        FieldType fieldType2 = typeManager.newFieldType(valueType2, name, Scope.NON_VERSIONED);
         fieldType2 = typeManager.createFieldType(fieldTypeCreate);
         assertEquals(fieldType2, typeManager.getFieldTypeByName(name));
     }
@@ -95,10 +106,11 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     public void testUpdateValueTypeFails() throws Exception {
         QName name = new QName(namespace, "testUpdateValueTypeFails");
         ValueType valueType = typeManager.getValueType("STRING");
-        FieldType fieldType = typeManager.newFieldType(valueType , name, Scope.VERSIONED);
+        FieldType fieldType = typeManager.newFieldType(valueType, name, Scope.VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        
-        fieldType.setValueType(typeManager.getValueType("INTEGER"));
+
+        fieldType = typeManager.newFieldType(fieldType.getId(), typeManager.getValueType("INTEGER"),
+                fieldType.getName(), fieldType.getScope());
         try {
             if (avro)
                 System.out.println("Expecting FieldTypeUpdateException");
@@ -112,10 +124,11 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     public void testUpdateScopeFails() throws Exception {
         QName name = new QName(namespace, "testUpdateScopeFails");
         ValueType valueType = typeManager.getValueType("STRING");
-        FieldType fieldType = typeManager.newFieldType(valueType , name, Scope.VERSIONED);
+        FieldType fieldType = typeManager.newFieldType(valueType, name, Scope.VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        
-        fieldType.setScope(Scope.NON_VERSIONED);
+
+        fieldType = typeManager.newFieldType(fieldType.getId(), fieldType.getValueType(),
+                fieldType.getName(), Scope.NON_VERSIONED);
         try {
             if (avro)
                 System.out.println("Expecting FieldTypeUpdateException");
@@ -124,20 +137,20 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         } catch (FieldTypeUpdateException e) {
         }
     }
-    
+
     @Test
     public void testUpdateToAnExistingNameFails() throws Exception {
         QName name1 = new QName(namespace, "testUpdateToAnExistingNameFails1");
         ValueType valueType = typeManager.getValueType("STRING");
-        FieldType fieldType = typeManager.newFieldType(valueType , name1, Scope.VERSIONED);
+        FieldType fieldType = typeManager.newFieldType(valueType, name1, Scope.VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
-        
+
         QName name2 = new QName(namespace, "testUpdateToAnExistingNameFails2");
         ValueType valueType2 = typeManager.getValueType("STRING");
-        FieldType fieldType2 = typeManager.newFieldType(valueType2 , name2, Scope.VERSIONED);
+        FieldType fieldType2 = typeManager.newFieldType(valueType2, name2, Scope.VERSIONED);
         fieldType2 = typeManager.createFieldType(fieldType2);
-        
-        fieldType.setName(name2);
+
+        fieldType = typeManager.newFieldType(fieldType.getId(), fieldType.getValueType(), name2, fieldType.getScope());
         try {
             if (avro)
                 System.out.println("Expecting FieldTypeUpdateException");
@@ -169,7 +182,8 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         //
         // Use createOrUpdate to update the field type
         //
-        fieldType.setName(new QName(NS, "field2"));
+        fieldType = typeManager.newFieldType(fieldType.getId(), fieldType.getValueType(), new QName(NS, "field2"),
+                fieldType.getScope());
         fieldType = typeManager.createOrUpdateFieldType(fieldType);
         assertNotNull(fieldType.getId());
         assertEquals(new QName(NS, "field2"), fieldType.getName());
@@ -177,7 +191,7 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         //
         // Call createOrUpdate without name: should just return the complete type
         //
-        fieldType.setName(null);
+        fieldType = typeManager.newFieldType(fieldType.getId(), fieldType.getValueType(), null, fieldType.getScope());
         fieldType = typeManager.createOrUpdateFieldType(fieldType);
         assertNotNull(fieldType.getId());
         assertEquals(new QName(NS, "field2"), fieldType.getName());
@@ -185,8 +199,8 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         //
         // Call createOrUpdate with a conflicting field type state
         //
-        FieldType conflictFieldType = fieldType.clone();
-        conflictFieldType.setScope(Scope.VERSIONED);
+        FieldType conflictFieldType = typeManager.newFieldType(fieldType.getId(), fieldType.getValueType(),
+                fieldType.getName(), Scope.VERSIONED);
         try {
             typeManager.createOrUpdateFieldType(conflictFieldType);
             fail("expected exception");
@@ -194,8 +208,8 @@ public abstract class AbstractTypeManagerFieldTypeTest {
             // expected
         }
 
-        conflictFieldType = fieldType.clone();
-        conflictFieldType.setValueType(typeManager.getValueType("LIST<STRING>"));
+        conflictFieldType = typeManager.newFieldType(fieldType.getId(), typeManager.getValueType("LIST<STRING>"),
+                fieldType.getName(), fieldType.getScope());
         try {
             typeManager.createOrUpdateFieldType(conflictFieldType);
             fail("expected exception");
@@ -206,9 +220,8 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         //
         // Call createOrUpdate without name and with conflicting state
         //
-        conflictFieldType = fieldType.clone();
-        conflictFieldType.setName(null);
-        conflictFieldType.setScope(Scope.VERSIONED_MUTABLE);
+        conflictFieldType = typeManager.newFieldType(fieldType.getId(), fieldType.getValueType(), null,
+                Scope.VERSIONED_MUTABLE);
         try {
             typeManager.createOrUpdateFieldType(conflictFieldType);
             fail("expected exception");
@@ -220,7 +233,7 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         // Call createOrUpdate with name and without id
         //
         SchemaId expectedId = fieldType.getId();
-        fieldType.setId(null);
+        fieldType = typeManager.newFieldType(null, fieldType.getValueType(), fieldType.getName(), fieldType.getScope());
         fieldType = typeManager.createOrUpdateFieldType(fieldType);
         assertEquals(expectedId, fieldType.getId());
         assertEquals(new QName(NS, "field2"), fieldType.getName());
@@ -228,14 +241,14 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         //
         // Call createOrUpdate without scope
         //
-        fieldType.setScope(null);
+        fieldType = typeManager.newFieldType(fieldType.getId(), fieldType.getValueType(), fieldType.getName(), null);
         fieldType = typeManager.createOrUpdateFieldType(fieldType);
         assertEquals(Scope.NON_VERSIONED, fieldType.getScope());
 
         //
         // Call createOrUpdate without value type
         //
-        fieldType.setValueType(null);
+        fieldType = typeManager.newFieldType(fieldType.getId(), null, fieldType.getName(), fieldType.getScope());
         fieldType = typeManager.createOrUpdateFieldType(fieldType);
         assertEquals(typeManager.getValueType("STRING"), fieldType.getValueType());
     }

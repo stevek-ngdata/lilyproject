@@ -18,6 +18,7 @@ package org.lilyproject.repository.api;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.lilyproject.util.Pair;
 
@@ -31,7 +32,7 @@ import org.lilyproject.util.Pair;
  * <p>For an in-depth description of the repository model, please see the Lily documentation.
  */
 public interface TypeManager extends Closeable {
-    
+
     /**
      * Instantiates a new RecordType object.
      *
@@ -45,35 +46,56 @@ public interface TypeManager extends Closeable {
      * <p>This is only a factory method, nothing is created in the repository.
      */
     RecordType newRecordType(SchemaId recordTypeId, QName name) throws TypeException;
-    
+
+    /**
+     * Instantiates a new RecordType object.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
+     */
+    RecordType newRecordType(SchemaId recordTypeId, QName name, long version) throws TypeException;
+
+    /**
+     * Instantiates a new RecordType object.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
+     */
+    RecordType newRecordType(QName name, Map<SchemaId, Long> mixins,
+                             Collection<FieldTypeEntry> fieldTypeEntries) throws TypeException;
+
+    /**
+     * Instantiates a new RecordType object.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
+     */
+    RecordType newRecordType(SchemaId recordTypeId, QName name, long version, Map<SchemaId, Long> mixins,
+                             Collection<FieldTypeEntry> fieldTypeEntries) throws TypeException;
+
     /**
      * Creates a RecordType in the repository.
      *
-     * @throws RecordTypeExistsException when a recordType with the same id already exists on the repository 
-     * @throws RecordTypeNotFoundException when a mixin of the recordType refers to a non-existing {@link RecordType} 
-     * @throws TypeException when the given recordType has no name specified
-     * @throws FieldTypeNotFoundException 
-     * @throws RepositoryException when an unexpected exception occurs on the repository
+     * @throws RecordTypeExistsException   when a recordType with the same id already exists on the repository
+     * @throws RecordTypeNotFoundException when a mixin of the recordType refers to a non-existing {@link RecordType}
+     * @throws TypeException               when the given recordType has no name specified
+     * @throws FieldTypeNotFoundException
+     * @throws RepositoryException         when an unexpected exception occurs on the repository
      */
     RecordType createRecordType(RecordType recordType) throws RepositoryException, InterruptedException;
-    
+
     /**
      * Gets a RecordType from the repository.
      *
      * @param version the version of the record type to return, or null for the latest version.
-     *
      * @throws RecordTypeNotFoundException when the recordType does not exist
-     * @throws RepositoryException when an unexpected exception occurs on the repository
+     * @throws RepositoryException         when an unexpected exception occurs on the repository
      */
     RecordType getRecordTypeById(SchemaId id, Long version) throws RepositoryException, InterruptedException;
-    
+
     /**
      * Gets a RecordType from the repository.
      *
      * @param version the version of the record type to return, or null for the latest version.
-     *
      * @throws RecordTypeNotFoundException when the recordType does not exist
-     * @throws RepositoryException when an unexpected exception occurs on the repository
+     * @throws RepositoryException         when an unexpected exception occurs on the repository
      */
     RecordType getRecordTypeByName(QName name, Long version) throws RepositoryException, InterruptedException;
 
@@ -81,7 +103,8 @@ public interface TypeManager extends Closeable {
      * Updates an existing record type.
      *
      * <p>You can provide any RecordType object as argument, either one retrieved from TypeManager, for example
-     * using {@link #getRecordTypeByName(QName, Long)} or a newly instantiated one, using {@link #newRecordType(QName)}.
+     * using {@link #getRecordTypeByName(QName, Long)} or a newly instantiated one, using {@link
+     * #newRecordType(QName)}.
      *
      * <p>The state of the record type will be updated to correspond to the given RecordType object. This also
      * concerns the list of fields: any fields that were previously in the record type but are not present in
@@ -92,10 +115,10 @@ public interface TypeManager extends Closeable {
      * from the returned RecordType object.
      *
      * @throws RecordTypeNotFoundException when the recordType to be updated does not exist
-     * @throws FieldTypeNotFoundException 
-     * @throws RepositoryException when an unexpected exception occurs on the repository
+     * @throws FieldTypeNotFoundException
+     * @throws RepositoryException         when an unexpected exception occurs on the repository
      */
-    RecordType updateRecordType(RecordType recordType) throws  RepositoryException, InterruptedException;
+    RecordType updateRecordType(RecordType recordType) throws RepositoryException, InterruptedException;
 
     /**
      * Either creates or updates the record type, depending on whether it exists in
@@ -111,10 +134,10 @@ public interface TypeManager extends Closeable {
 
     /**
      * Get the list of all record types that exist in the repository. This returns the latest version of
-     * each record type. 
+     * each record type.
      */
     Collection<RecordType> getRecordTypes() throws RepositoryException, InterruptedException;
-    
+
     /**
      * Instantiates a new FieldTypeEntry object.
      *
@@ -123,14 +146,14 @@ public interface TypeManager extends Closeable {
      * <p>FieldTypeEntries can be added to {@link RecordType}s.
      */
     FieldTypeEntry newFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory);
-    
+
     /**
      * Instantiates a new FieldType object.
      *
      * <p>This is only a factory method, nothing is created in the repository.
      */
     FieldType newFieldType(ValueType valueType, QName name, Scope scope);
-    
+
     /**
      * Instantiates a new FieldType object.
      *
@@ -144,7 +167,7 @@ public interface TypeManager extends Closeable {
      * <p>This is only a factory method, nothing is created in the repository.
      */
     FieldType newFieldType(SchemaId id, ValueType valueType, QName name, Scope scope);
-    
+
     /**
      * Creates a FieldType in the repository.
      *
@@ -152,9 +175,8 @@ public interface TypeManager extends Closeable {
      * object, it will be ignored. The generated ID is available from the returned FieldType object.
      *
      * @return updated FieldType object
-     *
-     * @throws RepositoryException when an unexpected exception occurs on the repository
-     * @throws FieldTypeExistsException 
+     * @throws RepositoryException      when an unexpected exception occurs on the repository
+     * @throws FieldTypeExistsException
      */
     FieldType createFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
 
@@ -180,10 +202,9 @@ public interface TypeManager extends Closeable {
      * FieldType object. The QName of the field type can be changed.
      *
      * @return updated FieldType object
-     *
      * @throws FieldTypeNotFoundException when no fieldType with id and version exists
-     * @throws FieldTypeUpdateException an exception occurred while updating the FieldType 
-     * @throws RepositoryException when an unexpected exception occurs on the repository
+     * @throws FieldTypeUpdateException   an exception occurred while updating the FieldType
+     * @throws RepositoryException        when an unexpected exception occurs on the repository
      */
     FieldType updateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
 
@@ -202,7 +223,6 @@ public interface TypeManager extends Closeable {
      * {@link FieldTypeUpdateException} is produced. These properties could
      * also be missing, the returned field type object will always contain
      * the full state as stored in the repository.
-     *
      */
     FieldType createOrUpdateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
 
@@ -210,15 +230,15 @@ public interface TypeManager extends Closeable {
      * Gets a FieldType from the repository.
      *
      * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
-     * @throws RepositoryException when an unexpected exception occurs on the repository
+     * @throws RepositoryException        when an unexpected exception occurs on the repository
      */
     FieldType getFieldTypeById(SchemaId id) throws RepositoryException, InterruptedException;
-    
+
     /**
      * Gets a FieldType from the repository.
      *
      * @throws FieldTypeNotFoundException when no fieldType with the given name exists
-     * @throws RepositoryException when an unexpected exception occurs on the repository
+     * @throws RepositoryException        when an unexpected exception occurs on the repository
      */
     FieldType getFieldTypeByName(QName name) throws RepositoryException, InterruptedException;
 
@@ -230,7 +250,7 @@ public interface TypeManager extends Closeable {
     /**
      * Provides {@link ValueType} instances. These are used to set to value type of {@link FieldType}s.
      *
-     * <p>The built-in available value types are listed in the following table. 
+     * <p>The built-in available value types are listed in the following table.
      *
      * <table>
      * <tbody>
@@ -252,25 +272,25 @@ public interface TypeManager extends Closeable {
      * <tr><td>BYTEARRAY</td><td>org.lilyproject.bytes.api.ByteArray</td></tr>
      * </tbody>
      * </table>
-     * 
+     *
      * <p>Some value types accept extra parameters to define the exact value type.
      * <p>For List and Path these parameters define the value type of the included values.
-     * It is mandatory to define this value type. 
-     * It should be specified by putting its name between brackets "&lt;&gt;"  
-     * and if that value type in its turn needs some extra parameters, 
+     * It is mandatory to define this value type.
+     * It should be specified by putting its name between brackets "&lt;&gt;"
+     * and if that value type in its turn needs some extra parameters,
      * these should be appended again within brackets "&lt;&gt;".
      * <br>For example: <code>getValueType("LIST&lt;PATH&lt;STRING&gt;&gt;");</code>
-     * 
+     *
      * <p>For Record and Link valuetype it is possible to define the {@link RecordType} in the parameters.
-     * This is not mandatory. It is done by specifying the name of the RecordType in the format 
-     * <code>{namespace}name</code> between brackets "&lt;&gt;". 
+     * This is not mandatory. It is done by specifying the name of the RecordType in the format
+     * <code>{namespace}name</code> between brackets "&lt;&gt;".
      * <br>For example: <code>getValueType("RECORD<{myNamespace}recordType1>");</code>
      *
-     * @see ValueType
      * @param valueType the value type string representation. See table above.
+     * @see ValueType
      */
-     ValueType getValueType(String valueType) throws RepositoryException, InterruptedException;
-    
+    ValueType getValueType(String valueType) throws RepositoryException, InterruptedException;
+
     /**
      * Registers custom {@link ValueType}s.
      *
@@ -280,7 +300,7 @@ public interface TypeManager extends Closeable {
      */
     void registerValueType(String name, ValueTypeFactory valueTypeFactory);
 
-    
+
     /**
      * Returns a record type builder, providing a fluent API to manipulate record types.
      */
@@ -305,7 +325,7 @@ public interface TypeManager extends Closeable {
      * <p>
      * To be used when a consistent snapshot is needed while performing a CRUD
      * operation.
-     * 
+     *
      * @return a snapshot of the FieldTypes cache
      * @throws InterruptedException
      */
@@ -339,7 +359,7 @@ public interface TypeManager extends Closeable {
      * repository for a given bucket
      * <p>
      * This method bypasses the cache of the type manager.
-     * 
+     *
      * @return a TypeBucket containing the list of field and record types of the
      *         bucket
      */
@@ -350,10 +370,9 @@ public interface TypeManager extends Closeable {
      * <p>
      * When enabled the schema caches will get a trigger to update their data
      * whenever a schema update was performed.
-     * 
+     *
+     * @throws RepositoryException when setting the flag to enabled failed
      * @see {@link #disableSchemaCacheRefresh()}
-     * @throws RepositoryException
-     *             when setting the flag to enabled failed
      */
     void enableSchemaCacheRefresh() throws RepositoryException, InterruptedException;
 
@@ -366,9 +385,8 @@ public interface TypeManager extends Closeable {
      * performed on the same repository and related schema cache.<br/>
      * Otherwise updates could be directed to servers lacking needed type
      * information (due to the disabled cache refreshing).
-     * 
-     * @throws RepositoryException
-     *             when setting the flag to disabled failed
+     *
+     * @throws RepositoryException when setting the flag to disabled failed
      */
     void disableSchemaCacheRefresh() throws RepositoryException, InterruptedException;
 
@@ -377,19 +395,18 @@ public interface TypeManager extends Closeable {
      * <p>
      * Even if the schema cache refreshing system is disabled, this call will
      * trigger the schema caches to refresh their data.
-     * 
+     *
+     * @throws RepositoryException when setting the flag to refresh the caches failed
      * @see {@link #disableSchemaCacheRefresh()}
-     * @throws RepositoryException
-     *             when setting the flag to refresh the caches failed
      */
     void triggerSchemaCacheRefresh() throws RepositoryException, InterruptedException;
 
     /**
      * <b>EXPERT ONLY !</b> Checks if the schema cache refreshing system is
      * enabled or disabled
-     * 
-     * @see {@link #disableSchemaCacheRefresh()}
+     *
      * @return true when enabled
+     * @see {@link #disableSchemaCacheRefresh()}
      */
     boolean isSchemaCacheRefreshEnabled() throws RepositoryException, InterruptedException;
 }

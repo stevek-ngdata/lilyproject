@@ -15,7 +15,14 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeBuilder;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 
 public class FieldTypeBuilderImpl implements FieldTypeBuilder {
     private SchemaId id;
@@ -65,9 +72,7 @@ public class FieldTypeBuilderImpl implements FieldTypeBuilder {
     }
 
     private FieldType buildFieldType() throws RepositoryException, InterruptedException {
-        FieldType fieldType = typeManager.newFieldType(valueType, name, scope);
-        fieldType.setId(id);
-        return fieldType;
+        return typeManager.newFieldType(id, valueType, name, scope);
     }
 
     @Override
@@ -75,12 +80,12 @@ public class FieldTypeBuilderImpl implements FieldTypeBuilder {
         FieldType fieldType = buildFieldType();
 
         // Apply defaults
-        if (fieldType.getValueType() == null) {
-            fieldType.setValueType(typeManager.getValueType("STRING"));
-        }
-
-        if (fieldType.getScope() == null) {
-            fieldType.setScope(Scope.NON_VERSIONED);
+        if (fieldType.getValueType() == null || fieldType.getScope() == null) {
+            ValueType valueType = fieldType.getValueType() == null ?
+                    typeManager.getValueType("STRING") : fieldType.getValueType();
+            Scope scope = fieldType.getScope() == null ?
+                    Scope.NON_VERSIONED : fieldType.getScope();
+            fieldType = typeManager.newFieldType(fieldType.getId(), valueType, fieldType.getName(), scope);
         }
 
         return typeManager.createFieldType(fieldType);

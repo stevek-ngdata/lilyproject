@@ -15,8 +15,6 @@
  */
 package org.lilyproject.repository.api;
 
-import javax.naming.OperationNotSupportedException;
-
 /**
  * A field type defines a field within a {@link Record}. Each field added to a record should be defined as a field
  * type.
@@ -44,45 +42,18 @@ import javax.naming.OperationNotSupportedException;
 public interface FieldType {
 
     /**
-     * Sets the id.
-     * 
-     * <p>
-     * Even though IDs are system-generated, you might need to set them on the
-     * field type e.g. to construct a field type to pass to the
-     * {@link TypeManager#updateFieldType(FieldType)}.
-     * 
-     * @throws OperationNotSupportedException
-     */
-    void setId(SchemaId id);
-
-    /**
      * The id is unique, immutable and system-generated.
      */
     SchemaId getId();
-
-    void setName(QName name);
 
     /**
      * The name is unique, user-provided but can be changed after initial creation of the field type.
      */
     QName getName();
 
-    /**
-     * Sets the value type. Value type instances can be obtained from {@link TypeManager#getValueType}.
-     */
-    void setValueType(ValueType valueType);
-
     ValueType getValueType();
-
-    void setScope(Scope scope);
 
     Scope getScope();
 
     boolean equals(Object obj);
-
-    /**
-     * Returns a clone of the field type
-     */
-    FieldType clone();
-
 }

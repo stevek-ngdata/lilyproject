@@ -19,7 +19,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -28,8 +34,28 @@ import org.joda.time.LocalDate;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.*;
+import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.BlobManagerImpl;
+import org.lilyproject.repository.impl.BlobStoreAccessConfig;
+import org.lilyproject.repository.impl.DFSBlobStoreAccess;
+import org.lilyproject.repository.impl.HBaseRepository;
+import org.lilyproject.repository.impl.HBaseTypeManager;
+import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
@@ -40,8 +66,6 @@ import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
 import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
 import org.lilyproject.rowlog.impl.RowLogShardSetup;
 import org.lilyproject.rowlog.impl.WalRowLog;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -86,11 +110,13 @@ public class TutorialTest {
 
         typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
 
-        
-        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
+
+        DFSBlobStoreAccess dfsBlobStoreAccess =
+                new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         List<BlobStoreAccess> blobStoreAccesses = Collections.<BlobStoreAccess>singletonList(dfsBlobStoreAccess);
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
+        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory =
+                new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         setupWal();
         RowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
@@ -98,10 +124,12 @@ public class TutorialTest {
         repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
 
     }
-    
+
     protected static void setupWal() throws Exception {
         rowLogConfMgr = new RowLogConfigurationManagerImpl(zooKeeper);
-        HBaseRowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
+        HBaseRowLocker rowLocker =
+                new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
+                        RecordColumn.LOCK.bytes, 10000);
         rowLogConfMgr.addRowLog("WAL", new RowLogConfig(true, false, 0L, 5000L, 5000L, 120000L, 100));
         wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
                 RecordColumn.WAL_PREFIX, rowLogConfMgr, rowLocker, new RowLogHashShardRouter());
@@ -130,7 +158,7 @@ public class TutorialTest {
 
         // (4)
         RecordType book = typeManager.newRecordType(new QName(BNS, "Book"));
-        book.addFieldTypeEntry(title.getId(), true);
+        book = book.withFieldTypeEntry(title.getId(), true);
 
         // (5)
         book = typeManager.createRecordType(book);
@@ -147,18 +175,19 @@ public class TutorialTest {
         FieldType pages = typeManager.createFieldType("LONG", new QName(BNS, "pages"), Scope.VERSIONED);
         FieldType sequelTo = typeManager.createFieldType("LINK", new QName(BNS, "sequel_to"), Scope.VERSIONED);
         FieldType manager = typeManager.createFieldType("STRING", new QName(BNS, "manager"), Scope.NON_VERSIONED);
-        FieldType reviewStatus = typeManager.createFieldType("STRING", new QName(BNS, "review_status"), Scope.VERSIONED_MUTABLE);
+        FieldType reviewStatus =
+                typeManager.createFieldType("STRING", new QName(BNS, "review_status"), Scope.VERSIONED_MUTABLE);
 
         RecordType book = typeManager.getRecordTypeByName(new QName(BNS, "Book"), null);
 
         // The order in which fields are added does not matter
-        book.addFieldTypeEntry(description.getId(), false);
-        book.addFieldTypeEntry(authors.getId(), false);
-        book.addFieldTypeEntry(released.getId(), false);
-        book.addFieldTypeEntry(pages.getId(), false);
-        book.addFieldTypeEntry(sequelTo.getId(), false);
-        book.addFieldTypeEntry(manager.getId(), false);
-        book.addFieldTypeEntry(reviewStatus.getId(), false);
+        book = book.withFieldTypeEntry(description.getId(), false);
+        book = book.withFieldTypeEntry(authors.getId(), false);
+        book = book.withFieldTypeEntry(released.getId(), false);
+        book = book.withFieldTypeEntry(pages.getId(), false);
+        book = book.withFieldTypeEntry(sequelTo.getId(), false);
+        book = book.withFieldTypeEntry(manager.getId(), false);
+        book = book.withFieldTypeEntry(reviewStatus.getId(), false);
 
         // Now we call updateRecordType instead of createRecordType
         book = typeManager.updateRecordType(book);
@@ -242,7 +271,7 @@ public class TutorialTest {
 
         // (1)
         Record record = repository.read(id);
-        String title = (String)record.getField(new QName(BNS, "title"));
+        String title = (String) record.getField(new QName(BNS, "title"));
         System.out.println(title);
 
         // (2)
@@ -264,7 +293,7 @@ public class TutorialTest {
         byte[] descriptionData = description.getBytes("UTF-8");
 
         // (1)
-        Blob blob = new Blob("text/html", (long)descriptionData.length, "description.xml");
+        Blob blob = new Blob("text/html", (long) descriptionData.length, "description.xml");
         OutputStream os = repository.getOutputStream(blob);
         try {
             os.write(descriptionData);
@@ -294,7 +323,7 @@ public class TutorialTest {
             System.out.println();
         } finally {
             if (is != null) is.close();
-        }        
+        }
     }
 
     @Test
@@ -317,7 +346,8 @@ public class TutorialTest {
         enRecord = repository.create(enRecord);
 
         // (5)
-        RecordId nlId = idGenerator.newRecordId(enRecord.getId().getMaster(), Collections.singletonMap("language", "nl"));
+        RecordId nlId =
+                idGenerator.newRecordId(enRecord.getId().getMaster(), Collections.singletonMap("language", "nl"));
         Record nlRecord = repository.newRecord(nlId);
         nlRecord.setRecordType(new QName(BNS, "Book"));
         nlRecord.setField(new QName(BNS, "title"), "Wagen onderhoud");
@@ -346,7 +376,7 @@ public class TutorialTest {
         record2 = repository.create(record2);
 
         // (3)
-        Link sequelToLink = (Link)record2.getField(new QName(BNS, "sequel_to"));
+        Link sequelToLink = (Link) record2.getField(new QName(BNS, "sequel_to"));
         RecordId sequelTo = sequelToLink.resolve(record2.getId(), repository.getIdGenerator());
         Record linkedRecord = repository.read(sequelTo);
         System.out.println(linkedRecord.getField(new QName(BNS, "title")));
@@ -357,12 +387,12 @@ public class TutorialTest {
         // (1)
         FieldType name = typeManager.createFieldType("STRING", new QName(ANS, "name"), Scope.NON_VERSIONED);
         FieldType email = typeManager.createFieldType("STRING", new QName(ANS, "email"), Scope.NON_VERSIONED);
-        
+
         RecordType authorType = typeManager.newRecordType(new QName(ANS, "author"));
-        authorType.addFieldTypeEntry(name.getId(), true);
-        authorType.addFieldTypeEntry(email.getId(), true);
+        authorType = authorType.withFieldTypeEntry(name.getId(), true);
+        authorType = authorType.withFieldTypeEntry(email.getId(), true);
         authorType = typeManager.createRecordType(authorType);
-        
+
         // (2)
         FieldType title = typeManager.createFieldType("STRING", new QName(ANS, "title"), Scope.NON_VERSIONED);
         FieldType authors = typeManager.createFieldType("LIST<RECORD<{article}author>>",
@@ -370,11 +400,11 @@ public class TutorialTest {
         FieldType body = typeManager.createFieldType("STRING", new QName(ANS, "body"), Scope.NON_VERSIONED);
 
         RecordType articleType = typeManager.newRecordType(new QName(ANS, "article"));
-        articleType.addFieldTypeEntry(title.getId(), true);
-        articleType.addFieldTypeEntry(authors.getId(), true);
-        articleType.addFieldTypeEntry(body.getId(), true);
+        articleType = articleType.withFieldTypeEntry(title.getId(), true);
+        articleType = articleType.withFieldTypeEntry(authors.getId(), true);
+        articleType = articleType.withFieldTypeEntry(body.getId(), true);
         articleType = typeManager.createRecordType(articleType);
-        
+
         // (3)
         Record author1 = repository.newRecord();
         author1.setRecordType(authorType.getName());
@@ -385,7 +415,7 @@ public class TutorialTest {
         author2.setRecordType(new QName(ANS, "author"));
         author2.setField(name.getName(), "Author Y");
         author2.setField(name.getName(), "author_y@authors.com");
-        
+
         // (4)
         Record article = repository.newRecord();
         article.setRecordType(articleType.getName());
@@ -393,7 +423,7 @@ public class TutorialTest {
         article.setField(new QName(ANS, "authors"), Lists.newArrayList(author1, author2));
         article.setField(new QName(ANS, "body"), "Body text of the article");
         article = repository.create(article);
-        
+
         PrintUtil.print(article, repository);
     }
 

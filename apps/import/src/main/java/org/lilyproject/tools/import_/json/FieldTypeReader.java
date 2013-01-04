@@ -34,7 +34,8 @@ public class FieldTypeReader implements EntityReader<FieldType> {
     public static EntityReader<FieldType> INSTANCE = new FieldTypeReader();
 
     @Override
-    public FieldType fromJson(JsonNode node, Repository repository) throws JsonFormatException, RepositoryException, InterruptedException {
+    public FieldType fromJson(JsonNode node, Repository repository)
+            throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(node, null, repository);
     }
 
@@ -47,7 +48,7 @@ public class FieldTypeReader implements EntityReader<FieldType> {
                     nodeNode.getClass().getName());
         }
 
-        ObjectNode node = (ObjectNode)nodeNode;
+        ObjectNode node = (ObjectNode) nodeNode;
 
         namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 
@@ -67,13 +68,12 @@ public class FieldTypeReader implements EntityReader<FieldType> {
 
         String valueTypeString = getString(node, "valueType");
         ValueType valueType = typeManager.getValueType(ValueTypeNSConverter.fromJson(valueTypeString, namespaces));
-        FieldType fieldType = typeManager.newFieldType(valueType, name, scope);
-
         String idString = getString(node, "id", null);
         SchemaId id = null;
         if (idString != null)
             id = new SchemaIdImpl(idString);
-        fieldType.setId(id);
+
+        FieldType fieldType = typeManager.newFieldType(id, valueType, name, scope);
 
         // Some sanity checks for version tag fields
         if (fieldType.getName().getNamespace().equals(VersionTag.NAMESPACE)) {
@@ -102,7 +102,8 @@ public class FieldTypeReader implements EntityReader<FieldType> {
 
     @Override
     public FieldType fromJson(JsonNode node, Namespaces namespaces, Repository repository,
-            LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
+                              LinkTransformer linkTransformer)
+            throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(node, namespaces, repository);
     }
 }

@@ -29,13 +29,26 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeExistsException;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeExistsException;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.HBaseTypeManager;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
-import org.lilyproject.util.hbase.*;
+import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeColumn;
 import org.lilyproject.util.io.Closer;
@@ -65,7 +78,7 @@ public class TypeManagerReliableCreateTest {
         typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory);
         valueType = typeManager.getValueType("LONG");
     }
-    
+
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         Closer.close(typeManager);
@@ -86,9 +99,9 @@ public class TypeManagerReliableCreateTest {
     @Test
     public void testConcurrentRecordCreate() throws Exception {
         QName qName = new QName("NS", "testConcurrentRecordCreate");
-        
+
         fakeConcurrentUpdate(qName);
-        
+
         try {
             typeManager.createRecordType(typeManager.newRecordType(qName));
             fail();
@@ -103,13 +116,13 @@ public class TypeManagerReliableCreateTest {
     public void testConcurrentRecordUpdate() throws Exception {
         QName qName1 = new QName("NS", "testConcurrentRecordUpdate1");
         QName qName2 = new QName("NS", "testConcurrentRecordUpdate2");
-        
+
         RecordType recordType = typeManager.createRecordType(typeManager.newRecordType(qName1));
-        
+
         // Fake concurrent update
         fakeConcurrentUpdate(qName2);
-        
-        recordType.setName(qName2);
+
+        typeManager.newRecordType(recordType.getId(), qName2);
         try {
             typeManager.updateRecordType(recordType);
             fail();
@@ -118,13 +131,12 @@ public class TypeManagerReliableCreateTest {
     }
 
 
-    
     @Test
     public void testConcurrentFieldCreate() throws Exception {
         QName qName = new QName("NS", "testConcurrentFieldCreate");
-        
+
         fakeConcurrentUpdate(qName);
-        
+
         try {
             typeManager.createFieldType(typeManager.newFieldType(valueType, qName, Scope.VERSIONED));
             fail();
@@ -134,18 +146,20 @@ public class TypeManagerReliableCreateTest {
         } catch (TypeException expected) {
         }
     }
-    
-    
+
+
     @Test
     public void testConcurrentFieldUpdate() throws Exception {
         QName qName1 = new QName("NS", "testConcurrentFieldUpdate1");
         QName qName2 = new QName("NS", "testConcurrentFieldUpdate2");
-        
-        FieldType createdFieldType = typeManager.createFieldType(typeManager.newFieldType(valueType, qName1, Scope.VERSIONED));
-        
+
+        FieldType createdFieldType =
+                typeManager.createFieldType(typeManager.newFieldType(valueType, qName1, Scope.VERSIONED));
+
         fakeConcurrentUpdate(qName2);
-        
-        createdFieldType.setName(qName2);
+
+        createdFieldType = typeManager.newFieldType(createdFieldType.getId(), createdFieldType.getValueType(),
+                qName2, createdFieldType.getScope());
         try {
             typeManager.updateFieldType(createdFieldType);
             fail();
@@ -160,12 +174,12 @@ public class TypeManagerReliableCreateTest {
         put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now + 6000));
         typeTable.put(put);
     }
-    
+
     @Test
     public void testGetTypeIgnoresConcurrentCounterRows() throws Exception {
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
         byte[] rowId = id.getBytes();
-        
+
         typeTable.incrementColumnValue(rowId, DATA_COLUMN_FAMILY, CONCURRENT_COUNTER_COLUMN_NAME, 1);
         try {
             typeManager.getFieldTypeById(id);

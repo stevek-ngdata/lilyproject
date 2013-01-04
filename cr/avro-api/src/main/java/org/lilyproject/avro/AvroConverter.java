@@ -208,18 +208,18 @@ public class AvroConverter {
     public RecordType convert(AvroRecordType avroRecordType) throws RepositoryException {
         SchemaId recordTypeId = convert(avroRecordType.getId());
         QName recordTypeName = convert(avroRecordType.getName());
-        RecordType recordType = typeManager.newRecordType(recordTypeId, recordTypeName);
-        recordType.setVersion(avroRecordType.getVersion());
+        RecordType recordType = typeManager.newRecordType(recordTypeId, recordTypeName, avroRecordType.getVersion());
         List<AvroFieldTypeEntry> fieldTypeEntries = avroRecordType.getFieldTypeEntries();
         if (fieldTypeEntries != null) {
             for (AvroFieldTypeEntry avroFieldTypeEntry : fieldTypeEntries) {
-                recordType.addFieldTypeEntry(convert(avroFieldTypeEntry));
+                recordType = recordType.withFieldTypeEntry(convert(avroFieldTypeEntry));
             }
         }
         List<AvroMixin> mixins = avroRecordType.getMixins();
         if (mixins != null) {
             for (AvroMixin avroMixin : mixins) {
-                recordType.addMixin(convert(avroMixin.getRecordTypeId()), avroMixin.getRecordTypeVersion());
+                recordType =
+                        recordType.withMixin(convert(avroMixin.getRecordTypeId()), avroMixin.getRecordTypeVersion());
             }
         }
         return recordType;

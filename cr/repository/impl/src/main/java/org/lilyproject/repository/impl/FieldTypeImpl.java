@@ -16,19 +16,25 @@
 package org.lilyproject.repository.impl;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
-public class FieldTypeImpl implements FieldType, Cloneable {
+public class FieldTypeImpl implements FieldType {
 
-    private SchemaId id;
-    private byte[] idQualifier; // Storing throug lazy initialization to avoid to re-create it each time.
-    private ValueType valueType;
-    private QName name;
-    private Scope scope;
+    private final SchemaId id;
+    private byte[] idQualifier; // Storing through lazy initialization to avoid to re-create it each time.
+    private final ValueType valueType;
+    private final QName name;
+    private final Scope scope;
 
     /**
      * This constructor should not be called directly.
+     *
      * @use {@link TypeManager#newFieldType} instead
      */
     public FieldTypeImpl(SchemaId id, ValueType valueType, QName name, Scope scope) {
@@ -38,8 +44,6 @@ public class FieldTypeImpl implements FieldType, Cloneable {
         this.scope = scope;
     }
 
-    private FieldTypeImpl(){}
-    
     @Override
     public QName getName() {
         return name;
@@ -49,7 +53,7 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     public SchemaId getId() {
         return id;
     }
-    
+
     public byte[] getQualifier() {
         if (idQualifier == null) {
             this.idQualifier = Bytes.add(new byte[]{RecordColumn.DATA_PREFIX}, id.getBytes());
@@ -65,37 +69,6 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     @Override
     public Scope getScope() {
         return scope;
-    }
-
-    @Override
-    public void setId(SchemaId id) {
-        this.id = id;
-    }
-    
-    @Override
-    public void setName(QName name) {
-        this.name = name;
-    }
-
-    @Override
-    public void setValueType(ValueType valueType) {
-        this.valueType = valueType;
-    }
-
-    @Override
-    public void setScope(Scope scope) {
-        this.scope = scope;
-    }
-    
-    @Override
-    public FieldType clone() {
-        FieldTypeImpl newFieldType = new FieldTypeImpl();
-        newFieldType.id = this.id;
-        newFieldType.idQualifier = this.idQualifier;
-        newFieldType.valueType = this.valueType;
-        newFieldType.name = this.name;
-        newFieldType.scope = this.scope;
-        return newFieldType;
     }
 
     @Override
@@ -136,6 +109,6 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     @Override
     public String toString() {
         return "FieldTypeImpl [id=" + id + ", name=" + name
-                        + ", valueType=" + valueType + "]";
+                + ", valueType=" + valueType + "]";
     }
 }

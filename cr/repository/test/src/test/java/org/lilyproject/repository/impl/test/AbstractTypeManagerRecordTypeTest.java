@@ -28,7 +28,17 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.junit.Test;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
+import org.lilyproject.repository.api.RecordTypeExistsException;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 
 public abstract class AbstractTypeManagerRecordTypeTest {
@@ -62,23 +72,22 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     public void testCreate() throws Exception {
         QName name = new QName("testNS", "testCreate");
         RecordType recordType = typeManager.newRecordType(name);
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         RecordType createdRecordType = typeManager.createRecordType(recordType);
         assertEquals(Long.valueOf(1), createdRecordType.getVersion());
-        
-        recordType.setVersion(Long.valueOf(1));
-        recordType.setId(createdRecordType.getId());
-        assertEquals(recordType, typeManager.getRecordTypeById(createdRecordType.getId(), null));
+
+        assertEquals(Long.valueOf(1), typeManager.getRecordTypeById(createdRecordType.getId(), null).getVersion());
+        assertEquals(createdRecordType.getId(), typeManager.getRecordTypeById(createdRecordType.getId(), null).getId());
     }
-    
+
     @Test
     public void testCreateSameNameFails() throws Exception {
         QName name = new QName(namespace1, "testCreateSameNameFails");
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);
-        
+
         recordType = typeManager.newRecordType(name);
         try {
             System.out.println("Expecting RecordTypeExistsException");
@@ -96,30 +105,31 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(Long.valueOf(1), recordType.getVersion());
         RecordType recordTypeV1 = typeManager.getRecordTypeByName(name, null);
         assertEquals(Long.valueOf(1), typeManager.updateRecordType(recordTypeV1).getVersion());
-        
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), true));
+
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), true));
         RecordType recordTypeV2 = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(2), recordTypeV2.getVersion());
         assertEquals(Long.valueOf(2), typeManager.updateRecordType(recordTypeV2).getVersion());
-        
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), true));
+
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), true));
         RecordType recordTypeV3 = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(3), recordTypeV3.getVersion());
         assertEquals(Long.valueOf(3), typeManager.updateRecordType(recordType).getVersion());
-    
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), true));
+
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), true));
         RecordType recordTypeV4 = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(4), recordTypeV4.getVersion());
         assertEquals(Long.valueOf(4), typeManager.updateRecordType(recordType).getVersion());
-        
-        recordType.setVersion(Long.valueOf(4));
+
+        recordType = typeManager.newRecordType(recordType.getId(), recordType.getName(), 4, recordType.getMixins(),
+                recordType.getFieldTypeEntries());
         assertEquals(recordType, typeManager.getRecordTypeByName(name, null));
-        
+
         // Read old versions
-        assertEquals(recordTypeV1, typeManager.getRecordTypeByName(name,Long.valueOf(1)));
-        assertEquals(recordTypeV2, typeManager.getRecordTypeByName(name,Long.valueOf(2)));
-        assertEquals(recordTypeV3, typeManager.getRecordTypeByName(name,Long.valueOf(3)));
-        assertEquals(recordTypeV4, typeManager.getRecordTypeByName(name,Long.valueOf(4)));
+        assertEquals(recordTypeV1, typeManager.getRecordTypeByName(name, Long.valueOf(1)));
+        assertEquals(recordTypeV2, typeManager.getRecordTypeByName(name, Long.valueOf(2)));
+        assertEquals(recordTypeV3, typeManager.getRecordTypeByName(name, Long.valueOf(3)));
+        assertEquals(recordTypeV4, typeManager.getRecordTypeByName(name, Long.valueOf(4)));
     }
 
     @Test
@@ -131,7 +141,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
             fail();
         } catch (RecordTypeNotFoundException expected) {
         }
-        
+
         typeManager.createRecordType(typeManager.newRecordType(name));
         try {
             System.out.println("Expecting RecordTypeNotFoundException");
@@ -151,7 +161,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
             fail();
         } catch (RecordTypeNotFoundException expected) {
         }
-        recordType.setId(new SchemaIdImpl(UUID.randomUUID()));
+        recordType = typeManager.newRecordType(new SchemaIdImpl(UUID.randomUUID()), name);
         try {
             System.out.println("Expecting RecordTypeNotFoundException");
             typeManager.updateRecordType(recordType);
@@ -164,7 +174,8 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     public void testFieldTypeExistsOnCreate() throws Exception {
         QName name = new QName("testNS", "testUpdateNonExistingRecordTypeFails");
         RecordType recordType = typeManager.newRecordType(name);
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(new SchemaIdImpl(UUID.randomUUID()), false));
+        recordType = recordType
+                .withFieldTypeEntry(typeManager.newFieldTypeEntry(new SchemaIdImpl(UUID.randomUUID()), false));
         try {
             System.out.println("Expecting FieldTypeNotFoundException");
             typeManager.createRecordType(recordType);
@@ -178,8 +189,9 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         QName name = new QName("testNS", "testFieldGroupExistsOnUpdate");
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);
-        
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(new SchemaIdImpl(UUID.randomUUID()), false));
+
+        recordType = recordType
+                .withFieldTypeEntry(typeManager.newFieldTypeEntry(new SchemaIdImpl(UUID.randomUUID()), false));
         try {
             System.out.println("Expecting FieldTypeNotFoundException");
             typeManager.updateRecordType(recordType);
@@ -192,16 +204,16 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     public void testRemove() throws Exception {
         QName name = new QName("testNS", "testRemove");
         RecordType recordType = typeManager.newRecordType(name);
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         recordType = typeManager.createRecordType(recordType);
-        
-        recordType.removeFieldTypeEntry(fieldType1.getId());
-        recordType.removeFieldTypeEntry(fieldType2.getId());
-        recordType.removeFieldTypeEntry(fieldType3.getId());
+
+        recordType = recordType.withoutFieldTypeEntry(fieldType1.getId());
+        recordType = recordType.withoutFieldTypeEntry(fieldType2.getId());
+        recordType = recordType.withoutFieldTypeEntry(fieldType3.getId());
         typeManager.updateRecordType(recordType);
-        
+
         RecordType readRecordType = typeManager.getRecordTypeByName(name, null);
         assertTrue(readRecordType.getFieldTypeEntries().isEmpty());
     }
@@ -210,16 +222,16 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     public void testRemoveLeavesOlderVersionsUntouched() throws Exception {
         QName name = new QName("testNS", "testRemoveLeavesOlderVersionsUntouched");
         RecordType recordType = typeManager.newRecordType(name);
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        recordType = recordType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         recordType = typeManager.createRecordType(recordType);
-        
-        recordType.removeFieldTypeEntry(fieldType1.getId());
-        recordType.removeFieldTypeEntry(fieldType2.getId());
-        recordType.removeFieldTypeEntry(fieldType3.getId());
+
+        recordType = recordType.withoutFieldTypeEntry(fieldType1.getId());
+        recordType = recordType.withoutFieldTypeEntry(fieldType2.getId());
+        recordType = recordType.withoutFieldTypeEntry(fieldType3.getId());
         typeManager.updateRecordType(recordType);
-        
+
         RecordType readRecordType = typeManager.getRecordTypeByName(name, Long.valueOf(1));
         assertEquals(3, readRecordType.getFieldTypeEntries().size());
     }
@@ -228,37 +240,38 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     public void testMixin() throws Exception {
         QName mixinName = new QName("mixinNS", "testMixin");
         RecordType mixinType = typeManager.newRecordType(mixinName);
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        mixinType = mixinType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType = mixinType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType = mixinType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType = typeManager.createRecordType(mixinType);
 
         QName recordName = new QName("recordNS", "testMixin");
         RecordType recordType = typeManager.newRecordType(recordName);
-        recordType.addMixin(mixinType.getId(), mixinType.getVersion());
+        mixinType = mixinType.withMixin(mixinType.getId(), mixinType.getVersion());
         recordType = typeManager.createRecordType(recordType);
         assertEquals(Long.valueOf(1), recordType.getVersion());
         assertEquals(recordType, typeManager.getRecordTypeById(recordType.getId(), null));
     }
-    
+
     @Test
     public void testMixinLatestVersion() throws Exception {
         QName mixinName = new QName("mixinNS", "testMixinLatestVersion");
         RecordType mixinType = typeManager.newRecordType(mixinName);
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType = mixinType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
         mixinType = typeManager.createRecordType(mixinType);
 
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        mixinType = mixinType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType = mixinType.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType = typeManager.updateRecordType(mixinType);
 
         QName recordName = new QName("recordNS", "testMixinLatestVersion");
         RecordType recordType = typeManager.newRecordType(recordName);
-        recordType.addMixin(mixinType.getId());
+        mixinType = mixinType.withMixin(mixinType.getId());
         recordType = typeManager.createRecordType(recordType);
         assertEquals(Long.valueOf(1), recordType.getVersion());
-        
-        recordType.addMixin(mixinType.getId(), 2L); // Assert latest version of the Mixin RecordType got filled in
+
+        mixinType = mixinType
+                .withMixin(mixinType.getId(), 2L); // Assert latest version of the Mixin RecordType got filled in
         assertEquals(recordType, typeManager.getRecordTypeById(recordType.getId(), null));
     }
 
@@ -266,23 +279,23 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     public void testMixinUpdate() throws Exception {
         QName mixinName = new QName("mixinNS", "testMixinUpdate");
         RecordType mixinType1 = typeManager.newRecordType(mixinName);
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        mixinType1 = mixinType1.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType1 = mixinType1.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType1 = mixinType1.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType1 = typeManager.createRecordType(mixinType1);
         QName mixinName2 = new QName("mixinNS", "testMixinUpdate2");
         RecordType mixinType2 = typeManager.newRecordType(mixinName2);
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        mixinType2 = mixinType2.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType2 = mixinType2.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType2 = mixinType2.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType2 = typeManager.createRecordType(mixinType2);
-        
+
         QName recordName = new QName("recordNS", "testMixinUpdate");
         RecordType recordType = typeManager.newRecordType(recordName);
-        recordType.addMixin(mixinType1.getId(), mixinType1.getVersion());
+        recordType = recordType.withMixin(mixinType1.getId(), mixinType1.getVersion());
         recordType = typeManager.createRecordType(recordType);
-        
-        recordType.addMixin(mixinType2.getId(), mixinType2.getVersion());
+
+        recordType = recordType.withMixin(mixinType2.getId(), mixinType2.getVersion());
         recordType = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(2), recordType.getVersion());
         assertEquals(recordType, typeManager.getRecordTypeById(recordType.getId(), null));
@@ -292,24 +305,24 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     public void testMixinRemove() throws Exception {
         QName mixinName = new QName("mixinNS", "testMixinRemove");
         RecordType mixinType1 = typeManager.newRecordType(mixinName);
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        mixinType1 = mixinType1.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType1 = mixinType1.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType1 = mixinType1.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType1 = typeManager.createRecordType(mixinType1);
         QName mixinName2 = new QName("mixinNS", "testMixinRemove2");
         RecordType mixinType2 = typeManager.newRecordType(mixinName2);
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        mixinType2 = mixinType2.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType2 = mixinType2.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType2 = mixinType2.withFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType2 = typeManager.createRecordType(mixinType2);
-        
+
         QName recordTypeName = new QName("recordNS", "testMixinRemove");
         RecordType recordType = typeManager.newRecordType(recordTypeName);
-        recordType.addMixin(mixinType1.getId(), mixinType1.getVersion());
+        recordType = recordType.withMixin(mixinType1.getId(), mixinType1.getVersion());
         recordType = typeManager.createRecordType(recordType);
-        
-        recordType.addMixin(mixinType2.getId(), mixinType2.getVersion());
-        recordType.removeMixin(mixinType1.getId());
+
+        recordType = recordType.withMixin(mixinType2.getId(), mixinType2.getVersion());
+        recordType = recordType.withoutMixin(mixinType1.getId());
         recordType = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(2), recordType.getVersion());
         RecordType readRecordType = typeManager.getRecordTypeById(recordType.getId(), null);
@@ -317,30 +330,33 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(1, mixins.size());
         assertEquals(Long.valueOf(1), mixins.get(mixinType2.getId()));
     }
-    
+
     @Test
     public void testGetRecordTypes() throws Exception {
-        RecordType recordType = typeManager.createRecordType(typeManager.newRecordType(new QName("NS", "getRecordTypes")));
+        RecordType recordType =
+                typeManager.createRecordType(typeManager.newRecordType(new QName("NS", "getRecordTypes")));
         Collection<RecordType> recordTypes = typeManager.getRecordTypes();
         assertTrue(recordTypes.contains(recordType));
     }
-    
+
     @Test
     public void testGetFieldTypes() throws Exception {
-        FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("NS", "getFieldTypes"), Scope.NON_VERSIONED));
+        FieldType fieldType = typeManager.createFieldType(typeManager
+                .newFieldType(typeManager.getValueType("STRING"), new QName("NS", "getFieldTypes"),
+                        Scope.NON_VERSIONED));
         Collection<FieldType> fieldTypes = typeManager.getFieldTypes();
         assertTrue(fieldTypes.contains(fieldType));
     }
-    
+
     @Test
     public void testUpdateName() throws Exception {
         QName name = new QName(namespace1, "testUpdateName");
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);
         assertEquals(name, recordType.getName());
-        
+
         QName name2 = new QName(namespace1, "testUpdateName2");
-        recordType.setName(name2);
+        recordType = typeManager.newRecordType(recordType.getId(), name2);
         recordType = typeManager.updateRecordType(recordType);
         recordType = typeManager.getRecordTypeById(recordType.getId(), null);
         assertEquals(name2, recordType.getName());
@@ -358,15 +374,15 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         RecordType recordType2 = typeManager.newRecordType(name2);
         recordType2 = typeManager.createRecordType(recordType2);
 
-        recordType.setName(name2);
+        recordType = typeManager.newRecordType(recordType.getId(), name2);
         try {
-            System.out.println("Expecting TypeException"); 
+            System.out.println("Expecting TypeException");
             recordType = typeManager.updateRecordType(recordType);
             fail();
-        } catch (TypeException expected){
+        } catch (TypeException expected) {
         }
     }
-    
+
     @Test
     public void testCreateOrUpdate() throws Exception {
         String NS = "testCreateOrUpdateRecordType";
@@ -376,8 +392,8 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         FieldType field3 = typeManager.createFieldType("STRING", new QName(NS, "field3"), Scope.NON_VERSIONED);
 
         RecordType recordType = typeManager.newRecordType(new QName(NS, "type1"));
-        recordType.addFieldTypeEntry(field1.getId(), false);
-        recordType.addFieldTypeEntry(field2.getId(), false);
+        recordType = recordType.withFieldTypeEntry(field1.getId(), false);
+        recordType = recordType.withFieldTypeEntry(field2.getId(), false);
 
         recordType = typeManager.createOrUpdateRecordType(recordType);
         assertNotNull(recordType.getId());
@@ -387,8 +403,9 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(recordType, updatedRecordType);
 
         // Remove the id from the record type and do a change
-        recordType.setId(null);
-        recordType.addFieldTypeEntry(field3.getId(), false);
+        recordType = typeManager.newRecordType(null, recordType.getName(), recordType.getVersion(),
+                recordType.getMixins(), recordType.getFieldTypeEntries());
+        recordType = recordType.withFieldTypeEntry(field3.getId(), false);
         typeManager.createOrUpdateRecordType(recordType);
         recordType = typeManager.getRecordTypeByName(new QName(NS, "type1"), null);
         assertEquals(3, recordType.getFieldTypeEntries().size());
@@ -407,12 +424,12 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         builder.field(fieldType1.getId(), false);
         builder.field(fieldType2.getId(), true);
         RecordType recordType = builder.create();
-        
+
         RecordType readRecordType = typeManager.getRecordTypeByName(rtName, null);
         assertEquals(recordType, readRecordType);
         assertFalse(readRecordType.getFieldTypeEntry(fieldType1.getId()).isMandatory());
         assertTrue(readRecordType.getFieldTypeEntry(fieldType2.getId()).isMandatory());
-        
+
         builder.reset();
         builder.id(recordType.getId());
         recordType = builder.update();
@@ -448,17 +465,24 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         FieldType field28 = typeManager.createFieldType("STRING", new QName(NS, "field28"), VERSIONED);
         FieldType field29 = typeManager.createFieldType("STRING", new QName(NS, "field29"), VERSIONED);
 
-        RecordType mixinType1 = typeManager.recordTypeBuilder().name(NS, "mixin1").fieldEntry().use(field21).add().create();
-        RecordType mixinType2 = typeManager.recordTypeBuilder().name(NS, "mixin2").fieldEntry().use(field22).add().create();
-        RecordType mixinType3 = typeManager.recordTypeBuilder().name(NS, "mixin3").fieldEntry().use(field23).add().create();
-        RecordType mixinType4 = typeManager.recordTypeBuilder().name(NS, "mixin4").fieldEntry().use(field24).add().create();
-        RecordType mixinType5 = typeManager.recordTypeBuilder().name(NS, "mixin5").fieldEntry().use(field25).add().create();
-        RecordType mixinType6 = typeManager.recordTypeBuilder().name(NS, "mixin6").fieldEntry().use(field26).add().create();
-        RecordType mixinType7 = typeManager.recordTypeBuilder().name(NS, "mixin7").fieldEntry().use(field27).add().create();
+        RecordType mixinType1 =
+                typeManager.recordTypeBuilder().name(NS, "mixin1").fieldEntry().use(field21).add().create();
+        RecordType mixinType2 =
+                typeManager.recordTypeBuilder().name(NS, "mixin2").fieldEntry().use(field22).add().create();
+        RecordType mixinType3 =
+                typeManager.recordTypeBuilder().name(NS, "mixin3").fieldEntry().use(field23).add().create();
+        RecordType mixinType4 =
+                typeManager.recordTypeBuilder().name(NS, "mixin4").fieldEntry().use(field24).add().create();
+        RecordType mixinType5 =
+                typeManager.recordTypeBuilder().name(NS, "mixin5").fieldEntry().use(field25).add().create();
+        RecordType mixinType6 =
+                typeManager.recordTypeBuilder().name(NS, "mixin6").fieldEntry().use(field26).add().create();
+        RecordType mixinType7 =
+                typeManager.recordTypeBuilder().name(NS, "mixin7").fieldEntry().use(field27).add().create();
         // give mixin7 two more versions
-        mixinType7.addFieldTypeEntry(field28.getId(), false);
+        mixinType7 = mixinType7.withFieldTypeEntry(field28.getId(), false);
         mixinType7 = typeManager.updateRecordType(mixinType7);
-        mixinType7.addFieldTypeEntry(field29.getId(), false);
+        mixinType7 = mixinType7.withFieldTypeEntry(field29.getId(), false);
         mixinType7 = typeManager.updateRecordType(mixinType7);
 
         RecordType recordType = typeManager

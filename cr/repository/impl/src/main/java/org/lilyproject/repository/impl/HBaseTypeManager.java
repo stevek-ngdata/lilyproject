@@ -19,21 +19,50 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
 import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.UUID;
 
 import javax.annotation.PreDestroy;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.ConcurrentUpdateTypeException;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.FieldTypeExistsException;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.FieldTypeUpdateException;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeExistsException;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeBucket;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Pair;
@@ -47,11 +76,13 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class HBaseTypeManager extends AbstractTypeManager implements TypeManager {
 
-    private static final Long CONCURRENT_TIMEOUT = 5000L; // The concurrent timeout should be large enough to allow for type caches to be refreshed an a clock skew between the servers
+    private static final Long CONCURRENT_TIMEOUT = 5000L;
+    // The concurrent timeout should be large enough to allow for type caches to be refreshed an a clock skew between the servers
 
     private HTableInterface typeTable;
 
-    public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration, ZooKeeperItf zooKeeper, HBaseTableFactory hbaseTableFactory)
+    public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration, ZooKeeperItf zooKeeper,
+                            HBaseTableFactory hbaseTableFactory)
             throws IOException, InterruptedException, KeeperException, RepositoryException {
         super(zooKeeper);
         schemaCache = new LocalSchemaCache(zooKeeper, this);
@@ -61,7 +92,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         this.typeTable = LilyHBaseSchema.getTypeTable(hbaseTableFactory);
         registerDefaultValueTypes();
         schemaCache.start();
-        
+
         // The 'last' vtag should always exist in the system (at least, for everything index-related). Therefore we
         // create it here.
         try {
@@ -79,28 +110,28 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     public void close() throws IOException {
         schemaCache.close();
     }
-    
+
     @Override
     public RecordType createRecordType(RecordType recordType) throws TypeException {
         ArgumentValidator.notNull(recordType, "recordType");
         ArgumentValidator.notNull(recordType.getName(), "recordType.name");
 
-        RecordType newRecordType = recordType.clone();
+        RecordType newRecordType;
         Long recordTypeVersion = Long.valueOf(1);
         try {
             SchemaId id = getValidId();
             byte[] rowId = id.getBytes();
             // Take a counter on a row with the name as key
             byte[] nameBytes = encodeName(recordType.getName());
-            
+
             // Prepare put
             Put put = new Put(rowId);
             put.add(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes, Bytes.toBytes(recordTypeVersion));
             put.add(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes, nameBytes);
 
             // Prepare newRecordType
-            newRecordType.setId(id);
-            newRecordType.setVersion(recordTypeVersion);
+            newRecordType = new RecordTypeImpl(id, recordType.getName(), recordTypeVersion, recordType.getMixins(),
+                    recordType.getFieldTypeEntries());
 
             // Check for concurrency
             long now = System.currentTimeMillis();
@@ -119,16 +150,16 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             Map<SchemaId, Long> mixins = recordType.getMixins();
             for (Entry<SchemaId, Long> mixin : mixins.entrySet()) {
-                newRecordType.addMixin(mixin.getKey(), putMixinOnRecordType(recordTypeVersion, put, mixin.getKey(),
-                        mixin.getValue()));
+                newRecordType = newRecordType.withMixin(mixin.getKey(),
+                        putMixinOnRecordType(recordTypeVersion, put, mixin.getKey(), mixin.getValue()));
             }
 
             // Put the record type on the table
             getTypeTable().put(put);
-            
+
             // Refresh the caches
             updateRecordTypeCache(newRecordType);
-            
+
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
         } catch (IOException e) {
@@ -169,8 +200,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             id = recordType.getId();
         }
 
-        RecordType newRecordType = recordType.clone();
-        newRecordType.setId(id);
+        RecordType newRecordType =
+                new RecordTypeImpl(id, recordType.getName(), recordType.getVersion(), recordType.getMixins(),
+                        recordType.getFieldTypeEntries());
 
         byte[] rowId = id.getBytes();
         byte[] nameBytes = null;
@@ -182,7 +214,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             if (!getTypeTable().exists(new Get(rowId))) {
                 throw new RecordTypeNotFoundException(recordType.getId(), null);
             }
-            
+
             // Only do the concurrency check when a name was given
             QName name = recordType.getName();
             if (name != null) {
@@ -192,12 +224,14 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 now = System.currentTimeMillis();
                 checkConcurrency(recordType.getName(), nameBytes, now);
             }
-            
+
             // Prepare the update
             RecordType latestRecordType = getRecordTypeByIdWithoutCache(id, null);
             // If no name was given, continue to use the name that was already on the record type
             if (name == null)
-                newRecordType.setName(latestRecordType.getName());
+                newRecordType = new RecordTypeImpl(newRecordType.getId(), latestRecordType.getName(),
+                        newRecordType.getVersion(), newRecordType.getMixins(), newRecordType.getFieldTypeEntries());
+
             Long latestRecordTypeVersion = latestRecordType.getVersion();
             Long newRecordTypeVersion = latestRecordTypeVersion + 1;
 
@@ -213,14 +247,17 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             if (fieldTypeEntriesChanged || mixinsChanged || nameChanged) {
                 put.add(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes, Bytes.toBytes(newRecordTypeVersion));
                 getTypeTable().put(put);
-                newRecordType.setVersion(newRecordTypeVersion);
+                newRecordType = new RecordTypeImpl(newRecordType.getId(), newRecordType.getName(), newRecordTypeVersion,
+                        newRecordType.getMixins(), newRecordType.getFieldTypeEntries());
             } else {
-                newRecordType.setVersion(latestRecordTypeVersion);
+                newRecordType =
+                        new RecordTypeImpl(newRecordType.getId(), newRecordType.getName(), latestRecordTypeVersion,
+                                newRecordType.getMixins(), newRecordType.getFieldTypeEntries());
             }
 
             // Refresh the caches
             updateRecordTypeCache(newRecordType);
-            
+
         } catch (IOException e) {
             throw new TypeException("Exception occurred while updating recordType '" + newRecordType.getId()
                     + "' on HBase", e);
@@ -270,7 +307,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
     }
 
-    private boolean updateName(Put put, RecordType recordType, RecordType latestRecordType) throws TypeException, RepositoryException, InterruptedException {
+    private boolean updateName(Put put, RecordType recordType, RecordType latestRecordType)
+            throws TypeException, RepositoryException, InterruptedException {
         if (!recordType.getName().equals(latestRecordType.getName())) {
             try {
                 getRecordTypeByName(recordType.getName(), null);
@@ -312,25 +350,29 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         NavigableMap<byte[], byte[]> nonVersionableColumnFamily = result.getFamilyMap(TypeCf.DATA.bytes);
         QName name;
         name = decodeName(nonVersionableColumnFamily.get(TypeColumn.RECORDTYPE_NAME.bytes));
-        RecordType recordType = newRecordType(id, name);
+        RecordType recordType = new RecordTypeImpl(id, name);
         Long currentVersion = Bytes.toLong(result.getValue(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes));
         if (version != null) {
             if (currentVersion < version) {
                 throw new RecordTypeNotFoundException(id, version);
             }
-            recordType.setVersion(version);
+            recordType = new RecordTypeImpl(recordType.getId(), recordType.getName(), version,
+                    recordType.getMixins(), recordType.getFieldTypeEntries());
         } else {
-            recordType.setVersion(currentVersion);
+            recordType = new RecordTypeImpl(recordType.getId(), recordType.getName(), currentVersion,
+                    recordType.getMixins(), recordType.getFieldTypeEntries());
         }
-        extractFieldTypeEntries(result, version, recordType);
-        extractMixins(result, version, recordType);
+        recordType = extractFieldTypeEntries(result, version, recordType);
+        recordType = extractMixins(result, version, recordType);
         return recordType;
     }
 
     private boolean updateFieldTypeEntries(Put put, Long newRecordTypeVersion, RecordType recordType,
-            RecordType latestRecordType) throws FieldTypeNotFoundException, TypeException {
+                                           RecordType latestRecordType)
+            throws FieldTypeNotFoundException, TypeException {
         boolean changed = false;
-        Collection<FieldTypeEntry> latestFieldTypeEntries = latestRecordType.getFieldTypeEntries();
+        Collection<FieldTypeEntry> latestFieldTypeEntries =
+                new HashSet<FieldTypeEntry>(latestRecordType.getFieldTypeEntries());
         // Update FieldTypeEntries
         for (FieldTypeEntry fieldTypeEntry : recordType.getFieldTypeEntries()) {
             FieldTypeEntry latestFieldTypeEntry = latestRecordType.getFieldTypeEntry(fieldTypeEntry.getFieldTypeId());
@@ -364,9 +406,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         put.add(TypeCf.FIELDTYPE_ENTRY.bytes, idBytes, version, encodeFieldTypeEntry(fieldTypeEntry));
     }
 
-    private boolean updateMixins(Put put, Long newRecordTypeVersion, RecordType recordType, RecordType latestRecordType) {
+    private boolean updateMixins(Put put, Long newRecordTypeVersion, RecordType recordType,
+                                 RecordType latestRecordType) {
         boolean changed = false;
-        Map<SchemaId, Long> latestMixins = latestRecordType.getMixins();
+        Map<SchemaId, Long> latestMixins = new HashMap<SchemaId, Long>(latestRecordType.getMixins());
         // Update mixins
         for (Entry<SchemaId, Long> entry : recordType.getMixins().entrySet()) {
             SchemaId mixinId = entry.getKey();
@@ -385,7 +428,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return changed;
     }
 
-    private void extractFieldTypeEntries(Result result, Long version, RecordType recordType) {
+    private RecordType extractFieldTypeEntries(Result result, Long version, RecordType recordType) {
+        RecordType newRecordType = recordType;
         if (version != null) {
             NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
             NavigableMap<byte[], NavigableMap<Long, byte[]>> fieldTypeEntriesVersionsMap = allVersionsMap
@@ -397,7 +441,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                     if (ceilingEntry != null) {
                         FieldTypeEntry fieldTypeEntry = decodeFieldTypeEntry(ceilingEntry.getValue(), fieldTypeId);
                         if (fieldTypeEntry != null) {
-                            recordType.addFieldTypeEntry(fieldTypeEntry);
+                            newRecordType = newRecordType.withFieldTypeEntry(fieldTypeEntry);
                         }
                     }
                 }
@@ -409,14 +453,18 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                     SchemaId fieldTypeId = new SchemaIdImpl(entry.getKey());
                     FieldTypeEntry fieldTypeEntry = decodeFieldTypeEntry(entry.getValue(), fieldTypeId);
                     if (fieldTypeEntry != null) {
-                        recordType.addFieldTypeEntry(fieldTypeEntry);
+                        newRecordType = newRecordType.withFieldTypeEntry(fieldTypeEntry);
                     }
                 }
             }
         }
+
+        return newRecordType;
     }
 
-    private void extractMixins(Result result, Long version, RecordType recordType) {
+    private RecordType extractMixins(Result result, Long version, RecordType recordType) {
+        RecordType newRecordType = recordType;
+
         if (version != null) {
             NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
             NavigableMap<byte[], NavigableMap<Long, byte[]>> mixinVersionsMap = allVersionsMap.get(TypeCf.MIXIN.bytes);
@@ -426,7 +474,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                     Entry<Long, byte[]> ceilingEntry = entry.getValue().ceilingEntry(version);
                     if (ceilingEntry != null) {
                         if (!EncodingUtil.isDeletedField(ceilingEntry.getValue())) {
-                            recordType.addMixin(mixinId, Bytes.toLong(ceilingEntry.getValue()));
+                            newRecordType = newRecordType.withMixin(mixinId, Bytes.toLong(ceilingEntry.getValue()));
                         }
                     }
                 }
@@ -436,11 +484,14 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             if (mixinMap != null) {
                 for (Entry<byte[], byte[]> entry : mixinMap.entrySet()) {
                     if (!EncodingUtil.isDeletedField(entry.getValue())) {
-                        recordType.addMixin(new SchemaIdImpl(entry.getKey()), Bytes.toLong(entry.getValue()));
+                        newRecordType = newRecordType
+                                .withMixin(new SchemaIdImpl(entry.getKey()), Bytes.toLong(entry.getValue()));
                     }
                 }
             }
         }
+
+        return newRecordType;
     }
 
     /**
@@ -493,10 +544,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_SCOPE.bytes, Bytes
                     .toBytes(fieldType.getScope().name()));
             put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes, nameBytes);
-            
+
             // Prepare newFieldType
-            newFieldType = fieldType.clone();
-            newFieldType.setId(id);
+            newFieldType = new FieldTypeImpl(id, fieldType.getValueType(), fieldType.getName(), fieldType.getScope());
 
             // Check if there is already a fieldType with this name 
             if (schemaCache.fieldTypeExists(fieldType.getName()))
@@ -513,7 +563,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             // Refresh the caches
             updateFieldTypeCache(newFieldType);
-            
+
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
         } catch (IOException e) {
@@ -538,8 +588,6 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             throw new TypeException("ID and name must be specified in the field type to update.");
         }
 
-        FieldType newFieldType = fieldType.clone();
-
         byte[] rowId = fieldType.getId().getBytes();
         byte[] nameBytes = null;
         Long now = null;
@@ -559,7 +607,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             // Prepare the update
             FieldType latestFieldType = getFieldTypeByIdWithoutCache(fieldType.getId());
-            copyUnspecifiedFields(newFieldType, latestFieldType);
+            FieldType newFieldType = copyUnspecifiedFields(fieldType, latestFieldType);
             checkImmutableFieldsCorrespond(newFieldType, latestFieldType);
             if (!newFieldType.getName().equals(latestFieldType.getName())) {
                 try {
@@ -577,9 +625,11 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
                 getTypeTable().put(put);
             }
-            
+
             // Update the caches
-            updateFieldTypeCache(newFieldType.clone());
+            updateFieldTypeCache(newFieldType);
+
+            return newFieldType;
         } catch (IOException e) {
             throw new TypeException("Exception occurred while updating fieldType '" + fieldType.getId() + "' on HBase",
                     e);
@@ -591,8 +641,6 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 clearConcurrency(nameBytes, now);
             }
         }
-
-        return newFieldType;
     }
 
     @Override
@@ -613,9 +661,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             // There's nothing to update or create: just fetch the field type, check its state corresponds
             // and return it
             FieldType latestFieldType = getFieldTypeByIdWithoutCache(fieldType.getId());
-            // don't modify input object
-            FieldType newFieldType = fieldType.clone();
-            copyUnspecifiedFields(newFieldType, latestFieldType);
+            FieldType newFieldType = copyUnspecifiedFields(fieldType, latestFieldType);
             checkImmutableFieldsCorrespond(newFieldType, latestFieldType);
             // The supplied name was null, so no need to check if it corresponds
             return latestFieldType;
@@ -636,8 +682,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                                 " than what is stored. This is not a user error, just retry please.");
                     }
                     // don't modify input object
-                    FieldType newFieldType = fieldType.clone();
-                    copyUnspecifiedFields(newFieldType, latestFieldType);
+                    FieldType newFieldType = copyUnspecifiedFields(fieldType, latestFieldType);
                     checkImmutableFieldsCorrespond(newFieldType, latestFieldType);
                     return latestFieldType;
                 } else {
@@ -670,27 +715,33 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
     }
 
-    private void copyUnspecifiedFields(FieldType userFieldType, FieldType latestFieldType)
+    private FieldType copyUnspecifiedFields(FieldType userFieldType, FieldType latestFieldType)
             throws FieldTypeUpdateException {
-        if (userFieldType.getScope() == null) {
-            userFieldType.setScope(latestFieldType.getScope());
+        if (userFieldType.getScope() == null || userFieldType.getValueType() == null) {
+            ValueType valueType = userFieldType.getValueType() == null ?
+                    latestFieldType.getValueType() : userFieldType.getValueType();
+            Scope scope = userFieldType.getScope() == null ?
+                    latestFieldType.getScope() : userFieldType.getScope();
+            return new FieldTypeImpl(userFieldType.getId(), valueType, userFieldType.getName(), scope);
         }
-        if (userFieldType.getValueType() == null) {
-            userFieldType.setValueType(latestFieldType.getValueType());
-        }
+        return userFieldType;
     }
 
     /**
-     * Checks if a name for a field type or record type is not being used by some other create or update operation 'at the same time'.
+     * Checks if a name for a field type or record type is not being used by some other create or update operation 'at
+     * the same time'.
      * This is to avoid that concurrent updates would result in the same name being used for two different types.
-     * 
-     *  <p>A timestamp 'now' is put in a row with nameBytes as key. As long as this timestamp is present and the timeout (concurrentTimeout)
-     *  has not expired, no other create or update operation can happen with the same name for the type.
-     *  
-     *  <p>When the create or update operation has finished {@link #clearConcurrency(byte[], long)} should be called to clear the timestamp
-     *  and to allow new updates.
+     *
+     * <p>A timestamp 'now' is put in a row with nameBytes as key. As long as this timestamp is present and the timeout
+     * (concurrentTimeout)
+     * has not expired, no other create or update operation can happen with the same name for the type.
+     *
+     * <p>When the create or update operation has finished {@link #clearConcurrency(byte[], long)} should be called to
+     * clear the timestamp
+     * and to allow new updates.
      */
-    private void checkConcurrency(QName name, byte[] nameBytes, long now) throws IOException, ConcurrentUpdateTypeException {
+    private void checkConcurrency(QName name, byte[] nameBytes, long now)
+            throws IOException, ConcurrentUpdateTypeException {
         // Get the timestamp of when the last update happened for the field name
         byte[] originalTimestampBytes = null;
         Long originalTimestamp = null;
@@ -708,36 +759,40 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             if ((originalTimestamp + CONCURRENT_TIMEOUT) >= now) {
                 throw new ConcurrentUpdateTypeException(name.toString());
             }
-            
+
         }
         // Try to put our own timestamp with a check and put to make sure we're the only one doing this
         Put put = new Put(nameBytes);
         put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now));
-        if (!getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, originalTimestampBytes, put)) {
+        if (!getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes,
+                originalTimestampBytes, put)) {
             throw new ConcurrentUpdateTypeException(name.toString());
         }
     }
-    
+
     /**
      * Clears the timestamp from the row with nameBytes as key.
-     * 
-     * <p>This method should be called when a create or update operation has finished to allow new updates to happen before the concurrent timeout would expire.
-     * 
-     * @param now the timestamp that was used when calling {@link #checkConcurrency(QName, byte[], long)} 
+     *
+     * <p>This method should be called when a create or update operation has finished to allow new updates to happen
+     * before the concurrent timeout would expire.
+     *
+     * @param now the timestamp that was used when calling {@link #checkConcurrency(QName, byte[], long)}
      */
     private void clearConcurrency(byte[] nameBytes, long now) {
         Put put = new Put(nameBytes);
         put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, null);
         try {
             // Using check and put to avoid clearing a timestamp that was not ours.
-            getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now), put);
+            getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes,
+                    Bytes.toBytes(now), put);
         } catch (IOException e) {
             // Ignore, too late to clear the timestamp
         }
     }
 
-    
-    private FieldType getFieldTypeByIdWithoutCache(SchemaId id) throws FieldTypeNotFoundException, TypeException, RepositoryException, InterruptedException  {
+
+    private FieldType getFieldTypeByIdWithoutCache(SchemaId id)
+            throws FieldTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(id, "id");
         Result result;
         Get get = new Get(id.getBytes());
@@ -878,11 +933,11 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
         TypeBucket typeBucket = new TypeBucket(bucketId);
         ResultScanner scanner = null;
-            byte[] rowPrefix = AbstractSchemaCache.decodeHexAndNextHex(bucketId);
-            scan.setStartRow(new byte[] { rowPrefix[0] });
-            if (!bucketId.equals("ff")) // In case of ff, just scan until
-                // the end
-                scan.setStopRow(new byte[] { rowPrefix[1] });
+        byte[] rowPrefix = AbstractSchemaCache.decodeHexAndNextHex(bucketId);
+        scan.setStartRow(new byte[]{rowPrefix[0]});
+        if (!bucketId.equals("ff")) // In case of ff, just scan until
+            // the end
+            scan.setStopRow(new byte[]{rowPrefix[1]});
         try {
             scanner = getTypeTable().getScanner(scan);
         } catch (IOException e) {
@@ -913,8 +968,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     public static byte[] encodeName(QName qname) {
         String name = qname.getName();
         String namespace = qname.getNamespace();
-        
-        int sizeEstimate = (((name == null) ? 1 : (name.length() * 2)) + ((namespace == null) ? 1 : (namespace.length() * 2)));
+
+        int sizeEstimate =
+                (((name == null) ? 1 : (name.length() * 2)) + ((namespace == null) ? 1 : (namespace.length() * 2)));
         DataOutput dataOutput = new DataOutputImpl(sizeEstimate);
 
         dataOutput.writeUTF(namespace);

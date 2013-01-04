@@ -15,20 +15,31 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.hadoop.hbase.util.Bytes.ByteArrayComparator;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.ArgumentValidator;
 
 public class RecordTypeImpl implements RecordType, Cloneable {
-    
-    private SchemaId id;
-    private QName name;
-    private Long version;
-    private Map<SchemaId, Long> mixins = new HashMap<SchemaId, Long>();
-    private Map<SchemaId, FieldTypeEntry> fieldTypeEntries;
+
+    private final SchemaId id;
+    private final QName name;
+    private final Long version;
+    private final Map<SchemaId, Long> mixins;
+    private final Map<SchemaId, FieldTypeEntry> fieldTypeEntries;
+
     private static final ByteArrayComparator byteArrayComparator = new ByteArrayComparator();
+
     private static final Comparator<SchemaId> comparator = new Comparator<SchemaId>() {
         @Override
         public int compare(SchemaId schemaId1, SchemaId schemaId2) {
@@ -38,31 +49,52 @@ public class RecordTypeImpl implements RecordType, Cloneable {
 
     /**
      * This constructor should not be called directly.
+     *
      * @use {@link TypeManager#newRecordType} instead
      */
     public RecordTypeImpl(SchemaId id, QName name) {
+        this(id, name, null, Collections.<SchemaId, Long>emptyMap(), Collections.<FieldTypeEntry>emptySet());
+    }
+
+    /**
+     * This constructor should not be called directly.
+     *
+     * @use {@link TypeManager#newRecordType} instead
+     */
+    public RecordTypeImpl(SchemaId id, QName name, long version) {
+        this(id, name, version, Collections.<SchemaId, Long>emptyMap(), Collections.<FieldTypeEntry>emptySet());
+    }
+
+    RecordTypeImpl(SchemaId id, QName name, Long version, Map<SchemaId, Long> mixins,
+                   Collection<FieldTypeEntry> fieldTypeEntries) {
         this.id = id;
         this.name = name;
+        this.version = version;
+        this.mixins = Collections.unmodifiableMap(mixins);
+
         // Sort the fieldTypeEntries at creation time so we don't have to sort them
         // each time they are requested.
-        fieldTypeEntries = new TreeMap<SchemaId, FieldTypeEntry>(comparator);
+        final TreeMap<SchemaId, FieldTypeEntry> mutableFieldTypeEntries =
+                new TreeMap<SchemaId, FieldTypeEntry>(comparator);
+        for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
+            mutableFieldTypeEntries.put(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry);
+        }
+        this.fieldTypeEntries = Collections.unmodifiableMap(mutableFieldTypeEntries);
     }
-    
-    @Override
-    public void setId(SchemaId id) {
-        this.id = id;
+
+    private Map<SchemaId, FieldTypeEntry> mutableFieldTypeEntries() {
+        return new HashMap<SchemaId, FieldTypeEntry>(fieldTypeEntries);
     }
-    
+
+    private Map<SchemaId, Long> mutableMixins() {
+        return new HashMap<SchemaId, Long>(mixins);
+    }
+
     @Override
     public SchemaId getId() {
         return id;
     }
-    
-    @Override
-    public void setName(QName name) {
-        this.name = name;
-    }
-    
+
     @Override
     public QName getName() {
         return name;
@@ -72,67 +104,63 @@ public class RecordTypeImpl implements RecordType, Cloneable {
     public Long getVersion() {
         return version;
     }
-    
-    @Override
-    public void setVersion(Long version){
-        this.version = version;
-    }
-    
+
     @Override
     public Collection<FieldTypeEntry> getFieldTypeEntries() {
         return fieldTypeEntries.values();
     }
-    
+
     @Override
     public FieldTypeEntry getFieldTypeEntry(SchemaId fieldTypeId) {
         return fieldTypeEntries.get(fieldTypeId);
     }
-    
+
     @Override
-    public void removeFieldTypeEntry(SchemaId fieldTypeId) {
-        fieldTypeEntries.remove(fieldTypeId);
-    }
-    
-    @Override
-    public void addFieldTypeEntry(FieldTypeEntry fieldTypeEntry) {
-        fieldTypeEntries.put(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry);
+    public RecordType withoutFieldTypeEntry(SchemaId fieldTypeId) {
+        final Map<SchemaId, FieldTypeEntry> mutableFieldTypeEntries = mutableFieldTypeEntries();
+        mutableFieldTypeEntries.remove(fieldTypeId);
+
+        return new RecordTypeImpl(this.id, this.name, this.version, this.mixins, mutableFieldTypeEntries.values());
     }
 
     @Override
-    public FieldTypeEntry addFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory) {
-        FieldTypeEntry fieldTypeEntry = new FieldTypeEntryImpl(fieldTypeId, mandatory);
-        addFieldTypeEntry(fieldTypeEntry);
-        return fieldTypeEntry;
+    public RecordType withFieldTypeEntry(FieldTypeEntry fieldTypeEntry) {
+        final Map<SchemaId, FieldTypeEntry> mutableFieldTypeEntries = mutableFieldTypeEntries();
+        mutableFieldTypeEntries.put(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry);
+
+        return new RecordTypeImpl(this.id, this.name, this.version, this.mixins, mutableFieldTypeEntries.values());
     }
 
     @Override
-    public void addMixin(SchemaId recordTypeId, Long recordTypeVersion) {
+    public RecordType withFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory) {
+        return withFieldTypeEntry(new FieldTypeEntryImpl(fieldTypeId, mandatory));
+    }
+
+    @Override
+    public RecordType withMixin(SchemaId recordTypeId, Long recordTypeVersion) {
         ArgumentValidator.notNull(recordTypeId, "recordTypeId");
-        mixins.put(recordTypeId, recordTypeVersion);
+        final Map<SchemaId, Long> mutableMixins = mutableMixins();
+        mutableMixins.put(recordTypeId, recordTypeVersion);
+
+        return new RecordTypeImpl(this.id, this.name, this.version, mutableMixins, this.fieldTypeEntries.values());
     }
-    
+
     @Override
-    public void addMixin(SchemaId recordTypeId) {
-        addMixin(recordTypeId, null);
+    public RecordType withMixin(SchemaId recordTypeId) {
+        return withMixin(recordTypeId, null);
     }
-    
+
     @Override
-    public void removeMixin(SchemaId recordTypeId) {
-        mixins.remove(recordTypeId);
+    public RecordType withoutMixin(SchemaId recordTypeId) {
+        final Map<SchemaId, Long> mutableMixins = mutableMixins();
+        mutableMixins.remove(recordTypeId);
+
+        return new RecordTypeImpl(this.id, this.name, this.version, mutableMixins, this.fieldTypeEntries.values());
     }
-    
+
     @Override
     public Map<SchemaId, Long> getMixins() {
         return mixins;
-    }
-
-    @Override
-    public RecordType clone() {
-        RecordTypeImpl clone = new RecordTypeImpl(this.id, this.name);
-        clone.version = this.version;
-        clone.fieldTypeEntries.putAll(fieldTypeEntries);
-        clone.mixins.putAll(mixins);
-        return clone;
     }
 
     @Override

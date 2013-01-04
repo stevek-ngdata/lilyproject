@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
 import java.util.List;
+
 import javax.annotation.PreDestroy;
 
 import org.apache.avro.AvroRemoteException;
@@ -102,7 +103,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
 
         try {
             RecordType newRecordType = converter.convert(lilyProxy.createRecordType(converter.convert(recordType)));
-            updateRecordTypeCache(newRecordType.clone());
+            updateRecordTypeCache(newRecordType);
             return newRecordType;
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
@@ -120,7 +121,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         try {
             RecordType newRecordType =
                     converter.convert(lilyProxy.createOrUpdateRecordType(converter.convert(recordType)));
-            updateRecordTypeCache(newRecordType.clone());
+            updateRecordTypeCache(newRecordType);
             return newRecordType;
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
