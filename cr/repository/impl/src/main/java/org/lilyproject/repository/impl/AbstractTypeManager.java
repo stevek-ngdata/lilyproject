@@ -169,7 +169,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
 
     @Override
-    public RecordType newRecordType(SchemaId recordTypeId, QName name, long version) {
+    public RecordType newRecordType(SchemaId recordTypeId, QName name, Long version) {
         return new RecordTypeImpl(recordTypeId, name, version);
     }
 
@@ -180,7 +180,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
 
     @Override
-    public RecordType newRecordType(SchemaId recordTypeId, QName name, long version, Map<SchemaId, Long> mixins,
+    public RecordType newRecordType(SchemaId recordTypeId, QName name, Long version, Map<SchemaId, Long> mixins,
                                     Collection<FieldTypeEntry> fieldTypeEntries) {
         return new RecordTypeImpl(recordTypeId, name, version, mixins, fieldTypeEntries);
     }

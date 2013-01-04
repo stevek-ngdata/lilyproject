@@ -121,8 +121,9 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(Long.valueOf(4), recordTypeV4.getVersion());
         assertEquals(Long.valueOf(4), typeManager.updateRecordType(recordType).getVersion());
 
-        recordType = typeManager.newRecordType(recordType.getId(), recordType.getName(), 4, recordType.getMixins(),
-                recordType.getFieldTypeEntries());
+        recordType =
+                typeManager.newRecordType(recordType.getId(), recordType.getName(), (long) 4, recordType.getMixins(),
+                        recordType.getFieldTypeEntries());
         assertEquals(recordType, typeManager.getRecordTypeByName(name, null));
 
         // Read old versions

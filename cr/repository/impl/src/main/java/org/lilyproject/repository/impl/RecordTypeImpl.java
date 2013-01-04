@@ -61,7 +61,7 @@ public class RecordTypeImpl implements RecordType, Cloneable {
      *
      * @use {@link TypeManager#newRecordType} instead
      */
-    public RecordTypeImpl(SchemaId id, QName name, long version) {
+    public RecordTypeImpl(SchemaId id, QName name, Long version) {
         this(id, name, version, Collections.<SchemaId, Long>emptyMap(), Collections.<FieldTypeEntry>emptySet());
     }
 

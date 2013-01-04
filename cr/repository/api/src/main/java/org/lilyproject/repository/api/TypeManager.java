@@ -52,7 +52,7 @@ public interface TypeManager extends Closeable {
      *
      * <p>This is only a factory method, nothing is created in the repository.
      */
-    RecordType newRecordType(SchemaId recordTypeId, QName name, long version) throws TypeException;
+    RecordType newRecordType(SchemaId recordTypeId, QName name, Long version) throws TypeException;
 
     /**
      * Instantiates a new RecordType object.
@@ -67,7 +67,7 @@ public interface TypeManager extends Closeable {
      *
      * <p>This is only a factory method, nothing is created in the repository.
      */
-    RecordType newRecordType(SchemaId recordTypeId, QName name, long version, Map<SchemaId, Long> mixins,
+    RecordType newRecordType(SchemaId recordTypeId, QName name, Long version, Map<SchemaId, Long> mixins,
                              Collection<FieldTypeEntry> fieldTypeEntries) throws TypeException;
 
     /**
