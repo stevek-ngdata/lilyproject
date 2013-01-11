@@ -28,7 +28,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-process</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.4</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -173,7 +173,7 @@ fi
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-kauri-plugin</artifactId>
-        <version>1.4-SNAPSHOT</version>
+        <version>1.4</version>
         <inherited>false</inherited>
         <executions>
           <execution>
