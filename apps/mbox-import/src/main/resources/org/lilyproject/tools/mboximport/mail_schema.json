@@ -60,7 +60,11 @@
       fields: [
         {name: "m$to" },
         {name: "m$subject" },
-        {name: "m$parts" }
+        {name: "m$parts" },
+        {name: "m$cc" },
+        {name: "m$from" },
+        {name: "m$sender" },
+        {name: "m$listId" }
       ]
     },
     {
