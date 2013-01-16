@@ -167,7 +167,7 @@ public class HBaseRepository extends BaseRepository {
             try {
                 result = recordTable.get(get);
             } catch (IOException e) {
-                throw new RecordException("Error reading record row for record id " + record.getId());
+                throw new RecordException("Error reading record row for record id " + record.getId(), e);
             }
 
             byte[] deleted = recdec.getLatest(result, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
