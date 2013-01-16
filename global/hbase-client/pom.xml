@@ -41,7 +41,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily</artifactId>
-    <version>1.4</version>
+    <version>1.4-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
 
