@@ -81,6 +81,7 @@ These classes include:
 - org.lilyproject.hadooptestfw.fork.MiniMRCluster.java
 - org.lilyproject.hadooptestfw.fork.MiniZooKeeperCluster.java
 - org.lilyproject.util.hbase.HTablePool.java
+- org.lilyproject.sep.impl.fork.ForkedReplicationSource
 
 The following diff-commands can be used to quickly check if there are any changes on the original classes:
 
