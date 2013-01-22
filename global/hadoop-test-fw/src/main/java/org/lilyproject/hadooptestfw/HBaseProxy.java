@@ -195,7 +195,7 @@ public class HBaseProxy {
                 conf.set("hbase.zookeeper.property.clientPort", "2181");
                 conf.set("hbase.replication", "true");
                 // Avoid extra delays in replication
-                conf.setInt("replication.source.maxretriesmultiplier", "2");
+                conf.setInt("replication.source.maxretriesmultiplier", 2);
 
                 addUserProps(conf);
 
