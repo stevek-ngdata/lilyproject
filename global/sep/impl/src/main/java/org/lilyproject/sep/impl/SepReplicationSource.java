@@ -25,10 +25,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.Stoppable;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
-import org.apache.hadoop.hbase.replication.regionserver.ReplicationSource;
 import org.apache.hadoop.hbase.replication.regionserver.ReplicationSourceManager;
 import org.lilyproject.sep.WALEditFilter;
 import org.lilyproject.sep.WALEditFilterProvider;
+import org.lilyproject.sep.impl.fork.ForkedReplicationSource;
 
 /**
  * Custom replication source for distributing Secondary Event Processor (SEP) events to listeners
@@ -39,7 +39,7 @@ import org.lilyproject.sep.WALEditFilterProvider;
  * {@code SepReplicationSource} is replicating to a custom SEP handler, the replication entries will
  * be filtered to only send the minimal necessary information for the remote SEP event processor.
  */
-public class SepReplicationSource extends ReplicationSource {
+public class SepReplicationSource extends ForkedReplicationSource {
 
     private WALEditFilter walEditFilter;
     private final Log log = LogFactory.getLog(getClass());
