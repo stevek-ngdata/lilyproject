@@ -20,12 +20,12 @@ import org.lilyproject.sep.EventListener;
 import java.io.IOException;
 
 /**
- * Publisher of secondary events which are distributed to and handled by {@link EventListener}s.
+ * Publisher of side-effect events which are distributed to and handled by {@link EventListener}s.
  */
 public interface EventPublisher {
 
     /**
-     * Publish a message to be processed by the secondary event processor system.
+     * Publish a message to be processed by the side-effect processor (SEP) system.
      * 
      * @param row The row key for the record to which the message is related
      * @param payload The content of the event message

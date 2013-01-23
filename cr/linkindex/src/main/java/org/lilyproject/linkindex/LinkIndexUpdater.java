@@ -32,11 +32,14 @@ import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.lilyproject.util.exception.ExceptionUtil;
 
 import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
@@ -63,15 +66,16 @@ public class LinkIndexUpdater implements EventListener {
     }
 
     @Override
-    public boolean processMessage(byte[] row, byte[] payload) {
+    public void processMessage(byte[] row, byte[] payload) {
+        RecordId recordId = repository.getIdGenerator().fromBytes(row);
+        RecordEvent recordEvent;
         try {
-            RecordId recordId = repository.getIdGenerator().fromBytes(row);
-            RecordEvent recordEvent = new RecordEvent(payload, repository.getIdGenerator());
-            update(recordId, recordEvent);
-        } catch (Exception e) {
-            log.error("Error processing event in LinkIndexUpdater", e);
+            recordEvent = new RecordEvent(payload, repository.getIdGenerator());
+        } catch (IOException e) {
+            log.error("Error reading record event, processing of message cancelled", e);
+            return;
         }
-        return true;
+        update(recordId, recordEvent);
     }
 
     public void update(RecordId recordId, RecordEvent recordEvent) {
@@ -160,7 +164,9 @@ public class LinkIndexUpdater implements EventListener {
                 }
             }
         } catch (Exception e) {
-            log.error("Error processing event in LinkIndexUpdater", e);
+            // Throw the exception through so that it is retried later by the SEP
+            ExceptionUtil.handleInterrupt(e);
+            throw new RuntimeException(e);
         } finally {
             metrics.report(Action.UPDATE, System.currentTimeMillis() - before);
         }

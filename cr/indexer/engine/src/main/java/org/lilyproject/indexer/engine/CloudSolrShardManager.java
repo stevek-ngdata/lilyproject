@@ -17,20 +17,23 @@ public class CloudSolrShardManager implements SolrShardManager {
 
     private SolrClientMetrics solrClientMetrics;
 
-    public CloudSolrShardManager(String indexName, String zkHost, String collection, boolean blockOnIOProblem)
+    /**
+     * @param swallowUnrecoverableExceptions If true, SolrClients will swallow and report all exceptions that cannot be corrected by a change in configuration
+     */
+    public CloudSolrShardManager(String indexName, String zkHost, String collection, boolean swallowUnrecoverableExceptions)
             throws MalformedURLException {
         solrServer = new CloudSolrServer(zkHost);
 
-        solrClient = createSolrClient(solrServer, collection, blockOnIOProblem, indexName);
+        solrClient = createSolrClient(solrServer, collection, swallowUnrecoverableExceptions, indexName);
     }
 
-    private SolrClient createSolrClient(CloudSolrServer solrServer, String collection, boolean blockOnIOProblem,
+    private SolrClient createSolrClient(CloudSolrServer solrServer, String collection, boolean swallowUnrecoverableExceptions,
                                         String indexName) {
         final SolrClientImpl solrClient = new SolrClientImpl(solrServer, collection, "Solr Cloud Client");
 
-        if (blockOnIOProblem) {
+        if (swallowUnrecoverableExceptions) {
             solrClientMetrics = new SolrClientMetrics(indexName, "cloud");
-            return RetryingSolrClient.wrap(solrClient, solrClientMetrics);
+            return ErrorSwallowingSolrClient.wrap(solrClient, solrClientMetrics);
         } else {
             return solrClient;
         }

@@ -31,7 +31,7 @@ import org.lilyproject.sep.WALEditFilterProvider;
 import org.lilyproject.sep.impl.fork.ForkedReplicationSource;
 
 /**
- * Custom replication source for distributing Secondary Event Processor (SEP) events to listeners
+ * Custom replication source for distributing Side-Effect Processor (SEP) events to listeners
  * elsewhere on the cluster, as well as remaining compatible with stock HBase replication servers.
  * <p>
  * When a {@code SepReplicationSource} is replicating to a standard replication sink, all

@@ -134,7 +134,7 @@ public class IndexUpdater implements EventListener {
     }
 
     @Override
-    public boolean processMessage(byte[] row, byte[] payload) {
+    public void processMessage(byte[] row, byte[] payload) {
         long before = System.currentTimeMillis();
 
         // During the processing of this message, we switch the context class loader to the one
@@ -234,7 +234,7 @@ public class IndexUpdater implements EventListener {
                             // For now, we do nothing, when the delete event is received the record will be removed
                             // from the index (as well as update of denormalized data).
                             // TODO: we should process all outstanding messages for the record (up to delete) in one go
-                            return true;
+                            return;
                         }
 
                         handleRecordCreateUpdate(vtRecord);
@@ -255,18 +255,19 @@ public class IndexUpdater implements EventListener {
             }
             if (recordId != null) {
                 String eventType = event != null && event.getType() != null ? event.getType().toString() : "(unknown)";
-                log.error("Failure in IndexUpdater. Record '" + recordId + "', event type " + eventType, e);
+                log.error("Failure in IndexUpdater. Record '" + recordId + "', event type " + eventType + ": " +  e);
                 metrics.errors.inc();
             } else {
-                log.error("Failure in IndexUpdater. Failed before/while reading payload.", e);
+                log.error("Failure in IndexUpdater. Failed before/while reading payload: " + e);
                 metrics.errors.inc();
             }
+            // We throw the exception through so that it will be retried by the SEP
+            throw new RuntimeException(e);
         } finally {
             long after = System.currentTimeMillis();
             metrics.updates.inc(after - before);
             Thread.currentThread().setContextClassLoader(currentCL);
         }
-        return true;
     }
 
     private void handleRecordCreateUpdate(VTaggedRecord vtRecord) throws Exception {

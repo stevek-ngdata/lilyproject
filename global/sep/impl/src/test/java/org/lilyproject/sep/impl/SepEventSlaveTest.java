@@ -89,8 +89,6 @@ public class SepEventSlaveTest {
 
         eventSlave.replicateLogEntries(hlogEntries);
 
-        when(eventListener.processMessage(aryEq(rowKey), aryEq(payloadData))).thenReturn(true);
-
         verify(eventListener).processMessage(aryEq(rowKey), aryEq(payloadData));
     }
 
@@ -126,8 +124,6 @@ public class SepEventSlaveTest {
         eventSlave.replicateLogEntries(hlogEntriesBeforeTimestamp);
         eventSlave.replicateLogEntries(hlogEntriesOnTimestamp);
         eventSlave.replicateLogEntries(hlogEntriesAfterTimestamp);
-
-        when(eventListener.processMessage(any(byte[].class), any(byte[].class))).thenReturn(true);
 
         // Event should be published for data on or after the subscription timestamp, but not before
         verify(eventListener, never()).processMessage(aryEq(rowKey), aryEq(payloadDataBeforeTimestamp));
