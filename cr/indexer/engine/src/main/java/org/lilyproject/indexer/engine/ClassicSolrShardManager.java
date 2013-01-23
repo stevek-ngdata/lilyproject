@@ -59,9 +59,12 @@ public class ClassicSolrShardManager implements SolrShardManager {
         this(indexName, shards, selector, httpClient, solrClientConfig, false);
     }
 
+    /**
+     * @param swallowUnrecoverableExceptions If true, SolrClients will swallow and report all exceptions that cannot be corrected by a change in configuration
+     */
     public ClassicSolrShardManager(String indexName, Map<String, String> shards, ShardSelector selector,
                                    HttpClient httpClient,
-                                   SolrClientConfig solrClientConfig, boolean blockOnIOProblem)
+                                   SolrClientConfig solrClientConfig, boolean swallowUnrecoverableExceptions)
             throws MalformedURLException {
         this.shards = shards;
         this.selector = selector;
@@ -88,7 +91,7 @@ public class ClassicSolrShardManager implements SolrShardManager {
             this.responseParser = new BinaryResponseParser();
         }
 
-        init(indexName, blockOnIOProblem);
+        init(indexName, swallowUnrecoverableExceptions);
     }
 
     /**
@@ -121,7 +124,7 @@ public class ClassicSolrShardManager implements SolrShardManager {
         return shardConnections.values().iterator().next().solrClient.query(query);
     }
 
-    private void init(String indexName, boolean blockOnIOProblem) throws MalformedURLException {
+    private void init(String indexName, boolean swallowUnrecoverableExceptions) throws MalformedURLException {
         shardConnections = new HashMap<String, SolrClientHandle>();
         for (Map.Entry<String, String> shard : shards.entrySet()) {
             //ConcurrentUpdateSolrServer solr = new ConcurrentUpdateSolrServer(shard.getValue(), httpClient, 50, 5);
@@ -130,8 +133,8 @@ public class ClassicSolrShardManager implements SolrShardManager {
             solr.setParser(responseParser);
             SolrClientMetrics metrics = new SolrClientMetrics(indexName, shard.getKey());
             SolrClient solrClient = new SolrClientImpl(solr, shard.getValue());
-            if (blockOnIOProblem) {
-                solrClient = RetryingSolrClient.wrap(solrClient, metrics);
+            if (swallowUnrecoverableExceptions) {
+                solrClient = ErrorSwallowingSolrClient.wrap(solrClient, metrics);
             }
             shardConnections.put(shard.getKey(), new SolrClientHandle(solrClient, metrics));
         }

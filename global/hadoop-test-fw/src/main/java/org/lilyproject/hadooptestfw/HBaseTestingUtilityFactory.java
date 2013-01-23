@@ -77,13 +77,11 @@ public class HBaseTestingUtilityFactory {
 
         // Replication parameters needed for the SEP
         conf.set("hbase.replication", "true");
-        conf.setInt("replication.source.maxretriesmultiplier", 2);  // Keep replication loop quick
         conf.set("replication.source.nb.capacity", "200");
         conf.set("replication.replicationsource.implementation",  "org.lilyproject.sep.impl.SepReplicationSource");
 
-        // make replication react quicker
-        conf.setLong("replication.source.sleepforretries", 50);
-        conf.setLong("replication.source.maxretriesmultiplier", 1);
+        // make replication react a little quicker
+        conf.setLong("replication.source.sleepforretries", 200);
 
         return new HBaseTestingUtility(conf, clearData);
     }

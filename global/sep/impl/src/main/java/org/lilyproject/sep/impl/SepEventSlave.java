@@ -1,6 +1,15 @@
 package org.lilyproject.sep.impl;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import org.apache.commons.logging.Log;
@@ -11,31 +20,19 @@ import org.apache.hadoop.hbase.ipc.HBaseRPC;
 import org.apache.hadoop.hbase.ipc.HRegionInterface;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.regionserver.wal.HLog;
+import org.apache.hadoop.hbase.regionserver.wal.HLogKey;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.lilyproject.sep.EventListener;
 import org.lilyproject.sep.SepModel;
 import org.lilyproject.util.concurrent.WaitPolicy;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.hadoop.hbase.regionserver.wal.HLogKey;
-
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public class SepEventSlave extends BaseHRegionServer {
     private final String subscriptionId;
@@ -58,7 +55,7 @@ public class SepEventSlave extends BaseHRegionServer {
      * @param listener listeners that will process the events
      * @param hostName hostname to bind to
      */
-    public SepEventSlave(String subscriptionId, long subscriptionTimestamp, EventListener listener, int threadCnt, 
+    public SepEventSlave(String subscriptionId, long subscriptionTimestamp, EventListener listener, int threadCnt,
             String hostName, ZooKeeperItf zk, Configuration hbaseConf) {
         Preconditions.checkArgument(threadCnt > 0, "Thread count must be > 0");
         this.subscriptionId = subscriptionId;
@@ -150,7 +147,7 @@ public class SepEventSlave extends BaseHRegionServer {
                             long before = System.currentTimeMillis();
                             log.debug("Delivering message to listener");
                             listener.processMessage(kv.getRow(), kv.getValue());
-                            sepMetrics.reportFilteredSepOperation(System.currentTimeMillis() - before); 
+                            sepMetrics.reportFilteredSepOperation(System.currentTimeMillis() - before);
                         }
                     });
                     futures.add(future);
@@ -166,7 +163,10 @@ public class SepEventSlave extends BaseHRegionServer {
         }
 
         // We should wait for all operations to finish before returning, because otherwise HBase might
-        // deliver a next batch from the same HLog to a different server
+        // deliver a next batch from the same HLog to a different server. This becomes even more important
+        // if an exception has been thrown in the batch, as waiting for all futures increases the back-off that
+        // occurs before the next attempt
+        List<Exception> exceptionsThrown = Lists.newArrayList();
         for (Future<?> future : futures) {
             try {
                 future.get();
@@ -174,10 +174,15 @@ public class SepEventSlave extends BaseHRegionServer {
                 Thread.currentThread().interrupt();
                 throw new IOException("Interrupted in processing events.", e);
             } catch (Exception e) {
-                // TODO think about error handling, probably just logging is a good idea
-                log.error("Listener failure in processing event", e);
+                exceptionsThrown.add(e);
             }
         }
+        
+        if (!exceptionsThrown.isEmpty()) {
+            log.error("Encountered exceptions on " + exceptionsThrown.size() + " edits (out of " + futures.size() + " total edits)");
+            throw new RuntimeException(exceptionsThrown.get(0));
+        }
+        
         if (lastProcessedTimestamp > 0) {
             sepMetrics.reportSepTimestamp(lastProcessedTimestamp);
         }

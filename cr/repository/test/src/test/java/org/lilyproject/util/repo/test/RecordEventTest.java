@@ -21,7 +21,7 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.sep.EventListener;
 import org.lilyproject.util.repo.RecordEvent;
 
-public class RecordEventTest { 
+public class RecordEventTest {
     private static final String NS = "org.lilyproject.util.repo.test";
 
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -119,7 +119,7 @@ public class RecordEventTest {
         private int messageCounter = 0;
         private Map<String,String> attr;
         @Override
-        public boolean processMessage(byte[] row, byte[] payload)  {
+        public void processMessage(byte[] row, byte[] payload)  {
             try {
                 RecordEvent recordEvent = new RecordEvent(payload, idGenerator);
                 Assert.assertEquals(attr, recordEvent.getAttributes());
@@ -127,8 +127,6 @@ public class RecordEventTest {
             } catch (IOException e) {
                 Assert.fail(e.getMessage());
             }
-            
-            return true;
         }
 
         public void setExpectedAttributes(Map<String,String> attr) {

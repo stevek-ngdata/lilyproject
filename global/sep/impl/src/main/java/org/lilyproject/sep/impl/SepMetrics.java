@@ -29,7 +29,7 @@ import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 
 /**
- * Metrics for the Secondary Event Processor (SEP).
+ * Metrics for the Side-Effect Processor (SEP) system.
  */
 public class SepMetrics implements Updater {
 
@@ -75,7 +75,7 @@ public class SepMetrics implements Updater {
     /**
      * Report the original write timestamp of a SEP operation that was received. Assuming that SEP
      * operations are delivered in the same order as they are originally written in HBase (which
-     * will always be the case except for when a region split or move takes place), this metric will always 
+     * will always be the case except for when a region split or move takes place), this metric will always
      * hold the write timestamp of the most recent operation in HBase that has been handled by the SEP system.
      * 
      * @param timestamp The write timestamp of the last SEP operation
@@ -98,7 +98,7 @@ public class SepMetrics implements Updater {
         private final ObjectName mbeanName;
 
         public SepMetricsMXBean(MetricsRegistry registry) {
-            super(registry, "Lily Secondary Event Processor Metrics");
+            super(registry, "Lily Side-Effect Processor Metrics");
 
             mbeanName = MBeanUtil.registerMBean("SEP", recordName, this);
         }

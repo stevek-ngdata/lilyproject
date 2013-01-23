@@ -25,7 +25,7 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 /**
- * Publishes secondary events directly to the HBase record table.
+ * Publishes side-effect events directly to the HBase record table.
  */
 public class HBaseEventPublisher implements EventPublisher {
 

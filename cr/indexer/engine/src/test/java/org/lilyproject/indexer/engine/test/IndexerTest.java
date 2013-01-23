@@ -3023,9 +3023,9 @@ public class IndexerTest {
         }
 
         @Override
-        public boolean processMessage(byte[] rowKey, byte[] payload) {
+        public void processMessage(byte[] rowKey, byte[] payload) {
             if (!enabled)
-                return true;
+                return;
 
             // In case of failures we print out "load" messages, the main junit thread is expected to
             // test that the failures variable is 0.
@@ -3062,7 +3062,6 @@ public class IndexerTest {
                 expectedId = null;
                 expectedEvent = null;
             }
-            return true;
         }
 
         private void printSomethingLoad() {
@@ -3079,9 +3078,8 @@ public class IndexerTest {
         private int msgCount;
 
         @Override
-        public boolean processMessage(byte[] row, byte[] payload)  {
+        public void processMessage(byte[] row, byte[] payload)  {
             msgCount++;
-            return true;
         }
 
         public int getMsgCount() {

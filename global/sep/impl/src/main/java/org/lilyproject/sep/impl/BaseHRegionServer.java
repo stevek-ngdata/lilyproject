@@ -35,6 +35,11 @@ import org.apache.hadoop.hbase.client.RowMutations;
  * {@link #getProtocolVersion}.
  */
 public class BaseHRegionServer implements HRegionInterface {
+    
+    // Constant dummy value that is returned from getHServerInfo.
+    private static final HServerInfo HSERVER_INFO = new HServerInfo();
+    
+    @Override
     public long getProtocolVersion(final String protocol, final long clientVersion) throws IOException {
         if (protocol.equals(HRegionInterface.class.getName())) {
           return HRegionInterface.VERSION;
@@ -42,6 +47,7 @@ public class BaseHRegionServer implements HRegionInterface {
         throw new IOException("Unknown protocol: " + protocol);
     }
 
+    @Override
     public ProtocolSignature getProtocolSignature(String protocol, long version, int clientMethodsHashCode)
             throws IOException {
         if (protocol.equals(HRegionInterface.class.getName())) {
@@ -151,7 +157,8 @@ public class BaseHRegionServer implements HRegionInterface {
 
     @Override
     public HServerInfo getHServerInfo() throws IOException {
-        throw new UnsupportedOperationException("Not implemented");
+        // Need to return something here as this method is used to ensure that a replication peer is up
+        return HSERVER_INFO;
     }
 
     @Override

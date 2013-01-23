@@ -395,6 +395,13 @@ public class ForkedReplicationSource extends Thread implements ReplicationSource
                             queueRecovered, currentWALisBeingWrittenTo);
                     this.lastLoggedPosition = this.position;
                 }
+                
+                // lily change -- be more responsive on a lightly-loaded cluster. This will not be necessary
+                // once HBASE-7325 is available
+                if (!gotIOE) {
+                    sleepMultiplier = 1;
+                }
+                
                 if (sleepForRetries("Nothing to replicate", sleepMultiplier)) {
                     sleepMultiplier++;
                 }
@@ -700,6 +707,12 @@ public class ForkedReplicationSource extends Thread implements ReplicationSource
                 }
 
                 try {
+                    // lily change - do an initial sleep here, because we're doing retries based on exceptions in the underlying
+                    // SEP message processing, so the "is the host down" check below will rarely matter
+                    if (sleepForRetries("Since a replication attempt failed", sleepMultiplier)){
+                        sleepMultiplier++;
+                    }
+                    
                     boolean down;
                     // Spin while the slave is down and we're not asked to shutdown/close
                     do {
