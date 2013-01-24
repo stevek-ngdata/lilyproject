@@ -40,23 +40,31 @@ import org.apache.hadoop.hbase.client.RowMutations;
 /**
  * This is a threadsafe solution for the non-threadsafe HTable.
  *
- * <p>The problem with HTable this tries to solve is that HTable is not threadsafe, and
- * on the other hand it is best not to instantiate a new HTable for each use for
- * performance reasons.
+ * <p>Be careful/considerate when using autoflush.
  *
- * <p>HTable is, unlike e.g. a file handle or a JDBC connection, not a scarce
- * resource which needs to be closed. The actual connection handling (which
- * consists of connections to a variety of region servers) it handled at other
- * places. We only need to avoid the cost of creating new copies of HTable all the time.
+ * <p>The problems with HTable this tries to solve is that HTable:
+ *
+ * <ul>
+ *     <li>HTable is not threadsafe</li>
+ *     <li>It needs to be closed when you're done with it (cfr. HConnection refcounting). And closing as soon
+ *     as you're done might actually not be efficient because when the refcount reaches zero, the connection
+ *     is closed but maybe a second later you'll need it again.</li>
+ *     <li>it is best not to instantiate a new HTable for each use for performance reasons
+ *     (though according to HBASE-4805, if you pass an executorservice & hconnection yourself, this isn't true).</li>
+ * </ul>
+ *
+ * <p>Note that HTable doesn't represent a connection, but uses a HConnection managed by the
+ * HConnectionManager.</p>
  *
  * <p>The first implementation was based on caching HTable instances in threadlocal
  * variables, now it is based on HTablePool. The reason for changing this was that
  * HTable now contains an ExecutorService instance, which is better exploited if we
- * reduce the number of HTable instances (and now this implementation even changes
- * it by a shared ExecutorService instance, since otherwise threads still very
- * many very short-lived threads were created).
- *
- * <p>Be careful/considerate when using autoflush.
+ * reduce the number of HTable instances. And now this implementation even changes
+ * it by a shared ExecutorService instance, since otherwise still very
+ * many very short-lived threads were created. So in fact we could return to the
+ * thread-local approach, but maybe that's less efficient when threads are not reused
+ * (which would actually be an efficiency problem by itself, so this is maybe not
+ * an argument).
  *
  */
 public class LocalHTable implements HTableInterface {
@@ -146,8 +154,6 @@ public class LocalHTable implements HTableInterface {
                 Map.Entry<Configuration, HTablePool> entry = it.next();
                 // closing the table pool will close the connection for every table.
                 entry.getValue().close();
-                // Since CDH4.0, we need to delete the connection again (this was also the case up to CDH3u2)
-                HConnectionManager.deleteConnection(entry.getKey(), true);
             }
         }
     }

@@ -72,10 +72,9 @@ public class HBaseConnections {
         }
         return result;
     }
-    
+
     public synchronized void close() {
         for (Configuration conf : configurations) {
-            HConnectionManager.deleteConnection(conf, true);
             forceClose(conf);
         }
         configurations.clear();
