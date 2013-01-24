@@ -14,6 +14,11 @@ import java.io.IOException;
 import java.util.UUID;
 
 public class SepModelImpl implements SepModel {
+    
+    // Replace '-' with unicode "CANADIAN SYLLABICS HYPHEN" character in zookeeper to avoid issues
+    // with HBase replication naming conventions
+    public static final char INTERNAL_HYPHEN_REPLACEMENT = '\u1400';
+    
     private final ZooKeeperItf zk;
     private final Configuration hbaseConf;
     private ReplicationAdmin replicationAdmin;
@@ -30,19 +35,23 @@ public class SepModelImpl implements SepModel {
         }
     }
 
+    @Override
     public void addSubscription(String name) throws InterruptedException, KeeperException, IOException {
         if (!addSubscriptionSilent(name)) {
             throw new IllegalStateException("There is already a subscription for name '" + name + "'.");
         }
     }
 
+    @Override
     public boolean addSubscriptionSilent(String name) throws InterruptedException, KeeperException, IOException {
-        if (replicationAdmin.listPeers().containsKey(name)) {
+        
+        String internalName = toInternalSubscriptionName(name);
+        if (replicationAdmin.listPeers().containsKey(internalName)) {
             return false;
         }
 
-        String basePath = HBASE_ROOT + "/" + name;
-        UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(name)); // always gives the same uuid for the same name
+        String basePath = HBASE_ROOT + "/" + internalName;
+        UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(internalName)); // always gives the same uuid for the same name
         ZkUtil.createPath(zk, basePath + "/hbaseid", Bytes.toBytes(uuid.toString()));
         ZkUtil.createPath(zk, basePath + "/rs");
 
@@ -51,7 +60,7 @@ public class SepModelImpl implements SepModel {
         String zkClientPort = hbaseConf.get("hbase.zookeeper.property.clientPort");
 
         try {
-            replicationAdmin.addPeer(name, zkQuorum + ":" + zkClientPort + ":" + basePath);
+            replicationAdmin.addPeer(internalName, zkQuorum + ":" + zkClientPort + ":" + basePath);
         } catch (IllegalArgumentException e) {
             if (e.getMessage().equals("Cannot add existing peer")) {
                 return false;
@@ -62,19 +71,22 @@ public class SepModelImpl implements SepModel {
         return true;
     }
 
+    @Override
     public void removeSubscription(String name) throws IOException {
         if (!removeSubscriptionSilent(name)) {
             throw new IllegalStateException("No subscription named '" + name + "'.");
         }
     }
 
+    @Override
     public boolean removeSubscriptionSilent(String name) throws IOException {
-        if (!replicationAdmin.listPeers().containsKey(name)) {
+        String internalName = toInternalSubscriptionName(name);
+        if (!replicationAdmin.listPeers().containsKey(internalName)) {
             log.error("Requested to remove a subscription which does not exist, skipping silently: '" + name + "'");
             return false;
         } else {
             try {
-                replicationAdmin.removePeer(name);
+                replicationAdmin.removePeer(internalName);
             } catch (IllegalArgumentException e) {
                 if (e.getMessage().equals("Cannot remove inexisting peer")) { // see ReplicationZookeeper
                     return false;
@@ -85,7 +97,17 @@ public class SepModelImpl implements SepModel {
         return true;
     }
 
+    @Override
     public boolean hasSubscription(String name) {
-       return replicationAdmin.listPeers().containsKey(name);
+       String internalName = toInternalSubscriptionName(name);
+       return replicationAdmin.listPeers().containsKey(internalName);
+    }
+    
+        
+    static String toInternalSubscriptionName(String subscriptionName) {
+        if (subscriptionName.indexOf(INTERNAL_HYPHEN_REPLACEMENT, 0) != -1) {
+            throw new IllegalArgumentException("Subscription name cannot contain character \\U001D");
+        }
+        return subscriptionName.replace('-', INTERNAL_HYPHEN_REPLACEMENT);
     }
 }

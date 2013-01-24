@@ -79,5 +79,21 @@ public class IndexerModelImplTest {
         indexerModel.addIndex(indexDefinition);
         verify(indexDefinition, never()).setSubscriptionTimestamp(anyLong());
     }
-
+    
+    @Test
+    public void testValidateIndexName_Valid() {
+        // Nothing should happen
+        IndexerModelImpl.validateIndexName("valid-index-name");
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void testValidateIndexName_Invalid_EmptyString() {
+        IndexerModelImpl.validateIndexName("");
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void testValidateIndexName_Invalid_NonPrintableCharacters() {
+        IndexerModelImpl.validateIndexName("not\u0001valid");
+    }
+    
 }
