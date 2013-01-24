@@ -8,7 +8,7 @@
       <img src="${publicUri('service:/main/static/images/lily-long-logo.png')}" alt="Lily logo"/>
     </p>    
 
-    <p>See the <a href="http://docs.outerthought.org/lily-docs-current/">Lily documentation</a> for information
+    <p>See the <a href="http://docs.ngdata.com/lily-docs-current/">Lily documentation</a> for information
       on how to use the REST-interface.</p>
 
     <p>Some resources which can be accessed as is:</p>

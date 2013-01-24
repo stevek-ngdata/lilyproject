@@ -5,4 +5,4 @@ incremental indexing, you can trigger batch indexing, or you can trigger
 deletion of the index.
 
 See the documentation about managing indexes:
-http://docs.outerthought.org/lily-docs-current/440-lily.html
+http://docs.ngdata.com/lily-docs-current/440-lily.html
