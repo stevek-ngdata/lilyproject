@@ -15,13 +15,18 @@
  */
 package org.lilyproject.clientmetrics;
 
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormat;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeDataSupport;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Various utility methods to pull interesting data from Lily.
@@ -60,6 +65,20 @@ public class LilyMetrics {
         ObjectName lily = new ObjectName("Lily:name=Info");
         ObjectName memory = new ObjectName("java.lang:type=Memory");
 
+        // This data structure is used to collect for each index, and for each server, the timestamp of the
+        // last WALEdit processed by the SEP
+        Map<String, Map<String, Long>> sepTimestampByIndexAndServer = new HashMap<String, Map<String, Long>>() {
+            @Override
+            public Map<String, Long> get(Object key) {
+                Map<String, Long> value = super.get(key);
+                if (value == null) {
+                    value = new HashMap<String, Long>();
+                    put((String)key, value);
+                }
+                return value;
+            }
+        };
+
         for (String server : lilyServers) {
             int colonPos = server.indexOf(':');
             String address = server.substring(0, colonPos);
@@ -73,8 +92,29 @@ public class LilyMetrics {
             double usedHeapMB = ((double)(Long)heapMemUsage.get("used")) / 1024d / 1024d;
 
             table.columns(address, version, String.valueOf(indexerMaster), maxHeapMB, usedHeapMB);
+
+            ObjectName indexUpdaterPattern = new ObjectName("Lily:service=SEP,name=IndexUpdater_*");
+            Set<ObjectName> indexUpdaterNames = connection.queryNames(indexUpdaterPattern, null);
+            for (ObjectName indexUpdater : indexUpdaterNames) {
+                Long lastSepTimestamp = (Long)connection.getAttribute(indexUpdater, "lastSepTimestamp");
+                String indexName = indexUpdater.getKeyProperty("name").substring("IndexUpdater_".length());
+                sepTimestampByIndexAndServer.get(indexName).put(server, lastSepTimestamp);
+            }
         }
 
         table.columnSepLine();
+
+        if (sepTimestampByIndexAndServer.size() > 0) {
+            long now = System.currentTimeMillis();
+            ps.println();
+            ps.println("SEP: how long ago was the timestamp of the last processed event:");
+            for (Map.Entry<String, Map<String, Long>> indexEntry : sepTimestampByIndexAndServer.entrySet()) {
+                ps.println("  Index " + indexEntry.getKey());
+                for (Map.Entry<String, Long> serverEntry : indexEntry.getValue().entrySet()) {
+                    Period duration = new Period(now - serverEntry.getValue());
+                    ps.println("    Server " + serverEntry.getKey() + ": " + PeriodFormat.getDefault().print(duration));
+                }
+            }
+        }
     }
 }
