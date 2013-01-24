@@ -58,7 +58,7 @@ public class SepEventSlave extends BaseHRegionServer {
     public SepEventSlave(String subscriptionId, long subscriptionTimestamp, EventListener listener, int threadCnt,
             String hostName, ZooKeeperItf zk, Configuration hbaseConf) {
         Preconditions.checkArgument(threadCnt > 0, "Thread count must be > 0");
-        this.subscriptionId = subscriptionId;
+        this.subscriptionId = SepModelImpl.toInternalSubscriptionName(subscriptionId);
         this.subscriptionTimestamp = subscriptionTimestamp;
         this.listener = listener;
         this.hostName = hostName;
