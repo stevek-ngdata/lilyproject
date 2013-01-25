@@ -93,6 +93,17 @@ public class SepModelImpl implements SepModel {
                 }
                 throw e;
             }
+            String basePath = HBASE_ROOT + "/" + internalName;
+            try {
+            ZkUtil.deleteNode(zk, basePath + "/hbaseid");
+            ZkUtil.deleteNode(zk, basePath + "/rs");
+            ZkUtil.deleteNode(zk, basePath);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(ie);
+            } catch (KeeperException ke) {
+                log.error("Cleanup in zookeeper failed on " + basePath, ke);
+            }
         }
         return true;
     }
