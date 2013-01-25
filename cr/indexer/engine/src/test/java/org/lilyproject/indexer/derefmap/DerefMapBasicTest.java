@@ -46,7 +46,7 @@ public class DerefMapBasicTest {
         TestHelper.setupLogging("org.lilyproject.indexer");
 
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         repository = repoSetup.getRepository();
         ids = repository.getIdGenerator();

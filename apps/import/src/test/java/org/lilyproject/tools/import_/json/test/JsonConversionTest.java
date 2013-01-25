@@ -76,7 +76,7 @@ public class JsonConversionTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         repository = repoSetup.getRepository();
 
@@ -333,7 +333,7 @@ public class JsonConversionTest {
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof RecordFilterList);
-        RecordFilterList parsedFilterList = (RecordFilterList) filterList;
+        RecordFilterList parsedFilterList = filterList;
         assertTrue(parsedFilterList.getFilters().get(0) instanceof RecordIdPrefixFilter);
         assertTrue(parsedFilterList.getFilters().get(1) instanceof RecordTypeFilter);
         assertEquals(RecordFilterList.Operator.MUST_PASS_ONE, parsedFilterList.getOperator());

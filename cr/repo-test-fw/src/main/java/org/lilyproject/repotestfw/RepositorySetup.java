@@ -132,7 +132,7 @@ public class RepositorySetup {
         typeManagerSetup = true;
     }
 
-    public void setupRepository(/* FIXME ROWLOG REFACTORING */ boolean withWal) throws Exception {
+    public void setupRepository() throws Exception {
         if (repositorySetup)
             return;
 
@@ -208,19 +208,6 @@ public class RepositorySetup {
         remoteSchemaCache.start();
     }
 
-    public void setupMessageQueue(boolean withProcessor) throws Exception {
-        setupMessageQueue(withProcessor, false);
-    }
-
-    /**
-     * @param withManualProcessing if true, the MQ RowLog will be wrapped to keep track of added messages to allow
-     *                             triggering a manual processing, see method {@link #processMQ}. Usually you will want
-     *                             either this or withProcessor, not both.
-     */
-    public void setupMessageQueue(boolean withProcessor, boolean withManualProcessing) throws Exception {
-        // FIXME ROWLOG REFACTORING
-    }
-
     /**
      * Wait until all currently queued SEP events are processed.
      *
@@ -284,7 +271,7 @@ public class RepositorySetup {
     public void stopSepEventSlave() {
         if (sepEventSlave == null || !sepEventSlave.isRunning()) {
             throw new IllegalStateException("No SepEventSlave to stop");
-        } 
+        }
         sepEventSlave.stop();
         sepEventSlave = null;
     }

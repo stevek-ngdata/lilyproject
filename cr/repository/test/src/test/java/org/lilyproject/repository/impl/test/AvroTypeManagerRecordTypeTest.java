@@ -34,7 +34,7 @@ public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordType
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         repoSetup.setupCore();
-        repoSetup.setupRepository(false);
+        repoSetup.setupRepository();
         repoSetup.setupRemoteAccess();
         typeManager = repoSetup.getRemoteTypeManager();
         setupFieldTypes();

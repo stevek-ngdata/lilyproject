@@ -65,8 +65,7 @@ public class IndexerApiTest {
         SOLR_TEST_UTIL.start();
 
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
-        repoSetup.setupMessageQueue(false, true);
+        repoSetup.setupRepository();
 
         repository = repoSetup.getRepository();
         typeManager = repoSetup.getTypeManager();

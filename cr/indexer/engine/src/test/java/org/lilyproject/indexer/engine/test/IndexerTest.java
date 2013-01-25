@@ -192,12 +192,10 @@ public class IndexerTest {
 
         repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
 
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         prematureRepository.setRepository(repoSetup.getRepository());
         indexUpdaterRepository.setDelegate(repoSetup.getRepository());
-
-        repoSetup.setupMessageQueue(false, true);
 
         repository = repoSetup.getRepository();
         typeManager = repoSetup.getTypeManager();

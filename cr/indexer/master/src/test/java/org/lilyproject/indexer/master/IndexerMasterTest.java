@@ -51,7 +51,7 @@ public class IndexerMasterTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
     }
 
     @Before

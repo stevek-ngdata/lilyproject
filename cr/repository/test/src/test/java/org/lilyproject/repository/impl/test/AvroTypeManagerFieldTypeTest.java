@@ -31,7 +31,7 @@ public class AvroTypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTe
         avro = true;
         TestHelper.setupLogging();
         repoSetup.setupCore();
-        repoSetup.setupRepository(false);
+        repoSetup.setupRepository();
         repoSetup.setupRemoteAccess();
 
         typeManager = repoSetup.getRemoteTypeManager();

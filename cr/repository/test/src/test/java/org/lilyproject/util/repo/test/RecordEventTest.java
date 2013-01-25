@@ -37,7 +37,7 @@ public class RecordEventTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         repository = repoSetup.getRepository();
         typeManager = repoSetup.getTypeManager();
