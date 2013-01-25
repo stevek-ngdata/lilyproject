@@ -6,6 +6,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.lilyproject.sep.SepModel;
@@ -21,18 +22,11 @@ public class SepModelImpl implements SepModel {
     
     private final ZooKeeperItf zk;
     private final Configuration hbaseConf;
-    private ReplicationAdmin replicationAdmin;
     private Log log = LogFactory.getLog(getClass());
 
     public SepModelImpl(ZooKeeperItf zk, Configuration hbaseConf) {
         this.zk = zk;
         this.hbaseConf = hbaseConf;
-
-        try {
-            this.replicationAdmin = new ReplicationAdmin(hbaseConf); // TODO do we need to close this?
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
@@ -44,31 +38,35 @@ public class SepModelImpl implements SepModel {
 
     @Override
     public boolean addSubscriptionSilent(String name) throws InterruptedException, KeeperException, IOException {
-        
-        String internalName = toInternalSubscriptionName(name);
-        if (replicationAdmin.listPeers().containsKey(internalName)) {
-            return false;
-        }
-
-        String basePath = HBASE_ROOT + "/" + internalName;
-        UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(internalName)); // always gives the same uuid for the same name
-        ZkUtil.createPath(zk, basePath + "/hbaseid", Bytes.toBytes(uuid.toString()));
-        ZkUtil.createPath(zk, basePath + "/rs");
-
-        // Let's assume we're all using the same ZooKeeper
-        String zkQuorum = hbaseConf.get("hbase.zookeeper.quorum");
-        String zkClientPort = hbaseConf.get("hbase.zookeeper.property.clientPort");
-
+        ReplicationAdmin replicationAdmin = new ReplicationAdmin(hbaseConf);
         try {
-            replicationAdmin.addPeer(internalName, zkQuorum + ":" + zkClientPort + ":" + basePath);
-        } catch (IllegalArgumentException e) {
-            if (e.getMessage().equals("Cannot add existing peer")) {
+            String internalName = toInternalSubscriptionName(name);
+            if (replicationAdmin.listPeers().containsKey(internalName)) {
                 return false;
             }
-            throw e;
-        }
 
-        return true;
+            String basePath = HBASE_ROOT + "/" + internalName;
+            UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(internalName)); // always gives the same uuid for the same name
+            ZkUtil.createPath(zk, basePath + "/hbaseid", Bytes.toBytes(uuid.toString()));
+            ZkUtil.createPath(zk, basePath + "/rs");
+
+            // Let's assume we're all using the same ZooKeeper
+            String zkQuorum = hbaseConf.get("hbase.zookeeper.quorum");
+            String zkClientPort = hbaseConf.get("hbase.zookeeper.property.clientPort");
+
+            try {
+                replicationAdmin.addPeer(internalName, zkQuorum + ":" + zkClientPort + ":" + basePath);
+            } catch (IllegalArgumentException e) {
+                if (e.getMessage().equals("Cannot add existing peer")) {
+                    return false;
+                }
+                throw e;
+            }
+
+            return true;
+        } finally {
+            Closer.close(replicationAdmin);
+        }
     }
 
     @Override
@@ -80,18 +78,21 @@ public class SepModelImpl implements SepModel {
 
     @Override
     public boolean removeSubscriptionSilent(String name) throws IOException {
-        String internalName = toInternalSubscriptionName(name);
-        if (!replicationAdmin.listPeers().containsKey(internalName)) {
-            log.error("Requested to remove a subscription which does not exist, skipping silently: '" + name + "'");
-            return false;
-        } else {
-            try {
-                replicationAdmin.removePeer(internalName);
-            } catch (IllegalArgumentException e) {
-                if (e.getMessage().equals("Cannot remove inexisting peer")) { // see ReplicationZookeeper
-                    return false;
+        ReplicationAdmin replicationAdmin = new ReplicationAdmin(hbaseConf);
+        try {
+            String internalName = toInternalSubscriptionName(name);
+            if (!replicationAdmin.listPeers().containsKey(internalName)) {
+                log.error("Requested to remove a subscription which does not exist, skipping silently: '" + name + "'");
+                return false;
+            } else {
+                try {
+                    replicationAdmin.removePeer(internalName);
+                } catch (IllegalArgumentException e) {
+                    if (e.getMessage().equals("Cannot remove inexisting peer")) { // see ReplicationZookeeper
+                        return false;
+                    }
+                    throw e;
                 }
-                throw e;
             }
             String basePath = HBASE_ROOT + "/" + internalName;
             try {
@@ -104,14 +105,21 @@ public class SepModelImpl implements SepModel {
             } catch (KeeperException ke) {
                 log.error("Cleanup in zookeeper failed on " + basePath, ke);
             }
+            return true;
+        } finally {
+            Closer.close(replicationAdmin);
         }
-        return true;
     }
 
     @Override
-    public boolean hasSubscription(String name) {
-       String internalName = toInternalSubscriptionName(name);
-       return replicationAdmin.listPeers().containsKey(internalName);
+    public boolean hasSubscription(String name) throws IOException {
+        ReplicationAdmin replicationAdmin = new ReplicationAdmin(hbaseConf);
+        try {
+            String internalName = toInternalSubscriptionName(name);
+            return replicationAdmin.listPeers().containsKey(internalName);
+        } finally {
+            Closer.close(replicationAdmin);
+        }
     }
     
         

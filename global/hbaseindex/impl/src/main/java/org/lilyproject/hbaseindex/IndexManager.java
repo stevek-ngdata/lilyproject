@@ -31,6 +31,7 @@ import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LocalHTable;
+import org.lilyproject.util.io.Closer;
 
 /**
  * Starting point for all the index and query functionality.
@@ -41,7 +42,6 @@ import org.lilyproject.util.hbase.LocalHTable;
  */
 public class IndexManager {
     private Configuration hbaseConf;
-    private HBaseAdmin hbaseAdmin;
     private HBaseTableFactory tableFactory;
     private static final byte[] INDEX_META_KEY = Bytes.toBytes("LILY_INDEX");
 
@@ -54,7 +54,6 @@ public class IndexManager {
 
     public IndexManager(Configuration hbaseConf, HBaseTableFactory tableFactory) throws IOException {
         this.hbaseConf = hbaseConf;
-        hbaseAdmin = new HBaseAdmin(hbaseConf);
         this.tableFactory = tableFactory != null ? tableFactory : new HBaseTableFactoryImpl(hbaseConf);
     }
 
@@ -161,25 +160,30 @@ public class IndexManager {
      * @throws IndexNotFoundException if the index does not exist.
      */
     public synchronized void deleteIndex(String name) throws IOException, IndexNotFoundException {
-        HTableDescriptor tableDescr;
-
+        HBaseAdmin hbaseAdmin = new HBaseAdmin(hbaseConf);
         try {
-            tableDescr = hbaseAdmin.getTableDescriptor(Bytes.toBytes(name));
-        } catch (RuntimeException e) {
-            if (e.getCause() != null && e.getCause() instanceof TableNotFoundException) {
+            HTableDescriptor tableDescr;
+
+            try {
+                tableDescr = hbaseAdmin.getTableDescriptor(Bytes.toBytes(name));
+            } catch (RuntimeException e) {
+                if (e.getCause() != null && e.getCause() instanceof TableNotFoundException) {
+                    throw new IndexNotFoundException(name);
+                } else {
+                    throw e;
+                }
+            } catch (TableNotFoundException e) {
                 throw new IndexNotFoundException(name);
-            } else {
-                throw e;
             }
-        } catch (TableNotFoundException e) {
-            throw new IndexNotFoundException(name);
-        }
 
-        if (tableDescr.getValue(INDEX_META_KEY) == null) {
-            throw new IOException("Table exists but is not an index table: " + name);
-        }
+            if (tableDescr.getValue(INDEX_META_KEY) == null) {
+                throw new IOException("Table exists but is not an index table: " + name);
+            }
 
-        hbaseAdmin.disableTable(name);
-        hbaseAdmin.deleteTable(name);
+            hbaseAdmin.disableTable(name);
+            hbaseAdmin.deleteTable(name);
+        } finally {
+            Closer.close(hbaseAdmin);
+        }
     }
 }

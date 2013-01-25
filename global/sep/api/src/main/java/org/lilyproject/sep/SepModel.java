@@ -31,5 +31,5 @@ public interface SepModel {
      */
     boolean removeSubscriptionSilent(String name) throws IOException;
 
-    boolean hasSubscription(String name);
+    boolean hasSubscription(String name) throws IOException;
 }
