@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
 
@@ -362,12 +363,15 @@ public class HBaseProxy {
 
     public void rollHLog() throws Exception {
         HBaseAdmin admin = new HBaseAdmin(conf);
-        Collection<ServerName> serverNames = admin.getClusterStatus().getServers();
-        if (serverNames.size() != 1) {
-            throw new RuntimeException("Expected exactly one region server, but got: " + serverNames.size());
+        try {
+            Collection<ServerName> serverNames = admin.getClusterStatus().getServers();
+            if (serverNames.size() != 1) {
+                throw new RuntimeException("Expected exactly one region server, but got: " + serverNames.size());
+            }
+            admin.rollHLogWriter(serverNames.iterator().next().getServerName());
+        } finally {
+            Closer.close(admin);
         }
-        admin.rollHLogWriter(serverNames.iterator().next().getServerName());
-        admin.close();
     }
 
     /**
