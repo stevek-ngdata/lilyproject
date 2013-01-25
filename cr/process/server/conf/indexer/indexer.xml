@@ -9,7 +9,7 @@
     go faster when running multiple index updaters in parallel on each Lily
     node.
   -->
-  <listenersPerIndex>10</listenersPerIndex>
+  <listenersPerIndex>50</listenersPerIndex>
 
   <!--
     Should a lock be taken so that the same record cannot be indexed concurrently by different
