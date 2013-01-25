@@ -105,7 +105,7 @@ public class IndexerApiTest {
                 .field(new QName(NS, "nv_field1"), "value")
                 .create();
 
-        // nothing will be indexed yet, because there are no rowlog subscriptions
+        // nothing will be indexed yet, because there are no index updaters running
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
@@ -126,7 +126,7 @@ public class IndexerApiTest {
                 .field(new QName(NS, "nv_field1"), "value")
                 .create();
 
-        // nothing will be indexed yet, because there are no rowlog subscriptions
+        // nothing will be indexed yet, because there are no index updaters running
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
@@ -147,7 +147,7 @@ public class IndexerApiTest {
                 .field(new QName(NS, "nv_field1"), "value")
                 .create();
 
-        // nothing will be indexed yet, because there are no rowlog subscriptions
+        // nothing will be indexed yet, because there are no index updaters running
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 

@@ -113,7 +113,7 @@ public class IndexUpdater implements EventListener {
     private IdGenerator idGenerator;
 
     /**
-     * @param subscriptionId ID of the rowlog subscription to which this listener is listening. This is needed
+     * @param subscriptionId id of the SEP subscription to which this listener is listening. This is needed
      *                       because the IndexUpdater generates events itself, which should only be sent to
      *                       this subscription.
      */
