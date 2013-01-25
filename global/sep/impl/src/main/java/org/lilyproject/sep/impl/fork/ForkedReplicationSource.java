@@ -580,6 +580,13 @@ public class ForkedReplicationSource extends Thread implements ReplicationSource
                 }
             }
         } catch (IOException ioe) {
+            
+            // lily change - Don't log anything if nothing has been flushed to the
+            // HLog yet -- this is handled in HBASE-7122
+            if (ioe instanceof EOFException && this.position == 0) {
+                return true;
+            }
+            
             LOG.warn(peerClusterZnode + " Got: ", ioe);
             // TODO Need a better way to determinate if a file is really gone but
             // TODO without scanning all logs dir

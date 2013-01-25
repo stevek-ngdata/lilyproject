@@ -364,12 +364,6 @@ public class HBaseProxy {
         // Roll the hlog
         rollHLog();
 
-        // HBase replication doesn't deal too well with empty hlogs, it constantly prints error messages about
-        // it, therefore write a dummy waledit. See also HBASE-6446 or HBASE-7122.
-        delete = new Delete(Bytes.toBytes("i-am-quite-sure-this-row-does-not-exist-ha-ha-ha-2"));
-        table.delete(delete);
-        table.close();
-
         // Using JMX, query the size of the queue of hlogs to be processed for each replication source
         JmxLiaison jmxLiaison = new JmxLiaison();
         jmxLiaison.connect(mode == Mode.EMBED);
