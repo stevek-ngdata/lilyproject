@@ -52,7 +52,7 @@ public class LinkIndexTest {
         TestHelper.setupLogging("org.lilyproject.linkindex", "org.lilyproject.rowlog.impl.RowLogImpl");
 
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         typeManager = repoSetup.getTypeManager();
         repository = repoSetup.getRepository();

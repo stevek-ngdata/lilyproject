@@ -52,7 +52,7 @@ public class RecordMatcherTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         repository = repoSetup.getRepository();
         typeManager = repository.getTypeManager();

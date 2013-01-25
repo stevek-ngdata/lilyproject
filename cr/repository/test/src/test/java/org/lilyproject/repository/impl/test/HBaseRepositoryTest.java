@@ -32,9 +32,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
-
-        repoSetup.setupMessageQueue(true);
+        repoSetup.setupRepository();
 
         idGenerator = repoSetup.getIdGenerator();
         repository = repoSetup.getRepository();
