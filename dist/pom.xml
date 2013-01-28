@@ -92,7 +92,6 @@
             <artifact>org.lilyproject:lily-server-test-fw:${project.version}</artifact>
             <artifact>org.lilyproject:lily-standalone-launcher:${project.version}</artifact>
             <artifact>org.lilyproject:lily-print-host:${project.version}</artifact>
-            <artifact>org.lilyproject:lily-upgrade:${project.version}</artifact>
             <artifact>org.lilyproject:lily-linkindex-cli:${project.version}</artifact>
             <artifact>org.lilyproject:lily-scan-records:${project.version}</artifact>
             <artifact>org.lilyproject:lily-record-row-visualizer:${project.version}</artifact>

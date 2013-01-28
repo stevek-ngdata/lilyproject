@@ -57,11 +57,7 @@
   <groupId>org.lilyproject</groupId>
   <artifactId>lily</artifactId>
   <packaging>pom</packaging>
-<<<<<<< HEAD
   <version>2.2-SNAPSHOT</version>
-=======
-  <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
   <name>Lily</name>
 
   <url>http://www.lilyproject.org/</url>
@@ -119,8 +115,6 @@
     <module>tools/record-row-visualizer</module>
     <module>tools/print-host</module>
     <module>tools/archetype</module>
-    <module>tools/upgrade</module>
-
 
     <module>apps/import</module>
     <module>apps/tester</module>
@@ -138,556 +132,307 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-util</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-bytes</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repo-util</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repo-test-fw</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbase-ext</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbase-util</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-zk-util</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-json-util</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-avro-api</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rpc-module</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-api</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-spi</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-id-impl</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-impl</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-remote-impl</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-linkindex</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-derefmap-indexfilter</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-clientmetrics</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-testclient-fw</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hadoop-test-fw</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-server-test-fw</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-standalone-launcher</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-solr-test-fw</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbaseindex</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbaseindex-base</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbaseindex-impl</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-api</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-remote-impl</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-client</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-import</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rest-module</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-module</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-general-module</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-module</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-integration-module</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-model</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-master</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-worker</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-engine</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-admin-cli</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-batchbuild</artifactId>
         <classifier>mapreduce-job</classifier>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbase-client</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-cli-fw</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-print-host</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-tester</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-mbox-import</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-pluginregistry-api</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-pluginregistry-impl</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-test-decorator</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-test-updatehook</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-webui-module</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-archetype-basic</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-archetype-lily-server-plugin</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-kauri-plugin</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-upgrade</artifactId>
-<<<<<<< HEAD
-        <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-record-row-visualizer</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-linkindex-cli</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-mapreduce</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-mapreduce-test-jobs</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-scan-records</artifactId>
-<<<<<<< HEAD
         <version>2.2-SNAPSHOT</version>
-=======
-        <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
