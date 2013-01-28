@@ -210,18 +210,6 @@ public class IndexerWorker {
             IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, updaterMetrics, derefMap,
                     hbaseEventPublisher, index.getQueueSubscriptionId());
 
-            // FIXME ROWLOG REFACTORING in particular, need to decide what to do with settings.getListenersPerIndex(),
-            //                          either use it or dop it
-//            List<RemoteListenerHandler> listenerHandlers = new ArrayList<RemoteListenerHandler>();
-//
-//            for (int i = 0; i < settings.getListenersPerIndex(); i++) {
-//                RemoteListenerHandler handler = new RemoteListenerHandler(rowLog, index.getQueueSubscriptionId(),
-//                        indexUpdater, rowLogConfMgr, hostName);
-//                listenerHandlers.add(handler);
-//            }
-//
-//            handle = new IndexUpdaterHandle(index, listenerHandlers, solrShardMgr, indexerMetrics, updaterMetrics);
-//            handle.start();
             SepEventSlave sepEventSlave = new SepEventSlave(index.getQueueSubscriptionId(), index.getSubscriptionTimestamp(),
                     indexUpdater, settings.getListenersPerIndex(), hostName, zk, hbaseConf);
             handle = new IndexUpdaterHandle(index, sepEventSlave, solrShardMgr, indexerMetrics, updaterMetrics);

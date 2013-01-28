@@ -36,6 +36,8 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import org.lilyproject.util.Pair;
+
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -204,21 +206,7 @@ public class IndexerTest {
         // Field types should exist before the indexer conf is loaded
         setupSchema();
 
-//        RowLogConfigurationManager rowLogConfMgr = repoSetup.getRowLogConfManager();
-//        rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 2);
-//
-//        repoSetup.waitForSubscription(repoSetup.getWal(), "MessageVerifier");
-//
-//        rowLogConfMgr.addSubscription("MQ", "IndexUpdater", RowLogSubscription.Type.VM, 1);
-//        rowLogConfMgr.addSubscription("MQ", "OtherListener", RowLogSubscription.Type.VM, 2);
-//
-//        repoSetup.waitForSubscription(repoSetup.getMq(), "IndexUpdater");
-//        repoSetup.waitForSubscription(repoSetup.getMq(), "OtherListener");
-//
         solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
-//
-//        RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
-//        RowLogMessageListenerMapping.INSTANCE.put("OtherListener", otherListener);
     }
 
     @AfterClass
@@ -284,7 +272,8 @@ public class IndexerTest {
 
         IndexUpdater indexUpdater = new IndexUpdater(indexer, indexUpdaterRepository, indexLocker,
                 new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisher(), "IndexUpdater_" + indexName);
-        repoSetup.startSepEventSlave("IndexUpdater_" + indexName, indexUpdater);
+        repoSetup.startSepEventSlave("IndexUpdater_" + indexName,
+                new CompositeEventListener(indexUpdater, messageVerifier, otherListener));
 
         waitForIndexesInfoUpdate(1);
     }
@@ -824,6 +813,7 @@ public class IndexerTest {
             expectEvent(UPDATE, record.getId(), nvfield1.getId());
             repository.update(record);
 
+            System.out.println("Updated " + record.getId());
             commitIndex();
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
@@ -2614,46 +2604,6 @@ public class IndexerTest {
     }
 
     /**
-     * Verifies that the re-index messages produced by IndexUpdater are only produced for the subscription
-     * to which this IndexUpdater is listening, thus are only sent to the relevant index.
-     */
-// TODO ROWLOG REFACTORING Possibly reinstate this, although the re-index logic currently
-//                         sends re-index events to all listeners
-//    @Test
-//    public void testReindexMessagesOnlyGoToOwnSubscription() throws Exception {
-//        changeIndexUpdater("indexerconf1.xml");
-//        messageVerifier.disable();
-//
-//        otherListener.reset();
-//
-//        // Create a record (record2) which links to another record (record1)
-//        Record record1 = repository.newRecord();
-//        record1.setRecordType(nvRecordType1.getName());
-//        record1.setField(nvfield1.getName(), "Manila");
-//        record1.setField(nvTag.getName(), 0L);
-//        record1 = repository.create(record1);
-//
-//        Record record2 = repository.newRecord();
-//        record2.setRecordType(nvRecordType1.getName());
-//        record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
-//        record2.setField(nvTag.getName(), 0L);
-//        expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvTag.getId());
-//        record2 = repository.create(record2);
-//
-//        commitIndex();
-//        assertEquals(2, otherListener.getMsgCount());
-//
-//        // Now update record2: this produces two events on the rowlog: one about the update, and one reindex message
-//        // produced by the IndexUpdater. The reindex message should however only go the subscription of the
-//        // IndexUpdater, not to any other listeners (indexers or otherwise).
-//        otherListener.reset();
-//        record1.setField(nvfield1.getName(), "Manama");
-//        record1 = repository.update(record1);
-//        commitIndex();
-//        assertEquals(1, otherListener.getMsgCount());
-//    }
-
-    /**
      * Tests the correct behavior when a record's state changes so that a different
      * record filter include rule is matched, with different vtags to index.
      */
@@ -2991,12 +2941,11 @@ public class IndexerTest {
         if (recordTypeChanged)
             event.setRecordTypeChanged(recordTypeChanged);
 
-        messageVerifier.setExpectedEvent(recordId, event);
+        messageVerifier.addExpectedEvent(recordId, event);
     }
 
     private static class MessageVerifier implements EventListener {
-        private RecordId expectedId;
-        private RecordEvent expectedEvent;
+        private List<Pair<RecordId, RecordEvent>> expectedEvents = Lists.newArrayList();
         private int failures = 0;
         private boolean enabled;
 
@@ -3006,8 +2955,7 @@ public class IndexerTest {
 
         public void init() {
             this.enabled = true;
-            this.expectedId = null;
-            this.expectedEvent = null;
+            this.expectedEvents.clear();
             this.failures = 0;
         }
 
@@ -3015,9 +2963,8 @@ public class IndexerTest {
             this.enabled = false;
         }
 
-        public void setExpectedEvent(RecordId recordId, RecordEvent recordEvent) {
-            this.expectedId = recordId;
-            this.expectedEvent = recordEvent;
+        public void addExpectedEvent(RecordId recordId, RecordEvent recordEvent) {
+            this.expectedEvents.add(Pair.create(recordId, recordEvent));
         }
 
         @Override
@@ -3027,10 +2974,27 @@ public class IndexerTest {
 
             // In case of failures we print out "load" messages, the main junit thread is expected to
             // test that the failures variable is 0.
-
+            
             RecordId recordId = repository.getIdGenerator().fromBytes(rowKey);
+            
             try {
                 RecordEvent event = new RecordEvent(payload, idGenerator);
+                
+                if (event.getType().equals(RecordEvent.Type.INDEX)) {
+                    log.debug("Ignoring incoming re-index event for message verification");
+                    return;
+                }
+                
+                if (expectedEvents.isEmpty()) {
+                    System.err.println("No events are expected, but we just got event " + event.toJson() + " on " + recordId);
+                    failures++;
+                    return;
+                }
+                
+                Pair<RecordId, RecordEvent> expectedPair = expectedEvents.remove(0);
+                RecordId expectedId = expectedPair.getV1();
+                RecordEvent expectedEvent = expectedPair.getV2();
+                
                 if (expectedEvent == null) {
                     failures++;
                     printSomethingLoad();
@@ -3056,9 +3020,6 @@ public class IndexerTest {
             } catch (IOException e) {
                 failures++;
                 e.printStackTrace();
-            } finally {
-                expectedId = null;
-                expectedEvent = null;
             }
         }
 
@@ -3087,6 +3048,23 @@ public class IndexerTest {
         public void reset() {
             msgCount = 0;
         }
+    }
+    
+    private static class CompositeEventListener implements EventListener {
+        private List<EventListener> eventListeners;
+        
+        public CompositeEventListener(EventListener...eventListeners) {
+            this.eventListeners = Lists.newArrayList(eventListeners);
+        }
+
+        @Override
+        public void processMessage(byte[] row, byte[] payload) {
+            for (EventListener eventListener : eventListeners) {
+                eventListener.processMessage(row, payload);
+            }
+        }
+        
+        
     }
 
     private static class TrackingRepository extends BaseRepositoryDecorator {

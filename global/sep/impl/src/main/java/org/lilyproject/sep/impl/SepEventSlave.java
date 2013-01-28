@@ -53,6 +53,7 @@ public class SepEventSlave extends BaseHRegionServer {
     /**
      * @param subscriptionTimestamp timestamp of when the index subscription became active (or more accurately, not inactive)
      * @param listener listeners that will process the events
+     * @param threadCnt number of worker threads that will handle incoming SEP events
      * @param hostName hostname to bind to
      */
     public SepEventSlave(String subscriptionId, long subscriptionTimestamp, EventListener listener, int threadCnt,

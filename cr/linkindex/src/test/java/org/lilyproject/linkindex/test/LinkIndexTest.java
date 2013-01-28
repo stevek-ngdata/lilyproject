@@ -49,7 +49,7 @@ public class LinkIndexTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        TestHelper.setupLogging("org.lilyproject.linkindex", "org.lilyproject.rowlog.impl.RowLogImpl");
+        TestHelper.setupLogging("org.lilyproject.linkindex");
 
         repoSetup.setupCore();
         repoSetup.setupRepository();
