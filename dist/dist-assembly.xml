@@ -267,31 +267,6 @@
       <fileMode>0755</fileMode>
     </file>
 
-
-    <!-- Obsolete CLI tools, provided for backwards compatibility -->
-    <file>
-      <source>${basedir}/src/main/resources/obsolete-cli-tools/lily-list-rowlogs</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <file>
-      <source>${basedir}/src/main/resources/obsolete-cli-tools/lily-rowlog-visualizer</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <file>
-      <source>${basedir}/src/main/resources/obsolete-cli-tools/lily-update-rowlog</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <file>
-      <source>${basedir}/src/main/resources/obsolete-cli-tools/lily-update-subscription</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-
-
-
     <!-- lily-mapreduce-classpath -->
     <file>
       <source>${basedir}/../cr/mapreduce/mapreduce/target/dist-scripts/lily-mapreduce-classpath</source>
