@@ -164,7 +164,13 @@ public class ZkUtil {
             public Boolean execute() throws KeeperException, InterruptedException {
                 Stat stat = zk.exists(path, false);
                 if (stat != null) {
-                    zk.delete(path, stat.getVersion());
+                    try {
+                        zk.delete(path, stat.getVersion());
+                    } catch (KeeperException.NoNodeException nne) {
+                        // This is ok, the node is already gone
+                    }
+                    // We don't catch BadVersion or NotEmpty as these are probably signs that there is something
+                    // unexpected going on with the node that is to be deleted
                 }
                 return true;
             }

@@ -14,6 +14,8 @@ import org.lilyproject.sep.SepModel;
 import java.io.IOException;
 import java.util.UUID;
 
+import org.apache.zookeeper.data.Stat;
+
 public class SepModelImpl implements SepModel {
     
     // Replace '-' with unicode "CANADIAN SYLLABICS HYPHEN" character in zookeeper to avoid issues
@@ -96,9 +98,12 @@ public class SepModelImpl implements SepModel {
             }
             String basePath = HBASE_ROOT + "/" + internalName;
             try {
-            ZkUtil.deleteNode(zk, basePath + "/hbaseid");
-            ZkUtil.deleteNode(zk, basePath + "/rs");
-            ZkUtil.deleteNode(zk, basePath);
+                ZkUtil.deleteNode(zk, basePath + "/hbaseid");
+                for (String child : zk.getChildren(basePath + "/rs", false)) {
+                    ZkUtil.deleteNode(zk, basePath + "/rs/" + child);
+                }
+                ZkUtil.deleteNode(zk, basePath + "/rs");
+                ZkUtil.deleteNode(zk, basePath);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException(ie);

@@ -108,6 +108,8 @@ public class SepEventSlave extends BaseHRegionServer {
             running = false;
             Closer.close(rpcServer);
             try {
+                // This ZK node will likely already be gone if the index has been removed
+                // from ZK, but we'll try to remove it here to be sure
                 zk.delete(zkNodePath, -1);
             } catch (Exception e) {
                 log.debug("Exception while removing zookeeper node", e);
