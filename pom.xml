@@ -115,8 +115,6 @@
     <module>tools/record-row-visualizer</module>
     <module>tools/print-host</module>
     <module>tools/archetype</module>
-    <module>tools/upgrade</module>
-
 
     <module>apps/import</module>
     <module>apps/tester</module>
@@ -409,11 +407,6 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-kauri-plugin</artifactId>
-        <version>1.4-SEP-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-upgrade</artifactId>
         <version>1.4-SEP-SNAPSHOT</version>
       </dependency>
       <dependency>
