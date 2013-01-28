@@ -254,8 +254,6 @@ public class IndexerMaster {
                     // due to concurrent operations (e.g. someone deleting this subscription right after we
                     // created it).
                     String subscriptionId = subscriptionId(index.getName());
-                    // FIXME ROWLOG REFACTORING take MQ subscription
-                    // rowLogConfMgr.addSubscription("mq", subscriptionId, RowLogSubscription.Type.Netty, 1);
                     sepModel.addSubscription(subscriptionId);
                     index.setQueueSubscriptionId(subscriptionId);
                     indexerModel.updateIndexInternal(index);
@@ -276,8 +274,6 @@ public class IndexerMaster {
                 // Read current situation of record and assure it is still actual
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 if (needsSubscriptionIdUnassigned(index)) {
-                    // FIXME ROWLOG REFACTORING remove MQ subscription
-                    // rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
                     sepModel.removeSubscription(index.getQueueSubscriptionId());
                     log.info("Deleted queue subscription for index " + indexName);
                     index.setQueueSubscriptionId(null);
@@ -376,8 +372,6 @@ public class IndexerMaster {
 
                 String queueSubscriptionId = index.getQueueSubscriptionId();
                 if (queueSubscriptionId != null) {
-                    // FIXME ROWLOG REFACTORING remove MQ subscription
-                    //rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
                     sepModel.removeSubscription(index.getQueueSubscriptionId());
                     // We leave the subscription ID in the index definition FYI
                 }
