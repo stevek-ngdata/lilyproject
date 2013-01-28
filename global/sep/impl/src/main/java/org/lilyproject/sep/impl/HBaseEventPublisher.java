@@ -40,7 +40,7 @@ public class HBaseEventPublisher implements EventPublisher {
     @Override
     public boolean publishMessage(byte[] row, byte[] payload) throws IOException {
         Put messagePut = new Put(row);
-        messagePut.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, payload);
+        messagePut.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, 1L, payload);
         return recordTable.checkAndPut(row, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, FALSE_BYTES,
                 messagePut);
     }

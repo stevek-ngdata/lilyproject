@@ -798,7 +798,7 @@ public class HBaseRepository extends BaseRepository {
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
 
-                put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
+                put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, 1L, recordEvent.toJsonBytes());
                 put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
                 boolean occSuccess = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
                         Bytes.toBytes(oldOcc), put);
