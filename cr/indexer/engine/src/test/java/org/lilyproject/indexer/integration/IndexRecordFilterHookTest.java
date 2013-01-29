@@ -17,21 +17,19 @@ package org.lilyproject.indexer.integration;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.lilyproject.repository.api.RepositoryException;
+import java.util.Map;
 
-import org.lilyproject.util.repo.RecordEvent.Type;
-
-import org.lilyproject.util.repo.RecordEvent;
+import org.apache.commons.collections.MapUtils;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
@@ -41,7 +39,10 @@ import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
+import org.lilyproject.util.repo.RecordEvent.Type;
 import org.mockito.Mockito;
 
 public class IndexRecordFilterHookTest {
@@ -82,7 +83,7 @@ public class IndexRecordFilterHookTest {
         assertTrue(idxFilterData.getNewRecordExists());
         verify(indexFilterHook).calculateIndexInclusion(oldRecord, newRecord, idxFilterData);
     }
-
+    
     @Test
     public void testBeforeCreate() throws RepositoryException, InterruptedException {
         IndexInfo inclusion = createMockIndexInfo("include", true);
@@ -168,9 +169,45 @@ public class IndexRecordFilterHookTest {
     }
 
     @Test
-    public void testCalculationInclusion_NoIndexSubscriptions() {
+    public void testCalculateIndexInclusion_NoIndexSubscriptions() {
         IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
         when(indexesInfo.getIndexInfos()).thenReturn(Lists.<IndexInfo>newArrayList());
+
+        indexFilterHook.calculateIndexInclusion(oldRecord, newRecord, indexFilterData);
+
+        verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
+    }
+    
+    @Test
+    public void testCalculateIndexInclusion_IndexingDisabledOnOldRecord() {
+        IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
+        IndexInfo inclusion = createMockIndexInfo("include", true);
+        when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusion));
+        
+        // Up until here, everything is set up so that this record will be indexed, but setting
+        // this flag to "false" should disable indexing
+        when(oldRecord.hasAttributes()).thenReturn(true);
+        Map<String,String> attributeMap = Maps.newHashMap();
+        attributeMap.put(IndexRecordFilterHook.NO_INDEX_FLAG, "false");
+        when(oldRecord.getAttributes()).thenReturn(attributeMap);
+
+        indexFilterHook.calculateIndexInclusion(oldRecord, newRecord, indexFilterData);
+
+        verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
+    }
+    
+    @Test
+    public void testCalculateIndexInclusion_IndexingDisabledOnNewRecord() {
+        IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
+        IndexInfo inclusion = createMockIndexInfo("include", true);
+        when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusion));
+        
+        // Up until here, everything is set up so that this record will be indexed, but setting
+        // this flag to "false" should disable indexing
+        when(newRecord.hasAttributes()).thenReturn(true);
+        Map<String,String> attributeMap = Maps.newHashMap();
+        attributeMap.put(IndexRecordFilterHook.NO_INDEX_FLAG, "false");
+        when(newRecord.getAttributes()).thenReturn(attributeMap);
 
         indexFilterHook.calculateIndexInclusion(oldRecord, newRecord, indexFilterData);
 

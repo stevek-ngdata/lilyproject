@@ -41,6 +41,13 @@ import java.util.Set;
  * needing to read the complete record.
  */
 public class IndexRecordFilterHook implements RecordUpdateHook {
+    
+    /**
+     * When attribute with this name is set to "false" on an incoming record,
+     * indexing will be disabled for that record.
+     */
+    public static final String NO_INDEX_FLAG = "lily.mq";
+    
     private PluginRegistry pluginRegistry;
     private final IndexesInfo indexesInfo;
 
@@ -197,6 +204,17 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
      * @param indexFilterData To be updated with index subscription inclusion/exclusion information
      */
     void calculateIndexInclusion(Record oldRecord, Record newRecord, IndexRecordFilterData indexFilterData) {
+        
+        if (oldRecord != null && oldRecord.hasAttributes() && "false".equals(oldRecord.getAttributes().get(NO_INDEX_FLAG))) {
+            indexFilterData.setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
+            return;
+        }
+        
+        if (newRecord != null && newRecord.hasAttributes() && "false".equals(newRecord.getAttributes().get(NO_INDEX_FLAG))) {
+            indexFilterData.setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
+            return;
+        }
+        
         Set<String> applicableIndexes = Sets.newHashSet();
         Set<String> nonApplicableIndexes = Sets.newHashSet();
         for (IndexInfo indexInfo : indexesInfo.getIndexInfos()) {

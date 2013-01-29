@@ -36,8 +36,6 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import org.lilyproject.util.Pair;
-
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -112,6 +110,7 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.sep.EventListener;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
@@ -783,6 +782,90 @@ public class IndexerTest {
         changeIndexUpdater("indexerconf1.xml");
         changeIndexUpdater("indexerconf1.xml");
     }
+    
+    // Test the behaviour of using the "lily.mq" attribute when indexing
+    @Test
+    public void testIndexer_AddAndUpdate_DisabledIndexing() throws Exception {
+       changeIndexUpdater("indexerconf1.xml");
+
+       // Create a record that should be indexed
+       Record recordToIndex = repository.newRecord();
+       recordToIndex.setRecordType(nvRecordType1.getName());
+       recordToIndex.setField(nvfield1.getName(), "mango");
+       recordToIndex.setField(nvTag.getName(), 0L);
+       recordToIndex = repository.create(recordToIndex);
+
+
+       // Create a record that shouldn't be indexed (due to the "lily.mq" attribute
+       Record recordToNotIndex = repository.newRecord();
+       recordToNotIndex.setRecordType(nvRecordType1.getName());
+       recordToNotIndex.setField(nvfield1.getName(), "mango");
+       recordToNotIndex.setField(nvTag.getName(), 0L);
+       
+       // Mark this record to not be indexed
+       recordToNotIndex.getAttributes().put("lily.mq", "false");
+       recordToNotIndex = repository.create(recordToNotIndex);
+
+       commitIndex();
+       verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 1);
+       verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 0);
+       verifyResultCount("nv_field1:mango", 1);
+       
+       // Now we'll update the recordToIndex, first without indexing, and then with it
+       
+       recordToIndex.setField(nvfield1.getName(), "orange");
+       recordToIndex.getAttributes().put("lily.mq", "false");
+       
+       recordToIndex = repository.update(recordToIndex);
+       commitIndex();
+       
+       verifyResultCount("nv_field1:orange", 0);
+       verifyResultCount("nv_field1:mango", 1);
+       
+
+    }
+    
+    // Test the behaviour of using the "lily.mq" attribute when indexing
+    @Test
+    public void testIndexer_Delete_DisabledIndexing() throws Exception {
+       changeIndexUpdater("indexerconf1.xml");
+
+       // Create a record that should be indexed
+       Record recordToIndex = repository.newRecord();
+       recordToIndex.setRecordType(nvRecordType1.getName());
+       recordToIndex.setField(nvfield1.getName(), "papaya");
+       recordToIndex.setField(nvTag.getName(), 0L);
+       recordToIndex = repository.create(recordToIndex);
+
+
+       // Create a record that shouldn't be indexed (due to the "lily.mq" attribute
+       Record recordToNotIndex = repository.newRecord();
+       recordToNotIndex.setRecordType(nvRecordType1.getName());
+       recordToNotIndex.setField(nvfield1.getName(), "papaya");
+       recordToNotIndex.setField(nvTag.getName(), 0L);
+       recordToNotIndex = repository.create(recordToNotIndex);
+
+       commitIndex();
+       
+       // Sanity check
+       verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 1);
+       verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 1);
+       verifyResultCount("nv_field1:papaya", 2);
+       
+       
+       // Now delete both records, but disable indexing on one of them
+       recordToNotIndex.getAttributes().put("lily.mq", "false");
+       
+       repository.delete(recordToIndex);
+       repository.delete(recordToNotIndex);
+       commitIndex();
+       
+       // And check that the index has only been updated for the record that should be indexed
+       verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 0);
+       verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 1);
+       verifyResultCount("nv_field1:papaya", 1);
+    }
+       
 
     @Test
     public void testIndexerNonVersioned() throws Exception {

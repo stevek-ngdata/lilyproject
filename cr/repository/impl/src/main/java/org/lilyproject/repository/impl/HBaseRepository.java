@@ -886,6 +886,7 @@ public class HBaseRepository extends BaseRepository {
             // Throw RecordNotFoundException if there is no record to be deleted
             FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
             Pair<Record, Long> recordAndOcc = readWithOcc(recordId, null, null, fieldTypes);
+            recordAndOcc.getV1().setAttributes(attributes);
             Record originalRecord = new UnmodifiableRecord(recordAndOcc.getV1());
 
             long oldOcc = recordAndOcc.getV2();
