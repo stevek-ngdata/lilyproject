@@ -41,6 +41,9 @@
     <module>rest-module</module>
     <module>webui-module</module>
     <module>indexer-integration-module</module>
+    <module>container-api</module>
+    <module>container-jetty</module>
+    <module>spring-mvc-hello</module>
   </modules>
 
   <build>

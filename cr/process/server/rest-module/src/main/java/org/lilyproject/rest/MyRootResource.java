@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Outerthought bvba
+ * Copyright 2010 Outerthought bvba
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-builder.router {
-    jaxRs(uri: "") {
-        jaxRsResource(scanPackages: ["org.lilyproject.rest.rowlog"])
-        jaxRsProvider(scanPackages: ["org.lilyproject.rest.providers"])
-        jaxRsProvider(scanPackages: ["org.lilyproject.rest.providers.json"])
+package org.lilyproject.rest;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
+
+import org.lilyproject.repository.api.Record;
+
+@Path("/")
+public class MyRootResource extends RepositoryEnabled {
+
+    @GET
+    @Produces("application/json")
+    public Entity<Record> get(@Context UriInfo uriInfo) {
+        return null;
     }
+
 }
