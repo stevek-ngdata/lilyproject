@@ -22,10 +22,11 @@ public class CustomJettyLauncher implements Container {
 
         server = new Server(8899);
 
-        context = new Context(server,"/",Context.SESSIONS);
+        context = new Context(server, "/", Context.SESSIONS);
         server.start();
 
     }
+
     @PostConstruct
     public Server getServerInstance() throws Exception {
         return server;

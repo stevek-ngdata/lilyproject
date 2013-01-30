@@ -30,29 +30,16 @@
   <context:annotation-config/>
   <kauri:module restletContext="restletContext" classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
 
-  <!-- for jax rs resources & providers
-  <context:component-scan base-package="org.lilyproject.hello.rest" />
-  <context:component-scan base-package="org.lilyproject.rest.providers" />
-  -->
-  <context:component-scan base-package="org.lilyproject.hello.webmvc" />
+  <!-- This is a kauri spring context because we want to be able to access backend services exported by other kauri
+  modules from inside the webmvc module -->
 
-  <!-- TODO: static resources + override mechanism -->
+  <kauri:import-service id="repository" service="org.lilyproject.repository.api.Repository"/>
 
-  <!-- TODO: FreemarkerTemplateView -->
+  <kauri:import-service id="container" service="org.lilyproject.container.api.Container"/>
 
-  <kauri:import-service id="controller" service="org.lilyproject.container.api.Container"/>
-
-  <!-- create the servlet -->
-  <bean id="dispatcherServletFactory"
-    class="org.lilyproject.container.util.DispatcherServletFactory"/>
-
-  <bean id="dispatcherServlet"
-      factory-bean="dispatcherServletFactory"
-      factory-method="createDispatcherServlet"/>
-
-  <!-- mount the dispatcher servlet -->
-  <bean class="org.lilyproject.container.api.ServletInstanceMapping">
-    <property name="urlPattern" value="/hello"/>
-    <property name="servlet" ref="dispatcherServlet"/>
+  <!-- This triggers the creation of a dispatcher servlet with correct spring app context setup-->
+  <bean id="dispatcherServletManager" class="org.lilyproject.hello.webmvc.DispatcherServletManager">
+    <constructor-arg value="classpath:/spring-mvc-context.xml"/>
   </bean>
+
 </beans>

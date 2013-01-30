@@ -36,9 +36,8 @@
     <constructor-arg ref="confRegistry"/>
   </bean>
 
-  <bean id="jettyLauncher" class="org.lilyproject.container.jetty.CustomJettyLauncher">
-  </bean>
+  <bean id="container" class="org.lilyproject.container.jetty.CustomJettyLauncher"/>
 
-  <kauri:export-service ref="jettyLauncher" service="org.lilyproject.container.api.Container"/>
+  <kauri:export-service ref="container" service="org.lilyproject.container.api.Container"/>
 
 </beans>
