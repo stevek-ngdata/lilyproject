@@ -45,6 +45,12 @@ import org.lilyproject.sep.WALEditFilter;
  * configured index subscription.
  */
 class IndexerEditFilter implements WALEditFilter {
+    
+    /**
+     * If this attribute value is set to "false" in the RecordEvent, the SEP event will not be passed
+     * through to the indexer.
+     */
+    public static final String NO_INDEX_FLAG = "lily.mq";
 
     private final IdGenerator idGenerator = new IdGeneratorImpl();
     private final Log log = LogFactory.getLog(getClass());
@@ -79,6 +85,9 @@ class IndexerEditFilter implements WALEditFilter {
                 recordEvent = new RecordEvent(keyValue.getValue(), idGenerator);
             } catch (IOException e) {
                 log.error("Error parsing RecordEvent", e);
+                return false;
+            }
+            if (recordEvent.hasAttributes() && "false".equals(recordEvent.getAttributes().get(NO_INDEX_FLAG))) {
                 return false;
             }
             IndexRecordFilterData indexRecordFilterData = recordEvent.getIndexRecordFilterData();

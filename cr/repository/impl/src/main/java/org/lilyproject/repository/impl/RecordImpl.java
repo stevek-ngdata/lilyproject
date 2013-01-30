@@ -205,10 +205,6 @@ public class RecordImpl implements Record, Cloneable {
             record.fieldsToDelete.addAll(fieldsToDelete);
         }
         
-        if (hasAttributes()) {
-            record.setAttributes(Maps.newHashMap(attributes));
-        }
-        
         // the ResponseStatus is not cloned, on purpose
         return record;
     }

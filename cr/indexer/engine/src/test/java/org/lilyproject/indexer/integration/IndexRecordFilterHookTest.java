@@ -23,13 +23,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Map;
-
-import org.apache.commons.collections.MapUtils;
-
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
@@ -178,42 +173,6 @@ public class IndexRecordFilterHookTest {
         verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
     }
     
-    @Test
-    public void testCalculateIndexInclusion_IndexingDisabledOnOldRecord() {
-        IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
-        IndexInfo inclusion = createMockIndexInfo("include", true);
-        when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusion));
-        
-        // Up until here, everything is set up so that this record will be indexed, but setting
-        // this flag to "false" should disable indexing
-        when(oldRecord.hasAttributes()).thenReturn(true);
-        Map<String,String> attributeMap = Maps.newHashMap();
-        attributeMap.put(IndexRecordFilterHook.NO_INDEX_FLAG, "false");
-        when(oldRecord.getAttributes()).thenReturn(attributeMap);
-
-        indexFilterHook.calculateIndexInclusion(oldRecord, newRecord, indexFilterData);
-
-        verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
-    }
-    
-    @Test
-    public void testCalculateIndexInclusion_IndexingDisabledOnNewRecord() {
-        IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
-        IndexInfo inclusion = createMockIndexInfo("include", true);
-        when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusion));
-        
-        // Up until here, everything is set up so that this record will be indexed, but setting
-        // this flag to "false" should disable indexing
-        when(newRecord.hasAttributes()).thenReturn(true);
-        Map<String,String> attributeMap = Maps.newHashMap();
-        attributeMap.put(IndexRecordFilterHook.NO_INDEX_FLAG, "false");
-        when(newRecord.getAttributes()).thenReturn(attributeMap);
-
-        indexFilterHook.calculateIndexInclusion(oldRecord, newRecord, indexFilterData);
-
-        verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
-    }
-
     private IndexInfo createMockIndexInfo(String queueSubscriptionId, boolean include) {
         IndexInfo indexInfo = mock(IndexInfo.class, Mockito.RETURNS_DEEP_STUBS);
         IndexRecordFilter indexRecordFilter = mock(IndexRecordFilter.class);

@@ -81,6 +81,23 @@ public class IndexerEditFilterTest {
 
         assertEquals(1, walEdit.size());
     }
+    
+    @Test
+    public void testApply_Payload_ApplicableIndexButNoIndexFlagIsSet() {
+        RecordEvent recordEvent = new RecordEvent();
+        IndexRecordFilterData filterData = new IndexRecordFilterData();
+        filterData.setSubscriptionInclusions(ImmutableSet.of(INDEX_NAME));
+        recordEvent.setIndexRecordFilterData(filterData);
+        recordEvent.getAttributes().put(IndexerEditFilter.NO_INDEX_FLAG, "false");
+
+        WALEdit walEdit = new WALEdit();
+        walEdit.add(new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes,
+                recordEvent.toJsonBytes()));
+
+        editFilter.apply(walEdit);
+
+        assertEquals(0, walEdit.size());
+    }
 
     @Test
     public void testApply_NonJsonPayload() {
