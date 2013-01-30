@@ -209,10 +209,10 @@ public class TableSplitTest {
                     count++;
                 }
 
-                assertTrue(String.format("Number of records in region '%s' is %d, expected between 80 and 120, " +
+                assertTrue(String.format("Number of records in region '%s' is %d, expected between 60 and 140, " +
                         "start key is '%s', end key is '%s'", regionInfo.getRegionNameAsString(), count,
                         Bytes.toStringBinary(regionInfo.getStartKey()), Bytes.toStringBinary(regionInfo.getEndKey())),
-                        count > 80 && count < 120);
+                        count >= 60 && count <= 140);
             }
         }
     }
