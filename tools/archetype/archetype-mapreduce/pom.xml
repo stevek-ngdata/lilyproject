@@ -22,11 +22,7 @@
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-archetype-mapreduce</artifactId>
   <packaging>jar</packaging>
-<<<<<<< HEAD
   <version>2.2-SNAPSHOT</version>
-=======
-  <version>1.4-SEP-SNAPSHOT</version>
->>>>>>> Change version to 1.4-SEP-SNAPSHOT to avoid confusion with master.
 
   <parent>
     <groupId>org.lilyproject</groupId>
