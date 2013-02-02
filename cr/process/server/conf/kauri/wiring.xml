@@ -41,7 +41,7 @@
     <artifact id="routing" groupId="org.kauriproject" artifactId="kauri-routing-impl">
     </artifact>
 
-    <artifact id="rest" groupId="org.lilyproject" artifactId="lily-rest-module" version="2.2-SNAPSHOT"/>
+    <artifact id="rest" groupId="org.lilyproject" artifactId="lily-rest-module" version="2.2-SNAPSHOT">
       <mount name="repository" path="/repository/" canonical="/repository/"/>
       <mount name="index" path="/index" canonical="/index"/>
     </artifact>
