@@ -757,7 +757,7 @@ public class RestTest {
 
         // Create a record with these blobs
         ObjectNode recordNode = JsonNodeFactory.instance.objectNode();
-        recordNode.put("type", "b$blobRT");
+        recordNode.put("type", "b$blobRT2");
         ObjectNode fieldsNode = recordNode.putObject("fields");
 
         ArrayNode blobNode = fieldsNode.putArray("b$blob2");
