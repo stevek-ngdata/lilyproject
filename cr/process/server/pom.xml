@@ -42,6 +42,8 @@
     <module>indexer-integration-module</module>
     <module>container-api</module>
     <module>container-jetty</module>
+    <module>servletregistry-api</module>
+    <module>servletregistry-module</module>
     <module>spring-mvc-hello</module>
   </modules>
 

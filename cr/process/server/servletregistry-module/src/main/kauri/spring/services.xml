@@ -36,10 +36,8 @@
     <constructor-arg ref="confRegistry"/>
   </bean>
 
-  <kauri:import-service id="servletRegistry" service="org.lilyproject.servletregistry.api.ServletRegistry"/>
+  <bean id="servletRegistry" class="org.lilyproject.servletregistry.impl.ServletRegistryImpl"/>
 
-  <bean id="container" class="org.lilyproject.container.jetty.CustomJettyLauncher"/>
-
-  <kauri:export-service ref="container" service="org.lilyproject.container.api.Container"/>
+  <kauri:export-service ref="servletRegistry" service="org.lilyproject.servletregistry.api.ServletRegistry"/>
 
 </beans>

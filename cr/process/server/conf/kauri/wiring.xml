@@ -4,7 +4,7 @@
               version="2.2-SNAPSHOT">
     </artifact>
 
-    <artifact id="lily-container-jetty" groupId="org.lilyproject" artifactId="lily-container-jetty"
+    <artifact id="lily-servletregistry-module" groupId="org.lilyproject" artifactId="lily-servletregistry-module"
               version="2.2-SNAPSHOT">
     </artifact>
 
@@ -53,7 +53,13 @@
 
     <directory id="plugin" basePath="${lily.plugin.dir}" path="load-at-end"/>
 
+<!--
     <artifact id="spring-mvc-hello" groupId="org.lilyproject" artifactId="spring-mvc-hello"
+              version="2.2-SNAPSHOT">
+    </artifact>
+-->
+
+    <artifact id="lily-container-jetty" groupId="org.lilyproject" artifactId="lily-container-jetty"
               version="2.2-SNAPSHOT">
     </artifact>
 
