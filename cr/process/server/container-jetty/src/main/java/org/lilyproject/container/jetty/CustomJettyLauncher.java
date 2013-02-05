@@ -36,7 +36,7 @@ public class CustomJettyLauncher implements Container {
     @PostConstruct
     public Server getServerInstance() throws Exception {
         for (ServletRegistryEntry entry: servletRegistry.getEntries()) {
-            context.addServlet(new ServletHolder(entry.getServletInstance()), entry.getUrlMapping());
+            context.addServlet(new ServletHolder(entry.getServletInstance(context.getServletContext())), entry.getUrlMapping());
         }
         return server;
     }
