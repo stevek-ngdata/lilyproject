@@ -43,6 +43,8 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.ngdata.sep.EventListener;
+import com.ngdata.sep.SepEvent;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -107,7 +109,6 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.sep.EventListener;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.Pair;
@@ -3051,25 +3052,25 @@ public class IndexerTest {
         }
 
         @Override
-        public void processMessage(byte[] rowKey, byte[] payload) {
+        public void processEvent(SepEvent event) {
             if (!enabled)
                 return;
 
             // In case of failures we print out "load" messages, the main junit thread is expected to
             // test that the failures variable is 0.
             
-            RecordId recordId = repository.getIdGenerator().fromBytes(rowKey);
+            RecordId recordId = repository.getIdGenerator().fromBytes(event.getRow());
             
             try {
-                RecordEvent event = new RecordEvent(payload, idGenerator);
+                RecordEvent recordEvent = new RecordEvent(event.getPayload(), idGenerator);
                 
-                if (event.getType().equals(RecordEvent.Type.INDEX)) {
+                if (recordEvent.getType().equals(RecordEvent.Type.INDEX)) {
                     log.debug("Ignoring incoming re-index event for message verification");
                     return;
                 }
                 
                 if (expectedEvents.isEmpty()) {
-                    System.err.println("No events are expected, but we just got event " + event.toJson() + " on " + recordId);
+                    System.err.println("No events are expected, but we just got event " + recordEvent.toJson() + " on " + recordId);
                     failures++;
                     return;
                 }
@@ -3083,9 +3084,9 @@ public class IndexerTest {
                     printSomethingLoad();
                     System.err.println("Did not expect a message, but got:");
                     System.err.println(recordId);
-                    System.err.println(event.toJson());
+                    System.err.println(recordEvent.toJson());
                 } else {
-                    if (!event.equals(expectedEvent) ||
+                    if (!recordEvent.equals(expectedEvent) ||
                             !(recordId.equals(expectedId) ||
                                     (expectedId == null && expectedEvent.getType() == CREATE))) {
                         failures++;
@@ -3095,7 +3096,7 @@ public class IndexerTest {
                         System.err.println(expectedEvent.toJson());
                         System.err.println("Received message:");
                         System.err.println(recordId);
-                        System.err.println(event.toJson());
+                        System.err.println(recordEvent.toJson());
                     } else {
                         log.debug("Received message ok.");
                     }
@@ -3120,7 +3121,7 @@ public class IndexerTest {
         private int msgCount;
 
         @Override
-        public void processMessage(byte[] row, byte[] payload)  {
+        public void processEvent(SepEvent event)  {
             msgCount++;
         }
 
@@ -3141,9 +3142,9 @@ public class IndexerTest {
         }
 
         @Override
-        public void processMessage(byte[] row, byte[] payload) {
+        public void processEvent(SepEvent event) {
             for (EventListener eventListener : eventListeners) {
-                eventListener.processMessage(row, payload);
+                eventListener.processEvent(event);
             }
         }
         

@@ -44,6 +44,8 @@
     <!-- Align jetty versions -->
     <version.jetty>6.1.26.cloudera.2</version.jetty>
 
+    <version.sep>1.0-SNAPSHOT</version.sep>
+
     <!-- Tells maven plugins what file encoding to use -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -90,6 +92,7 @@
     <module>cr/server-test-fw</module>
     <module>cr/standalone-launcher</module>
     <module>cr/mapreduce</module>
+    <module>cr/sep</module>
 
     <module>global/hbaseindex</module>
     <module>global/util</module>
@@ -105,7 +108,6 @@
     <module>global/clientmetrics</module>
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
-    <module>global/sep</module>
 
     <module>tools/lily-kauri-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
@@ -456,18 +458,47 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-sep-api</artifactId>
-        <version>2.2-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-sep-impl</artifactId>
-        <version>2.2-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-sep-filter</artifactId>
         <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-sep</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ngdata</groupId>
+        <artifactId>hbase-sep-api</artifactId>
+        <version>${version.sep}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>com.ngdata</groupId>
+        <artifactId>hbase-sep-impl</artifactId>
+        <version>${version.sep}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.zookeeper</groupId>
@@ -799,6 +830,12 @@
       <id>lilyproject</id>
       <name>Lily Maven repository</name>
       <url>http://lilyproject.org/maven/maven2/deploy/</url>
+    </repository>
+
+    <repository>
+      <id>lilyproject.snapshot</id>
+      <name>Lily Maven snapshot repository</name>
+      <url>http://lilyproject.org/maven/maven2/dev/</url>
     </repository>
 
     <repository>

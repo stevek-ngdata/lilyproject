@@ -79,7 +79,7 @@ public class HBaseTestingUtilityFactory {
         conf.set("hbase.replication", "true");
         conf.setFloat("replication.source.ratio", 1.0f);
         conf.set("replication.source.nb.capacity", "200");
-        conf.set("replication.replicationsource.implementation",  "org.lilyproject.sep.impl.SepReplicationSource");
+        conf.set("replication.replicationsource.implementation",  "com.ngdata.sep.impl.SepReplicationSource");
 
         // make replication react a little quicker
         conf.setLong("replication.source.sleepforretries", 200);

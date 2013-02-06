@@ -13,21 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.sep;
 
 /**
- * Provider of {@link WALEditFilter}s via the {@code ServiceLoader} system.
+ * Provides adapters and Lily-specific implementations for working with the HBase Side-Effect Processor (SEP).
  */
-public interface WALEditFilterProvider {
+package org.lilyproject.sep;
 
-    /**
-     * Get a {@code WALEditFilter} for the given SEP subscription id.
-     * <p>
-     * If no {@code WALEditFilter} is available for the given subscription id, null is returned.
-     *
-     * @param subscriptionId The id of the subscription for which the WALEditFilter is to be loaded
-     * @return The edit filter, or null if no applicable filter is available from this loader
-     */
-    WALEditFilter getWALEditFilter(String subscriptionId);
-
-}

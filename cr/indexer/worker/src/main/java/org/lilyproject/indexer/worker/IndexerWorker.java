@@ -32,12 +32,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.lilyproject.sep.impl.HBaseEventPublisher;
-
-import org.lilyproject.sep.EventPublisher;
-
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-
+import com.ngdata.sep.EventPublisher;
+import com.ngdata.sep.impl.SepConsumer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -69,10 +65,13 @@ import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.sep.impl.SepEventSlave;
+import org.lilyproject.sep.LilyHBaseEventPublisher;
+import org.lilyproject.sep.LilyPayloadExtractor;
+import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -206,13 +205,14 @@ public class IndexerWorker {
             indexerRegistry.register(indexer);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
-            EventPublisher hbaseEventPublisher = new HBaseEventPublisher(LilyHBaseSchema.getRecordTable(tableFactory));
+            EventPublisher hbaseEventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(tableFactory));
             IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, updaterMetrics, derefMap,
                     hbaseEventPublisher, index.getQueueSubscriptionId());
 
-            SepEventSlave sepEventSlave = new SepEventSlave(index.getQueueSubscriptionId(), index.getSubscriptionTimestamp(),
-                    indexUpdater, settings.getListenersPerIndex(), hostName, zk, hbaseConf);
-            handle = new IndexUpdaterHandle(index, sepEventSlave, solrShardMgr, indexerMetrics, updaterMetrics);
+            SepConsumer sepConsumer = new SepConsumer(index.getQueueSubscriptionId(),
+                    index.getSubscriptionTimestamp(), indexUpdater, settings.getListenersPerIndex(), hostName,
+                    new ZooKeeperItfAdapter(zk), hbaseConf, new LilyPayloadExtractor());
+            handle = new IndexUpdaterHandle(index, sepConsumer, solrShardMgr, indexerMetrics, updaterMetrics);
             handle.start();
 
             indexUpdaters.put(index.getName(), handle);
@@ -330,27 +330,27 @@ public class IndexerWorker {
 
     private class IndexUpdaterHandle {
         private final IndexDefinition indexDef;
-        private final SepEventSlave sepEventSlave;
+        private final SepConsumer sepConsumer;
         private final SolrShardManager solrShardMgr;
         private final IndexerMetrics indexerMetrics;
         private final IndexUpdaterMetrics updaterMetrics;
 
-        public IndexUpdaterHandle(IndexDefinition indexDef, SepEventSlave sepEventSlave,
+        public IndexUpdaterHandle(IndexDefinition indexDef, SepConsumer sepEventSlave,
                                   SolrShardManager solrShardMgr, IndexerMetrics indexerMetrics,
                                   IndexUpdaterMetrics updaterMetrics) {
             this.indexDef = indexDef;
-            this.sepEventSlave = sepEventSlave;
+            this.sepConsumer = sepEventSlave;
             this.solrShardMgr = solrShardMgr;
             this.indexerMetrics = indexerMetrics;
             this.updaterMetrics = updaterMetrics;
         }
 
         public void start() throws InterruptedException, KeeperException, IOException {
-            sepEventSlave.start();
+            sepConsumer.start();
         }
 
         public void stop() throws InterruptedException {
-            Closer.close(sepEventSlave);
+            Closer.close(sepConsumer);
             Closer.close(solrShardMgr);
             Closer.close(indexerMetrics);
             Closer.close(updaterMetrics);

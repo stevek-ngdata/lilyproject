@@ -40,8 +40,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-sep-api</artifactId>
+      <groupId>com.ngdata</groupId>
+      <artifactId>hbase-sep-api</artifactId>
     </dependency>
 
     <dependency>

@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.sep.impl;
+package org.lilyproject.sep;
 
-import static org.junit.Assert.assertTrue;
+
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 
+import com.ngdata.sep.impl.HBaseEventPublisher;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -31,7 +32,10 @@ import org.junit.Test;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
-public class HBaseEventPublisherTest {
+/**
+ * Adapter from the Lily ZooKeeperItf interface and the HBase SEP ZooKeepterItf interface.
+ */
+public class LilyHBaseEventPublisherTest {
 
     private HTableInterface recordTable;
     private HBaseEventPublisher eventPublisher;
@@ -39,7 +43,7 @@ public class HBaseEventPublisherTest {
     @Before
     public void setUp() {
         recordTable = mock(HTableInterface.class);
-        eventPublisher = new HBaseEventPublisher(recordTable);
+        eventPublisher = new LilyHBaseEventPublisher(recordTable);
     }
 
     @Test
@@ -50,27 +54,11 @@ public class HBaseEventPublisherTest {
         Put expectedPut = new Put(messageRow);
         expectedPut.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, messagePayload);
         
-        when(recordTable.checkAndPut(aryEq(messageRow), aryEq(RecordCf.DATA.bytes), aryEq(RecordColumn.DELETED.bytes), 
-                aryEq(Bytes.toBytes(false)), any(Put.class))).thenReturn(true);
+ 
+        eventPublisher.publishEvent(messageRow, messagePayload);
         
-        boolean publishResult = eventPublisher.publishMessage(messageRow, messagePayload);
-        assertTrue(publishResult);
-    }
-    
-    
-    @Test
-    public void testProcessMessage_RowNotInRepository() throws IOException {
-        byte[] messageRow = Bytes.toBytes("row-id");
-        byte[] messagePayload = Bytes.toBytes("payload");
-        
-        Put expectedPut = new Put(messageRow);
-        expectedPut.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, messagePayload);
-        
-        when(recordTable.checkAndPut(aryEq(messageRow), aryEq(RecordCf.DATA.bytes), aryEq(RecordColumn.DELETED.bytes), 
-                aryEq(Bytes.toBytes(false)), any(Put.class))).thenReturn(false);
-        
-        boolean publishResult = eventPublisher.publishMessage(messageRow, messagePayload);
-        assertTrue(!publishResult);
+        verify(recordTable).checkAndPut(aryEq(messageRow), aryEq(RecordCf.DATA.bytes), aryEq(RecordColumn.DELETED.bytes),
+                aryEq(Bytes.toBytes(false)), any(Put.class));
     }
 
 }

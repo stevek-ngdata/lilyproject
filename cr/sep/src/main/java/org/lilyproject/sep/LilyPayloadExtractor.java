@@ -15,21 +15,15 @@
  */
 package org.lilyproject.sep;
 
-import org.lilyproject.sep.EventListener;
+import com.ngdata.sep.impl.PayloadExtractor;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
-import java.io.IOException;
+public class LilyPayloadExtractor extends PayloadExtractor {
 
-/**
- * Publisher of side-effect events which are distributed to and handled by {@link EventListener}s.
- */
-public interface EventPublisher {
+    public LilyPayloadExtractor() {
+        super(Table.RECORD.bytes, RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes);
+    }
 
-    /**
-     * Publish a message to be processed by the side-effect processor (SEP) system.
-     * 
-     * @param row The row key for the record to which the message is related
-     * @param payload The content of the event message
-     * @return true if the message was successfully published, false otherwise
-     */
-    boolean publishMessage(byte[] row, byte[] payload) throws IOException;
 }

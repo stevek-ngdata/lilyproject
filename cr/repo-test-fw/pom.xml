@@ -43,13 +43,18 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-sep-impl</artifactId>
+      <artifactId>lily-sep</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-hadoop-test-fw</artifactId>
       <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.ngdata</groupId>
+      <artifactId>hbase-sep-impl</artifactId>
     </dependency>
 
     <dependency>

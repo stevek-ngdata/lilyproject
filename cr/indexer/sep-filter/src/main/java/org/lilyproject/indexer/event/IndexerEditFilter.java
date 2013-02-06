@@ -19,26 +19,17 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
-
-import org.lilyproject.util.repo.RecordEvent;
-
+import com.ngdata.sep.WALEditFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-
-import org.lilyproject.repository.api.IdGenerator;
-
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
-
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-
 import org.apache.hadoop.hbase.KeyValue;
-
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
-
-import org.lilyproject.sep.WALEditFilter;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+import org.lilyproject.util.repo.RecordEvent;
+import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
 
 /**
  * Filter for SEP events that removes all KeyValues from WALEdits that are not applicable to the

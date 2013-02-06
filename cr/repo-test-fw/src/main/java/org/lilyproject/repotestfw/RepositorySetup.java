@@ -21,6 +21,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.ngdata.sep.EventListener;
+import com.ngdata.sep.EventPublisher;
+import com.ngdata.sep.SepModel;
+import com.ngdata.sep.impl.SepConsumer;
+import com.ngdata.sep.impl.SepModelImpl;
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.hadoop.conf.Configuration;
@@ -52,12 +57,9 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.RemoteRepository;
 import org.lilyproject.repository.remote.RemoteTypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
-import org.lilyproject.sep.SepModel;
-import org.lilyproject.sep.EventListener;
-import org.lilyproject.sep.EventPublisher;
-import org.lilyproject.sep.impl.HBaseEventPublisher;
-import org.lilyproject.sep.impl.SepEventSlave;
-import org.lilyproject.sep.impl.SepModelImpl;
+import org.lilyproject.sep.LilyHBaseEventPublisher;
+import org.lilyproject.sep.LilyPayloadExtractor;
+import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -91,7 +93,7 @@ public class RepositorySetup {
     private BlobManager remoteBlobManager;
     
     private SepModel sepModel;
-    private SepEventSlave sepEventSlave;
+    private SepConsumer sepConsumer;
     private EventPublisher eventPublisher;
 
     private boolean coreSetup;
@@ -144,8 +146,8 @@ public class RepositorySetup {
         repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager);
         repository.setRecordUpdateHooks(recordUpdateHooks);
         
-        sepModel = new SepModelImpl(zk, hadoopConf);
-        eventPublisher = new HBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory));
+        sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
+        eventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory));
 
         repositorySetup = true;
     }
@@ -223,7 +225,7 @@ public class RepositorySetup {
 
     public void stop() throws InterruptedException {
 
-        Closer.close(sepEventSlave);
+        Closer.close(sepConsumer);
         Closer.close(remoteSchemaCache);
         Closer.close(remoteTypeManager);
         Closer.close(remoteRepository);
@@ -269,11 +271,11 @@ public class RepositorySetup {
     }
     
     public void stopSepEventSlave() {
-        if (sepEventSlave == null || !sepEventSlave.isRunning()) {
+        if (sepConsumer == null || !sepConsumer.isRunning()) {
             throw new IllegalStateException("No SepEventSlave to stop");
         }
-        sepEventSlave.stop();
-        sepEventSlave = null;
+        sepConsumer.stop();
+        sepConsumer = null;
     }
     
     /**
@@ -284,12 +286,12 @@ public class RepositorySetup {
      * @param eventListener The listener to handle incoming events
      */
     public void startSepEventSlave(String subscriptionId, EventListener eventListener) throws Exception {
-        if (sepEventSlave != null) {
+        if (sepConsumer != null) {
             throw new IllegalStateException("There is already a SepEventSlave running, stop it first");
         }
-        sepEventSlave = new SepEventSlave(subscriptionId, System.currentTimeMillis(), eventListener, 1, "localhost",
-                zk, hadoopConf);
-        sepEventSlave.start();
+        sepConsumer = new SepConsumer(subscriptionId, System.currentTimeMillis(), eventListener, 1, "localhost",
+                new ZooKeeperItfAdapter(zk), hadoopConf, new LilyPayloadExtractor());
+        sepConsumer.start();
     }
 
     /**

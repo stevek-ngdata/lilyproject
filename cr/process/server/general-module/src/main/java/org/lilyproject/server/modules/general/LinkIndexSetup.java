@@ -1,5 +1,12 @@
 package org.lilyproject.server.modules.general;
 
+import java.io.IOException;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import com.ngdata.sep.SepModel;
+import com.ngdata.sep.impl.SepConsumer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.hbaseindex.IndexManager;
@@ -8,15 +15,11 @@ import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.sep.SepModel;
-import org.lilyproject.sep.impl.SepEventSlave;
+import org.lilyproject.sep.LilyPayloadExtractor;
+import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.io.IOException;
 
 public class LinkIndexSetup {
     private final SepModel sepModel;
@@ -27,7 +30,7 @@ public class LinkIndexSetup {
     private final HBaseTableFactory tableFactory;
     private final ZooKeeperItf zk;
     private final String hostName;
-    private SepEventSlave sepEventSlave;
+    private SepConsumer sepConsumer;
 
     public LinkIndexSetup(SepModel sepModel, boolean linkIndexEnabled, int threads, Repository repository,
             Configuration hbaseConf, HBaseTableFactory tableFactory, ZooKeeperItf zk, String hostName) {
@@ -60,13 +63,14 @@ public class LinkIndexSetup {
 
             LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repository, linkIndex);
 
-            sepEventSlave = new SepEventSlave("LinkIndexUpdater", 0L, linkIndexUpdater, threads, hostName, zk, hbaseConf);
-            sepEventSlave.start();
+            sepConsumer = new SepConsumer("LinkIndexUpdater", 0L, linkIndexUpdater, threads, hostName,
+                    new ZooKeeperItfAdapter(zk), hbaseConf, new LilyPayloadExtractor());
+            sepConsumer.start();
         }
     }
 
     @PreDestroy
     public void stop() {
-        Closer.close(sepEventSlave);
+        Closer.close(sepConsumer);
     }
 }

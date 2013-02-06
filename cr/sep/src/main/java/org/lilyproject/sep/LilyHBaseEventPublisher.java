@@ -13,36 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.sep.impl;
+package org.lilyproject.sep;
 
 import java.io.IOException;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema;
+
+import com.ngdata.sep.impl.HBaseEventPublisher;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.sep.EventPublisher;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 /**
- * Publishes side-effect events directly to the HBase record table.
+ * Ensures that events are only published to the record table if the record for which the event is to be published exists
+ * and is not deleted.
  */
-public class HBaseEventPublisher implements EventPublisher {
+public class LilyHBaseEventPublisher extends HBaseEventPublisher {
 
     private static final byte[] FALSE_BYTES = Bytes.toBytes(false);
 
-    private HTableInterface recordTable;
-
-    public HBaseEventPublisher(HTableInterface recordTable) {
-        this.recordTable = recordTable;
+    public LilyHBaseEventPublisher(HTableInterface recordTable) {
+        super(recordTable, LilyHBaseSchema.RecordCf.DATA.bytes, LilyHBaseSchema.RecordColumn.PAYLOAD.bytes);
     }
 
     @Override
-    public boolean publishMessage(byte[] row, byte[] payload) throws IOException {
+    public void publishEvent(byte[] row, byte[] payload) throws IOException {
         Put messagePut = new Put(row);
         messagePut.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, 1L, payload);
-        return recordTable.checkAndPut(row, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, FALSE_BYTES,
-                messagePut);
+        getPayloadTable().checkAndPut(row, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, FALSE_BYTES, messagePut);
     }
 
 }

@@ -15,6 +15,19 @@
  */
 package org.lilyproject.linkindex;
 
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import com.ngdata.sep.EventListener;
+import com.ngdata.sep.SepEvent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.linkindex.LinkIndexUpdaterMetrics.Action;
@@ -26,22 +39,11 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.VersionNotFoundException;
-import org.lilyproject.sep.EventListener;
+import org.lilyproject.util.exception.ExceptionUtil;
 import org.lilyproject.util.repo.FieldFilter;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.lilyproject.util.exception.ExceptionUtil;
-
-import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 // TODO think more about error processing:
 //      Some kinds of errors might be temporary in nature and be solved by retrying after some time.
@@ -66,11 +68,11 @@ public class LinkIndexUpdater implements EventListener {
     }
 
     @Override
-    public void processMessage(byte[] row, byte[] payload) {
-        RecordId recordId = repository.getIdGenerator().fromBytes(row);
+    public void processEvent(SepEvent event) {
+        RecordId recordId = repository.getIdGenerator().fromBytes(event.getRow());
         RecordEvent recordEvent;
         try {
-            recordEvent = new RecordEvent(payload, repository.getIdGenerator());
+            recordEvent = new RecordEvent(event.getPayload(), repository.getIdGenerator());
         } catch (IOException e) {
             log.error("Error reading record event, processing of message cancelled", e);
             return;

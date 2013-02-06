@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.ngdata.sep.EventListener;
+import com.ngdata.sep.SepEvent;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,7 +20,6 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.sep.EventListener;
 import org.lilyproject.util.repo.RecordEvent;
 
 public class RecordEventTest {
@@ -119,9 +120,9 @@ public class RecordEventTest {
         private int messageCounter = 0;
         private Map<String,String> attr;
         @Override
-        public void processMessage(byte[] row, byte[] payload)  {
+        public void processEvent(SepEvent event)  {
             try {
-                RecordEvent recordEvent = new RecordEvent(payload, idGenerator);
+                RecordEvent recordEvent = new RecordEvent(event.getPayload(), idGenerator);
                 Assert.assertEquals(attr, recordEvent.getAttributes());
                 messageCounter++;
             } catch (IOException e) {

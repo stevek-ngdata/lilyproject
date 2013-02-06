@@ -16,9 +16,8 @@
 
 package org.lilyproject.indexer.event;
 
-import org.lilyproject.sep.WALEditFilter;
-
-import org.lilyproject.sep.WALEditFilterProvider;
+import com.ngdata.sep.WALEditFilter;
+import com.ngdata.sep.WALEditFilterProvider;
 
 /**
  * Provides configured instances of {@link IndexerEditFilter} for SEP subscriptions that are related

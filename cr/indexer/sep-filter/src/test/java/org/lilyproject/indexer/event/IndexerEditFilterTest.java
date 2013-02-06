@@ -65,7 +65,7 @@ public class IndexerEditFilterTest {
 
         assertEquals(0, walEdit.size());
     }
-
+    
     @Test
     public void testApply_Payload_ApplicableIndex() {
         RecordEvent recordEvent = new RecordEvent();
