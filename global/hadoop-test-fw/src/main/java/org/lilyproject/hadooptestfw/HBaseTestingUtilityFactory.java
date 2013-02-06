@@ -77,6 +77,7 @@ public class HBaseTestingUtilityFactory {
 
         // Replication parameters needed for the SEP
         conf.set("hbase.replication", "true");
+        conf.setFloat("replication.source.ratio", 1.0f);
         conf.set("replication.source.nb.capacity", "200");
         conf.set("replication.replicationsource.implementation",  "org.lilyproject.sep.impl.SepReplicationSource");
 
