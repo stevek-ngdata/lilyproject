@@ -13,26 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.lilyproject.indexer.event;
 
+import java.util.List;
+
 import com.ngdata.sep.WALEditFilter;
-import com.ngdata.sep.WALEditFilterProvider;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 /**
- * Provides configured instances of {@link IndexerEditFilter} for SEP subscriptions that are related
- * to an {@code IndexUpdater}.
+ * Edit filter for the {@code LinkIndexUpdater}.
  */
-public class IndexerEditFilterProvider implements WALEditFilterProvider {
+public class LinkIndexUpdaterEditFilter implements WALEditFilter {
 
     @Override
-    public WALEditFilter getWALEditFilter(String subscriptionId) {
-        if (subscriptionId.startsWith("IndexUpdater_")) {
-            return new IndexerEditFilter(subscriptionId);
-        } else if ("LinkIndexUpdater".equals(subscriptionId)) {
-            return new LinkIndexUpdaterEditFilter();
-        } else {
-            return null;
+    public void apply(WALEdit walEdit) {
+        List<KeyValue> keyValues = walEdit.getKeyValues();
+        for (int i = keyValues.size() - 1; i >= 0; i--) {
+            KeyValue kv = keyValues.get(i);
+            if (!(kv.matchingColumn(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes))) {
+                keyValues.remove(i);
+            }
         }
     }
 

@@ -17,7 +17,9 @@ package org.lilyproject.indexer.event;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+import com.ngdata.sep.WALEditFilter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,6 +37,13 @@ public class IndexerEditFilterProviderTest {
         String subscriptionName = "IndexUpdater_IndexName";
         IndexerEditFilter editFilter = (IndexerEditFilter)filterProvider.getWALEditFilter(subscriptionName);
         assertEquals(subscriptionName, editFilter.getSubscriptionName());
+    }
+    
+    @Test
+    public void testGetWALEditFilter_LinkIndexUpdater() {
+        String subscriptionName = "LinkIndexUpdater";
+        WALEditFilter editFilter = filterProvider.getWALEditFilter(subscriptionName);
+        assertTrue(editFilter instanceof LinkIndexUpdaterEditFilter);
     }
 
     @Test

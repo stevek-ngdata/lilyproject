@@ -118,9 +118,13 @@ public class RecordEventTest {
 
     private class CountingMessageVerifier implements EventListener {
         private int messageCounter = 0;
-        private Map<String,String> attr;
+        private Map<String, String> attr;
+
         @Override
-        public void processEvent(SepEvent event)  {
+        public void processEvent(SepEvent event) {
+            if (event.getPayload() == null) {
+                return;
+            }
             try {
                 RecordEvent recordEvent = new RecordEvent(event.getPayload(), idGenerator);
                 Assert.assertEquals(attr, recordEvent.getAttributes());
@@ -130,7 +134,7 @@ public class RecordEventTest {
             }
         }
 
-        public void setExpectedAttributes(Map<String,String> attr) {
+        public void setExpectedAttributes(Map<String, String> attr) {
             this.attr = attr;
         }
 

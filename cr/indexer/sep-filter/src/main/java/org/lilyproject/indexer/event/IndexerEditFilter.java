@@ -16,7 +16,6 @@
 package org.lilyproject.indexer.event;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import com.ngdata.sep.WALEditFilter;
@@ -32,14 +31,14 @@ import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
 
 /**
- * Filter for SEP events that removes all KeyValues from WALEdits that are not applicable to the
- * configured index subscription.
+ * Filter for SEP events that removes all KeyValues from WALEdits that are not applicable to the configured index
+ * subscription.
  */
 class IndexerEditFilter implements WALEditFilter {
-    
+
     /**
-     * If this attribute value is set to "false" in the RecordEvent, the SEP event will not be passed
-     * through to the indexer.
+     * If this attribute value is set to "false" in the RecordEvent, the SEP event will not be passed through to the
+     * indexer.
      */
     public static final String NO_INDEX_FLAG = "lily.mq";
 
@@ -48,10 +47,9 @@ class IndexerEditFilter implements WALEditFilter {
     private final String subscriptionName;
 
     /**
-     * Instantiate with the name of the IndexUpdater SEP subscription for which KeyValues are to be
-     * allowed. All {@code KeyValue}s in incoming {@code WALEdit}s that are not for the given index
-     * will be removed.
-     *
+     * Instantiate with the name of the IndexUpdater SEP subscription for which KeyValues are to be allowed. All
+     * {@code KeyValue}s in incoming {@code WALEdit}s that are not for the given index will be removed.
+     * 
      * @param subscriptionName Name of the SEP subscription for which {@code KeyValue}s are not to be removed
      */
     public IndexerEditFilter(String subscriptionName) {
@@ -68,12 +66,11 @@ class IndexerEditFilter implements WALEditFilter {
         }
     }
 
-    private boolean isValidKeyValue(KeyValue keyValue) {
-        if (Arrays.equals(RecordCf.DATA.bytes, keyValue.getFamily())
-                && Arrays.equals(RecordColumn.PAYLOAD.bytes, keyValue.getQualifier())) {
+    private boolean isValidKeyValue(KeyValue kv) {
+        if (kv.matchingColumn(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes)) {
             RecordEvent recordEvent = null;
             try {
-                recordEvent = new RecordEvent(keyValue.getValue(), idGenerator);
+                recordEvent = new RecordEvent(kv.getValue(), idGenerator);
             } catch (IOException e) {
                 log.error("Error parsing RecordEvent", e);
                 return false;
