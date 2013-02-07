@@ -61,7 +61,7 @@
 
   <kauri:export-service
       ref="sepModel"
-      service="org.lilyproject.sep.SepModel"/>
+      service="com.ngdata.sep.SepModel"/>
 
   <kauri:export-service
       ref="prematureRepository"
@@ -146,7 +146,7 @@
     <constructor-arg ref="zooKeeper"/>
   </bean>
 
-  <bean id="sepModel" class="org.lilyproject.sep.impl.SepModelImpl">
+  <bean id="sepModel" class="com.ngdata.sep.impl.SepModelImpl">
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="hbaseConf"/>
   </bean>

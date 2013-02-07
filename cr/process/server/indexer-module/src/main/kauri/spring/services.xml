@@ -61,7 +61,7 @@
 
   <kauri:import-service
       id="sepModel"
-      service="org.lilyproject.sep.SepModel"/>
+      service="com.ngdata.sep.SepModel"/>
 
   <kauri:import-service
       id="hbaseTableFactory"
