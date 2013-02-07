@@ -96,6 +96,11 @@
     <constructor-arg value="${zookeeper:startupTimeout}"/>
   </bean>
 
+  <bean id="zooKeeperAdapter"
+        class="org.lilyproject.sep.ZooKeeperItfAdapter">
+    <constructor-arg ref="zooKeeper"/>
+  </bean>
+
   <bean id="hbaseConf"
       factory-bean="hbaseConfiguration"
       factory-method="getHBaseConf"/>
@@ -147,7 +152,7 @@
   </bean>
 
   <bean id="sepModel" class="com.ngdata.sep.impl.SepModelImpl">
-    <constructor-arg ref="zooKeeper"/>
+    <constructor-arg ref="zooKeeperAdapter"/>
     <constructor-arg ref="hbaseConf"/>
   </bean>
 
