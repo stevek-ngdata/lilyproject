@@ -24,14 +24,11 @@ import java.net.UnknownHostException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.apache.solr.common.util.NamedList;
-
-import org.apache.solr.client.solrj.response.UpdateResponse;
-
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrException.ErrorCode;
+import org.apache.solr.common.util.NamedList;
 
 /**
  * A wrapper around a SolrClient that swallows certain kinds of errors that occur while indexing via a
@@ -41,7 +38,8 @@ import org.apache.solr.common.SolrException.ErrorCode;
  * Solr is thrown through, with the rationale being that these kinds of errors can be corrected by a human operator,
  * after which the indexing operations should still be executed.
  * <p>
- * Any kind of exception that is due to some kind of document issue (meaning that it's not a temporary issue that can be
+ * Any kind of exception that is due to some kind of document issue (meaning that it's not a temporary issue that can
+ * be
  * resolved by a human operator) is swallowed and recorded in a metric.
  * <p>
  * The rationale behind this class is the fact that indexing is run within the SEP (Side-Effect Processor), which has
@@ -51,9 +49,12 @@ import org.apache.solr.common.SolrException.ErrorCode;
  * This class is intended to do the inverse of the previous RetryingSolrClient.
  */
 public class ErrorSwallowingSolrClient {
-    
-    /** Dummy UpdateResponse that is returned in case of a swallowed exception. */
+
+    /**
+     * Dummy UpdateResponse that is returned in case of a swallowed exception.
+     */
     static final UpdateResponse ERROR_UPDATE_RESPONSE = new UpdateResponse();
+
     static {
         // Ensure we won't get NullPointerExceptions on the toString of ERROR_UPDATE_RESPONSE
         ERROR_UPDATE_RESPONSE.setResponse(new NamedList<Object>());
@@ -62,7 +63,7 @@ public class ErrorSwallowingSolrClient {
     public static SolrClient wrap(SolrClient solrClient, SolrClientMetrics solrClientMetrics) {
         ErrorSwallowingSolrClientInvocationHandler handler = new ErrorSwallowingSolrClientInvocationHandler(solrClient,
                 solrClientMetrics);
-        return (SolrClient)Proxy.newProxyInstance(SolrClient.class.getClassLoader(), new Class[] { SolrClient.class },
+        return (SolrClient) Proxy.newProxyInstance(SolrClient.class.getClassLoader(), new Class[]{SolrClient.class},
                 handler);
     }
 
@@ -84,7 +85,7 @@ public class ErrorSwallowingSolrClient {
             } catch (InvocationTargetException ite) {
                 Throwable throwable = ite.getTargetException();
                 final Throwable originalThrowable = throwable;
-                
+
                 if (!method.getReturnType().equals(UpdateResponse.class)) {
                     throw originalThrowable;
                 }
@@ -94,8 +95,9 @@ public class ErrorSwallowingSolrClient {
                 }
 
                 Throwable cause = throwable.getCause();
-                
-                if (throwable instanceof SolrException && ((SolrException)throwable).code() == ErrorCode.NOT_FOUND.code) {
+
+                if (throwable instanceof SolrException &&
+                        ((SolrException) throwable).code() == ErrorCode.NOT_FOUND.code) {
                     throw originalThrowable;
                 } else if (cause != null && cause instanceof UnknownHostException) {
                     throw originalThrowable;
@@ -105,7 +107,7 @@ public class ErrorSwallowingSolrClient {
                         && throwable.getMessage().equals("No live SolrServers available to handle this request")) {
                     throw originalThrowable;
                 }
-                log.warn("Swallowing Solr exception: " + originalThrowable);
+                log.warn("Swallowing Solr exception", originalThrowable);
                 clientMetrics.swallowedExceptions.inc();
                 return ERROR_UPDATE_RESPONSE;
             }
