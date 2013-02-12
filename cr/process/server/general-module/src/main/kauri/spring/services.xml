@@ -18,52 +18,52 @@
 -->
 <beans              xmlns = "http://www.springframework.org/schema/beans"
                 xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
-              xmlns:kauri = "http://kauriproject.org/runtime/1.0#springext"
+              xmlns:lily = "http://lilyproject.org/runtime/1.0#springext"
             xmlns:context = "http://www.springframework.org/schema/context"
        xsi:schemaLocation = "http://www.springframework.org/schema/beans
                              http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
                              http://www.springframework.org/schema/context
                              http://www.springframework.org/schema/context/spring-context-2.5.xsd
-                             http://kauriproject.org/runtime/1.0#springext
-                             http://www.kauriproject.org/schemas/runtime/springext.xsd">
+                             http://lilyproject.org/runtime/1.0#springext
+                             http://www.lilyproject.org/schemas/runtime/springext.xsd">
 
   <context:annotation-config/>
 
-  <kauri:module classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
+  <lily:module classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
 
-  <bean class="org.kauriproject.runtime.rapi.ConfPlaceholderConfigurer">
+  <bean class="org.lilyproject.runtime.rapi.ConfPlaceholderConfigurer">
     <constructor-arg ref="confRegistry"/>
   </bean>
 
-  <kauri:export-service
+  <lily:export-service
       ref="hbaseConfiguration"
       service="org.lilyproject.server.modules.general.HadoopConfigurationFactory"/>
 
-  <kauri:export-service
+  <lily:export-service
       ref="zooKeeper"
       service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
 
-  <kauri:export-service
+  <lily:export-service
       ref="hbaseTableFactory"
       service="org.lilyproject.util.hbase.HBaseTableFactory"/>
   
-  <kauri:export-service
+  <lily:export-service
       ref="lilyInfo"
       service="org.lilyproject.util.LilyInfo"/>
 
-  <kauri:export-service
+  <lily:export-service
       ref="networkItfInfo"
       service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
-  <kauri:export-service
+  <lily:export-service
       ref="indexerModel"
       service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
-  <kauri:export-service
+  <lily:export-service
       ref="sepModel"
       service="com.ngdata.sep.SepModel"/>
 
-  <kauri:export-service
+  <lily:export-service
       ref="prematureRepository"
       service="org.lilyproject.util.repo.PrematureRepository"/>
 
@@ -72,16 +72,16 @@
   <bean id="hbaseConfiguration"
       class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl"
       depends-on="zooKeeper">
-    <constructor-arg><kauri:conf path="hadoop"/></constructor-arg>
-    <constructor-arg><kauri:conf path="hbase"/></constructor-arg>
-    <constructor-arg><kauri:conf path="mapreduce"/></constructor-arg>
+    <constructor-arg><lily:conf path="hadoop"/></constructor-arg>
+    <constructor-arg><lily:conf path="hbase"/></constructor-arg>
+    <constructor-arg><lily:conf path="mapreduce"/></constructor-arg>
     <constructor-arg value="${zookeeper:connectString}"/>
     <constructor-arg value="${zookeeper:sessionTimeout}"/>
   </bean>
 
   <bean id="metrics"
       class="org.lilyproject.server.modules.general.Metrics">
-    <constructor-arg><kauri:conf path="metrics"/></constructor-arg>
+    <constructor-arg><lily:conf path="metrics"/></constructor-arg>
   </bean>
 
   <bean id="networkItfInfo" class="org.lilyproject.server.modules.general.NetworkInterfaceInfoImpl">
@@ -110,12 +110,12 @@
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg>
       <bean class="org.lilyproject.server.modules.general.TableConfigBuilder" factory-method="buildTableConfigs">
-        <constructor-arg><kauri:conf path="tables"/></constructor-arg>
+        <constructor-arg><lily:conf path="tables"/></constructor-arg>
       </bean>
     </constructor-arg>
     <constructor-arg>
       <bean class="org.lilyproject.server.modules.general.TableConfigBuilder" factory-method="buildCfConfig">
-        <constructor-arg><kauri:conf path="tables" select="familyDefaults" type="node"/></constructor-arg>
+        <constructor-arg><lily:conf path="tables" select="familyDefaults" type="node"/></constructor-arg>
       </bean>
     </constructor-arg>
   </bean>

@@ -18,40 +18,40 @@
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:kauri="http://kauriproject.org/runtime/1.0#springext"
+       xmlns:lily="http://lilyproject.org/runtime/1.0#springext"
        xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
                              http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
                              http://www.springframework.org/schema/context
                              http://www.springframework.org/schema/context/spring-context-2.5.xsd
-                             http://kauriproject.org/runtime/1.0#springext
-                             http://www.kauriproject.org/schemas/runtime/springext.xsd">
+                             http://lilyproject.org/runtime/1.0#springext
+                             http://www.lilyproject.org/schemas/runtime/springext.xsd">
 
   <context:annotation-config/>
 
-  <kauri:module classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
+  <lily:module classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
 
-  <bean class="org.kauriproject.runtime.rapi.ConfPlaceholderConfigurer">
+  <bean class="org.lilyproject.runtime.rapi.ConfPlaceholderConfigurer">
     <constructor-arg ref="confRegistry"/>
   </bean>
 
-  <kauri:import-service
+  <lily:import-service
       id="networkItfInfo"
       service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
-  <kauri:import-service
+  <lily:import-service
       id="repository"
       service="org.lilyproject.repository.api.Repository"/>
 
-  <kauri:import-service
+  <lily:import-service
       id="indexer"
       service="org.lilyproject.indexer.Indexer"/>
 
-  <kauri:import-service
+  <lily:import-service
       id="zooKeeper"
       service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
 
-  <kauri:import-service
+  <lily:import-service
       id="hadoopConfFactory"
       service="org.lilyproject.server.modules.general.HadoopConfigurationFactory"/>
 

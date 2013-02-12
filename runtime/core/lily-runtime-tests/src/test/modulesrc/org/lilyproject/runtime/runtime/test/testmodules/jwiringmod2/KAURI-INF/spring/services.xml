@@ -1,16 +1,16 @@
 <?xml version="1.0"?>
 <beans              xmlns = "http://www.springframework.org/schema/beans"
                 xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
-              xmlns:kauri = "http://kauriproject.org/runtime/1.0#springext"
+              xmlns:lily = "http://lilyproject.org/runtime/1.0#springext"
             xmlns:context = "http://www.springframework.org/schema/context"
        xsi:schemaLocation = "http://www.springframework.org/schema/beans
                              http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
                              http://www.springframework.org/schema/context
                              http://www.springframework.org/schema/context/spring-context-2.5.xsd
-                             http://kauriproject.org/runtime/1.0#springext
-                             http://www.kauriproject.org/schemas/runtime/springext.xsd">
+                             http://lilyproject.org/runtime/1.0#springext
+                             http://www.lilyproject.org/schemas/runtime/springext.xsd">
 
-  <kauri:export-service ref="barBean" service="java.lang.CharSequence"/>
+  <lily:export-service ref="barBean" service="java.lang.CharSequence"/>
 
   <bean id="barBean" class="java.lang.String">
     <constructor-arg index="0" type="java.lang.String" value="bar"/>
