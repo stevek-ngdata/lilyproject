@@ -18,7 +18,7 @@ package org.lilyproject.server.modules.general;
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.kauriproject.conf.Conf;
+import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.util.hbase.ColumnFamilyConfig;
 import org.lilyproject.util.hbase.TableConfig;
 import org.lilyproject.util.hbase.TableConfigEntry;

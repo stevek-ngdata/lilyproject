@@ -41,8 +41,8 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
       </plugin>
 
       <plugin>

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<root xmlns:t="http://kauriproject.org/template">
-  Not json parsed   : {
-    "message": "Hello world!"
-}
-  Parsed json access: Hello world!
-  Root elm from html: html
-  Root elm from xml : root
-</root>

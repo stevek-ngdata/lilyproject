@@ -1,0 +1,33 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.lilyproject</groupId>
+  <artifactId>lily-runtime-rapi</artifactId>
+  <packaging>jar</packaging>
+  <version>2.2-SNAPSHOT</version>
+
+  <parent>
+    <groupId>org.lilyproject</groupId>
+    <artifactId>lily-runtime-parent</artifactId>
+    <version>2.2-SNAPSHOT</version>
+    <relativePath>../..</relativePath>
+  </parent>
+
+  <name>Lily Runtime ::: RUNTIME RUNTIME API = RAPI (API towards modules deployed in the Lily runtime)</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-jci-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-runtime-conf</artifactId>
+    </dependency>
+  </dependencies>
+
+</project>

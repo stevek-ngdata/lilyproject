@@ -4,7 +4,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 
-import org.kauriproject.runtime.rapi.KauriModule;
+import org.lilyproject.runtime.runtime.rapi.KauriModule;
 import org.lilyproject.container.api.Container;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;

@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<root xmlns:ktl="http://kauriproject.org/template" xmlns:foo="bar" ktl:dropPrefixMappings="#all">
-  <foo:element foo:attr="value"/>
-</root>

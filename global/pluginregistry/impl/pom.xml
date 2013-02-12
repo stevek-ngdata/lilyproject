@@ -56,7 +56,7 @@
 
     <plugins>
       <plugin>
-        <groupId>org.kauriproject</groupId>
+        <groupId>org.lilyproject</groupId>
         <artifactId>kauri-genclassloader-plugin</artifactId>
       </plugin>
     </plugins>

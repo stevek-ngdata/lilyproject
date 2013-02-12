@@ -66,7 +66,7 @@
             <configuration>
               <tasks>
                 <mkdir dir="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/" />
-                <echo file="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/kauri.properties" encoding="utf8">kauri.version=${version.kauri}
+                <echo file="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/lily.properties" encoding="utf8">lily.version=${project.version}
                 </echo>
               </tasks>
             </configuration>
@@ -102,7 +102,7 @@ cd $CWD
 # Enable JMX access on the same port as used by HBase's region server
 # This is handy because some of our test tools can read out HBase metrics this way
 LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
-LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=true"
+LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dlilyruntime.cacheclassloaders=true"
 
 # User can specify an alternate conf dir using TEST_LILY_CONF_DIR
 if [ -z "$TEST_LILY_CONF_DIR" ] ; then
@@ -137,7 +137,7 @@ cd $CWD
 # Enable JMX access on the same port as used by HBase's region server
 # This is handy because some of our test tools can read out HBase metrics this way
 LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
-LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=true"
+LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dlilyruntime.cacheclassloaders=true"
 
 # User can specify an alternate conf dir using TEST_LILY_CONF_DIR
 if [ -z "$TEST_LILY_CONF_DIR" ] ; then
@@ -172,7 +172,7 @@ chdir /d %CWD%
 rem Enable JMX access on the same port as used by HBase's region server
 rem This is handy because some of our test tools can read out HBase metrics this way
 set LILY_JMX_OPTIONS=-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102
-set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloaders=true
+set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dlilyruntime.cacheclassloaders=true
               ]]></value>
             </parameter>
             <parameter>
@@ -191,7 +191,7 @@ chdir /d %CWD%
 rem Enable JMX access on the same port as used by HBase's region server
 rem This is handy because some of our test tools can read out HBase metrics this way
 set LILY_JMX_OPTIONS=-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102
-set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloaders=true
+set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dlilyruntime.cacheclassloaders=true
               ]]></value>
             </parameter>
           </beforeJavaHook>

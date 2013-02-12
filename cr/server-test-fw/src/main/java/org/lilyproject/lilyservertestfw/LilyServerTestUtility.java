@@ -21,13 +21,13 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.kauriproject.runtime.KauriRuntime;
-import org.kauriproject.runtime.KauriRuntimeSettings;
-import org.kauriproject.runtime.configuration.ConfManager;
-import org.kauriproject.runtime.configuration.ConfManagerImpl;
-import org.kauriproject.runtime.rapi.Mode;
-import org.kauriproject.runtime.repository.ArtifactRepository;
-import org.kauriproject.runtime.repository.Maven2StyleArtifactRepository;
+import org.lilyproject.runtime.runtime.KauriRuntime;
+import org.lilyproject.runtime.runtime.KauriRuntimeSettings;
+import org.lilyproject.runtime.runtime.configuration.ConfManager;
+import org.lilyproject.runtime.runtime.configuration.ConfManagerImpl;
+import org.lilyproject.runtime.runtime.rapi.Mode;
+import org.lilyproject.runtime.runtime.repository.ArtifactRepository;
+import org.lilyproject.runtime.runtime.repository.Maven2StyleArtifactRepository;
 import org.lilyproject.util.MavenUtil;
 import org.lilyproject.util.io.Closer;
 

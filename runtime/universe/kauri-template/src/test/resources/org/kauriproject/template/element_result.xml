@@ -1,7 +1,0 @@
-<root xmlns:ktl="http://kauriproject.org/template">
-  <foo>
-    <bar att1="value1">
-    </bar>
-  </foo>
-  <p1:foo xmlns:p1="ns1"/>
-</root>

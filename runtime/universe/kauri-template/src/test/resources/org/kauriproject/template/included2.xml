@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<t:if test="true" xmlns:t="http://kauriproject.org/template">
-  <p>output which will be ignored</p>
-  <t:variable name="x" value="ieks" />
-  <t:macro name="m">
-    <t:parameter name="p" value="pee" />
-    <p>${p} and ${x}</p>
-  </t:macro>
-</t:if>

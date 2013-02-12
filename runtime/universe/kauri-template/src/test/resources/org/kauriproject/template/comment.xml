@@ -1,8 +1,0 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<root xmlns:ktl="http://kauriproject.org/template">
-  <ktl:comment>subliminal messages</ktl:comment>
-  <h1>Hello Kauri</h1>
-  <ktl:comment>
-    <ktl:if test="${true}">I'm <b>bold</b></ktl:if>
-  </ktl:comment>
-</root>

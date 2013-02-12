@@ -53,16 +53,15 @@
         <directory>src/main/resources</directory>
       </resource>
       <resource>
-        <directory>src/main/kauri</directory>
-        <targetPath>KAURI-INF</targetPath>
+        <directory>src/main/lily</directory>
+        <targetPath>LILY-INF</targetPath>
       </resource>
     </resources>
 
     <plugins>
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-package-plugin</artifactId>
-        <version>${version.kauri}</version>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-package-plugin</artifactId>
         <inherited>false</inherited>
         <configuration>
           <confDirectory>${basedir}/conf</confDirectory>
@@ -77,14 +76,14 @@
           <scripts>
             <script>
               <basename>lily-server</basename>
-              <mainClass>org.kauriproject.launcher.RuntimeCliLauncher</mainClass>
+              <mainClass>org.lilyproject.runtime.launcher.RuntimeCliLauncher</mainClass>
             </script>
           </scripts>
           <alternativeClasspath>
             <dependency>
-              <groupId>org.kauriproject</groupId>
-              <artifactId>kauri-runtime-launcher</artifactId>
-              <version>${version.kauri}</version>
+              <groupId>org.lilyproject</groupId>
+              <artifactId>lily-runtime-launcher</artifactId>
+              <version>${project.version}</version>
             </dependency>
           </alternativeClasspath>
           <includeProjectInClasspath>false</includeProjectInClasspath>
@@ -109,12 +108,12 @@
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>-Dkauri.launcher.repository=$LAUNCHER_M2_REPO -Dlily.logdir=$LILY_HOME/logs -Dlily.plugin.dir=$LILY_PLUGIN_DIR</value>
+              <value>-Dlilyruntime.launcher.repository=$LAUNCHER_M2_REPO -Dlily.logdir=$LILY_HOME/logs -Dlily.plugin.dir=$LILY_PLUGIN_DIR</value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dist</mode>
-              <value>-Dkauri.launcher.repository="%LAUNCHER_M2_REPO%" -Dlily.logdir="%LILY_HOME%\logs" -Dlily.plugin.dir="%LILY_HOME%\plugins"</value>
+              <value>-Dlilyruntime.launcher.repository="%LAUNCHER_M2_REPO%" -Dlily.logdir="%LILY_HOME%\logs" -Dlily.plugin.dir="%LILY_HOME%\plugins"</value>
             </parameter>
             <parameter>
               <platform>unix</platform>
@@ -176,7 +175,7 @@ fi
 
       <plugin>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-kauri-plugin</artifactId>
+        <artifactId>lily-runtime-plugin</artifactId>
         <version>2.2-SNAPSHOT</version>
         <inherited>false</inherited>
         <executions>

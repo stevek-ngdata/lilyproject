@@ -110,15 +110,15 @@
         <directory>src/main/resources</directory>
       </resource>
       <resource>
-        <directory>src/main/kauri</directory>
-        <targetPath>KAURI-INF</targetPath>
+        <directory>src/main/lily</directory>
+        <targetPath>LILY-INF</targetPath>
       </resource>
     </resources>
 
     <plugins>
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
       </plugin>
 
       <plugin>

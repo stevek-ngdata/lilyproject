@@ -27,7 +27,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.zookeeper.KeeperException;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
-import org.kauriproject.conf.Conf;
+import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.impl.*;

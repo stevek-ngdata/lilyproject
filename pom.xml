@@ -36,7 +36,6 @@
 
     <!-- The following properties are all Kauri-related, and should be brought in sync with
          Kauri when moving to a new Kauri version. -->
-    <version.kauri>0.4-dev-SNAPSHOT</version.kauri>
     <version.spring>3.2.1.RELEASE</version.spring>
     <version.jaxrs>1.0</version.jaxrs>
 
@@ -79,6 +78,8 @@
   </scm>
 
   <modules>
+    <module>runtime</module>
+
     <module>cr/repository</module>
     <module>cr/indexer</module>
     <module>cr/linkindex</module>
@@ -108,7 +109,7 @@
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
 
-    <module>tools/lily-kauri-plugin</module>
+    <module>tools/lily-runtime-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
     <module>tools/genscript-plugin</module>
     <module>tools/doc-tools</module>
@@ -130,6 +131,21 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-rapi</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-conf</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-servlet-helpers</artifactId>
@@ -432,7 +448,7 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-kauri-plugin</artifactId>
+        <artifactId>lily-runtime-plugin</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -903,6 +919,10 @@
       <id>kauri-dev</id>
       <url>http://kauriproject.org/maven/maven2/dev</url>
     </repository>
+    <repository>
+      <id>kauri-deploy</id>
+      <url>http://kauriproject.org/maven/maven2/deploy</url>
+    </repository>
   </repositories>
 
   <pluginRepositories>
@@ -924,6 +944,27 @@
       <name>Lily snapshot plugin repository</name>
       <url>http://lilyproject.org/maven/maven2/deploy/</url>
     </pluginRepository>
+
+    <pluginRepository>
+      <id>kauri-dev</id>
+      <url>http://lilyproject.org/maven/maven2/dev</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <id>kauri-deploy</id>
+      <url>http://lilyproject.org/maven/maven2/deploy</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <name>oss.sonatype.org</name>
+      <id>oss.sonatype.org</id>
+      <url>http://oss.sonatype.org/content/groups/public</url>
+    </pluginRepository>
+
   </pluginRepositories>
 
 
@@ -1023,9 +1064,8 @@
           <version>${version.avro}</version>
         </plugin>
         <plugin>
-          <groupId>org.kauriproject</groupId>
-          <artifactId>kauri-genclassloader-plugin</artifactId>
-          <version>${version.kauri}</version>
+          <groupId>org.lilyproject</groupId>
+          <artifactId>lily-runtime-genclassloader-plugin</artifactId>
           <executions>
             <execution>
               <phase>compile</phase>

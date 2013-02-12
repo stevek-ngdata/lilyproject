@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<root xmlns:ktl="http://kauriproject.org/template">
-  <p>second case - true</p>
-  <p>other starts inner choose</p>
-  <p>first case - true</p>
-  <p>here ends the inner choose</p>
-</root>

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<root xmlns:t="http://kauriproject.org/template">
-  <t:variable name="data" src="data.json" value="ignore"/>
-  ${data.message}
-  ${json:serialize(data)}
-</root>

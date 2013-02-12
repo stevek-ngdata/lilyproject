@@ -50,9 +50,8 @@
       <artifactId>spring-beans</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.kauriproject</groupId>
-      <artifactId>kauri-conf</artifactId>
-      <version>${version.kauri}</version>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-runtime-conf</artifactId>
     </dependency>
     <dependency>
       <groupId>org.lilyproject</groupId>
@@ -67,8 +66,8 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
       </plugin>
 
       <plugin>

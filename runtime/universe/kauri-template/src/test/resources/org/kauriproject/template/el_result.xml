@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<root xmlns:ktl="http://kauriproject.org/template">
-  <p>true</p>
-  <p>waar</p>
-  <p>1023.0</p>
-  <p>1000 ?= 1000</p>
-  <p>check this: 2 (EL) ?= 2 (groovy)</p>
-  <p>5$ isn't much, 100$ is a {lot} more</p>
-</root>

@@ -17,7 +17,7 @@ package org.lilyproject.server.modules.general;
 
 import org.apache.hadoop.metrics.ContextFactory;
 import org.apache.hadoop.metrics.jvm.JvmMetrics;
-import org.kauriproject.conf.Conf;
+import org.lilyproject.runtime.conf.Conf;
 
 import java.io.IOException;
 

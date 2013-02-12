@@ -17,7 +17,7 @@ package org.lilyproject.server.modules.repository;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.kauriproject.conf.Conf;
+import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.plugin.PluginHandle;
 import org.lilyproject.plugin.PluginRegistry;
 import org.lilyproject.plugin.PluginUser;

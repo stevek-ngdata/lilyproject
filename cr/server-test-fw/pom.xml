@@ -56,7 +56,7 @@
 
       <plugin>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-kauri-plugin</artifactId>
+        <artifactId>lily-runtime-plugin</artifactId>
         <version>2.2-SNAPSHOT</version>
         <configuration>
           <confDirectory>${basedir}/../../cr/process/server/conf</confDirectory>
@@ -76,8 +76,8 @@
           lily-launcher project.
         -->
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
         <configuration>
           <templateFileName>there is none</templateFileName>
           <targetDirectory>${basedir}/target/</targetDirectory>
@@ -118,9 +118,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.kauriproject</groupId>
-      <artifactId>kauri-runtime</artifactId>
-      <version>${version.kauri}</version>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-runtime</artifactId>
     </dependency>
 
     <dependency>
