@@ -2,7 +2,7 @@
 <web-app>
   <servlet>
      <servlet-name>KauriServlet</servlet-name>
-     <servlet-class>org.kauriproject.runtime.servlet.KauriServlet</servlet-class>
+     <servlet-class>org.lilyproject.runtime.servlet.KauriServlet</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>KauriServlet</servlet-name>
