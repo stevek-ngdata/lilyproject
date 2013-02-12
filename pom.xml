@@ -36,10 +36,9 @@
 
     <!-- The following properties are all Kauri-related, and should be brought in sync with
          Kauri when moving to a new Kauri version. -->
-    <version.kauri>0.4-r1971</version.kauri>
+    <version.kauri>0.4-dev-SNAPSHOT</version.kauri>
     <version.spring>3.2.1.RELEASE</version.spring>
     <version.jaxrs>1.0</version.jaxrs>
-    <version.restlet>svn7960</version.restlet>
 
     <!-- Align jetty versions -->
     <version.jetty>6.1.26.cloudera.2</version.jetty>
@@ -131,6 +130,11 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-servlet-helpers</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-servletregistry-api</artifactId>
@@ -890,7 +894,7 @@
     </repository>
 
     <!-- This repository is necessary to be able to download Kauri's restlet dependencies, but
-         only for users of Lily that have not build Lily locally. The reason is a current
+         only for users of Lily that have not built Lily locally. The reason is a current
          limitation in the lily-kauri-plugin, which only makes use of the repository declarations
          of Lily, rather than recursively using those from the projects to which the dependencies
          belong.

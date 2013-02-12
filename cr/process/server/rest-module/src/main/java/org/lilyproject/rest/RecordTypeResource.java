@@ -68,20 +68,20 @@ public class RecordTypeResource extends RepositoryEnabled {
         ImportResultType resultType = result.getResultType();
         switch (resultType) {
             case CREATED:
-                URI uri = UriBuilder.fromResource(RecordTypeResource.class).
+                URI uri = uriInfo.getBaseUriBuilder().path(RecordTypeResource.class).
                         queryParam("ns.n", recordType.getName().getNamespace()).
                         build("n$" + recordType.getName().getName());
-                response = Response.created(uri).entity(Entity.create(recordType, uriInfo)).build();
+                response = Response.status(201).header("Location",uri.toString()).entity(Entity.create(recordType, uriInfo)).build();
                 break;
             case UPDATED:
             case UP_TO_DATE:
                 if (!recordType.getName().equals(qname)) {
                     // Reply with "301 Moved Permanently": see explanation in FieldTypeResource
-                    uri = UriBuilder.fromResource(RecordTypeResource.class).
+                    uri = uriInfo.getBaseUriBuilder().path(RecordTypeResource.class).
                             queryParam("ns.n", recordType.getName().getNamespace()).
                             build("n$" + recordType.getName().getName());
 
-                    return Response.status(Response.Status.MOVED_PERMANENTLY).header("Location", uri).
+                    return Response.status(Response.Status.MOVED_PERMANENTLY).header("Location", uri.toString()).
                             entity(Entity.create(recordType, uriInfo)).build();
                 } else {
                     response = Response.ok(Entity.create(recordType, uriInfo)).build();

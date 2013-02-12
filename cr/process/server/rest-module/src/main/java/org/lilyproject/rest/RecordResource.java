@@ -77,8 +77,8 @@ public class RecordResource extends RepositoryEnabled {
         ImportResultType resultType = result.getResultType();
         switch (resultType) {
             case CREATED:
-                URI uri = UriBuilder.fromResource(RecordResource.class).build(record.getId());
-                response = Response.created(uri).entity(Entity.create(record, uriInfo)).build();
+                URI uri = uriInfo.getBaseUriBuilder().path(RecordResource.class).build(record.getId());
+                response = Response.status(201).header("Location", uri.toString()).entity(Entity.create(record, uriInfo)).build();
                 break;
             case UPDATED:
             case UP_TO_DATE:

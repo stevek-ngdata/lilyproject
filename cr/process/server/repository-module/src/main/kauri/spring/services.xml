@@ -29,7 +29,7 @@
 
   <context:annotation-config/>
 
-  <kauri:module restletContext="restletContext" classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
+  <kauri:module classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
 
   <bean class="org.kauriproject.runtime.rapi.ConfPlaceholderConfigurer">
     <constructor-arg ref="confRegistry"/>

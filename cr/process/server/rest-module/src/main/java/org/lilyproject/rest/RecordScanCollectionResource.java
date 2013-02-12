@@ -21,9 +21,11 @@ import java.util.Random;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
@@ -41,7 +43,7 @@ public class RecordScanCollectionResource extends RepositoryEnabled {
     
     @POST
     @Consumes("application/json")
-    public Response post(RecordScan scan) {
+    public Response post(RecordScan scan, @Context UriInfo uriInfo) {
         String scanId = String.valueOf(rand.nextLong());        
         try {
             recordScannerMap.put(scanId, repository.getScanner(scan));            
@@ -50,7 +52,7 @@ public class RecordScanCollectionResource extends RepositoryEnabled {
         } catch (InterruptedException e) {
             throw new ResourceException(e, Status.INTERNAL_SERVER_ERROR.getStatusCode());
         }
-        URI uri = UriBuilder.fromResource(RecordScanResource.class).build(scanId);
+        URI uri = uriInfo.getBaseUriBuilder().path(RecordScanResource.class).build(scanId);
         return Response.created(uri).build();     
     }
 }

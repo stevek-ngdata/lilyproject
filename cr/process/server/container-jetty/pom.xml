@@ -78,18 +78,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.restlet.jse</groupId>
-      <artifactId>org.restlet</artifactId>
-      <version>${version.restlet}</version>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.kauriproject</groupId>
-      <artifactId>kauri-routing-api</artifactId>
-      <version>${version.kauri}</version>
-    </dependency>
-
-    <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>jsr311-api</artifactId>
       <version>${version.jaxrs}</version>

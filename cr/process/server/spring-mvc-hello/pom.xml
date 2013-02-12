@@ -91,14 +91,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.restlet.jse</groupId>
-      <artifactId>org.restlet</artifactId>
-      <version>${version.restlet}</version>
-    </dependency>
-
-    <dependency>
       <groupId>org.kauriproject</groupId>
-      <artifactId>kauri-routing-api</artifactId>
+      <artifactId>kauri-runtime-rapi</artifactId>
       <version>${version.kauri}</version>
     </dependency>
 

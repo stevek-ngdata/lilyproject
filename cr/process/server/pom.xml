@@ -37,6 +37,7 @@
     <module>general-module</module>
     <module>repository-module</module>
     <module>indexer-module</module>
+    <module>servlet-helpers</module>
     <module>rest-module</module>
     <module>webui-module</module>
     <module>indexer-integration-module</module>
@@ -44,7 +45,6 @@
     <module>container-jetty</module>
     <module>servletregistry-api</module>
     <module>servletregistry-module</module>
-    <module>spring-mvc-hello</module>
   </modules>
 
   <build>

@@ -64,10 +64,10 @@ public class FieldTypeResource extends RepositoryEnabled {
         ImportResultType resultType = result.getResultType();
         switch (resultType) {
             case CREATED:
-                URI uri = UriBuilder.fromResource(FieldTypeResource.class).
+                URI uri = uriInfo.getBaseUriBuilder().path(FieldTypeResource.class).
                         queryParam("ns.n", fieldType.getName().getNamespace()).
                         build("n$" + fieldType.getName().getName());
-                response = Response.created(uri).entity(Entity.create(fieldType, uriInfo)).build();
+                response = Response.status(201).header("Location",uri.toString()).entity(Entity.create(fieldType, uriInfo)).build();
                 break;
             case UPDATED:
             case UP_TO_DATE:
@@ -78,11 +78,10 @@ public class FieldTypeResource extends RepositoryEnabled {
                 //   means I need to send a response code of 301 ("Moved Permanently") and put the user's
                 //   new URI in the Location header.
                 if (!fieldType.getName().equals(qname)) {
-                    uri = UriBuilder.fromResource(FieldTypeResource.class).
+                    uri = uriInfo.getBaseUriBuilder().path(FieldTypeResource.class).
                             queryParam("ns.n", fieldType.getName().getNamespace()).
                             build("n$" + fieldType.getName().getName());
-
-                    return Response.status(Response.Status.MOVED_PERMANENTLY).header("Location", uri).
+                    return Response.status(Response.Status.MOVED_PERMANENTLY).header("Location", uri.toString()).
                             entity(Entity.create(fieldType, uriInfo)).build();
                 } else {
                     response = Response.ok(Entity.create(fieldType, uriInfo)).build();

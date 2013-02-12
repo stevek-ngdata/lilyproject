@@ -28,7 +28,7 @@
                              http://www.kauriproject.org/schemas/runtime/springext.xsd">
 
   <context:annotation-config/>
-  <kauri:module restletContext="restletContext" classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
+  <kauri:module classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
 
   <!-- This is a kauri spring context because we want to be able to access backend services exported by other kauri
   modules from inside the webmvc module -->

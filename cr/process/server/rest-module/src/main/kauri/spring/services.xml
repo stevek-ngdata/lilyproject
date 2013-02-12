@@ -29,23 +29,15 @@
 
   <context:annotation-config/>
 
-  <kauri:module restletContext="restletContext" classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
+  <kauri:module classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
 
   <bean class="org.kauriproject.runtime.rapi.ConfPlaceholderConfigurer">
     <constructor-arg ref="confRegistry"/>
   </bean>
 
   <kauri:import-service
-      id="representationBuilder"
-      service="org.kauriproject.representation.build.RepresentationBuilder"/>
-
-  <bean factory-bean="representationBuilder" factory-method="install">
-    <constructor-arg ref="module"/>
-  </bean>
-
-  <kauri:import-service
-      id="routingService"
-      service="org.kauriproject.routing.RoutingService"/>
+      id="servletRegistry"
+      service="org.lilyproject.servletregistry.api.ServletRegistry"/>
 
   <kauri:import-service
       id="repository"
@@ -54,31 +46,6 @@
   <kauri:import-service
       id="indexer"
       service="org.lilyproject.indexer.Indexer"/>
-
-  <kauri:export-restservice name="repository" ref="repositoryRouter"/>
-  <kauri:export-restservice name="index" ref="indexRouter"/>
-
-  <bean id="repositoryRouter" factory-bean="routingService" factory-method="createRouter">
-    <constructor-arg ref="restletContext"/>
-    <constructor-arg ref="module"/>
-    <constructor-arg>
-      <bean class="org.kauriproject.routing.RoutingConfig">
-        <property name="configPath" value="repository-router.groovy"/>
-        <property name="fallBackToDefault" value="false"/>
-      </bean>
-    </constructor-arg>
-  </bean>
-
-  <bean id="indexRouter" factory-bean="routingService" factory-method="createRouter">
-    <constructor-arg ref="restletContext"/>
-    <constructor-arg ref="module"/>
-    <constructor-arg>
-      <bean class="org.kauriproject.routing.RoutingConfig">
-        <property name="configPath" value="index-router.groovy"/>
-        <property name="fallBackToDefault" value="false"/>
-      </bean>
-    </constructor-arg>
-  </bean>
 
   <kauri:import-service id="indexerModel" service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
@@ -90,6 +57,16 @@
       <!--<kauri:conf path="rest:scannerLeasePeriod"/>-->
       <value>${rest:scannerLeasePeriod}</value>
     </constructor-arg>
+  </bean>
+
+  <bean id="servletManager" class="org.lilyproject.servlet.JerseySpringServletManager">
+    <constructor-arg value="lily-repository-rest-context.xml"/>
+    <property name="urlPatterns">
+      <list>
+        <value>/repository</value>
+        <value>/repository/*</value>
+      </list>
+    </property>
   </bean>
 
 </beans>

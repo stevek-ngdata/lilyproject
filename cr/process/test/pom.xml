@@ -41,6 +41,11 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
+      <artifactId>lily-servlet-helpers</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
       <artifactId>lily-test-decorator</artifactId>
     </dependency>
 
@@ -48,6 +53,7 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-test-updatehook</artifactId>
     </dependency>
+
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-ipc</artifactId>

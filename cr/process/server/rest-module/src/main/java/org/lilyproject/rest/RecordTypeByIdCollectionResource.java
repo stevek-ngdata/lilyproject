@@ -32,8 +32,8 @@ public class RecordTypeByIdCollectionResource extends BaseRecordTypeCollectionRe
     @Produces("application/json")
     public Response post(PostAction<RecordType> postAction, @Context UriInfo uriInfo) {
         RecordType recordType = processPost(postAction);
-        URI uri = UriBuilder.fromResource(RecordTypeByIdResource.class).build(recordType.getId());
-        return Response.created(uri).entity(Entity.create(recordType, uriInfo)).build();
+        URI uri = uriInfo.getBaseUriBuilder().path(RecordTypeByIdResource.class).build(recordType.getId());
+        return Response.status(201).header("Location",uri.toString()).entity(Entity.create(recordType, uriInfo)).build();
     }
 
 }

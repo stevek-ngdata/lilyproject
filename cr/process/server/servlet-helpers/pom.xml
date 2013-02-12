@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+<!--
+/*
+ * Copyright 2012 NGDATA nv
+ *
+ * All rights reserved.
+ *
+ */
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.lilyproject</groupId>
+  <artifactId>lily-servlet-helpers</artifactId>
+  <packaging>jar</packaging>
+
+  <parent>
+    <groupId>org.lilyproject</groupId>
+    <artifactId>lily-server</artifactId>
+    <version>2.2-SNAPSHOT</version>
+    <relativePath>../</relativePath>
+  </parent>
+
+  <name>Lily: Servlet helpers</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.sun.jersey.contribs</groupId>
+      <artifactId>jersey-spring</artifactId>
+      <version>1.17</version>
+      <!-- exclude spring dependencies from jersey - for some reason
+           the (old) version used by jersey takes precedence over our own listed dependencies' versions -->
+      <exclusions>
+        <exclusion><groupId>org.springframework</groupId><artifactId>spring-beans</artifactId></exclusion>
+        <exclusion><groupId>org.springframework</groupId><artifactId>spring-context</artifactId></exclusion>
+        <exclusion><groupId>org.springframework</groupId><artifactId>spring-core</artifactId></exclusion>
+        <exclusion><groupId>org.springframework</groupId><artifactId>spring-web</artifactId></exclusion>
+        <exclusion><groupId>org.springframework</groupId><artifactId>spring-aop</artifactId></exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-server</artifactId>
+      <version>1.17</version>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-core</artifactId>
+      <version>1.17</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
+      <version>3.2.1.RELEASE</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>${version.spring}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core</artifactId>
+      <version>${version.spring}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+      <version>${version.spring}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-aop</artifactId>
+      <version>${version.spring}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+      <version>${version.spring}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context-support</artifactId>
+      <version>${version.spring}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-servletregistry-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-repository-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>jsr311-api</artifactId>
+      <version>${version.jaxrs}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.kauriproject</groupId>
+      <artifactId>kauri-runtime-rapi</artifactId>
+      <version>${version.kauri}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>src/main/kauri</directory>
+        <targetPath>KAURI-INF</targetPath>
+      </resource>
+    </resources>
+
+    <plugins>
+      <plugin>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-genclassloader-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/classes/KAURI-INF/conf</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/../conf/rest</directory>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

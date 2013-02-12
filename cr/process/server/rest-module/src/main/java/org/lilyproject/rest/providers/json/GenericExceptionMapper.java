@@ -41,6 +41,8 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
         if (throwable instanceof ResourceException) {
             ResourceException re = (ResourceException) throwable;
             return createResponseForResourceException(re);
+        } else if (throwable instanceof WebApplicationException) {
+            return ((WebApplicationException)throwable).getResponse();
         } else {
             return createGenericResponse(throwable);
         }

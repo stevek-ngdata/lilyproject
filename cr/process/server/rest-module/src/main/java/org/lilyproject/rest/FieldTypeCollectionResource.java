@@ -35,7 +35,7 @@ public class FieldTypeCollectionResource extends BaseFieldTypeCollectionResource
     @Produces("application/json")
     public Response post(PostAction<FieldType> postAction, @Context UriInfo uriInfo) {
         FieldType fieldType = processPost(postAction);
-        URI uri = UriBuilder.fromResource(FieldTypeResource.class).
+        URI uri = uriInfo.getBaseUriBuilder().path(FieldTypeResource.class).
                 queryParam("ns.n", fieldType.getName().getNamespace()).
                 build("n$" + fieldType.getName().getName());
         return Response.created(uri).entity(Entity.create(fieldType, uriInfo)).build();

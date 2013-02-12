@@ -56,14 +56,6 @@
     </repository>
 
     <repository>
-      <id>restlet</id>
-      <url>http://maven.restlet.org/</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
       <id>kauri-deploy</id>
       <url>http://kauriproject.org/maven/maven2/deploy</url>
       <snapshots>
@@ -100,11 +92,6 @@
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>org.restlet.jse</groupId>
-        <artifactId>org.restlet</artifactId>
-        <version>${version.restlet}</version>
-      </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-beans</artifactId>

@@ -35,6 +35,11 @@
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
+      <artifactId>lily-servlet-helpers</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
       <artifactId>lily-repository-api</artifactId>
     </dependency>
 
@@ -56,18 +61,6 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-beans</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.restlet.jse</groupId>
-      <artifactId>org.restlet</artifactId>
-      <version>${version.restlet}</version>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.kauriproject</groupId>
-      <artifactId>kauri-routing-api</artifactId>
-      <version>${version.kauri}</version>
     </dependency>
 
     <dependency>

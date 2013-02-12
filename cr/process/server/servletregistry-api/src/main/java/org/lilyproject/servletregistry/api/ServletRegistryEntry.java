@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ServletRegistryEntry {
   
-  String getUrlMapping();
+  List<String> getUrlPatterns();
   Servlet getServletInstance(ServletContext context);
   List<EventListener> getEventListeners();
 
