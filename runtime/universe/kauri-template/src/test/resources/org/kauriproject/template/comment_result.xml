@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:ktl="http://kauriproject.org/template">
+  <!-- subliminal messages -->
+  <h1>
+    Hello Kauri
+  </h1>
+  <!-- 
+  I'm <b>bold</b>
+  -->
+</root>

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:ktl="http://kauriproject.org/template">
+  <h1 class="title">Testing the attribute directive</h1>
+  <div class="music">
+    <p>There is no song, just a delusion of silence.</p>
+    <p>We dance and the music dies.</p>
+  </div>
+  <div class="math">
+    <p>1 + 1 == 2</p>
+  </div>
+  <div span="2" class="spanned" id="007" />
+  <div xmlns:p1="ns1" p1:att1="val1"/>
+</root>

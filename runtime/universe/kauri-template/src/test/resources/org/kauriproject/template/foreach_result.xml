@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:ktl="http://kauriproject.org/template">
+  <h1>HelloWorld</h1>
+  <p>inner loop 1</p>
+  <p>inner loop 2</p>
+  <p>inner loop 2</p>
+  <h1>HelloWorld</h1>
+  <p>inner loop 1</p>
+  <p>inner loop 2</p>
+  <p>inner loop 2</p>
+  <h1>HelloWorld</h1>
+  <p>inner loop 1</p>
+  <p>inner loop 2</p>
+  <p>inner loop 2</p>
+  <div>
+    <p>in collection: item1</p>
+    <p>in collection: item2</p>
+    <p>in collection: item3</p>
+  </div>
+  <div>
+    <tr>
+      <td>1</td>
+      <td>item1</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>item3</td>
+    </tr>
+  </div>
+  <div>
+    <p class="one">in array: one</p>
+    <p class="two">in array: two</p>
+    <p class="three">in array: three</p>
+  </div>
+  <div>
+    <p>item2</p>
+  </div>
+</root>

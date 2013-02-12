@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config att1="value1" att2="value2">
+  <element>abc</element>
+  <element>abc</element>
+
+  <parent>
+    <child>def</child>
+    <child>def</child>
+  </parent>
+</config>

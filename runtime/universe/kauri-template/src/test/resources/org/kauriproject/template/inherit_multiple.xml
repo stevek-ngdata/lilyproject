@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns:ktl="http://kauriproject.org/template" ktl:inherit="inherit.xml">
+  <head>
+    <title>multiple levels of inheritance</title>
+  </head>
+  <body>
+    <ktl:block name="block1">
+      <div>
+        <ktl:superBlock />
+        <p>first block - 2nd level child</p>
+        <ktl:superBlock />
+      </div>
+    </ktl:block>
+    <ktl:block name="block2">
+      <p>second block - 2nd level child</p>
+    </ktl:block>
+    <ktl:block name="child">
+      <p>overriding block defined in parent</p>
+    </ktl:block>
+    <p>blablabla</p>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:t="http://kauriproject.org/template">
+  <p>macro from base template</p>
+  <p>ready to include</p>
+  <div xmlns:t="http://kauriproject.org/template">
+    <p>we have foo-included and bar-included included</p>
+  </div>
+  <p>after inclusion</p>
+  <p>we have foo-included and bar-included here</p>
+  <p>we still know bilbo,</p>
+  <p>but now we also know frodo</p>
+  <p>macro from included template</p>
+  <p>after silent inclusion</p>
+  <p>we have ieks here</p>
+  <p>pee and ieks</p>
+  <root xmlns:t="http://kauriproject.org/template">
+    <a>aa en ieks</a>
+    <b>bee en "
+    ei en ieks"</b>
+  </root>
+</root>

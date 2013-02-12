@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:ktl="http://kauriproject.org/template">
+  <table>
+    <tr class="odd">
+      <td class="header">content</td>
+    </tr>
+    <tr class="even">
+      <td class="cell">content</td>
+    </tr>
+    <tr class="odd">
+      <td class="cell">content</td>
+    </tr>
+  </table>
+</root>

@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns:t="http://kauriproject.org/template">
+  <head>
+    <title>Kauri insert example</title>
+  </head>
+  <body>
+    <h3>test insert html from url</h3>
+    <t:insert src="plain.html" mode="html" />
+  </body>
+</html>

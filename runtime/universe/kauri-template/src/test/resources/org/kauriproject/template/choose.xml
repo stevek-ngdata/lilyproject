@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:ktl="http://kauriproject.org/template">
+  <ktl:choose>
+    <ktl:when test="${false}">
+      <p>first case - false</p>
+    </ktl:when>
+    <ktl:when test="${true}">
+      <p>second case - true</p>
+    </ktl:when>
+    <ktl:otherwise>
+      <p>other</p>
+    </ktl:otherwise>
+  </ktl:choose>
+  <ktl:choose>
+    <ktl:when test="${false}">
+      <p>first case - false</p>
+    </ktl:when>
+    <ktl:otherwise>
+      <p>other starts inner choose</p>
+      <ktl:choose>
+        <ktl:when test="${true}">
+          <p>first case - true</p>
+        </ktl:when>
+      </ktl:choose>
+      <p>here ends the inner choose</p>
+    </ktl:otherwise>
+  </ktl:choose>
+</root>

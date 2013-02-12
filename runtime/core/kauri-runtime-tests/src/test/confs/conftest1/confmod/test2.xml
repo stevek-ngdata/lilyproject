@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<conf xmlns:conf="http://kauriproject.org/configuration"
+      conf:inherit="deep">
+  <email>foobar@hotmail.com</email>
+</conf>

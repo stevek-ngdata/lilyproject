@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.kauriproject</groupId>
+  <artifactId>kauri-runtime-tests</artifactId>
+  <packaging>jar</packaging>
+  <version>0.4-dev-SNAPSHOT</version>
+
+  <parent>
+    <groupId>org.kauriproject</groupId>
+    <artifactId>kauri</artifactId>
+    <version>0.4-dev-SNAPSHOT</version>
+    <relativePath>../..</relativePath>
+  </parent>
+
+  <name>KAURI ::: RUNTIME TEST CASES</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.kauriproject</groupId>
+      <artifactId>kauri-runtime-testfw</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-tx</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <!--
+        Executes tests at the integration test phase, since we need the jar to load
+        it as module in the Kauri Runtime during testing.
+        -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+          <systemProperties>
+            <property><name>project.version</name><value>${project.version}</value></property>
+          </systemProperties>
+        </configuration>
+        <executions>
+          <execution>
+            <id>surefire-it</id>
+            <phase>integration-test</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <skip>${maven.test.skip}</skip>
+              <systemProperties>
+                <property><name>project.version</name><value>${project.version}</value></property>
+                <property><name>console-logging</name><value>trace</value></property>
+              </systemProperties>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>    
+    </plugins>
+  </build>
+
+</project>

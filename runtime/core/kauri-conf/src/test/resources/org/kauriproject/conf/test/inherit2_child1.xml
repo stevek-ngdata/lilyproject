@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<conf xmlns:conf="http://kauriproject.org/configuration"
+      conf:inherit="shallow"
+      attr2="val2 - altered">
+  <c>
+    <e>ee</e>
+  </c>
+</conf>

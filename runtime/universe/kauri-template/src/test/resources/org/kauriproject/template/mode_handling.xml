@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:t="http://kauriproject.org/template">
+  <t:variable name="text" src="data.json" mode="txt" />
+  <t:variable name="json" mode="json" >${text}</t:variable>
+  <t:variable name="html" src="plain.html" />
+  <t:variable name="xml"  src="plain.xml" />
+
+
+  Not json parsed   : ${text}
+  Parsed json access: ${json.message}
+  Root elm from html: ${html.documentElement.localName}
+  Root elm from xml : ${xml.documentElement.localName}
+</root>

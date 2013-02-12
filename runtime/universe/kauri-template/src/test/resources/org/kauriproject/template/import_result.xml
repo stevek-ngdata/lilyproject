@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:t="http://kauriproject.org/template">
+  <p>macro from base template</p>
+  <p>ready to include</p>
+  <div xmlns:t="http://kauriproject.org/template">
+    <p>we have foo-included and bar-included included</p>
+  </div>
+  <p>after inclusion</p>
+  <p>we have foo and bar here</p>
+  <p>we still know bilbo,</p>
+  <p>but ${new} is undefined</p>
+  <p>macro from base template</p>
+  <p>after silent import</p>
+  <p>we have mee here</p>
+  <p>pee and mee</p>
+</root>

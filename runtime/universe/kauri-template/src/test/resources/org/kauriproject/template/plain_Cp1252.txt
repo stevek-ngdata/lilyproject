@@ -1,0 +1,1 @@
+This file must be encoded in Cp1252. To test it contains the chars €(euro) é(e-acute) ©(copyright)

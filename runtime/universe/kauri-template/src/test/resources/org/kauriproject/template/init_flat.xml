@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:t="http://kauriproject.org/template">
+  <t:include src="init_util.xml" mode="silent" />
+  <t:variable name="y" value="ei" />
+  <a>aa en ${x}</a>
+  <b>
+    bee en "<t:callMacro name="m"><t:parameter name="p" value="${y}"/></t:callMacro>"
+  </b>
+</root>

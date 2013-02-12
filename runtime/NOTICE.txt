@@ -1,0 +1,230 @@
+NOTICE: Only our own original work is licensed under the terms of the Apache
+License Version 2.0. The licenses of some libraries might impose different
+redistribution or general licensing terms than those stated in the Apache
+License. Users and redistributors are hereby requested to verify these
+conditions and agree upon them.
+
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/).
+
+Javascript Libraries:
+
+jquery
+  website: http://jquery.org, http://jquery.com
+  license: http://jquery.org/license
+qunit
+  website: http://docs.jquery.com/Qunit
+  license: http://jquery.org/license
+jqGrid
+  website: http://www.trirand.com/blog/, http://code.google.com/p/jqgrid/
+  license: http://www.opensource.org/licenses/mit-license.php 
+
+Java Libraries:
+
+antlr:antlr
+  website: http://www.antlr.org/
+  license: http://www.antlr.org/license.html 
+asm:asm
+  website: http://asm.ow2.org/
+  license: http://asm.ow2.org/license.html
+c3p0:c3p0
+  website: http://sourceforge.net/projects/c3p0/
+  license: http://www.gnu.org/copyleft/lesser.html
+cglib:cglib-nodep
+  website: http://cglib.sourceforge.net/index.html
+  license: http://opensource.org/licenses/apache2.0.php
+classworlds:classworlds
+  website: http://classworlds.codehaus.org/
+  license: ???
+com.sun.xml.bind:jaxb-impl
+  website: https://jaxb.dev.java.net/
+  license: https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html
+com.thoughtworks.xstream:xstream
+  website: http://xstream.codehaus.com/
+  license: http://xstream.codehaus.com/license.html 
+commons-beanutils:commons-beanutils
+  website: http://commons.apache.org/beanutils/
+  license: http://commons.apache.org/beanutils/license.html
+commons-cli:commons-cli
+  website: http://commons.apache.org/cli/
+  license: http://commons.apache.org/cli/license.html
+commons-codec:commons-codec
+  website: http://commons.apache.org/codec/
+  license: http://commons.apache.org/codec/license.html
+commons-collections:commons-collections
+  website: http://commons.apache.org/collections/
+  license: http://commons.apache.org/collections/license.html
+commons-fileupload:commons-fileupload
+  website: http://commons.apache.org/fileupload/
+  license: http://commons.apache.org/fileupload/license.html
+commons-httpclient:commons-httpclient
+  website: http://hc.apache.org/httpclient-3.x/
+  license: http://hc.apache.org/httpclient-3.x/license.html
+commons-io:commons-io
+  website: http://commons.apache.org/io/
+  license: http://commons.apache.org/io/license.html
+commons-jxpath:commons-jxpath
+  website: http://commons.apache.org/jxpath/
+  license: http://commons.apache.org/jxpath/license.html
+commons-lang:commons-lang
+  website: http://commons.apache.org/lang/
+  license: http://commons.apache.org/lang/license.html
+commons-logging:commons-logging
+commons-logging:commons-logging-api
+  website: http://commons.apache.org/logging/
+  license: http://commons.apache.org/logging/license.html
+dom4j:dom4j
+  website: hhttp://dom4j.sourceforge.net/dom4j-1.6.1/
+  license: http://dom4j.sourceforge.net/dom4j-1.6.1/license.html
+hsqldb:hsqldb
+  website: http://hsqldb.org/
+  license: http://hsqldb.org/web/hsqlLicense.html
+javax.activation:activation
+  website: http://java.sun.com/products/archive/javabeans/jaf11.html
+  license: ??? 
+javax.annotation:jsr250-api
+  website: https://jsr250.dev.java.net/
+  license: http://www.opensource.org/licenses/cddl1.php
+javax.el:el-api
+  website: http://download.oracle.com/javaee/1.4/tutorial/doc/JSPIntro7.html
+  license: ???
+javax.mail:mail
+  website: http://www.oracle.com/technetwork/java/index-jsp-139225.html
+  license: ??? 
+javax.persistence:persistence-api
+  website: http://www.jcp.org/en/jsr/detail?id=317
+  license: ???
+javax.servlet:servlet-api
+  website: http://jcp.org/aboutJava/communityprocess/mrel/jsr154/index2.html
+  license: ???
+javax.transaction:jta
+  website: ???
+  license: ???
+javax.ws.rs:jsr311-api
+  website: https://jsr311.dev.java.net/
+  license: http://www.opensource.org/licenses/cddl1.php
+javax.xml.bind:jaxb-api
+  website: ???
+  license: ???
+javax.xml.stream:stax-api
+  website: ???
+  license: ???
+jboss:javassist
+  website: http://www.jboss.org/javassist
+  license: http://www.opensource.org/licenses/mozilla1.1.php or http://www.opensource.org/licenses/lgpl-license.php
+jboss:jboss-common-core
+  website: http://community.jboss.org/wiki/JBossCommonProject
+  license: ??? 
+joda-time:joda-time
+  website: http://joda-time.sourceforge.net/
+  license:  http://joda-time.sourceforge.net/license.html
+junit:junit
+  website: http://junit.org/
+  license: http://www.opensource.org/licenses/cpl1.0.php
+log4j:log4j
+  website: http://logging.apache.org/log4j/
+  license: http://logging.apache.org/license.html
+mysql:mysql-connector-java
+  website: http://dev.mysql.com/usingmysql/java/
+  license: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (others can be purchased)
+nekohtml:nekodtd
+nekohtml:nekohtml
+  website: http://people.apache.org/~andyc/neko/doc/dtd/index.html
+  license:  http://people.apache.org/~andyc/neko/LICENSE
+net.sf.ehcache:ehcache
+  website: http://ehcache.org/
+  license: http://www.opensource.org/licenses/apache2.0.php
+net.sf.ezmorph:ezmorph
+  website: http://ezmorph.sourceforge.net/
+  license: http://ezmorph.sourceforge.net/license.html
+net.sf.json-lib:json-lib
+  website: http://json-lib.sourceforge.net/
+  license: http://json-lib.sourceforge.net/license.html
+org.apache.commons:commons-jci-core
+org.apache.commons:commons-jci-fam
+  website: http://commons.apache.org/jci/
+  license: http://commons.apache.org/jci/license.html
+org.apache.maven:**
+  website: http://maven.apache.org/
+  license: http://maven.apache.org/license.html
+org.aspectj:aspectjrt
+org.aspectj:aspectjweaver
+  website: http://www.eclipse.org/aspectj/
+  license:  http://www.eclipse.org/legal/epl-v10.html
+org.codehaus.groovy:groovy-all
+  website: http://groovy.codehaus.org/
+  license: http://www.apache.org/licenses/LICENSE-2.0.html
+org.codehaus.jackson:jackson-core-asl
+org.codehaus.jackson:jackson-mapper-asl
+  website: http://jackson.codehaus.org/
+  license: ??? 
+org.codehaus.jettison:jettison
+  website: http://jettison.codehaus.org/
+  license: http://jettison.codehaus.org/License
+org.codehaus.plexus:plexus-container-default
+org.codehaus.plexus:plexus-utils
+  website: http://plexus.codehaus.org/
+  license: ???
+org.eclipse.jetty:*
+  website: http://www.eclipse.org/jetty/
+  license: http://www.eclipse.org/jetty/licenses.php
+org.hibernate:ejb3-persistence
+org.hibernate:hibernate
+org.hibernate:hibernate-annotations
+org.hibernate:hibernate-commons-annotations
+org.hibernate:hibernate-entitymanager
+org.hibernate:hibernate-validator
+  website: http://hibernate.org/
+  license: http://hibernate.org/license.html
+org.jboss.el:jboss-el
+  website: http://www.jboss.com/products/seam/
+  license: http://www.opensource.org/licenses/lgpl-license.php
+org.json:org.json
+  website: http://json.org/
+  license: ???
+org.osgi:org.osgi.core
+  website: http://www.osgi.org/Main/HomePage
+  license: ??? 
+org.restlet.gae:org.restlet
+org.restlet.gae:org.restlet.ext.servlet
+org.restlet.jse:org.restlet
+org.restlet.jse:org.restlet.ext.crypto
+org.restlet.jse:org.restlet.ext.fileupload
+org.restlet.jse:org.restlet.ext.jaxrs
+org.restlet.jse:org.restlet.ext.jetty
+org.restlet.jse:org.restlet.ext.json
+org.restlet.jse:org.restlet.ext.xml
+org.restlet.jse:org.restlet.lib.org.json
+  website: http://www.restlet.org/
+  license: http://www.restlet.org/about/legal 
+org.slf4j:jcl-over-slf4j
+org.slf4j:jul-to-slf4j
+org.slf4j:slf4j-api
+org.slf4j:slf4j-log4j12
+  website: http://www.slf4j.org/
+  license: http://www.slf4j.org/license.html
+org.springframework.security:spring-security-core
+org.springframework.security:spring-security-core-tiger
+org.springframework:spring-aop
+org.springframework:spring-beans
+org.springframework:spring-context
+org.springframework:spring-core
+org.springframework:spring-jdbc
+org.springframework:spring-orm
+org.springframework:spring-test
+org.springframework:spring-tx
+  website: http://www.springsource.org/
+  license: http://www.apache.org/licenses/LICENSE-2.0.html
+stax:stax
+stax:stax-api
+  website: http://stax.codehaus.org/Home
+  license: http://www.apache.org/licenses/LICENSE-2.0.html
+xerces:xercesImpl
+  website: http://xerces.apache.org/xerces-j/
+  license: http://www.apache.org/licenses/LICENSE-2.0.html
+xml-apis:xml-apis
+  website: http://xml.apache.org/commons/
+  license: http://www.apache.org/licenses/LICENSE-2.0.html 
+xpp3:xpp3_min
+  website: http://www.extreme.indiana.edu/xgws/xsoap/xpp/mxp1/index.html
+  license: ???

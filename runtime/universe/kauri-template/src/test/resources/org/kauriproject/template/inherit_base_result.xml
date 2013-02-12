@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns:ktl="http://kauriproject.org/template">
+  <head>
+    <title>Template inheritance</title>
+  </head>
+  <body>
+    <p>leading stuff from base</p>
+    <p>first block - base</p>
+    <p>second block - base</p>
+    <p>third block - base</p>
+    <p>trailing stuff from base</p>
+  </body>
+</html>

@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><root xmlns:t="http://kauriproject.org/template"><test1><span>foo</span><span>bar</span></test1><test2><span>foo</span> <span>bar</span></test2><test3><span>foo</span> <span>bar</span></test3><test4>foo <span> <span/></span></test4></root>

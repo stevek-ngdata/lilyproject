@@ -1,0 +1,31 @@
+How to run this Kauri-based application
+=======================================
+
+This directory contains an application built on Kauri.
+
+This file contains generic instructions on how to run a Kauri-based
+application, the actual application might need additional setup work.
+
+
+                               - o -
+
+To run this application, you need to download Kauri version ${version.kauri}
+from http://kauriproject.org.
+
+Extract the download.
+
+Then:
+
+ * For Unix-like systems:
+     export KAURI_HOME=/path/to/where-kauri-is-extracted
+     cd /kauri-app (= dir containing the file you're reading now)
+     $KAURI_HOME/bin/kauri.sh -r lib
+
+ * For Windows
+     set KAURI_HOME=c:\path\to\where-kauri-is-extracted
+     cd c:\kauri-app (= dir containing the file you're reading now)
+     $KAURI_HOME/bin/kauri -r lib
+
+
+For any serious work, we recommend using the service wrapper scripts,
+found in the service subdirectory.

@@ -1,0 +1,84 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.kauriproject</groupId>
+  <artifactId>kauri-runtime-launcher</artifactId>
+  <packaging>jar</packaging>
+  <version>0.4-dev-SNAPSHOT</version>
+
+  <parent>
+    <groupId>org.kauriproject</groupId>
+    <artifactId>kauri</artifactId>
+    <version>0.4-dev-SNAPSHOT</version>
+    <relativePath>../..</relativePath>
+  </parent>
+
+  <name>KAURI ::: RUNTIME LAUNCHER</name>
+
+  <dependencies>
+    <!--
+        IMPORTANT: the whole idea behind the runtime launcher is that there
+        would only be one jar you need on your classpath.
+
+        So, this project should not have any dependencies.
+
+        The dependency below is to force that the kauri-runtime-cli is built
+        before the launcher, since it generates the classloader XML that
+        we need.
+    -->
+    <dependency>
+      <groupId>org.kauriproject</groupId>
+      <artifactId>kauri-runtime-cli</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-classloader</id>
+            <phase>compile</phase>
+            <configuration>
+              <tasks>
+                <!--
+                    Copy the classloader XML file, for which we rely on the kauri-runtime-cli project
+                    to generate it for us.
+                -->
+                <property name="classLoaderXmlLocation" value="${basedir}/../kauri-runtime-cli/target/classloader-for-use-by-launcher.xml" />
+                <available property="classLoaderXmlAvailable" file="${classLoaderXmlLocation}" />
+                <fail unless="classLoaderXmlAvailable" message="File not available: ${classLoaderXmlLocation}" />
+
+                <property name="targetDir" value="target/classes/org/kauriproject/launcher/" />
+                <mkdir dir="${targetDir}" />
+                <copy file="${classLoaderXmlLocation}" tofile="${targetDir}/classloader.xml" />
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>make-versionless-jar</id>
+            <phase>install</phase>
+            <configuration>
+              <tasks>
+                <!--
+                   Copy the artifact to a version-less name, makes it easy to refer to in the
+                   kauri developer-mode launch script
+                -->
+                <copy file="target/${project.artifactId}-${project.version}.jar" tofile="target/${project.artifactId}.jar" />
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>          
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

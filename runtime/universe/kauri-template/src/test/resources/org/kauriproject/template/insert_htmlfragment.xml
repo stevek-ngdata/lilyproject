@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns:t="http://kauriproject.org/template">
+  <t:variable name="fragment"><![CDATA[
+    Badly behaving html fragment with <ul>
+      <li>unbalanced elements </p>
+      <li>some of those allowed <img src="none.png"> in html
+      <li>some value-less attributes <hr noshade>
+      <li>and an entity -&euro;- 
+    </ul>]]>
+  </t:variable>
+  <head>
+    <title>Kauri insert example</title>
+  </head>
+  <body>
+    <h3>test insert html from variable fragment</h3>
+    <t:insert value="${fragment}" mode="html" />
+  </body>
+</html>

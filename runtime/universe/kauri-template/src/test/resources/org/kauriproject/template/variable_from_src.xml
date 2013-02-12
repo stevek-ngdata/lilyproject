@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:ktl="http://kauriproject.org/template">
+  <ktl:variable name="data" src="data.json" value="ignore"/>
+  <ktl:variable name="data2" src="nodata.json" value="${data}"/>
+  <ktl:variable name="overwriteTest1" value="local"/>
+  <ktl:variable name="overwriteTest2" value="local" overwrite="false"/>
+
+  ${data.message},${data2.message},${overwriteTest1},${overwriteTest2}
+</root>

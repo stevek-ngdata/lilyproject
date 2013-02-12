@@ -1,0 +1,7 @@
+<conf planet="Mars">
+  <planet>Venus</planet>
+  <things>
+    <thing name="Book" quantity="5"/>
+    <thing name="Bicycle" quantity="50"/>
+  </things>
+</conf>

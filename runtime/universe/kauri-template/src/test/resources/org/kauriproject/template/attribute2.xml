@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:ktl="http://kauriproject.org/template">
+  <table>
+    <ktl:forEach begin="1" end="3" step="1">
+      <tr>
+        <ktl:attribute name="class"
+          value="${loopStatus.number % 2 == 0 ? 'even' : 'odd'}" />
+        <td>
+          <ktl:choose>
+            <ktl:when test="${loopStatus.index == 0}">
+              <ktl:attribute name="class" value="header" />
+            </ktl:when>
+            <ktl:otherwise>
+              <ktl:attribute name="class" value="cell" />
+            </ktl:otherwise>
+          </ktl:choose>
+          content
+        </td>
+      </tr>
+    </ktl:forEach>
+  </table>
+</root>

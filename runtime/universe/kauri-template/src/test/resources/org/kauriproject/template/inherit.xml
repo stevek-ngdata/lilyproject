@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns:ktl="http://kauriproject.org/template" ktl:inherit="inherit_base.xml">
+  <ktl:init><ktl:variable name="x">ieks</ktl:variable></ktl:init>
+  <head>
+    <title>child template</title>
+  </head>
+  <body>
+    <ktl:block name="block1">
+      <p>first block - child</p>
+    </ktl:block>
+    <ktl:block name="block3">
+      <div>
+        <p>third block - child - ${x}</p>
+        <ktl:block name="child">
+          <p>block defined in child</p>
+        </ktl:block>
+      </div>
+      <ktl:macro name="mac">
+        <p>macro defined in child</p>
+      </ktl:macro>
+      <ktl:callMacro name="mac" />
+    </ktl:block>
+  </body>
+</html>

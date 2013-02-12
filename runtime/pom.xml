@@ -1,0 +1,769 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <properties>
+    <!-- Note: when upgrading any of these versions, consider
+         upgrading them in the archetype pom.xml as well -->
+    <version.maven>2.0.9</version.maven>
+    <version.springframework>3.2.1.RELEASE</version.springframework>
+    <version.springsecurity>2.0.3</version.springsecurity>
+    <version.slf4j>1.6.1</version.slf4j>
+    <version.jaxrs>1.0</version.jaxrs>
+  </properties>
+
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.kauriproject</groupId>
+  <artifactId>kauri</artifactId>
+  <packaging>pom</packaging>
+  <name>KAURI ::: ALL</name>
+  <version>0.4-dev-SNAPSHOT</version>
+  <description>
+    Kauri - Web application development framework
+  </description>
+  <url>http://kauriproject.org/</url>
+
+  <prerequisites>
+    <maven>2.1.0</maven>
+  </prerequisites>
+  <!--
+  <issueManagement>
+    <system>jira</system>
+    <url>http://kauriproject.org/JIRA</url>
+  </issueManagement>
+  -->
+  <!--
+  <ciManagement>
+    <system>continuum</system>
+    <url>http://kauriproject.org/continuum/</url>
+    <notifiers>
+      <notifier>
+        <type>mail</type>
+        <configuration>
+          <address>kauri-developers@googlegroups.com</address>
+        </configuration>
+      </notifier>
+    </notifiers>
+  </ciManagement>
+  <inceptionYear>2008</inceptionYear>
+  -->
+  <mailingLists>
+    <mailingList>
+      <name>Kauri developers list</name>
+      <subscribe>http://groups.google.com/group/kauri-developers/subscribe</subscribe>
+      <unsubscribe>kauri-developers-unsubscribe@googlegroups.com</unsubscribe>
+      <post>kauri-developers@googlegroups.com</post>
+      <archive>http://groups.google.com/group/kauri-developers/topics</archive>
+    </mailingList>
+  </mailingLists>
+
+  <developers>
+    <developer>
+      <name>Bruno Dumon</name>
+      <id>bruno</id>
+      <email>bruno@outerthought.org</email>
+      <organization>Outerthought</organization>
+      <roles>
+        <role>dev</role>
+      </roles>
+      <url />
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <name>Ives De Bruycker</name>
+      <id>idbr</id>
+      <email>idbr@schaubroeck.be</email>
+      <organization>Schaubroeck</organization>
+      <roles>
+        <role>dev</role>
+      </roles>
+      <url />
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <name>Jeroen Goubert</name>
+      <id>jgou</id>
+      <email>jgou@schaubroeck.be</email>
+      <organization>Schaubroeck</organization>
+      <roles>
+        <role>dev</role>
+      </roles>
+      <url />
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <name>Marc Portier</name>
+      <id>mpo</id>
+      <email>mpo@outerthought.org</email>
+      <organization>Outerthought</organization>
+      <roles>
+        <role>dev</role>
+      </roles>
+      <url />
+      <timezone>+1</timezone>
+    </developer>
+  </developers>
+  <contributors />
+
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>Copyright 2008 by Outerthought bvba and Schaubroeck nv</comments>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:svn:http://dev.outerthought.org/svn/outerthought_kauri/trunk</connection>
+    <developerConnection>scm:svn:https://dev.outerthought.org/svn/outerthought_kauri/trunk</developerConnection>
+    <url>http://dev.outerthought.org/trac/outerthought_kauri/browser/trunk</url>
+  </scm>
+
+  <organization>
+    <name>Kauri Project</name>
+    <url>http://kauriproject.org</url>
+  </organization>
+
+  <repositories>
+    <repository>
+      <id>default</id>
+      <name>Maven Repository Switchboard</name>
+      <layout>default</layout>
+      <url>http://repo1.maven.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>maven2-repository.dev.java.net</id>
+      <name>Java.net Repository for Maven</name>
+      <url>http://download.java.net/maven/2/</url>
+      <layout>default</layout>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    
+    <repository>
+      <id>repository.jboss.org</id>
+      <name>JBoss Maven repository (used for EL impl)</name>
+      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+      <layout>default</layout>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>kauri-dev</id>
+      <url>http://kauriproject.org/maven/maven2/dev</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>kauri-deploy</id>
+      <url>http://kauriproject.org/maven/maven2/deploy</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    
+    <repository>
+      <id>cdh.repo</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+      <name>Cloudera Repository</name>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>kauri-dev</id>
+      <url>http://kauriproject.org/maven/maven2/dev</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+    <!--
+    <pluginRepository>
+      <id>kauri-deploy</id>
+      <url>http://kauriproject.org/maven/maven2/deploy</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+    -->
+    <pluginRepository>
+      <name>oss.sonatype.org</name>
+      <id>oss.sonatype.org</id>
+      <url>http://oss.sonatype.org/content/groups/public</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>src/main/kauri</directory>
+        <targetPath>KAURI-INF</targetPath>
+      </resource>
+    </resources>
+
+    <pluginManagement>
+      <plugins>
+
+
+        <!-- compile -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>2.0.2</version>
+          <configuration>
+            <source>1.5</source>
+            <target>1.5</target>
+          </configuration>
+        </plugin>
+
+
+        <!-- test -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.4</version>
+          <configuration>
+            <trimStackTrace>false</trimStackTrace>
+            <!--
+            <debugForkedProcess>true</debugForkedProcess>
+            -->
+          </configuration>
+        </plugin>
+
+
+        <!--site -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>2.1</version>
+      <!--
+          <configuration>
+            <locales>nl</locales>
+          </configuration>
+      -->
+        </plugin>
+
+
+        <!-- IDE -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-eclipse-plugin</artifactId>
+          <version>2.4</version>
+          <configuration>
+            <downloadSources>true</downloadSources>
+            <downloadJavadocs>true</downloadJavadocs>
+            <useProjectReferences>false</useProjectReferences>
+          </configuration>
+        </plugin>
+        <!-- dependency -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>2.0</version>
+        </plugin>
+        <!-- packaging -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>2.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-war-plugin</artifactId>
+          <version>2.0.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>2.0.4</version>
+          <executions>
+            <execution>
+              <!-- To deploy the sources automatically -->
+              <goals>
+                <goal>jar</goal>
+                <goal>test-jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+
+        <!--  kauri module building :: generating classloader.xml -->
+        <plugin>
+          <groupId>org.kauriproject</groupId>
+          <artifactId>kauri-genclassloader-plugin</artifactId>
+          <version>0.4-dev-SNAPSHOT</version>
+          <executions>
+            <execution>
+              <phase>compile</phase>
+              <goals>
+                <goal>generate</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      
+      
+        <!--  kauri module building :: producing a conf/build.xml -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <executions>
+            <execution>
+              <phase>generate-resources</phase>
+              <goals>
+                <goal>run</goal>
+              </goals>
+              <configuration>
+                <tasks>
+                  <mkdir dir="${project.build.directory}/classes/KAURI-INF/conf" />
+                  <tstamp>
+                    <format property="build.time" timezone="GMT + 0" pattern="yyyyMMdd'T'HHmmss'Z'" />
+                  </tstamp>
+                  <condition property="key" value="${project.version}-${build.time}" else="${project.version}">
+                    <contains string="${project.version}" substring="-SNAPSHOT" />
+                  </condition>
+                  <echo file="${basedir}/target/classes/KAURI-INF/conf/build.xml" encoding="utf8"><![CDATA[<?xml version="1.0"?>
+<!-- generated by the module build process -->
+<conf>
+  <build>
+    <id>${project.id}</id>
+    <by>${user.name}</by>
+    <time>${build.time}</time>
+    <version>${project.version}</version>
+    <key>${key}</key>
+    <java>
+      <vendor>${java.vendor}</vendor>
+      <version>${java.version}</version>
+    </java>    
+  </build>
+</conf>]]></echo>
+                </tasks>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+
+        <plugin>
+          <groupId>net.alchim31.maven</groupId>
+          <artifactId>yuicompressor-maven-plugin</artifactId>
+          <version>1.2</version>
+        </plugin>
+
+
+      </plugins>      
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <!-- Entry needed to create, install and deploy sources jars -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <!-- Added here so that the 'javascript' dependency type would be know
+             by the kauri-dist project (and similar situations). -->
+        <groupId>org.codehaus.mojo.javascript</groupId>
+        <artifactId>javascript-maven-plugin</artifactId>
+        <version>1.0-kauri-20080605</version>
+        <extensions>true</extensions>
+      </plugin>
+    </plugins>
+
+  </build>
+  
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <aggregate>true</aggregate>
+          <links>
+            <link>http://java.sun.com/javase/6/docs/api</link>
+            <link>http://spring-rich-c.sourceforge.net/apidocs</link>
+          </links>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jxr-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
+
+  <profiles>
+    <profile>
+      <id>fast</id>
+      <properties>
+        <maven.test.skip>true</maven.test.skip>
+      </properties>
+    </profile>
+    <profile>
+      <id>production</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <maven.test.skip>false</maven.test.skip>
+      </properties>
+    </profile>
+    <profile>
+      <id>release</id>
+      <properties>
+        <maven.test.skip>false</maven.test.skip>
+      </properties>
+    </profile>
+    <profile>
+      <id>debug</id>
+      <properties>
+        <maven.surefire.debug>-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 -Xnoagent -Djava.compiler=NONE</maven.surefire.debug>
+      </properties>
+    </profile>
+
+  </profiles>
+
+  <modules>
+    <module>core/kauri-runtime</module>
+    <module>core/kauri-runtime-rapi</module>
+    <module>core/kauri-runtime-testfw</module>
+    <module>core/kauri-runtime-tests</module>
+    <module>core/kauri-runtime-launcher</module>
+    <module>core/kauri-runtime-cli</module>
+    <module>core/kauri-util</module>
+    <module>core/kauri-conf</module>
+
+    <module>tools/kauri-genclassloader-plugin</module>
+    <module>tools/kauri-deploy-repo</module>
+    <module>tools/kauri-package-plugin</module>
+
+<!--
+    <module>dist</module>
+-->
+
+    <module>universe/kauri-xmlcore</module>
+    <module>universe/kauri-template</module>
+    
+  </modules>
+
+  <dependencies>
+  </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- general dependencies -->
+      <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>2.4</version>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.1</version>
+        <scope>compile</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>avalon-framework</groupId>
+            <artifactId>avalon-framework</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>logkit</groupId>
+            <artifactId>logkit</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.1</version>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>1.4</version>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>1.2.1</version>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-jci-core</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>3.8.1</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>servlet-api</artifactId>
+        <version>2.5</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.groovy</groupId>
+        <artifactId>groovy-all</artifactId>
+        <version>1.7.3</version>
+        <scope>compile</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.ant</groupId>
+            <artifactId>ant</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.ant</groupId>
+            <artifactId>ant-launcher</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jline</groupId>
+            <artifactId>jline</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-core-asl</artifactId>
+        <version>1.5.6</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-mapper-asl</artifactId>
+        <version>1.5.6</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.annotation</groupId>
+        <artifactId>jsr250-api</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-cli</groupId>
+        <artifactId>commons-cli</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.16</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${version.slf4j}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>${version.slf4j}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jcl-over-slf4j</artifactId>
+        <version>${version.slf4j}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jul-to-slf4j</artifactId>
+        <version>${version.slf4j}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-core</artifactId>
+        <version>${version.springframework}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-beans</artifactId>
+        <version>${version.springframework}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-tx</artifactId>
+        <version>${version.springframework}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context</artifactId>
+        <version>${version.springframework}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-aop</artifactId>
+        <version>${version.springframework}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-core</artifactId>
+        <version>${version.springsecurity}</version>
+        <exclusions>
+          <!-- spring-support is old stuff and conflicts with spring-context-support, see trac #224-->
+          <exclusion>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-support</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>cglib</groupId>
+        <artifactId>cglib-nodep</artifactId>
+        <version>2.1_3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.aspectj</groupId>
+        <artifactId>aspectjrt</artifactId>
+        <version>1.6.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.aspectj</groupId>
+        <artifactId>aspectjweaver</artifactId>
+        <version>1.6.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>org.json</artifactId>
+        <version>2.0</version>
+      </dependency>        
+      <dependency>
+        <groupId>net.sf.json-lib</groupId>
+        <artifactId>json-lib</artifactId>
+        <version>2.2.2</version>
+        <classifier>jdk15</classifier>
+        <exclusions>
+          <!-- json-lib is dependent on an old commons-collections -->
+          <exclusion>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-util</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-template</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-runtime</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency> 
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-runtime-rapi</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency>         
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-deploy-repo</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-package-plugin</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-runtime-testfw</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-xmlcore</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-runtime-cli</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-runtime-launcher</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>joda-time</groupId>
+        <artifactId>joda-time</artifactId>
+        <version>1.6</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-jxpath</groupId>
+        <artifactId>commons-jxpath</artifactId>
+        <version>1.3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-conf</artifactId>
+        <version>0.4-dev-SNAPSHOT</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <distributionManagement>
+    <repository>
+      <id>org.kauriproject.maven-deploy</id>
+      <name>Kauri deploy repository</name>
+      <url>scp://kauriproject.org/var/www/kauriproject.org/maven/maven2/deploy</url>
+    </repository>
+    <snapshotRepository>
+      <id>org.kauriproject.maven-snapshot</id>
+      <name>Kauri dev repository</name>
+      <url>scp://kauriproject.org/var/www/kauriproject.org/maven/maven2/dev</url>
+    </snapshotRepository>
+    <site>
+      <id>kauriproject-website</id>
+      <url>scp://www.kauriproject.org/var/www/kauriproject.org/maven-site/${project.version}</url>
+    </site>
+  </distributionManagement>
+
+</project>

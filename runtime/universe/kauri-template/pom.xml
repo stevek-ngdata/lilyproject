@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0,http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.kauriproject</groupId>
+    <artifactId>kauri</artifactId>
+    <version>0.4-dev-SNAPSHOT</version>
+    <relativePath>../..</relativePath>
+  </parent>
+
+  <artifactId>kauri-template</artifactId>
+  <packaging>jar</packaging>
+  <name>KAURI ::: TEMPLATE</name>
+  <description>Kauri templating language and engine</description>
+
+  <build>
+    <plugins>        
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.kauriproject</groupId>
+      <artifactId>kauri-util</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kauriproject</groupId>
+      <artifactId>kauri-xmlcore</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.el</groupId>
+      <artifactId>jboss-el</artifactId>
+      <version>2.0.1.GA</version>
+    </dependency>
+    <!-- In case we would want to use Juel
+    <dependency>
+      <groupId>juel</groupId>
+      <artifactId>juel</artifactId>
+      <version>2.2.1</version>
+    </dependency>
+    -->	
+  </dependencies>
+
+  <profiles>
+  </profiles>
+</project>

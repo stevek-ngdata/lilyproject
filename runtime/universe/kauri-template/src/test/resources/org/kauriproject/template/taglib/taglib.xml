@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns:tst="http://kauriproject.org/template/taglib/test">
+  <head>
+    <title>Kauri taglib example</title>
+  </head>
+  <body>
+    <h3>Kauri template</h3>
+    <small>
+      <tst:test test="${false}">The end !</tst:test>
+    </small>
+    <div>
+      <p>There is no song, just a delusion of silence.</p>
+      <p>We dance and the music dies.</p>
+    </div>
+    <tst:test test="${true}">The end !</tst:test>
+  </body>
+</html>

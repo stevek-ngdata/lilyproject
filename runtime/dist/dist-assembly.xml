@@ -1,0 +1,104 @@
+<assembly>
+  <id>dist</id>
+
+  <formats>
+    <format>zip</format>
+    <format>tar.gz</format>
+  </formats>
+
+  <files>
+    <!-- The binary distribution includes a different README.txt than
+         the one in the root of the source tree -->
+    <file>
+      <source>target/classes/README.txt</source>
+      <outputDirectory>/</outputDirectory>
+    </file>
+    <file>
+      <source>../LICENSE.txt</source>
+      <outputDirectory>/</outputDirectory>
+    </file>
+    <file>
+      <source>target/classes/kauri.sh</source>
+      <outputDirectory>/bin/</outputDirectory>
+    </file>
+    <file>
+      <source>target/classes/kauri.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+    </file>
+    <file>
+      <source>target/classes/README-SAMPLES.txt</source>
+      <outputDirectory>/samples/</outputDirectory>
+    </file>
+    <file>
+      <source>../tools/kauri-archetype/archetype-catalog.xml</source>
+      <outputDirectory>/lib/</outputDirectory>
+      <filtered>true</filtered>
+    </file>
+    <file>
+      <source>target/classes/kauri-project-template.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+    </file>
+    <file>
+      <source>target/classes/kauri-project-template.sh</source>
+      <outputDirectory>/bin/</outputDirectory>
+    </file>
+    <file>
+      <source>target/classes/kauri-deploy-repo.sh</source>
+      <outputDirectory>/bin/</outputDirectory>
+    </file>
+    <file>
+      <source>target/classes/kauri-deploy-repo.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+    </file>
+    <file>
+      <source>target/classes/service-wrapper-common.conf</source>
+      <outputDirectory>/wrapper/conf</outputDirectory>
+    </file>
+    <file>
+      <source>src/main/wrapper/README.txt</source>
+      <outputDirectory>wrapper/</outputDirectory>
+    </file>
+  </files>
+
+  <fileSets>
+    <!-- Include sources of the samples -->
+    <fileSet>
+      <directory>../samples/</directory>
+      <outputDirectory>/samples/</outputDirectory>
+      <excludes>
+        <exclude>**/target/**</exclude>
+        <exclude>kauri-dbforms-sample/**</exclude>
+        <exclude>kauri-dbresources-sample/**</exclude>
+      </excludes>
+      <useDefaultExcludes>true</useDefaultExcludes>
+      <!--
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+      -->
+    </fileSet>
+    <fileSet>
+      <directory>src/main/wrapper/lib</directory>
+      <outputDirectory>/wrapper/lib</outputDirectory>
+      <useDefaultExcludes>true</useDefaultExcludes>
+    </fileSet>
+    <fileSet>
+      <directory>src/main/wrapper/bin</directory>
+      <outputDirectory>/wrapper/bin</outputDirectory>
+      <useDefaultExcludes>true</useDefaultExcludes>
+      <fileMode>755</fileMode>
+    </fileSet>
+  </fileSets>
+
+  <repositories>
+    <repository>
+      <includeMetadata>false</includeMetadata>
+      <scope>runtime</scope>
+      <outputDirectory>lib</outputDirectory>
+      <useStrictFiltering>true</useStrictFiltering>
+      <excludes>
+        <exclude>*kauri-dist*</exclude>
+      </excludes>
+    </repository>
+  </repositories>
+
+</assembly>
