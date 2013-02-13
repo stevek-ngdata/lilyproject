@@ -14,7 +14,7 @@ public class ConfManagerImpl implements ConfManager {
     private ScheduledExecutorService executor;
     private State state = State.STOPPED;
 
-    private static final String RUNTIME_CONF_NAME = "kauri";
+    private static final String RUNTIME_CONF_NAME = "runtime";
 
     private enum State { STOPPED, RUNTIME_CONF_AVAILABLE, MODULES_CONF_AVAILABLE }
 

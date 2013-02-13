@@ -80,8 +80,8 @@
             </goals>
             <configuration>
               <tasks>
-                <mkdir dir="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/lilyruntimedepresolver/" />
-                <echo file="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/lilyruntimedepresolver/lilyruntime.properties" encoding="utf8">lily.version=${project.version}</echo>
+                <mkdir dir="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/" />
+                <echo file="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/lilyruntime.properties" encoding="utf8">lily.version=${project.version}</echo>
               </tasks>
             </configuration>
           </execution>

@@ -20,6 +20,7 @@ import java.util.Properties;
 
 public class KauriMavenUtil {
     public static String getKauriVersion() {
+        // TODO NEWRUNTIME does this still make sense now that kauri==lily?
         String kauriVersion;
         try {
             Properties props = new Properties();

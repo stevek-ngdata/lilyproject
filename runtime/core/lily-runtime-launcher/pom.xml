@@ -50,7 +50,7 @@
                 <available property="classLoaderXmlAvailable" file="${classLoaderXmlLocation}" />
                 <fail unless="classLoaderXmlAvailable" message="File not available: ${classLoaderXmlLocation}" />
 
-                <property name="targetDir" value="target/classes/org/lilyproject/launcher/" />
+                <property name="targetDir" value="target/classes/org/lilyproject/runtime/launcher/" />
                 <mkdir dir="${targetDir}" />
                 <copy file="${classLoaderXmlLocation}" tofile="${targetDir}/classloader.xml" />
               </tasks>

@@ -262,15 +262,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
       </plugin>
-
-      <plugin>
-        <!-- Added here so that the 'javascript' dependency type would be know
-             by the kauri-dist project (and similar situations). -->
-        <groupId>org.codehaus.mojo.javascript</groupId>
-        <artifactId>javascript-maven-plugin</artifactId>
-        <version>1.0-kauri-20080605</version>
-        <extensions>true</extensions>
-      </plugin>
     </plugins>
 
   </build>

@@ -114,7 +114,9 @@
     <module>tools/genscript-plugin</module>
     <module>tools/doc-tools</module>
     <module>tools/licensecheck</module>
+    <!-- TODO NEWROWLOG
     <module>tools/record-row-visualizer</module>
+    -->
     <module>tools/print-host</module>
     <module>tools/archetype</module>
 
@@ -1066,6 +1068,7 @@
         <plugin>
           <groupId>org.lilyproject</groupId>
           <artifactId>lily-runtime-genclassloader-plugin</artifactId>
+          <version>${project.version}</version>
           <executions>
             <execution>
               <phase>compile</phase>

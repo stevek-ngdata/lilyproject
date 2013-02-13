@@ -74,7 +74,7 @@ public class KauriProjectClasspath {
 
     public ModuleArtifacts getModuleArtifactsFromKauriConfig(File confDirectory, List remoteRepos)
             throws MojoExecutionException {
-        File configFile = new File(confDirectory, "lilyruntime/wiring.xml");
+        File configFile = new File(confDirectory, "runtime/wiring.xml");
         try {
             FileInputStream fis = null;
             try {

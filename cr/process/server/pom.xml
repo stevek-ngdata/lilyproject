@@ -62,6 +62,7 @@
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-package-plugin</artifactId>
+        <version>${project.version}</version>
         <inherited>false</inherited>
         <configuration>
           <confDirectory>${basedir}/conf</confDirectory>
