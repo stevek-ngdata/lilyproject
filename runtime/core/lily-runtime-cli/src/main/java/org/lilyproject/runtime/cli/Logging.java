@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.runtime.runtime.cli;
+package org.lilyproject.runtime.cli;
 
 import org.apache.log4j.*;
 import org.apache.log4j.jmx.HierarchyDynamicMBean;

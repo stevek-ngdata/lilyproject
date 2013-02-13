@@ -64,7 +64,7 @@ public class RuntimeCliLauncher {
 
     public void run(String[] args) throws Throwable {
 
-        ClassLoader classLoader = LauncherClasspathHelper.getClassLoader("org/lilyproject/launcher/classloader.xml", repositoryLocation);
+        ClassLoader classLoader = LauncherClasspathHelper.getClassLoader("org/lilyproject/runtime/launcher/classloader.xml", repositoryLocation);
         Thread.currentThread().setContextClassLoader(classLoader);
 
         Method mainMethod;
