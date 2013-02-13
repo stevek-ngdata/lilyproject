@@ -1246,7 +1246,8 @@ public class RestTest {
     }
 
     private void printErrorResponse(ResponseAndContent response) throws IOException {
-        if (response.getResponse().getEntity() != null && "application/json".equals(response.getResponse().getEntity().getContentType().getValue())) {
+        if (response.getResponse().getEntity() != null && response.getResponse().getEntity().getContentType() != null
+                && "application/json".equals(response.getResponse().getEntity().getContentType().getValue())) {
             JsonNode json = JsonFormat.deserializeNonStd(response.getContent());
             System.err.println("Error:");
             System.err.println("  Description: " +
