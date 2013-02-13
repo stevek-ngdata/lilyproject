@@ -65,7 +65,7 @@ public class RestTest {
 
         httpClient = new DefaultHttpClient();
 
-        BASE_URI = "http://localhost:8899/repository";
+        BASE_URI = "http://localhost:12060/repository";
     }
 
     @AfterClass

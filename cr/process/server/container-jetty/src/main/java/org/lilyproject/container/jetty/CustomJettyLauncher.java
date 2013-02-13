@@ -26,7 +26,7 @@ public class CustomJettyLauncher implements Container {
     public CustomJettyLauncher() throws Exception {
         log.trace("in constructor custom jetty launcher");
 
-        server = new Server(8899);
+        server = new Server(12060);
 
         context = new Context(server, "/", Context.SESSIONS);
         server.start();
