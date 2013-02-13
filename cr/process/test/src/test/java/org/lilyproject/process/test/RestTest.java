@@ -1289,7 +1289,7 @@ public class RestTest {
     }
 
     public static JsonNode readJson(ResponseAndContent rac) throws IOException {
-        return JsonFormat.deserialize(rac.getContent());
+        return JsonFormat.deserializeNonStd(rac.getContent());
     }
 
     private String json(String input) {
