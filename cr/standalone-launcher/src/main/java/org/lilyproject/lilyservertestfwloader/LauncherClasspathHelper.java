@@ -81,7 +81,7 @@ public class LauncherClasspathHelper {
         if (classPathEl == null) {
             throw new RuntimeException("Classloader configuration does not contain a classpath element.");
         } else {
-            String kauriVersion = getKauriVersion();
+            String kauriVersion = getProjectVersion();
             List<URL> artifactURLs = new ArrayList<URL>();
             children = classPathEl.getChildNodes();
             for (int i = 0; i < children.getLength(); i++) {
@@ -143,18 +143,31 @@ public class LauncherClasspathHelper {
         return document;
     }
 
-    private static String getKauriVersion() {
-        Properties properties = new Properties();
-        InputStream is = LauncherClasspathHelper.class.getResourceAsStream("kauri.properties");
-        String kauriVersion = "";
+    private static String getProjectVersion() {
+        return readVersion("org.lilyproject", "lily-standalone-launcher");
+    }
+
+    public static String readVersion(String groupId, String artifactId) {
+        String propPath = "/META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
+        InputStream is = LauncherClasspathHelper.class.getResourceAsStream(propPath);
         if (is != null) {
+            Properties properties = new Properties();
             try {
                 properties.load(is);
-                is.close();
-                kauriVersion = properties.getProperty("kauri.version");
+                String version = properties.getProperty("version");
+                if (version != null) {
+                    return version;
+                }
             } catch (IOException e) {
+                // ignore
+            }
+            try {
+                is.close();
+            } catch (IOException e) {
+                // ignore
             }
         }
-        return kauriVersion;
+
+        return "undetermined (please report this as bug)";
     }
 }

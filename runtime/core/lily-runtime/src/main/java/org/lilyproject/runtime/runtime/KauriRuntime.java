@@ -15,8 +15,6 @@
  */
 package org.lilyproject.runtime.runtime;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -24,7 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.jci.monitor.FilesystemAlterationMonitor;
@@ -50,7 +47,7 @@ import org.lilyproject.runtime.runtime.repository.ArtifactNotFoundException;
 import org.lilyproject.runtime.runtime.repository.ArtifactRepository;
 import org.lilyproject.runtime.runtime.source.ModuleSourceManager;
 import org.lilyproject.runtime.util.ArgumentValidator;
-import org.lilyproject.runtime.util.io.IOUtils;
+import org.lilyproject.util.Version;
 
 /**
  * This is the main entry point of the KauriRuntime.
@@ -312,24 +309,7 @@ public class KauriRuntime {
     }
 
     public static String getVersion() {
-        String pomPropsPath = "META-INF/maven/org.lilyproject/kauri-runtime/pom.properties";
-        InputStream is = null;
-        try {
-            is = KauriRuntime.class.getClassLoader().getResourceAsStream(pomPropsPath);
-            if (is == null) {
-                throw new KauriRTException("Could not find the resource containing the Kauri version information at " + pomPropsPath);
-            }
-
-            Properties pomProps = new Properties();
-            try {
-                pomProps.load(is);
-            } catch (IOException e) {
-                throw new RuntimeException("Error reading Kauri pom properties from " + pomPropsPath, e);
-            }
-            return pomProps.getProperty("version");
-        } finally {
-            IOUtils.closeQuietly(is);
-        }
+        return Version.readVersion("org.lilyproject", "lily-runtime");
     }
 
     public ConfManager getConfManager() {

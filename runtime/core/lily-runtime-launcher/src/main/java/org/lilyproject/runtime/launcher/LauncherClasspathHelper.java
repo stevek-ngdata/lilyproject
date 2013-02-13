@@ -69,7 +69,7 @@ public class LauncherClasspathHelper {
         if (classPathEl == null) {
             throw new RuntimeException("Classloader configuration does not contain a classpath element.");
         } else {
-            String defaultVersion = getKauriVersion();
+            String defaultVersion = getProjectVersion();
             List<URL> artifactURLs = new ArrayList<URL>();
             children = classPathEl.getChildNodes();
             for (int i = 0; i < children.getLength(); i++) {
@@ -112,20 +112,31 @@ public class LauncherClasspathHelper {
         return document;
     }
 
-    private static String getKauriVersion() {
-        String pomPropsPath = "META-INF/maven/org.lilyproject/kauri-runtime-launcher/pom.properties";
-        InputStream is = LauncherClasspathHelper.class.getClassLoader().getResourceAsStream(pomPropsPath);
-        Properties properties = new Properties();
-        try {
-            properties.load(is);
-            is.close();
-        } catch (Exception e) {
-            throw new RuntimeException("Error reading classpath resource " + pomPropsPath, e);
+    private static String getProjectVersion() {
+        return readVersion("org.lilyproject", "lily-runtime-launcher");
+    }
+
+    public static String readVersion(String groupId, String artifactId) {
+        String propPath = "/META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
+        InputStream is = LauncherClasspathHelper.class.getResourceAsStream(propPath);
+        if (is != null) {
+            Properties properties = new Properties();
+            try {
+                properties.load(is);
+                String version = properties.getProperty("version");
+                if (version != null) {
+                    return version;
+                }
+            } catch (IOException e) {
+                // ignore
+            }
+            try {
+                is.close();
+            } catch (IOException e) {
+                // ignore
+            }
         }
 
-        String version = properties.getProperty("version");
-        if (version == null)
-            throw new RuntimeException("Unexpected error: no version property defined in classpath resource " + pomPropsPath);
-        return version;
+        return "undetermined (please report this as bug)";
     }
 }
