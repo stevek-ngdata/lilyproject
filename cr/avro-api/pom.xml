@@ -106,7 +106,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${basedir}/target/classes/KAURI-INF/conf</outputDirectory>
+              <outputDirectory>${basedir}/target/classes/LILY-INF/conf</outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}/../conf/avro</directory>

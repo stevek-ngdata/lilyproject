@@ -236,7 +236,7 @@ public abstract class AbstractPackageMojo extends AbstractMojo {
    }
 
     protected Set<Artifact> getClassPathArtifacts(Artifact moduleArtifact) throws MojoExecutionException {
-        String entryPath = "KAURI-INF/classloader.xml";
+        String entryPath = "LILY-INF/classloader.xml";
         ZipFile zipFile = null;
         InputStream is = null;
         Document classLoaderDocument;

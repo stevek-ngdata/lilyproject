@@ -8,8 +8,7 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.logging.Logger;
 
-import com.google.common.collect.Lists;
-import org.lilyproject.runtime.runtime.rapi.KauriModule;
+import org.lilyproject.runtime.rapi.KauriModule;
 import org.lilyproject.servletregistry.api.ServletRegistry;
 import org.lilyproject.servletregistry.api.ServletRegistryEntry;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -87,7 +87,7 @@ public class ClassloaderMojo extends AbstractMojo {
     private MavenProjectHelper projectHelper;
 
     /**
-     * @parameter expression="src/main/kauri"
+     * @parameter expression="src/main/lily"
      */
     private String templateDirectory;
 
@@ -99,7 +99,7 @@ public class ClassloaderMojo extends AbstractMojo {
     /**
      * Where should the file end up?
      * 
-     * @parameter expression="${project.build.directory}/classes/KAURI-INF"
+     * @parameter expression="${project.build.directory}/classes/LILY-INF"
      */
     private String targetDirectory;
 

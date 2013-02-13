@@ -43,7 +43,7 @@
       </resource>
       <resource>
         <directory>src/main/lily</directory>
-        <targetPath>KAURI-INF</targetPath>
+        <targetPath>LILY-INF</targetPath>
       </resource>
     </resources>
 

@@ -19,7 +19,7 @@ import org.apache.log4j.*;
 import org.apache.log4j.jmx.HierarchyDynamicMBean;
 import org.apache.log4j.spi.LoggerRepository;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.lilyproject.runtime.runtime.KauriRuntime;
+import org.lilyproject.runtime.KauriRuntime;
 
 import javax.management.JMException;
 import javax.management.MBeanServer;

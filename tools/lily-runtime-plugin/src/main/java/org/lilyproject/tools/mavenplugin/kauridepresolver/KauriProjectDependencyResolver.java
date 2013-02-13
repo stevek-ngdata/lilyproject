@@ -24,7 +24,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProjectBuilder;
 import org.apache.maven.settings.Repository;
-import org.lilyproject.runtime.runtime.model.SourceLocations;
+import org.lilyproject.runtime.model.SourceLocations;
 
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
