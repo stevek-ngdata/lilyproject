@@ -111,7 +111,7 @@ public class RecordUpdateHookTest {
         FileUtils.forceMkdir(repoConfDir);
 
         // Write configuration to activate the decorator
-        String repositoryXml = "<repository xmlns:conf=\"http://kauriproject.org/configuration\" conf:inherit=\"shallow\">" +
+        String repositoryXml = "<repository xmlns:conf=\"http://lilyproject.org/configuration\" conf:inherit=\"shallow\">" +
                 "<updateHooks><updateHook>test-updatehook</updateHook></updateHooks>" +
                 "</repository>";
 

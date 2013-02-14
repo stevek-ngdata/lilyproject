@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<conf xmlns:conf="http://kauriproject.org/configuration"
+<conf xmlns:conf="http://lilyproject.org/configuration"
       conf:inherit="deep">
   <properties conf:inheritKey="">
      <property key="key2">value2 - altered</property>

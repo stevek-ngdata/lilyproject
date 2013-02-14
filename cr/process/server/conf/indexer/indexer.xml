@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<indexer xmlns:conf="http://kauriproject.org/configuration"
+<indexer xmlns:conf="http://lilyproject.org/configuration"
                conf:inherit="deep">
   <!--
     The amount of message queue listeners (index updaters) that should be
