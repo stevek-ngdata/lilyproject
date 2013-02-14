@@ -15,7 +15,7 @@
  */
 package org.lilyproject.runtime.model;
 
-import org.lilyproject.runtime.util.ArgumentValidator;
+import org.lilyproject.util.ArgumentValidator;
 
 public abstract class JavaServiceInjectDefinition {
     private String sourceModuleId;

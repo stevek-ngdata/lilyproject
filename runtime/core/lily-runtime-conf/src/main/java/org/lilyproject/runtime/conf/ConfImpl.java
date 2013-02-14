@@ -1,7 +1,7 @@
 package org.lilyproject.runtime.conf;
 
-import org.lilyproject.runtime.util.location.Location;
-import org.lilyproject.runtime.util.location.LocationImpl;
+import org.lilyproject.util.location.Location;
+import org.lilyproject.util.location.LocationImpl;
 import org.lilyproject.runtime.conf.jxpath.ConfPointerFactory;
 import org.apache.commons.jxpath.JXPathContext;
 

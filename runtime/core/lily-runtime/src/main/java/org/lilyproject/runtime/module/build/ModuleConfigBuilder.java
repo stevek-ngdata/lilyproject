@@ -32,8 +32,8 @@ import org.lilyproject.runtime.module.ModuleConfig;
 import org.lilyproject.runtime.module.ModuleConfigImpl;
 import org.lilyproject.runtime.rapi.ModuleSource;
 import org.lilyproject.runtime.repository.FileArtifactRef;
-import org.lilyproject.runtime.util.io.IOUtils;
-import org.lilyproject.runtime.util.xml.DocumentHelper;
+import org.lilyproject.util.io.IOUtils;
+import org.lilyproject.util.xml.DocumentHelper;
 import org.w3c.dom.Document;
 
 public class ModuleConfigBuilder {

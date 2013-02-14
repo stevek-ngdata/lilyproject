@@ -15,9 +15,7 @@
  */
 package org.lilyproject.runtime.module.javaservice;
 
-import org.lilyproject.runtime.KauriRTException;
-import org.lilyproject.runtime.util.ObjectUtils;
-import org.lilyproject.runtime.util.ArgumentValidator;
+import org.lilyproject.util.ArgumentValidator;
 
 import java.util.Map;
 import java.util.HashMap;

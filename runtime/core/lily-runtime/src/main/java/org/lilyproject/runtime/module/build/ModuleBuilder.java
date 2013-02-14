@@ -29,7 +29,7 @@ import org.lilyproject.runtime.module.ModuleImpl;
 import org.lilyproject.runtime.module.javaservice.JavaServiceShield;
 import org.lilyproject.runtime.rapi.ModuleSource;
 import org.lilyproject.runtime.repository.ArtifactNotFoundException;
-import org.lilyproject.runtime.util.io.IOUtils;
+import org.lilyproject.util.io.IOUtils;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.context.support.GenericApplicationContext;

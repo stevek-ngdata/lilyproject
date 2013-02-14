@@ -1,11 +1,10 @@
 package org.lilyproject.runtime.conf;
 
 import org.xml.sax.*;
-import org.apache.commons.logging.LogFactory;
-import org.lilyproject.runtime.util.xml.LocalSAXParserFactory;
-import org.lilyproject.runtime.util.location.Location;
-import org.lilyproject.runtime.util.location.LocationImpl;
-import org.lilyproject.runtime.util.io.IOUtils;
+import org.lilyproject.util.xml.LocalSAXParserFactory;
+import org.lilyproject.util.location.Location;
+import org.lilyproject.util.location.LocationImpl;
+import org.lilyproject.util.io.IOUtils;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;

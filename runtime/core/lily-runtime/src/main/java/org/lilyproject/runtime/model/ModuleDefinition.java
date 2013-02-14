@@ -16,14 +16,13 @@
 package org.lilyproject.runtime.model;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.lilyproject.runtime.KauriRTException;
-import org.lilyproject.runtime.util.ArgumentValidator;
-import org.lilyproject.runtime.util.location.Location;
+import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.location.Location;
 
 /**
  * Pointer to a module file (to be part of the runtime).

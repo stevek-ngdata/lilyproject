@@ -46,7 +46,7 @@ import org.lilyproject.runtime.rapi.Mode;
 import org.lilyproject.runtime.repository.ArtifactNotFoundException;
 import org.lilyproject.runtime.repository.ArtifactRepository;
 import org.lilyproject.runtime.source.ModuleSourceManager;
-import org.lilyproject.runtime.util.ArgumentValidator;
+import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Version;
 
 /**

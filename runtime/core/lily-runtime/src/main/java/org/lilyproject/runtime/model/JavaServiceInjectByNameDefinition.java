@@ -15,7 +15,7 @@
  */
 package org.lilyproject.runtime.model;
 
-import org.lilyproject.runtime.util.ArgumentValidator;
+import org.lilyproject.util.ArgumentValidator;
 
 public class JavaServiceInjectByNameDefinition extends JavaServiceInjectDefinition {
     private String dependencyName;

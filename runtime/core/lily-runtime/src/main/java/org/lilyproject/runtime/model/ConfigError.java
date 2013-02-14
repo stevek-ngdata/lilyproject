@@ -15,7 +15,7 @@
  */
 package org.lilyproject.runtime.model;
 
-import org.lilyproject.runtime.util.location.Location;
+import org.lilyproject.util.location.Location;
 
 public class ConfigError {
     private String message;

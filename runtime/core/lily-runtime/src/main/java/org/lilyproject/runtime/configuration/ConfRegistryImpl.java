@@ -7,7 +7,7 @@ import org.lilyproject.runtime.rapi.ConfNotFoundException;
 import org.lilyproject.runtime.configuration.ConfSource.CachedConfig;
 import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.runtime.conf.ConfImpl;
-import org.lilyproject.runtime.util.location.LocationImpl;
+import org.lilyproject.util.location.LocationImpl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

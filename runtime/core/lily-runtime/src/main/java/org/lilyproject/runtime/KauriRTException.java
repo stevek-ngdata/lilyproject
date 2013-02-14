@@ -15,8 +15,8 @@
  */
 package org.lilyproject.runtime;
 
-import org.lilyproject.runtime.util.location.LocatedRuntimeException;
-import org.lilyproject.runtime.util.location.Location;
+import org.lilyproject.util.location.LocatedRuntimeException;
+import org.lilyproject.util.location.Location;
 
 public class KauriRTException extends LocatedRuntimeException {
 

@@ -26,7 +26,7 @@ import org.lilyproject.runtime.repository.ArtifactRef;
 import org.lilyproject.runtime.repository.ArtifactRepository;
 import org.lilyproject.runtime.repository.FileArtifactRef;
 import org.lilyproject.runtime.repository.RepoArtifactRef;
-import org.lilyproject.runtime.util.xml.DocumentHelper;
+import org.lilyproject.util.xml.DocumentHelper;
 import org.w3c.dom.Element;
 
 /**

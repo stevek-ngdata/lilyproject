@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.runtime.conf.XmlConfBuilder;
 import org.lilyproject.runtime.conf.ConfImpl;
-import org.lilyproject.runtime.util.io.IOUtils;
+import org.lilyproject.util.io.IOUtils;
 
 import java.io.InputStream;
 import java.io.IOException;

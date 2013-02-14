@@ -1,6 +1,6 @@
 package org.lilyproject.runtime.conf;
 
-import org.lilyproject.runtime.util.location.Location;
+import org.lilyproject.util.location.Location;
 
 import java.util.List;
 import java.util.Map;

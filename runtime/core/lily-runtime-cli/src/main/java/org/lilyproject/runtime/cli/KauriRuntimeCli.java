@@ -48,8 +48,8 @@ import org.lilyproject.runtime.model.*;
 import org.lilyproject.runtime.repository.ArtifactRepository;
 import org.lilyproject.runtime.repository.ChainedMaven2StyleArtifactRepository;
 import org.lilyproject.runtime.repository.Maven2StyleArtifactRepository;
-import org.lilyproject.runtime.util.xml.SimpleNamespaceContext;
-import org.lilyproject.runtime.util.io.IOUtils;
+import org.lilyproject.util.xml.SimpleNamespaceContext;
+import org.lilyproject.util.io.IOUtils;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.w3c.dom.Document;
 
