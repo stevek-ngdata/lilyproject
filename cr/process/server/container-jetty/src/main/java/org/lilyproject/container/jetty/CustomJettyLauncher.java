@@ -42,7 +42,6 @@ public class CustomJettyLauncher {
         log.trace("in constructor custom jetty launcher");
 
         server = new Server(12060);
-        server.start();
 
         context = new Context(server, "/", Context.SESSIONS);
     }
@@ -55,12 +54,8 @@ public class CustomJettyLauncher {
                 context.addServlet(servletHolder, pattern);
             }
         }
-
+        server.start();
         return server;
-    }
-
-    public void addServletMapping(String urlPattern, HttpServlet servlet) {
-        ServletHolder servletHolder = new ServletHolder(servlet);
     }
 
     @PreDestroy
