@@ -257,11 +257,6 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-container-api</artifactId>
-        <version>2.2-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
         <artifactId>lily-container-jetty</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>

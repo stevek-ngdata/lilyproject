@@ -270,7 +270,6 @@
     <module>core/lily-runtime-tests</module>
     <module>core/lily-runtime-launcher</module>
     <module>core/lily-runtime-cli</module>
-    <module>core/lily-runtime-util</module>
     <module>core/lily-runtime-conf</module>
 
     <module>tools/lily-runtime-genclassloader-plugin</module>

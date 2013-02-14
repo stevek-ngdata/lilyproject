@@ -32,7 +32,6 @@ import org.lilyproject.runtime.conf.XmlConfBuilder;
 import org.lilyproject.runtime.KauriRTException;
 import org.lilyproject.runtime.KauriRuntime;
 import org.lilyproject.runtime.repository.ArtifactRepository;
-import org.lilyproject.runtime.util.properties.PropertyResolver;
 
 public class KauriRuntimeModelBuilder {
     public static KauriRuntimeModel build(File runtimeConfig, Set<String> disabledModuleIds,

@@ -15,8 +15,6 @@
  */
 package org.lilyproject.runtime.model;
 
-import org.lilyproject.runtime.util.properties.PropertyResolver;
-
 import java.util.Properties;
 import java.util.Map;
 import java.io.InputStream;

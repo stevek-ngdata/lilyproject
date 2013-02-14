@@ -35,10 +35,6 @@
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-container-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lilyproject</groupId>
       <artifactId>lily-servletregistry-api</artifactId>
     </dependency>
 
