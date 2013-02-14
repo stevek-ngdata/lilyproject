@@ -1,6 +1,7 @@
 package org.lilyproject.container.jetty;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServlet;
 
 import org.apache.commons.logging.Log;
@@ -27,10 +28,9 @@ public class CustomJettyLauncher implements Container {
         log.trace("in constructor custom jetty launcher");
 
         server = new Server(12060);
-
-        context = new Context(server, "/", Context.SESSIONS);
         server.start();
 
+        context = new Context(server, "/", Context.SESSIONS);
     }
 
     @PostConstruct
@@ -41,11 +41,17 @@ public class CustomJettyLauncher implements Container {
                 context.addServlet(servletHolder, pattern);
             }
         }
+
         return server;
     }
 
     public void addServletMapping(String urlPattern, HttpServlet servlet) {
         ServletHolder servletHolder = new ServletHolder(servlet);
+    }
+
+    @PreDestroy
+    public void stopServer() throws Exception {
+        server.stop();
     }
 
 }

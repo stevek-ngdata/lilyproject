@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<classLoading xmlns:conf="http://kauriproject.org/configuration"
+<classLoading xmlns:conf="http://lilyproject.org/configuration"
               conf:inherit="deep">
 
   <required on-conflict="highest"/>

@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 
 public class ShardSelectorTest {
     private static final String BASE_PATH = "org/lilyproject/indexer/model/sharding/test/";

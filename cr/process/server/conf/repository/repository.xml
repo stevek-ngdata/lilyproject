@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<repository xmlns:conf="http://kauriproject.org/configuration"
+<repository xmlns:conf="http://lilyproject.org/configuration"
             conf:inherit="shallow">
 
   <!-- Filesystem to use to store blobs. The directory will be created if it

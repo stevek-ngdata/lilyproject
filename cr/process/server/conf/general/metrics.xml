@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<metrics xmlns:conf="http://kauriproject.org/configuration"
+<metrics xmlns:conf="http://lilyproject.org/configuration"
          conf:inherit="deep">
 
   <hadoopMetricsAttributes conf:inheritKey="string(@name)">

@@ -15,6 +15,7 @@
  */
 package org.lilyproject.runtime.test;
 
+import org.junit.Assert;
 import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
 import org.lilyproject.runtime.model.*;
 import org.lilyproject.runtime.rapi.Mode;
