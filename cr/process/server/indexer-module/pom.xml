@@ -30,7 +30,7 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <name>Lily: Kauri: indexer module</name>
+  <name>Lily: Runtime: indexer module</name>
 
   <dependencies>
     <dependency>
@@ -44,7 +44,7 @@
       <exclusions>
         <exclusion>
           <!-- Excluding Avro here so that it would only be in the classpath of the repository module.
-               Otherwise Avro can't find the repository implementation classes in the Kauri Runtime. -->
+               Otherwise Avro can't find the repository implementation classes in the Lily Runtime. -->
           <groupId>org.apache.hadoop</groupId>
           <artifactId>avro</artifactId>
         </exclusion>

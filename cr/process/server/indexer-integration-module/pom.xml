@@ -30,7 +30,7 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <name>Lily: Kauri: indexer-integration module</name>
+  <name>Lily: Runtime: indexer-integration module</name>
 
   <dependencies>
     <dependency>

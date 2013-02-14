@@ -30,7 +30,7 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <name>Lily: Kauri: general module</name>
+  <name>Lily: Runtime: general module</name>
 
   <dependencies>
     <dependency>

@@ -22,7 +22,7 @@
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-runtime-plugin</artifactId>
   <packaging>maven-plugin</packaging>
-  <name>Lily: Kauri-related Maven plugins</name>
+  <name>Lily: Runtime-related Maven plugins</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>

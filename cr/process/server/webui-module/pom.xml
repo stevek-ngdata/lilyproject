@@ -30,7 +30,7 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <name>Lily: Kauri: web-ui module</name>
+  <name>Lily: Runtime: web-ui module</name>
 
   <dependencies>
     <dependency>
