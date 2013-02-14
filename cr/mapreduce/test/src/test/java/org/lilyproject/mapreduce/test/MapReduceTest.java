@@ -15,7 +15,7 @@
  */
 package org.lilyproject.mapreduce.test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;

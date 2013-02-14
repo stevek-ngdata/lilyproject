@@ -1,6 +1,6 @@
 package org.lilyproject.util.hbase;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TableConfigTest {

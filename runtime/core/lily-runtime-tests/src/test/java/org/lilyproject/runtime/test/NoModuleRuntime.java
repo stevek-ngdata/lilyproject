@@ -15,6 +15,7 @@
  */
 package org.lilyproject.runtime.test;
 
+import org.junit.Assert;
 import org.lilyproject.runtime.KauriRuntime;
 import org.lilyproject.runtime.KauriRuntimeSettings;
 import org.lilyproject.runtime.configuration.ConfManagerImpl;

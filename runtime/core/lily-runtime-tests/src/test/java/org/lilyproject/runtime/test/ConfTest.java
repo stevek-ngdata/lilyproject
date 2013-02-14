@@ -1,18 +1,21 @@
 package org.lilyproject.runtime.test;
 
-import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
-import org.lilyproject.runtime.model.*;
-import org.lilyproject.runtime.rapi.ConfRegistry;
-import org.lilyproject.runtime.configuration.ConfManager;
-import org.lilyproject.runtime.configuration.ConfManagerImpl;
-import org.lilyproject.runtime.testmodules.confmod.ConfDependentBean;
-import org.lilyproject.runtime.conf.Conf;
-import org.springframework.context.ApplicationContext;
-
 import java.io.File;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import org.junit.Assert;
+import org.lilyproject.runtime.conf.Conf;
+import org.lilyproject.runtime.configuration.ConfManager;
+import org.lilyproject.runtime.configuration.ConfManagerImpl;
+import org.lilyproject.runtime.model.KauriRuntimeModel;
+import org.lilyproject.runtime.model.ModuleDefinition;
+import org.lilyproject.runtime.model.ModuleSourceType;
+import org.lilyproject.runtime.rapi.ConfRegistry;
+import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
+import org.lilyproject.runtime.testmodules.confmod.ConfDependentBean;
+import org.springframework.context.ApplicationContext;
 
 public class ConfTest extends AbstractRuntimeTest {
     @Override

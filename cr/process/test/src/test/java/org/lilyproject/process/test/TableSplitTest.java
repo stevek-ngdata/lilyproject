@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
