@@ -15,13 +15,23 @@
  */
 package org.lilyproject.tools.import_.core;
 
-import org.lilyproject.repository.api.*;
+import static org.lilyproject.tools.import_.core.ImportMode.CREATE;
+import static org.lilyproject.tools.import_.core.ImportMode.CREATE_OR_UPDATE;
+import static org.lilyproject.tools.import_.core.ImportMode.UPDATE;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.lilyproject.tools.import_.core.ImportMode.*;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
+import org.lilyproject.repository.api.RecordTypeExistsException;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 
 public class RecordTypeImport {
     public static ImportResult<RecordType> importRecordType(RecordType newRecordType, ImportMode impMode,
@@ -59,16 +69,18 @@ public class RecordTypeImport {
                 if (oldRecordType != null) {
                     boolean updated = false;
 
+                    final RecordTypeBuilder builder = typeManager.recordTypeBuilder(oldRecordType);
+
                     // Update field entries
-                    Set<FieldTypeEntry> oldFieldTypeEntries = new HashSet<FieldTypeEntry>(oldRecordType.getFieldTypeEntries());
-                    Set<FieldTypeEntry> newFieldTypeEntries = new HashSet<FieldTypeEntry>(newRecordType.getFieldTypeEntries());
+                    Set<FieldTypeEntry> oldFieldTypeEntries =
+                            new HashSet<FieldTypeEntry>(oldRecordType.getFieldTypeEntries());
+                    Set<FieldTypeEntry> newFieldTypeEntries =
+                            new HashSet<FieldTypeEntry>(newRecordType.getFieldTypeEntries());
                     if (!newFieldTypeEntries.equals(oldFieldTypeEntries)) {
                         updated = true;
 
-                        oldRecordType.getFieldTypeEntries().clear();
-
                         for (FieldTypeEntry entry : newFieldTypeEntries) {
-                            oldRecordType.addFieldTypeEntry(entry);
+                            builder.field(entry.getFieldTypeId(), entry.isMandatory());
                         }
                     }
 
@@ -87,10 +99,8 @@ public class RecordTypeImport {
                     if (!oldMixins.equals(newMixins)) {
                         updated = true;
 
-                        oldRecordType.getMixins().clear();
-
                         for (Map.Entry<SchemaId, Long> entry : newMixins.entrySet()) {
-                            oldRecordType.addMixin(entry.getKey(), entry.getValue());
+                            builder.mixin().id(entry.getKey()).version(entry.getValue()).add();
                         }
                     }
 
@@ -99,11 +109,11 @@ public class RecordTypeImport {
                     QName newName = newRecordType.getName();
                     if (!oldName.equals(newName)) {
                         updated = true;
-                        oldRecordType.setName(newName);
+                        builder.name(newName);
                     }
 
                     if (updated) {
-                        oldRecordType = typeManager.updateRecordType(oldRecordType);
+                        oldRecordType = typeManager.updateRecordType(builder.build());
                         return ImportResult.updated(oldRecordType);
                     } else {
                         return ImportResult.upToDate(oldRecordType);
@@ -113,7 +123,8 @@ public class RecordTypeImport {
 
             if (impMode == UPDATE) {
                 // We should never arrive here, update is handled above
-                throw new RuntimeException("Unexpected situation: in case of mode " + UPDATE + " we should not be here.");
+                throw new RuntimeException(
+                        "Unexpected situation: in case of mode " + UPDATE + " we should not be here.");
             }
 
             try {

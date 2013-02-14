@@ -43,6 +43,7 @@ import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.testclientfw.BaseRepositoryTestTool;
 import org.lilyproject.testclientfw.Util;
@@ -273,7 +274,8 @@ public class Tester extends BaseRepositoryTestTool {
             throws JsonFormatException, RepositoryException, ImportException, InterruptedException {
         String recordTypeName = JsonUtil.getString(recordTypeNode, "name");
         QName recordTypeQName = QNameConverter.fromJson(recordTypeName, jsonImport.getNamespaces());
-        recordType = repository.getTypeManager().newRecordType(recordTypeQName);
+        final RecordTypeBuilder recordTypeBuilder = repository.getTypeManager().recordTypeBuilder();
+        recordTypeBuilder.name(recordTypeQName);
         TestRecordType testRecordType = new TestRecordType();
         // Fields
         for (JsonNode fieldNode : recordTypeNode.get("fields")) {
@@ -286,17 +288,18 @@ public class Tester extends BaseRepositoryTestTool {
             if (times == 0) {
                 TestFieldType fieldType = fieldTypes
                         .get(QNameConverter.fromJson(fieldName, jsonImport.getNamespaces()));
-                recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
+                recordTypeBuilder.field(fieldType.getFieldType().getId(), false);
                 testRecordType.addFieldType(fieldType);
             } else {
                 for (int i = 0; i < times; i++) {
                     TestFieldType fieldType = fieldTypes.get(QNameConverter.fromJson(fieldName + i,
                             jsonImport.getNamespaces()));
-                    recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
+                    recordTypeBuilder.field(fieldType.getFieldType().getId(), false);
                     testRecordType.addFieldType(fieldType);
                 }
             }
         }
+        recordType = recordTypeBuilder.build();
         testRecordType.setRecordType(jsonImport.importRecordType(recordType));
         recordTypes.put(recordType.getName(), testRecordType);
     }
@@ -361,15 +364,17 @@ public class Tester extends BaseRepositoryTestTool {
             for (JsonNode recordTypeNode : recordTypesNode) {
                 String recordTypeName = JsonUtil.getString(recordTypeNode, "name");
                 QName recordTypeQName = QNameConverter.fromJson(recordTypeName, jsonImport.getNamespaces());
-                recordType = repository.getTypeManager().newRecordType(recordTypeQName);
+                final RecordTypeBuilder recordTypeBuilder = repository.getTypeManager().recordTypeBuilder();
+                recordTypeBuilder.name(recordTypeQName);
                 TestRecordType testRecordType = new TestRecordType();
                 // Fields
                 for (JsonNode fieldNode : recordTypeNode.get("fields")) {
                     String fieldName = JsonUtil.getString(fieldNode, "name");
                     TestFieldType fieldType = fieldTypes.get(fieldName);
-                    recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
+                    recordTypeBuilder.field(fieldType.getFieldType().getId(), false);
                     testRecordType.addFieldType(fieldType);
                 }
+                recordType = recordTypeBuilder.build();
                 testRecordType.setRecordType(jsonImport.importRecordType(recordType));
                 recordTypes.put(recordType.getName(), testRecordType);
             }

@@ -49,6 +49,22 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
         reset();
     }
 
+    /**
+     * Initialize a builder from an existing record.
+     */
+    public RecordTypeBuilderImpl(TypeManager typeManager, RecordType existingRecordType) throws TypeException {
+        this(typeManager);
+        name(existingRecordType.getName());
+        version(existingRecordType.getVersion());
+        id(existingRecordType.getId());
+        for (FieldTypeEntry fieldTypeEntry : existingRecordType.getFieldTypeEntries()) {
+            this.fieldTypeEntries.add(fieldTypeEntry);
+        }
+        for (Map.Entry<SchemaId, Long> mixin : existingRecordType.getMixins().entrySet()) {
+            this.mixins.put(mixin.getKey(), mixin.getValue());
+        }
+    }
+
     @Override
     public RecordTypeBuilder defaultNamespace(String namespace) {
         this.defaultNamespace = namespace;
@@ -186,6 +202,12 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
         @Override
         public FieldEntryBuilder mandatory() {
             mandatory = true;
+            return this;
+        }
+
+        @Override
+        public FieldEntryBuilder mandatory(boolean mandatory) {
+            this.mandatory = mandatory;
             return this;
         }
 

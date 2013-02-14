@@ -30,7 +30,7 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.ArgumentValidator;
 
-public class RecordTypeImpl implements RecordType, Cloneable {
+public class RecordTypeImpl implements RecordType {
 
     private final SchemaId id;
     private final QName name;
@@ -66,7 +66,7 @@ public class RecordTypeImpl implements RecordType, Cloneable {
     }
 
     RecordTypeImpl(SchemaId id, QName name, Long version, Map<SchemaId, Long> mixins,
-                   Collection<FieldTypeEntry> fieldTypeEntries) {
+            Collection<FieldTypeEntry> fieldTypeEntries) {
         this.id = id;
         this.name = name;
         this.version = version;

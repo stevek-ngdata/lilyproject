@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -48,19 +47,21 @@ import org.lilyproject.repository.api.TypeManager;
 /**
  * This test has as goal to test that data is kept when a data dir is given and the clear flag is put to false.
  * Example usage:
- *   mvn -DargLine="-Dlily.lilyproxy.dir=/home/lilyuser/tmp/test1 -Dlily.lilyproxy.mode=embed -Dlily.lilyproxy.clear=false" \
- *                 test -Dtest=KeepDataTest
+ * mvn -DargLine="-Dlily.lilyproxy.dir=/home/lilyuser/tmp/test1 -Dlily.lilyproxy.mode=embed
+ * -Dlily.lilyproxy.clear=false" \
+ * test -Dtest=KeepDataTest
  */
 public class KeepDataTest {
     private static final QName RECORDTYPE1 = new QName("org.lilyproject.lilytestutility", "TestRecordType");
-    private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility","name");
+    private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility", "name");
     private static Repository repository;
     private static LilyProxy lilyProxy;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         lilyProxy = new LilyProxy();
-        byte[] schemaData = IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
+        byte[] schemaData =
+                IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
         lilyProxy.start(schemaData, null);
         LilyClient lilyClient = lilyProxy.getLilyServerProxy().getClient();
         repository = lilyClient.getRepository();
@@ -85,7 +86,7 @@ public class KeepDataTest {
 
         try {
             fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),
-                FIELD1, Scope.NON_VERSIONED));
+                    FIELD1, Scope.NON_VERSIONED));
         } catch (FieldTypeExistsException e) {
             System.out.println("[KeepDataTest] Field Type already exists: " + FIELD1);
         }
@@ -96,8 +97,7 @@ public class KeepDataTest {
             System.out.println("[KeepDataTest] RecordType already exists: " + recordType1);
         } catch (RecordTypeNotFoundException e) {
             System.out.println("[KeepDataTest] RecordType does not exist yet. Create it: " + recordType1);
-            recordType1 = typeManager.newRecordType(RECORDTYPE1);
-            recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+            recordType1 = typeManager.recordTypeBuilder().name(RECORDTYPE1).field(fieldType1.getId(), false).build();
             typeManager.createRecordType(recordType1);
         }
 
@@ -110,7 +110,7 @@ public class KeepDataTest {
         RecordId recordId = null;
         int i = 0;
         try {
-            while(true) {
+            while (true) {
                 recordId = repository.getIdGenerator().newRecordId("MyRecord" + i++);
                 Record read = repository.read(recordId);
                 System.out.println("[KeepDataTest] Record already exists: " + recordId);
@@ -123,7 +123,7 @@ public class KeepDataTest {
             record = repository.create(record);
         }
         Record record = repository.read(recordId);
-        Assert.assertEquals("name1", (String)record.getField(FIELD1));
+        Assert.assertEquals("name1", (String) record.getField(FIELD1));
 
         // Wait for messages to be processed
         Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
@@ -136,14 +136,15 @@ public class KeepDataTest {
         }
         for (int j = 0; j < i; j++) {
             RecordId expectedRecordId = repository.getIdGenerator().newRecordId("MyRecord" + j);
-            Assert.assertTrue("Expected " + expectedRecordId + " to be in query result", recordIds.contains(expectedRecordId));
+            Assert.assertTrue("Expected " + expectedRecordId + " to be in query result",
+                    recordIds.contains(expectedRecordId));
         }
     }
 
     private List<RecordId> querySolr(String name) throws SolrServerException {
         SolrServer solr = lilyProxy.getSolrProxy().getSolrServer();
         SolrQuery solrQuery = new SolrQuery();
-        solrQuery.set("df","name");
+        solrQuery.set("df", "name");
         solrQuery.setQuery(name);
         solrQuery.set("fl", "lily.id");
 

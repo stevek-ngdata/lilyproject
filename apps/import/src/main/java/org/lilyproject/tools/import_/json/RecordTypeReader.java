@@ -25,6 +25,7 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
@@ -32,7 +33,7 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 
 public class RecordTypeReader implements EntityReader<RecordType> {
-    public static EntityReader<RecordType> INSTANCE  = new RecordTypeReader();
+    public static EntityReader<RecordType> INSTANCE = new RecordTypeReader();
 
     @Override
     public RecordType fromJson(JsonNode node, Repository repository) throws JsonFormatException, RepositoryException,
@@ -49,18 +50,18 @@ public class RecordTypeReader implements EntityReader<RecordType> {
                     nodeNode.getClass().getName());
         }
 
-        ObjectNode node = (ObjectNode)nodeNode;
+        ObjectNode node = (ObjectNode) nodeNode;
 
         namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 
         TypeManager typeManager = repository.getTypeManager();
         QName name = QNameConverter.fromJson(getString(node, "name"), namespaces);
 
-        RecordType recordType = typeManager.newRecordType(name);
+        final RecordTypeBuilder recordTypeBuilder = typeManager.recordTypeBuilder();
 
         String id = getString(node, "id", null);
         if (id != null)
-            recordType.setId(new SchemaIdImpl(id));
+            recordTypeBuilder.id(new SchemaIdImpl(id));
 
         if (node.get("fields") != null) {
             ArrayNode fields = getArray(node, "fields");
@@ -73,16 +74,17 @@ public class RecordTypeReader implements EntityReader<RecordType> {
                 String fieldName = getString(field, "name", null);
 
                 if (fieldIdString != null) {
-                    recordType.addFieldTypeEntry(new SchemaIdImpl(fieldIdString), mandatory);
+                    recordTypeBuilder.fieldEntry().id(new SchemaIdImpl(fieldIdString)).mandatory(mandatory).add();
                 } else if (fieldName != null) {
                     QName fieldQName = QNameConverter.fromJson(fieldName, namespaces);
 
                     try {
                         SchemaId fieldId = typeManager.getFieldTypeByName(fieldQName).getId();
-                        recordType.addFieldTypeEntry(fieldId, mandatory);
+                        recordTypeBuilder.fieldEntry().id(fieldId).mandatory(mandatory).add();
                     } catch (RepositoryException e) {
-                        throw new JsonFormatException("Record type " + name + ": error looking up field type with name: " +
-                                fieldQName, e);
+                        throw new JsonFormatException(
+                                "Record type " + name + ": error looking up field type with name: " +
+                                        fieldQName, e);
                     }
                 } else {
                     throw new JsonFormatException("Record type " + name + ": field entry should specify an id or name");
@@ -100,16 +102,17 @@ public class RecordTypeReader implements EntityReader<RecordType> {
                 Long rtVersion = getLong(mixin, "version", null);
 
                 if (rtIdString != null) {
-                    recordType.addMixin(new SchemaIdImpl(rtIdString), rtVersion);
+                    recordTypeBuilder.mixin().id(new SchemaIdImpl(rtIdString)).version(rtVersion).add();
                 } else if (rtName != null) {
                     QName rtQName = QNameConverter.fromJson(rtName, namespaces);
 
                     try {
                         SchemaId rtId = typeManager.getRecordTypeByName(rtQName, null).getId();
-                        recordType.addMixin(rtId, rtVersion);
+                        recordTypeBuilder.mixin().id(rtId).version(rtVersion).add();
                     } catch (RepositoryException e) {
-                        throw new JsonFormatException("Record type " + name + ": error looking up mixin record type with name: " +
-                                rtQName, e);
+                        throw new JsonFormatException(
+                                "Record type " + name + ": error looking up mixin record type with name: " +
+                                        rtQName, e);
                     }
                 } else {
                     throw new JsonFormatException("Record type " + name + ": mixin should specify an id or name");
@@ -117,7 +120,7 @@ public class RecordTypeReader implements EntityReader<RecordType> {
             }
         }
 
-        return recordType;
+        return recordTypeBuilder.build();
     }
 
     @Override

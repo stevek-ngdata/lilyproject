@@ -15,13 +15,27 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.*;
-import org.lilyproject.tools.import_.core.*;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import static javax.ws.rs.core.Response.Status.*;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.tools.import_.core.IdentificationMode;
+import org.lilyproject.tools.import_.core.ImportMode;
+import org.lilyproject.tools.import_.core.ImportResult;
+import org.lilyproject.tools.import_.core.ImportResultType;
+import org.lilyproject.tools.import_.core.RecordTypeImport;
 
 @Path("schema/recordTypeById/{id}")
 public class RecordTypeByIdResource extends RepositoryEnabled {
@@ -35,7 +49,8 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
-            throw new ResourceException("Error loading record type with id " + id, e, INTERNAL_SERVER_ERROR.getStatusCode());
+            throw new ResourceException("Error loading record type with id " + id, e,
+                    INTERNAL_SERVER_ERROR.getStatusCode());
         }
     }
 
@@ -44,38 +59,43 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
     @Consumes("application/json")
     public Response put(@PathParam("id") String id, RecordType recordType) {
         SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
-
-        if (recordType.getId() != null && !recordType.getId().equals(schemaId)) {
-            throw new ResourceException("ID in submitted record type does not match the id in URI.",
-                    BAD_REQUEST.getStatusCode());
-        }
-        recordType.setId(schemaId);
-
-        ImportResult<RecordType> result;
         try {
-            result = RecordTypeImport.importRecordType(recordType, ImportMode.UPDATE, IdentificationMode.ID,
-                    null, repository.getTypeManager());
-        } catch (Exception e) {
-            throw new ResourceException("Error creating or updating record type with id " + id, e,
+
+            if (recordType.getId() != null && !recordType.getId().equals(schemaId)) {
+                throw new ResourceException("ID in submitted record type does not match the id in URI.",
+                        BAD_REQUEST.getStatusCode());
+            }
+            recordType = repository.getTypeManager().recordTypeBuilder(recordType).id(schemaId).build();
+
+            ImportResult<RecordType> result;
+            try {
+                result = RecordTypeImport.importRecordType(recordType, ImportMode.UPDATE, IdentificationMode.ID,
+                        null, repository.getTypeManager());
+            } catch (Exception e) {
+                throw new ResourceException("Error creating or updating record type with id " + id, e,
+                        INTERNAL_SERVER_ERROR.getStatusCode());
+            }
+
+            recordType = result.getEntity();
+            Response response;
+
+            ImportResultType resultType = result.getResultType();
+            switch (resultType) {
+                case UPDATED:
+                case UP_TO_DATE:
+                    response = Response.ok(Entity.create(recordType)).build();
+                    break;
+                case CANNOT_UPDATE_DOES_NOT_EXIST:
+                    throw new ResourceException("Record type not found: " + id, NOT_FOUND.getStatusCode());
+                default:
+                    throw new RuntimeException("Unexpected import result type: " + resultType);
+            }
+
+            return response;
+        } catch (TypeException e) {
+            throw new ResourceException("Error updating record type with id " + id, e,
                     INTERNAL_SERVER_ERROR.getStatusCode());
         }
-
-        recordType = result.getEntity();
-        Response response;
-
-        ImportResultType resultType = result.getResultType();
-        switch (resultType) {
-            case UPDATED:
-            case UP_TO_DATE:
-                response = Response.ok(Entity.create(recordType)).build();
-                break;
-            case CANNOT_UPDATE_DOES_NOT_EXIST:
-                throw new ResourceException("Record type not found: " + id, NOT_FOUND.getStatusCode());
-            default:
-                throw new RuntimeException("Unexpected import result type: " + resultType);
-        }
-
-        return response;
     }
 
 }

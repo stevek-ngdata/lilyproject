@@ -191,6 +191,11 @@ public interface RecordTypeBuilder {
         FieldEntryBuilder mandatory();
 
         /**
+         * Sets the mandatory flag.
+         */
+        FieldEntryBuilder mandatory(boolean mandatory);
+
+        /**
          * Adds a new field type entry to the record type and returns the
          * {@link RecordTypeBuilder}.
          */

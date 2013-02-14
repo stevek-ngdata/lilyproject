@@ -147,12 +147,12 @@ public class IndexerMasterTest {
                 typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),
                         NAME, Scope.NON_VERSIONED));
 
-        RecordType bookRecordType = typeManager.newRecordType(BOOK_RECORD_TYPE);
-        bookRecordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
+        final RecordType bookRecordType =
+                typeManager.recordTypeBuilder().name(BOOK_RECORD_TYPE).field(linkFieldType.getId(), false).build();
         typeManager.createRecordType(bookRecordType);
 
-        final RecordType authorRecordType = typeManager.newRecordType(AUTHOR_RECORD_TYPE);
-        authorRecordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(nameFieldType.getId(), false));
+        final RecordType authorRecordType =
+                typeManager.recordTypeBuilder().name(AUTHOR_RECORD_TYPE).field(nameFieldType.getId(), false).build();
         typeManager.createRecordType(authorRecordType);
     }
 

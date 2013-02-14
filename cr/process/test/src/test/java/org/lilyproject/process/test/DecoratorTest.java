@@ -15,17 +15,23 @@
  */
 package org.lilyproject.process.test;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.File;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.repository.api.*;
-
-import java.io.File;
-
-import static org.junit.Assert.assertEquals;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
 
 /**
  * Tests the repository decorator feature.
@@ -69,8 +75,8 @@ public class DecoratorTest {
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         try {
-           if (lilyProxy != null)
-               lilyProxy.stop();
+            if (lilyProxy != null)
+                lilyProxy.stop();
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -91,12 +97,13 @@ public class DecoratorTest {
         String projectVersion = System.getProperty("project.version");
         if (projectVersion == null) {
             throw new Exception("This test relies on a system property project.version being set. Probably you " +
-                "are running this test outside of Maven? Try adding -Dproject.version=...");
+                    "are running this test outside of Maven? Try adding -Dproject.version=...");
         }
 
         String wiringXml = "<wiring>\n" +
                 "  <modules>\n" +
-                "    <artifact id=\"test-decorator\" groupId=\"org.lilyproject\" artifactId=\"lily-test-decorator\" version=\"" + projectVersion + "\">\n" +
+                "    <artifact id=\"test-decorator\" groupId=\"org.lilyproject\" artifactId=\"lily-test-decorator\" version=\"" +
+                projectVersion + "\">\n" +
                 "    </artifact>\n" +
                 "  </modules>\n" +
                 "</wiring>";
@@ -113,9 +120,10 @@ public class DecoratorTest {
         FileUtils.forceMkdir(repoConfDir);
 
         // Write configuration to activate the decorator
-        String repositoryXml = "<repository xmlns:conf=\"http://kauriproject.org/configuration\" conf:inherit=\"shallow\">" +
-                "<decorators><decorator>test-decorator</decorator></decorators>" +
-                "</repository>";
+        String repositoryXml =
+                "<repository xmlns:conf=\"http://kauriproject.org/configuration\" conf:inherit=\"shallow\">" +
+                        "<decorators><decorator>test-decorator</decorator></decorators>" +
+                        "</repository>";
 
         FileUtils.writeStringToFile(new File(repoConfDir, "repository.xml"), repositoryXml, "UTF-8");
 
@@ -136,13 +144,13 @@ public class DecoratorTest {
         fieldType = typeMgr.createFieldType(fieldType);
 
         QName typeName = new QName("ns", "rt1");
-        RecordType recordType = typeMgr.newRecordType(typeName);
-        recordType.addFieldTypeEntry(fieldType.getId(), false);
+        RecordType recordType = typeMgr.recordTypeBuilder().name(typeName).field(fieldType.getId(), false).build();
         recordType = typeMgr.createRecordType(recordType);
 
         // This field will be set by the decorator, it needs to exist for (de)serialization to work
         QName responseFieldName = new QName("decorator-test", "post-create");
-        FieldType responseFieldType = typeMgr.newFieldType(typeMgr.getValueType("STRING"), responseFieldName, Scope.NON_VERSIONED);
+        FieldType responseFieldType =
+                typeMgr.newFieldType(typeMgr.getValueType("STRING"), responseFieldName, Scope.NON_VERSIONED);
         responseFieldType = typeMgr.createFieldType(responseFieldType);
 
         Record record = repository.newRecord();

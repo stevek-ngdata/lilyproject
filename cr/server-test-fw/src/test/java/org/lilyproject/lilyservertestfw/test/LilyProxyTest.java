@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -47,7 +46,7 @@ import org.lilyproject.repository.api.TypeManager;
 
 public class LilyProxyTest {
     private static final QName RECORDTYPE1 = new QName("org.lilyproject.lilytestutility", "TestRecordType");
-    private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility","name");
+    private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility", "name");
     private static LilyProxy lilyProxy;
     private static LilyClient lilyClient;
     private Repository repository;
@@ -55,7 +54,8 @@ public class LilyProxyTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         lilyProxy = new LilyProxy();
-        byte[] schemaData = IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
+        byte[] schemaData =
+                IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
         lilyProxy.start(schemaData, null);
         lilyClient = lilyProxy.getLilyServerProxy().getClient();
     }
@@ -72,8 +72,8 @@ public class LilyProxyTest {
         TypeManager typeManager = repository.getTypeManager();
         FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),
                 FIELD1, Scope.NON_VERSIONED));
-        RecordType recordType1 = typeManager.newRecordType(RECORDTYPE1);
-        recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        final RecordType recordType1 =
+                typeManager.recordTypeBuilder().name(RECORDTYPE1).field(fieldType1.getId(), false).build();
         typeManager.createRecordType(recordType1);
 
         // Add index
@@ -87,7 +87,7 @@ public class LilyProxyTest {
         record.setField(FIELD1, "name1");
         record = repository.create(record);
         record = repository.read(record.getId());
-        Assert.assertEquals("name1", (String)record.getField(FIELD1));
+        Assert.assertEquals("name1", (String) record.getField(FIELD1));
 
         // Wait for messages to be processed
         Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
@@ -97,8 +97,8 @@ public class LilyProxyTest {
 
         Assert.assertTrue(recordIds.contains(record.getId()));
 
-        System.out.println("Original record:" +record.getId().toString());
-        System.out.println("Queried record:" +recordIds.get(0).toString());
+        System.out.println("Original record:" + record.getId().toString());
+        System.out.println("Queried record:" + recordIds.get(0).toString());
 
         //
         // Batch index build scenario
@@ -145,8 +145,8 @@ public class LilyProxyTest {
     private List<RecordId> querySolr(String name) throws SolrServerException {
         SolrServer solr = lilyProxy.getSolrProxy().getSolrServer();
         SolrQuery solrQuery = new SolrQuery();
-      //set default search field (no longer supported in schema.xml
-        solrQuery.set("df","name");
+        //set default search field (no longer supported in schema.xml
+        solrQuery.set("df", "name");
         solrQuery.setQuery(name);
         solrQuery.set("fl", "lily.id");
         QueryResponse response = solr.query(solrQuery);

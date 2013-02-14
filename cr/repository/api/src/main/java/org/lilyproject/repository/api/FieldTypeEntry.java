@@ -16,7 +16,8 @@
 package org.lilyproject.repository.api;
 
 /**
- * Describes the association between a {@link RecordType} and a {@link FieldType}. Or in other words, the occurrence of a
+ * Describes the association between a {@link RecordType} and a {@link FieldType}. Or in other words, the occurrence of
+ * a
  * field type within a record type.
  *
  * <p>At this time, the only attribute specific to this relation indicates if the field type is mandatory
@@ -29,15 +30,9 @@ package org.lilyproject.repository.api;
  */
 public interface FieldTypeEntry {
 
-    void setFieldTypeId(SchemaId id);
-
     SchemaId getFieldTypeId();
 
-    void setMandatory(boolean mandatory);
-
     boolean isMandatory();
-
-    FieldTypeEntry clone();
 
     boolean equals(Object obj);
 }

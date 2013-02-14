@@ -15,6 +15,9 @@
  */
 package org.lilyproject.process.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.OutputStream;
 import java.util.Set;
@@ -37,9 +40,6 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class LilyClientTest {
     private static LilyProxy lilyProxy;
@@ -80,8 +80,8 @@ public class LilyClientTest {
         FieldType blobFieldType = typeManager.newFieldType(blobType, new QName(NS, "data"), Scope.VERSIONED);
         blobFieldType = typeManager.createFieldType(blobFieldType);
 
-        RecordType recordType = typeManager.newRecordType(new QName(NS, "file"));
-        recordType.addFieldTypeEntry(blobFieldType.getId(), true);
+        RecordType recordType =
+                typeManager.recordTypeBuilder().name(new QName(NS, "file")).field(blobFieldType.getId(), true).build();
         recordType = typeManager.createRecordType(recordType);
 
 
@@ -123,8 +123,8 @@ public class LilyClientTest {
         FieldType fieldType = typeManager.newFieldType("STRING", new QName(NS, "scanfield"), Scope.VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
 
-        RecordType recordType = typeManager.newRecordType(new QName(NS, "scanrt"));
-        recordType.addFieldTypeEntry(fieldType.getId(), true);
+        RecordType recordType =
+                typeManager.recordTypeBuilder().name(new QName(NS, "scanrt")).field(fieldType.getId(), true).build();
         recordType = typeManager.createRecordType(recordType);
 
         // Create some records
@@ -162,8 +162,8 @@ public class LilyClientTest {
         FieldType fieldType = typeManager.newFieldType("STRING", new QName(NS, "indexfield"), Scope.VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
 
-        RecordType recordType = typeManager.newRecordType(new QName(NS, "indexrt"));
-        recordType.addFieldTypeEntry(fieldType.getId(), true);
+        RecordType recordType =
+                typeManager.recordTypeBuilder().name(new QName(NS, "indexrt")).field(fieldType.getId(), true).build();
         recordType = typeManager.createRecordType(recordType);
 
         // Create a record

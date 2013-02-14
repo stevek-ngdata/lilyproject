@@ -60,7 +60,7 @@ public interface TypeManager extends Closeable {
      * <p>This is only a factory method, nothing is created in the repository.
      */
     RecordType newRecordType(QName name, Map<SchemaId, Long> mixins,
-                             Collection<FieldTypeEntry> fieldTypeEntries) throws TypeException;
+            Collection<FieldTypeEntry> fieldTypeEntries) throws TypeException;
 
     /**
      * Instantiates a new RecordType object.
@@ -68,7 +68,7 @@ public interface TypeManager extends Closeable {
      * <p>This is only a factory method, nothing is created in the repository.
      */
     RecordType newRecordType(SchemaId recordTypeId, QName name, Long version, Map<SchemaId, Long> mixins,
-                             Collection<FieldTypeEntry> fieldTypeEntries) throws TypeException;
+            Collection<FieldTypeEntry> fieldTypeEntries) throws TypeException;
 
     /**
      * Creates a RecordType in the repository.
@@ -305,6 +305,13 @@ public interface TypeManager extends Closeable {
      * Returns a record type builder, providing a fluent API to manipulate record types.
      */
     RecordTypeBuilder recordTypeBuilder() throws TypeException;
+
+    /**
+     * Returns a record type builder initialized with the values from an existing record type, providing a fluent API
+     * to
+     * manipulate this record type.
+     */
+    RecordTypeBuilder recordTypeBuilder(RecordType recordType) throws TypeException;
 
     /**
      * Returns a field type builder, providing a fluent API to manipulate field types.
