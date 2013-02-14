@@ -57,7 +57,7 @@ public class RecordTypeReader implements EntityReader<RecordType> {
         TypeManager typeManager = repository.getTypeManager();
         QName name = QNameConverter.fromJson(getString(node, "name"), namespaces);
 
-        final RecordTypeBuilder recordTypeBuilder = typeManager.recordTypeBuilder();
+        final RecordTypeBuilder recordTypeBuilder = typeManager.recordTypeBuilder().name(name);
 
         String id = getString(node, "id", null);
         if (id != null)
