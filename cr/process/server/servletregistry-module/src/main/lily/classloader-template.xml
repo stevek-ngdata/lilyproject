@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classloader>
   <classpath>
-    <!-- This is needed because otherwise Hadoop fails to load the Lily InputFormat (which
-         it needs to calculate the splits). This is loaded via Configuration.getClass, which
-         doesn't use the context classloader (or rather, uses the context classloader at the
-         time of static initialisation of the Configuration object).
-    -->
     <artifact groupId="org.lilyproject" artifactId="lily-servletregistry-api" share="required"/>
   </classpath>
 </classloader>

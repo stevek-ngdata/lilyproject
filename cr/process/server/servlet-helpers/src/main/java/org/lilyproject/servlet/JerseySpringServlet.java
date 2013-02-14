@@ -1,3 +1,18 @@
+/*
+ * Copyright 2013 NGDATA nv
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.lilyproject.servlet;
 
 import javax.servlet.ServletException;
@@ -13,18 +28,15 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 public class JerseySpringServlet extends SpringServlet {
 
-    private static final Log log = LogFactory.getLog(JerseySpringServlet.class);
-
     private ConfigurableApplicationContext context;
 
     public JerseySpringServlet(ConfigurableApplicationContext context) {
         this.context = context;
     }
+
     @Override
-    protected ResourceConfig getDefaultResourceConfig(Map<String, Object> props,
-                                                      WebConfig webConfig) throws ServletException {
-//        props.put(PackagesResourceConfig.PROPERTY_PACKAGES, "com.ngdata.lilyenterprise.consumerdb.rest");
-//        return new PackagesResourceConfig(props);
+    protected ResourceConfig getDefaultResourceConfig(Map<String, Object> props, WebConfig webConfig)
+            throws ServletException {
         return new DefaultResourceConfig();
     }
 
