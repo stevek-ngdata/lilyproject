@@ -35,8 +35,6 @@
 
   <lily:import-service id="repository" service="org.lilyproject.repository.api.Repository"/>
 
-  <lily:import-service id="container" service="org.lilyproject.container.api.Container"/>
-
   <!-- This triggers the creation of a dispatcher servlet with correct spring app context setup-->
   <bean id="dispatcherServletManager" class="org.lilyproject.hello.webmvc.DispatcherServletManager">
     <constructor-arg value="classpath:/spring-mvc-context.xml"/>

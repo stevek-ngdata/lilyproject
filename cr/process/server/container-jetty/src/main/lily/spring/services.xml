@@ -40,6 +40,4 @@
 
   <bean id="container" class="org.lilyproject.container.jetty.CustomJettyLauncher"/>
 
-  <lily:export-service ref="container" service="org.lilyproject.container.api.Container"/>
-
 </beans>

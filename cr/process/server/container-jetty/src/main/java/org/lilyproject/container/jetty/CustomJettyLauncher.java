@@ -14,7 +14,7 @@ import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CustomJettyLauncher implements Container {
+public class CustomJettyLauncher {
 
     private Log log = LogFactory.getLog(CustomJettyLauncher.class);
 
