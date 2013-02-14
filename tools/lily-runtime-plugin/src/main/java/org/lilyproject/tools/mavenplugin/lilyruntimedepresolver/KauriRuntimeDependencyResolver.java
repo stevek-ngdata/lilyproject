@@ -23,6 +23,7 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProjectBuilder;
+import org.lilyproject.util.Version;
 
 import java.util.List;
 import java.util.Set;
@@ -79,10 +80,10 @@ public class KauriRuntimeDependencyResolver extends AbstractMojo {
         KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), null,
                 artifactFactory, resolver, localRepository);
 
-        String kauriVersion = KauriMavenUtil.getKauriVersion();
+        String lilyVersion = Version.readVersion("org.lilyproject", "lily-runtime-plugin");
 
         Artifact runtimeLauncherArtifact = artifactFactory.createArtifact("org.lilyproject", "lily-runtime-launcher",
-                kauriVersion, "runtime", "jar");
+                lilyVersion, "runtime", "jar");
 
         try {
             resolver.resolve(runtimeLauncherArtifact, remoteRepositories, localRepository);

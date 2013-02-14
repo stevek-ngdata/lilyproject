@@ -23,6 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectBuilder;
+import org.lilyproject.util.Version;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -43,7 +44,7 @@ import java.util.zip.ZipFile;
 
 public class KauriProjectClasspath {
     protected XPathFactory xpathFactory = XPathFactory.newInstance();
-    private String kauriVersion;
+    private String lilyVersion;
     private ArtifactFilter filter;
     private ArtifactFactory artifactFactory;
     protected ArtifactResolver resolver;
@@ -57,7 +58,7 @@ public class KauriProjectClasspath {
         this.resolver = resolver;
         this.localRepository = localRepository;
         this.log = log;
-        this.kauriVersion = KauriMavenUtil.getKauriVersion();
+        this.lilyVersion = Version.readVersion("org.lilyproject", "lily-runtime-plugin");
     }
 
     public Set<Artifact> getAllArtifacts(Set<Artifact> moduleArtifacts, List remoteRepositories)
@@ -198,7 +199,7 @@ public class KauriProjectClasspath {
             String version = el.getAttribute("version");
             String classifier = el.getAttribute("classifier");
             if (version.equals("") && groupId.startsWith("org.lilyproject"))
-                version = kauriVersion;
+                version = lilyVersion;
             if (classifier.equals(""))
                 classifier = null;
 

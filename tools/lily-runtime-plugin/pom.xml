@@ -41,6 +41,10 @@
       <artifactId>lily-runtime</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-util</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-compat</artifactId>
       <version>${version.maven}</version>
@@ -66,27 +70,4 @@
       <version>${version.aether}</version>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <tasks>
-                <mkdir dir="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/" />
-                <echo file="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/lilyruntime.properties" encoding="utf8">lily.version=${project.version}</echo>
-              </tasks>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 </project>

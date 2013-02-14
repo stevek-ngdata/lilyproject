@@ -57,20 +57,6 @@
               <goal>run</goal>
             </goals>
           </execution>
-
-          <execution>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <tasks>
-                <mkdir dir="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/" />
-                <echo file="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/lilyruntime.properties" encoding="utf8">lily.version=${project.version}
-                </echo>
-              </tasks>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
 
