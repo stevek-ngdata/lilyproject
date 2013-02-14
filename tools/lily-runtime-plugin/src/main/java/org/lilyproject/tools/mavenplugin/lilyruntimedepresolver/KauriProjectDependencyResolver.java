@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tools.mavenplugin.kauridepresolver;
+package org.lilyproject.tools.mavenplugin.lilyruntimedepresolver;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -23,7 +23,6 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProjectBuilder;
-import org.apache.maven.settings.Repository;
 import org.lilyproject.runtime.model.SourceLocations;
 
 import javax.xml.xpath.XPathFactory;

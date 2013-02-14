@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tools.mavenplugin.kauridepresolver;
+package org.lilyproject.tools.mavenplugin.lilyruntimedepresolver;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;

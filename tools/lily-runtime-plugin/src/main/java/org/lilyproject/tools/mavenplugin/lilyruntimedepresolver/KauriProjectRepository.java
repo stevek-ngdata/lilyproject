@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tools.mavenplugin.kauridepresolver;
+package org.lilyproject.tools.mavenplugin.lilyruntimedepresolver;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -23,20 +23,30 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
+import java.io.File;
 import java.util.List;
 import java.util.Set;
 
 /**
  *
- * @goal assemble-runtime-repository
+ * @goal assemble-project-repository
  * @requiresDependencyResolution runtime
- * @description Creates a Maven-style repository for Kauri with all the dependencies needed to launch Kauri.
+ * @description Creates a Maven-style repository for Kauri with all the dependencies of a Kauri project,
+ *              based upon reading the wiring.xml.
  */
-public class KauriRuntimeRepository extends AbstractMojo {
+public class KauriProjectRepository extends AbstractMojo {
     /**
      * Location of the conf directory.
      *
-     * @parameter expression="${basedir}/target/kauri-repository"
+     * @parameter expression="${basedir}/conf"
+     * @required
+     */
+    protected String confDirectory;
+
+    /**
+     * Location of the conf directory.
+     *
+     * @parameter expression="${basedir}/target/lilyruntime-repository"
      * @required
      */
     protected String targetDirectory;
@@ -78,21 +88,9 @@ public class KauriRuntimeRepository extends AbstractMojo {
         KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), null,
                 artifactFactory, resolver, localRepository);
 
-        String kauriVersion = KauriMavenUtil.getKauriVersion();
-
-        Artifact runtimeLauncherArtifact = artifactFactory.createArtifact("org.lilyproject", "lily-runtime-launcher",
-                kauriVersion, "runtime", "jar");
-
-        try {
-            resolver.resolve(runtimeLauncherArtifact, remoteRepositories, localRepository);
-        } catch (Exception e) {
-            throw new MojoExecutionException("Error resolving artifact: " + runtimeLauncherArtifact, e);
-        }
-
-        Set<Artifact> artifacts = cp.getClassPathArtifacts(runtimeLauncherArtifact,
-                "org/lilyproject/launcher/classloader.xml", remoteRepositories);
-        artifacts.add(runtimeLauncherArtifact);
-
+        ModuleArtifacts moduleArtifacts = cp.getModuleArtifactsFromKauriConfig(new File(confDirectory), remoteRepositories);
+        Set<Artifact> artifacts = cp.getAllArtifacts(moduleArtifacts.artifacts, remoteRepositories);
         RepositoryWriter.write(artifacts, targetDirectory);
     }
+
 }
