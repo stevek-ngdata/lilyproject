@@ -31,11 +31,12 @@
     <version.maven>3.0.4</version.maven>
     <version.solr>4.0.0</version.solr>
     <version.httpclient>4.1.3</version.httpclient>
+    <version.freemarker>2.3.19</version.freemarker>
 
     <version.avro>1.7.1-813-1154</version.avro>
 
-    <!-- The following properties are all Kauri-related, and should be brought in sync with
-         Kauri when moving to a new Kauri version. -->
+    <!-- The following properties are all Lily Runtime related.
+         They should be in sync with runtime/pom.xml (and eventually disappear from runtime/pom.xml -->
     <version.spring>3.2.1.RELEASE</version.spring>
     <version.jaxrs>1.0</version.jaxrs>
 
@@ -114,9 +115,7 @@
     <module>tools/genscript-plugin</module>
     <module>tools/doc-tools</module>
     <module>tools/licensecheck</module>
-    <!-- TODO NEWROWLOG
     <module>tools/record-row-visualizer</module>
-    -->
     <module>tools/print-host</module>
     <module>tools/archetype</module>
 
@@ -840,9 +839,9 @@
         <version>${version.httpclient}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpcore</artifactId>
-        <version>${version.httpclient}</version>
+        <groupId>org.freemarker</groupId>
+        <artifactId>freemarker</artifactId>
+        <version>${version.freemarker}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

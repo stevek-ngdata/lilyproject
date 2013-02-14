@@ -15,6 +15,7 @@
  */
 package org.lilyproject.tools.recordrowvisualizer;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
+import freemarker.template.TemplateException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -34,19 +36,6 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.runtime.template.CompiledTemplate;
-import org.lilyproject.runtime.template.DefaultTemplateBuilder;
-import org.lilyproject.runtime.template.DefaultTemplateContext;
-import org.lilyproject.runtime.template.DefaultTemplateExecutor;
-import org.lilyproject.runtime.template.DefaultTemplateService;
-import org.lilyproject.runtime.template.ExecutionContext;
-import org.lilyproject.runtime.template.KauriSaxHandler;
-import org.lilyproject.runtime.template.TemplateContext;
-import org.lilyproject.runtime.template.TemplateResult;
-import org.lilyproject.runtime.template.TemplateResultImpl;
-import org.lilyproject.runtime.template.source.ClasspathSourceResolver;
-import org.lilyproject.runtime.template.source.Source;
-import org.lilyproject.runtime.template.source.SourceResolver;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.repository.api.FieldType;
@@ -67,7 +56,6 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-import org.xml.sax.SAXException;
 
 /**
  * Tool to visualize the HBase-storage structure of a Lily record, in the form
@@ -155,7 +143,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
             }
         }
 
-        executeTemplate("org/lilyproject/tools/recordrowvisualizer/recordrow2html.xml",
+        executeTemplate("recordrow2html.ftl",
                 Collections.<String, Object>singletonMap("row", recordRow), System.out);
 
         return 0;
@@ -263,7 +251,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         public String decode(byte[] bytes) {
             if (bytes == null)
                 return null;
-            
+
             char[] result = new char[bytes.length * 2];
 
             for (int i = 0; i < bytes.length; i++) {
@@ -300,23 +288,8 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     private static final LongValueDecoder LONG_DECODER = new LongValueDecoder();
     private static final Base64ValueDecoder BASE64_DECODER = new Base64ValueDecoder();
 
-    private void executeTemplate(String template, Map<String, Object> variables, OutputStream os) throws SAXException {
-        DefaultTemplateBuilder builder = new DefaultTemplateBuilder(null, new DefaultTemplateService(), false);
-        SourceResolver sourceResolver = new ClasspathSourceResolver();
-        Source resource = sourceResolver.resolve(template);
-        CompiledTemplate compiledTemplate = builder.buildTemplate(resource);
+    private void executeTemplate(String template, Map<String, Object> variables, OutputStream os) throws IOException, TemplateException {
+        new TemplateRenderer().render(template, variables, os);
 
-        TemplateContext context = new DefaultTemplateContext();
-        context.putAll(variables);
-
-        ExecutionContext execContext = new ExecutionContext();
-        execContext.setTemplateContext(context);
-        execContext.setSourceResolver(sourceResolver);
-        DefaultTemplateExecutor executor = new DefaultTemplateExecutor();
-
-        TemplateResult result = new TemplateResultImpl(new KauriSaxHandler(os, KauriSaxHandler.OutputFormat.HTML, "UTF-8"));
-        executor.execute(compiledTemplate, null, execContext, result);
-        result.flush();
     }
-
 }
