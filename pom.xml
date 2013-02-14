@@ -164,11 +164,6 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-runtime-package-plugin</artifactId>
-        <version>2.2-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
         <artifactId>lily-runtime-testfw</artifactId>
         <version>2.2-SNAPSHOT</version>
         <scope>test</scope>
