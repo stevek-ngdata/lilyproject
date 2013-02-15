@@ -47,7 +47,6 @@ public class JerseySpringServletManager {
         this.springMvcApplicationContextLocation = springMvcApplicationContextLocation;
     }
 
-
     @PostConstruct
     public void createAndRegisterDispatcherServletInContainer() {
         final ApplicationContext existingLilyRuntimeSpringContext = module.getSpringContext();
@@ -60,19 +59,27 @@ public class JerseySpringServletManager {
 
             @Override
             public Servlet getServletInstance(ServletContext context) {
-                final GenericWebApplicationContext mvcContext = new GenericWebApplicationContext(context);
+                ClassLoader orig = Thread.currentThread().getContextClassLoader();
+                Thread.currentThread().setContextClassLoader(module.getClassLoader());
 
-                mvcContext.setClassLoader(module.getClassLoader());
+                try {
+                    final GenericWebApplicationContext mvcContext = new GenericWebApplicationContext(context);
 
-                mvcContext.setServletContext(context);
-                XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(mvcContext);
-                xmlReader.loadBeanDefinitions(new ClassPathResource(springMvcApplicationContextLocation));
-                mvcContext.setParent(existingLilyRuntimeSpringContext);
-                mvcContext.refresh();
+                    mvcContext.setClassLoader(module.getClassLoader());
 
-                JerseySpringServlet springServlet = new JerseySpringServlet(mvcContext);
-                return springServlet;
+                    mvcContext.setServletContext(context);
+                    XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(mvcContext);
+                    xmlReader.setBeanClassLoader(module.getClassLoader());
+                    xmlReader.loadBeanDefinitions(new ClassPathResource(springMvcApplicationContextLocation,
+                            module.getClassLoader()));
+                    mvcContext.setParent(existingLilyRuntimeSpringContext);
+                    mvcContext.refresh();
 
+                    JerseySpringServlet springServlet = new JerseySpringServlet(mvcContext);
+                    return springServlet;
+                } finally {
+                    Thread.currentThread().setContextClassLoader(orig);
+                }
             }
 
             @Override

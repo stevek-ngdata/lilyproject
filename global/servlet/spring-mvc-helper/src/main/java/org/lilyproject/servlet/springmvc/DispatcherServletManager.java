@@ -64,19 +64,28 @@ public class DispatcherServletManager {
 
             @Override
             public Servlet getServletInstance(ServletContext context) {
-                final GenericWebApplicationContext mvcContext = new GenericWebApplicationContext(context);
+                ClassLoader orig = Thread.currentThread().getContextClassLoader();
+                Thread.currentThread().setContextClassLoader(module.getClassLoader());
 
-                mvcContext.setClassLoader(module.getClassLoader());
+                try {
+                    final GenericWebApplicationContext mvcContext = new GenericWebApplicationContext(context);
 
-                mvcContext.setServletContext(context);
-                XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(mvcContext);
-                xmlReader.loadBeanDefinitions(new ClassPathResource(springMvcApplicationContextLocation));
-                mvcContext.setParent(existingLilyRuntimeSpringContext);
-                mvcContext.refresh();
+                    mvcContext.setClassLoader(module.getClassLoader());
 
-                DispatcherServlet dispatcherServlet = new DispatcherServlet(mvcContext);
-                dispatcherServlet.setDetectAllHandlerMappings(true);
-                return dispatcherServlet;
+                    mvcContext.setServletContext(context);
+                    XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(mvcContext);
+                    xmlReader.setBeanClassLoader(module.getClassLoader());
+                    xmlReader.loadBeanDefinitions(new ClassPathResource(springMvcApplicationContextLocation,
+                            module.getClassLoader()));
+                    mvcContext.setParent(existingLilyRuntimeSpringContext);
+                    mvcContext.refresh();
+
+                    DispatcherServlet dispatcherServlet = new DispatcherServlet(mvcContext);
+                    dispatcherServlet.setDetectAllHandlerMappings(true);
+                    return dispatcherServlet;
+                } finally {
+                    Thread.currentThread().setContextClassLoader(orig);
+                }
             }
 
             @Override
