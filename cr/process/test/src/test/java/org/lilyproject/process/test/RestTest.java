@@ -1238,8 +1238,13 @@ public class RestTest {
     }
 
     private void assertStatus(int expectedStatus, ResponseAndContent response) throws IOException {
+        StackTraceElement[] trace = new Exception().getStackTrace();
         if (expectedStatus != response.getResponse().getStatusLine().getStatusCode()) {
-            System.err.println("Detected unexpected response status, body of the response is:");
+            System.err.println("Detected unexpected response status.");
+            System.err.println("Expected status: " + expectedStatus);
+            System.err.println("Got status: " + response.getResponse().getStatusLine().getStatusCode());
+            System.err.println("Called from: " + trace[1].toString());
+            System.err.println("Body of the response is:");
             printErrorResponse(response);
             assertEquals(expectedStatus, response.getResponse().getStatusLine().getStatusCode());
         }
