@@ -33,7 +33,7 @@ public class FieldTypeResource extends RepositoryEnabled {
     public Entity<FieldType> get(@PathParam("name") String name, @Context UriInfo uriInfo) {
         QName qname = ResourceClassUtil.parseQName(name, uriInfo.getQueryParameters());
         try {
-            return Entity.create(repository.getTypeManager().getFieldTypeByName(qname));
+            return Entity.create(repository.getTypeManager().getFieldTypeByName(qname), uriInfo);
         } catch (FieldTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -67,7 +67,7 @@ public class FieldTypeResource extends RepositoryEnabled {
                 URI uri = UriBuilder.fromResource(FieldTypeResource.class).
                         queryParam("ns.n", fieldType.getName().getNamespace()).
                         build("n$" + fieldType.getName().getName());
-                response = Response.created(uri).entity(Entity.create(fieldType)).build();
+                response = Response.created(uri).entity(Entity.create(fieldType, uriInfo)).build();
                 break;
             case UPDATED:
             case UP_TO_DATE:
@@ -83,9 +83,9 @@ public class FieldTypeResource extends RepositoryEnabled {
                             build("n$" + fieldType.getName().getName());
 
                     return Response.status(Response.Status.MOVED_PERMANENTLY).header("Location", uri).
-                            entity(Entity.create(fieldType)).build();
+                            entity(Entity.create(fieldType, uriInfo)).build();
                 } else {
-                    response = Response.ok(Entity.create(fieldType)).build();
+                    response = Response.ok(Entity.create(fieldType, uriInfo)).build();
                 }
                 break;
             case CONFLICT:

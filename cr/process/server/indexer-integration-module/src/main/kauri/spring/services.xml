@@ -47,10 +47,6 @@
       id="pluginRegistry"
       service="org.lilyproject.plugin.PluginRegistry"/>
 
-  <kauri:import-service
-      id="messageQueue"
-      service="org.lilyproject.rowlog.api.RowLog"/>
-
   <bean id="indexesInfo" class="org.lilyproject.indexer.model.util.IndexesInfoImpl">
     <constructor-arg ref="indexerModel"/>
     <constructor-arg ref="prematureRepository"/>
@@ -58,12 +54,6 @@
 
   <bean id="indexRecordFilterHook" class="org.lilyproject.indexer.integration.IndexRecordFilterHook">
     <constructor-arg ref="pluginRegistry"/>
-    <constructor-arg ref="indexesInfo"/>
-  </bean>
-
-  <bean id="indexAwareMQFeeder" class="org.lilyproject.indexer.integration.IndexAwareMQFeeder">
-    <constructor-arg ref="messageQueue"/>
-    <constructor-arg ref="prematureRepository"/>
     <constructor-arg ref="indexesInfo"/>
   </bean>
 

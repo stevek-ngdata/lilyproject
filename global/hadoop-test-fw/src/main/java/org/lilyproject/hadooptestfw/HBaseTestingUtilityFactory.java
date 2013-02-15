@@ -15,12 +15,12 @@
  */
 package org.lilyproject.hadooptestfw;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
-
-import java.io.File;
-import java.io.IOException;
 
 public class HBaseTestingUtilityFactory {
     public static final String TEST_DIR_KEY = "lily.hbasetestingutility.dir";
@@ -42,19 +42,19 @@ public class HBaseTestingUtilityFactory {
         // This property is picked up by our fork of MiniMRCluster (the default implementation was hardcoded
         // to use build/test/mapred/local)
         System.setProperty("mapred.local.dir", createSubDir(tmpDir, "mapred-local"));
-        
+
         conf.set("mapred.local.dir", createSubDir(tmpDir, "mapred-local"));
 
         // Properties used for MiniMRCluster
         conf.set("hadoop.log.dir", createSubDir(tmpDir, "hadoop-logs"));
         conf.set("hadoop.tmp.dir", createSubDir(tmpDir, "mapred-output"));
-        
+
         conf.set("mapred.system.dir", "/tmp/hadoop/mapred/system");
         conf.set("mapreduce.jobtracker.staging.root.dir", "/tmp/hadoop/mapred/staging");
 
         // Only use one MR child VM, should be lighter on developer machines
         conf.set("mapred.tasktracker.map.tasks.maximum", "1");
-        
+
         // Force default port numbers
         conf.set("hbase.master.info.port", "60010");
         conf.set("hbase.regionserver.info.port", "60030");
@@ -74,6 +74,15 @@ public class HBaseTestingUtilityFactory {
         // before HBase had the opportunity to flush its data. This then leads to (possibly long) recoveries
         // on the next startup (and even then, I've seen data loss, maybe sync is not active for the mini cluster?).
         conf.set("fs.automatic.close", "false");
+
+        // Replication parameters needed for the SEP
+        conf.set("hbase.replication", "true");
+        conf.setFloat("replication.source.ratio", 1.0f);
+        conf.set("replication.source.nb.capacity", "200");
+        conf.set("replication.replicationsource.implementation",  "com.ngdata.sep.impl.SepReplicationSource");
+
+        // make replication react a little quicker
+        conf.setLong("replication.source.sleepforretries", 200);
 
         return new HBaseTestingUtility(conf, clearData);
     }

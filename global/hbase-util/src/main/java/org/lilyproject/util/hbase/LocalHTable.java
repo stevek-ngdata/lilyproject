@@ -31,26 +31,40 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.hadoop.hbase.client.HTableInterface;
+
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RowMutations;
+
 /**
  * This is a threadsafe solution for the non-threadsafe HTable.
  *
- * <p>The problem with HTable this tries to solve is that HTable is not threadsafe, and
- * on the other hand it is best not to instantiate a new HTable for each use for
- * performance reasons.
+ * <p>Be careful/considerate when using autoflush.
  *
- * <p>HTable is, unlike e.g. a file handle or a JDBC connection, not a scarce
- * resource which needs to be closed. The actual connection handling (which
- * consists of connections to a variety of region servers) it handled at other
- * places. We only need to avoid the cost of creating new copies of HTable all the time.
+ * <p>The problems with HTable this tries to solve is that HTable:
+ *
+ * <ul>
+ *     <li>HTable is not threadsafe</li>
+ *     <li>It needs to be closed when you're done with it (cfr. HConnection refcounting). And closing as soon
+ *     as you're done might actually not be efficient because when the refcount reaches zero, the connection
+ *     is closed but maybe a second later you'll need it again.</li>
+ *     <li>it is best not to instantiate a new HTable for each use for performance reasons
+ *     (though according to HBASE-4805, if you pass an executorservice & hconnection yourself, this isn't true).</li>
+ * </ul>
+ *
+ * <p>Note that HTable doesn't represent a connection, but uses a HConnection managed by the
+ * HConnectionManager.</p>
  *
  * <p>The first implementation was based on caching HTable instances in threadlocal
  * variables, now it is based on HTablePool. The reason for changing this was that
  * HTable now contains an ExecutorService instance, which is better exploited if we
- * reduce the number of HTable instances (and now this implementation even changes
- * it by a shared ExecutorService instance, since otherwise threads still very
- * many very short-lived threads were created).
- *
- * <p>Be careful/considerate when using autoflush.
+ * reduce the number of HTable instances. And now this implementation even changes
+ * it by a shared ExecutorService instance, since otherwise still very
+ * many very short-lived threads were created. So in fact we could return to the
+ * thread-local approach, but maybe that's less efficient when threads are not reused
+ * (which would actually be an efficiency problem by itself, so this is maybe not
+ * an argument).
  *
  */
 public class LocalHTable implements HTableInterface {
@@ -72,10 +86,10 @@ public class LocalHTable implements HTableInterface {
 
         // HTable internally has an ExecutorService. I have noticed that many of the HBase operations that Lily
         // performs don't make use of this ES, since they are not plain put or batch operations. Thus, for the
-        // operations that do make use of it (still enough, e.g. all the puts on the rowlog shards), they use
-        // the ExecutorServices of many different HTable instances, leading to very little thread re-use
-        // and many very short-lived threads. Therefore, we switch the ExecutorService instance in HBase by
-        // a shared one, which requires modifying a private variable. (seems like this is improved in HBase trunk)
+        // operations that do make use of it, they use the ExecutorServices of many different HTable instances,
+        // leading to very little thread re-use and many very short-lived threads. Therefore, we switch the
+        // ExecutorService instance in HBase by a shared one, which requires modifying a private variable.
+        // (seems like this is improved in HBase trunk)
 
         synchronized (this) {
             if (EXECUTOR_SERVICE == null) {
@@ -140,8 +154,6 @@ public class LocalHTable implements HTableInterface {
                 Map.Entry<Configuration, HTablePool> entry = it.next();
                 // closing the table pool will close the connection for every table.
                 entry.getValue().close();
-                // Since CDH4.0, we need to delete the connection again (this was also the case up to CDH3u2)
-                HConnectionManager.deleteConnection(entry.getKey(), true);
             }
         }
     }
@@ -354,23 +366,12 @@ public class LocalHTable implements HTableInterface {
 
     @Override
     public boolean isAutoFlush() {
-        return runNoExc(new TableRunnable<Boolean>() {
-            @Override
-            public Boolean run(HTableInterface table) throws IOException, InterruptedException {
-                return table.isAutoFlush();
-            }
-        });
+        throw new UnsupportedOperationException("isAutoFlush is not supported on LocalHTables");
     }
 
     @Override
     public void flushCommits() throws IOException {
-        runNoIE(new TableRunnable<Object>() {
-            @Override
-            public Object run(HTableInterface table) throws IOException, InterruptedException {
-                table.flushCommits();
-                return null;
-            }
-        });
+        throw new UnsupportedOperationException("flushCommits is not supported on LocalHTables");
     }
 
     @Override
@@ -400,7 +401,7 @@ public class LocalHTable implements HTableInterface {
     }
 
     @Override
-    public void batch(final List<Row> actions, final Object[] results) throws IOException, InterruptedException {
+    public void batch(final List<? extends Row> actions, final Object[] results) throws IOException, InterruptedException {
         run(new TableRunnable<Void>() {
             @Override
             public Void run(HTableInterface table) throws IOException, InterruptedException {
@@ -411,7 +412,7 @@ public class LocalHTable implements HTableInterface {
     }
 
     @Override
-    public Object[] batch(final List<Row> actions) throws IOException, InterruptedException {
+    public Object[] batch(final List<? extends Row> actions) throws IOException, InterruptedException {
         return run(new TableRunnable<Object[]>() {
             @Override
             public Object[] run(HTableInterface table) throws IOException, InterruptedException {
@@ -471,7 +472,48 @@ public class LocalHTable implements HTableInterface {
             table.close();
         }
     }
+    
+    @Override
+    public void mutateRow(final RowMutations rm) throws IOException {
+        runNoIE(new TableRunnable<Object>() {
+            @Override
+            public Object run(HTableInterface table) throws IOException, InterruptedException {
+                table.mutateRow(rm);
+                return null;
+            }
+        });
+    }
 
+    @Override
+    public Result append(final Append append) throws IOException {
+        return runNoIE(new TableRunnable<Result>() {
+            @Override
+            public Result run(HTableInterface table) throws IOException, InterruptedException {
+                return table.append(append);
+            }
+        });
+    }
+
+    @Override
+    public void setAutoFlush(boolean autoFlush) {
+        throw new UnsupportedOperationException("setAutoFlush is not supported on LocalHTables");
+    }
+
+    @Override
+    public void setAutoFlush(boolean autoFlush, boolean clearBufferOnFail) {
+        throw new UnsupportedOperationException("setAutoFlush is not supported on LocalHTables");
+    }
+
+    @Override
+    public long getWriteBufferSize() {
+        throw new UnsupportedOperationException("getWriteBufferSize is not supported on LocalHTables");
+    }
+
+    @Override
+    public void setWriteBufferSize(long writeBufferSize) throws IOException {
+        throw new UnsupportedOperationException("setWriteBufferSize is not supported on LocalHTables");
+    }
+    
     private <T> T run(TableRunnable<T> runnable) throws IOException, InterruptedException {
         // passing tableNameString, since otherwise pool.getTable converts it to string anyway
         HTableInterface table = pool.getTable(tableNameString);
@@ -586,4 +628,5 @@ public class LocalHTable implements HTableInterface {
             executorService.execute(command);
         }
     }
+
 }

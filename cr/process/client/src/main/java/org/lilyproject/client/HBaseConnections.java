@@ -27,7 +27,6 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
 
 public class HBaseConnections {
     private List<Configuration> configurations = new ArrayList<Configuration>();
@@ -73,13 +72,10 @@ public class HBaseConnections {
         }
         return result;
     }
-    
+
     public synchronized void close() {
         for (Configuration conf : configurations) {
-            HConnectionManager.deleteConnection(conf, true);
             forceClose(conf);
-            // Close the corresponding HBaseAdmin connection (which uses a cloned conf object)
-            HBaseAdminFactory.close(conf);
         }
         configurations.clear();
     }

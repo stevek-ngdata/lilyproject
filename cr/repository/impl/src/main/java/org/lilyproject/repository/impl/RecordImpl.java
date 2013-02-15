@@ -18,6 +18,8 @@ package org.lilyproject.repository.impl;
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.google.common.collect.Maps;
+
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ObjectUtils;
 
@@ -202,6 +204,7 @@ public class RecordImpl implements Record, Cloneable {
         if (fieldsToDelete.size() > 0) { // addAll seems expensive even when list is empty
             record.fieldsToDelete.addAll(fieldsToDelete);
         }
+        
         // the ResponseStatus is not cloned, on purpose
         return record;
     }

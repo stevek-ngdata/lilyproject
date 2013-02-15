@@ -30,13 +30,21 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.ngdata.sep.EventListener;
+import com.ngdata.sep.SepEvent;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -83,6 +91,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.MappingNode;
 import org.lilyproject.indexer.model.indexerconf.VariantFollow;
+import org.lilyproject.indexer.model.util.IndexInfo;
 import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.indexer.model.util.IndexesInfoImpl;
 import org.lilyproject.repository.api.Blob;
@@ -106,18 +115,19 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogException;
-import org.lilyproject.rowlog.api.RowLogMessage;
-import org.lilyproject.rowlog.api.RowLogMessageListener;
-import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 public class IndexerTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -176,11 +186,12 @@ public class IndexerTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+
         SOLR_TEST_UTIL = new SolrTestingUtility();
         SOLR_TEST_UTIL.setSolrDefinition(
                 new SolrDefinition(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml"))));
 
-        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl",
+        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.indexer.engine",
                 "org.lilyproject.indexer.engine.test.IndexerTest");
 
         SOLR_TEST_UTIL.start();
@@ -195,12 +206,10 @@ public class IndexerTest {
 
         repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
 
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         prematureRepository.setRepository(repoSetup.getRepository());
         indexUpdaterRepository.setDelegate(repoSetup.getRepository());
-
-        repoSetup.setupMessageQueue(false, true);
 
         repository = repoSetup.getRepository();
         typeManager = repoSetup.getTypeManager();
@@ -209,21 +218,7 @@ public class IndexerTest {
         // Field types should exist before the indexer conf is loaded
         setupSchema();
 
-        RowLogConfigurationManager rowLogConfMgr = repoSetup.getRowLogConfManager();
-        rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 2);
-
-        repoSetup.waitForSubscription(repoSetup.getWal(), "MessageVerifier");
-
-        rowLogConfMgr.addSubscription("MQ", "IndexUpdater", RowLogSubscription.Type.VM, 1);
-        rowLogConfMgr.addSubscription("MQ", "OtherListener", RowLogSubscription.Type.VM, 2);
-
-        repoSetup.waitForSubscription(repoSetup.getMq(), "IndexUpdater");
-        repoSetup.waitForSubscription(repoSetup.getMq(), "OtherListener");
-
         solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
-
-        RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
-        RowLogMessageListenerMapping.INSTANCE.put("OtherListener", otherListener);
     }
 
     @AfterClass
@@ -234,7 +229,28 @@ public class IndexerTest {
             SOLR_TEST_UTIL.stop();
     }
 
+    // augmented each time we change the indexerconf, to give the indexes unique names
+    private static int idxChangeCnt = 0;
+    
     public static void changeIndexUpdater(String confName) throws Exception {
+        String prevIndexName = "test" + idxChangeCnt;
+        idxChangeCnt++;
+        String indexName = "test" + idxChangeCnt;
+
+        System.out.println("changeIndexUpdater invocation " + idxChangeCnt);
+
+        // First clean up stuff of old index, to be sure this also gets executed in case of invalid indexerconf
+        if (indexerModel.hasIndex(prevIndexName)) {
+            indexerModel.deleteIndex(prevIndexName);
+            repoSetup.getSepModel().removeSubscription("IndexUpdater_" + prevIndexName);
+            repoSetup.getHBaseProxy().waitOnReplicationPeerStopped("IndexUpdater_" + prevIndexName);
+            repoSetup.stopSepEventSlave();
+        }
+        waitForIndexesInfoUpdate(0);
+
+        // warning: the below line will throw an exception in case of invalid conf, which is an exception
+        // which some test cases expect, and hence it won't be visible but will cause the remainder of the
+        // code in this method not to be executed! (so keep this in mind for anything related to resource cleanup)
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
 
@@ -251,22 +267,26 @@ public class IndexerTest {
             }
         }
         derefMap = DerefMapHbaseImpl.create("test", hbaseConf, null, repository.getIdGenerator());
-        Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
-                new IndexerMetrics("test"), derefMap);
-
-        RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, indexUpdaterRepository,
-                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test"), derefMap, "IndexUpdater"));
-
-        if (indexerModel.hasIndex("test")) {
-            indexerModel.deleteIndex("test");
-        }
-        waitForIndexesInfoUpdate(0);
+        Indexer indexer = new Indexer(indexName, INDEXER_CONF, repository, solrShardManager, indexLocker,
+                new IndexerMetrics(indexName), derefMap);
 
         // The registration of the index into the IndexerModel is only needed for the IndexRecordFilterHook
-        IndexDefinition indexDef = indexerModel.newIndex("test");
+        IndexDefinition indexDef = indexerModel.newIndex(indexName);
         indexDef.setConfiguration(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream(confName)));
         indexDef.setSolrShards(Collections.singletonMap("shard1", "http://somewhere/"));
+        indexDef.setQueueSubscriptionId("IndexUpdater_" + indexName);
+
         indexerModel.addIndex(indexDef);
+
+        repoSetup.getSepModel().addSubscription(indexDef.getQueueSubscriptionId());
+
+        repoSetup.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + indexName);
+
+        IndexUpdater indexUpdater = new IndexUpdater(indexer, indexUpdaterRepository, indexLocker,
+                new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisher(), "IndexUpdater_" + indexName);
+        repoSetup.startSepEventSlave("IndexUpdater_" + indexName,
+                new CompositeEventListener(indexUpdater, messageVerifier, otherListener));
+
         waitForIndexesInfoUpdate(1);
     }
 
@@ -275,7 +295,15 @@ public class IndexerTest {
         long now = System.currentTimeMillis();
         while (indexesInfo.getIndexInfos().size() != expectedCount) {
             if (System.currentTimeMillis() - now > 10000) {
-                fail("IndexesInfo was not updated within the expected timeout.");
+                String indexNames = Joiner.on(",").join(
+                        Collections2.transform(indexesInfo.getIndexInfos(), new Function<IndexInfo, String>() {
+                            @Override
+                            public String apply(@Nullable IndexInfo input) {
+                                return input.getIndexDefinition().getName();
+                            }
+                        }));
+                fail("IndexesInfo was not updated within the expected timeout, expected count = " + expectedCount +
+                        " actual entries = " + indexNames);
             }
             Thread.sleep(20);
         }
@@ -487,9 +515,13 @@ public class IndexerTest {
         // Test ForEach
         //
 
+
+        log.debug("Begin test forEach");
+
         String baseProductId = "product29485";
         String linkedProductId = "linkedProduct12345";
         RecordId linkedRecordId = repository.getIdGenerator().newRecordId(linkedProductId);
+
 
 
         repository.recordBuilder()
@@ -501,6 +533,7 @@ public class IndexerTest {
 
         repository.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId(baseProductId,
+                .id(repository.getIdGenerator().newRecordId(baseProductId,
                         Collections.singletonMap("country", "france")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "louche")
@@ -509,11 +542,13 @@ public class IndexerTest {
 
         repository.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId(baseProductId,
+                .id(repository.getIdGenerator().newRecordId(baseProductId,
                         Collections.singletonMap("country", "belgium")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "schuimspaan")
                 .field(nvfield2.getName(), "11")
                 .create();
+
 
         repository.recordBuilder()
                 .id(linkedRecordId)
@@ -528,6 +563,7 @@ public class IndexerTest {
         verifyResultCount("linked_product:12345", 1);
 
         // update the price in france:
+        log.debug("Begin test forEach - update");
         repository.recordBuilder()
                 .id(repository.getIdGenerator()
                         .newRecordId("product29485", Collections.singletonMap("country", "france")))
@@ -773,6 +809,90 @@ public class IndexerTest {
         changeIndexUpdater("indexerconf1.xml");
         changeIndexUpdater("indexerconf1.xml");
     }
+    
+    // Test the behaviour of using the "lily.mq" attribute when indexing
+    @Test
+    public void testIndexer_AddAndUpdate_DisabledIndexing() throws Exception {
+       changeIndexUpdater("indexerconf1.xml");
+
+       // Create a record that should be indexed
+       Record recordToIndex = repository.newRecord();
+       recordToIndex.setRecordType(nvRecordType1.getName());
+       recordToIndex.setField(nvfield1.getName(), "mango");
+       recordToIndex.setField(nvTag.getName(), 0L);
+       recordToIndex = repository.create(recordToIndex);
+
+
+       // Create a record that shouldn't be indexed (due to the "lily.mq" attribute
+       Record recordToNotIndex = repository.newRecord();
+       recordToNotIndex.setRecordType(nvRecordType1.getName());
+       recordToNotIndex.setField(nvfield1.getName(), "mango");
+       recordToNotIndex.setField(nvTag.getName(), 0L);
+       
+       // Mark this record to not be indexed
+       recordToNotIndex.getAttributes().put("lily.mq", "false");
+       recordToNotIndex = repository.create(recordToNotIndex);
+
+       commitIndex();
+       verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 1);
+       verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 0);
+       verifyResultCount("nv_field1:mango", 1);
+       
+       // Now we'll update the recordToIndex, first without indexing, and then with it
+       
+       recordToIndex.setField(nvfield1.getName(), "orange");
+       recordToIndex.getAttributes().put("lily.mq", "false");
+       
+       recordToIndex = repository.update(recordToIndex);
+       commitIndex();
+       
+       verifyResultCount("nv_field1:orange", 0);
+       verifyResultCount("nv_field1:mango", 1);
+       
+
+    }
+    
+    // Test the behaviour of using the "lily.mq" attribute when indexing
+    @Test
+    public void testIndexer_Delete_DisabledIndexing() throws Exception {
+       changeIndexUpdater("indexerconf1.xml");
+
+       // Create a record that should be indexed
+       Record recordToIndex = repository.newRecord();
+       recordToIndex.setRecordType(nvRecordType1.getName());
+       recordToIndex.setField(nvfield1.getName(), "papaya");
+       recordToIndex.setField(nvTag.getName(), 0L);
+       recordToIndex = repository.create(recordToIndex);
+
+
+       // Create a record that shouldn't be indexed (due to the "lily.mq" attribute
+       Record recordToNotIndex = repository.newRecord();
+       recordToNotIndex.setRecordType(nvRecordType1.getName());
+       recordToNotIndex.setField(nvfield1.getName(), "papaya");
+       recordToNotIndex.setField(nvTag.getName(), 0L);
+       recordToNotIndex = repository.create(recordToNotIndex);
+
+       commitIndex();
+       
+       // Sanity check
+       verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 1);
+       verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 1);
+       verifyResultCount("nv_field1:papaya", 2);
+       
+       
+       // Now delete both records, but disable indexing on one of them
+       recordToNotIndex.getAttributes().put("lily.mq", "false");
+       
+       repository.delete(recordToIndex);
+       repository.delete(recordToNotIndex);
+       commitIndex();
+       
+       // And check that the index has only been updated for the record that should be indexed
+       verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 0);
+       verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 1);
+       verifyResultCount("nv_field1:papaya", 1);
+    }
+       
 
     @Test
     public void testIndexerNonVersioned() throws Exception {
@@ -803,6 +923,7 @@ public class IndexerTest {
             expectEvent(UPDATE, record.getId(), nvfield1.getId());
             repository.update(record);
 
+            System.out.println("Updated " + record.getId());
             commitIndex();
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
@@ -1961,17 +2082,17 @@ public class IndexerTest {
 
         // Create a record type with two versions
         RecordType rt = typeManager.newRecordType(new QName(NS, "sf_rt"));
-        rt = rt.withFieldTypeEntry(field1.getId(), false);
-        rt = rt.withFieldTypeEntry(field2.getId(), false);
-        rt = rt.withMixin(mixin1.getId());
+        rt.addFieldTypeEntry(field1.getId(), false);
+        rt.addFieldTypeEntry(field2.getId(), false);
+        rt.addMixin(mixin1.getId());
         rt = typeManager.createRecordType(rt);
 
-        rt = rt.withMixin(mixin2.getId(), mixin2.getVersion());
+        rt.addMixin(mixin2.getId(), mixin2.getVersion());
         rt = typeManager.updateRecordType(rt);
 
         RecordType rt2 = typeManager.newRecordType(new QName(NS, "sf_rt2"));
-        rt = rt.withFieldTypeEntry(field1.getId(), false);
-        rt = rt.withFieldTypeEntry(field2.getId(), false);
+        rt2.addFieldTypeEntry(field1.getId(), false);
+        rt2.addFieldTypeEntry(field2.getId(), false);
         rt2 = typeManager.createRecordType(rt2);
 
         //
@@ -2593,44 +2714,6 @@ public class IndexerTest {
     }
 
     /**
-     * Verifies that the re-index messages produced by IndexUpdater are only produced for the subscription
-     * to which this IndexUpdater is listening, thus are only sent to the relevant index.
-     */
-    @Test
-    public void testReindexMessagesOnlyGoToOwnSubscription() throws Exception {
-        changeIndexUpdater("indexerconf1.xml");
-        messageVerifier.disable();
-
-        otherListener.reset();
-
-        // Create a record (record2) which links to another record (record1)
-        Record record1 = repository.newRecord();
-        record1.setRecordType(nvRecordType1.getName());
-        record1.setField(nvfield1.getName(), "Manila");
-        record1.setField(nvTag.getName(), 0L);
-        record1 = repository.create(record1);
-
-        Record record2 = repository.newRecord();
-        record2.setRecordType(nvRecordType1.getName());
-        record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
-        record2.setField(nvTag.getName(), 0L);
-        expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvTag.getId());
-        record2 = repository.create(record2);
-
-        commitIndex();
-        assertEquals(2, otherListener.getMsgCount());
-
-        // Now update record2: this produces two events on the rowlog: one about the update, and one reindex message
-        // produced by the IndexUpdater. The reindex message should however only go the subscription of the
-        // IndexUpdater, not to any other listeners (indexers or otherwise).
-        otherListener.reset();
-        record1.setField(nvfield1.getName(), "Manama");
-        record1 = repository.update(record1);
-        commitIndex();
-        assertEquals(1, otherListener.getMsgCount());
-    }
-
-    /**
      * Tests the correct behavior when a record's state changes so that a different
      * record filter include rule is matched, with different vtags to index.
      */
@@ -2893,7 +2976,13 @@ public class IndexerTest {
     }
 
     private void commitIndex() throws Exception {
-        repoSetup.processMQ();
+        // wait for all events that exist at this point in time to be processed
+        repoSetup.waitForSepProcessing();
+
+        // The events that have been processed up to now might themselves have produced new events (reindex events)
+        // that now also need to be processed, therefore do another wait.
+        repoSetup.waitForSepProcessing();
+
         solrShardManager.commit(true, true);
     }
 
@@ -2962,12 +3051,11 @@ public class IndexerTest {
         if (recordTypeChanged)
             event.setRecordTypeChanged(recordTypeChanged);
 
-        messageVerifier.setExpectedEvent(recordId, event);
+        messageVerifier.addExpectedEvent(recordId, event);
     }
 
-    private static class MessageVerifier implements RowLogMessageListener {
-        private RecordId expectedId;
-        private RecordEvent expectedEvent;
+    private static class MessageVerifier implements EventListener {
+        private List<Pair<RecordId, RecordEvent>> expectedEvents = Lists.newArrayList();
         private int failures = 0;
         private boolean enabled;
 
@@ -2977,8 +3065,7 @@ public class IndexerTest {
 
         public void init() {
             this.enabled = true;
-            this.expectedId = null;
-            this.expectedEvent = null;
+            this.expectedEvents.clear();
             this.failures = 0;
         }
 
@@ -2986,30 +3073,46 @@ public class IndexerTest {
             this.enabled = false;
         }
 
-        public void setExpectedEvent(RecordId recordId, RecordEvent recordEvent) {
-            this.expectedId = recordId;
-            this.expectedEvent = recordEvent;
+        public void addExpectedEvent(RecordId recordId, RecordEvent recordEvent) {
+            this.expectedEvents.add(Pair.create(recordId, recordEvent));
         }
 
         @Override
-        public boolean processMessage(RowLogMessage message) {
+        public void processEvent(SepEvent event) {
             if (!enabled)
-                return true;
+                return;
 
             // In case of failures we print out "load" messages, the main junit thread is expected to
             // test that the failures variable is 0.
-
-            RecordId recordId = repository.getIdGenerator().fromBytes(message.getRowKey());
+            
+            RecordId recordId = repository.getIdGenerator().fromBytes(event.getRow());
+            
             try {
-                RecordEvent event = new RecordEvent(message.getPayload(), idGenerator);
+                RecordEvent recordEvent = new RecordEvent(event.getPayload(), idGenerator);
+                
+                if (recordEvent.getType().equals(RecordEvent.Type.INDEX)) {
+                    log.debug("Ignoring incoming re-index event for message verification");
+                    return;
+                }
+                
+                if (expectedEvents.isEmpty()) {
+                    System.err.println("No events are expected, but we just got event " + recordEvent.toJson() + " on " + recordId);
+                    failures++;
+                    return;
+                }
+                
+                Pair<RecordId, RecordEvent> expectedPair = expectedEvents.remove(0);
+                RecordId expectedId = expectedPair.getV1();
+                RecordEvent expectedEvent = expectedPair.getV2();
+                
                 if (expectedEvent == null) {
                     failures++;
                     printSomethingLoad();
                     System.err.println("Did not expect a message, but got:");
                     System.err.println(recordId);
-                    System.err.println(event.toJson());
+                    System.err.println(recordEvent.toJson());
                 } else {
-                    if (!event.equals(expectedEvent) ||
+                    if (!recordEvent.equals(expectedEvent) ||
                             !(recordId.equals(expectedId) ||
                                     (expectedId == null && expectedEvent.getType() == CREATE))) {
                         failures++;
@@ -3019,22 +3122,15 @@ public class IndexerTest {
                         System.err.println(expectedEvent.toJson());
                         System.err.println("Received message:");
                         System.err.println(recordId);
-                        System.err.println(event.toJson());
+                        System.err.println(recordEvent.toJson());
                     } else {
                         log.debug("Received message ok.");
                     }
                 }
-            } catch (RowLogException e) {
-                failures++;
-                e.printStackTrace();
             } catch (IOException e) {
                 failures++;
                 e.printStackTrace();
-            } finally {
-                expectedId = null;
-                expectedEvent = null;
             }
-            return true;
         }
 
         private void printSomethingLoad() {
@@ -3047,13 +3143,12 @@ public class IndexerTest {
     /**
      * An arbitrary, non-indexing, MQ listener.
      */
-    private static class OtherListener implements RowLogMessageListener {
+    private static class OtherListener implements EventListener {
         private int msgCount;
 
         @Override
-        public boolean processMessage(RowLogMessage message) throws InterruptedException {
+        public void processEvent(SepEvent event)  {
             msgCount++;
-            return true;
         }
 
         public int getMsgCount() {
@@ -3063,6 +3158,23 @@ public class IndexerTest {
         public void reset() {
             msgCount = 0;
         }
+    }
+    
+    private static class CompositeEventListener implements EventListener {
+        private List<EventListener> eventListeners;
+        
+        public CompositeEventListener(EventListener...eventListeners) {
+            this.eventListeners = Lists.newArrayList(eventListeners);
+        }
+
+        @Override
+        public void processEvent(SepEvent event) {
+            for (EventListener eventListener : eventListeners) {
+                eventListener.processEvent(event);
+            }
+        }
+        
+        
     }
 
     private static class TrackingRepository extends BaseRepositoryDecorator {

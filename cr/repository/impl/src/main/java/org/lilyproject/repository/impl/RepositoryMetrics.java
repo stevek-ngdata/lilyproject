@@ -19,6 +19,10 @@ import java.util.EnumMap;
 
 import javax.management.ObjectName;
 
+import org.apache.commons.lang.StringUtils;
+
+import org.apache.hadoop.metrics.util.MetricsLongValue;
+
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
 import org.apache.hadoop.metrics.MetricsUtil;
@@ -36,7 +40,9 @@ public class RepositoryMetrics implements Updater {
     private final MetricsRecord metricsRecord;
     private final MetricsContext context;
     private final EnumMap<Action, MetricsTimeVaryingRate> rates = new EnumMap<Action, MetricsTimeVaryingRate>(Action.class);
-    private final EnumMap<HBaseAction, MetricsTimeVaryingRate> hbaseRates = new EnumMap<HBaseAction, MetricsTimeVaryingRate>(HBaseAction.class);
+    private final EnumMap<HBaseAction, MetricsTimeVaryingRate> hbaseRates = 
+                new EnumMap<HBaseAction, MetricsTimeVaryingRate>(HBaseAction.class);
+    private final MetricsLongValue lastMutationEventTimestamp;
     private final RepositoryMetricsMXBean mbean;
     private final String recordName;
 
@@ -49,7 +55,7 @@ public class RepositoryMetrics implements Updater {
         for (HBaseAction action : HBaseAction.values()) {
             hbaseRates.put(action, new MetricsTimeVaryingRate(action.name().toLowerCase(), registry));
         }
-        
+        lastMutationEventTimestamp = new MetricsLongValue("timestampLastMutation", registry);
         context = MetricsUtil.getContext("repository");
         metricsRecord = MetricsUtil.createRecord(context, recordName);
         context.registerUpdater(this);
@@ -73,6 +79,9 @@ public class RepositoryMetrics implements Updater {
 
     void report(Action action, long duration) {
         rates.get(action).inc(duration);
+        if (action != Action.READ) {
+            lastMutationEventTimestamp.set(System.currentTimeMillis());
+        }
     }
 
     void reportHBase(HBaseAction action, long duration) {

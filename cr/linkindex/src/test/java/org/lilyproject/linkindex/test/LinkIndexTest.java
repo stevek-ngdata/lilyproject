@@ -47,8 +47,6 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
 
@@ -64,10 +62,10 @@ public class LinkIndexTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        TestHelper.setupLogging("org.lilyproject.linkindex", "org.lilyproject.rowlog.impl.RowLogImpl");
+        TestHelper.setupLogging("org.lilyproject.linkindex");
 
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         typeManager = repoSetup.getTypeManager();
         repository = repoSetup.getRepository();
@@ -77,10 +75,8 @@ public class LinkIndexTest {
 
         linkIndex = new LinkIndex(indexManager, repository);
 
-        repoSetup.getRowLogConfManager().addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1);
-        RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
-
-        repoSetup.waitForSubscription(repoSetup.getWal(), "LinkIndexUpdater");
+        repoSetup.getSepModel().addSubscription("LinkIndexUpdater");
+        repoSetup.startSepEventSlave("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
     }
 
     @AfterClass
@@ -243,6 +239,7 @@ public class LinkIndexTest {
             record.setRecordType(recordType.getName());
             record.setField(nonVersionedFt.getName(), new Link(ids.newRecordId("foo1")));
             record = repository.create(record);
+            repoSetup.waitForSepProcessing();
 
             Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), lastVTag);
             assertEquals(1, referrers.size());
@@ -255,6 +252,7 @@ public class LinkIndexTest {
             record.setField(versionedFt.getName(), Arrays.asList(new Link(ids.newRecordId("foo2")),
                     new Link(ids.newRecordId("foo3"))));
             record = repository.update(record);
+            repoSetup.waitForSepProcessing();
 
             referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), lastVTag);
             assertEquals(1, referrers.size());
@@ -285,6 +283,7 @@ public class LinkIndexTest {
                                     )
                             ))
                     .create();
+            repoSetup.waitForSepProcessing();
 
             Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("nl1"), lastVTag);
             assertEquals(1, referrers.size());
@@ -322,6 +321,7 @@ public class LinkIndexTest {
                                             .build()
                             ))
                     .create();
+            repoSetup.waitForSepProcessing();
 
             Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("cl1"), lastVTag);
             assertEquals(1, referrers.size());

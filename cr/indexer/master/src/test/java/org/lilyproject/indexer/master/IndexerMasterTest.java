@@ -33,7 +33,6 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkLockException;
@@ -52,13 +51,13 @@ public class IndexerMasterTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
     }
 
     @Before
     public void setUp() throws Exception {
         repository = repoSetup.getRepository();
-        hBaseAdmin = HBaseAdminFactory.get(repoSetup.getHadoopConf());
+        hBaseAdmin = new HBaseAdmin(repoSetup.getHadoopConf());
 
         final IndexerModelImpl model = new IndexerModelImpl(repoSetup.getZk());
         indexesInfo = new IndexesInfoImpl(model, repository);

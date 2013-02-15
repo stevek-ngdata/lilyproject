@@ -21,8 +21,10 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
 @Path("schema/fieldType")
@@ -31,12 +33,12 @@ public class FieldTypeCollectionResource extends BaseFieldTypeCollectionResource
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    public Response post(PostAction<FieldType> postAction) {
+    public Response post(PostAction<FieldType> postAction, @Context UriInfo uriInfo) {
         FieldType fieldType = processPost(postAction);
         URI uri = UriBuilder.fromResource(FieldTypeResource.class).
                 queryParam("ns.n", fieldType.getName().getNamespace()).
                 build("n$" + fieldType.getName().getName());
-        return Response.created(uri).entity(Entity.create(fieldType)).build();
+        return Response.created(uri).entity(Entity.create(fieldType, uriInfo)).build();
     }
 
 }

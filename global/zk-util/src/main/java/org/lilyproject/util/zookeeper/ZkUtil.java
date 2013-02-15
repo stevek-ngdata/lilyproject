@@ -20,6 +20,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.zookeeper.KeeperException.NotEmptyException;
+
+import org.apache.zookeeper.KeeperException;
+
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Stat;
@@ -137,6 +141,38 @@ public class ZkUtil {
             public Boolean execute() throws KeeperException, InterruptedException {
                 zk.setData(path, data, version);
                 return null;
+            }
+        });
+    }
+    
+    /**
+     * Deletes a path (non-recursively) in ZooKeeper, if it exists.
+     * <p>
+     * If the path doesn't exist, the delete will fail silently. The delete operation is retried until it succeeds, or
+     * until it fails with a non-recoverable error.
+     * <p>
+     * If the path has children, the operation will fail with the underlying {@link NotEmptyException}.
+     * 
+     * @param zk Handle to the ZooKeeper where the delete will occur
+     * @param path The path to be deleted
+     */
+    public static void deleteNode(final ZooKeeperItf zk, final String path) throws InterruptedException,
+            KeeperException {
+        zk.retryOperation(new ZooKeeperOperation<Boolean>() {
+
+            @Override
+            public Boolean execute() throws KeeperException, InterruptedException {
+                Stat stat = zk.exists(path, false);
+                if (stat != null) {
+                    try {
+                        zk.delete(path, stat.getVersion());
+                    } catch (KeeperException.NoNodeException nne) {
+                        // This is ok, the node is already gone
+                    }
+                    // We don't catch BadVersion or NotEmpty as these are probably signs that there is something
+                    // unexpected going on with the node that is to be deleted
+                }
+                return true;
             }
         });
     }

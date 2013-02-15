@@ -46,7 +46,7 @@ public class RecordTest {
         // TODO this test relies on all blobs being inline blobs, since it reuses blob values
         repoSetup.setBlobLimits(Long.MAX_VALUE, -1);
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         typeManager = repoSetup.getTypeManager();
         repository = repoSetup.getRepository();

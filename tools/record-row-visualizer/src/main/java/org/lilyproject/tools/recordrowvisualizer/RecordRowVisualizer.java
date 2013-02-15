@@ -15,40 +15,59 @@
  */
 package org.lilyproject.tools.recordrowvisualizer;
 
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.kauriproject.template.*;
+import org.kauriproject.template.CompiledTemplate;
+import org.kauriproject.template.DefaultTemplateBuilder;
+import org.kauriproject.template.DefaultTemplateContext;
+import org.kauriproject.template.DefaultTemplateExecutor;
+import org.kauriproject.template.DefaultTemplateService;
+import org.kauriproject.template.ExecutionContext;
+import org.kauriproject.template.KauriSaxHandler;
+import org.kauriproject.template.TemplateContext;
+import org.kauriproject.template.TemplateResult;
+import org.kauriproject.template.TemplateResultImpl;
 import org.kauriproject.template.source.ClasspathSourceResolver;
 import org.kauriproject.template.source.Source;
 import org.kauriproject.template.source.SourceResolver;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.cli.BaseZkCliTool;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.EncodingUtil;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
-import org.lilyproject.rowlog.api.ExecutionState;
-import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
 import org.lilyproject.util.Version;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.xml.sax.SAXException;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
 
 /**
  * Tool to visualize the HBase-storage structure of a Lily record, in the form
@@ -126,12 +145,8 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
         readColumns(root.get(RecordCf.DATA.bytes));
 
-        readRowLog(recordRow.walState, recordRow.walPayload, recordRow.mqState, recordRow.mqPayload,
-                root.get(RecordCf.ROWLOG.bytes));
-
         byte[][] treatedColumnFamilies = {
-                RecordCf.DATA.bytes,
-                RecordCf.ROWLOG.bytes
+                RecordCf.DATA.bytes
         };
 
         for (byte[] cf : root.keySet()) {
@@ -151,7 +166,6 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         Closer.close(typeMgr);
         Closer.close(zk);
         HConnectionManager.deleteAllConnections(true);
-        HBaseAdminFactory.closeAll();
         super.cleanup();
     }
 
@@ -207,101 +221,11 @@ public class RecordRowVisualizer extends BaseZkCliTool {
                 setSystemField("Versioned-mutable Record Type ID", column.getValue(), new RecordTypeValueDecoder(typeMgr));
             } else if (Arrays.equals(columnKey, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes)) {
                 setSystemField("Versioned-mutable Record Type Version", column.getValue(), LONG_DECODER);
-            } else if (Arrays.equals(columnKey, RecordColumn.LOCK.bytes)) {
-                setSystemField("Lock", column.getValue(), BASE64_DECODER);
             } else if (Arrays.equals(columnKey, RecordColumn.VERSION.bytes)) {
                 setSystemField("Record Version", column.getValue(), LONG_DECODER);
             } else {
                 recordRow.unknownColumns.add(Bytes.toString(columnKey));
             }
-        }
-    }
-
-    private void readRowLog(Map<RowLogKey, List<ExecutionData>> walStateByKey, Map<RowLogKey,
-            List<String>> walPayloadByKey, Map<RowLogKey, List<ExecutionData>> mqStateByKey,
-            Map<RowLogKey, List<String>> mqPayloadByKey, NavigableMap<byte[], NavigableMap<Long, byte[]>> cf)
-            throws IOException {
-
-        if (cf == null)
-            return;
-        
-        for (Map.Entry<byte[], NavigableMap<Long, byte[]>> rowEntry : cf.entrySet()) {
-            byte[] column = rowEntry.getKey();
-            // columns start with rowlow-prefix
-            byte rowlogId = column[0];
-            if (rowlogId == RecordColumn.WAL_PREFIX) {
-                readRowLog(walStateByKey, walPayloadByKey, rowEntry.getValue(), Arrays.copyOfRange(column, 1, column.length));
-            } else if (rowlogId == RecordColumn.MQ_PREFIX) {
-                readRowLog(mqStateByKey, mqPayloadByKey, rowEntry.getValue(), Arrays.copyOfRange(column, 1, column.length));
-            } else {
-                // TODO : unknown rowlog
-            }
-        }
-    }
-    
-    private static final byte PL_BYTE = (byte)1;
-    private static final byte ES_BYTE = (byte)2;
-    private static final byte[] SEQ_NR = Bytes.toBytes("SEQNR");
-    
-    private void readRowLog(Map<RowLogKey, List<ExecutionData>> stateByKey, Map<RowLogKey,
-            List<String>> payloadByKey, NavigableMap<Long, byte[]> columnCells, byte[] key) throws IOException {
-
-        NavigableMap<Long, byte[]> maxSeqNr = null;
-        
-        if (Arrays.equals(key, SEQ_NR)) { // key could be "SEQNR"
-            maxSeqNr = columnCells;
-        } else { // or is prefixed by payload or executionState byte
-            long seqNr = Bytes.toLong(key, 1);
-            long timestamp = Bytes.toLong(key, 1 + Bytes.SIZEOF_LONG);
-            if (key[0] == PL_BYTE) {
-                readPayload(payloadByKey, columnCells, seqNr, timestamp);
-            } else if (key[0] == ES_BYTE) {
-                readExecutionState(stateByKey, columnCells, seqNr, timestamp);
-            } else {
-                // TODO unexpected
-            }
-        }
-        
-        if (maxSeqNr != null) {
-            // TODO
-        }
-    }
-    
-    private void readExecutionState(Map<RowLogKey, List<ExecutionData>> stateByKey,
-            NavigableMap<Long, byte[]> columnCells, long seqNr, long timestamp) throws IOException {
-
-        for (Map.Entry<Long, byte[]> columnEntry : columnCells.entrySet()) {
-            RowLogKey key = new RowLogKey(seqNr, timestamp, columnEntry.getKey());
-
-            List<ExecutionData> states = stateByKey.get(key);
-            if (states == null) {
-                states = new ArrayList<ExecutionData>();
-                stateByKey.put(key, states);
-            }
-
-            ExecutionState state = SubscriptionExecutionState.fromBytes(columnEntry.getValue());
-            for (CharSequence subscriptionIdCharSeq : state.getSubscriptionIds()) {
-                String subscriptionId = subscriptionIdCharSeq.toString();
-
-                ExecutionData data = new ExecutionData();
-                data.subscriptionId = subscriptionId;
-                data.success = state.getState(subscriptionId);
-                states.add(data);
-            }
-
-        }
-    }
-
-    private void readPayload(Map<RowLogKey, List<String>> payloadByKey, NavigableMap<Long, byte[]> columnCells,
-            long seqNr, long timestamp) throws UnsupportedEncodingException {
-        for (Map.Entry<Long, byte[]> columnEntry : columnCells.entrySet()) {
-            RowLogKey key = new RowLogKey(seqNr, timestamp, columnEntry.getKey());
-            List<String> payloads = payloadByKey.get(key);
-            if (payloads == null) {
-                payloads = new ArrayList<String>();
-                payloadByKey.put(key, payloads);
-            }
-            payloads.add(new String(columnEntry.getValue(), "UTF-8"));
         }
     }
 

@@ -43,10 +43,10 @@ public class DerefMapBasicTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl");
+        TestHelper.setupLogging("org.lilyproject.indexer");
 
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         repository = repoSetup.getRepository();
         ids = repository.getIdGenerator();

@@ -41,7 +41,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>2.2-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
 
@@ -64,10 +64,6 @@
           <artifactId>commons-cli</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>commons-lang</groupId>
-          <artifactId>commons-lang</artifactId>
-        </exclusion>
-        <exclusion>
           <groupId>commons-logging</groupId>
           <artifactId>commons-logging</artifactId>
         </exclusion>
@@ -78,10 +74,6 @@
         <exclusion>
           <groupId>commons-beanutils</groupId>
           <artifactId>commons-beanutils-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.github.stephenc.high-scale-lib</groupId>
-          <artifactId>high-scale-lib</artifactId>
         </exclusion>
         <exclusion>
           <groupId>commons-codec</groupId>
@@ -122,14 +114,6 @@
         <exclusion>
           <groupId>org.jruby</groupId>
           <artifactId>jruby-complete</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.codehaus.jackson</groupId>
-          <artifactId>jackson-core-asl</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.codehaus.jackson</groupId>
-          <artifactId>jackson-mapper-asl</artifactId>
         </exclusion>
         <exclusion>
           <groupId>org.codehaus.jackson</groupId>
@@ -179,6 +163,10 @@
           <groupId>tomcat</groupId>
           <artifactId>jasper-runtime</artifactId>
         </exclusion>
+	<exclusion>
+	  <groupId>com.yammer.metrics</groupId>
+	  <artifactId>metrics-core</artifactId>
+	</exclusion>
       </exclusions>
     </dependency>
 
@@ -294,10 +282,6 @@
           <artifactId>jersey-json</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.codehaus.jackson</groupId>
-          <artifactId>jackson-mapper-asl</artifactId>
-        </exclusion>
-        <exclusion>
           <groupId>com.sun.jersey</groupId>
           <artifactId>jersey-server</artifactId>
         </exclusion>
@@ -312,10 +296,6 @@
         <exclusion>
           <groupId>net.java.dev.jets3t</groupId>
           <artifactId>jets3t</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>commons-lang</groupId>
-          <artifactId>commons-lang</artifactId>
         </exclusion>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -385,10 +365,6 @@
           <artifactId>core</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.codehaus.jackson</groupId>
-          <artifactId>jackson-core-asl</artifactId>
-        </exclusion>
-        <exclusion>
           <groupId>commons-cli</groupId>
           <artifactId>commons-cli</artifactId>
         </exclusion>
@@ -419,10 +395,6 @@
         <exclusion>
           <groupId>org.mortbay.jetty</groupId>
           <artifactId>jetty-util</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.codehaus.jackson</groupId>
-          <artifactId>jackson-mapper-asl</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

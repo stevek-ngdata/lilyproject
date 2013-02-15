@@ -19,13 +19,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -34,29 +28,8 @@ import org.joda.time.LocalDate;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.Link;
-import org.lilyproject.repository.api.MutationCondition;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RecordTypeBuilder;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.ValueType;
-import org.lilyproject.repository.impl.BlobManagerImpl;
-import org.lilyproject.repository.impl.BlobStoreAccessConfig;
-import org.lilyproject.repository.impl.DFSBlobStoreAccess;
-import org.lilyproject.repository.impl.HBaseRepository;
-import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.*;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
@@ -67,6 +40,8 @@ import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
 import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
 import org.lilyproject.rowlog.impl.RowLogShardSetup;
 import org.lilyproject.rowlog.impl.WalRowLog;
+import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -90,10 +65,8 @@ public class TutorialTest {
 
     private static TypeManager typeManager;
     private static HBaseRepository repository;
-    private static RowLog wal;
     private static Configuration configuration;
     private static ZooKeeperItf zooKeeper;
-    private static RowLogConfigurationManager rowLogConfMgr;
 
     private static HBaseTableFactory hbaseTableFactory;
 
@@ -111,37 +84,20 @@ public class TutorialTest {
 
         typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
 
-
-        DFSBlobStoreAccess dfsBlobStoreAccess =
-                new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
+        
+        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         List<BlobStoreAccess> blobStoreAccesses = Collections.<BlobStoreAccess>singletonList(dfsBlobStoreAccess);
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory =
-                new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
+        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-        setupWal();
-        RowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
-                RecordColumn.LOCK.bytes, 10000);
-        repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
+        repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager);
 
-    }
-
-    protected static void setupWal() throws Exception {
-        rowLogConfMgr = new RowLogConfigurationManagerImpl(zooKeeper);
-        HBaseRowLocker rowLocker =
-                new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
-                        RecordColumn.LOCK.bytes, 10000);
-        rowLogConfMgr.addRowLog("WAL", new RowLogConfig(true, false, 0L, 5000L, 5000L, 120000L, 100));
-        wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
-                RecordColumn.WAL_PREFIX, rowLogConfMgr, rowLocker, new RowLogHashShardRouter());
-        RowLogShardSetup.setupShards(1, wal, hbaseTableFactory);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         Closer.close(typeManager);
         Closer.close(repository);
-        Closer.close(rowLogConfMgr);
         Closer.close(zooKeeper);
         HBASE_PROXY.stop();
     }

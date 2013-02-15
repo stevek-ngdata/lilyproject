@@ -1,0 +1,314 @@
+Index: src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
+===================================================================
+--- src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java	(revision 1417972)
++++ src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java	(working copy)
+@@ -364,6 +364,11 @@
+       try {
+         connection.close();
+       } catch (Exception e) {
++        // Lily change
++        if (e instanceof InterruptedException) {
++            Thread.currentThread().interrupt();
++            throw new IOException("Giving up: thread is interrupted.", e);
++        }
+         if (connectSucceeded) {
+           throw new IOException("The connection to " + connection
+               + " could not be deleted.", e);
+@@ -700,7 +705,8 @@
+             this.masterLock.wait(ConnectionUtils.getPauseTime(this.pause, tries));
+           } catch (InterruptedException e) {
+             Thread.currentThread().interrupt();
+-            throw new RuntimeException("Thread was interrupted while trying to connect to master.");
++            // Lily change: nest interruptedexc so that we can detect it
++            throw new RuntimeException("Thread was interrupted while trying to connect to master.", e);
+           }
+         }
+         // Avoid re-checking in the future if this is a managed HConnection,
+@@ -1075,8 +1081,9 @@
+           Thread.sleep(ConnectionUtils.getPauseTime(this.pause, tries));
+         } catch (InterruptedException e) {
+           Thread.currentThread().interrupt();
++          // Lily change: nest interruptedexc so that we can detect it
+           throw new IOException("Giving up trying to location region in " +
+-            "meta: thread is interrupted.");
++            "meta: thread is interrupted.", e);
+         }
+       }
+     }
+Index: src/main/java/org/apache/hadoop/hbase/client/HTable.java
+===================================================================
+--- src/main/java/org/apache/hadoop/hbase/client/HTable.java	(revision 1417972)
++++ src/main/java/org/apache/hadoop/hbase/client/HTable.java	(working copy)
+@@ -680,6 +680,8 @@
+ 
+       return results;
+     } catch (InterruptedException e) {
++      // Lily change
++      Thread.currentThread().interrupt();
+       throw new IOException(e);
+     }
+   }
+@@ -727,6 +729,8 @@
+     try {
+       connection.processBatch((List) deletes, tableName, pool, results);
+     } catch (InterruptedException e) {
++      // Lily change
++      Thread.currentThread().interrupt();
+       throw new IOException(e);
+     } finally {
+       // mutate list so that it is empty for complete success, or contains only failed records
+@@ -917,6 +921,8 @@
+       try {
+         this.connection.processBatch(writeBuffer, tableName, pool, results);
+       } catch (InterruptedException e) {
++        // Lily change
++        Thread.currentThread().interrupt();
+         throw new IOException(e);
+       } finally {
+         // mutate list so that it is empty for complete success, or contains
+Index: src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java
+===================================================================
+--- src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java	(revision 1417972)
++++ src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java	(working copy)
+@@ -130,7 +130,18 @@
+    **/
+   public static void merge(Configuration destConf, Configuration srcConf) {
+     for (Entry<String, String> e : srcConf) {
+-      destConf.set(e.getKey(), e.getValue());
++      // Lily change (only compiles against Hadoop 0.23):
++      // without the isDeprecated check, we see quite some messages logged in LilyClient-using
++      // apps about deprecated properties. These deprecated properties are nowhere explicitly
++      // configured. Rather, Hadoop Configuration internally stores properties both under new
++      // and old names, and then in this situation where we iterate over all of them, we also
++      // get the old names, and would then set these old names in the new config and get the
++      // warning.
++      // (didn't test if this outside of Lily and whether this is only with Cloudera, but would
++      // make sense to do so and report higher up)
++      if (!Configuration.isDeprecated(e.getKey())) {
++        destConf.set(e.getKey(), e.getValue());
++      }
+     }
+   }
+   
+Index: src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java
+===================================================================
+--- src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java	(revision 1417972)
++++ src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java	(working copy)
+@@ -207,7 +207,11 @@
+ 
+     Algorithm(String name) {
+       this.conf = new Configuration();
+-      this.conf.setBoolean("hadoop.native.lib", true);
++      if (Configuration.isDeprecated("hadoop.native.lib")) {
++        this.conf.setBoolean("io.native.lib.available", true);
++      } else {
++        this.conf.setBoolean("hadoop.native.lib", true);
++      }
+       this.compressName = name;
+     }
+ 
+Index: src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
+===================================================================
+--- src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java	(revision 1417972)
++++ src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java	(working copy)
+@@ -522,7 +522,11 @@
+       // otherwise back off and retry
+       try {
+         Thread.sleep(failureSleep);
+-      } catch (InterruptedException ignored) {}
++      } catch (InterruptedException ignored) {
++        // Lily change
++        Thread.currentThread().interrupt();
++        throw new IOException("Giving up: thread is interrupted.", ignored);
++      }
+ 
+       LOG.info("Retrying connect to server: " + remoteId.getAddress() +
+         " after sleeping " + failureSleep + "ms. Already tried " + curRetries +
+@@ -606,6 +610,10 @@
+           receiveResponse();
+         }
+       } catch (Throwable t) {
++        // Lily change
++        if (t instanceof InterruptedException) {
++            Thread.currentThread().interrupt();
++        }
+         LOG.warn("Unexpected exception receiving call responses", t);
+         markClosed(new IOException("Unexpected exception receiving call responses", t));
+       }
+@@ -1008,6 +1016,12 @@
+         } catch (InterruptedException ignored) {
+           // save the fact that we were interrupted
+           interrupted = true;
++
++          // Lily change: noticed that often HBase kept hanging on the above call.wait when the
++          // thread was interrupted, even if there was no reason for the call to take a long
++          // time (= hbase & zookeeper running)
++          Thread.currentThread().interrupt();
++          throw new RuntimeException("HBaseClient: interrupted while waiting for call to be done.");
+         }
+       }
+ 
+@@ -1131,6 +1145,15 @@
+      * refs for keys in HashMap properly. For now its ok.
+      */
+     ConnectionId remoteId = new ConnectionId(addr, protocol, ticket, rpcTimeout);
++
++
++    // Lily change: stop if interrupted. Without this change, this loop would
++    // sometimes be executed tightly many millions times (see while condition).
++    // (this might be a side effect of other interruptions we added)
++    if (Thread.currentThread().isInterrupted()) {
++      throw new InterruptedException("Thread is interrupted.");
++    }
++
+     synchronized (connections) {
+       connection = connections.get(remoteId);
+       if (connection == null) {
+Index: src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
+===================================================================
+--- src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java	(revision 1417972)
++++ src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java	(working copy)
+@@ -270,6 +270,9 @@
+         Thread.sleep(1000);
+       } catch (InterruptedException ie) {
+         // IGNORE
++        // Lily change
++        Thread.currentThread().interrupt();
++        throw new RuntimeException("Thread interrupted.", ie);
+       }
+     }
+   }
+Index: pom.xml
+===================================================================
+--- pom.xml	(revision 1417972)
++++ pom.xml	(working copy)
+@@ -36,7 +36,7 @@
+   <groupId>org.apache.hbase</groupId>
+   <artifactId>hbase</artifactId>
+   <packaging>jar</packaging>
+-  <version>0.94.3</version>
++  <version>0.94.3_stock-cdh4.0.0-lily</version>
+   <name>HBase</name>
+   <description>
+     HBase is the &amp;lt;a href="http://hadoop.apache.org"&amp;rt;Hadoop&lt;/a&amp;rt; database. Use it when you need
+@@ -302,6 +302,14 @@
+         <enabled>true</enabled>
+       </releases>
+     </repository>
++    <repository>
++      <id>cdh.repo</id>
++      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
++      <name>Cloudera Repository</name>
++      <snapshots>
++        <enabled>false</enabled>
++      </snapshots>
++    </repository>
+   </repositories>
+ 
+   <pluginRepositories>
+@@ -319,6 +327,13 @@
+   </pluginRepositories>
+ 
+   <build>
++    <extensions>
++      <extension>
++        <groupId>org.apache.maven.wagon</groupId>
++        <artifactId>wagon-ssh</artifactId>
++        <version>2.0</version>
++      </extension>
++    </extensions>
+     <!-- Some plugins (javadoc for example) can be used in the normal build- and the site phase.
+          These plugins inherit their options from the <reporting> section below. These settings
+          can be overwritten here. -->
+@@ -2203,6 +2218,91 @@
+     </profile>
+ 
+ 
++    <!--
++      profile for building against Hadoop 2.0.0-alpha. Activate using:
++       mvn -Dhadoop.profile=cdh4
++    -->
++    <profile>
++      <id>hadoop-cdh4</id>
++      <activation>
++        <property>
++          <name>hadoop.profile</name>
++          <value>cdh4</value>
++        </property>
++      </activation>
++      <properties>
++        <hadoop.version>2.0.0-cdh4.0.0</hadoop.version>
++        <slf4j.version>1.6.1</slf4j.version>
++      </properties>
++      <dependencies>
++        <dependency>
++          <groupId>org.apache.hadoop</groupId>
++          <artifactId>hadoop-common</artifactId>
++          <version>${hadoop.version}</version>
++        </dependency>
++        <dependency>
++          <groupId>org.apache.hadoop</groupId>
++          <artifactId>hadoop-annotations</artifactId>
++          <version>${hadoop.version}</version>
++        </dependency>
++        <!-- test deps for hadoop-2.0 profile -->
++        <dependency>
++          <groupId>org.apache.hadoop</groupId>
++          <artifactId>hadoop-minicluster</artifactId>
++          <version>${hadoop.version}</version>
++          <scope>compile</scope>
++        </dependency>
++      </dependencies>
++      <build>
++        <plugins>
++          <plugin>
++            <groupId>org.codehaus.mojo</groupId>
++            <artifactId>build-helper-maven-plugin</artifactId>
++            <executions>
++              <execution>
++                <id>add-test-resource</id>
++                <goals>
++                  <goal>add-test-resource</goal>
++                </goals>
++                <configuration>
++                  <resources>
++                    <resource>
++                      <directory>src/test/resources</directory>
++                      <includes>
++                        <include>hbase-site.xml</include>
++                      </includes>
++                    </resource>
++                  </resources>
++                </configuration>
++              </execution>
++            </executions>
++          </plugin>
++          <plugin>
++            <artifactId>maven-dependency-plugin</artifactId>
++            <executions>
++              <execution>
++                <id>create-mrapp-generated-classpath</id>
++                <phase>generate-test-resources</phase>
++                <goals>
++                  <goal>build-classpath</goal>
++                </goals>
++                <configuration>
++                  <!-- needed to run the unit test for DS to generate
++                  the required classpath that is required in the env
++                  of the launch container in the mini mr/yarn cluster
++                  -->
++                  <outputFile>${project.build.directory}/test-classes/mrapp-generated-classpath</outputFile>
++                </configuration>
++              </execution>
++            </executions>
++          </plugin>
++        </plugins>
++      </build>
++    </profile>
++
++
++
++
+     <!-- profiles for the tests
+          See as well the properties of the project for the values
+          when no profile is active.     -->

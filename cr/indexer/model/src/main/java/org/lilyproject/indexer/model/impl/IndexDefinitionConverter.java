@@ -55,6 +55,7 @@ public class IndexDefinitionConverter {
         IndexBatchBuildState buildState = IndexBatchBuildState.valueOf(JsonUtil.getString(node, "batchBuildState"));
 
         String queueSubscriptionId = JsonUtil.getString(node, "queueSubscriptionId", null);
+        long subscriptionTimestamp = JsonUtil.getLong(node, "subscriptionTimestamp", 0L);
 
         byte[] configuration;
         try {
@@ -139,6 +140,7 @@ public class IndexDefinitionConverter {
         index.setUpdateState(updateState);
         index.setBatchBuildState(buildState);
         index.setQueueSubscriptionId(queueSubscriptionId);
+        index.setSubscriptionTimestamp(subscriptionTimestamp);
         index.setConfiguration(configuration);
         index.setSolrShards(solrShards);
         index.setShardingConfiguration(shardingConfiguration);
@@ -168,6 +170,8 @@ public class IndexDefinitionConverter {
 
         if (index.getQueueSubscriptionId() != null)
             node.put("queueSubscriptionId", index.getQueueSubscriptionId());
+        
+        node.put("subscriptionTimestamp", index.getSubscriptionTimestamp());
 
         String configurationAsString;
         try {

@@ -34,8 +34,8 @@ public class SolrClientMetrics implements Updater {
     private final SolrClientMetricsMBean mbean;
     private final MetricsContext context;
 
-    /** Counts number of times a Solr operation has been retried because of connection-related problems. */
-    public MetricsTimeVaryingLong retries = new MetricsTimeVaryingLong("retries", registry);
+    /** Counts number of times indexing exceptions have been swallowed because they are determined as not retry-able. */
+    public MetricsTimeVaryingLong swallowedExceptions = new MetricsTimeVaryingLong("swallowedExceptions", registry);
 
     public SolrClientMetrics(String indexName, String shardName) {
         this.recordName = indexName + "_" + shardName;

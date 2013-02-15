@@ -15,6 +15,9 @@
  */
 package org.lilyproject.indexer.master;
 
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -26,9 +29,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import com.ngdata.sep.SepModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -57,8 +62,6 @@ import org.lilyproject.indexer.model.api.IndexerModelEventType;
 import org.lilyproject.indexer.model.api.IndexerModelListener;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -67,9 +70,6 @@ import org.lilyproject.util.zookeeper.LeaderElection;
 import org.lilyproject.util.zookeeper.LeaderElectionCallback;
 import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
 
 
 /**
@@ -90,8 +90,6 @@ public class IndexerMaster {
     private final String zkConnectString;
 
     private final int zkSessionTimeout;
-
-    private final RowLogConfigurationManager rowLogConfMgr;
 
     private final SolrClientConfig solrClientConfig;
 
@@ -119,12 +117,13 @@ public class IndexerMaster {
 
     private final String nodes;
 
-
     private byte[] fullTableScanConf;
+
+    private SepModel sepModel;
 
     public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Repository repository,
             Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
-            String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr,
+            String zkConnectString, int zkSessionTimeout, SepModel sepModel,
             LilyInfo lilyInfo, SolrClientConfig solrClientConfig, boolean enableLocking,
             String hostName, HBaseTableFactory tableFactory, String nodes) {
 
@@ -136,13 +135,13 @@ public class IndexerMaster {
         this.hbaseConf = hbaseConf;
         this.zkConnectString = zkConnectString;
         this.zkSessionTimeout = zkSessionTimeout;
-        this.rowLogConfMgr = rowLogConfMgr;
         this.lilyInfo = lilyInfo;
         this.solrClientConfig = solrClientConfig;
         this.enableLocking = enableLocking;
         this.hostName = hostName;
         this.tableFactory = tableFactory;
         this.nodes = nodes;
+        this.sepModel = sepModel;
     }
 
     @PostConstruct
@@ -256,7 +255,7 @@ public class IndexerMaster {
                     // due to concurrent operations (e.g. someone deleting this subscription right after we
                     // created it).
                     String subscriptionId = subscriptionId(index.getName());
-                    rowLogConfMgr.addSubscription("mq", subscriptionId, RowLogSubscription.Type.Netty, 1);
+                    sepModel.addSubscription(subscriptionId);
                     index.setQueueSubscriptionId(subscriptionId);
                     indexerModel.updateIndexInternal(index);
                     log.info("Assigned queue subscription ID '" + subscriptionId + "' to index '" + indexName + "'");
@@ -276,7 +275,7 @@ public class IndexerMaster {
                 // Read current situation of record and assure it is still actual
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 if (needsSubscriptionIdUnassigned(index)) {
-                    rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
+                    sepModel.removeSubscription(index.getQueueSubscriptionId());
                     log.info("Deleted queue subscription for index " + indexName);
                     index.setQueueSubscriptionId(null);
                     indexerModel.updateIndexInternal(index);
@@ -374,7 +373,7 @@ public class IndexerMaster {
 
                 String queueSubscriptionId = index.getQueueSubscriptionId();
                 if (queueSubscriptionId != null) {
-                    rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
+                    sepModel.removeSubscription(index.getQueueSubscriptionId());
                     // We leave the subscription ID in the index definition FYI
                 }
 

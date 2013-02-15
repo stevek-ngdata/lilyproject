@@ -27,9 +27,8 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
         avro = true;
         TestHelper.setupLogging();
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
         repoSetup.setupRemoteAccess();
-        repoSetup.setupMessageQueue(true);
 
         idGenerator = repoSetup.getIdGenerator();
         repository = repoSetup.getRemoteRepository();

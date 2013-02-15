@@ -90,7 +90,7 @@ public class LilyProxyTest {
         Assert.assertEquals("name1", (String) record.getField(FIELD1));
 
         // Wait for messages to be processed
-        Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
+        Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepEventsProcessed(10000L));
 
         // Query Solr
         List<RecordId> recordIds = querySolr("name1");
@@ -118,7 +118,8 @@ public class LilyProxyTest {
             } finally {
                 indexerModel.unlockIndex(lock);
             }
-            lilyProxy.getLilyServerProxy().waitOnMQSubscription(subscriptionId, false, 60000L);
+
+            lilyProxy.getHBaseProxy().waitOnReplicationPeerStopped(subscriptionId);
 
             // Create record
             record = repository.newRecord();
@@ -127,7 +128,7 @@ public class LilyProxyTest {
             record = repository.create(record);
 
             // Wait for messages to be processed -- there shouldn't be any
-            Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
+            Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepEventsProcessed(10000L));
 
             // Record shouldn't be in index yet
             recordIds = querySolr("name2");

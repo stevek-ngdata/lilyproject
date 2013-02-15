@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.List;
 
+import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -30,6 +31,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -151,13 +153,10 @@ public class TableSplitTest {
         FileUtils.writeStringToFile(new File(generalConfDir, "tables.xml"), tablesXml, "UTF-8");
 
         // Write configuration to enable the linkindex
-        File rowlogConfDir = new File(confDir, "rowlog");
-        FileUtils.forceMkdir(rowlogConfDir);
+        String linkindexXml = "<linkindex xmlns:conf='http://kauriproject.org/configuration' conf:inherit='deep'>" +
+                "<enabled>true</enabled></linkindex>";
 
-        String rowlogXml = "<rowlog xmlns:conf='http://kauriproject.org/configuration' conf:inherit='deep'>" +
-                "<linkIndexUpdater enabled='true'/></rowlog>";
-
-        FileUtils.writeStringToFile(new File(rowlogConfDir, "rowlog.xml"), rowlogXml, "UTF-8");
+        FileUtils.writeStringToFile(new File(generalConfDir, "linkindex.xml"), linkindexXml, "UTF-8");
 
         return confDir;
     }
@@ -191,6 +190,8 @@ public class TableSplitTest {
                     .create();
         }
 
+        Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepEventsProcessed(60000L));
+
         //
         // Count number of records in each region
         //
@@ -201,10 +202,6 @@ public class TableSplitTest {
                 scan.setStartRow(regionInfo.getStartKey());
                 scan.setStopRow(regionInfo.getEndKey());
 
-                //System.out.println("table " + Bytes.toString(table.getTableName()));;
-                //System.out.println("start key: " + Bytes.toStringBinary(regionInfo.getStartKey()));
-                //System.out.println("end key: " + Bytes.toStringBinary(regionInfo.getEndKey()));
-
                 ResultScanner scanner = table.getScanner(scan);
                 int count = 0;
                 for (Result result : scanner) {
@@ -212,8 +209,10 @@ public class TableSplitTest {
                     count++;
                 }
 
-                assertTrue(String.format("Number of splits in region '%s' is %d, expected between 80 and 120",
-                                    regionInfo.getRegionNameAsString(), count), count > 80 && count < 120);
+                assertTrue(String.format("Number of records in region '%s' is %d, expected between 60 and 140, " +
+                        "start key is '%s', end key is '%s'", regionInfo.getRegionNameAsString(), count,
+                        Bytes.toStringBinary(regionInfo.getStartKey()), Bytes.toStringBinary(regionInfo.getEndKey())),
+                        count >= 60 && count <= 140);
             }
         }
     }

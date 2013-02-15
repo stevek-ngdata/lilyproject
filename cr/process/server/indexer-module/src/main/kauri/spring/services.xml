@@ -44,20 +44,8 @@
       service="org.lilyproject.repository.api.Repository"/>
 
   <kauri:import-service
-      id="messageQueue"
-      service="org.lilyproject.rowlog.api.RowLog"/>
-
-  <kauri:import-service
-      id="writeAheadLog"
-      service="org.lilyproject.rowlog.api.RowLog"/>
-
-  <kauri:import-service
       id="zooKeeper"
       service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
-
-  <kauri:import-service
-      id="rowLogConfigurationMgr"
-      service="org.lilyproject.rowlog.api.RowLogConfigurationManager"/>
 
   <kauri:import-service
       id="lilyInfo"
@@ -70,6 +58,10 @@
   <kauri:import-service
       id="indexerModel"
       service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
+
+  <kauri:import-service
+      id="sepModel"
+      service="com.ngdata.sep.SepModel"/>
 
   <kauri:import-service
       id="hbaseTableFactory"
@@ -109,7 +101,7 @@
     <constructor-arg>
       <bean factory-bean="hadoopConfFactory" factory-method="getZooKeeperSessionTimeout"/>
     </constructor-arg>
-    <constructor-arg ref="rowLogConfigurationMgr"/>
+    <constructor-arg ref="sepModel"/>
     <constructor-arg ref="lilyInfo"/>
     <constructor-arg ref="solrClientConfig"/>
     <constructor-arg value="${indexer:enableLocking}"/>
@@ -125,10 +117,8 @@
   <bean id="indexerWorker" class="org.lilyproject.indexer.worker.IndexerWorker">
     <constructor-arg ref="indexerModel"/>
     <constructor-arg ref="repository"/>
-    <constructor-arg ref="messageQueue"/>
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="hbaseConf"/>
-    <constructor-arg ref="rowLogConfigurationMgr"/>
     <constructor-arg ref="solrClientConfig"/>
     <constructor-arg>
       <bean factory-bean="networkItfInfo" factory-method="getHostName"/>

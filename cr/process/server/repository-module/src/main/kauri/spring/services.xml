@@ -48,20 +48,8 @@
       service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
 
   <kauri:import-service
-      id="messageQueue"
-      service="org.lilyproject.rowlog.api.RowLog"/>
-
-  <kauri:import-service
-      id="writeAheadLog"
-      service="org.lilyproject.rowlog.api.RowLog"/>
-
-  <kauri:import-service
       id="hbaseTableFactory"
       service="org.lilyproject.util.hbase.HBaseTableFactory"/>
-
-  <kauri:import-service
-      id="rowLocker"
-      service="org.lilyproject.rowlock.RowLocker"/>
 
   <kauri:import-service
       id="networkItfInfo"
@@ -131,10 +119,8 @@
       <bean class="org.lilyproject.repository.impl.HBaseRepository">
         <constructor-arg ref="typeManager"/>
         <constructor-arg ref="idGenerator"/>
-        <constructor-arg ref="writeAheadLog"/>
         <constructor-arg ref="hbaseTableFactory"/>
         <constructor-arg ref="blobManager"/>
-        <constructor-arg ref="rowLocker"/>
       </bean>
     </constructor-arg>
   </bean>
@@ -149,12 +135,6 @@
   </bean>
 
   <bean id="repository" factory-bean="repositoryDecoratorActivator" factory-method="getDecoratedRepository"/>
-
-  <bean class="org.lilyproject.server.modules.repository.LinkIndexUpdaterSetup">
-    <constructor-arg ref="repository"/>
-    <constructor-arg ref="hbaseConf"/>
-    <constructor-arg ref="hbaseTableFactory"/>
-  </bean>
 
   <bean id="mbeanExporter" class="org.springframework.jmx.export.MBeanExporter">
     <property name="beans">

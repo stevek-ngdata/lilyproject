@@ -23,6 +23,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -31,11 +33,12 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 public class RecordTypeByIdAndVersionResource extends RepositoryEnabled {
     @GET
     @Produces("application/json")
-    public Entity<RecordType> get(@PathParam("id") String id, @PathParam("version") Long version) {
+    public Entity<RecordType> get(@PathParam("id") String id, @PathParam("version") Long version,
+            @Context UriInfo uriInfo) {
         try {
             SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
             RecordType recordType = repository.getTypeManager().getRecordTypeById(schemaId, version);
-            return Entity.create(recordType);
+            return Entity.create(recordType, uriInfo);
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {

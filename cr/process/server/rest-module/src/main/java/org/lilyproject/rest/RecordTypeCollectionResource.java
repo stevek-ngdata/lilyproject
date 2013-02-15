@@ -21,8 +21,10 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
 @Path("schema/recordType")
@@ -31,12 +33,12 @@ public class RecordTypeCollectionResource extends BaseRecordTypeCollectionResour
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    public Response post(PostAction<RecordType> postAction) {
+    public Response post(PostAction<RecordType> postAction, @Context UriInfo uriInfo) {
         RecordType recordType = processPost(postAction);
         URI uri = UriBuilder.fromResource(RecordTypeResource.class).
                 queryParam("ns.n", recordType.getName().getNamespace()).
                 build("n$" + recordType.getName().getName());
-        return Response.created(uri).entity(Entity.create(recordType)).build();
+        return Response.created(uri).entity(Entity.create(recordType, uriInfo)).build();
     }
 
 }

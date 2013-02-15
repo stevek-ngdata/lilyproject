@@ -21,11 +21,8 @@ import static org.junit.Assert.assertEquals;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 
@@ -35,9 +32,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
-
-        repoSetup.setupMessageQueue(true);
+        repoSetup.setupRepository();
 
         idGenerator = repoSetup.getIdGenerator();
         repository = repoSetup.getRepository();
@@ -58,27 +53,4 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
         assertEquals(fieldType1, newTypeManager.getFieldTypeByName(fieldType1.getName()));
         Closer.close(newTypeManager);
     }
-    
-    @Test
-    public void testUpdateProcessesRemainingMessages() throws Exception {
-        HBaseRepositoryTestConsumer.reset();
-        RowLogMessageListenerMapping.INSTANCE.put("TestSubscription", new HBaseRepositoryTestConsumer());
-        repoSetup.getRowLogConfManager().addSubscription("WAL", "TestSubscription", Type.VM, 2);
-        repoSetup.waitForSubscription(repoSetup.getWal(), "TestSubscription");
-        
-        Record record = repository.newRecord();
-        record.setRecordType(recordType1.getName(), recordType1.getVersion());
-        record.setField(fieldType1.getName(), "value1");
-        record = repository.create(record);
-        record.setField(fieldType1.getName(), "value2");
-        record = repository.update(record);
-
-        assertEquals("value2", record.getField(fieldType1.getName()));
-
-        assertEquals(record, repository.read(record.getId()));
-        repoSetup.getRowLogConfManager().removeSubscription("WAL", "TestSubscription");
-        RowLogMessageListenerMapping.INSTANCE.remove("TestSubscription");
-    }
-    
-    
 }

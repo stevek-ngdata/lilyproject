@@ -591,8 +591,15 @@ public class HBaseTestingUtility {
         }
         s.close();
         t.close();
+
+        // Lily change: fix wrong master filesystem
+        // TODO Remove this once HBASE-6441 is available in the currently-used version of HBase
+        Configuration masterConf = hbaseCluster.getMaster().getConfiguration();
+        FileSystem fs = FileSystem.get(masterConf);
+        fs.setConf(masterConf);
+        
         LOG.info("Minicluster is up");
-        //getHBaseAdmin();
+        
         return this.hbaseCluster;
     }
 

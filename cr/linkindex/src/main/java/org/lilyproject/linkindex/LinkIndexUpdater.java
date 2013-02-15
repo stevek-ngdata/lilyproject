@@ -15,21 +15,35 @@
  */
 package org.lilyproject.linkindex;
 
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import com.ngdata.sep.EventListener;
+import com.ngdata.sep.SepEvent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.linkindex.LinkIndexUpdaterMetrics.Action;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.util.exception.ExceptionUtil;
 import org.lilyproject.util.repo.FieldFilter;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
-import org.lilyproject.util.repo.RowLogContext;
 import org.lilyproject.util.repo.VTaggedRecord;
-import org.lilyproject.rowlog.api.RowLogMessage;
-import org.lilyproject.rowlog.api.RowLogMessageListener;
-
-import java.util.*;
-
-import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 // TODO think more about error processing:
 //      Some kinds of errors might be temporary in nature and be solved by retrying after some time.
@@ -40,9 +54,8 @@ import static org.lilyproject.util.repo.RecordEvent.Type.*;
 /**
  * Keeps the {@link LinkIndex} up to date when changes happen to records.
  */
-public class LinkIndexUpdater implements RowLogMessageListener {
+public class LinkIndexUpdater implements EventListener {
     private Repository repository;
-    private TypeManager typeManager;
     private LinkIndex linkIndex;
 
     private Log log = LogFactory.getLog(getClass());
@@ -50,28 +63,21 @@ public class LinkIndexUpdater implements RowLogMessageListener {
 
     public LinkIndexUpdater(Repository repository, LinkIndex linkIndex) throws RepositoryException, InterruptedException {
         this.repository = repository;
-        this.typeManager = repository.getTypeManager();
         this.linkIndex = linkIndex;
         metrics = new LinkIndexUpdaterMetrics("linkIndexUpdater");
     }
 
     @Override
-    public boolean processMessage(RowLogMessage msg) {
+    public void processEvent(SepEvent event) {
+        RecordId recordId = repository.getIdGenerator().fromBytes(event.getRow());
+        RecordEvent recordEvent;
         try {
-            RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());
-            Object context = msg.getContext();
-            RecordEvent recordEvent = null;
-            if (context != null) {
-                RowLogContext rowLogContext = (RowLogContext) msg.getContext();
-                recordEvent = rowLogContext.getRecordEvent();
-            }
-            if (recordEvent == null)
-                recordEvent = new RecordEvent(msg.getPayload(), repository.getIdGenerator());
-            update(recordId, recordEvent);
-        } catch (Exception e) {
-            log.error("Error processing event in LinkIndexUpdater", e);
+            recordEvent = new RecordEvent(event.getPayload(), repository.getIdGenerator());
+        } catch (IOException e) {
+            log.error("Error reading record event, processing of message cancelled", e);
+            return;
         }
-        return true;
+        update(recordId, recordEvent);
     }
 
     public void update(RecordId recordId, RecordEvent recordEvent) {
@@ -160,7 +166,9 @@ public class LinkIndexUpdater implements RowLogMessageListener {
                 }
             }
         } catch (Exception e) {
-            log.error("Error processing event in LinkIndexUpdater", e);
+            // Throw the exception through so that it is retried later by the SEP
+            ExceptionUtil.handleInterrupt(e);
+            throw new RuntimeException(e);
         } finally {
             metrics.report(Action.UPDATE, System.currentTimeMillis() - before);
         }
@@ -204,7 +212,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
             return "null";
 
         try {
-            return typeManager.getFieldTypeById(fieldTypeId).getName().getName();
+            return repository.getTypeManager().getFieldTypeById(fieldTypeId).getName().getName();
         } catch (Throwable t) {
             return "failed to load name";
         }

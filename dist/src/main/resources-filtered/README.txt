@@ -13,7 +13,7 @@ Getting started with Lily
 
 Please see the Running Lily guide on the website:
 
-http://docs.outerthought.org/lily-docs-1.3/414-lily.html
+http://docs.ngdata.com/lily-docs-current/414-lily.html
 
 
 Discussion group

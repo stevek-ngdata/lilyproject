@@ -29,7 +29,7 @@ public class BlobStoreTest extends AbstractBlobStoreTest {
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
+        repoSetup.setupRepository();
 
         repository = repoSetup.getRepository();
         typeManager = repoSetup.getTypeManager();

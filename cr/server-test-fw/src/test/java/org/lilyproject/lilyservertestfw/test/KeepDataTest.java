@@ -126,7 +126,7 @@ public class KeepDataTest {
         Assert.assertEquals("name1", (String) record.getField(FIELD1));
 
         // Wait for messages to be processed
-        Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
+        Assert.assertTrue("Processing events took too long", lilyProxy.waitSepEventsProcessed(60000L));
 
         // Query Solr and assert all previously created records are indexed
         List<RecordId> recordIds = querySolr("name1");

@@ -24,11 +24,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.Indexer;
 import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.ConcurrentRecordUpdateException;
 import org.lilyproject.repository.api.IOBlobException;
 import org.lilyproject.repository.api.IORecordException;
 import org.lilyproject.repository.api.IOTypeException;
 import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.RecordLockedException;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RetriesExhaustedBlobException;
 import org.lilyproject.repository.api.RetriesExhaustedRecordException;
@@ -230,7 +230,7 @@ public class BalancingAndRetryingLilyConnection {
                 throwable = ((InvocationTargetException) throwable).getTargetException();
 
             if (throwable instanceof IORecordException || throwable instanceof IOBlobException ||
-                    throwable instanceof IOTypeException || throwable instanceof RecordLockedException) {
+                    throwable instanceof IOTypeException || throwable instanceof ConcurrentRecordUpdateException) {
 
                 boolean callInitiated = true;
                 if (throwable.getCause() instanceof NoServersException) {

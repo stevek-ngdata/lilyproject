@@ -15,18 +15,26 @@
  */
 package org.lilyproject.indexer.engine;
 
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
+
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.ngdata.sep.SepEvent;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.ngdata.sep.EventListener;
+import com.ngdata.sep.EventPublisher;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
@@ -44,17 +52,11 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogException;
-import org.lilyproject.rowlog.api.RowLogMessage;
-import org.lilyproject.rowlog.api.RowLogMessageListener;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.RecordEvent;
+import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
-
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
 
 //
 // About the exception handling strategy
@@ -90,13 +92,13 @@ import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
 /**
  * Updates the index in response to repository events.
  */
-public class IndexUpdater implements RowLogMessageListener {
+public class IndexUpdater implements EventListener {
     private Repository repository;
     private Indexer indexer;
     private IndexUpdaterMetrics metrics;
     private ClassLoader myContextClassLoader;
     private IndexLocker indexLocker;
-    private RowLog rowLog;
+    private EventPublisher eventPublisher;
     private String subscriptionId;
 
     /**
@@ -109,20 +111,19 @@ public class IndexUpdater implements RowLogMessageListener {
     private IdGenerator idGenerator;
 
     /**
-     * @param rowLog this should be the message queue
-     * @param subscriptionId ID of the rowlog subscription to which this listener is listening. This is needed
+     * @param subscriptionId id of the SEP subscription to which this listener is listening. This is needed
      *                       because the IndexUpdater generates events itself, which should only be sent to
      *                       this subscription.
      */
     public IndexUpdater(Indexer indexer, Repository repository, IndexLocker indexLocker,
-            RowLog rowLog, IndexUpdaterMetrics metrics, DerefMap derefMap, String subscriptionId)
-            throws RowLogException, IOException {
+            IndexUpdaterMetrics metrics, DerefMap derefMap, EventPublisher eventPublisher, String subscriptionId)
+            throws IOException {
         this.indexer = indexer;
         this.repository = repository;
         this.idGenerator = repository.getIdGenerator();
         this.indexLocker = indexLocker;
-        this.rowLog = rowLog;
         this.derefMap = derefMap;
+        this.eventPublisher = eventPublisher;
         this.subscriptionId = subscriptionId;
 
         this.myContextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -131,33 +132,34 @@ public class IndexUpdater implements RowLogMessageListener {
     }
 
     @Override
-    public boolean processMessage(RowLogMessage msg) throws InterruptedException {
+    public void processEvent(SepEvent event) {
         long before = System.currentTimeMillis();
 
         // During the processing of this message, we switch the context class loader to the one
         // of the Kauri module to which the index updater belongs. This is necessary for Tika
         // to find its parser implementations.
 
-        RecordEvent event = null;
+        RecordEvent recordEvent = null;
         RecordId recordId = null;
 
         ClassLoader currentCL = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(myContextClassLoader);
-            event = new RecordEvent(msg.getPayload(), idGenerator);
-            recordId = idGenerator.fromBytes(msg.getRowKey());
+            
+            recordEvent = new RecordEvent(event.getPayload(), idGenerator);
+            recordId = idGenerator.fromBytes(event.getRow());
 
             if (log.isDebugEnabled()) {
-                log.debug("Received message: " + event.toJson());
+                log.debug("Received message: " + recordEvent.toJson());
             }
 
-            if (event.getType().equals(INDEX)) {
+            if (recordEvent.getType().equals(INDEX)) {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("Record %1$s: reindex requested for these vtags: %2$s", recordId,
-                            indexer.vtagSetToNameString(event.getVtagsToIndex())));
+                            indexer.vtagSetToNameString(recordEvent.getVtagsToIndex())));
                 }
-                index(recordId, event.getVtagsToIndex());
-            } else if (event.getType().equals(DELETE)) {
+                index(recordId, recordEvent.getVtagsToIndex());
+            } else if (recordEvent.getType().equals(DELETE)) {
                 // Record is deleted: delete its index entry. We do not check for a matching index case, since
                 // we can't (record is not available anymore), and besides IndexAwareMQFeeder takes care of sending us
                 // only relevant events.
@@ -182,10 +184,10 @@ public class IndexUpdater implements RowLogMessageListener {
                 // Based on the partial old/new record state stored in the RecordEvent, determine whether we
                 // now match a different IndexCase than before, and if so, if the new case would have less vtags
                 // than the old one, perform the necessary deletes on Solr.
-                Record[] records =
-                        IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, event, repository);
-                Record oldRecord = records[0];
-                Record newRecord = records[1];
+                Pair<Record,Record> oldAndNewRecords =
+                        IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, recordEvent, repository);
+                Record oldRecord = oldAndNewRecords.getV1();
+                Record newRecord = oldAndNewRecords.getV2();
                 IndexCase caseOld = oldRecord != null ? indexer.getConf().getIndexCase(oldRecord) : null;
                 IndexCase caseNew = newRecord != null ? indexer.getConf().getIndexCase(newRecord) : null;
 
@@ -215,7 +217,7 @@ public class IndexUpdater implements RowLogMessageListener {
                     doIndexing = caseOld.getVersionTags().size() > 0;
                 }
 
-                RecordEventHelper eventHelper = new RecordEventHelper(event, null, repository.getTypeManager());
+                RecordEventHelper eventHelper = new RecordEventHelper(recordEvent, null, repository.getTypeManager());
 
                 if (doIndexing) {
                     indexLocker.lock(recordId);
@@ -231,7 +233,7 @@ public class IndexUpdater implements RowLogMessageListener {
                             // For now, we do nothing, when the delete event is received the record will be removed
                             // from the index (as well as update of denormalized data).
                             // TODO: we should process all outstanding messages for the record (up to delete) in one go
-                            return true;
+                            return;
                         }
 
                         handleRecordCreateUpdate(vtRecord);
@@ -246,23 +248,25 @@ public class IndexUpdater implements RowLogMessageListener {
                 }
             }
 
-        } catch (InterruptedException e) {
-            throw e;
         } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             if (recordId != null) {
-                String eventType = event != null && event.getType() != null ? event.getType().toString() : "(unknown)";
-                log.error("Failure in IndexUpdater. Record '" + recordId + "', event type " + eventType, e);
+                String eventType = recordEvent != null && recordEvent.getType() != null ? recordEvent.getType().toString() : "(unknown)";
+                log.error("Failure in IndexUpdater. Record '" + recordId + "', event type " + eventType + ": " +  e);
                 metrics.errors.inc();
             } else {
-                log.error("Failure in IndexUpdater. Failed before/while reading payload.", e);
+                log.error("Failure in IndexUpdater. Failed before/while reading payload: " + e);
                 metrics.errors.inc();
             }
+            // We throw the exception through so that it will be retried by the SEP
+            throw new RuntimeException(e);
         } finally {
             long after = System.currentTimeMillis();
             metrics.updates.inc(after - before);
             Thread.currentThread().setContextClassLoader(currentCL);
         }
-        return true;
     }
 
     private void handleRecordCreateUpdate(VTaggedRecord vtRecord) throws Exception {
@@ -452,17 +456,19 @@ public class IndexUpdater implements RowLogMessageListener {
             for (SchemaId vtag : referrersAndVTags.get(referrer)) {
                 payload.addVTagToIndex(vtag);
             }
+            IndexRecordFilterData filterData = new IndexRecordFilterData();
+            filterData.setSubscriptionInclusions(ImmutableSet.of(this.subscriptionId));
+            payload.setIndexRecordFilterData(filterData);
 
-            // TODO how will this behave if the row was meanwhile deleted?
             try {
-                rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null,
-                        Collections.singletonList(subscriptionId));
+                eventPublisher.publishEvent(referrer.toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.
                 log.error("Error putting index message on queue of record " + referrer, e);
                 metrics.errors.inc();
             }
+            metrics.lastReindexRequestedTimestamp.set(System.currentTimeMillis());
         }
     }
 

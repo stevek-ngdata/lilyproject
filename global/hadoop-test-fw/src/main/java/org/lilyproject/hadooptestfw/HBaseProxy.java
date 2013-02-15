@@ -33,15 +33,23 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HConnectionManager;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
+import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
+
+import javax.management.ObjectName;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
 
 /**
  * Provides access to HBase, either by starting an embedded HBase or by connecting to a running HBase.
@@ -60,8 +68,8 @@ public class HBaseProxy {
     private boolean cleanStateOnConnect = true;
     private boolean enableMapReduce = false;
     private boolean clearData = true;
-    private boolean format;
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
+    private ReplicationPeerUtil mbean = new ReplicationPeerUtil();
 
     public enum Mode {EMBED, CONNECT}
 
@@ -99,6 +107,10 @@ public class HBaseProxy {
         }
     }
 
+    public Mode getMode() {
+        return mode;
+    }
+
     public void setTestHome(File testHome) throws IOException {
         if (mode != Mode.EMBED) {
             throw new RuntimeException("testHome should only be set when mode is EMBED");
@@ -111,8 +123,6 @@ public class HBaseProxy {
             testHome = TestHomeUtil.createTestHome("lily-hbaseproxy-");
         }
 
-        if (!testHome.exists())
-            format = true; // A new directory: the NameNode and DataNodes will have to be formatted first
         FileUtils.forceMkdir(testHome);
     }
 
@@ -130,6 +140,10 @@ public class HBaseProxy {
 
     public void setEnableMapReduce(boolean enableMapReduce) {
         this.enableMapReduce = enableMapReduce;
+    }
+
+    public HBaseTestingUtility getHBaseTestingUtility() {
+        return hbaseTestUtil;
     }
 
     public void start() throws Exception {
@@ -180,6 +194,8 @@ public class HBaseProxy {
             case CONNECT:
                 conf.set("hbase.zookeeper.quorum", "localhost");
                 conf.set("hbase.zookeeper.property.clientPort", "2181");
+                conf.set("hbase.replication", "true");
+
                 addUserProps(conf);
 
                 cleanupUtil = new CleanupUtil(conf, getZkConnectString());
@@ -190,12 +206,17 @@ public class HBaseProxy {
                     allTimestampReusingTables.putAll(cleanupUtil.getDefaultTimestampReusingTables());
                     allTimestampReusingTables.putAll(timestampReusingTables);
                     cleanupUtil.cleanTables(allTimestampReusingTables);
+
+                    cleanupUtil.cleanHBaseReplicas();
                 }
 
                 break;
             default:
                 throw new RuntimeException("Unexpected mode: " + mode);
         }
+
+        ManagementFactory.getPlatformMBeanServer().registerMBean(mbean,
+                new ObjectName("LilyHBaseProxy:name=ReplicationPeer"));
     }
 
     /**
@@ -300,6 +321,8 @@ public class HBaseProxy {
         if (clearData && testHome != null) {
             TestHomeUtil.cleanupTestHome(testHome);
         }
+
+        ManagementFactory.getPlatformMBeanServer().unregisterMBean(new ObjectName("LilyHBaseProxy:name=ReplicationPeer"));
     }
 
     public Configuration getConf() {
@@ -338,75 +361,112 @@ public class HBaseProxy {
         cleanupUtil.cleanBlobStore(getBlobFS().getUri());
     }
 
-    /**
-     * Waits for all messages from the WAL and MQ to be processed.
-     *
-     * @param timeout the maximum time to wait
-     * @return false if the timeout was reached before all messages were processed
-     */
-    public boolean waitWalAndMQMessagesProcessed(long timeout) throws Exception {
-        long before = System.currentTimeMillis();
-        if (!waitWalMessagesProcessed(timeout))
-            return false;
-        long duration = System.currentTimeMillis() - before;
-        return waitMQMessagesProcessed(timeout - duration);
-    }
-
-    /**
-     * Waits for all messages from the WAL to be processed.
-     *
-     * @param timeout the maximum time to wait
-     * @return false if the timeout was reached before all messages were processed
-     */
-    public boolean waitWalMessagesProcessed(long timeout) throws Exception {
-        String tableName = "rowlog-wal";
-        HTable hTable = new HTable(conf, Bytes.toBytes(tableName));
+    public void rollHLog() throws Exception {
+        HBaseAdmin admin = new HBaseAdmin(conf);
         try {
-            return waitRowLogMessagesProcessed(timeout, hTable);
+            Collection<ServerName> serverNames = admin.getClusterStatus().getServers();
+            if (serverNames.size() != 1) {
+                throw new RuntimeException("Expected exactly one region server, but got: " + serverNames.size());
+            }
+            admin.rollHLogWriter(serverNames.iterator().next().getServerName());
         } finally {
-            hTable.close();
+            Closer.close(admin);
         }
     }
 
     /**
-     * Waits for all messages from the MQ to be processed.
+     * Wait for all outstanding waledit's that are currently in the hlog(s) to be replicated. Any new waledits
+     * produced during the calling of this method won't be processed.
      *
-     * @param timeout the maximum time to wait
-     * @return false if the timeout was reached before all messages were processed
+     * <p>To avoid any timing issues, after adding a replication peer you will want to call
+     * {@link #waitOnReplicationPeerReady(String)} to be sure the current logs are in the queue
+     * of the new peer and that the peer's mbean is registered, otherwise this method might skip
+     * that peer (usually will go so fast that this problem doesn't really exist, but just to be sure).</p>
      */
-    public boolean waitMQMessagesProcessed(long timeout) throws Exception {
-        String tableName = "rowlog-mq";
-        HTable hTable = new HTable(conf, Bytes.toBytes(tableName));
-        try {
-            return waitRowLogMessagesProcessed(timeout, hTable);
-        } finally {
-            hTable.close();
-        }
-    }
+    public boolean waitOnReplication(long timeout) throws Exception {
+        // Wait for the SEP to have processed all events.
+        // The idea is as follows:
+        //   - we want to be sure hbase replication processed all outstanding events in the hlog
+        //   - therefore, roll the current hlog
+        //   - if the queue of hlogs to be processed by replication contains only the current hlog (the newly
+        //     rolled one), all events in the previous hlog(s) will have been processed
+        //
+        // It only works for one region server (which is the case for the test framework) and of course
+        // assumes that new hlogs aren't being created in the meantime, but that is under all reasonable
+        // circumstances the case.
+        // It does ignore new edits that are happening after/during the call of this method, which is a good thing.
 
-    private boolean waitRowLogMessagesProcessed(long timeout, HTable hTable) throws Exception {
-        if (log.isDebugEnabled()) {
-            log.debug("Begin waiting on " + Bytes.toString(hTable.getTableName()));
-        }
+        // Make sure there actually is something within the hlog, otherwise it won't roll
+        // This assumes the record table exits (doing the same with the .META. tables gives an exception
+        // "Failed openScanner" at KeyComparator.compareWithoutRow in connect mode)
+        HTable table = new HTable(conf, "record");
+        Delete delete = new Delete(Bytes.toBytes("i-am-quite-sure-this-row-does-not-exist-ha-ha-ha"));
+        table.delete(delete);
 
-        long before = System.currentTimeMillis();
-        try {
-            long tryUntil = System.currentTimeMillis() + timeout;
-            while (System.currentTimeMillis() < tryUntil) {
-                ResultScanner scanner = hTable.getScanner(Bytes.toBytes("messages"));
-                Result result = scanner.next();
-                scanner.close();
-                if (result == null || result.size() <= 0) {
-                    return true;
+        // Roll the hlog
+        rollHLog();
+        
+        // Force creation of a new HLog
+        delete = new Delete(Bytes.toBytes("i-am-quite-sure-this-row-does-not-exist-ha-ha-ha-2"));
+        table.delete(delete);
+        table.close();
+
+        // Using JMX, query the size of the queue of hlogs to be processed for each replication source
+        JmxLiaison jmxLiaison = new JmxLiaison();
+        jmxLiaison.connect(mode == Mode.EMBED);
+        ObjectName replicationSources = new ObjectName("hadoop:service=Replication,name=ReplicationSource for *");
+        Set<ObjectName> mbeans = jmxLiaison.queryNames(replicationSources);
+        long tryUntil = System.currentTimeMillis() + timeout;
+        nextMBean: for (ObjectName mbean : mbeans) {
+            int logQSize = Integer.MAX_VALUE;
+            while (logQSize > 0 && System.currentTimeMillis() < tryUntil) {
+                logQSize = (Integer)jmxLiaison.getAttribute(mbean, "sizeOfLogQueue");
+                // logQSize == 0 means there is one active hlog that is polled by replication
+                // and none that are queued for later processing
+                // System.out.println("hlog q size is " + logQSize + " for " + mbean.toString() + " max wait left is " +
+                //     (tryUntil - System.currentTimeMillis()));
+                if (logQSize == 0) {
+                    continue nextMBean;
+                } else {
+                    Thread.sleep(100);
                 }
-                Thread.sleep(30);
             }
             return false;
-        } finally {
-            if (log.isDebugEnabled()) {
-                log.debug("Waiting on " + Bytes.toString(hTable.getTableName()) + " took " +
-                        (System.currentTimeMillis() - before));
-            }
+        }
+
+        return true;
+    }
+
+    /**
+     * After adding a new replication peer, this waits for the replication source in the region server to be started.
+     */
+    public void waitOnReplicationPeerReady(String peerId) throws Exception {
+        if (mode == Mode.EMBED) {
+            mbean.waitOnReplicationPeerReady(peerId);
+        } else {
+            JmxLiaison jmxLiaison = new JmxLiaison();
+            jmxLiaison.connect(false);
+            jmxLiaison.invoke(new ObjectName("LilyHBaseProxy:name=ReplicationPeer"), "waitOnReplicationPeerReady",
+                    peerId);
+            jmxLiaison.disconnect();
         }
     }
+
+    /**
+     * After removing a replication peer, this waits for the replication source in the region server to be stopped,
+     * and will as well unregister its mbean (a workaround because this is missing in hbase at the time of this
+     * writing -- hbase 0.94.3)
+     */
+    public void waitOnReplicationPeerStopped(String peerId) throws Exception {
+        if (mode == Mode.EMBED) {
+            mbean.waitOnReplicationPeerStopped(peerId);
+        } else {
+            JmxLiaison jmxLiaison = new JmxLiaison();
+            jmxLiaison.connect(false);
+            jmxLiaison.invoke(new ObjectName("LilyHBaseProxy:name=ReplicationPeer"), "waitOnReplicationPeerStopped",
+                    peerId);
+            jmxLiaison.disconnect();
+        }
+    }
+
 }

@@ -1,1 +1,0 @@
-WARNING ! Changing the properties of the rowlog can greatly influence the behaviour of the system. Do not change anything unless you know what you're doing.

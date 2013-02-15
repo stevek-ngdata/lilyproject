@@ -31,6 +31,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PreDestroy;
 
+import com.google.common.base.Preconditions;
+
+import org.lilyproject.indexer.model.api.IndexUpdateState;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.CreateMode;
@@ -160,6 +164,9 @@ public class IndexerModelImpl implements WriteableIndexerModel {
     public void addIndex(IndexDefinition index) throws IndexExistsException, IndexModelException, IndexValidityException {
         assertValid(index);
 
+        if (index.getUpdateState() != IndexUpdateState.DO_NOT_SUBSCRIBE) {
+            index.setSubscriptionTimestamp(System.currentTimeMillis());
+        }
         final String indexPath = INDEX_COLLECTION_PATH + "/" + index.getName();
         final byte[] data = IndexDefinitionConverter.INSTANCE.toJsonBytes(index);
 
@@ -771,6 +778,27 @@ public class IndexerModelImpl implements WriteableIndexerModel {
                 if (oldIndex != null) {
                     events.add(new IndexerModelEvent(IndexerModelEventType.INDEX_REMOVED, indexName));
                 }
+            }
+        }
+    }
+
+    /**
+     * Check the validity of an index name.
+     * <p>
+     * An index name can be any string of printable unicode characters that has a length greater than 0. Printable
+     * characters in this context are considered to be anything that is not an ISO control character as defined by
+     * {@link Character#isISOControl(int)}.
+     * 
+     * @param indexName The name to validate
+     */
+    public static void validateIndexName(String indexName) {
+        Preconditions.checkNotNull(indexName);
+        if (indexName.length() == 0) {
+            throw new IllegalArgumentException("Index name is empty");
+        }
+        for (int charIdx = 0; charIdx < indexName.length(); charIdx++) {
+            if (Character.isISOControl(indexName.codePointAt(charIdx))) {
+                throw new IllegalArgumentException("Index names may only consist of printable characters");
             }
         }
     }

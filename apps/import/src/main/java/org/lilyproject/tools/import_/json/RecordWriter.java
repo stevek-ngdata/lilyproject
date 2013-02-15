@@ -32,11 +32,14 @@ public class RecordWriter implements EntityWriter<Record> {
     @Override
     public ObjectNode toJson(Record record, WriteOptions options, Repository repository) throws RepositoryException,
             InterruptedException {
-        Namespaces namespaces = new NamespacesImpl();
+        Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
+                NamespacesImpl.DEFAULT_USE_PREFIXES);
 
         ObjectNode recordNode = toJson(record, options, namespaces, repository);
 
-        recordNode.put("namespaces", NamespacesConverter.toJson(namespaces));
+        if (namespaces.usePrefixes()) {
+            recordNode.put("namespaces", NamespacesConverter.toJson(namespaces));
+        }
 
         return recordNode;
     }

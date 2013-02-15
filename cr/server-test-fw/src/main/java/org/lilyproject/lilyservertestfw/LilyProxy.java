@@ -33,10 +33,7 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
 
 public class LilyProxy {
-    /**
-     *
-     */
-    public static final String TEMP_DIR_PREFIX = "lily-proxy-";
+    private static final String TEMP_DIR_PREFIX = "lily-proxy-";
     private HBaseProxy hbaseProxy;
     private LilyServerProxy lilyServerProxy;
     private SolrProxy solrProxy;
@@ -136,7 +133,7 @@ public class LilyProxy {
         }
         hbaseProxy.setEnableMapReduce(true);
         solrProxy = new SolrProxy(solrMode, this.clearData);
-        lilyServerProxy = new LilyServerProxy(lilyServerMode, this.clearData);
+        lilyServerProxy = new LilyServerProxy(lilyServerMode, this.clearData, hbaseProxy);
     }
 
     public Mode getMode() {
@@ -273,27 +270,30 @@ public class LilyProxy {
     }
 
     /**
-     * Waits for all messages from the WAL and MQ to be processed and optionally commits the solr index.
+     * Waits for all SEP events to be processed and if successful commits the solr index.
+     *
+     * <p>The canonical usage in tests is along these lines:</p>
+     *
+     * <pre>Assert.assertTrue("Processing events took too long", lilyProxy.waitSepEventsProcessed(60000L));</pre>
      *
      * @param timeout the maximum time to wait
-     * @param
-     * @return false if the timeout was reached before all messages were processed
+     * @return false if the timeout was reached before all events were processed
      */
-    public boolean waitWalAndMQMessagesProcessed(long timeout, boolean commitSolr) throws Exception {
-        boolean result = hbaseProxy.waitWalAndMQMessagesProcessed(timeout);
-        if (commitSolr)
-            solrProxy.commit();
-        return result;
+    public boolean waitSepEventsProcessed(long timeout) throws Exception {
+        return waitSepEventsProcessed(timeout, true);
     }
 
     /**
-     * Waits for all messages from the WAL and MQ to be processed and commits the solr index by default.
+     * Waits for all SEP events to be processed and optionally commits the solr index.
      *
      * @param timeout the maximum time to wait
-     * @param
-     * @return false if the timeout was reached before all messages were processed
+     * @return false if the timeout was reached before all events were processed
      */
-    public boolean waitWalAndMQMessagesProcessed(long timeout) throws Exception {
-        return waitWalAndMQMessagesProcessed(timeout, true);
+    public boolean waitSepEventsProcessed(long timeout, boolean commitSolr) throws Exception {
+        boolean success = hbaseProxy.waitOnReplication(timeout);
+        if (success && commitSolr) {
+            solrProxy.commit();
+        }
+        return success;
     }
 }

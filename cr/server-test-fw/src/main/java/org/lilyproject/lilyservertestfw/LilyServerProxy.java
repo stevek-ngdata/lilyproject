@@ -22,15 +22,10 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -40,6 +35,7 @@ import org.apache.zookeeper.KeeperException;
 import org.kauriproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
+import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.indexer.model.api.IndexBatchBuildState;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
@@ -48,6 +44,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
@@ -61,6 +58,7 @@ public class LilyServerProxy {
     private final Log log = LogFactory.getLog(getClass());
 
     private Mode mode;
+    private HBaseProxy hbaseProxy;
 
     public enum Mode { EMBED, CONNECT }
     private static String LILY_MODE_PROP_NAME = "lily.lilyserverproxy.mode";
@@ -74,12 +72,12 @@ public class LilyServerProxy {
     private ZooKeeperItf zooKeeper;
     private final boolean clearData;
 
-    public LilyServerProxy() throws IOException {
-        this(null);
+    public LilyServerProxy(HBaseProxy hbaseProxy) throws IOException {
+        this(null, hbaseProxy);
     }
 
-    public LilyServerProxy(Mode mode) throws IOException {
-        this(mode, true);
+    public LilyServerProxy(Mode mode, HBaseProxy hbaseProxy) throws IOException {
+        this(mode, true, hbaseProxy);
     }
 
     /**
@@ -95,8 +93,9 @@ public class LilyServerProxy {
      *     "lily.conf.customdir".
      * @param mode the mode (CONNECT or EMBED) in which to start the proxy.
      */
-    public LilyServerProxy(Mode mode, boolean clearData) throws IOException {
+    public LilyServerProxy(Mode mode, boolean clearData, HBaseProxy hbaseProxy) throws IOException {
         this.clearData = clearData;
+        this.hbaseProxy = hbaseProxy;
 
         if (mode == null) {
             String lilyModeProp = System.getProperty(LILY_MODE_PROP_NAME);
@@ -226,11 +225,11 @@ public class LilyServerProxy {
     /**
      * Adds an index from in index configuration contained in a resource.
      *
-     * <p>This method waits for the index subscription to be known by the MQ rowlog (or until a given timeout
-     * has passed). Only when this is the case record creates or updates will result in messages to be created
-     * on the MQ rowlog.
+     * <p>This method waits for the index subscription to be known by the SEP (or until a given timeout
+     * has passed), this assures that all repository operations from then on will be processed by the
+     * SEP listeners.
      *
-     * <p>Note that when the messages from the MQ rowlog are processed, the data has been put in solr but this
+     * <p>Note that when the SEP events are processed, the data has been put in solr but this
      * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
      *
      * @param indexName name of the index
@@ -240,18 +239,17 @@ public class LilyServerProxy {
      *                have not been reached within this timeout
      * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the
      *                            subscriptionId of the new index
-     * @param waitForMQRowlog boolean indicating the call has to wait until the MQ rowlog knows the subscriptionId
-     *                        of the new index.
+     * @param waitForSep boolean indicating the call has to wait until the SEP for the new index started.
      *        This can only be true if the waitForIndexerModel is true as well.
      * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
      *                               the index, this is important for synchronous indexing.
      */
     public void addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout,
-            boolean waitForIndexerModel, boolean waitForMQRowlog, boolean waitForIndexerRegistry) throws Exception {
+            boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
         InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         is.close();
-        addIndex(indexName, coreName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog,
+        addIndex(indexName, coreName, indexerConfiguration, timeout, waitForIndexerModel, waitForSep,
                 waitForIndexerRegistry);
     }
 
@@ -260,13 +258,13 @@ public class LilyServerProxy {
      * the default core name.
      */
     public void addIndexFromResource(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel,
-            boolean waitForMQRowlog, boolean waitForIndexerRegistry) throws Exception {
-        addIndexFromResource(indexName, (String)null, indexerConf, timeout, waitForIndexerModel, waitForMQRowlog,
+            boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
+        addIndexFromResource(indexName, (String)null, indexerConf, timeout, waitForIndexerModel, waitForSep,
                 waitForIndexerRegistry);
     }
 
     /**
-     * Shortcut method with waitForIndexerModel and waitForMQRowlog put to true
+     * Shortcut method with waitForIndexerModel and waitForSep put to true
      */
     public void addIndexFromResource(String indexName, String indexerConf, long timeout) throws Exception {
         addIndexFromResource(indexName, indexerConf, timeout, true, true, true);
@@ -283,11 +281,12 @@ public class LilyServerProxy {
     /**
      * Adds an index from in index configuration contained in a resource.
      *
-     * <p>This method waits for the index subscription to be known by the MQ rowlog (or until a given timeout
-     * has passed). Only when this is the case record creates or updates will result in messages to be created
-     * on the MQ rowlog.
+     * <p>This method waits for the index subscription to be known by the SEP (or until a given timeout
+     * has passed), this assures that all repository operations from then on will be processed by the
+     * SEP listeners.
      *
-     * <p>Note that when the messages from the MQ rowlog are processed, the data has been put in solr but this
+     * <p>Note that when the SEP events are processed, the data has been put in solr but this
+     * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
      * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
      *
      * @param indexName name of the index
@@ -297,14 +296,13 @@ public class LilyServerProxy {
      *                have not been reached within this timeout
      * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the
      *                            subscriptionId of the new index
-     * @param waitForMQRowlog boolean indicating the call has to wait until the MQ rowlog knows the subscriptionId
-     *                        of the new index.
+     * @param waitForSep boolean indicating the call has to wait until the SEP for the new index started.
      *        This can only be true if the waitForIndexerModel is true as well.
      * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
      *                               the index, this is important for synchronous indexing.
      */
     public void addIndex(String indexName, String coreName, byte[] indexerConfiguration, long timeout,
-            boolean waitForIndexerModel, boolean waitForMQRowlog, boolean waitForIndexerRegistry) throws Exception {
+            boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
         long tryUntil = System.currentTimeMillis() + timeout;
         WriteableIndexerModel indexerModel = getIndexerModel();
         IndexDefinition index = indexerModel.newIndex(indexName);
@@ -324,9 +322,8 @@ public class LilyServerProxy {
             if (subscriptionId == null)
                 throw new Exception("Timed out waiting for index subscription ID to be assigned.");
 
-            if (waitForMQRowlog) {
-                // Wait for RowLog to know the mq subscriptionId
-                waitOnMQSubscription(subscriptionId, true, timeout);
+            if (waitForSep) {
+                hbaseProxy.waitOnReplicationPeerReady(subscriptionId);
             }
         }
 
@@ -365,51 +362,15 @@ public class LilyServerProxy {
         return subscriptionId;
     }
 
-    /**
-     * Waits for a MQ subscription to be actually picked up by the row log. After waiting for this, one can be
-     * sure that for newly added records the subscription will receive events.
-     *
-     * @param subscriptionId id of the subscription
-     * @param waitUntilAvailable if true, waits until the subscription exists, if false, wait until the subscription
-     *                           does not exist.
-     * @param timeOut maximim time to wait
-     * @return false if the intended situation was not reached within the timeout.
-     */
-    public void waitOnMQSubscription(String subscriptionId, boolean waitUntilAvailable, long timeOut) throws Exception {
-        waitOnMQSubscriptionInt(subscriptionId, waitUntilAvailable, System.currentTimeMillis() + timeOut);
-    }
-
-    private void waitOnMQSubscriptionInt(String subscriptionId, boolean waitUntilAvailable, long tryUntil) throws Exception {
-        JmxLiaison jmxLiaison = new JmxLiaison("Lily:name=RowLog,id=mq");
-
-        try {
-            jmxLiaison.connect();
-
-            while (System.currentTimeMillis() < tryUntil) {
-                List<String> subscriptionIds = (List<String>)jmxLiaison.getAttribute("SubscriptionIds");
-                if (waitUntilAvailable && subscriptionIds.contains(subscriptionId)) {
-                    return;
-                } else if (!waitUntilAvailable && !subscriptionIds.contains(subscriptionId)) {
-                    return;
-                }
-                Thread.sleep(50);
-            }
-            String adjective = waitUntilAvailable ? "available" : "unavailable";
-            throw new Exception("Timed out waiting for MQ subscription to become " + adjective
-                    + " in RowLog instance: " + subscriptionId);
-        } finally {
-            jmxLiaison.disconnect();
-        }
-    }
-
     public void waitOnIndexerRegistry(String indexName, long tryUntil) throws Exception {
-        JmxLiaison jmxLiaison = new JmxLiaison("Lily:name=Indexer");
+        JmxLiaison jmxLiaison = new JmxLiaison();
+        ObjectName indexerObjectName = new ObjectName("Lily:name=Indexer");
 
         try {
-            jmxLiaison.connect();
+            jmxLiaison.connect(mode == Mode.EMBED);
 
             while (System.currentTimeMillis() < tryUntil) {
-                Set<String> subscriptionIds = (Set<String>)jmxLiaison.getAttribute("IndexNames");
+                Set<String> subscriptionIds = (Set<String>)jmxLiaison.getAttribute(indexerObjectName, "IndexNames");
                 if (subscriptionIds.contains(indexName)) {
                     return;
                 }
@@ -418,43 +379,6 @@ public class LilyServerProxy {
             throw new Exception("Timed out waiting for indexer to become known to IndexerRegistry: " + indexName);
         } finally {
             jmxLiaison.disconnect();
-        }
-    }
-
-    private class JmxLiaison {
-        private final String objectNameString;
-        private ObjectName objectName;
-        private MBeanServerConnection connection;
-        private JMXConnector connector;
-
-        public JmxLiaison(String objectName) {
-            this.objectNameString = objectName;
-        }
-
-        public void connect() throws Exception {
-            objectName = new ObjectName(objectNameString);
-            switch (mode) {
-                case EMBED:
-                    connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
-                    break;
-                case CONNECT:
-                    String hostport = "localhost:10102";
-                    JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://"
-                            + hostport + "/jmxrmi");
-                    connector = JMXConnectorFactory.connect(url);
-                    connector.connect();
-                    connection = connector.getMBeanServerConnection();
-                    break;
-            }
-        }
-
-        public void disconnect() throws Exception {
-            if (connector != null)
-                connector.close();
-        }
-
-        public Object getAttribute(String attrName) throws Exception {
-            return connection.getAttribute(objectName, attrName);
         }
     }
 

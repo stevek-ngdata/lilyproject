@@ -1,5 +1,9 @@
 package org.lilyproject.indexer.batchbuild.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -14,6 +18,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
@@ -38,10 +43,6 @@ import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.VersionTag;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;

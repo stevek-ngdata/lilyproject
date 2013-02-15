@@ -81,26 +81,6 @@
       </tbody>
     </table>
 
-    <h2>RowLog: Message Queue Execution State</h2>
-    <t:callMacro name="executionStateList">
-      <t:parameter name="state" value="${row.mqState}"/>
-    </t:callMacro>
-
-    <h2>RowLog: Message Queue Payload</h2>
-    <t:callMacro name="payloadList">
-      <t:parameter name="payload" value="${row.mqPayload}"/>
-    </t:callMacro>
-
-    <h2>RowLog: WAL Execution State</h2>
-    <t:callMacro name="executionStateList">
-      <t:parameter name="state" value="${row.walState}"/>
-    </t:callMacro>
-
-    <h2>RowLog: WAL Payload</h2>
-    <t:callMacro name="payloadList">
-      <t:parameter name="payload" value="${row.walPayload}"/>
-    </t:callMacro>
-
     <h2>Unknown or untreated column families</h2>
     <t:choose>
       <t:when test="${empty row.unknownColumnFamilies}">
@@ -116,88 +96,4 @@
     </t:choose>
   </body>
 
-  <t:macro name="executionStateList">
-    <t:parameter name="state"/>
-
-    <table border="1">
-      <thead>
-        <tr>
-          <th>Seq nr</th>
-          <th>Timestamp</th>
-          <th>HBase version</th>
-          <th>Execution state</th>
-        </tr>
-      </thead>
-      <tbody>
-        <t:forEach var="item" in="${state.entrySet()}">
-          <tr>
-            <td>${item.key.sequenceNr}</td>
-            <td>
-              ${item.key.timestamp}
-              <br/>
-              ${item.key.timestampFormatted}
-            </td>
-            <td>
-              ${item.key.hbaseVersion}
-              <br/>
-              ${item.key.hbaseVersionFormatted}
-            </td>
-            <td>
-              <table border="1">
-                <thead>
-                  <tr>
-                    <th>Subscription ID</th>
-                    <th>Success</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <t:forEach var="sub" in="${item.value}">
-                    <tr>
-                      <td>${sub.subscriptionId}</td>
-                      <td>${sub.success}</td>
-                    </tr>
-                  </t:forEach>
-                </tbody>
-              </table>
-            </td>
-          </tr>
-        </t:forEach>
-      </tbody>
-    </table>
-  </t:macro>
-
-  <t:macro name="payloadList">
-    <t:parameter name="payload"/>
-
-    <table border="1">
-      <thead>
-        <tr>
-          <th>Seq nr</th>
-          <th>Timestamp</th>
-          <th>HBase version</th>
-          <th>Payload</th>
-        </tr>
-      </thead>
-      <tbody>
-        <t:forEach var="item" in="${payload.entrySet()}">
-          <tr>
-            <td>${item.key.sequenceNr}</td>
-            <td>
-              ${item.key.timestamp}
-              <br/>
-              ${item.key.timestampFormatted}
-            </td>
-            <td>
-              ${item.key.hbaseVersion}
-              <br/>
-              ${item.key.hbaseVersionFormatted}
-            </td>
-            <td>
-              ${item.value}
-            </td>
-          </tr>
-        </t:forEach>
-      </tbody>
-    </table>
-  </t:macro>
 </html>

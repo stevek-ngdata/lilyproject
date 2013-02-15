@@ -207,38 +207,6 @@
       <fileMode>0755</fileMode>
     </file>
 
-    <!--  Rowlog Admin Cli -->
-    <file>
-      <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-list-rowlogs</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <file>
-      <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-list-rowlogs.bat</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <file>
-      <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-rowlog</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <file>
-      <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-rowlog.bat</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <file>
-      <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-subscription</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <file>
-      <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-subscription.bat</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-
     <!-- Launch lily -->
     <file>
       <source>${basedir}/../cr/standalone-launcher/target/dist-scripts/launch-test-lily</source>
@@ -262,32 +230,7 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-  
-    <!-- Lily schema upgrade tool for upgrade from Lily 1.0 to Lily 1.1 -->
-    <file>
-      <source>${basedir}/../tools/upgrade/target/dist-scripts/lily-upgrade-from-1.0</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <!-- Lily schema upgrade tool for upgrade from Lily 1.1 to Lily 1.2 -->
-    <file>
-      <source>${basedir}/../tools/upgrade/target/dist-scripts/lily-upgrade-from-1.1</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-
-    <!-- Rowlog visualizer tool -->
-    <file>
-      <source>${basedir}/../tools/rowlog-visualizer/target/dist-scripts/lily-rowlog-visualizer</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <file>
-      <source>${basedir}/../tools/rowlog-visualizer/target/dist-scripts/lily-rowlog-visualizer.bat</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-
+ 
     <!-- Record row visualizer tool -->
     <file>
       <source>${basedir}/../tools/record-row-visualizer/target/dist-scripts/lily-record-row-visualizer</source>

@@ -15,25 +15,41 @@
  */
 package org.lilyproject.util.repo.test;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.repo.RecordEvent;
-
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import org.lilyproject.util.repo.RecordEvent.FieldChange;
+import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
 
 public class RecordEventTest {
+
+    private IdGenerator idGenerator;
+
+    @Before
+    public void setUp() {
+        this.idGenerator = new IdGeneratorImpl();
+    }
+
     @Test
-    public void testIndexRecordFilterDataJson() throws Exception {
-        IdGenerator idGenerator = new IdGeneratorImpl();
+    public void testRecordEvent_JsonRoundTrip() throws Exception {
 
         RecordEvent event = new RecordEvent();
         byte[] json = event.toJsonBytes();
@@ -92,4 +108,120 @@ public class RecordEventTest {
         assertNull(fieldChanges.get(3).getOldValue());
         assertArrayEquals(Bytes.toBytes("foo4"), fieldChanges.get(3).getNewValue());
     }
+
+    @Test
+    public void testIndexRecordFilterData_JsonRoundtrip() {
+        IndexRecordFilterData recordFilterData = new IndexRecordFilterData();
+        SchemaId newTypeSchemaId = new SchemaIdImpl("newtype".getBytes());
+        SchemaId oldTypeSchemaId = new SchemaIdImpl("oldtype".getBytes());
+        SchemaId changedFieldId = new SchemaIdImpl("changedfield".getBytes());
+        byte[] oldFieldValue = new byte[] { 1 };
+        byte[] newFieldValue = new byte[] { 2 };
+
+        recordFilterData.setNewRecordExists(true);
+        recordFilterData.setOldRecordExists(true);
+        recordFilterData.setNewRecordType(newTypeSchemaId);
+        recordFilterData.setOldRecordType(oldTypeSchemaId);
+        recordFilterData.addChangedField(changedFieldId, oldFieldValue, newFieldValue);
+
+        IndexRecordFilterData deserialized = doJsonRoundtrip(recordFilterData);
+
+        assertTrue(deserialized.getNewRecordExists());
+        assertTrue(deserialized.getOldRecordExists());
+        assertEquals(newTypeSchemaId, deserialized.getNewRecordType());
+        assertEquals(oldTypeSchemaId, deserialized.getOldRecordType());
+        List<FieldChange> fieldChanges = deserialized.getFieldChanges();
+
+        assertEquals(1, fieldChanges.size());
+        FieldChange fieldChange = fieldChanges.get(0);
+        assertEquals(changedFieldId, fieldChange.getId());
+        assertArrayEquals(oldFieldValue, fieldChange.getOldValue());
+        assertArrayEquals(newFieldValue, fieldChange.getNewValue());
+
+        assertEquals(recordFilterData, deserialized);
+    }
+
+    @Test
+    public void testIndexRecordFilterData_JsonRoundtrip_IncludeIndexes() {
+        IndexRecordFilterData filterData = new IndexRecordFilterData();
+        filterData.setSubscriptionInclusions(Sets.newHashSet("indexA", "indexB"));
+
+        assertEquals(filterData, doJsonRoundtrip(filterData));
+    }
+
+    @Test
+    public void testIndexRecordFilterData_JsonRoundtrip_ExcludeIndexes() {
+        IndexRecordFilterData filterData = new IndexRecordFilterData();
+        filterData.setSubscriptionExclusions(Sets.newHashSet("indexA", "indexB"));
+
+        assertEquals(filterData, doJsonRoundtrip(filterData));
+    }
+
+    @Test
+    public void testAppliesToSubscription_DefaultCase() {
+        IndexRecordFilterData filterData = new IndexRecordFilterData();
+
+        assertTrue(filterData.appliesToSubscription("indexname"));
+    }
+
+    @Test
+    public void testAppliesToSubscription_AllInclusive() {
+        IndexRecordFilterData filterData = new IndexRecordFilterData();
+        filterData.setSubscriptionInclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
+
+        assertTrue(filterData.appliesToSubscription("indexname"));
+    }
+
+    @Test
+    public void testAppliesToSubscription_AllExclusive() {
+        IndexRecordFilterData filterData = new IndexRecordFilterData();
+        filterData.setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
+
+        assertFalse(filterData.appliesToSubscription("indexname"));
+    }
+
+    @Test
+    public void testAppliesToSubscription_Included() {
+        IndexRecordFilterData filterData = new IndexRecordFilterData();
+        filterData.setSubscriptionInclusions(ImmutableSet.of("to_include"));
+
+        assertTrue(filterData.appliesToSubscription("to_include"));
+    }
+
+    @Test
+    public void testAppliesToSubscription_Excluded() {
+        IndexRecordFilterData filterData = new IndexRecordFilterData();
+        filterData.setSubscriptionExclusions(ImmutableSet.of("to_exclude"));
+
+        assertFalse(filterData.appliesToSubscription("to_exclude"));
+    }
+
+    @Test
+    public void testAppliesToSubcription_NotExcluded() {
+        IndexRecordFilterData filterData = new IndexRecordFilterData();
+        filterData.setSubscriptionExclusions(ImmutableSet.of("to_exclude"));
+
+        assertTrue(filterData.appliesToSubscription("not_excluded"));
+    }
+
+    @Test
+    public void testAppliesToSubscription_NotIncluded() {
+        IndexRecordFilterData filterData = new IndexRecordFilterData();
+        filterData.setSubscriptionInclusions(ImmutableSet.of("to_include"));
+
+        assertFalse(filterData.appliesToSubscription("not_included"));
+    }
+
+    private IndexRecordFilterData doJsonRoundtrip(IndexRecordFilterData recordFilterData) {
+        RecordEvent recordEvent = new RecordEvent();
+        recordEvent.setIndexRecordFilterData(recordFilterData);
+        RecordEvent deserializedEvent;
+        try {
+            deserializedEvent = new RecordEvent(recordEvent.toJsonBytes(), idGenerator);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return deserializedEvent.getIndexRecordFilterData();
+    }
+
 }

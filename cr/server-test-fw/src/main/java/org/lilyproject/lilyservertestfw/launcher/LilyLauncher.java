@@ -317,6 +317,9 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             System.out.println("Clearing Lily's ZooKeeper state");
             cleanupUtil.cleanZooKeeper();
 
+            // Clear replication stat
+            cleanupUtil.cleanHBaseReplicas();
+
             // Clear Blobs on hdfs blobstore
             String dfsUri = "hdfs://localhost:8020/lily/blobs";
             System.out.println("Clearing HDFS Blob Store on " + dfsUri);

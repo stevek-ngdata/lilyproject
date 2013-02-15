@@ -71,6 +71,7 @@ public class RecordDecoder {
     public static List<byte[]> SYSTEM_FIELDS = new ArrayList<byte[]>();
 
     static {
+        SYSTEM_FIELDS.add(RecordColumn.OCC.bytes);
         SYSTEM_FIELDS.add(RecordColumn.DELETED.bytes);
         SYSTEM_FIELDS.add(RecordColumn.VERSION.bytes);
         SYSTEM_FIELDS.add(RecordColumn.NON_VERSIONED_RT_ID.bytes);

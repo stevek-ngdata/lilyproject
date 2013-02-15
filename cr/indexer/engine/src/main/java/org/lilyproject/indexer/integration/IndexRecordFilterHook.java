@@ -23,6 +23,14 @@ import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.util.repo.RecordEvent;
 
 import javax.annotation.PreDestroy;
+
+import com.google.common.collect.Sets;
+
+import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
+
+import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
+import org.lilyproject.repository.api.Record;
+
 import java.util.Collection;
 import java.util.Set;
 
@@ -33,15 +41,16 @@ import java.util.Set;
  * needing to read the complete record.
  */
 public class IndexRecordFilterHook implements RecordUpdateHook {
+    
     private PluginRegistry pluginRegistry;
-    private IndexesInfo indexesInfo;
+    private final IndexesInfo indexesInfo;
 
     /**
      * Name should be unique among all RecordUpdateHook's. Because the name starts
      * with 'org.lilyproject', this hook does not need to be activated through
      * configuration.
      */
-    private String NAME = "org.lilyproject.IndexRecordFilterHook";
+    private final String NAME = "org.lilyproject.IndexRecordFilterHook";
 
     public IndexRecordFilterHook(IndexesInfo indexesInfo) {
         this.indexesInfo = indexesInfo;
@@ -97,6 +106,9 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
                     addField(type, oldValue, newValue, idxSel);
                 }
             }
+
+            calculateIndexInclusion(originalRecord, record, idxSel);
+
         }
     }
 
@@ -126,6 +138,7 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
                     addField(type, null, newValue, idxSel);
                 }
             }
+            calculateIndexInclusion(null, newRecord, idxSel);
         }
     }
 
@@ -154,6 +167,7 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
                     addField(type, oldValue, null, idxSel);
                 }
             }
+            calculateIndexInclusion(originalRecord, null, idxSel);
         }
     }
 
@@ -174,4 +188,48 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
 
         idxSel.addChangedField(type.getId(), (byte[])oldValue, (byte[])newValue);
     }
+
+    /**
+     * Calculate the inclusion/exclusion sets for index subscriptions based on the old and new
+     * records, and update the {@code IndexRecordFilterData} with this information.
+     *
+     * @param oldRecord Previous version of the record, null if the record is being newly created
+     * @param newRecord New version of the record, null if the record is being deleted
+     * @param indexFilterData To be updated with index subscription inclusion/exclusion information
+     */
+    void calculateIndexInclusion(Record oldRecord, Record newRecord, IndexRecordFilterData indexFilterData) {
+        
+        Set<String> applicableIndexes = Sets.newHashSet();
+        Set<String> nonApplicableIndexes = Sets.newHashSet();
+        for (IndexInfo indexInfo : indexesInfo.getIndexInfos()) {
+            String queueSubscriptionId = indexInfo.getIndexDefinition().getQueueSubscriptionId();
+            if (indexIsApplicable(indexInfo.getIndexerConf().getRecordFilter(), oldRecord, newRecord)) {
+                applicableIndexes.add(queueSubscriptionId);
+            } else {
+                nonApplicableIndexes.add(queueSubscriptionId);
+            }
+        }
+
+        if (applicableIndexes.isEmpty()) {
+            indexFilterData.setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
+        } else if (nonApplicableIndexes.isEmpty()) {
+            indexFilterData.setSubscriptionInclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
+        } else if (applicableIndexes.size() > nonApplicableIndexes.size()) {
+            indexFilterData.setSubscriptionInclusions(applicableIndexes);
+        } else {
+            indexFilterData.setSubscriptionExclusions(nonApplicableIndexes);
+        }
+    }
+
+    /**
+     * Determine if an {@code IndexRecordFilter} is applicable for either the old or new version of
+     * a record.
+     *
+     * @return true if the index is applicable for either the new or old version of the record
+     */
+    boolean indexIsApplicable(IndexRecordFilter filter, Record oldRecord, Record newRecord) {
+        return ((oldRecord != null && filter.getIndexCase(oldRecord) != null)
+                || (newRecord != null && filter.getIndexCase(newRecord) != null));
+    }
+
 }

@@ -15,6 +15,8 @@
  */
 package org.lilyproject.hadooptestfw;
 
+import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -24,6 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest.CompactionState;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -37,14 +41,13 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
-
-import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
+import org.lilyproject.util.io.Closer;
 
 public class CleanupUtil {
     private Configuration conf;
@@ -145,53 +148,56 @@ public class CleanupUtil {
         StringBuilder truncateReport = new StringBuilder();
         StringBuilder retainReport = new StringBuilder();
 
-        HBaseAdmin admin = HBaseAdminFactory.get(conf);
-        HTableDescriptor[] tables = admin.listTables();
-        System.out.println("Found tables: " + (tables == null ? "null" : tables.length));
-        tables = tables == null ? new HTableDescriptor[0] : tables;
+        HBaseAdmin admin = new HBaseAdmin(conf);
+        try {
+            HTableDescriptor[] tables = admin.listTables();
+            System.out.println("Found tables: " + (tables == null ? "null" : tables.length));
+            tables = tables == null ? new HTableDescriptor[0] : tables;
 
-        Set<String> exploitTimestampTables = new HashSet<String>();
+            Set<String> exploitTimestampTables = new HashSet<String>();
 
-        for (HTableDescriptor table : tables) {
-            if (RETAIN_TABLES.contains(table.getNameAsString())) {
-                if (retainReport.length() > 0)
-                    retainReport.append(", ");
-                retainReport.append(table.getNameAsString());
-                continue;
+            for (HTableDescriptor table : tables) {
+                if (RETAIN_TABLES.contains(table.getNameAsString())) {
+                    if (retainReport.length() > 0)
+                        retainReport.append(", ");
+                    retainReport.append(table.getNameAsString());
+                    continue;
+                }
+
+                HTable htable = new HTable(conf, table.getName());
+
+                if (timestampReusingTables.containsKey(table.getNameAsString())) {
+                    insertTimestampTableTestRecord(table.getNameAsString(), htable,
+                            timestampReusingTables.get(table.getNameAsString()));
+                    exploitTimestampTables.add(table.getNameAsString());
+                }
+
+                int totalCount = clearTable(htable);
+
+                if (truncateReport.length() > 0)
+                    truncateReport.append(", ");
+                truncateReport.append(table.getNameAsString()).append(" (").append(totalCount).append(")");
+
+                htable.close();
+
+                if (timestampReusingTables.containsKey(table.getNameAsString())) {
+                    admin.flush(table.getNameAsString());
+                    admin.majorCompact(table.getName());
+                }
             }
 
-            HTable htable = new HTable(conf, table.getName());
+            truncateReport.insert(0, "Truncated the following tables: ");
+            retainReport.insert(0, "Did not truncate the following tables: ");
 
-            if (timestampReusingTables.containsKey(table.getNameAsString())) {
-                insertTimestampTableTestRecord(table.getNameAsString(), htable,
-                        timestampReusingTables.get(table.getNameAsString()));
-                exploitTimestampTables.add(table.getNameAsString());
-            }
+            System.out.println(truncateReport);
+            System.out.println(retainReport);
 
-            int totalCount = clearTable(htable);
+            waitForTimestampTables(exploitTimestampTables, timestampReusingTables);
 
-            if (truncateReport.length() > 0)
-                truncateReport.append(", ");
-            truncateReport.append(table.getNameAsString()).append(" (").append(totalCount).append(")");
-
-            htable.close();
-
-            if (timestampReusingTables.containsKey(table.getNameAsString())) {
-                admin.flush(table.getNameAsString());
-                admin.majorCompact(table.getName());
-            }
+            System.out.println("------------------------------------------------------------------------");
+        } finally {
+            Closer.close(admin);
         }
-
-        truncateReport.insert(0, "Truncated the following tables: ");
-        retainReport.insert(0, "Did not truncate the following tables: ");
-
-        System.out.println(truncateReport);
-        System.out.println(retainReport);
-
-        waitForTimestampTables(exploitTimestampTables, timestampReusingTables);
-
-        System.out.println("------------------------------------------------------------------------");
-
     }
 
     public static int clearTable(HTable htable) throws IOException {
@@ -230,6 +236,7 @@ public class CleanupUtil {
             HTable htable = null;
             try {
                 htable = new HTable(conf, tableName);
+                
                 byte[] CF = timestampReusingTables.get(tableName);
                 byte[] tmpRowKey = waitForCompact(tableName, CF);
 
@@ -248,8 +255,9 @@ public class CleanupUtil {
         HTable htable = null;
         try {
             htable = new HTable(conf, tableName);
-
+            System.out.println("Waiting for flush/compact of " + tableName + " table to complete");
             byte[] value = null;
+            long waitStart = System.currentTimeMillis();
             while (value == null) {
                 Put put = new Put(tmpRowKey);
                 put.add(CF, COL, 1, new byte[] { 0 });
@@ -260,8 +268,22 @@ public class CleanupUtil {
                 value = result.getValue(CF, COL);
                 if (value == null) {
                     // If the value is null, it is because the delete marker has not yet been flushed/compacted away
-                    System.out.println("Waiting for flush/compact of " + tableName + " to complete");
-                    Thread.sleep(100);
+                    Thread.sleep(500);
+                }
+                
+                long totalWait = System.currentTimeMillis() - waitStart;
+                if (totalWait > 5000) {
+                    HBaseAdmin admin = new HBaseAdmin(conf);
+                    try {
+                        CompactionState compactionState = admin.getCompactionState(tableName);
+                        if (compactionState != CompactionState.MAJOR && compactionState != CompactionState.MAJOR_AND_MINOR) {
+                            System.out.println("Re-requesting major compaction on " + tableName);
+                            admin.majorCompact(tableName);
+                        }
+                    } finally {
+                        Closer.close(admin);
+                    }
+                    waitStart = System.currentTimeMillis();
                 }
             }
             return tmpRowKey;
@@ -270,47 +292,20 @@ public class CleanupUtil {
         }
     }
 
-    /** Force a major compaction and wait for it to finish.
-     *  This method can be used in a test to avoid issue HBASE-2256 after performing a delete operation
-     *  Uses same principle as {@link #cleanTables}
-     */
-    public void majorCompact(String tableName, String[] columnFamilies) throws Exception {
-        byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
-        byte[] COL = Bytes.toBytes("DummyColumn");
-        HBaseAdmin admin = HBaseAdminFactory.get(conf);
-        HTable htable = null;
-        try {
-            htable = new HTable(conf, tableName);
-
-            // Write a dummy row
-            for (String columnFamily : columnFamilies) {
-                byte[] CF = Bytes.toBytes(columnFamily);
-                Put put = new Put(tmpRowKey);
-                put.add(CF, COL, 1, new byte[] { 0 });
-                htable.put(put);
-                // Delete the value again
-                Delete delete = new Delete(tmpRowKey);
-                delete.deleteColumn(CF, COL);
-                htable.delete(delete);
-            }
-
-            // Perform major compaction
-            admin.flush(tableName);
-            admin.majorCompact(tableName);
-
-            // Wait for compact to finish
-            for (String columnFamily : columnFamilies) {
-                byte[] CF = Bytes.toBytes(columnFamily);
-                waitForCompact(tableName, CF);
-            }
-        } finally {
-            htable.close();
-        }
-    }
-
     public void cleanBlobStore(URI dfsUri) throws Exception {
         FileSystem fs = FileSystem.get(new URI(dfsUri.getScheme() + "://" + dfsUri.getAuthority()), conf);
         Path blobRootPath = new Path(dfsUri.getPath());
         fs.delete(blobRootPath, true);
+    }
+
+    public void cleanHBaseReplicas() throws Exception {
+        ReplicationAdmin repliAdmin = new ReplicationAdmin(conf);
+        try {
+            for (String peerId : repliAdmin.listPeers().keySet()) {
+                repliAdmin.removePeer(peerId);
+            }
+        } finally {
+            Closer.close(repliAdmin);
+        }
     }
 }

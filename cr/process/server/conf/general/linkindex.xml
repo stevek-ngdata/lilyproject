@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<linkindex xmlns:conf="http://kauriproject.org/configuration"
+       conf:inherit="deep">
+
+  <!-- Should link index updating be enabled? Default is false. -->
+  <enabled>false</enabled>
+
+  <!-- Number of threads to work on the link index updating -->
+  <threads>10</threads>
+
+</linkindex>

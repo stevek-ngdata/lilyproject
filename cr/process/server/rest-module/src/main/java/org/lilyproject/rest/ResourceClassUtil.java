@@ -28,6 +28,10 @@ import org.lilyproject.tools.import_.json.WriteOptions;
 
 public class ResourceClassUtil {
     public static QName parseQName(String name, MultivaluedMap<String, String> queryParams) {
+        if (name.startsWith("{")) {
+            return QName.fromString(name);
+        }
+
         int pos = name.indexOf('$');
         if (pos == -1) {
             throw new ResourceException("Invalid qualified name: " + name, BAD_REQUEST.getStatusCode());
@@ -95,13 +99,18 @@ public class ResourceClassUtil {
     }
 
     public static WriteOptions getWriteOptions(UriInfo uriInfo) {
+        WriteOptions options = new WriteOptions();
+
         String includeSchema = uriInfo.getQueryParameters().getFirst("schema");
-        if (includeSchema != null && includeSchema.equalsIgnoreCase("true")) {
-            WriteOptions options = new WriteOptions();
-            options.setIncludeSchema(true);
-            return options;
-        } else {
-            return WriteOptions.INSTANCE;
+        if (includeSchema != null) {
+            options.setIncludeSchema(includeSchema.equalsIgnoreCase("true"));
         }
+
+        String useNamespacePrefixes = uriInfo.getQueryParameters().getFirst("nsprefixes");
+        if (useNamespacePrefixes != null) {
+            options.setUseNamespacePrefixes(useNamespacePrefixes.equalsIgnoreCase("true"));
+        }
+
+        return options;
     }
 }

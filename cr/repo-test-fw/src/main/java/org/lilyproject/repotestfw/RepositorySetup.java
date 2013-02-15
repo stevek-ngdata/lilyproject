@@ -21,12 +21,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.ngdata.sep.EventListener;
+import com.ngdata.sep.EventPublisher;
+import com.ngdata.sep.SepModel;
+import com.ngdata.sep.impl.SepConsumer;
+import com.ngdata.sep.impl.SepModelImpl;
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.zookeeper.KeeperException;
-import org.junit.Assert;
 import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.AvroLilyImpl;
@@ -53,29 +57,16 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.RemoteRepository;
 import org.lilyproject.repository.remote.RemoteTypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
-import org.lilyproject.rowlock.HBaseRowLocker;
-import org.lilyproject.rowlock.RowLocker;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfig;
-import org.lilyproject.rowlog.api.RowLogException;
-import org.lilyproject.rowlog.api.RowLogMessageListener;
-import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.rowlog.impl.MessageQueueFeeder;
-import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
-import org.lilyproject.rowlog.impl.RowLogImpl;
-import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
-import org.lilyproject.rowlog.impl.RowLogShardSetup;
-import org.lilyproject.rowlog.impl.WalRowLog;
+import org.lilyproject.sep.LilyHBaseEventPublisher;
+import org.lilyproject.sep.LilyPayloadExtractor;
+import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
 
 /**
  * Helper class to instantiate and wire all the repository related services.
@@ -87,9 +78,6 @@ public class RepositorySetup {
 
     private HBaseTableFactory hbaseTableFactory;
 
-    private RowLogConfigurationManagerImpl rowLogConfManager;
-
-    private RowLocker rowLocker;
     private IdGenerator idGenerator;
     private HBaseTypeManager typeManager;
     private RemoteTypeManager remoteTypeManager;
@@ -103,16 +91,15 @@ public class RepositorySetup {
 
     private BlobManager blobManager;
     private BlobManager remoteBlobManager;
-
-    private RowLog wal;
-    private RowLog mq;
-
-    private RowLogProcessorImpl mqProcessor;
+    
+    private SepModel sepModel;
+    private SepConsumer sepConsumer;
+    private EventPublisher eventPublisher;
 
     private boolean coreSetup;
     private boolean typeManagerSetup;
     private boolean repositorySetup;
-
+    
     private long hbaseBlobLimit = -1;
     private long inlineBlobLimit = -1;
 
@@ -134,9 +121,6 @@ public class RepositorySetup {
 
         hbaseTableFactory = new HBaseTableFactoryImpl(hadoopConf);
 
-        rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
-                RecordColumn.LOCK.bytes, 10000);
-
         coreSetup = true;
     }
 
@@ -150,7 +134,7 @@ public class RepositorySetup {
         typeManagerSetup = true;
     }
 
-    public void setupRepository(boolean withWal) throws Exception {
+    public void setupRepository() throws Exception {
         if (repositorySetup)
             return;
 
@@ -159,20 +143,11 @@ public class RepositorySetup {
         blobStoreAccessFactory = createBlobAccess();
         blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
 
-        if (withWal) {
-            setupRowLogConfigurationManager();
-            HBaseRowLocker rowLocker =
-                    new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
-                            RecordColumn.LOCK.bytes, 10000);
-            rowLogConfManager.addRowLog("WAL", new RowLogConfig(true, false, 100L, 5000L, 5000L, 120000L, 100));
-            wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
-                    LilyHBaseSchema.RecordCf.ROWLOG.bytes,
-                    LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker, new RowLogHashShardRouter());
-            RowLogShardSetup.setupShards(1, wal, hbaseTableFactory);
-        }
-
-        repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
+        repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager);
         repository.setRecordUpdateHooks(recordUpdateHooks);
+        
+        sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
+        eventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory));
 
         repositorySetup = true;
     }
@@ -208,10 +183,6 @@ public class RepositorySetup {
         this.hbaseBlobLimit = hbaseBlobLimit;
     }
 
-    public void setupRowLogConfigurationManager() throws Exception {
-        rowLogConfManager = new RowLogConfigurationManagerImpl(zk);
-    }
-
     public void setupRemoteAccess() throws Exception {
         AvroConverter serverConverter = new AvroConverter();
         serverConverter.setRepository(repository);
@@ -239,58 +210,22 @@ public class RepositorySetup {
         remoteSchemaCache.start();
     }
 
-    public void setupMessageQueue(boolean withProcessor) throws Exception {
-        setupMessageQueue(withProcessor, false);
-    }
-
     /**
-     * @param withManualProcessing if true, the MQ RowLog will be wrapped to keep track of added messages to allow
-     *                             triggering a manual processing, see method {@link #processMQ}. Usually you will want
-     *                             either this or withProcessor, not both.
+     * Wait until all currently queued SEP events are processed.
+     *
+     * <p>New events that are generated after/during a call to this method will not be waited for.</p>
      */
-    public void setupMessageQueue(boolean withProcessor, boolean withManualProcessing) throws Exception {
-
-        rowLogConfManager.addRowLog("MQ", new RowLogConfig(false, true, 100L, 0L, 5000L, 120000L, 100));
-        rowLogConfManager.addSubscription("WAL", "MQFeeder", RowLogSubscription.Type.VM, 1);
-
-        mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
-                LilyHBaseSchema.RecordCf.ROWLOG.bytes,
-                LilyHBaseSchema.RecordColumn.MQ_PREFIX, rowLogConfManager, null, new RowLogHashShardRouter());
-        RowLogShardSetup.setupShards(1, mq, hbaseTableFactory);
-        if (withManualProcessing) {
-            mq = new ManualProcessRowLog(mq);
+    public void waitForSepProcessing() throws Exception {
+        long timeout = 60000L;
+        boolean success = hbaseProxy.waitOnReplication(timeout);
+        if (!success) {
+            throw new Exception("Events were not processed within a timeout of " + timeout + "ms");
         }
-
-        RowLogMessageListenerMapping listenerClassMapping = RowLogMessageListenerMapping.INSTANCE;
-        listenerClassMapping.put("MQFeeder", createMQFeeder(mq));
-
-        waitForSubscription(wal, "MQFeeder");
-
-        if (withProcessor) {
-            mqProcessor = new RowLogProcessorImpl(mq, rowLogConfManager, getHadoopConf());
-            mqProcessor.start();
-        }
-    }
-
-    /**
-     * Can be overridden by subclass to provide other implementation.
-     */
-    public RowLogMessageListener createMQFeeder(RowLog mq) {
-        return new MessageQueueFeeder(mq);
-    }
-
-    /**
-     * When the message queue was setup with the option for manual processing, calling this method will
-     * trigger synchronous MQ processing.
-     */
-    public void processMQ() throws RowLogException, InterruptedException {
-        ((ManualProcessRowLog) mq).processMessages();
     }
 
     public void stop() throws InterruptedException {
-        if (mqProcessor != null)
-            mqProcessor.stop();
 
+        Closer.close(sepConsumer);
         Closer.close(remoteSchemaCache);
         Closer.close(remoteTypeManager);
         Closer.close(remoteRepository);
@@ -303,28 +238,11 @@ public class RepositorySetup {
             lilyServer.join();
         }
 
-        Closer.close(rowLogConfManager);
-
         Closer.close(zk);
         Closer.close(hbaseProxy);
         coreSetup = false;
         repositorySetup = false;
         typeManagerSetup = false;
-    }
-
-    public void waitForSubscription(RowLog rowLog, String subscriptionId) throws InterruptedException {
-        boolean subscriptionKnown = false;
-        int timeOut = 10000;
-        long waitUntil = System.currentTimeMillis() + timeOut;
-        while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
-            if (rowLog.getSubscriptionIds().contains(subscriptionId)) {
-                subscriptionKnown = true;
-                break;
-            }
-            Thread.sleep(10);
-        }
-        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
-                subscriptionKnown);
     }
 
     public ZooKeeperItf getZk() {
@@ -341,6 +259,39 @@ public class RepositorySetup {
 
     public Repository getRemoteRepository() {
         return remoteRepository;
+    }
+    
+    
+    public SepModel getSepModel() {
+        return sepModel;
+    }
+    
+    public EventPublisher getEventPublisher() {
+        return eventPublisher;
+    }
+    
+    public void stopSepEventSlave() {
+        if (sepConsumer == null || !sepConsumer.isRunning()) {
+            throw new IllegalStateException("No SepEventSlave to stop");
+        }
+        sepConsumer.stop();
+        sepConsumer = null;
+    }
+    
+    /**
+     * Start a SEP event processor. Only a single SEP event processor is supported within the
+     * context of this class.
+     * 
+     * @param subscriptionId The id of the subscription for which the slave will process events
+     * @param eventListener The listener to handle incoming events
+     */
+    public void startSepEventSlave(String subscriptionId, EventListener eventListener) throws Exception {
+        if (sepConsumer != null) {
+            throw new IllegalStateException("There is already a SepEventSlave running, stop it first");
+        }
+        sepConsumer = new SepConsumer(subscriptionId, System.currentTimeMillis(), eventListener, 1, "localhost",
+                new ZooKeeperItfAdapter(zk), hadoopConf, new LilyPayloadExtractor());
+        sepConsumer.start();
     }
 
     /**
@@ -363,24 +314,12 @@ public class RepositorySetup {
         return idGenerator;
     }
 
-    public RowLog getWal() {
-        return wal;
-    }
-
-    public RowLog getMq() {
-        return mq;
-    }
-
     public Configuration getHadoopConf() {
         return hadoopConf;
     }
 
     public HBaseTableFactory getHbaseTableFactory() {
         return hbaseTableFactory;
-    }
-
-    public RowLogConfigurationManagerImpl getRowLogConfManager() {
-        return rowLogConfManager;
     }
 
     public BlobStoreAccessFactory getBlobStoreAccessFactory() {
@@ -399,8 +338,8 @@ public class RepositorySetup {
         return remoteBlobManager;
     }
 
-    public RowLocker getRowLocker() {
-        return rowLocker;
+    public HBaseProxy getHBaseProxy() {
+        return hbaseProxy;
     }
 
     private class RemoteTestSchemaCache extends AbstractSchemaCache implements SchemaCache {

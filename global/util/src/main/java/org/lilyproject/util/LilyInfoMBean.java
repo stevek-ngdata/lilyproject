@@ -23,8 +23,4 @@ public interface LilyInfoMBean {
     Set<String> getHostnames();
 
     boolean isIndexerMaster();
-
-    boolean isRowLogProcessorMQ();
-
-    boolean isRowLogProcessorWAL();
 }

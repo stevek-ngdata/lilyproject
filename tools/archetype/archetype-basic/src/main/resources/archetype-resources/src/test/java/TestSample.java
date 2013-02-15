@@ -11,7 +11,7 @@ public class TestSample {
 
     // The below is commented out by default since the LILY_PROXY.start() call can take quite some time.
     // For more details on using the Lily test framework, please see:
-    // http://docs.outerthought.org/lily-docs-current/515-lily.html
+    // http://docs.ngdata.com/lily-docs-current/515-lily.html
 
     /*
     @BeforeClass

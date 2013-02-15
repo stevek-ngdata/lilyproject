@@ -60,13 +60,12 @@ public class IndexerApiTest {
         SOLR_TEST_UTIL.setSolrDefinition(
                 new SolrDefinition(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml"))));
 
-        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl");
+        TestHelper.setupLogging("org.lilyproject.indexer");
 
         SOLR_TEST_UTIL.start();
 
         repoSetup.setupCore();
-        repoSetup.setupRepository(true);
-        repoSetup.setupMessageQueue(false, true);
+        repoSetup.setupRepository();
 
         repository = repoSetup.getRepository();
         typeManager = repoSetup.getTypeManager();
@@ -105,7 +104,7 @@ public class IndexerApiTest {
                 .field(new QName(NS, "nv_field1"), "value")
                 .create();
 
-        // nothing will be indexed yet, because there are no rowlog subscriptions
+        // nothing will be indexed yet, because there are no index updaters running
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
@@ -126,7 +125,7 @@ public class IndexerApiTest {
                 .field(new QName(NS, "nv_field1"), "value")
                 .create();
 
-        // nothing will be indexed yet, because there are no rowlog subscriptions
+        // nothing will be indexed yet, because there are no index updaters running
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
@@ -147,7 +146,7 @@ public class IndexerApiTest {
                 .field(new QName(NS, "nv_field1"), "value")
                 .create();
 
-        // nothing will be indexed yet, because there are no rowlog subscriptions
+        // nothing will be indexed yet, because there are no index updaters running
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
@@ -169,7 +168,6 @@ public class IndexerApiTest {
     }
 
     private void commitIndex() throws Exception {
-        repoSetup.processMQ();
         solrShardManager.commit(true, true);
     }
 

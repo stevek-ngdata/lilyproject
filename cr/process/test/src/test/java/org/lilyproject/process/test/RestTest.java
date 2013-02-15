@@ -344,6 +344,14 @@ public class RestTest {
         assertNotNull(json.get("schema"));
         assertEquals(1L, json.get("schema").size());
 
+        // Read the record without namespace prefixes
+        response = get(BASE_URI + "/record/USER.faster_fishing?nsprefixes=false");
+        assertStatus(Status.SUCCESS_OK, response);
+
+        // Verify content
+        json = readJson(response.getEntity());
+        assertEquals("Faster Fishing", json.get("fields").get("{org.lilyproject.resttest}title").getTextValue());
+
         // Read the record as specific version
         response = get(BASE_URI + "/record/USER.faster_fishing/version/1");
         assertStatus(Status.SUCCESS_OK, response);
@@ -749,7 +757,7 @@ public class RestTest {
 
         // Create a record with these blobs
         ObjectNode recordNode = JsonNodeFactory.instance.objectNode();
-        recordNode.put("type", "b$blobRT");
+        recordNode.put("type", "b$blobRT2");
         ObjectNode fieldsNode = recordNode.putObject("fields");
 
         ArrayNode blobNode = fieldsNode.putArray("b$blob2");
