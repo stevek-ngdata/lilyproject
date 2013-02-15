@@ -51,12 +51,6 @@ public class LilyRuntimeModelBuilder {
 
         LilyRuntimeModel model = new LilyRuntimeModel();
 
-        if (runtimeConf.getChild("connectors", false) != null) {
-            LogFactory.getLog(LilyRuntimeModelBuilder.class).error("Found a <connectors> child element in your "
-                    + "modules configuration. This will be unused, from Kauri 0.4 on the connectors configuration "
-                    + "has moved to a different file.");
-        }
-
         Stack<String> wiringFileStack = new Stack<String>(); // used to detect recursive wiring.xml inclusions
         List<ModuleDefinition> modules = new ArrayList<ModuleDefinition>();
 

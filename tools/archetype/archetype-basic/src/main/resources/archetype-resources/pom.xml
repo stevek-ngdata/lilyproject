@@ -86,7 +86,7 @@
         </configuration>
       </plugin>
 
-      <!-- This plugin makes sure that all Lily/Kauri runtime dependencies
+      <!-- This plugin makes sure that all Lily runtime dependencies
           are available in the local repository (required for lily-sever-test-fw) -->
       <plugin>
         <groupId>org.lilyproject</groupId>

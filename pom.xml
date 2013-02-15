@@ -1024,21 +1024,6 @@
         <enabled>true</enabled>
       </releases>
     </repository>
-
-    <!-- This repository is necessary to be able to download Kauri's restlet dependencies, but
-         only for users of Lily that have not built Lily locally. The reason is a current
-         limitation in the lily-kauri-plugin, which only makes use of the repository declarations
-         of Lily, rather than recursively using those from the projects to which the dependencies
-         belong.
-    -->
-    <repository>
-      <id>kauri-dev</id>
-      <url>http://kauriproject.org/maven/maven2/dev</url>
-    </repository>
-    <repository>
-      <id>kauri-deploy</id>
-      <url>http://kauriproject.org/maven/maven2/deploy</url>
-    </repository>
   </repositories>
 
   <pluginRepositories>
