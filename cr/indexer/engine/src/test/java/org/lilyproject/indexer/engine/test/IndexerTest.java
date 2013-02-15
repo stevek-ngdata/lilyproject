@@ -2074,8 +2074,9 @@ public class IndexerTest {
                 .mixin().id(mixin1.getId()).add();
         RecordType rt = typeManager.createRecordType(rtBuilder.build());
 
-        rtBuilder.mixin().id(mixin2.getId()).version(mixin2.getVersion()).add();
-        rt = typeManager.updateRecordType(rtBuilder.build());
+        rt = typeManager.updateRecordType(
+                typeManager.recordTypeBuilder(rt).mixin().id(mixin2.getId()).version(mixin2.getVersion()).add()
+                        .build());
 
         RecordType rt2 = typeManager.recordTypeBuilder()
                 .name(new QName(NS, "sf_rt2"))
