@@ -23,7 +23,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
@@ -38,7 +37,7 @@ public class RecordTypeCollectionResource extends BaseRecordTypeCollectionResour
         URI uri = uriInfo.getBaseUriBuilder().path(RecordTypeResource.class).
                 queryParam("ns.n", recordType.getName().getNamespace()).
                 build("n$" + recordType.getName().getName());
-        return Response.status(201).header("Location", uri.toString()).entity(Entity.create(recordType, uriInfo)).build();
+        return Response.created(uri).entity(Entity.create(recordType, uriInfo)).build();
     }
 
 }

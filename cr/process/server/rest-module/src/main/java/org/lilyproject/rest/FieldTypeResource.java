@@ -67,7 +67,7 @@ public class FieldTypeResource extends RepositoryEnabled {
                 URI uri = uriInfo.getBaseUriBuilder().path(FieldTypeResource.class).
                         queryParam("ns.n", fieldType.getName().getNamespace()).
                         build("n$" + fieldType.getName().getName());
-                response = Response.status(201).header("Location",uri.toString()).entity(Entity.create(fieldType, uriInfo)).build();
+                response = Response.created(uri).entity(Entity.create(fieldType, uriInfo)).build();
                 break;
             case UPDATED:
             case UP_TO_DATE:

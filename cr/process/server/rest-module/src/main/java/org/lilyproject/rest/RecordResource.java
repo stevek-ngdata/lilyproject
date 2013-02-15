@@ -24,7 +24,6 @@ import org.lilyproject.tools.import_.core.RecordImport;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.*;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import java.net.URI;
@@ -78,7 +77,7 @@ public class RecordResource extends RepositoryEnabled {
         switch (resultType) {
             case CREATED:
                 URI uri = uriInfo.getBaseUriBuilder().path(RecordResource.class).build(record.getId());
-                response = Response.status(201).header("Location", uri.toString()).entity(Entity.create(record, uriInfo)).build();
+                response = Response.created(uri).entity(Entity.create(record, uriInfo)).build();
                 break;
             case UPDATED:
             case UP_TO_DATE:

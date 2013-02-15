@@ -71,7 +71,7 @@ public class RecordTypeResource extends RepositoryEnabled {
                 URI uri = uriInfo.getBaseUriBuilder().path(RecordTypeResource.class).
                         queryParam("ns.n", recordType.getName().getNamespace()).
                         build("n$" + recordType.getName().getName());
-                response = Response.status(201).header("Location",uri.toString()).entity(Entity.create(recordType, uriInfo)).build();
+                response = Response.created(uri).entity(Entity.create(recordType, uriInfo)).build();
                 break;
             case UPDATED:
             case UP_TO_DATE:

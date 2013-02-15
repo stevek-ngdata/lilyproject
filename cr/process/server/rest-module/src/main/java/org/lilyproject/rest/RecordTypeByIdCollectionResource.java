@@ -20,7 +20,6 @@ import org.lilyproject.repository.api.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
@@ -33,7 +32,7 @@ public class RecordTypeByIdCollectionResource extends BaseRecordTypeCollectionRe
     public Response post(PostAction<RecordType> postAction, @Context UriInfo uriInfo) {
         RecordType recordType = processPost(postAction);
         URI uri = uriInfo.getBaseUriBuilder().path(RecordTypeByIdResource.class).build(recordType.getId());
-        return Response.status(201).header("Location",uri.toString()).entity(Entity.create(recordType, uriInfo)).build();
+        return Response.created(uri).entity(Entity.create(recordType, uriInfo)).build();
     }
 
 }

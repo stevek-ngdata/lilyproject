@@ -20,7 +20,6 @@ import org.lilyproject.repository.api.Record;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import java.net.URI;
@@ -45,7 +44,7 @@ public class RecordCollectionResource extends RepositoryEnabled {
             // TODO record we respond with should be full record or be limited to user-specified field list
             record = repository.create(record);
             URI uri = uriInfo.getBaseUriBuilder().path(RecordResource.class).build(record.getId());
-            return Response.status(201).header("Location",uri.toString()).entity(Entity.create(record, uriInfo)).build();
+            return Response.created(uri).entity(Entity.create(record, uriInfo)).build();
         } catch (Exception e) {
             throw new ResourceException(e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
