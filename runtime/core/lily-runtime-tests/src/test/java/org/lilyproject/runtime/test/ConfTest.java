@@ -14,7 +14,7 @@ import org.lilyproject.runtime.model.ModuleDefinition;
 import org.lilyproject.runtime.model.ModuleSourceType;
 import org.lilyproject.runtime.rapi.ConfRegistry;
 import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
-import org.lilyproject.runtime.testmodules.confmod.ConfDependentBean;
+import org.lilyproject.runtime.test.testmodules.confmod.ConfDependentBean;
 import org.springframework.context.ApplicationContext;
 
 public class ConfTest extends AbstractRuntimeTest {

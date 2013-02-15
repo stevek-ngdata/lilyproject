@@ -1,4 +1,4 @@
-package org.lilyproject.runtime.testmodules.confmod;
+package org.lilyproject.runtime.test.testmodules.confmod;
 
 import org.lilyproject.runtime.conf.Conf;
 
