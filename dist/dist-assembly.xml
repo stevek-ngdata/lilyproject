@@ -278,7 +278,7 @@
   <fileSets>
     <!-- Lily server dependencies -->
     <fileSet>
-      <directory>${basedir}/target/runtime-repository</directory>
+      <directory>${basedir}/target/lilyruntime-repository</directory>
       <outputDirectory>/lib</outputDirectory>
       <useDefaultExcludes>true</useDefaultExcludes>
     </fileSet>
