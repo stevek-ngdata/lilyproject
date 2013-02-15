@@ -37,13 +37,9 @@
     <module>general-module</module>
     <module>repository-module</module>
     <module>indexer-module</module>
-    <module>servlet-helpers</module>
     <module>rest-module</module>
     <module>webui-module</module>
     <module>indexer-integration-module</module>
-    <module>container-jetty</module>
-    <module>servletregistry-api</module>
-    <module>servletregistry-module</module>
   </modules>
 
   <build>
@@ -58,16 +54,6 @@
     </resources>
 
     <plugins>
-      <plugin>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-package-plugin</artifactId>
-        <version>${project.version}</version>
-        <inherited>false</inherited>
-        <configuration>
-          <confDirectory>${basedir}/conf</confDirectory>
-        </configuration>
-      </plugin>
-
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-genscript-plugin</artifactId>

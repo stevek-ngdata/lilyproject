@@ -108,6 +108,7 @@
     <module>global/clientmetrics</module>
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
+    <module>global/servlet</module>
 
     <module>tools/lily-runtime-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>

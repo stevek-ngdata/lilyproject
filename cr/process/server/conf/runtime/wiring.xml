@@ -4,7 +4,7 @@
               version="2.2-SNAPSHOT">
     </artifact>
 
-    <artifact id="lily-servletregistry-module" groupId="org.lilyproject" artifactId="lily-servletregistry-module"
+    <artifact id="servletregistry" groupId="org.lilyproject" artifactId="lily-servletregistry-module"
               version="2.2-SNAPSHOT">
     </artifact>
 
@@ -46,7 +46,7 @@
     </artifact>
 -->
 
-    <artifact id="lily-container-jetty" groupId="org.lilyproject" artifactId="lily-container-jetty"
+    <artifact id="jetty" groupId="org.lilyproject" artifactId="lily-jetty-module"
               version="2.2-SNAPSHOT">
     </artifact>
 

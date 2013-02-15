@@ -33,7 +33,7 @@
   </parent>
 
   <modules>
-    <module>container-jetty</module>
+    <module>jetty-module</module>
     <module>servlet-helpers</module>
     <module>servletregistry-api</module>
     <module>servletregistry-module</module>
