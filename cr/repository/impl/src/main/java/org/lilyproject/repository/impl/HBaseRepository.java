@@ -103,7 +103,6 @@ public class HBaseRepository extends BaseRepository {
 
     private List<RecordUpdateHook> updateHooks = Collections.emptyList();
 
-
     private final Log log = LogFactory.getLog(getClass());
 
     public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, HBaseTableFactory hbaseTableFactory,
@@ -120,7 +119,8 @@ public class HBaseRepository extends BaseRepository {
      * Sets the record update hooks.
      */
     public void setRecordUpdateHooks(List<RecordUpdateHook> recordUpdateHooks) {
-        this.updateHooks = recordUpdateHooks == null ? Collections.<RecordUpdateHook> emptyList() : recordUpdateHooks;
+        this.updateHooks = recordUpdateHooks == null ?
+                Collections.<RecordUpdateHook> emptyList() : recordUpdateHooks;
     }
 
     @Override
@@ -138,10 +138,8 @@ public class HBaseRepository extends BaseRepository {
             InterruptedException {
 
         if (record.getId() == null) {
-            // While we could generate an ID ourselves in this case, this would defeat partly the
-            // purpose of
-            // createOrUpdate, which is that clients would be able to retry the operation (in case
-            // of IO exceptions)
+            // While we could generate an ID ourselves in this case, this would defeat partly the purpose of
+            // createOrUpdate, which is that clients would be able to retry the operation (in case of IO exceptions)
             // without having to worry that more than one record might be created.
             throw new RecordException("Record ID is mandatory when using create-or-update.");
         }
@@ -225,9 +223,8 @@ public class HBaseRepository extends BaseRepository {
                     if (oldVersion != null) {
                         version = Bytes.toLong(oldVersion) + 1;
                         // Make sure any old data gets cleared and old blobs are deleted
-                        // This is to cover the failure scenario where a record was deleted, but a
-                        // failure
-                        // occurred before executing the clearData
+                        // This is to cover the failure scenario where a record was deleted, but a failure occurred
+                        // before executing the clearData
                         // If this was already done, this is a no-op
                         // Note: since the removal of the row locking, this part could run concurrent with other
                         // threads trying to re-create a record or with a delete still being in progress. This
@@ -249,14 +246,13 @@ public class HBaseRepository extends BaseRepository {
 
                 Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
                 Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
-                Put put = buildPut(record, version, recordEvent, fieldTypes, referencedBlobs, unReferencedBlobs);
+                Put put = buildPut(newRecord, version, recordEvent, fieldTypes, referencedBlobs, unReferencedBlobs);
 
                 if (record.hasAttributes()) {
                     recordEvent.setAttributes(record.getAttributes());
                 }
 
-                // Make sure the record type changed flag stays false for a newly
-                // created record
+                // Make sure the record type changed flag stays false for a newly created record
                 recordEvent.setRecordTypeChanged(false);
                 Long newVersion = newRecord.getVersion();
                 if (newVersion != null)
@@ -288,8 +284,7 @@ public class HBaseRepository extends BaseRepository {
                 throw new RecordException("Exception occurred while creating record '" + recordId + "' in HBase table",
                         e);
             } catch (BlobException e) {
-                throw new RecordException("Exception occurred while creating record '" + recordId + "'",
-                        e);
+                throw new RecordException("Exception occurred while creating record '" + recordId + "'", e);
             }
         } finally {
             metrics.report(Action.CREATE, System.currentTimeMillis() - before);
@@ -297,8 +292,9 @@ public class HBaseRepository extends BaseRepository {
     }
 
     /**
-     * Build a {@code Put} for inserting a new record into Lily. Using this method circumvents nearly all extra operations that happen within Lily, so it should
-     * only be used for inserting new records that don't require (synchronous) indexing and are sure to not already exist in HBase.
+     * Build a {@code Put} for inserting a new record into Lily. Using this method circumvents nearly all extra
+     * operations that happen within Lily, so it should only be used for inserting new records that don't require
+     * (synchronous) indexing and are sure to not already exist in HBase.
      * 
      * @param record Record to be inserted
      * @param version version number of the record to be inserted
@@ -309,7 +305,8 @@ public class HBaseRepository extends BaseRepository {
      * @return Put which can be sent directly to HBase
      */
     public Put buildPut(Record record, long version, RecordEvent recordEvent, FieldTypes fieldTypes,
-            Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs) throws InterruptedException, RepositoryException {
+            Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs) throws InterruptedException,
+            RepositoryException {
         Record dummyOriginalRecord = newRecord();
         Put put = new Put(record.getId().toBytes());
         put.add(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(false));
@@ -376,7 +373,7 @@ public class HBaseRepository extends BaseRepository {
     }
 
     private Record updateRecord(Record record, boolean useLatestRecordType, List<MutationCondition> conditions,
-                                FieldTypes fieldTypes) throws RepositoryException {
+            FieldTypes fieldTypes) throws RepositoryException {
 
         RecordId recordId = record.getId();
 
@@ -404,8 +401,7 @@ public class HBaseRepository extends BaseRepository {
             if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent, referencedBlobs,
                     unReferencedBlobs, useLatestRecordType, fieldTypes)) {
 
-                // Check the conditions after establishing that the record really needs updating,
-                // this makes the
+                // Check the conditions after establishing that the record really needs updating, this makes the
                 // conditional update operation idempotent.
                 Record conditionsResponse = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
                         record);
@@ -449,8 +445,8 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
-    // Calculates the changes that are to be made on the record-row and puts
-    // this information on the Put object and the RecordEvent
+    // Calculates the changes that are to be made on the record-row and puts this information on the Put object and the
+    // RecordEvent
     private boolean calculateRecordChanges(Record record, Record originalRecord, Long version, Put put,
             RecordEvent recordEvent, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs,
             boolean useLatestRecordType, FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
@@ -477,8 +473,7 @@ public class HBaseRepository extends BaseRepository {
 
         boolean fieldsHaveChanged = !changedScopes.isEmpty();
         if (fieldsHaveChanged) {
-            // The provided recordTypeVersion could have been null, so the latest version of the
-            // recordType was taken
+            // The provided recordTypeVersion could have been null, so the latest version of the recordType was taken
             // and we need to know which version that is
             recordTypeVersion = recordType.getVersion();
             if (!recordTypeName.equals(originalRecord.getRecordTypeName())
@@ -488,8 +483,8 @@ public class HBaseRepository extends BaseRepository {
                 put.add(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_VERSION.bytes, 1L,
                         Bytes.toBytes(recordTypeVersion));
             }
-            // Always set the record type on the record since the requested
-            // record type could have been given without a version number
+            // Always set the record type on the record since the requested record type could have been given without a
+            // version number
             record.setRecordType(recordTypeName, recordTypeVersion);
             if (version != null) {
                 byte[] versionBytes = Bytes.toBytes(version);
@@ -501,39 +496,32 @@ public class HBaseRepository extends BaseRepository {
 
         setRecordTypesAfterUpdate(record, originalRecord, changedScopes);
 
-        // Always set the version on the record. If no fields were changed this
-        // will give the latest version in the repository
+        // Always set the version on the record. If no fields were changed this will give the latest version in the
+        // repository
         record.setVersion(version);
 
         if (versionedFieldsHaveChanged) {
             recordEvent.setVersionCreated(version);
         }
 
-        // Clear the list of deleted fields, as this is typically what the user will expect when
-        // using the
-        // record object for future updates.
+        // Clear the list of deleted fields, as this is typically what the user will expect when using the record object
+        // for future updates.
         return fieldsHaveChanged;
     }
 
     private void setRecordTypesAfterUpdate(Record record, Record originalRecord, Set<Scope> changedScopes) {
-        // The returned record object after an update should always contain complete record type
-        // information for
-        // all the scopes
+        // The returned record object after an update should always contain complete record type information for all the
+        // scopes
         for (Scope scope : Scope.values()) {
-            // For any unchanged or non-existing scope, we reset the record type information to the
-            // one of the
-            // original record, so that the returned record object corresponds to the repository
-            // state (= same
-            // as when one would do a fresh read)
+            // For any unchanged or non-existing scope, we reset the record type information to the one of the
+            // original record, so that the returned record object corresponds to the repository state (= same as when
+            // one would do a fresh read)
             //
             // Copy over the original record type of a scope if:
-            // - the scope was unchanged. If it was changed, the record type will already have been
-            // filled in
-            // by calculateRecordChanges.
-            // - for the non-versioned scope, only copy it over if none of the scopes changed,
-            // because the
-            // record type of the non-versioned scope is always brought up to date in case any scope
-            // is changed
+            // - the scope was unchanged. If it was changed, the record type will already have been by
+            // calculateRecordChanges.
+            // - for the non-versioned scope, only copy it over if none of the scopes changed, because the record type
+            // of the non-versioned scope is always brought up to date in case any scope is changed
             if (!changedScopes.contains(scope) && (scope != Scope.NON_VERSIONED || changedScopes.isEmpty())) {
                 record.setRecordType(scope, originalRecord.getRecordTypeName(scope),
                         originalRecord.getRecordTypeVersion(scope));
@@ -584,8 +572,7 @@ public class HBaseRepository extends BaseRepository {
         for (Scope scope : changedScopes) {
             long versionOfRTField = version;
             if (Scope.NON_VERSIONED.equals(scope)) {
-                versionOfRTField = 1L; // For non-versioned fields the record type is always stored
-                                       // at version 1.
+                versionOfRTField = 1L; // For non-versioned fields the record type is always stored at version 1.
             }
             // Only update the recordTypeNames and versions if they have indeed changed
             QName originalScopeRecordTypeName = originalRecord.getRecordTypeName(scope);
@@ -611,10 +598,8 @@ public class HBaseRepository extends BaseRepository {
         return changedScopes;
     }
 
-    // Returns a map (fieldname -> field) of all fields that are indicated by the record to be
-    // updated.
-    // The map also includes the fields that need to be deleted. Their name is mapped onto the
-    // delete marker.
+    // Returns a map (fieldname -> field) of all fields that are indicated by the record to be updated.
+    // The map also includes the fields that need to be deleted. Their name is mapped onto the delete marker.
     private Map<QName, Object> getFieldsToUpdate(Record record) {
         // Work with a copy of the map
         Map<QName, Object> fields = new HashMap<QName, Object>();
@@ -625,8 +610,7 @@ public class HBaseRepository extends BaseRepository {
         return fields;
     }
 
-    // Checks for each field if it is different from its previous value and indeed needs to be
-    // updated.
+    // Checks for each field if it is different from its previous value and indeed needs to be updated.
     private Set<Scope> calculateUpdateFields(Record parentRecord, Map<QName, Object> fields,
             Map<QName, Object> originalFields, Map<QName, Object> originalNextFields, Long version, Put put,
             RecordEvent recordEvent, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs,
@@ -650,10 +634,9 @@ public class HBaseRepository extends BaseRepository {
 
                 byte[] encodedFieldValue = encodeFieldValue(parentRecord, fieldType, newValue);
 
-                // Check if the previousValue contained blobs which should be deleted since they are
-                // no longer used
-                // In case of a mutable update, it is checked later if no other versions use the
-                // blob before deciding to delete it
+                // Check if the previousValue contained blobs which should be deleted since they are no longer used
+                // In case of a mutable update, it is checked later if no other versions use the blob before deciding to
+                // delete it
                 if (Scope.NON_VERSIONED.equals(scope) || (mutableUpdate && Scope.VERSIONED_MUTABLE.equals(scope))) {
                     if (originalValue != null) {
                         Set<BlobReference> previouslyReferencedBlobs = getReferencedBlobs(fieldType, originalValue);
@@ -667,10 +650,8 @@ public class HBaseRepository extends BaseRepository {
                     put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), 1L, encodedFieldValue);
                 } else {
                     put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), version, encodedFieldValue);
-                    // If it is a mutable update and the next version of the field was the same as
-                    // the one that is being updated,
-                    // the original value needs to be copied to that next version (due to sparseness
-                    // of the table).
+                    // If it is a mutable update and the next version of the field was the same as the one that is being updated,
+                    // the original value needs to be copied to that next version (due to sparseness of the table).
                     if (originalNextFields != null && !fieldIsNewOrDeleted && originalNextFields.containsKey(fieldName)) {
                         copyValueToNextVersionIfNeeded(parentRecord, version, put, originalNextFields, fieldName,
                                 originalValue, fieldTypes);
@@ -757,8 +738,7 @@ public class HBaseRepository extends BaseRepository {
             }
 
             if (!changedScopes.isEmpty()) {
-                // Check the conditions after establishing that the record really needs updating,
-                // this makes the
+                // Check the conditions after establishing that the record really needs updating, this makes the
                 // conditional update operation idempotent.
                 Record conditionsRecord = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
                         record);
@@ -767,9 +747,7 @@ public class HBaseRepository extends BaseRepository {
                 }
 
                 // Update the record types
-
-                // If no record type is specified explicitly, use the current one of the
-                // non-versioned scope
+                // If no record type is specified explicitly, use the current one of the non-versioned scope
                 QName recordTypeName = record.getRecordTypeName() != null ? record.getRecordTypeName()
                         : originalRecord.getRecordTypeName();
                 Long recordTypeVersion;
@@ -798,8 +776,7 @@ public class HBaseRepository extends BaseRepository {
                     RecordType originalMutableScopeRecordType = typeManager.getRecordTypeByName(
                             originalMutableScopeRecordTypeName, originalRecord.getRecordTypeVersion(mutableScope));
                     if (!recordType.getId().equals(originalMutableScopeRecordType.getId())) {
-                        // If the next record version had the same record type name, copy the
-                        // original value to that one
+                        // If the next record version had the same record type name, copy the original value to that one
                         if (originalNextRecord != null
                                 && originalMutableScopeRecordType.getName().equals(
                                         originalNextRecord.getRecordTypeName(mutableScope))) {
@@ -810,8 +787,8 @@ public class HBaseRepository extends BaseRepository {
                                 recordType.getId().getBytes());
                     }
                     if (!recordType.getVersion().equals(originalMutableScopeRecordType.getVersion())) {
-                        // If the next record version had the same record type version, copy the
-                        // original value to that one
+                        // If the next record version had the same record type version, copy the original value to that
+                        // one
                         if (originalNextRecord != null
                                 && originalMutableScopeRecordType.getVersion().equals(
                                         originalNextRecord.getRecordTypeVersion(mutableScope))) {
@@ -823,8 +800,7 @@ public class HBaseRepository extends BaseRepository {
                     }
                 }
 
-                // Validate if the new values for the record are valid wrt the recordType (e.g.
-                // mandatory fields)
+                // Validate if the new values for the record are valid wrt the recordType (e.g. mandatory fields)
                 validateRecord(newRecord, originalRecord, recordType, fieldTypes);
 
                 // Reserve blobs so no other records can use them
@@ -838,9 +814,8 @@ public class HBaseRepository extends BaseRepository {
                     throw new ConcurrentRecordUpdateException(recordId);
                 }
 
-                // The unReferencedBlobs could still be in use in another version of the mutable
-                // field,
-                // therefore we filter them first
+                // The unReferencedBlobs could still be in use in another version of the mutable field, therefore we
+                // filter them first
                 unReferencedBlobs = filterReferencedBlobs(recordId, unReferencedBlobs, version);
 
                 // Remove the used blobs from the blobIncubator
@@ -856,8 +831,7 @@ public class HBaseRepository extends BaseRepository {
             throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table",
-                    e);
+            throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table", e);
         }
 
         newRecord.getFieldsToDelete().clear();
@@ -877,9 +851,9 @@ public class HBaseRepository extends BaseRepository {
     }
 
     /**
-     * If the original value is the same as for the next version this means that the cell at the
-     * next version does not contain any value yet, and the record relies on what is in the previous
-     * cell's version. The original value needs to be copied into it. Otherwise we loose that value.
+     * If the original value is the same as for the next version this means that the cell at the next version does not
+     * contain any value yet, and the record relies on what is in the previous cell's version. The original value needs
+     * to be copied into it. Otherwise we loose that value.
      */
     private void copyValueToNextVersionIfNeeded(Record parentRecord, Long version, Put put,
             Map<QName, Object> originalNextFields, QName fieldName, Object originalValue, FieldTypes fieldTypes)
@@ -942,10 +916,8 @@ public class HBaseRepository extends BaseRepository {
             // Mark the record as deleted
             put.add(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(true));
 
-            // Put the delete marker in the non-versioned fields instead of deleting their columns
-            // in the clearData call
-            // This is needed to avoid non-versioned fields to be lost due to the hbase delete
-            // thombstone
+            // Put the delete marker in the non-versioned fields instead of deleting their columns in the clearData call
+            // This is needed to avoid non-versioned fields to be lost due to the hbase delete tombstone
             // See trac ticket http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/297
             Map<QName, Object> fields = originalRecord.getFields();
             for (Entry<QName, Object> fieldEntry : fields.entrySet()) {
@@ -984,11 +956,11 @@ public class HBaseRepository extends BaseRepository {
 
     // Clear all data of the recordId until the latest record version (included)
     // And delete any referred blobs
-    private void clearData(RecordId recordId, Record originalRecord, Long upToVersion)
-            throws IOException, RepositoryException, InterruptedException {
+    private void clearData(RecordId recordId, Record originalRecord, Long upToVersion) throws IOException,
+            RepositoryException, InterruptedException {
         Get get = new Get(recordId.toBytes());
         get.addFamily(RecordCf.DATA.bytes);
-        get.setFilter(new ColumnPrefixFilter(new byte[]{RecordColumn.DATA_PREFIX}));
+        get.setFilter(new ColumnPrefixFilter(new byte[] { RecordColumn.DATA_PREFIX }));
         // Only read versions that exist(ed) at the time the record was deleted, since this code could
         // run concurrently with the re-creation of the same record.
         if (upToVersion != null) {
@@ -1045,8 +1017,8 @@ public class HBaseRepository extends BaseRepository {
                                 // Get cells to delete
                                 // Only delete if in NON_VERSIONED scope
                                 // The NON_VERSIONED fields will get filled in with a delete marker
-                                // This is needed to avoid non-versioned fields to be lost due to
-                                // the hbase delete thombstone
+                                // This is needed to avoid non-versioned fields to be lost due to the hbase delete
+                                // thombstone
                                 // See trac ticket
                                 // http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/297
                                 if (fieldType.getScope() != Scope.NON_VERSIONED) {
@@ -1074,8 +1046,7 @@ public class HBaseRepository extends BaseRepository {
                 // Do not delete the NON-VERSIONED record type column.
                 // If the thombstone was not processed yet (major compaction)
                 // a re-creation of the record would then loose its record type since the
-                // NON-VERSIONED
-                // field is always stored at timestamp 1L
+                // NON-VERSIONED field is always stored at timestamp 1L
                 // Re-creating the record will always overwrite the (NON-VERSIONED) record type.
                 // So, there is no risk of old record type information ending up in the new record.
                 delete.deleteColumns(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_ID.bytes, upToVersion);

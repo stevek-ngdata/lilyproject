@@ -93,6 +93,7 @@
     <module>cr/standalone-launcher</module>
     <module>cr/mapreduce</module>
     <module>cr/sep</module>
+    <module>cr/bulk-import</module>
 
     <module>global/hbaseindex</module>
     <module>global/util</module>
@@ -821,6 +822,11 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore</artifactId>
         <version>${version.httpclient}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.python</groupId>
+        <artifactId>jython</artifactId>
+        <version>2.5.3</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

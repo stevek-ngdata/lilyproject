@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.bulk;
+package org.lilyproject.bulk;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -71,8 +71,8 @@ public class BulkIngester implements Closeable {
             // FIXME Blobs aren't really supported here (no BlobManager is created), but null is
             // just passed in as the BlobManager so we'll probably get some mystery NPEs if Blobs
             // are used. We should either support blobs, or at least forcefully disallow them
-            HBaseRepository hbaseRepository = new HBaseRepository(typeManager, idGenerator, null, hbaseTableFactory,
-                    null, null);
+            HBaseRepository hbaseRepository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory,
+                    null);
             return new BulkIngester(hbaseRepository, LilyHBaseSchema.getRecordTable(hbaseTableFactory),
                     typeManager.getFieldTypesSnapshot());
         } catch (Exception e) {
