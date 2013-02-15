@@ -62,7 +62,6 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        //TODO: check mediaType.equals vs .isCompatible;
         if (type.equals(PostAction.class) && mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
             if (genericType instanceof ParameterizedType) {
                 ParameterizedType pt = (ParameterizedType)genericType;
