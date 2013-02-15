@@ -33,10 +33,11 @@
   </parent>
 
   <modules>
-    <module>jetty-module</module>
-    <module>servlet-helpers</module>
     <module>servletregistry-api</module>
     <module>servletregistry-module</module>
+    <module>jetty-module</module>
+    <module>jersey-helper</module>
+    <module>spring-mvc-helper</module>
   </modules>
 
   <build>

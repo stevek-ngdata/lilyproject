@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.servlet;
+package org.lilyproject.servlet.jersey;
 
 import javax.servlet.ServletException;
 import java.util.Map;
@@ -22,8 +22,6 @@ import com.sun.jersey.api.core.DefaultResourceConfig;
 import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.spi.container.servlet.WebConfig;
 import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 
 public class JerseySpringServlet extends SpringServlet {

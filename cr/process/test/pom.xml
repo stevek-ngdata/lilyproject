@@ -41,7 +41,7 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-servlet-helpers</artifactId>
+      <artifactId>lily-jersey-helper</artifactId>
     </dependency>
 
     <dependency>

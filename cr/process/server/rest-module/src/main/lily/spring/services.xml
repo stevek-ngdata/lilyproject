@@ -59,7 +59,7 @@
     </constructor-arg>
   </bean>
 
-  <bean id="servletManager" class="org.lilyproject.servlet.JerseySpringServletManager">
+  <bean id="servletManager" class="org.lilyproject.servlet.jersey.JerseySpringServletManager">
     <constructor-arg value="lily-repository-rest-context.xml"/>
     <property name="urlPatterns">
       <list>

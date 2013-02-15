@@ -33,7 +33,7 @@
 
   <lily:import-service id="servletRegistry" service="org.lilyproject.servletregistry.api.ServletRegistry"/>
 
-  <bean id="servletManager" class="org.lilyproject.servlet.DispatcherServletManager">
+  <bean id="servletManager" class="org.lilyproject.servlet.springmvc.DispatcherServletManager">
     <constructor-arg value="lily-webui-context.xml"/>
     <property name="urlPatterns">
       <list>

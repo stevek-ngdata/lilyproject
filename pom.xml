@@ -243,7 +243,12 @@
       <!-- lily (non-runtime) -->
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-servlet-helpers</artifactId>
+        <artifactId>lily-jersey-helper</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-spring-mvc-helper</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -258,7 +263,7 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-container-jetty</artifactId>
+        <artifactId>lily-jetty-module</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>
       <dependency>

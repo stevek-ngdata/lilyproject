@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <classloader share-self="required">
   <classpath>
-    <artifact groupId="org.lilyproject" artifactId="lily-servlet-helpers" share="required"/>
+    <artifact groupId="org.lilyproject" artifactId="lily-spring-mvc-helper" share="required"/>
     <artifact groupId="org.springframework" artifactId="spring-beans" share="required"/>
     <artifact groupId="org.springframework" artifactId="spring-web" share="required"/>
     <artifact groupId="org.springframework" artifactId="spring-context-support" share="required"/>
