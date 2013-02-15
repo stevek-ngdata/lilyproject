@@ -47,6 +47,7 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
@@ -146,6 +147,21 @@ public class TutorialTest {
     }
 
     @Test
+    public void tutorial() throws Exception {
+        createRecordType();
+        updateRecordType();
+        createRecord();
+        createRecordUserSpecifiedId();
+        updateRecord();
+        updateRecordViaRead();
+        updateRecordConditionally();
+        readRecord();
+        blob();
+        variantRecord();
+        linkField();
+        complexFields();
+    }
+
     public void createRecordType() throws Exception {
         // (1)
         ValueType stringValueType = typeManager.getValueType("STRING");
@@ -157,8 +173,8 @@ public class TutorialTest {
         title = typeManager.createFieldType(title);
 
         // (4)
-        RecordType book = typeManager.newRecordType(new QName(BNS, "Book"));
-        book = book.withFieldTypeEntry(title.getId(), true);
+        RecordType book =
+                typeManager.recordTypeBuilder().name(new QName(BNS, "Book")).field(title.getId(), true).build();
 
         // (5)
         book = typeManager.createRecordType(book);
@@ -167,7 +183,6 @@ public class TutorialTest {
         PrintUtil.print(book, repository);
     }
 
-    @Test
     public void updateRecordType() throws Exception {
         FieldType description = typeManager.createFieldType("BLOB", new QName(BNS, "description"), Scope.VERSIONED);
         FieldType authors = typeManager.createFieldType("LIST<STRING>", new QName(BNS, "authors"), Scope.VERSIONED);
@@ -180,22 +195,24 @@ public class TutorialTest {
 
         RecordType book = typeManager.getRecordTypeByName(new QName(BNS, "Book"), null);
 
+        final RecordTypeBuilder builder = typeManager.recordTypeBuilder(book);
+
         // The order in which fields are added does not matter
-        book = book.withFieldTypeEntry(description.getId(), false);
-        book = book.withFieldTypeEntry(authors.getId(), false);
-        book = book.withFieldTypeEntry(released.getId(), false);
-        book = book.withFieldTypeEntry(pages.getId(), false);
-        book = book.withFieldTypeEntry(sequelTo.getId(), false);
-        book = book.withFieldTypeEntry(manager.getId(), false);
-        book = book.withFieldTypeEntry(reviewStatus.getId(), false);
+        builder.field(description.getId(), false);
+        builder.field(description.getId(), false);
+        builder.field(authors.getId(), false);
+        builder.field(released.getId(), false);
+        builder.field(pages.getId(), false);
+        builder.field(sequelTo.getId(), false);
+        builder.field(manager.getId(), false);
+        builder.field(reviewStatus.getId(), false);
 
         // Now we call updateRecordType instead of createRecordType
-        book = typeManager.updateRecordType(book);
+        book = typeManager.updateRecordType(builder.build());
 
         PrintUtil.print(book, repository);
     }
 
-    @Test
     public void createRecord() throws Exception {
         // (1)
         Record record = repository.newRecord();
@@ -213,7 +230,6 @@ public class TutorialTest {
         PrintUtil.print(record, repository);
     }
 
-    @Test
     public void createRecordUserSpecifiedId() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.newRecord(id);
@@ -225,7 +241,6 @@ public class TutorialTest {
         PrintUtil.print(record, repository);
     }
 
-    @Test
     public void updateRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.newRecord(id);
@@ -238,7 +253,6 @@ public class TutorialTest {
         PrintUtil.print(record, repository);
     }
 
-    @Test
     public void updateRecordViaRead() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.read(id);
@@ -251,7 +265,6 @@ public class TutorialTest {
         PrintUtil.print(record, repository);
     }
 
-    @Test
     public void updateRecordConditionally() throws Exception {
         List<MutationCondition> conditions = new ArrayList<MutationCondition>();
         conditions.add(new MutationCondition(new QName(BNS, "manager"), "Manager Z"));
@@ -264,7 +277,6 @@ public class TutorialTest {
         System.out.println(record.getResponseStatus());
     }
 
-    @Test
     public void readRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
 
@@ -283,7 +295,6 @@ public class TutorialTest {
         System.out.println(record.getField(new QName(BNS, "title")));
     }
 
-    @Test
     public void blob() throws Exception {
         //
         // Write a blob
@@ -326,7 +337,6 @@ public class TutorialTest {
         }
     }
 
-    @Test
     public void variantRecord() throws Exception {
         // (1)
         IdGenerator idGenerator = repository.getIdGenerator();
@@ -360,7 +370,6 @@ public class TutorialTest {
         }
     }
 
-    @Test
     public void linkField() throws Exception {
         // (1)
         Record record1 = repository.newRecord();
@@ -382,15 +391,15 @@ public class TutorialTest {
         System.out.println(linkedRecord.getField(new QName(BNS, "title")));
     }
 
-    @Test
     public void complexFields() throws Exception {
         // (1)
         FieldType name = typeManager.createFieldType("STRING", new QName(ANS, "name"), Scope.NON_VERSIONED);
         FieldType email = typeManager.createFieldType("STRING", new QName(ANS, "email"), Scope.NON_VERSIONED);
 
-        RecordType authorType = typeManager.newRecordType(new QName(ANS, "author"));
-        authorType = authorType.withFieldTypeEntry(name.getId(), true);
-        authorType = authorType.withFieldTypeEntry(email.getId(), true);
+        RecordType authorType = typeManager.recordTypeBuilder()
+                .name(new QName(ANS, "author"))
+                .field(name.getId(), true)
+                .field(email.getId(), true).build();
         authorType = typeManager.createRecordType(authorType);
 
         // (2)
@@ -399,10 +408,11 @@ public class TutorialTest {
                 new QName(ANS, "authors"), Scope.NON_VERSIONED);
         FieldType body = typeManager.createFieldType("STRING", new QName(ANS, "body"), Scope.NON_VERSIONED);
 
-        RecordType articleType = typeManager.newRecordType(new QName(ANS, "article"));
-        articleType = articleType.withFieldTypeEntry(title.getId(), true);
-        articleType = articleType.withFieldTypeEntry(authors.getId(), true);
-        articleType = articleType.withFieldTypeEntry(body.getId(), true);
+        RecordType articleType = typeManager.recordTypeBuilder()
+                .name(new QName(ANS, "article"))
+                .field(title.getId(), true)
+                .field(authors.getId(), true)
+                .field(body.getId(), true).build();
         articleType = typeManager.createRecordType(articleType);
 
         // (3)
