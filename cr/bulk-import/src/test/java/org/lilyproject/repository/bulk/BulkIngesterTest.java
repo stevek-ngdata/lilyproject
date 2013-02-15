@@ -24,6 +24,8 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
+import com.google.common.collect.Lists;
+
 import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
@@ -75,8 +77,9 @@ public class BulkIngesterTest {
         configurePutCreation(record, expectedPut);
 
         bulkIngester.write(record);
+        bulkIngester.flush();
 
-        verify(recordTable).put(expectedPut);
+        verify(recordTable).put(Lists.newArrayList(expectedPut));
         verify(record, never()).setId(any(RecordId.class));
 
     }
@@ -94,8 +97,9 @@ public class BulkIngesterTest {
         configurePutCreation(record, expectedPut);
 
         bulkIngester.write(record);
+        bulkIngester.flush();
 
-        verify(recordTable).put(expectedPut);
+        verify(recordTable).put(Lists.newArrayList(expectedPut));
         verify(record).setId(recordId);
 
     }
