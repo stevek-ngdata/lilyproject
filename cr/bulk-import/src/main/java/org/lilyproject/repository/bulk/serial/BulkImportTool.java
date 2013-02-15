@@ -20,6 +20,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.apache.commons.cli.CommandLine;
+
+import org.lilyproject.repository.bulk.AbstractBulkImportCliTool;
+
 import com.google.common.base.Charsets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,28 +37,28 @@ import org.python.google.common.io.Files;
  * A bulk import tool similar to {@link org.lilyproject.repository.bulk.mapreduce.BulkImportTool} that works without
  * MapReduce.
  */
-public class BulkImportTool {
+public class BulkImportTool extends AbstractBulkImportCliTool {
     
-    private static final Log LOG = LogFactory.getLog(BulkImportTool.class);
+    private final Log log = LogFactory.getLog(BulkImportTool.class);
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 4) {
-            System.err.println("Usage: BulkImportTool <lily zookeeper> <inputfile> <python file> <python symbol>");
-            System.exit(1);
-        }
+        new BulkImportTool().start(args);
+    }
 
-        String lilyZk = args[0];
-        String inputPath = args[1];
-        String pythonFilePath = args[2];
-        String pythonSymbol = args[3];
-
-        BulkIngester bulkIngester = BulkIngester.newBulkIngester(lilyZk, 30000);
+    @Override
+    protected String getCmdName() {
+        return "lily-bulk-import";
+    }
+    
+    @Override
+    public int run(CommandLine cmd) throws Exception {
+        BulkIngester bulkIngester = BulkIngester.newBulkIngester(zkConnectionString, 30000);
 
         BufferedReader bufferedReader = new BufferedReader(new FileReader(inputPath));
         
-        LineMapper lineMapper = new JythonLineMapper(Files.toString(new File(pythonFilePath), Charsets.UTF_8),
+        LineMapper lineMapper = new JythonLineMapper(Files.toString(new File(pythonMapperPath), Charsets.UTF_8),
                 pythonSymbol);
-        ThreadedRecordWriter recordWriter = new ThreadedRecordWriter(lilyZk, 10);
+        ThreadedRecordWriter recordWriter = new ThreadedRecordWriter(zkConnectionString, 10);
         LineMappingContext mappingContext = new LineMappingContext(bulkIngester, recordWriter);
         
         long start = System.currentTimeMillis();
@@ -68,7 +72,9 @@ public class BulkImportTool {
         bufferedReader.close();
         recordWriter.close();
         float duration = (System.currentTimeMillis() - start) / 1000f;
-        LOG.info(String.format("Imported %d lines in %.2f seconds", numLines, duration));
+        log.info(String.format("Imported %d lines in %.2f seconds", numLines, duration));
+        
+        return 0;
     }
 
 }

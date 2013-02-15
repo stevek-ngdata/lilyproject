@@ -17,13 +17,17 @@ package org.lilyproject.repository.bulk.mapreduce;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
-import org.apache.hadoop.hbase.regionserver.metrics.SchemaMetrics;
+import org.lilyproject.repository.bulk.AbstractBulkImportCliTool;
 
 import com.google.common.base.Charsets;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.KeyValue;
@@ -32,10 +36,13 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
+import org.apache.hadoop.hbase.regionserver.metrics.SchemaMetrics;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.lilyproject.cli.BaseZkCliTool;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.python.google.common.io.Files;
@@ -43,29 +50,45 @@ import org.python.google.common.io.Files;
 /**
  * MapReduce-based import tool that makes use of Jython-based text line mapping.
  */
-public class BulkImportTool extends Configured implements Tool {
+public class BulkImportTool extends AbstractBulkImportCliTool implements Tool {
 
     private static final String HFILE_PATH = "lilyproject.bulkimport.hfilepath";
 
+    private Configuration conf = new Configuration();
+
     @Override
     public int run(String[] args) throws Exception {
+        start(args);
+        return 0;
+    }
+    
+    @Override
+    public Configuration getConf() {
+        return conf;
+    }
+    
+    @Override
+    public void setConf(Configuration conf) {
+        this.conf = conf;
+    }
+    
 
-        if (args.length != 3) {
-            System.err.printf("Usage: %s [generic options] <input file> <python mapper file> <python mapper symbol>\n",
-                    getClass().getSimpleName());
-            ToolRunner.printGenericCommandUsage(System.err);
-            return -1;
+    @Override
+    protected String getCmdName() {
+        return "lily-bulk-import";
+    }
+
+    @Override
+    public int run(CommandLine cmd) throws Exception {
+        int status = super.run(cmd);
+
+        if (status != 0) {
+            return status;
         }
 
-        String inputPath = args[0];
-        String pythonFilePath = args[1];
-        String pythonSymbol = args[2];
-
-        Configuration conf = getConf();
-
-        // TODO This needs to be a parameter
-        conf.set(LilyJythonMapper.LILY_ZK_STRING, "localhost:2181");
-        conf.set(LilyJythonMapper.MAPPER_CODE, Files.toString(new File(pythonFilePath), Charsets.UTF_8));
+        conf.set("hbase.zookeeper.quorum", zkConnectionString);
+        conf.set(LilyJythonMapper.LILY_ZK_STRING, zkConnectionString);
+        conf.set(LilyJythonMapper.MAPPER_CODE, Files.toString(new File(pythonMapperPath), Charsets.UTF_8));
         conf.set(LilyJythonMapper.MAPPER_SYMBOL_NAME, pythonSymbol);
 
         Job job = new Job(conf);
@@ -90,7 +113,6 @@ public class BulkImportTool extends Configured implements Tool {
         if (!job.waitForCompletion(true)) {
             throw new RuntimeException("Job failed");
         }
-
         return 0;
     }
 

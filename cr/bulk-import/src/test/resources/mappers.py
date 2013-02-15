@@ -2,6 +2,7 @@ def singleFieldRecord(line, ctx):
     rec = ctx.newRecord()
     rec.setRecordType(ctx.qn("{org.lilyproject}NameRecord"))
     rec.setField(ctx.qn("{org.lilyproject}Name"), line)
+    rec.setField(ctx.qn("{org.lilyproject}IntField"), 42)
     ctx.writeRecord(rec)
     
 def mapsNothing(line, ctx):
