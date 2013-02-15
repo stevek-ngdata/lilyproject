@@ -91,7 +91,7 @@ public class LilyRuntimeRepository extends AbstractMojo {
         }
 
         Set<Artifact> artifacts = cp.getClassPathArtifacts(runtimeLauncherArtifact,
-                "org/lilyproject/launcher/classloader.xml", remoteRepositories);
+                "org/lilyproject/runtime/launcher/classloader.xml", remoteRepositories);
         artifacts.add(runtimeLauncherArtifact);
 
         RepositoryWriter.write(artifacts, targetDirectory);
