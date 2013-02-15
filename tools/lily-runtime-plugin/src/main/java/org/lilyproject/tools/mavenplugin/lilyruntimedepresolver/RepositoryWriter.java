@@ -17,8 +17,7 @@ package org.lilyproject.tools.mavenplugin.lilyruntimedepresolver;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
-import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
+import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.plugin.MojoExecutionException;
 
 import java.io.File;
@@ -28,11 +27,9 @@ import java.util.Set;
 public class RepositoryWriter {
 
     public static void write(Set<Artifact> artifacts, String targetDirectory) throws MojoExecutionException {
-        ArtifactRepositoryLayout m2layout = new DefaultRepositoryLayout();
-
         for (Artifact artifact : artifacts) {
             File src = artifact.getFile();
-            File dest = new File(targetDirectory, m2layout.pathOf(artifact));
+            File dest = new File(targetDirectory, pathOf(artifact));
             try {
                 FileUtils.copyFile(src, dest);
             } catch (IOException e) {
@@ -60,5 +57,43 @@ public class RepositoryWriter {
         }
 
         return new File(path.replaceAll("\\.jar$", ".pom"));
+    }
+
+
+    private static final char PATH_SEPARATOR = '/';
+    private static final char GROUP_SEPARATOR = '.';
+    private static final char ARTIFACT_SEPARATOR = '-';
+
+    /**
+     * disclaimer: this method has been copied from the DefaultRepositoryLayout of the Maven
+     * source tree and is Apache licensed. It was changed to use getBaseVersion() instead
+     * of getVersion() on the artifact.
+     */
+    private static String pathOf(Artifact artifact) {
+        ArtifactHandler artifactHandler = artifact.getArtifactHandler();
+
+        StringBuffer path = new StringBuffer();
+
+        path.append(formatAsDirectory(artifact.getGroupId())).append(PATH_SEPARATOR);
+        path.append(artifact.getArtifactId()).append(PATH_SEPARATOR);
+        path.append(artifact.getBaseVersion()).append(PATH_SEPARATOR);
+        // Lily change: Here we call getBaseVersion() instead of getVersion() because otherwise for snapshot artifacts
+        // a timestamp suffix is included in the version (and our shell scripts & runtime classloader.xml's
+        // refer to the plain snapshot version)
+        path.append(artifact.getArtifactId()).append(ARTIFACT_SEPARATOR).append(artifact.getBaseVersion());
+
+        if (artifact.hasClassifier()) {
+            path.append(ARTIFACT_SEPARATOR).append(artifact.getClassifier());
+        }
+
+        if (artifactHandler.getExtension() != null && artifactHandler.getExtension().length() > 0) {
+            path.append(GROUP_SEPARATOR).append(artifactHandler.getExtension());
+        }
+
+        return path.toString();
+    }
+
+    private static String formatAsDirectory( String directory ) {
+        return directory.replace(GROUP_SEPARATOR, PATH_SEPARATOR);
     }
 }
