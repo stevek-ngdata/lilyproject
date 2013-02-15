@@ -40,16 +40,16 @@ import org.lilyproject.runtime.configuration.ConfManager;
  * Stuff needed to bootstrap a KauriRuntime instance.
  *
  */
-public class KauriRuntimeSettings {
+public class LilyRuntimeSettings {
     private ArtifactRepository repository;
     private boolean enableArtifactSharing = true;
     private ConfManager confManager;
     private Set<String> disabledModuleIds;
-    private KauriRuntimeModel model;
+    private LilyRuntimeModel model;
     private SourceLocations sourceLocations;
     private boolean disableServerConnectors;
 
-    public KauriRuntimeSettings() {
+    public LilyRuntimeSettings() {
     }
 
     public ArtifactRepository getRepository() {
@@ -84,7 +84,7 @@ public class KauriRuntimeSettings {
         this.disabledModuleIds = disabledModuleIds;
     }
 
-    public KauriRuntimeModel getModel() {
+    public LilyRuntimeModel getModel() {
         return model;
     }
 
@@ -93,7 +93,7 @@ public class KauriRuntimeSettings {
      *
      * <p>If you have a good use-case, let us know.
      */
-    public void setModel(KauriRuntimeModel model) {
+    public void setModel(LilyRuntimeModel model) {
         this.model = model;
     }
 

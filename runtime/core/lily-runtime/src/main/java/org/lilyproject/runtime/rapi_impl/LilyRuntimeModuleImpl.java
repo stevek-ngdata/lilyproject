@@ -18,20 +18,20 @@ package org.lilyproject.runtime.rapi_impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.lilyproject.runtime.KauriRuntime;
+import org.lilyproject.runtime.LilyRuntime;
 import org.lilyproject.runtime.module.Module;
 import org.lilyproject.runtime.module.ModuleConfig;
 import org.lilyproject.runtime.rapi.ConfRegistry;
-import org.lilyproject.runtime.rapi.KauriModule;
+import org.lilyproject.runtime.rapi.LilyRuntimeModule;
 import org.lilyproject.runtime.rapi.Mode;
 import org.lilyproject.runtime.rapi.ModuleSource;
 import org.springframework.context.ApplicationContext;
 
-public class KauriModuleImpl implements KauriModule {
+public class LilyRuntimeModuleImpl implements LilyRuntimeModule {
     private Module module;
-    private KauriRuntime runtime;
+    private LilyRuntime runtime;
 
-    public KauriModuleImpl(Module module, KauriRuntime runtime) {
+    public LilyRuntimeModuleImpl(Module module, LilyRuntime runtime) {
         this.module = module;
         this.runtime = runtime;
     }
@@ -56,22 +56,22 @@ public class KauriModuleImpl implements KauriModule {
         return moduleSources;
     }
 
-    public List<KauriModule> getModules() {
-        List<KauriModule> modules = new ArrayList<KauriModule>();
+    public List<LilyRuntimeModule> getModules() {
+        List<LilyRuntimeModule> modules = new ArrayList<LilyRuntimeModule>();
 
         for (Module module : runtime.getModules()) {
-            modules.add(new KauriModuleImpl(module, runtime));
+            modules.add(new LilyRuntimeModuleImpl(module, runtime));
         }
 
         return modules;
     }
 
-    public KauriModule getModuleById(String id) {
+    public LilyRuntimeModule getModuleById(String id) {
         Module module = runtime.getModuleById(id);
         if (module == null)
             return null;
 
-        return new KauriModuleImpl(module, runtime);
+        return new LilyRuntimeModuleImpl(module, runtime);
     }
 
     public ClassLoader getClassLoader() {

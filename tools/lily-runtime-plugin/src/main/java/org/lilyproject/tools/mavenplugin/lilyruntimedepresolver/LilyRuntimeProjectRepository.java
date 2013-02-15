@@ -34,7 +34,7 @@ import java.util.Set;
  * @description Creates a Maven-style repository for Kauri with all the dependencies of a Kauri project,
  *              based upon reading the wiring.xml.
  */
-public class KauriProjectRepository extends AbstractMojo {
+public class LilyRuntimeProjectRepository extends AbstractMojo {
     /**
      * Location of the conf directory.
      *
@@ -85,7 +85,7 @@ public class KauriProjectRepository extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), null,
+        LilyRuntimeProjectClasspath cp = new LilyRuntimeProjectClasspath(getLog(), null,
                 artifactFactory, resolver, localRepository);
 
         ModuleArtifacts moduleArtifacts = cp.getModuleArtifactsFromKauriConfig(new File(confDirectory), remoteRepositories);

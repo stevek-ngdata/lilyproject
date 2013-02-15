@@ -18,25 +18,25 @@ package org.lilyproject.runtime;
 import org.lilyproject.util.location.LocatedRuntimeException;
 import org.lilyproject.util.location.Location;
 
-public class KauriRTException extends LocatedRuntimeException {
+public class LilyRTException extends LocatedRuntimeException {
 
-    public KauriRTException(String message) {
+    public LilyRTException(String message) {
         super(message);
     }
 
-    public KauriRTException(String message, Throwable cause) throws LocatedRuntimeException {
+    public LilyRTException(String message, Throwable cause) throws LocatedRuntimeException {
         super(message, cause, null, false);
     }
 
-    public KauriRTException(String message, Location location) {
+    public LilyRTException(String message, Location location) {
         super(message, null, location, false);
     }
 
-    public KauriRTException(String message, Throwable cause, Location location) throws LocatedRuntimeException {
+    public LilyRTException(String message, Throwable cause, Location location) throws LocatedRuntimeException {
         super(message, cause, location, false);
     }
 
-    public KauriRTException(String message, Throwable cause, Location location, boolean rethrowLocated) throws LocatedRuntimeException {
+    public LilyRTException(String message, Throwable cause, Location location, boolean rethrowLocated) throws LocatedRuntimeException {
         super(message, cause, location, rethrowLocated);
     }
 }

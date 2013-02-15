@@ -15,10 +15,9 @@
  */
 package org.lilyproject.runtime.module.javaservice;
 
-import org.lilyproject.runtime.KauriRTException;
-import org.lilyproject.util.location.LocatedRuntimeException;
+import org.lilyproject.runtime.LilyRTException;
 
-public class ServiceConfigurationException extends KauriRTException {
+public class ServiceConfigurationException extends LilyRTException {
     public ServiceConfigurationException(String message) {
         super(message);
     }

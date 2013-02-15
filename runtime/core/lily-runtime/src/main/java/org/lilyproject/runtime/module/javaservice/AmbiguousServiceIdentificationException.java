@@ -15,9 +15,9 @@
  */
 package org.lilyproject.runtime.module.javaservice;
 
-import org.lilyproject.runtime.KauriRTException;
+import org.lilyproject.runtime.LilyRTException;
 
-public class AmbiguousServiceIdentificationException extends KauriRTException {
+public class AmbiguousServiceIdentificationException extends LilyRTException {
     private String type;
     private String moduleId;
 

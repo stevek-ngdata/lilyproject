@@ -19,7 +19,7 @@ import java.util.List;
 
 import org.springframework.context.ApplicationContext;
 
-public interface KauriModule {
+public interface LilyRuntimeModule {
     String getId();
 
     ModuleSource getSource();
@@ -41,7 +41,7 @@ public interface KauriModule {
      * having special system privileges. Thus, don't use this, unless you know what
      * you are doing.
      */
-    List<KauriModule> getModules();
+    List<LilyRuntimeModule> getModules();
 
     /**
      * Returns a module by ID.
@@ -53,7 +53,7 @@ public interface KauriModule {
      * having special system privileges. Thus, don't use this, unless you know what
      * you are doing.
      */
-    KauriModule getModuleById(String id);
+    LilyRuntimeModule getModuleById(String id);
 
     ClassLoader getClassLoader();
 

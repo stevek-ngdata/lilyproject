@@ -15,6 +15,9 @@
  */
 package org.lilyproject.runtime.module.build;
 
+import org.lilyproject.runtime.LilyRTException;
+import org.lilyproject.runtime.rapi.LilyRuntimeModule;
+import org.lilyproject.runtime.rapi_impl.LilyRuntimeModuleImpl;
 import org.springframework.beans.factory.xml.NamespaceHandler;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -24,11 +27,8 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.lilyproject.runtime.KauriRTException;
 import org.lilyproject.runtime.model.JavaServiceInjectDefinition;
 import org.lilyproject.runtime.module.javaservice.JavaServiceManager;
-import org.lilyproject.runtime.rapi_impl.KauriModuleImpl;
-import org.lilyproject.runtime.rapi.KauriModule;
 import org.lilyproject.runtime.rapi.ConfRegistry;
 import org.lilyproject.runtime.conf.Conf;
 import org.apache.commons.jxpath.JXPathContext;
@@ -36,7 +36,7 @@ import org.apache.commons.jxpath.JXPathContext;
 import java.util.Map;
 import java.util.HashMap;
 
-public class KauriRuntimeNamespaceHandler implements NamespaceHandler {
+public class LilyRuntimeNamespaceHandler implements NamespaceHandler {
 
     public void init() {
     }
@@ -51,7 +51,7 @@ public class KauriRuntimeNamespaceHandler implements NamespaceHandler {
             try {
                 return processor.process(element, parserContext, springBuildContext);
             } catch (Throwable e) {
-                throw new KauriRTException("Error handling " + elementName + " directive.", e);
+                throw new LilyRTException("Error handling " + elementName + " directive.", e);
             }
         }
 
@@ -87,8 +87,8 @@ public class KauriRuntimeNamespaceHandler implements NamespaceHandler {
                 RootBeanDefinition def = new RootBeanDefinition(ObjectFactoryBean.class);
 
                 ConstructorArgumentValues args = new ConstructorArgumentValues();
-                args.addIndexedArgumentValue(0, KauriModule.class);
-                args.addIndexedArgumentValue(1, new KauriModuleImpl(springBuildContext.getModule(), springBuildContext.getRuntime()));
+                args.addIndexedArgumentValue(0, LilyRuntimeModule.class);
+                args.addIndexedArgumentValue(1, new LilyRuntimeModuleImpl(springBuildContext.getModule(), springBuildContext.getRuntime()));
 
                 def.setConstructorArgumentValues(args);
                 def.setLazyInit(false);
@@ -146,7 +146,7 @@ public class KauriRuntimeNamespaceHandler implements NamespaceHandler {
                     component = javaServiceManager.getService(serviceClass);
                 }
             } catch (Throwable t) {
-                throw new KauriRTException("Error assigning Java service dependency " + dependencyName + " of module "
+                throw new LilyRTException("Error assigning Java service dependency " + dependencyName + " of module "
                         + springBuildContext.getModule().getDefinition().getId(), t);
             }
 
@@ -199,17 +199,17 @@ public class KauriRuntimeNamespaceHandler implements NamespaceHandler {
                     if (type != null && type.equals("node")) {
                         value = context.selectSingleNode(expr);
                         if (!(value instanceof Conf)) {
-                            throw new KauriRTException("Element " + element.getTagName() + " of Spring bean config in module " +
+                            throw new LilyRTException("Element " + element.getTagName() + " of Spring bean config in module " +
                             moduleId + ": configuration pointed to by expression \"" + expr + "\""
                             + " does not evaluate to a node.");
                         }
                     } else {
                         value = String.valueOf(context.getValue(expr));
                     }
-                } catch (KauriRTException e) {
+                } catch (LilyRTException e) {
                     throw e;
                 } catch (Exception e) {
-                    throw new KauriRTException("Element " + element.getTagName() + " of Spring bean config in module " +
+                    throw new LilyRTException("Element " + element.getTagName() + " of Spring bean config in module " +
                             moduleId + ": error retrieving configuration value using expression \"" + expr + "\""
                             + " from configuration path \"" + path + "\".", e);
                 }

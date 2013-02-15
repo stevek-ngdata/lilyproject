@@ -39,9 +39,9 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.runtime.KauriRTException;
-import org.lilyproject.runtime.KauriRuntime;
-import org.lilyproject.runtime.KauriRuntimeSettings;
+import org.lilyproject.runtime.LilyRTException;
+import org.lilyproject.runtime.LilyRuntime;
+import org.lilyproject.runtime.LilyRuntimeSettings;
 import org.lilyproject.runtime.configuration.ConfManagerImpl;
 import org.lilyproject.runtime.rapi.Mode;
 import org.lilyproject.runtime.model.*;
@@ -54,15 +54,15 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.w3c.dom.Document;
 
 @SuppressWarnings({"AccessStaticViaInstance"})
-public class KauriRuntimeCli {
-    protected final Log infolog = LogFactory.getLog(KauriRuntime.INFO_LOG_CATEGORY);
+public class LilyRuntimeCli {
+    protected final Log infolog = LogFactory.getLog(LilyRuntime.INFO_LOG_CATEGORY);
     private static String DEFAULT_CONF_DIR = "conf";
 
     public static void main(String[] args) throws Exception {
-        new KauriRuntimeCli().run(args);
+        new LilyRuntimeCli().run(args);
     }
 
-    private KauriRuntimeCli() {
+    private LilyRuntimeCli() {
 
     }
 
@@ -253,7 +253,7 @@ public class KauriRuntimeCli {
                 is = new FileInputStream(file);
                 sourceLocations = new SourceLocations(is, file.getParent());
             } catch (Throwable t) {
-                throw new KauriRTException("Problem reading source locations property file.", t);
+                throw new LilyRTException("Problem reading source locations property file.", t);
             } finally {
                 IOUtils.closeQuietly(is);
             }
@@ -263,14 +263,14 @@ public class KauriRuntimeCli {
 
 
 
-        KauriRuntimeSettings settings = new KauriRuntimeSettings();
+        LilyRuntimeSettings settings = new LilyRuntimeSettings();
         settings.setConfManager(new ConfManagerImpl(confDirs));
         settings.setDisabledModuleIds(disabledModuleIds);
         settings.setRepository(artifactRepository);
         settings.setSourceLocations(sourceLocations);
         settings.setEnableArtifactSharing(!cmd.hasOption(disableClassSharingOption.getOpt()));
 
-        KauriRuntime runtime = new KauriRuntime(settings);
+        LilyRuntime runtime = new LilyRuntime(settings);
 
         if (cmd.hasOption(modeOption.getOpt())) {
             String optionValue = cmd.getOptionValue(modeOption.getOpt());
@@ -362,9 +362,9 @@ public class KauriRuntimeCli {
     }
 
     public static class ShutdownHandler implements Runnable {
-        private final KauriRuntime runtime;
+        private final LilyRuntime runtime;
 
-        public ShutdownHandler(KauriRuntime runtime) {
+        public ShutdownHandler(LilyRuntime runtime) {
             this.runtime = runtime;
         }
 

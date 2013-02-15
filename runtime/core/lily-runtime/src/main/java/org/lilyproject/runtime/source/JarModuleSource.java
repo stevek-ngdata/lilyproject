@@ -15,9 +15,9 @@
  */
 package org.lilyproject.runtime.source;
 
+import org.lilyproject.runtime.LilyRTException;
 import org.lilyproject.runtime.rapi.ModuleSource;
 import org.lilyproject.runtime.rapi.Mode;
-import org.lilyproject.runtime.KauriRTException;
 import org.apache.commons.jci.monitor.FilesystemAlterationListener;
 
 import java.io.InputStream;
@@ -218,7 +218,7 @@ public class JarModuleSource implements ModuleSource {
             try {
                 return new URL(path);
             } catch (MalformedURLException e) {
-                throw new KauriRTException("Error constructing URL for jar file entry " + path, e);
+                throw new LilyRTException("Error constructing URL for jar file entry " + path, e);
             }
         }
 

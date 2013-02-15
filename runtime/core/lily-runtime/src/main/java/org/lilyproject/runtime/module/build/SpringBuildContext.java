@@ -18,27 +18,27 @@ package org.lilyproject.runtime.module.build;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.lilyproject.runtime.KauriRuntime;
+import org.lilyproject.runtime.LilyRuntime;
 import org.lilyproject.runtime.module.Module;
 
 /**
  * Context information that should be available while building the spring
  * bean container (= BeanFactory) for handling Kauri's namespace, see also
- * {@link KauriRuntimeNamespaceHandler}.
+ * {@link LilyRuntimeNamespaceHandler}.
  */
 public class SpringBuildContext {
     private List<JavaServiceExport> exportedJavaServices = new ArrayList<JavaServiceExport>();
-    private KauriRuntime runtime;
+    private LilyRuntime runtime;
     private ClassLoader moduleClassLoader;
     private Module module;
 
-    public SpringBuildContext(KauriRuntime runtime, Module module, ClassLoader moduleClassLoader) {
+    public SpringBuildContext(LilyRuntime runtime, Module module, ClassLoader moduleClassLoader) {
         this.runtime = runtime;
         this.module = module;
         this.moduleClassLoader = moduleClassLoader;
     }
 
-    public KauriRuntime getRuntime() {
+    public LilyRuntime getRuntime() {
         return runtime;
     }
 

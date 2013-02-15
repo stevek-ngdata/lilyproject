@@ -15,7 +15,7 @@
  */
 package org.lilyproject.runtime.module.javaservice;
 
-import org.lilyproject.runtime.KauriRTException;
+import org.lilyproject.runtime.LilyRTException;
 import org.lilyproject.runtime.module.Module;
 
 import java.lang.reflect.InvocationHandler;
@@ -44,7 +44,7 @@ public class JavaServiceShield implements InvocationHandler {
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (!owner.isAlive()) {
-            throw new KauriRTException("Component belongs to module which is no longer alive, for service " + serviceType.getName());
+            throw new LilyRTException("Component belongs to module which is no longer alive, for service " + serviceType.getName());
         }
 
         Thread currentThread = Thread.currentThread();

@@ -25,8 +25,8 @@ import java.io.File;
  * Tests explicit wiring of Java services.
  */
 public class JavaServiceWiringTest extends AbstractRuntimeTest {
-    protected KauriRuntimeModel getRuntimeModel() throws Exception {
-        KauriRuntimeModel model = new KauriRuntimeModel();
+    protected LilyRuntimeModel getRuntimeModel() throws Exception {
+        LilyRuntimeModel model = new LilyRuntimeModel();
 
         {
             File module1Dir = createModule("org.lilyproject.runtime.test.testmodules.jwiringmod1");

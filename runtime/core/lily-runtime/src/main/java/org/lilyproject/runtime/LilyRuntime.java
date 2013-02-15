@@ -32,8 +32,8 @@ import org.lilyproject.runtime.classloading.ClassLoaderBuilder;
 import org.lilyproject.runtime.classloading.ClasspathEntry;
 import org.lilyproject.runtime.configuration.ConfManager;
 import org.lilyproject.runtime.model.ConfigError;
-import org.lilyproject.runtime.model.KauriRuntimeModel;
-import org.lilyproject.runtime.model.KauriRuntimeModelBuilder;
+import org.lilyproject.runtime.model.LilyRuntimeModel;
+import org.lilyproject.runtime.model.LilyRuntimeModelBuilder;
 import org.lilyproject.runtime.model.ModuleDefinition;
 import org.lilyproject.runtime.model.SourceLocations;
 import org.lilyproject.runtime.module.Module;
@@ -54,14 +54,14 @@ import org.lilyproject.util.Version;
  *
  * <p>Basic usage:
  * <ul>
- *   <li>Create a {@link KauriRuntimeSettings}
- *   <li>Use {@link #KauriRuntime(KauriRuntimeSettings)}
+ *   <li>Create a {@link LilyRuntimeSettings}
+ *   <li>Use {@link #LilyRuntime(LilyRuntimeSettings)}
  *   <li>Call {@link #start()}
  * </ul>
  */
-public class KauriRuntime {
-    private KauriRuntimeSettings settings;
-    private KauriRuntimeModel model;
+public class LilyRuntime {
+    private LilyRuntimeSettings settings;
+    private LilyRuntimeModel model;
     private ClassLoader rootClassLoader;
     private List<Module> modules;
     private Map<String, Module> modulesById = new HashMap<String, Module>();
@@ -80,14 +80,14 @@ public class KauriRuntime {
     public static final String CLASSLOADING_LOG_CATEGORY = "org.lilyproject.runtime.classloading-info";
     public static final String CLASSLOADING_REPORT_CATEGORY = "org.lilyproject.runtime.classloading-report";
 
-    public KauriRuntime(KauriRuntimeSettings settings) {
+    public LilyRuntime(LilyRuntimeSettings settings) {
         ArgumentValidator.notNull(settings, "settings");
 
         if (settings.getRepository() == null)
-            throw new KauriRTException("KauriRuntimeSettings should contain an artifact repository.");
+            throw new LilyRTException("KauriRuntimeSettings should contain an artifact repository.");
 
         if (settings.getConfManager() == null)
-            throw new KauriRTException("KauriRuntimeSettings should contain a ConfManager.");
+            throw new LilyRTException("KauriRuntimeSettings should contain a ConfManager.");
 
         this.settings = settings;
 
@@ -107,7 +107,7 @@ public class KauriRuntime {
     }
 
 
-    public KauriRuntimeModel buildModel() {
+    public LilyRuntimeModel buildModel() {
         // Init the configuration manager
         ConfManager confManager = settings.getConfManager();
         confManager.initRuntimeConfig();
@@ -118,8 +118,8 @@ public class KauriRuntime {
     }
 
 
-    private KauriRuntimeModel buildModel(ConfRegistry confRegistry) {
-        KauriRuntimeModel newModel;
+    private LilyRuntimeModel buildModel(ConfRegistry confRegistry) {
+        LilyRuntimeModel newModel;
         if ((settings.getModel() != null)) {
             newModel = settings.getModel();
         } else {
@@ -129,9 +129,9 @@ public class KauriRuntime {
             SourceLocations sourceLocations = settings.getSourceLocations() != null ?
                     settings.getSourceLocations() : new SourceLocations();
             try {
-                newModel = KauriRuntimeModelBuilder.build(modulesConf, disabledModuleIds, settings.getRepository(), sourceLocations);
+                newModel = LilyRuntimeModelBuilder.build(modulesConf, disabledModuleIds, settings.getRepository(), sourceLocations);
             } catch (Exception e) {
-                throw new KauriRTException("Error building the Kauri model from configuration.", e);
+                throw new LilyRTException("Error building the Kauri model from configuration.", e);
             }
         }
         return newModel;
@@ -145,10 +145,10 @@ public class KauriRuntime {
      * Just create a new KauriRuntime instance with the same KauriRuntimeConfig if you want
      * to (re)start another instance.
      */
-    public void start() throws KauriRTException, MalformedURLException, ArtifactNotFoundException {
+    public void start() throws LilyRTException, MalformedURLException, ArtifactNotFoundException {
         // a KauriRuntime object cannot be started twice, even if it has been stopped in between
         if (state.ordinal() > LifeCycle.NOT_STARTED.ordinal())
-            throw new KauriRTException("This Kauri Runtime instance has already been started before.");
+            throw new LilyRTException("This Kauri Runtime instance has already been started before.");
         state = LifeCycle.STARTED;
 
         // Init the configuration manager
@@ -171,7 +171,7 @@ public class KauriRuntime {
                     errorMsg.append(", ");
                 errorMsg.append(configErrors.get(i).getMessage());
             }
-            throw new KauriRTException(errorMsg.toString());
+            throw new LilyRTException(errorMsg.toString());
         }
 
         moduleConfigs = new ArrayList<ModuleConfig>();
@@ -252,17 +252,17 @@ public class KauriRuntime {
         return modulesById.get(moduleId);
     }
 
-    public KauriRuntimeSettings getSettings() {
+    public LilyRuntimeSettings getSettings() {
         return settings;
     }
 
-    public KauriRuntimeModel getModel() {
+    public LilyRuntimeModel getModel() {
         return model;
     }
 
     public void stop() {
         if (state != LifeCycle.STARTED)
-            throw new KauriRTException("Cannot stop the runtime, it is in state " + state + " instead of " + LifeCycle.STARTED);
+            throw new LilyRTException("Cannot stop the runtime, it is in state " + state + " instead of " + LifeCycle.STARTED);
 
         // TODO temporarily disabled because FAM.stop() is slow
         // See JCI jira patch: https://issues.apache.org/jira/browse/JCI-57 (the newer one in commons-io has the same problem)

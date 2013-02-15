@@ -21,9 +21,8 @@ import javax.servlet.ServletContext;
 import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
-import java.util.logging.Logger;
 
-import org.lilyproject.runtime.rapi.KauriModule;
+import org.lilyproject.runtime.rapi.LilyRuntimeModule;
 import org.lilyproject.servletregistry.api.ServletRegistry;
 import org.lilyproject.servletregistry.api.ServletRegistryEntry;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +39,7 @@ import org.springframework.web.servlet.DispatcherServlet;
 public class DispatcherServletManager {
 
     @Autowired
-    private KauriModule module;
+    private LilyRuntimeModule module;
 
     @Autowired
     private ServletRegistry servletRegistry;

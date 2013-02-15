@@ -19,7 +19,7 @@ import org.apache.log4j.*;
 import org.apache.log4j.jmx.HierarchyDynamicMBean;
 import org.apache.log4j.spi.LoggerRepository;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.lilyproject.runtime.KauriRuntime;
+import org.lilyproject.runtime.LilyRuntime;
 
 import javax.management.JMException;
 import javax.management.MBeanServer;
@@ -122,24 +122,24 @@ public class Logging {
             return;
         }
 
-        Logger logger = Logger.getLogger(KauriRuntime.INFO_LOG_CATEGORY);
+        Logger logger = Logger.getLogger(LilyRuntime.INFO_LOG_CATEGORY);
         logger.setLevel(Level.INFO);
         if (!hasConsoleAppender)
             logger.addAppender(consoleAppender);
 
         if (classLoadingLog) {
-            logger = Logger.getLogger(KauriRuntime.CLASSLOADING_LOG_CATEGORY);
+            logger = Logger.getLogger(LilyRuntime.CLASSLOADING_LOG_CATEGORY);
             logger.setLevel(Level.INFO);
             if (!hasConsoleAppender)
                 logger.addAppender(consoleAppender);
 
-            logger = Logger.getLogger(KauriRuntime.CLASSLOADING_REPORT_CATEGORY);
+            logger = Logger.getLogger(LilyRuntime.CLASSLOADING_REPORT_CATEGORY);
             logger.setLevel(Level.INFO);
             if (!hasConsoleAppender)
                 logger.addAppender(consoleAppender);
         } else {
             // Always print classloader warnings
-            logger = Logger.getLogger(KauriRuntime.CLASSLOADING_LOG_CATEGORY);
+            logger = Logger.getLogger(LilyRuntime.CLASSLOADING_LOG_CATEGORY);
             logger.setLevel(Level.WARN);
             if (!hasConsoleAppender)
                 logger.addAppender(consoleAppender);

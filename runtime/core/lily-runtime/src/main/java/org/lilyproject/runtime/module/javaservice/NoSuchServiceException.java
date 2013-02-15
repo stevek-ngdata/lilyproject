@@ -15,9 +15,9 @@
  */
 package org.lilyproject.runtime.module.javaservice;
 
-import org.lilyproject.runtime.KauriRTException;
+import org.lilyproject.runtime.LilyRTException;
 
-public class NoSuchServiceException extends KauriRTException {
+public class NoSuchServiceException extends LilyRTException {
     private String type;
     private String moduleId;
     private String name;

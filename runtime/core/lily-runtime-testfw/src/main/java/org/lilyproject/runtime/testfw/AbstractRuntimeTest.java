@@ -28,11 +28,11 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
-import org.lilyproject.runtime.KauriRuntime;
-import org.lilyproject.runtime.KauriRuntimeSettings;
+import org.lilyproject.runtime.LilyRuntime;
+import org.lilyproject.runtime.LilyRuntimeSettings;
 import org.lilyproject.runtime.configuration.ConfManager;
 import org.lilyproject.runtime.configuration.ConfManagerImpl;
-import org.lilyproject.runtime.model.KauriRuntimeModel;
+import org.lilyproject.runtime.model.LilyRuntimeModel;
 import org.lilyproject.runtime.rapi.Mode;
 import org.lilyproject.runtime.repository.ArtifactNotFoundException;
 import org.lilyproject.runtime.repository.ArtifactRepository;
@@ -83,7 +83,7 @@ public abstract class AbstractRuntimeTest extends TestCase {
     
     protected String projectVersion = System.getProperty("project.version"); // This property should be explictly set via test plugin configuration
 
-    protected KauriRuntime runtime;
+    protected LilyRuntime runtime;
 
     private Set<File> createdTempDirs = new HashSet<File>();
 
@@ -189,7 +189,7 @@ public abstract class AbstractRuntimeTest extends TestCase {
         return resourceDir;
     }
 
-    protected KauriRuntimeModel getRuntimeModel() throws Exception {
+    protected LilyRuntimeModel getRuntimeModel() throws Exception {
         return null;
     }
 
@@ -260,14 +260,14 @@ public abstract class AbstractRuntimeTest extends TestCase {
     protected void setUp() throws Exception {
         setUpLogging();
 
-        KauriRuntimeModel model = getRuntimeModel();
+        LilyRuntimeModel model = getRuntimeModel();
         if (model != null) {
-            KauriRuntimeSettings settings = new KauriRuntimeSettings();
+            LilyRuntimeSettings settings = new LilyRuntimeSettings();
             settings.setModel(model);
             settings.setRepository(localRepository);
             settings.setConfManager(getConfManager());
 
-            runtime = new KauriRuntime(settings);
+            runtime = new LilyRuntime(settings);
             runtime.setMode(getMode());
             
             if (startRuntime())

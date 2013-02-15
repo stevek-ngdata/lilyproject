@@ -24,10 +24,10 @@ import java.io.File;
  * Test an 'empty' module.
  */
 public class EmptyModuleTest extends AbstractRuntimeTest {
-    protected KauriRuntimeModel getRuntimeModel() throws Exception {
+    protected LilyRuntimeModel getRuntimeModel() throws Exception {
         File moduleDir = createModule("org.lilyproject.runtime.test.testmodules.emptymodule");
 
-        KauriRuntimeModel model = new KauriRuntimeModel();
+        LilyRuntimeModel model = new LilyRuntimeModel();
 
         ModuleDefinition module = new ModuleDefinition("foo", moduleDir, ModuleSourceType.EXPANDED_JAR);
         model.addModule(module);

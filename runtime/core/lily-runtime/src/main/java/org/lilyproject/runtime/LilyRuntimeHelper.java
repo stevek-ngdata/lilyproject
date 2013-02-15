@@ -27,13 +27,13 @@ import org.lilyproject.runtime.repository.ChainedMaven2StyleArtifactRepository;
  * Helper class for creating a KauriRuntime. This is intended to be the most
  * high-level interface for embedded creation of the repository.
  */
-public class KauriRuntimeHelper {
-    public static KauriRuntimeSettings createSettings(File confDir, String mavenRepoLocation) throws Exception {
+public class LilyRuntimeHelper {
+    public static LilyRuntimeSettings createSettings(File confDir, String mavenRepoLocation) throws Exception {
         return createSettings(Collections.singletonList(confDir), mavenRepoLocation);
     }
 
-    public static KauriRuntimeSettings createSettings(List<File> confDirs, String mavenRepoLocation) throws Exception {
-        KauriRuntimeSettings settings = new KauriRuntimeSettings();
+    public static LilyRuntimeSettings createSettings(List<File> confDirs, String mavenRepoLocation) throws Exception {
+        LilyRuntimeSettings settings = new LilyRuntimeSettings();
         settings.setConfManager(new ConfManagerImpl(confDirs));
 
         ArtifactRepository artifactRepository = new ChainedMaven2StyleArtifactRepository(mavenRepoLocation);
@@ -42,8 +42,8 @@ public class KauriRuntimeHelper {
         return settings;
     }
 
-    public static KauriRuntime createRuntime(KauriRuntimeSettings settings) throws Exception {
-        KauriRuntime runtime = new KauriRuntime(settings);
+    public static LilyRuntime createRuntime(LilyRuntimeSettings settings) throws Exception {
+        LilyRuntime runtime = new LilyRuntime(settings);
         runtime.start();
         return runtime;
     }

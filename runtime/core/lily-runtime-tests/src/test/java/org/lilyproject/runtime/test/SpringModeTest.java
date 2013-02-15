@@ -30,10 +30,10 @@ import java.io.File;
 public class SpringModeTest extends AbstractRuntimeTest {
 
     @Override
-    protected KauriRuntimeModel getRuntimeModel() throws Exception {
+    protected LilyRuntimeModel getRuntimeModel() throws Exception {
         File moduleDir = createModule("org.lilyproject.runtime.test.testmodules.springmode");
 
-        KauriRuntimeModel model = new KauriRuntimeModel();
+        LilyRuntimeModel model = new LilyRuntimeModel();
 
         ModuleDefinition module = new ModuleDefinition("mod", moduleDir, ModuleSourceType.EXPANDED_JAR);
         model.addModule(module);

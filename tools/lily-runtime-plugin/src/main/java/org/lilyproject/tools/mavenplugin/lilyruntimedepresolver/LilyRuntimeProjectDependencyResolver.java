@@ -37,7 +37,7 @@ import java.util.Set;
  * @requiresDependencyResolution runtime
  * @description Resolve (download) all the dependencies of a Kauri project starting from wiring.xml.
  */
-public class KauriProjectDependencyResolver extends AbstractMojo {
+public class LilyRuntimeProjectDependencyResolver extends AbstractMojo {
     /**
      * Location of the conf directory.
      *
@@ -153,7 +153,7 @@ public class KauriProjectDependencyResolver extends AbstractMojo {
             }
         }
 
-        KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), new MyArtifactFilter(),
+        LilyRuntimeProjectClasspath cp = new LilyRuntimeProjectClasspath(getLog(), new MyArtifactFilter(),
                 artifactFactory, resolver, localRepository);
 
         ModuleArtifacts moduleArts;
@@ -179,7 +179,7 @@ public class KauriProjectDependencyResolver extends AbstractMojo {
         cp.getAllArtifacts(moduleArts.artifacts, allRemoteRepos);
     }
 
-    public class MyArtifactFilter implements KauriProjectClasspath.ArtifactFilter {
+    public class MyArtifactFilter implements LilyRuntimeProjectClasspath.ArtifactFilter {
         @Override
         public boolean include(Artifact artifact) {
             if (artifact.getGroupId().equals(projectGroupId)) {

@@ -16,10 +16,10 @@
 package org.lilyproject.runtime.test;
 
 import org.junit.Assert;
-import org.lilyproject.runtime.KauriRuntime;
-import org.lilyproject.runtime.KauriRuntimeSettings;
+import org.lilyproject.runtime.LilyRuntime;
+import org.lilyproject.runtime.LilyRuntimeSettings;
 import org.lilyproject.runtime.configuration.ConfManagerImpl;
-import org.lilyproject.runtime.model.KauriRuntimeModel;
+import org.lilyproject.runtime.model.LilyRuntimeModel;
 import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
 
 /**
@@ -28,23 +28,23 @@ import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
 public class NoModuleRuntime extends AbstractRuntimeTest {
 
     public void testRuntimeWithoutModules() throws Exception {
-        KauriRuntimeModel model = new KauriRuntimeModel();
-        KauriRuntimeSettings settings = new KauriRuntimeSettings();
+        LilyRuntimeModel model = new LilyRuntimeModel();
+        LilyRuntimeSettings settings = new LilyRuntimeSettings();
         settings.setModel(model);
         settings.setRepository(dummyRepository);
         settings.setConfManager(new ConfManagerImpl());
 
-        KauriRuntime runtime = new KauriRuntime(settings);
+        LilyRuntime runtime = new LilyRuntime(settings);
         runtime.start();
         runtime.stop();
 
         // Test we can start the runtime a second time
-        runtime = new KauriRuntime(settings);
+        runtime = new LilyRuntime(settings);
         runtime.start();
         runtime.stop();
 
         // Same with connectors configured
-        runtime = new KauriRuntime(settings);
+        runtime = new LilyRuntime(settings);
         runtime.start();
         runtime.stop();
 
@@ -56,7 +56,7 @@ public class NoModuleRuntime extends AbstractRuntimeTest {
 
         // Test that we can't start if we don't set a repository in the config
         settings.setRepository(null);
-        runtime = new KauriRuntime(settings);
+        runtime = new LilyRuntime(settings);
         try {
             runtime.start();
             Assert.fail("Starting runtime should fail if there is no artifact repository configured.");

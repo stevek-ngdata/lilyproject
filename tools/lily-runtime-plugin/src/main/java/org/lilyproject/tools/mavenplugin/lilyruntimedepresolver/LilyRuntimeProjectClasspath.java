@@ -42,7 +42,7 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class KauriProjectClasspath {
+public class LilyRuntimeProjectClasspath {
     protected XPathFactory xpathFactory = XPathFactory.newInstance();
     private String lilyVersion;
     private ArtifactFilter filter;
@@ -51,8 +51,8 @@ public class KauriProjectClasspath {
     protected ArtifactRepository localRepository;
     private Log log;
 
-    public KauriProjectClasspath(Log log, ArtifactFilter filter, ArtifactFactory artifactFactory,
-            ArtifactResolver resolver, ArtifactRepository localRepository) {
+    public LilyRuntimeProjectClasspath(Log log, ArtifactFilter filter, ArtifactFactory artifactFactory,
+                                       ArtifactResolver resolver, ArtifactRepository localRepository) {
         this.filter = filter;
         this.artifactFactory = artifactFactory;
         this.resolver = resolver;

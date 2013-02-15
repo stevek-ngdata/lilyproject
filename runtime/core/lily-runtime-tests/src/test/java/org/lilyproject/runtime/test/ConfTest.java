@@ -9,7 +9,7 @@ import org.junit.Assert;
 import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.runtime.configuration.ConfManager;
 import org.lilyproject.runtime.configuration.ConfManagerImpl;
-import org.lilyproject.runtime.model.KauriRuntimeModel;
+import org.lilyproject.runtime.model.LilyRuntimeModel;
 import org.lilyproject.runtime.model.ModuleDefinition;
 import org.lilyproject.runtime.model.ModuleSourceType;
 import org.lilyproject.runtime.rapi.ConfRegistry;
@@ -19,10 +19,10 @@ import org.springframework.context.ApplicationContext;
 
 public class ConfTest extends AbstractRuntimeTest {
     @Override
-    protected KauriRuntimeModel getRuntimeModel() throws Exception {
+    protected LilyRuntimeModel getRuntimeModel() throws Exception {
         File moduleDir = createModule("org.lilyproject.runtime.test.testmodules.confmod");
 
-        KauriRuntimeModel model = new KauriRuntimeModel();
+        LilyRuntimeModel model = new LilyRuntimeModel();
 
         ModuleDefinition module = new ModuleDefinition("confmod", moduleDir, ModuleSourceType.EXPANDED_JAR);
         model.addModule(module);

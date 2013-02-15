@@ -24,8 +24,8 @@ import java.io.File;
  * Tests having multiple instances of the same module.
  */
 public class MultiModuleInstancesTest extends AbstractRuntimeTest {
-    protected KauriRuntimeModel getRuntimeModel() throws Exception {
-        KauriRuntimeModel model = new KauriRuntimeModel();
+    protected LilyRuntimeModel getRuntimeModel() throws Exception {
+        LilyRuntimeModel model = new LilyRuntimeModel();
 
         File module1Dir = createModule("org.lilyproject.runtime.test.testmodules.jwiringmod1");
 

@@ -14,7 +14,7 @@ import java.util.Set;
 import org.junit.Assert;
 import org.lilyproject.runtime.configuration.ConfManager;
 import org.lilyproject.runtime.configuration.ConfManagerImpl;
-import org.lilyproject.runtime.model.KauriRuntimeModel;
+import org.lilyproject.runtime.model.LilyRuntimeModel;
 import org.lilyproject.runtime.model.ModuleDefinition;
 import org.lilyproject.runtime.model.ModuleSourceType;
 import org.lilyproject.runtime.rapi.ConfListener;
@@ -25,10 +25,10 @@ public class ConfListeningTest extends AbstractRuntimeTest {
     private File conflistenmodConfDir;
 
     @Override
-    protected KauriRuntimeModel getRuntimeModel() throws Exception {
+    protected LilyRuntimeModel getRuntimeModel() throws Exception {
         File moduleDir = createModule("org.lilyproject.runtime.test.testmodules.conflistenmod");
 
-        KauriRuntimeModel model = new KauriRuntimeModel();
+        LilyRuntimeModel model = new LilyRuntimeModel();
 
         ModuleDefinition module = new ModuleDefinition("conflistenmod", moduleDir, ModuleSourceType.EXPANDED_JAR);
         model.addModule(module);

@@ -22,7 +22,6 @@ import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.project.MavenProjectBuilder;
 import org.lilyproject.util.Version;
 
 import java.util.List;
@@ -30,11 +29,18 @@ import java.util.Set;
 
 /**
  *
- * @goal resolve-runtime-dependencies
+ * @goal assemble-runtime-repository
  * @requiresDependencyResolution runtime
- * @description Resolve (download) all the dependencies to run the Kauri Runtime.
+ * @description Creates a Maven-style repository for Kauri with all the dependencies needed to launch Kauri.
  */
-public class KauriRuntimeDependencyResolver extends AbstractMojo {
+public class LilyRuntimeRepository extends AbstractMojo {
+    /**
+     * Location of the conf directory.
+     *
+     * @parameter expression="${basedir}/target/kauri-repository"
+     * @required
+     */
+    protected String targetDirectory;
 
     /**
      * Maven Artifact Factory component.
@@ -68,16 +74,9 @@ public class KauriRuntimeDependencyResolver extends AbstractMojo {
      */
     protected ArtifactResolver resolver;
 
-    /**
-     * @component role="org.apache.maven.project.MavenProjectBuilder"
-     * @required
-     * @readonly
-     */
-    protected MavenProjectBuilder mavenProjectBuilder;
-
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), null,
+        LilyRuntimeProjectClasspath cp = new LilyRuntimeProjectClasspath(getLog(), null,
                 artifactFactory, resolver, localRepository);
 
         String lilyVersion = Version.readVersion("org.lilyproject", "lily-runtime-plugin");
@@ -92,8 +91,9 @@ public class KauriRuntimeDependencyResolver extends AbstractMojo {
         }
 
         Set<Artifact> artifacts = cp.getClassPathArtifacts(runtimeLauncherArtifact,
-                "org/lilyproject/runtime/launcher/classloader.xml", remoteRepositories);
-
+                "org/lilyproject/launcher/classloader.xml", remoteRepositories);
         artifacts.add(runtimeLauncherArtifact);
+
+        RepositoryWriter.write(artifacts, targetDirectory);
     }
 }

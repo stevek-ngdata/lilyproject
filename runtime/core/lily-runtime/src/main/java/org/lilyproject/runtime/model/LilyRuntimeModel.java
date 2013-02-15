@@ -12,10 +12,10 @@ import java.util.Set;
  * it is running (TODO: maybe the KauriRuntime should create a clone of the config internally?).
  *
  */
-public class KauriRuntimeModel {
+public class LilyRuntimeModel {
     private List<ModuleDefinition> modules = new ArrayList<ModuleDefinition>();
 
-    public KauriRuntimeModel() {
+    public LilyRuntimeModel() {
     }
 
     public List<ModuleDefinition> getModules() {

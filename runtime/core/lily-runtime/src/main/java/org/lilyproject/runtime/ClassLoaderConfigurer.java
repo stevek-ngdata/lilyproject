@@ -44,8 +44,8 @@ public class ClassLoaderConfigurer {
     private SharingConflictResolution requiredSharingConflictResolution = SharingConflictResolution.HIGHEST;
     private SharingConflictResolution allowedSharingConflictResolution = SharingConflictResolution.DONTSHARE;
 
-    private final Log classLoadingLog = LogFactory.getLog(KauriRuntime.CLASSLOADING_LOG_CATEGORY);
-    private final Log reportLog = LogFactory.getLog(KauriRuntime.CLASSLOADING_REPORT_CATEGORY);
+    private final Log classLoadingLog = LogFactory.getLog(LilyRuntime.CLASSLOADING_LOG_CATEGORY);
+    private final Log reportLog = LogFactory.getLog(LilyRuntime.CLASSLOADING_REPORT_CATEGORY);
 
     /**
      * Checks the class loader configurations of the modules (throws Exceptions in case of errors),
@@ -68,7 +68,7 @@ public class ClassLoaderConfigurer {
             String requiredSharingStr = requiredConf.getAttribute("on-conflict", requiredSharingConflictResolution.getName());
             requiredSharingConflictResolution = SharingConflictResolution.fromString(requiredSharingStr);
             if (requiredSharingConflictResolution == null || requiredSharingConflictResolution.equals(SharingConflictResolution.DONTSHARE)) {
-                throw new KauriRTException("Illegal value for required sharing conflict resolution (@on-conflict: " + requiredSharingStr, requiredConf.getLocation());
+                throw new LilyRTException("Illegal value for required sharing conflict resolution (@on-conflict: " + requiredSharingStr, requiredConf.getLocation());
             }
         }
         
@@ -76,7 +76,7 @@ public class ClassLoaderConfigurer {
             String allowedSharingStr = allowedConf.getAttribute("on-conflict", allowedSharingConflictResolution.getName());
             allowedSharingConflictResolution = SharingConflictResolution.fromString(allowedSharingStr);
             if (allowedSharingConflictResolution == null) {
-                throw new KauriRTException("Illegal value for allowed sharing conflict resolution (@on-conflict:  " + allowedSharingStr, requiredConf.getLocation());
+                throw new LilyRTException("Illegal value for allowed sharing conflict resolution (@on-conflict:  " + allowedSharingStr, requiredConf.getLocation());
             }
         }
     }
@@ -151,7 +151,7 @@ public class ClassLoaderConfigurer {
                 classLoadingLog.error("  version " + user.version + " by " + user.module.getId() + " (sharing allowed)");
             }
 
-            throw new KauriRTException("Multiple modules use different versions of the share-allowed artifact " + holder + ". Enable classloading logging to see details.");
+            throw new LilyRTException("Multiple modules use different versions of the share-allowed artifact " + holder + ". Enable classloading logging to see details.");
 
         }
         return true;
@@ -215,7 +215,7 @@ public class ClassLoaderConfigurer {
                         versionsToString(versions) + ") for share-required artifact " + holder + ": " + version);
                 makeShared(holder, version);
             } catch (UncomparableVersionException e) {
-                throw new KauriRTException("Multiple modules use different versions of the share-required artifact " +
+                throw new LilyRTException("Multiple modules use different versions of the share-required artifact " +
                         holder + " and cannot compare them: " + versionsToString(versions) +
                         ". Enable classloading logging to see details.");
             }
@@ -233,7 +233,7 @@ public class ClassLoaderConfigurer {
                 classLoadingLog.error("  version " + user.version + " by " + user.module.getId() + " (sharing prohibited)");
             }
 
-            throw new KauriRTException("Multiple modules use different versions of the share-required artifact " + holder + ". Enable classloading logging to see details.");
+            throw new LilyRTException("Multiple modules use different versions of the share-required artifact " + holder + ". Enable classloading logging to see details.");
         } else {
             classLoadingLog.info("Pushing " + holder + " with version " + versions.iterator().next() + " to the shared classloader.");
             makeShared(holder, versions.iterator().next());

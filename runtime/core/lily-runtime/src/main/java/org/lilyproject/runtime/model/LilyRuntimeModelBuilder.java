@@ -27,32 +27,32 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.logging.LogFactory;
+import org.lilyproject.runtime.LilyRTException;
+import org.lilyproject.runtime.LilyRuntime;
 import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.runtime.conf.XmlConfBuilder;
-import org.lilyproject.runtime.KauriRTException;
-import org.lilyproject.runtime.KauriRuntime;
 import org.lilyproject.runtime.repository.ArtifactRepository;
 
-public class KauriRuntimeModelBuilder {
-    public static KauriRuntimeModel build(File runtimeConfig, Set<String> disabledModuleIds,
+public class LilyRuntimeModelBuilder {
+    public static LilyRuntimeModel build(File runtimeConfig, Set<String> disabledModuleIds,
             ArtifactRepository repository) throws Exception {
         Conf conf = XmlConfBuilder.build(runtimeConfig);
         return build(conf, disabledModuleIds, repository, new SourceLocations());
     }
 
-    public static KauriRuntimeModel build(File runtimeConfig, Set<String> disabledModuleIds,
+    public static LilyRuntimeModel build(File runtimeConfig, Set<String> disabledModuleIds,
             ArtifactRepository repository, SourceLocations artifactSourceLocations) throws Exception {
         Conf conf = XmlConfBuilder.build(runtimeConfig);
         return build(conf, disabledModuleIds, repository, artifactSourceLocations);
     }
 
-    public static KauriRuntimeModel build(Conf runtimeConf, Set<String> disabledModuleIds,
+    public static LilyRuntimeModel build(Conf runtimeConf, Set<String> disabledModuleIds,
             ArtifactRepository repository, SourceLocations artifactSourceLocations) throws Exception {
 
-        KauriRuntimeModel model = new KauriRuntimeModel();
+        LilyRuntimeModel model = new LilyRuntimeModel();
 
         if (runtimeConf.getChild("connectors", false) != null) {
-            LogFactory.getLog(KauriRuntimeModelBuilder.class).error("Found a <connectors> child element in your "
+            LogFactory.getLog(LilyRuntimeModelBuilder.class).error("Found a <connectors> child element in your "
                     + "modules configuration. This will be unused, from Kauri 0.4 on the connectors configuration "
                     + "has moved to a different file.");
         }
@@ -105,13 +105,13 @@ public class KauriRuntimeModelBuilder {
                 // Version is optional for org.lilyproject artifacts
                 version = groupId.equals("org.lilyproject") ?
                         importConf.getAttribute("version", null) : importConf.getAttribute("version");
-                version = version == null ? KauriRuntime.getVersion() : version;
+                version = version == null ? LilyRuntime.getVersion() : version;
 
                 File sourceLocation = artifactSourceLocations.getSourceLocation(groupId, artifactId);
                 if (sourceLocation != null) {
                     fileToImport = sourceLocation.getCanonicalFile();
                     if (!fileToImport.exists())
-                        throw new KauriRTException("Specified artifact source directory does not exist: "
+                        throw new LilyRTException("Specified artifact source directory does not exist: "
                                 + fileToImport.getAbsolutePath(), importConf.getLocation());
                     sourceType = ModuleSourceType.SOURCE_DIRECTORY;
                 } else {
@@ -145,12 +145,12 @@ public class KauriRuntimeModelBuilder {
                 }
 
             } else {
-                throw new KauriRTException("Unexpected node: " + importConf.getName(), importConf.getLocation());
+                throw new LilyRTException("Unexpected node: " + importConf.getName(), importConf.getLocation());
             }
 
             if (fileToImport != null) {
                 if (!fileToImport.exists()) {
-                    throw new KauriRTException("Import does not exist: " + fileToImport.getAbsolutePath(),
+                    throw new LilyRTException("Import does not exist: " + fileToImport.getAbsolutePath(),
                             importConf.getLocation());
                 }
 
@@ -167,7 +167,7 @@ public class KauriRuntimeModelBuilder {
     private static void include(String dirName, String id, List<ModuleDefinition> modules,
                                 Stack<String> wiringFileStack, ArtifactRepository repository,
                                 SourceLocations artifactSourceLocations) throws Exception {
-        LogFactory.getLog(KauriRuntimeModelBuilder.class).debug("Searching for wiring includes at " + dirName);
+        LogFactory.getLog(LilyRuntimeModelBuilder.class).debug("Searching for wiring includes at " + dirName);
         File dir = new File(dirName);
         if (dir.exists() && dir.isDirectory()) {
             File[] files = dir.listFiles();
@@ -193,7 +193,7 @@ public class KauriRuntimeModelBuilder {
         String key = file.getCanonicalPath();
 
         if (wiringFileStack.contains(key)) {
-            throw new KauriRTException("Recursive loading of wiring.xml-type file detected: " + key);
+            throw new LilyRTException("Recursive loading of wiring.xml-type file detected: " + key);
         }
 
         Conf conf = XmlConfBuilder.build(file);
@@ -214,7 +214,7 @@ public class KauriRuntimeModelBuilder {
                 String name = child.getAttribute("name", null);
                 String service = child.getAttribute("service", null);
                 if (name == null && service == null)
-                    throw new KauriRTException("Either name or service attribute should be specified on inject-javaservice", child.getLocation());
+                    throw new LilyRTException("Either name or service attribute should be specified on inject-javaservice", child.getLocation());
                 String ref = child.getAttribute("ref");
 
                 String sourceModule;

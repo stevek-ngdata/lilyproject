@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.lilyproject.runtime.KauriRTException;
+import org.lilyproject.runtime.LilyRTException;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.location.Location;
 
@@ -87,7 +87,7 @@ public class ModuleDefinition {
 
     public void addInject(JavaServiceInjectByNameDefinition injectDefinition) {
         if (javaServiceInjects.containsKey(injectDefinition.getDependencyName()))
-            throw new KauriRTException("Duplicate inject for Java service " + injectDefinition.getDependencyName() + " on module " + id);
+            throw new LilyRTException("Duplicate inject for Java service " + injectDefinition.getDependencyName() + " on module " + id);
         javaServiceInjects.put(injectDefinition.getDependencyName(), injectDefinition);
     }
 
@@ -97,7 +97,7 @@ public class ModuleDefinition {
 
     public void addInject(JavaServiceInjectByServiceDefinition injectDefinition) {
         if (javaServiceInjectsByService.containsKey(injectDefinition.getServiceType()))
-            throw new KauriRTException("Duplicate inject for Java service " + injectDefinition.getServiceType() + " on module " + id);
+            throw new LilyRTException("Duplicate inject for Java service " + injectDefinition.getServiceType() + " on module " + id);
         javaServiceInjectsByService.put(injectDefinition.getServiceType(), injectDefinition);
     }
 
@@ -105,7 +105,7 @@ public class ModuleDefinition {
         return javaServiceInjectsByService.get(serviceType);
     }
 
-    public void validate(List<ConfigError> configErrors, KauriRuntimeModel model) {
+    public void validate(List<ConfigError> configErrors, LilyRuntimeModel model) {
     }
 
 }

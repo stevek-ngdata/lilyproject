@@ -15,14 +15,14 @@
  */
 package org.lilyproject.runtime.module.build;
 
+import org.lilyproject.runtime.LilyRuntime;
 import org.lilyproject.runtime.conf.Conf;
-import org.lilyproject.runtime.KauriRuntime;
 
 public class VersionManager {
     
-    private KauriRuntime runtime;
+    private LilyRuntime runtime;
     
-    public VersionManager(KauriRuntime runtime) {
+    public VersionManager(LilyRuntime runtime) {
         this.runtime = runtime;
     }
     
@@ -45,7 +45,7 @@ public class VersionManager {
         /** To avoid having to create a versions.xml configuration for existing applications, always
          * return a preferred version for org.lilyproject:* items */ 
         if (preferred == null && groupId.equals("org.lilyproject")) {
-            preferred = KauriRuntime.getVersion(); 
+            preferred = LilyRuntime.getVersion();
         }
         
         return preferred;

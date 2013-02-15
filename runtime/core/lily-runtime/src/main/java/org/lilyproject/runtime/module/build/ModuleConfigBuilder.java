@@ -20,8 +20,8 @@ import java.util.Collections;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.runtime.KauriRTException;
-import org.lilyproject.runtime.KauriRuntime;
+import org.lilyproject.runtime.LilyRTException;
+import org.lilyproject.runtime.LilyRuntime;
 import org.lilyproject.runtime.classloading.ArtifactSharingMode;
 import org.lilyproject.runtime.classloading.ClassLoadingConfig;
 import org.lilyproject.runtime.classloading.ClassLoadingConfigImpl;
@@ -38,15 +38,15 @@ import org.w3c.dom.Document;
 
 public class ModuleConfigBuilder {
     private ModuleDefinition moduleDefinition;
-    private KauriRuntime runtime;
+    private LilyRuntime runtime;
 
     private final Log log = LogFactory.getLog(getClass());
 
-    public static ModuleConfig build(ModuleDefinition moduleDefinition, KauriRuntime runtime) throws KauriRTException {
+    public static ModuleConfig build(ModuleDefinition moduleDefinition, LilyRuntime runtime) throws LilyRTException {
         return new ModuleConfigBuilder(moduleDefinition, runtime).build();
     }
 
-    private ModuleConfigBuilder(ModuleDefinition moduleDefinition, KauriRuntime runtime) {
+    private ModuleConfigBuilder(ModuleDefinition moduleDefinition, LilyRuntime runtime) {
         this.moduleDefinition = moduleDefinition;
         this.runtime = runtime;
     }
@@ -85,7 +85,7 @@ public class ModuleConfigBuilder {
                 }
             }
 
-            throw new KauriRTException("Error reading module config from " + moduleDefinition.getFile().getAbsolutePath(), e);
+            throw new LilyRTException("Error reading module config from " + moduleDefinition.getFile().getAbsolutePath(), e);
         }
     }
 

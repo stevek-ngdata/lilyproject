@@ -15,9 +15,9 @@
  */
 package org.lilyproject.runtime.source;
 
+import org.lilyproject.runtime.LilyRTException;
 import org.lilyproject.runtime.rapi.ModuleSource;
 import org.lilyproject.runtime.model.ModuleSourceType;
-import org.lilyproject.runtime.KauriRTException;
 import org.apache.commons.jci.monitor.FilesystemAlterationMonitor;
 
 import java.io.File;
@@ -47,7 +47,7 @@ public class ModuleSourceManager {
             moduleSources.put(key, moduleSource);
         } else {
             if (getType(moduleSource.getDelegate()) != moduleSourceType) {
-                throw new KauriRTException("The same module location was requested earlier but with a different type. Type 1: " + getType(moduleSource) + ", type 2: " + moduleSourceType);
+                throw new LilyRTException("The same module location was requested earlier but with a different type. Type 1: " + getType(moduleSource) + ", type 2: " + moduleSourceType);
             }
         }
         moduleSource.increaseRefCount();
@@ -58,7 +58,7 @@ public class ModuleSourceManager {
         try {
             return location.getCanonicalFile().getAbsolutePath();
         } catch (IOException e) {
-            throw new KauriRTException("Error making key for module source location " + location, e);
+            throw new LilyRTException("Error making key for module source location " + location, e);
         }
     }
 
@@ -77,7 +77,7 @@ public class ModuleSourceManager {
                     moduleSource = new MavenSourceDirectoryModuleSource(location, fam);
                     break;
                 default:
-                    throw new KauriRTException("Unexpected module definition type: " + location);
+                    throw new LilyRTException("Unexpected module definition type: " + location);
             }
             return moduleSource;
         } catch (Throwable t) {
@@ -93,13 +93,13 @@ public class ModuleSourceManager {
         else if (moduleSource instanceof MavenSourceDirectoryModuleSource)
             return ModuleSourceType.SOURCE_DIRECTORY;
         else
-            throw new KauriRTException("Unrecognized module source implementation: " + moduleSource.getClass().getName());
+            throw new LilyRTException("Unrecognized module source implementation: " + moduleSource.getClass().getName());
     }
 
     protected synchronized void dispose(SharedModuleSource moduleSource) throws Exception {
         // Remove from list of managed module sources
         if (moduleSources.remove(moduleSource.getKey()) == null)
-            throw new KauriRTException("Unexpected situation: disposed module source not found.");
+            throw new LilyRTException("Unexpected situation: disposed module source not found.");
 
         // perform disposal of actual module source
         moduleSource.getDelegate().dispose();

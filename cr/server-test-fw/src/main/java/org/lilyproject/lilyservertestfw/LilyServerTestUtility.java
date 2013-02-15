@@ -21,8 +21,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.lilyproject.runtime.KauriRuntime;
-import org.lilyproject.runtime.KauriRuntimeSettings;
+import org.lilyproject.runtime.LilyRuntime;
+import org.lilyproject.runtime.LilyRuntimeSettings;
 import org.lilyproject.runtime.configuration.ConfManager;
 import org.lilyproject.runtime.configuration.ConfManagerImpl;
 import org.lilyproject.runtime.rapi.Mode;
@@ -32,7 +32,7 @@ import org.lilyproject.util.MavenUtil;
 import org.lilyproject.util.io.Closer;
 
 public class LilyServerTestUtility {
-    private KauriRuntime runtime;
+    private LilyRuntime runtime;
     private final String defaultConfDir;
     private final String customConfDir;
     private final File testSpecificConfDir;
@@ -57,11 +57,11 @@ public class LilyServerTestUtility {
         // This disable the HBaseConnectionDisposer in Lily which deletes HBase connections on shutdown
         System.setProperty("lily.hbase.deleteConnections", "false");
 
-        KauriRuntimeSettings settings = new KauriRuntimeSettings();
+        LilyRuntimeSettings settings = new LilyRuntimeSettings();
         settings.setRepository(resolveRepository());
         settings.setConfManager(getConfManager());
 
-        runtime = new KauriRuntime(settings);
+        runtime = new LilyRuntime(settings);
         runtime.setMode(Mode.getDefault());
         runtime.start();
     }
@@ -96,7 +96,7 @@ public class LilyServerTestUtility {
         this.artifactRepository = artifactRepository;
     }
 
-    public KauriRuntime getRuntime() {
+    public LilyRuntime getRuntime() {
         return runtime;
     }
 }

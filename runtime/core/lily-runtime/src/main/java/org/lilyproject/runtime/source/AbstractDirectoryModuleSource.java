@@ -15,9 +15,9 @@
  */
 package org.lilyproject.runtime.source;
 
+import org.lilyproject.runtime.LilyRTException;
 import org.lilyproject.runtime.rapi.ModuleSource;
 import org.lilyproject.runtime.rapi.Mode;
-import org.lilyproject.runtime.KauriRTException;
 import org.apache.commons.jci.monitor.FilesystemAlterationMonitor;
 import org.apache.commons.jci.monitor.FilesystemAlterationListener;
 
@@ -170,7 +170,7 @@ public abstract class AbstractDirectoryModuleSource implements ModuleSource {
             try {
                 return file.toURL();
             } catch (MalformedURLException e) {
-                throw new KauriRTException("Error constructing file URL for file " + file.getAbsolutePath(), e);
+                throw new LilyRTException("Error constructing file URL for file " + file.getAbsolutePath(), e);
             }
         }
 
