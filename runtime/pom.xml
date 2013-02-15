@@ -1,25 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-  <properties>
-    <!-- Note: when upgrading any of these versions, consider
-         upgrading them in the archetype pom.xml as well -->
-    <version.slf4j>1.6.1</version.slf4j>
-    <version.jaxrs>1.0</version.jaxrs>
-  </properties>
-
-
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-runtime-parent</artifactId>
   <packaging>pom</packaging>
-  <name>Lily ::: Runtime</name>
-  <version>2.2-SNAPSHOT</version>
-  <description>
-    Lily Runtime
-  </description>
-  <url>http://lilyproject.org/</url>
+  <name>Lily: runtime platform</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
@@ -28,65 +15,18 @@
     <relativePath>..</relativePath>
   </parent>
 
-  <repositories>
-<!--
-    <repository>
-      <id>default</id>
-      <name>Maven Repository Switchboard</name>
-      <layout>default</layout>
-      <url>http://repo1.maven.org/maven2</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
+  <modules>
+    <module>core/lily-runtime</module>
+    <module>core/lily-runtime-rapi</module>
+    <module>core/lily-runtime-testfw</module>
+    <module>core/lily-runtime-tests</module>
+    <module>core/lily-runtime-launcher</module>
+    <module>core/lily-runtime-cli</module>
+    <module>core/lily-runtime-conf</module>
 
-    <repository>
-      <id>maven2-repository.dev.java.net</id>
-      <name>Java.net Repository for Maven</name>
-      <url>http://download.java.net/maven/2/</url>
-      <layout>default</layout>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    
-    <repository>
-      <id>repository.jboss.org</id>
-      <name>JBoss Maven repository (used for EL impl)</name>
-      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-      <layout>default</layout>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>cdh.repo</id>
-      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-      <name>Cloudera Repository</name>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
--->
-  </repositories>
-
-  <pluginRepositories>
-<!--
-    <pluginRepository>
-      <id>kauri-dev</id>
-      <url>http://lilyproject.org/maven/maven2/dev</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-    <pluginRepository>
-      <name>oss.sonatype.org</name>
-      <id>oss.sonatype.org</id>
-      <url>http://oss.sonatype.org/content/groups/public</url>
-    </pluginRepository>
--->
-  </pluginRepositories>
+    <module>tools/lily-runtime-genclassloader-plugin</module>
+    <module>tools/lily-runtime-deploy-repo</module>
+  </modules>
 
   <build>
     <resources>
@@ -94,98 +34,13 @@
         <directory>src/main/resources</directory>
       </resource>
       <resource>
-        <directory>src/main/lilyruntime</directory>
+        <directory>src/main/lily</directory>
         <targetPath>LILY-INF</targetPath>
       </resource>
     </resources>
 
     <pluginManagement>
       <plugins>
-
-
-        <!-- compile -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>2.0.2</version>
-          <configuration>
-            <source>1.5</source>
-            <target>1.5</target>
-          </configuration>
-        </plugin>
-
-
-        <!-- test -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.4</version>
-          <configuration>
-            <trimStackTrace>false</trimStackTrace>
-            <!--
-            <debugForkedProcess>true</debugForkedProcess>
-            -->
-          </configuration>
-        </plugin>
-
-
-        <!--site -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-site-plugin</artifactId>
-          <version>2.1</version>
-      <!--
-          <configuration>
-            <locales>nl</locales>
-          </configuration>
-      -->
-        </plugin>
-
-
-        <!-- IDE -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-eclipse-plugin</artifactId>
-          <version>2.4</version>
-          <configuration>
-            <downloadSources>true</downloadSources>
-            <downloadJavadocs>true</downloadJavadocs>
-            <useProjectReferences>false</useProjectReferences>
-          </configuration>
-        </plugin>
-        <!-- dependency -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-dependency-plugin</artifactId>
-          <version>2.0</version>
-        </plugin>
-        <!-- packaging -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>2.2</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-war-plugin</artifactId>
-          <version>2.0.2</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>2.0.4</version>
-          <executions>
-            <execution>
-              <!-- To deploy the sources automatically -->
-              <goals>
-                <goal>jar</goal>
-                <goal>test-jar</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-
-
         <!--  lily-runtime module building :: generating classloader.xml -->
         <plugin>
           <groupId>org.lilyproject</groupId>
@@ -200,8 +55,7 @@
             </execution>
           </executions>
         </plugin>
-      
-      
+
         <!--  lily-runtime module building :: producing a conf/build.xml -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -241,44 +95,9 @@
             </execution>
           </executions>
         </plugin>
-
-
-        <plugin>
-          <groupId>net.alchim31.maven</groupId>
-          <artifactId>yuicompressor-maven-plugin</artifactId>
-          <version>1.2</version>
-        </plugin>
-
-
       </plugins>      
     </pluginManagement>
 
-    <plugins>
-      <plugin>
-        <!-- Entry needed to create, install and deploy sources jars -->
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-      </plugin>
-    </plugins>
-
   </build>
-  
-  <modules>
-    <module>core/lily-runtime</module>
-    <module>core/lily-runtime-rapi</module>
-    <module>core/lily-runtime-testfw</module>
-    <module>core/lily-runtime-tests</module>
-    <module>core/lily-runtime-launcher</module>
-    <module>core/lily-runtime-cli</module>
-    <module>core/lily-runtime-conf</module>
-
-    <module>tools/lily-runtime-genclassloader-plugin</module>
-    <module>tools/lily-runtime-deploy-repo</module>
-
-<!--
-    <module>dist</module>
--->
-
-  </modules>
 
 </project>
