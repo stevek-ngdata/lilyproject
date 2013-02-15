@@ -10,8 +10,8 @@ import java.io.InputStream;
 
 public class ConfModelTest extends TestCase {
     public void testConfig1() throws Exception {
-        String configPath = "org/lilyproject/conf/test/config1.xml";
-        InputStream configStream = getClass().getClassLoader().getResourceAsStream(configPath);
+        String configPath = "config1.xml";
+        InputStream configStream = getClass().getResourceAsStream(configPath);
 
         Conf config = XmlConfBuilder.build(configStream, configPath);
         assertEquals("value1", config.getAttribute("att1"));
@@ -49,8 +49,8 @@ public class ConfModelTest extends TestCase {
      * Test that mixed content is not allowed.
      */
     public void testConfig2() throws Exception {
-        String configPath = "org/lilyproject/conf/test/config2.xml";
-        InputStream configStream = getClass().getClassLoader().getResourceAsStream(configPath);
+        String configPath = "config2.xml";
+        InputStream configStream = getClass().getResourceAsStream(configPath);
 
         try {
             XmlConfBuilder.build(configStream, configPath);
@@ -64,8 +64,8 @@ public class ConfModelTest extends TestCase {
      * Test that namespaced root element is not allowed.
      */
     public void testConfig3() throws Exception {
-        String configPath = "org/lilyproject/conf/test/config3.xml";
-        InputStream configStream = getClass().getClassLoader().getResourceAsStream(configPath);
+        String configPath = "config3.xml";
+        InputStream configStream = getClass().getResourceAsStream(configPath);
 
         try {
             XmlConfBuilder.build(configStream, configPath);
@@ -79,8 +79,8 @@ public class ConfModelTest extends TestCase {
      * Test that namespaced elements and attributes are ignored.
      */
     public void testConfig4() throws Exception {
-        String configPath = "org/lilyproject/conf/test/config4.xml";
-        InputStream configStream = getClass().getClassLoader().getResourceAsStream(configPath);
+        String configPath = "config4.xml";
+        InputStream configStream = getClass().getResourceAsStream(configPath);
 
         XmlConfBuilder.build(configStream, configPath);
     }
@@ -89,8 +89,8 @@ public class ConfModelTest extends TestCase {
      * Test the getAsXXX methods.
      */
     public void testConfig5() throws Exception {
-        String configPath = "org/lilyproject/conf/test/config5.xml";
-        InputStream configStream = getClass().getClassLoader().getResourceAsStream(configPath);
+        String configPath = "config5.xml";
+        InputStream configStream = getClass().getResourceAsStream(configPath);
 
         Conf config = XmlConfBuilder.build(configStream, configPath);
 

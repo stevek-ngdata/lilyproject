@@ -12,8 +12,8 @@ import java.util.List;
 
 public class JXPathTest extends TestCase {
     public void testIt() throws Exception {
-        String path = "org/lilyproject/conf/test/jxpathconf.xml";
-        Conf conf = XmlConfBuilder.build(getClass().getClassLoader().getResourceAsStream(path), path);
+        String path = "jxpathconf.xml";
+        Conf conf = XmlConfBuilder.build(getClass().getResourceAsStream(path), path);
 
         JXPathContext context = JXPathContext.newContext(conf);
 

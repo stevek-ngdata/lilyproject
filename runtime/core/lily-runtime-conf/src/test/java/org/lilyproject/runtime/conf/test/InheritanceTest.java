@@ -82,7 +82,6 @@ public class InheritanceTest extends TestCase {
     }
 
     private ConfImpl loadConf(String name) throws Exception {
-        String path = "org/lilyproject/conf/test/" + name;
-        return XmlConfBuilder.build(getClass().getClassLoader().getResourceAsStream(path), path);
+        return XmlConfBuilder.build(getClass().getResourceAsStream(name), name);
     }
 }
