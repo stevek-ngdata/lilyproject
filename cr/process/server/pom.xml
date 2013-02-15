@@ -62,7 +62,7 @@
           <scripts>
             <script>
               <basename>lily-server</basename>
-              <mainClass>org.lilyproject.runtime.launcher.RuntimeCliLauncher</mainClass>
+              <mainClass>org.lilyproject.runtime.launcher.LilyRuntimeCliLauncher</mainClass>
             </script>
           </scripts>
           <alternativeClasspath>

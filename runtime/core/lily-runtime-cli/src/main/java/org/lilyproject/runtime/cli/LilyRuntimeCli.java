@@ -326,7 +326,7 @@ public class LilyRuntimeCli {
         return ids;
     }
 
-    // This method is duplicated in RuntimeCliLauncher, so if you modify it
+    // This method is duplicated in LilyRuntimeCliLauncher, so if you modify it
     // here, it is likely useful to copy you modifications there too.
     private File findLocalMavenRepository() {
         String homeDir = System.getProperty("user.home");

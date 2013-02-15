@@ -39,7 +39,7 @@ import java.util.Iterator;
  * you don't specify another location to launch it from using
  * -Dlilyruntime.launcher.repository
  */
-public class RuntimeCliLauncher {
+public class LilyRuntimeCliLauncher {
     private File repositoryLocation;
 
     public static void main(String[] args) throws Throwable {
@@ -55,10 +55,10 @@ public class RuntimeCliLauncher {
     }
 
     public static void launch(File repositoryLocation, String[] args) throws Throwable {
-        new RuntimeCliLauncher(repositoryLocation).run(args);
+        new LilyRuntimeCliLauncher(repositoryLocation).run(args);
     }
 
-    private RuntimeCliLauncher(File repositoryLocation) {
+    private LilyRuntimeCliLauncher(File repositoryLocation) {
         this.repositoryLocation = repositoryLocation;
     }
 
