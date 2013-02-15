@@ -69,7 +69,10 @@ public class RecordTypeImport {
                 if (oldRecordType != null) {
                     boolean updated = false;
 
-                    final RecordTypeBuilder builder = typeManager.recordTypeBuilder(oldRecordType);
+                    // create a builder with all the values from the old record type filled in
+                    // (except field types and mixins)
+                    final RecordTypeBuilder builder = typeManager.recordTypeBuilder();
+                    builder.id(oldRecordType.getId()).name(oldRecordType.getName()).version(oldRecordType.getVersion());
 
                     // Update field entries
                     Set<FieldTypeEntry> oldFieldTypeEntries =
@@ -78,10 +81,9 @@ public class RecordTypeImport {
                             new HashSet<FieldTypeEntry>(newRecordType.getFieldTypeEntries());
                     if (!newFieldTypeEntries.equals(oldFieldTypeEntries)) {
                         updated = true;
-
-                        for (FieldTypeEntry entry : newFieldTypeEntries) {
-                            builder.field(entry.getFieldTypeId(), entry.isMandatory());
-                        }
+                    }
+                    for (FieldTypeEntry entry : newFieldTypeEntries) {
+                        builder.field(entry.getFieldTypeId(), entry.isMandatory());
                     }
 
                     // Update mixins
@@ -98,10 +100,9 @@ public class RecordTypeImport {
 
                     if (!oldMixins.equals(newMixins)) {
                         updated = true;
-
-                        for (Map.Entry<SchemaId, Long> entry : newMixins.entrySet()) {
-                            builder.mixin().id(entry.getKey()).version(entry.getValue()).add();
-                        }
+                    }
+                    for (Map.Entry<SchemaId, Long> entry : newMixins.entrySet()) {
+                        builder.mixin().id(entry.getKey()).version(entry.getValue()).add();
                     }
 
                     // Update name

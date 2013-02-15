@@ -102,7 +102,11 @@ public class RecordTypeReader implements EntityReader<RecordType> {
                 Long rtVersion = getLong(mixin, "version", null);
 
                 if (rtIdString != null) {
-                    recordTypeBuilder.mixin().id(new SchemaIdImpl(rtIdString)).version(rtVersion).add();
+                    final RecordTypeBuilder.MixinBuilder mixinBuilder =
+                            recordTypeBuilder.mixin().id(new SchemaIdImpl(rtIdString));
+                    if (rtVersion != null)
+                        mixinBuilder.version(rtVersion);
+                    mixinBuilder.add();
                 } else if (rtName != null) {
                     QName rtQName = QNameConverter.fromJson(rtName, namespaces);
 

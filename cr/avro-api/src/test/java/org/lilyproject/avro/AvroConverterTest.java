@@ -51,6 +51,7 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.FieldTypeEntryImpl;
 import org.lilyproject.repository.impl.FieldTypeImpl;
 import org.lilyproject.repository.impl.RecordImpl;
+import org.lilyproject.repository.impl.RecordTypeBuilderImpl;
 import org.lilyproject.repository.impl.RecordTypeImpl;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
@@ -203,8 +204,8 @@ public class AvroConverterTest {
         QName name = new QName("aNamespace", "aName");
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(id, name);
-        typeManager.newRecordType(id, name, null);
-        expectLastCall().andReturn(recordType);
+        typeManager.recordTypeBuilder();
+        expectLastCall().andReturn(new RecordTypeBuilderImpl(typeManager));
 
         control.replay();
         converter = new AvroConverter();
@@ -231,8 +232,8 @@ public class AvroConverterTest {
         QName name = new QName("aNamespace", "aName");
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(id, name, (long) 1);
-        typeManager.newRecordType(id, name, (long) 1);
-        expectLastCall().andReturn(recordType);
+        typeManager.recordTypeBuilder();
+        expectLastCall().andReturn(new RecordTypeBuilderImpl(typeManager));
 
         control.replay();
         converter = new AvroConverter();
@@ -261,8 +262,8 @@ public class AvroConverterTest {
         QName name = new QName("aNamespace", "aName");
         SchemaId recordTypeId = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(recordTypeId, name);
-        typeManager.newRecordType(recordTypeId, name, null);
-        expectLastCall().andReturn(recordType);
+        typeManager.recordTypeBuilder();
+        expectLastCall().andReturn(new RecordTypeBuilderImpl(typeManager));
 
         SchemaId fieldTypeId1 = new SchemaIdImpl(UUID.randomUUID());
         SchemaId fieldTypeId2 = new SchemaIdImpl(UUID.randomUUID());
@@ -322,8 +323,8 @@ public class AvroConverterTest {
         QName name = new QName("aNamespace", "aName");
         SchemaId recordTypeId = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(recordTypeId, name);
-        typeManager.newRecordType(recordTypeId, name, null);
-        expectLastCall().andReturn(recordType);
+        typeManager.recordTypeBuilder();
+        expectLastCall().andReturn(new RecordTypeBuilderImpl(typeManager));
 
         control.replay();
         converter = new AvroConverter();

@@ -42,6 +42,7 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
 import org.lilyproject.repository.api.RemoteException;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
@@ -208,21 +209,30 @@ public class AvroConverter {
     public RecordType convert(AvroRecordType avroRecordType) throws RepositoryException {
         SchemaId recordTypeId = convert(avroRecordType.getId());
         QName recordTypeName = convert(avroRecordType.getName());
-        RecordType recordType = typeManager.newRecordType(recordTypeId, recordTypeName, avroRecordType.getVersion());
+
+        final RecordTypeBuilder recordTypeBuilder =
+                typeManager.recordTypeBuilder().id(recordTypeId).name(recordTypeName)
+                        .version(avroRecordType.getVersion());
+
         List<AvroFieldTypeEntry> fieldTypeEntries = avroRecordType.getFieldTypeEntries();
         if (fieldTypeEntries != null) {
             for (AvroFieldTypeEntry avroFieldTypeEntry : fieldTypeEntries) {
-                recordType = recordType.withFieldTypeEntry(convert(avroFieldTypeEntry));
+                final FieldTypeEntry fieldTypeEntry = convert(avroFieldTypeEntry);
+                recordTypeBuilder.field(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry.isMandatory());
             }
         }
         List<AvroMixin> mixins = avroRecordType.getMixins();
         if (mixins != null) {
             for (AvroMixin avroMixin : mixins) {
-                recordType =
-                        recordType.withMixin(convert(avroMixin.getRecordTypeId()), avroMixin.getRecordTypeVersion());
+                final RecordTypeBuilder.MixinBuilder mixinBuilder =
+                        recordTypeBuilder.mixin().id(convert(avroMixin.getRecordTypeId()));
+                if (avroMixin.getRecordTypeVersion() != null) {
+                    mixinBuilder.version(avroMixin.getRecordTypeVersion());
+                }
+                mixinBuilder.add();
             }
         }
-        return recordType;
+        return recordTypeBuilder.build();
     }
 
     public AvroRecordType convert(RecordType recordType) {
