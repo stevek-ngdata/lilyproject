@@ -13,7 +13,7 @@
     <p>Some resources which can be accessed as is:</p>
     <ul>
       <li><a href="/repository/schema/fieldType">List of field types (as JSON) - /repository/schema/fieldType</a></li>
-      <li><a href="/repository/schema/recordType')}">List of record types (as JSON) - /repository/schema/recordType</a></li>
+      <li><a href="/repository/schema/recordType">List of record types (as JSON) - /repository/schema/recordType</a></li>
     </ul>
 
   </body>
