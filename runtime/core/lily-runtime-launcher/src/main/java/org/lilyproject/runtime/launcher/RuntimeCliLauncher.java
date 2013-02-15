@@ -32,19 +32,19 @@ import java.util.Iterator;
 
 /**
  * This class is simply an indirect way to call the main method of the
- * KauriRuntimeCli, before doing so it creates a classloader from
- * which to load Kauri.
+ * LilyRuntimeCli, before doing so it creates a classloader from
+ * which to load Lily Runtime.
  *
  * <p>It is also smart enough to find your local Maven repository, if
  * you don't specify another location to launch it from using
- * -Dkauri.launcher.repository
+ * -Dlilyruntime.launcher.repository
  */
 public class RuntimeCliLauncher {
     private File repositoryLocation;
 
     public static void main(String[] args) throws Throwable {
         File repositoryLocation;
-        String param = System.getProperty("kauri.launcher.repository");
+        String param = System.getProperty("lilyruntime.launcher.repository");
         if (param != null) {
             repositoryLocation = new File(param);
         } else {
@@ -69,22 +69,22 @@ public class RuntimeCliLauncher {
 
         Method mainMethod;
         try {
-            Class runtimeClass = classLoader.loadClass("org.lilyproject.runtime.cli.KauriRuntimeCli");
+            Class runtimeClass = classLoader.loadClass("org.lilyproject.runtime.cli.LilyRuntimeCli");
             mainMethod = runtimeClass.getMethod("main", String[].class);
         } catch (Exception e) {
-            throw new RuntimeException("Error loading Kauri runtime", e);
+            throw new RuntimeException("Error loading Lily runtime", e);
         }
 
         try {
             mainMethod.invoke(null, (Object)args);
         } catch (IllegalAccessException e) {
-            throw new RuntimeException("Error launching Kauri runtime", e);
+            throw new RuntimeException("Error launching Lily runtime", e);
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }
     }
 
-    // This method is duplicated in KauriRuntimeCli, so if you modify it
+    // This method is duplicated in LilyRuntimeCli, so if you modify it
     // here, it is likely useful to copy you modifications there too.
     private static File findLocalMavenRepository() {
         String homeDir = System.getProperty("user.home");

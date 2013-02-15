@@ -36,7 +36,7 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.InputStreamResource;
 
 public class ModuleBuilder {
-    // These ThreadLocal's serve as communication mechanism for KauriRuntimeNamespaceHandler
+    // These ThreadLocal's serve as communication mechanism for LilyRuntimeNamespaceHandler
     protected static ThreadLocal<SpringBuildContext> SPRING_BUILD_CONTEXT = new ThreadLocal<SpringBuildContext>();
 
     protected final Log infolog = LogFactory.getLog(LilyRuntime.INFO_LOG_CATEGORY);
@@ -108,7 +108,7 @@ public class ModuleBuilder {
             return module;
         } catch (Throwable e) {
             // TODO module source and classloader handle might need disposing!
-            // especially important if the kauri runtime is launched as part of a longer-living VM
+            // especially important if the lily runtime is launched as part of a longer-living VM
             throw new LilyRTException("Error constructing module defined at " + cfg.getDefinition().getFile().getAbsolutePath(), e);
         } finally {
             Thread.currentThread().setContextClassLoader(previousContextClassLoader);

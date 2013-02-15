@@ -1,4 +1,4 @@
-kauri-deploy-repo
+lily-deploy-repo
 -----------------
 
 This is nothing more than a recursive directory copy, with some additional

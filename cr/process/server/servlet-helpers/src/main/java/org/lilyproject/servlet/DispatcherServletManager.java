@@ -34,7 +34,7 @@ import org.springframework.web.servlet.DispatcherServlet;
 
 /**
  * This class is part of the mvc project because it is mvc specific. It creates a spring mvc dispatcher servlet
- * which has the kauri spring app context as parent app context and registers this servlet with the container.
+ * which has the lily runtime spring app context as parent app context and registers this servlet with the container.
  */
 public class DispatcherServletManager {
 
@@ -54,7 +54,7 @@ public class DispatcherServletManager {
 
     @PostConstruct
     public void createAndRegisterDispatcherServletInContainer() {
-        final ApplicationContext existingKauriSpringContext = module.getSpringContext();
+        final ApplicationContext existingLilyRuntimeSpringContext = module.getSpringContext();
 
         servletRegistry.addEntry(new ServletRegistryEntry() {
             @Override
@@ -71,7 +71,7 @@ public class DispatcherServletManager {
                 mvcContext.setServletContext(context);
                 XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(mvcContext);
                 xmlReader.loadBeanDefinitions(new ClassPathResource(springMvcApplicationContextLocation));
-                mvcContext.setParent(existingKauriSpringContext);
+                mvcContext.setParent(existingLilyRuntimeSpringContext);
                 mvcContext.refresh();
 
                 DispatcherServlet dispatcherServlet = new DispatcherServlet(mvcContext);

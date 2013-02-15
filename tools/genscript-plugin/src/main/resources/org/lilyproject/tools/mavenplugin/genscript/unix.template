@@ -52,10 +52,10 @@ if [ -f "$LILY_HOME/bin/lily-env.sh" ]; then
   . $LILY_HOME/bin/lily-env.sh
 fi
 
-# The repository suitable for bootstrapping Kauri
+# The repository suitable for bootstrapping Lily Runtime
 LAUNCHER_M2_REPO=$LILY_HOME/lib
 
-# The repository(ies) to be used by Kauri for loading the application
+# The repository(ies) to be used by Lily Runtime for loading the application
 M2_REPO=$LAUNCHER_M2_REPO
 if [ ! -z "$LILY_MAVEN_REPO" ] ; then
   M2_REPO=$M2_REPO,$LILY_MAVEN_REPO

@@ -23,7 +23,7 @@ public class RepoArtifactRef extends BaseArtifactRef {
     private final String classifier;
 
     public RepoArtifactRef(String groupId, String artifactId, String classifier, String version) {
-        super("kauri:repo:" + groupId + ":" + artifactId + (classifier == null || classifier.equals("") ? "" : ":" + classifier), version);
+        super("lilyruntime:repo:" + groupId + ":" + artifactId + (classifier == null || classifier.equals("") ? "" : ":" + classifier), version);
 
         if (groupId == null)
             throw new IllegalArgumentException("Null argument: groupId");

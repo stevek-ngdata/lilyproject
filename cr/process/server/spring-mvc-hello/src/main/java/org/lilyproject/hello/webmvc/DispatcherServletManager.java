@@ -4,7 +4,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 
-import org.lilyproject.runtime.rapi.KauriModule;
+import org.lilyproject.runtime.rapi.LilyRuntimeModule;
 import org.lilyproject.container.api.Container;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -13,14 +13,14 @@ import org.springframework.web.servlet.DispatcherServlet;
 
 /**
  * This class is part of the mvc project because it is mvc specific. It creates a spring mvc dispatcher servlet
- * which has the kauri spring app context as parent app context and registers this servlet with the container.
+ * which has the lily runtime spring app context as parent app context and registers this servlet with the container.
  */
 public class DispatcherServletManager {
 
     private static final Logger LOGGER = Logger.getLogger(DispatcherServletManager.class.getName());
 
     @Autowired
-    private KauriModule module;
+    private LilyRuntimeModule module;
 
     @Autowired
     private Container container;
@@ -35,11 +35,11 @@ public class DispatcherServletManager {
     @PostConstruct
     public void createAndRegisterDispatcherServletInContainer() {
 
-        ApplicationContext existingKauriSpringContext = module.getSpringContext();
+        ApplicationContext existingLilyRuntimeSpringContext = module.getSpringContext();
 
         XmlWebApplicationContext mvcContext = new XmlWebApplicationContext();
         mvcContext.setConfigLocation(springMvcApplicationContextLocation);
-        mvcContext.setParent(existingKauriSpringContext);
+        mvcContext.setParent(existingLilyRuntimeSpringContext);
 
         final DispatcherServlet dispatcherServlet = new DispatcherServlet(mvcContext);
         dispatcherServlet.setDetectAllHandlerMappings(true);

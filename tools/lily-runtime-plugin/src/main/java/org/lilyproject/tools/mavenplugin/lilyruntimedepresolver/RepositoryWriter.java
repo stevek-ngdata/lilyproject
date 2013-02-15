@@ -39,7 +39,7 @@ public class RepositoryWriter {
                 throw new MojoExecutionException("Error copying file " + src + " to " + dest);
             }
 
-            // Kauri does not need the pom files, but let's copy them anyway, for informational purposes
+            // Lily Runtime does not need the pom files, but let's copy them anyway, for informational purposes
             File srcPom = pomFile(src);
             File destPom = pomFile(dest);
             if (srcPom != null && srcPom.exists()) {

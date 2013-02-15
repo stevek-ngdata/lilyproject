@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * This object describes the Kauri system to be created by the KauriRuntime.
+ * This object describes the Lily Runtime system to be created by the LilyRuntime.
  *
- * <p>The KauriRuntimeModel should not be modified while a KauriRuntime that is using
- * it is running (TODO: maybe the KauriRuntime should create a clone of the config internally?).
+ * <p>The LilyRuntimeModel should not be modified while a LilyRuntime that is using
+ * it is running (TODO: maybe the LilyRuntime should create a clone of the config internally?).
  *
  */
 public class LilyRuntimeModel {

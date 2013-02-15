@@ -35,7 +35,7 @@
     <version.spring>3.2.1.RELEASE</version.spring>
     <version.log4j>1.2.16</version.log4j>
     <version.slf4j>1.6.1</version.slf4j>
-    <version.jaxrs>1.0</version.jaxrs>
+    <version.jaxrs>1.1.1</version.jaxrs>
 
     <version.avro>1.7.1-813-1154</version.avro>
 

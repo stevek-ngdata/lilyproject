@@ -40,7 +40,7 @@ public class JarModuleSource implements ModuleSource {
 
     private static final String RESOURCES_PATH = "LILY-INF/";
     private static final Pattern SPRING_COMMON_CONF_PATTERN = Pattern.compile("LILY-INF/spring/[^/]*\\.xml");
-    private static final String KAURI_CLASSLOADER_CONF = "LILY-INF/classloader.xml";
+    private static final String LILY_CLASSLOADER_CONF = "LILY-INF/classloader.xml";
 
     protected JarModuleSource(File file) throws IOException {
         this.file = file;
@@ -56,7 +56,7 @@ public class JarModuleSource implements ModuleSource {
             JarEntry jarEntry = jarEntries.nextElement();
             String name = jarEntry.getName();
 
-            if (name.equals(KAURI_CLASSLOADER_CONF)) {
+            if (name.equals(LILY_CLASSLOADER_CONF)) {
                 classLoaderConfig = jarEntry;
                 continue;
             }

@@ -50,7 +50,7 @@ public class JerseySpringServletManager {
 
     @PostConstruct
     public void createAndRegisterDispatcherServletInContainer() {
-        final ApplicationContext existingKauriSpringContext = module.getSpringContext();
+        final ApplicationContext existingLilyRuntimeSpringContext = module.getSpringContext();
 
         servletRegistry.addEntry(new ServletRegistryEntry() {
             @Override
@@ -67,7 +67,7 @@ public class JerseySpringServletManager {
                 mvcContext.setServletContext(context);
                 XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(mvcContext);
                 xmlReader.loadBeanDefinitions(new ClassPathResource(springMvcApplicationContextLocation));
-                mvcContext.setParent(existingKauriSpringContext);
+                mvcContext.setParent(existingLilyRuntimeSpringContext);
                 mvcContext.refresh();
 
                 JerseySpringServlet springServlet = new JerseySpringServlet(mvcContext);

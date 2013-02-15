@@ -77,7 +77,7 @@ public class LilyRuntimeCli {
         Option confDirsOption = OptionBuilder
         .withArgName("confdir")
         .hasArg()
-        .withDescription("The Kauri runtime configuration directory. Can be multiple paths separated by " +
+        .withDescription("The Lily runtime configuration directory. Can be multiple paths separated by " +
                 File.pathSeparator)
         .withLongOpt("confdir")
         .create('c');
@@ -166,7 +166,7 @@ public class LilyRuntimeCli {
         cliOptions.addOption(modeOption);
         
         Option versionOption = OptionBuilder
-            .withDescription("Don't start the service, only dump the version info string for the module defined with -Dkauri.info.module")
+            .withDescription("Don't start the service, only dump the version info string for the module defined with -Dlilyruntime.info.module")
             .withLongOpt("version")
             .create("V");
         cliOptions.addOption(versionOption);      
@@ -198,7 +198,7 @@ public class LilyRuntimeCli {
             infolog.error("Unable to register log4j JMX control", e);
         }
 
-        infolog.info("Starting the Kauri Runtime.");
+        infolog.info("Starting the Lily Runtime.");
         
         List<File> confDirs = new ArrayList<File>();
 
@@ -279,7 +279,7 @@ public class LilyRuntimeCli {
         }
         
         if (cmd.hasOption(versionOption.getOpt())) {
-            System.out.println(runtime.buildModel().moduleInfo(System.getProperty("kauri.info.module")));
+            System.out.println(runtime.buildModel().moduleInfo(System.getProperty("lilyruntime.info.module")));
             System.exit(0);
         }
 
@@ -302,12 +302,12 @@ public class LilyRuntimeCli {
     private void printStartedMessage() {
         DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG);
         String now = dateFormat.format(new Date());
-        infolog.info("Kauri Runtime started [" + now + "]");
+        infolog.info("Lily Runtime started [" + now + "]");
     }
 
     private void printHelp(Options cliOptions) {
         HelpFormatter help = new HelpFormatter();
-        help.printHelp("kauri-runtime", cliOptions, true);
+        help.printHelp("lily-runtime", cliOptions, true);
     }
 
     private Set<String> getDisabledModuleIds(String spec) {

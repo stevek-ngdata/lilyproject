@@ -42,14 +42,14 @@ public class RuntimeLauncher {
         Object runtime;
         try {
             Thread.currentThread().setContextClassLoader(classLoader);
-            Class runtimeHelperClass = classLoader.loadClass("org.lilyproject.runtime.KauriRuntimeHelper");
+            Class runtimeHelperClass = classLoader.loadClass("org.lilyproject.runtime.LilyRuntimeHelper");
             Method createMethod = runtimeHelperClass.getMethod("createRuntime", String.class, String.class, Set.class);
             runtime = createMethod.invoke(null, runtimeConfigLocation, repositoryLocation, disabledModuleIds);
             return new RuntimeHandle(runtime);
         } catch (InvocationTargetException e) {
-            throw new RuntimeException("Error loading Kauri runtime", e.getTargetException());
+            throw new RuntimeException("Error loading Lily runtime", e.getTargetException());
         } catch (Exception e) {
-            throw new RuntimeException("Error loading Kauri runtime", e);
+            throw new RuntimeException("Error loading Lily runtime", e);
         } finally {
             Thread.currentThread().setContextClassLoader(oldContextClassLoader);
         }

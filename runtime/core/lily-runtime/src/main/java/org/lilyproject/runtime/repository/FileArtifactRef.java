@@ -32,7 +32,7 @@ public class FileArtifactRef extends BaseArtifactRef {
 
     private static String makeId(File file) {
         try {
-            return "kauri:file:" + file.getCanonicalFile().getAbsolutePath();
+            return "lilyruntime:file:" + file.getCanonicalFile().getAbsolutePath();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

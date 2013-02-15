@@ -151,12 +151,12 @@ public class Logging {
      * that can be found in many places.
      *
      * Register the log4j JMX mbeans. Set environment variable
-     * "kauri.jmx.log4j.disable" to true to disable registration.
+     * "lilyruntime.jmx.log4j.disable" to true to disable registration.
      * http://logging.apache.org/log4j/1.2/apidocs/index.html?org/apache/log4j/jmx/package-summary.html
      * @throws javax.management.JMException if registration fails
      */
     public static void registerLog4jMBeans() throws JMException {
-        if (Boolean.getBoolean("kauri.jmx.log4j.disable")) {
+        if (Boolean.getBoolean("lilyruntime.jmx.log4j.disable")) {
             return;
         }
 

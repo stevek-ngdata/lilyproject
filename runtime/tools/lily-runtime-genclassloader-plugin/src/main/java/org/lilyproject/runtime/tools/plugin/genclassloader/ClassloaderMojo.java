@@ -67,7 +67,7 @@ import org.xml.sax.helpers.AttributesImpl;
  * 
  * @goal generate
  * @requiresDependencyResolution runtime
- * @description Genenerate a Kauri classloader file for a module.
+ * @description Genenerate a Lily Runtime classloader file for a module.
  */
 public class ClassloaderMojo extends AbstractMojo {
 

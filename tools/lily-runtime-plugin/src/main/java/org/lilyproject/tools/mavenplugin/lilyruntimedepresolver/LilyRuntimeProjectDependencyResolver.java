@@ -35,7 +35,7 @@ import java.util.Set;
  *
  * @goal resolve-project-dependencies
  * @requiresDependencyResolution runtime
- * @description Resolve (download) all the dependencies of a Kauri project starting from wiring.xml.
+ * @description Resolve (download) all the dependencies of a Lily Runtime project starting from wiring.xml.
  */
 public class LilyRuntimeProjectDependencyResolver extends AbstractMojo {
     /**
@@ -158,9 +158,9 @@ public class LilyRuntimeProjectDependencyResolver extends AbstractMojo {
 
         ModuleArtifacts moduleArts;
         if (confDirectory != null) {
-            moduleArts = cp.getModuleArtifactsFromKauriConfig(new File(confDirectory), remoteRepositories);
+            moduleArts = cp.getModuleArtifactsFromLilyRuntimeConfig(new File(confDirectory), remoteRepositories);
         } else {
-            moduleArts = cp.getModuleArtifactsFromKauriConfig(dependencyArtifacts, wiringXmlResource,
+            moduleArts = cp.getModuleArtifactsFromLilyRuntimeConfig(dependencyArtifacts, wiringXmlResource,
                     mavenProjectBuilder, remoteRepositories);
         }
 

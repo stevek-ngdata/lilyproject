@@ -60,7 +60,7 @@ public class JavaServiceWiringTest extends AbstractRuntimeTest {
     }
 
     public void testIt() {
-        // The main test is that the Kauri Runtime is able to boot up. The below is just some additional verification.
+        // The main test is that the Lily Runtime is able to boot up. The below is just some additional verification.
         Assert.assertEquals("foo1", runtime.getModuleById("jwiringmod3").getApplicationContext().getBean("bean1").toString());
         Assert.assertEquals("bar", runtime.getModuleById("jwiringmod4").getApplicationContext().getBean("bean1").toString());
     }

@@ -73,7 +73,7 @@ public class LilyRuntimeProjectClasspath {
         return result;
     }
 
-    public ModuleArtifacts getModuleArtifactsFromKauriConfig(File confDirectory, List remoteRepos)
+    public ModuleArtifacts getModuleArtifactsFromLilyRuntimeConfig(File confDirectory, List remoteRepos)
             throws MojoExecutionException {
         File configFile = new File(confDirectory, "runtime/wiring.xml");
         try {
@@ -82,7 +82,7 @@ public class LilyRuntimeProjectClasspath {
                 fis = new FileInputStream(configFile);
 
                 ModuleArtifacts result = new ModuleArtifacts();
-                result.artifacts = getModuleArtifactsFromKauriConfig(fis, configFile.getAbsolutePath(),
+                result.artifacts = getModuleArtifactsFromLilyRuntimeConfig(fis, configFile.getAbsolutePath(),
                         remoteRepos);
 
                 return result;
@@ -95,8 +95,8 @@ public class LilyRuntimeProjectClasspath {
         }
     }
 
-    public ModuleArtifacts getModuleArtifactsFromKauriConfig(Set<Artifact> dependencies, String wiringPath,
-            MavenProjectBuilder mavenProjectBuilder, List remoteRepos)
+    public ModuleArtifacts getModuleArtifactsFromLilyRuntimeConfig(Set<Artifact> dependencies, String wiringPath,
+                                                                   MavenProjectBuilder mavenProjectBuilder, List remoteRepos)
             throws MojoExecutionException {
 
         try {
@@ -113,7 +113,7 @@ public class LilyRuntimeProjectClasspath {
                         ZipEntry zipEntry = zipFile.getEntry(wiringPath);
                         if (zipEntry != null) {
                             log.info("Reading " + wiringPath + " from " + artifact.getFile());
-                            Set<Artifact> moduleArtifacts = getModuleArtifactsFromKauriConfig(
+                            Set<Artifact> moduleArtifacts = getModuleArtifactsFromLilyRuntimeConfig(
                                     zipFile.getInputStream(zipEntry), wiringPath, remoteRepos);
 
                             MavenProject wiringSourceProject = mavenProjectBuilder.buildFromRepository(artifact,
@@ -138,7 +138,7 @@ public class LilyRuntimeProjectClasspath {
         throw new MojoExecutionException("The wiring.xml was not found in the dependency jars at path " + wiringPath);
     }
 
-    public Set<Artifact> getModuleArtifactsFromKauriConfig(InputStream wiringStream, String path, List remoteRepos)
+    public Set<Artifact> getModuleArtifactsFromLilyRuntimeConfig(InputStream wiringStream, String path, List remoteRepos)
             throws MojoExecutionException {
         Document configDoc;
         try {

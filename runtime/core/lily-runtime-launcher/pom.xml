@@ -22,7 +22,7 @@
 
         So, this project should not have any dependencies.
 
-        The dependency below is to force that the kauri-runtime-cli is built
+        The dependency below is to force that the lily-runtime-cli is built
         before the launcher, since it generates the classloader XML that
         we need.
     -->

@@ -23,7 +23,7 @@ import org.lilyproject.runtime.module.Module;
 
 /**
  * Context information that should be available while building the spring
- * bean container (= BeanFactory) for handling Kauri's namespace, see also
+ * bean container (= BeanFactory) for handling Lily's namespace, see also
  * {@link LilyRuntimeNamespaceHandler}.
  */
 public class SpringBuildContext {

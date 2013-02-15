@@ -122,7 +122,7 @@ public abstract class AbstractRuntimeTest extends TestCase {
         String suffix = (System.currentTimeMillis() % 100000) + "" + (int)(Math.random() * 100000);
         File dir;
         while (true) {
-            String dirName = System.getProperty("java.io.tmpdir") + File.separator + ("kauritest_") + suffix;
+            String dirName = System.getProperty("java.io.tmpdir") + File.separator + ("lilytest_") + suffix;
             dir = new File(dirName);
             if (dir.exists()) {
                 System.out.println("Temporary test directory already exists, trying another location. Currenty tried: " + dirName);

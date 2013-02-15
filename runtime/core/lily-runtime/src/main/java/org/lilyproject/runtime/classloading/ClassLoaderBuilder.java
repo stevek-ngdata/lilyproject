@@ -33,7 +33,7 @@ public class ClassLoaderBuilder {
     private static Map<String, ClassLoader> classLoaderCache;
     private static boolean classLoaderCacheEnabled = true;
     static {
-        classLoaderCacheEnabled = System.getProperty("kauri.cacheclassloaders") != null;
+        classLoaderCacheEnabled = System.getProperty("lilyruntime.cacheclassloaders") != null;
         if (classLoaderCacheEnabled) {
             classLoaderCache = new HashMap<String, ClassLoader>();
         }
@@ -46,14 +46,14 @@ public class ClassLoaderBuilder {
             //
             // About the ClassLoader cache:
             //  The ClassLoader cache was introduced to handle leaks in the 'Perm Gen' and 'Code Cache'
-            //  JVM memory spaces when repeatedly restarting Kauri within the same JVM. In such cases,
-            //  on each restart Kauri would construct new class loaders, hence the classes loaded through
+            //  JVM memory spaces when repeatedly restarting Lily Runtime within the same JVM. In such cases,
+            //  on each restart Lily Runtime would construct new class loaders, hence the classes loaded through
             //  them would be new and would stress those JVM memory spaces.
             //
-            //  The solution here is good enough for what it is intended to do (restarting the same Kauri
+            //  The solution here is good enough for what it is intended to do (restarting the same Lily Runtime
             //  app, unchanged, many times). There is no cache cleaning and the cache key calculation
-            //  is not perfect, so if you would enable the cache when starting a wide variety of Kauri
-            //  apps within one VM or for reloading changed Kauri apps, it could be problematic.
+            //  is not perfect, so if you would enable the cache when starting a wide variety of Lily Runtime
+            //  apps within one VM or for reloading changed Lily Runtime apps, it could be problematic.
             //
             StringBuilder cacheKeyBuilder = new StringBuilder(2000);
             for (ClasspathEntry entry : classpathEntries) {
@@ -77,7 +77,7 @@ public class ClassLoaderBuilder {
                 classLoaderCache.put(cacheKey, classLoader);
             } else if (classLoader.getParent() != parentClassLoader) {
                 Log log = LogFactory.getLog(ClassLoaderBuilder.class);
-                log.error("Kauri ClassLoader cache: parentClassLoader of cache ClassLoader is different" +
+                log.error("Lily Runtime ClassLoader cache: parentClassLoader of cache ClassLoader is different" +
                         " from the specified one. Returning the cached one anyway.");
             }
             

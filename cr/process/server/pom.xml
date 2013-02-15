@@ -23,7 +23,7 @@
   <artifactId>lily-server</artifactId>
   <packaging>pom</packaging>
 
-  <name>Lily: server process (Kauri modules)</name>
+  <name>Lily: server process (Lily Runtime modules)</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
@@ -91,7 +91,7 @@
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>--repository $M2_REPO --confdir $LILY_KAURICONF_DIR --log-configuration $LILY_HOME/lily-log4j.properties</value>
+              <value>--repository $M2_REPO --confdir $LILY_RUNTIMECONF_DIR --log-configuration $LILY_HOME/lily-log4j.properties</value>
             </parameter>
             <parameter>
               <platform>windows</platform>
@@ -101,7 +101,7 @@
             <parameter>
               <platform>unix</platform>
               <mode>dev</mode>
-              <value>--confdir $LILY_KAURICONF_DIR</value>
+              <value>--confdir $LILY_RUNTIMECONF_DIR</value>
             </parameter>
           </defaultCliArgs>
           <defaultJvmArgs>
@@ -137,8 +137,8 @@ if [ -z "$LILY_PLUGIN_DIR" ]; then
 fi
 
 # Default conf dir
-if [ -z "$LILY_KAURICONF_DIR" ]; then
-  LILY_KAURICONF_DIR="$LILY_HOME/conf"
+if [ -z "$LILY_RUNTIMECONF_DIR" ]; then
+  LILY_RUNTIMECONF_DIR="$LILY_HOME/conf"
 fi
               </value>
             </parameter>
@@ -156,8 +156,8 @@ if [ -z "$LILY_PLUGIN_DIR" ]; then
 fi
 
 # Default conf dir (assumes this script is started from cr/process/server)
-if [ -z "$LILY_KAURICONF_DIR" ]; then
-  LILY_KAURICONF_DIR="conf"
+if [ -z "$LILY_RUNTIMECONF_DIR" ]; then
+  LILY_RUNTIMECONF_DIR="conf"
 fi
               </value>
             </parameter>

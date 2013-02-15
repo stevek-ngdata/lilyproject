@@ -46,8 +46,8 @@ public class ConfListeningTest extends AbstractRuntimeTest {
         test1ConfDir.mkdirs();
 
         // Create a config for the configuration manager
-        File kauriConfDir = new File(test1ConfDir, "kauri");
-        writeConf(kauriConfDir, "configuration.xml", "<conf><reloading enabled='true' delay='1000'/></conf>");
+        File lilyRuntimeConfDir = new File(test1ConfDir, "runtime");
+        writeConf(lilyRuntimeConfDir, "configuration.xml", "<conf><reloading enabled='true' delay='1000'/></conf>");
 
         // Create a conf for our test module
         conflistenmodConfDir = new File(test1ConfDir, "conflistenmod");

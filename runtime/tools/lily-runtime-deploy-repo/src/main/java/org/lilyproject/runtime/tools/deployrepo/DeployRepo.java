@@ -47,20 +47,20 @@ public class DeployRepo {
             System.out.println("  " + mavenRepo.getAbsolutePath());
         }
 
-        String kauriHome = System.getProperty("kauri.home");
-        File kauriRepo = new File(kauriHome + "/lib");
-        if (!kauriRepo.exists()) {
-            System.out.println("Could not find Kauri's Maven repository at:");
-            System.out.println(kauriRepo);
+        String lilyRuntimeHome = System.getProperty("lilyruntime.home");
+        File lilyRuntimeRepo = new File(lilyRuntimeHome + "/lib");
+        if (!lilyRuntimeRepo.exists()) {
+            System.out.println("Could not find Lily Runtime's Maven repository at:");
+            System.out.println(lilyRuntimeRepo);
         }
 
         System.out.println();
-        System.out.println("Coping Kauri repository from");
-        System.out.println("  " + kauriRepo.getAbsolutePath());
+        System.out.println("Coping Lily Runtime repository from");
+        System.out.println("  " + lilyRuntimeRepo.getAbsolutePath());
         System.out.println("to");
         System.out.println("  " + mavenRepo.getAbsolutePath());
         System.out.println();
-        copy(kauriRepo, mavenRepo, "");
+        copy(lilyRuntimeRepo, mavenRepo, "");
         System.out.println("Done.");
     }
 

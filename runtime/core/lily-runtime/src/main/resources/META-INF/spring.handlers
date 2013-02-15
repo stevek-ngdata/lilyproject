@@ -1,1 +1,1 @@
-http\://lilyproject.org/runtime/1.0#springext=org.lilyproject.runtime.module.build.KauriRuntimeNamespaceHandler
+http\://lilyproject.org/runtime/1.0#springext=org.lilyproject.runtime.module.build.LilyRuntimeNamespaceHandler

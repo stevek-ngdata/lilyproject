@@ -31,13 +31,13 @@ import java.util.Set;
  *
  * @goal assemble-runtime-repository
  * @requiresDependencyResolution runtime
- * @description Creates a Maven-style repository for Kauri with all the dependencies needed to launch Kauri.
+ * @description Creates a Maven-style repository for Lily Runtime with all the dependencies needed to launch Lily Runtime.
  */
 public class LilyRuntimeRepository extends AbstractMojo {
     /**
      * Location of the conf directory.
      *
-     * @parameter expression="${basedir}/target/kauri-repository"
+     * @parameter expression="${basedir}/target/lilyruntime-repository"
      * @required
      */
     protected String targetDirectory;

@@ -39,7 +39,7 @@ public class LilyServerTestUtility {
     private ArtifactRepository artifactRepository;
 
     /**
-     * LilyServerTestUtility is used to start Lily using the KauriRuntime.
+     * LilyServerTestUtility is used to start Lily using the LilyRuntime.
      * 
      * @param defaultConfDir path to the directory containing the default configuration files to startup lily
      * @param customConfDir path to a directory containing custom configuration files which should be used on top

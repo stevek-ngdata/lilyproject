@@ -24,7 +24,7 @@ import org.lilyproject.runtime.repository.ArtifactRepository;
 import org.lilyproject.runtime.repository.ChainedMaven2StyleArtifactRepository;
 
 /**
- * Helper class for creating a KauriRuntime. This is intended to be the most
+ * Helper class for creating a LilyRuntime. This is intended to be the most
  * high-level interface for embedded creation of the repository.
  */
 public class LilyRuntimeHelper {

@@ -37,7 +37,7 @@ import org.lilyproject.runtime.model.*;
 import org.lilyproject.runtime.configuration.ConfManager;
 
 /**
- * Stuff needed to bootstrap a KauriRuntime instance.
+ * Stuff needed to bootstrap a LilyRuntime instance.
  *
  */
 public class LilyRuntimeSettings {

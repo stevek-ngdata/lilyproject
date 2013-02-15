@@ -47,16 +47,3 @@ are bound to ephemeral ports, so there will be no conflicts.
 
 Once you have servers running, you can use the client library to connect to them.
 
-Running via normal Kauri script
-===============================
-
-Note that instead of launching the lily-server script, you can as well simply
-launch Kauri if you have it installed, for example:
-
-/path/to/kauri-trunk/kauri.sh run -c myconf:conf
-
-You can obtain Kauri as follows:
-
-svn co https://dev.outerthought.org/svn/outerthought_kauri/trunk kauri-trunk
-cd kauri-trunk
-mvn -P fast install

@@ -41,10 +41,10 @@ set LILY_HOME=%~dp0..
 
 :: ----- Run -------------------------------------------------------------------
 
-rem The repository suitable for bootstrapping Kauri
+rem The repository suitable for bootstrapping Lily Runtime
 set LAUNCHER_M2_REPO=%LILY_HOME%\lib
 
-rem The repository(ies) to be used by Kauri for loading the application
+rem The repository(ies) to be used by Lily Runtime for loading the application
 set M2_REPO=%LILY_HOME%\lib
 if "%LILY_MAVEN_REPO%"=="" goto noExtraRepoPath
 set M2_REPO=%M2_REPO%,%LILY_MAVEN_REPO%

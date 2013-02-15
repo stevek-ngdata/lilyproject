@@ -90,10 +90,10 @@
           are available in the local repository (required for lily-sever-test-fw) -->
       <plugin>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-kauri-plugin</artifactId>
+        <artifactId>lily-runtime-plugin</artifactId>
         <version>${version.lily}</version>
         <configuration>
-          <wiringXmlResource>org/lilyproject/lilyservertestfw/conf/kauri/wiring.xml</wiringXmlResource>
+          <wiringXmlResource>org/lilyproject/lilyservertestfw/conf/runtime/wiring.xml</wiringXmlResource>
         </configuration>
         <executions>
           <execution>

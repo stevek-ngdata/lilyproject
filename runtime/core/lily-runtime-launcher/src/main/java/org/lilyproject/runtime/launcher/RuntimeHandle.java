@@ -33,9 +33,9 @@ public class RuntimeHandle {
         try {
             return getServiceMethod.invoke(runtime, type);
         } catch (IllegalAccessException e) {
-            throw new RuntimeException("Error getting service from the Kauri Runtime.", e);
+            throw new RuntimeException("Error getting service from the Lily Runtime.", e);
         } catch (InvocationTargetException e) {
-            throw new RuntimeException("Error getting service from the Kauri Runtime.", e.getTargetException());
+            throw new RuntimeException("Error getting service from the Lily Runtime.", e.getTargetException());
         }
     }
 
@@ -43,9 +43,9 @@ public class RuntimeHandle {
         try {
             shutdownMethod.invoke(runtime);
         } catch (InvocationTargetException e) {
-            throw new RuntimeException("Error shutting down the Kauri Runtime.", e.getTargetException());
+            throw new RuntimeException("Error shutting down the Lily Runtime.", e.getTargetException());
         } catch (Exception e) {
-            throw new RuntimeException("Error shutting down the Kauri Runtime.", e);
+            throw new RuntimeException("Error shutting down the Lily Runtime.", e);
         }
     }
 }

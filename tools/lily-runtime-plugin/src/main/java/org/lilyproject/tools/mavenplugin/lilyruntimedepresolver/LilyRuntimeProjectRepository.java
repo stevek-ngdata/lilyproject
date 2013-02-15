@@ -31,7 +31,7 @@ import java.util.Set;
  *
  * @goal assemble-project-repository
  * @requiresDependencyResolution runtime
- * @description Creates a Maven-style repository for Kauri with all the dependencies of a Kauri project,
+ * @description Creates a Maven-style repository for Lily Runtime with all the dependencies of a Lily Runtime project,
  *              based upon reading the wiring.xml.
  */
 public class LilyRuntimeProjectRepository extends AbstractMojo {
@@ -88,7 +88,7 @@ public class LilyRuntimeProjectRepository extends AbstractMojo {
         LilyRuntimeProjectClasspath cp = new LilyRuntimeProjectClasspath(getLog(), null,
                 artifactFactory, resolver, localRepository);
 
-        ModuleArtifacts moduleArtifacts = cp.getModuleArtifactsFromKauriConfig(new File(confDirectory), remoteRepositories);
+        ModuleArtifacts moduleArtifacts = cp.getModuleArtifactsFromLilyRuntimeConfig(new File(confDirectory), remoteRepositories);
         Set<Artifact> artifacts = cp.getAllArtifacts(moduleArtifacts.artifacts, remoteRepositories);
         RepositoryWriter.write(artifacts, targetDirectory);
     }

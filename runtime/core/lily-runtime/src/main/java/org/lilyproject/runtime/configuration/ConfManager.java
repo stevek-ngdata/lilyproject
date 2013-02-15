@@ -6,7 +6,7 @@ import org.lilyproject.runtime.module.ModuleConfig;
 import java.util.List;
 
 /**
- * Provides configuration data, both for the core Kauri Runtime as well
+ * Provides configuration data, both for the core Lily Runtime as well
  * as for modules.
  *
  * <p>The Runtime will take the supplied ConfManager through the following

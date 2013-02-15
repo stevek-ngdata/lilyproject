@@ -67,7 +67,7 @@ public class ModuleDefinition {
     }
     
     public String moduleInfo() {
-        if (Boolean.getBoolean("kauri.info.verbose"))
+        if (Boolean.getBoolean("lilyruntime.info.verbose"))
             return String.format("%s (version: %s) - running from [%s] (in mode: %s)", id, version, file.getAbsolutePath(), sourceType.name());
         //else
         return String.format("%s (version: %s)", id, version);

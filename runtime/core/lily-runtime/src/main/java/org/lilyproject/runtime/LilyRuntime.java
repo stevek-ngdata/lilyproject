@@ -50,7 +50,7 @@ import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Version;
 
 /**
- * This is the main entry point of the KauriRuntime.
+ * This is the main entry point of the LilyRuntime.
  *
  * <p>Basic usage:
  * <ul>
@@ -84,10 +84,10 @@ public class LilyRuntime {
         ArgumentValidator.notNull(settings, "settings");
 
         if (settings.getRepository() == null)
-            throw new LilyRTException("KauriRuntimeSettings should contain an artifact repository.");
+            throw new LilyRTException("LilyRuntimeSettings should contain an artifact repository.");
 
         if (settings.getConfManager() == null)
-            throw new LilyRTException("KauriRuntimeSettings should contain a ConfManager.");
+            throw new LilyRTException("LilyRuntimeSettings should contain a ConfManager.");
 
         this.settings = settings;
 
@@ -131,24 +131,24 @@ public class LilyRuntime {
             try {
                 newModel = LilyRuntimeModelBuilder.build(modulesConf, disabledModuleIds, settings.getRepository(), sourceLocations);
             } catch (Exception e) {
-                throw new LilyRTException("Error building the Kauri model from configuration.", e);
+                throw new LilyRTException("Error building the Lily model from configuration.", e);
             }
         }
         return newModel;
     }
 
     /**
-     * Starts the Kauri Runtime. This will launch all modules (i.e. their Spring containers),
+     * Starts the Lily Runtime. This will launch all modules (i.e. their Spring containers),
      * and set up the restservices.
      *
-     * <p>A KauriRuntime instance can only be started once, even after it has been stopped.
-     * Just create a new KauriRuntime instance with the same KauriRuntimeConfig if you want
+     * <p>A LilyRuntime instance can only be started once, even after it has been stopped.
+     * Just create a new LilyRuntime instance with the same LilyRuntimeConfig if you want
      * to (re)start another instance.
      */
     public void start() throws LilyRTException, MalformedURLException, ArtifactNotFoundException {
-        // a KauriRuntime object cannot be started twice, even if it has been stopped in between
+        // a LilyRuntime object cannot be started twice, even if it has been stopped in between
         if (state.ordinal() > LifeCycle.NOT_STARTED.ordinal())
-            throw new LilyRTException("This Kauri Runtime instance has already been started before.");
+            throw new LilyRTException("This Lily Runtime instance has already been started before.");
         state = LifeCycle.STARTED;
 
         // Init the configuration manager

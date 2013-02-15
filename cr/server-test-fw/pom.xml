@@ -205,7 +205,7 @@
     </dependency>
 
     <!--
-      The following dependencies are here because otherwise Spring/Kauri does not find their classes.
+      The following dependencies are here because otherwise Spring/Lily Runtime does not find their classes.
       This is because of the excludes that were added to the lily-client pom to make it lighter, combined
       with the fact the classes can't see classes in class loaders lower in the CL hierarchy.
     -->

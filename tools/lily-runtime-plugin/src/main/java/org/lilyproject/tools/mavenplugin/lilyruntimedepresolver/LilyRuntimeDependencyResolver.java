@@ -32,7 +32,7 @@ import java.util.Set;
  *
  * @goal resolve-runtime-dependencies
  * @requiresDependencyResolution runtime
- * @description Resolve (download) all the dependencies to run the Kauri Runtime.
+ * @description Resolve (download) all the dependencies to run the Lily Runtime.
  */
 public class LilyRuntimeDependencyResolver extends AbstractMojo {
 
