@@ -1219,15 +1219,15 @@ public class RestTest {
         String location = response.getLocationRef().toString();
 
         // Delete scanner
-        response = delete(BASE_URI + location);
+        response = delete(location);
         assertStatus(HttpStatus.SC_OK, response);
 
         // Check that scanner is gone
-        response = get(BASE_URI + location);
+        response = get(location);
         assertStatus(HttpStatus.SC_NOT_FOUND, response);
 
         // Delete a non existing scanner gets a 404
-        response = delete(BASE_URI + location + "not_here");
+        response = delete(location + "not_here");
         assertStatus(HttpStatus.SC_NOT_FOUND, response);
     }
 
