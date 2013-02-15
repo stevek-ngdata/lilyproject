@@ -61,15 +61,18 @@ public class JythonLineMapperTest {
     public void testMap_SimpleCase() throws RecordException, IOException, InterruptedException {
         LineMapper lineMapper = new JythonLineMapper(pythonCode, "singleFieldRecord");
         
-        QName fieldName = QName.fromString("{org.lilyproject}Name");
+        QName stringFieldName = QName.fromString("{org.lilyproject}Name");
+        QName intFieldName = QName.fromString("{org.lilyproject}IntField");
         QName recordTypeName = QName.fromString("{org.lilyproject}NameRecord");
         
-        when(mappingContext.qn("{org.lilyproject}Name")).thenReturn(fieldName);
+        when(mappingContext.qn("{org.lilyproject}Name")).thenReturn(stringFieldName);
+        when(mappingContext.qn("{org.lilyproject}IntField")).thenReturn(intFieldName);
         when(mappingContext.qn("{org.lilyproject}NameRecord")).thenReturn(recordTypeName);
         
         lineMapper.mapLine("nameValue", mappingContext);
         
-        verify(record).setField(fieldName, "nameValue");
+        verify(record).setField(stringFieldName, "nameValue");
+        verify(record).setField(intFieldName, 42);
         verify(record).setRecordType(recordTypeName);
         verify(mappingContext).writeRecord(record);
     }
