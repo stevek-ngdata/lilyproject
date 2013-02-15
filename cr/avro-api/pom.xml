@@ -92,8 +92,8 @@
       </plugin>
 
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
       </plugin>
 
       <plugin>
@@ -106,7 +106,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${basedir}/target/classes/KAURI-INF/conf</outputDirectory>
+              <outputDirectory>${basedir}/target/classes/LILY-INF/conf</outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}/../conf/avro</directory>

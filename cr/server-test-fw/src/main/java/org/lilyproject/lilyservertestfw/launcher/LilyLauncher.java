@@ -26,6 +26,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
 import javax.management.ObjectName;
 
@@ -44,6 +46,7 @@ import org.lilyproject.lilyservertestfw.TemplateDir;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private Option enableHadoopOption;
@@ -138,6 +141,11 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         int result = super.run(cmd);
         if (result != 0)
             return result;
+
+        // Forward JDK logging to SLF4J
+        LogManager.getLogManager().reset();
+        LogManager.getLogManager().getLogger("").addHandler(new SLF4JBridgeHandler());
+        LogManager.getLogManager().getLogger("").setLevel(Level.ALL);
 
         boolean prepareMode = cmd.hasOption(prepareOption.getOpt());
 

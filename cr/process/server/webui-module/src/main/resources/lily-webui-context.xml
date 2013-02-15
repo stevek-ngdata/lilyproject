@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!--
+/*
+ * Copyright 2010 Outerthought bvba
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+             xmlns:mvc="http://www.springframework.org/schema/mvc"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:util="http://www.springframework.org/schema/util"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/beans/spring-util.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+  <!-- This is the context in which the spring MVC frontend beans (controlers etc) are defined -->
+
+  <context:annotation-config/>
+  <context:component-scan base-package="org.lilyproject.webui.controllers"/>
+
+  <!-- not sure why we explicitely need to add these (I thought it would be by default), but they make the annotations with url mappings on controllers work... -->
+  <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/>
+  <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+      <property name="messageConverters">
+        <list>
+          <bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter"/>
+          <bean class="org.springframework.http.converter.ByteArrayHttpMessageConverter"/>
+          <bean class="org.springframework.http.converter.xml.SourceHttpMessageConverter"/>
+          <bean class="org.springframework.http.converter.xml.SourceHttpMessageConverter"/>
+          <bean class="org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter"/>
+        </list>
+    </property>
+  </bean>
+
+
+  <context:property-placeholder location="classpath:/lily-webui-config-defaults.properties,file:${user.home}/.lily-overrides.properties"
+      ignore-resource-not-found="true"/>
+
+  <mvc:resources mapping="static/**" location="${lily-webui.resource.location}/static"/>
+  <mvc:resources mapping="/favicon.ico" location="${lily-webui.resource.location}/static/images/favicon.ico"/>
+
+  <bean id="freemarkerConfig" class="org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer">
+    <property name="templateLoaderPath" value="${lily-webui.templates.path}"/>
+  </bean>
+     
+  <!-- 
+    View resolvers can also be configured with ResourceBundles or XML files. If you need
+    different view resolving based on Locale, you have to use the resource bundle resolver.
+  -->
+  <bean id="viewResolver" class="org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver">
+    <property name="cache" value="${lily-webui.templates.cache}" /> <!-- should depend on mode (dev/prod) - or, better have a FAM which ejects templates on change -->
+    <property name="order" value="1"/>
+    <property name="prefix" value="/"/>
+    <property name="suffix" value=".ftl"/>
+  </bean>
+
+</beans>

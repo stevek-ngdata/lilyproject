@@ -21,25 +21,25 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.kauriproject.runtime.KauriRuntime;
-import org.kauriproject.runtime.KauriRuntimeSettings;
-import org.kauriproject.runtime.configuration.ConfManager;
-import org.kauriproject.runtime.configuration.ConfManagerImpl;
-import org.kauriproject.runtime.rapi.Mode;
-import org.kauriproject.runtime.repository.ArtifactRepository;
-import org.kauriproject.runtime.repository.Maven2StyleArtifactRepository;
+import org.lilyproject.runtime.LilyRuntime;
+import org.lilyproject.runtime.LilyRuntimeSettings;
+import org.lilyproject.runtime.configuration.ConfManager;
+import org.lilyproject.runtime.configuration.ConfManagerImpl;
+import org.lilyproject.runtime.rapi.Mode;
+import org.lilyproject.runtime.repository.ArtifactRepository;
+import org.lilyproject.runtime.repository.Maven2StyleArtifactRepository;
 import org.lilyproject.util.MavenUtil;
 import org.lilyproject.util.io.Closer;
 
 public class LilyServerTestUtility {
-    private KauriRuntime runtime;
+    private LilyRuntime runtime;
     private final String defaultConfDir;
     private final String customConfDir;
     private final File testSpecificConfDir;
     private ArtifactRepository artifactRepository;
 
     /**
-     * LilyServerTestUtility is used to start Lily using the KauriRuntime.
+     * LilyServerTestUtility is used to start Lily using the LilyRuntime.
      * 
      * @param defaultConfDir path to the directory containing the default configuration files to startup lily
      * @param customConfDir path to a directory containing custom configuration files which should be used on top
@@ -57,11 +57,11 @@ public class LilyServerTestUtility {
         // This disable the HBaseConnectionDisposer in Lily which deletes HBase connections on shutdown
         System.setProperty("lily.hbase.deleteConnections", "false");
 
-        KauriRuntimeSettings settings = new KauriRuntimeSettings();
+        LilyRuntimeSettings settings = new LilyRuntimeSettings();
         settings.setRepository(resolveRepository());
         settings.setConfManager(getConfManager());
 
-        runtime = new KauriRuntime(settings);
+        runtime = new LilyRuntime(settings);
         runtime.setMode(Mode.getDefault());
         runtime.start();
     }
@@ -96,7 +96,7 @@ public class LilyServerTestUtility {
         this.artifactRepository = artifactRepository;
     }
 
-    public KauriRuntime getRuntime() {
+    public LilyRuntime getRuntime() {
         return runtime;
     }
 }

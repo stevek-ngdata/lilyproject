@@ -56,7 +56,7 @@
 
       <plugin>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-kauri-plugin</artifactId>
+        <artifactId>lily-runtime-plugin</artifactId>
         <version>2.2-SNAPSHOT</version>
         <configuration>
           <confDirectory>${basedir}/../../cr/process/server/conf</confDirectory>
@@ -76,8 +76,8 @@
           lily-launcher project.
         -->
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
         <configuration>
           <templateFileName>there is none</templateFileName>
           <targetDirectory>${basedir}/target/</targetDirectory>
@@ -105,6 +105,11 @@
     </dependency>
 
     <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jul-to-slf4j</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase</artifactId>
       <classifier>tests</classifier>
@@ -118,9 +123,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.kauriproject</groupId>
-      <artifactId>kauri-runtime</artifactId>
-      <version>${version.kauri}</version>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-runtime</artifactId>
     </dependency>
 
     <dependency>
@@ -156,6 +160,16 @@
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-rpc-module</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-jetty-module</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-servletregistry-module</artifactId>
     </dependency>
 
     <dependency>
@@ -206,7 +220,7 @@
     </dependency>
 
     <!--
-      The following dependencies are here because otherwise Spring/Kauri does not find their classes.
+      The following dependencies are here because otherwise Spring/Lily Runtime does not find their classes.
       This is because of the excludes that were added to the lily-client pom to make it lighter, combined
       with the fact the classes can't see classes in class loaders lower in the CL hierarchy.
     -->

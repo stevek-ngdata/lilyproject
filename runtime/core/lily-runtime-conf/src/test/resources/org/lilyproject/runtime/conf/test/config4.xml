@@ -1,0 +1,3 @@
+<config att="val" x:att="val" xmlns:x="foobar">
+
+</config>

@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<conf>
+  <properties>
+     <property key="key1">value1</property>
+     <property key="key2">value2</property>
+  </properties>
+</conf>

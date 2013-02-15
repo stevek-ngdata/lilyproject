@@ -25,7 +25,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RetriesExhaustedException;
 import org.apache.hadoop.hbase.client.Scan;
-import org.kauriproject.conf.Conf;
+import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.util.io.Closer;
 
 import java.util.concurrent.atomic.AtomicInteger;

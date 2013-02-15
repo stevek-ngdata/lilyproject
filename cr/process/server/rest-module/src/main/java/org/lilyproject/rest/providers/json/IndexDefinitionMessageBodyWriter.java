@@ -45,7 +45,7 @@ public class IndexDefinitionMessageBodyWriter implements MessageBodyWriter<Index
 	@Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
 			MediaType mediaType) {
-		if (mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
+		if (IndexDefinition.class.isAssignableFrom(type) && mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
 			return true;
 		}
 		return false;

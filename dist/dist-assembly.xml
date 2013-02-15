@@ -40,8 +40,8 @@
 
     <!-- versions.xml forcing the version number for org.lilyproject artifacts -->
     <file>
-      <source>${basedir}/target/classes/conf/kauri/versions.xml</source>
-      <outputDirectory>/conf/kauri</outputDirectory>
+      <source>${basedir}/target/classes/conf/runtime/versions.xml</source>
+      <outputDirectory>/conf/runtime</outputDirectory>
     </file>
 
     <!-- Service wrapper -->
@@ -278,7 +278,7 @@
   <fileSets>
     <!-- Lily server dependencies -->
     <fileSet>
-      <directory>${basedir}/target/kauri-repository</directory>
+      <directory>${basedir}/target/lilyruntime-repository</directory>
       <outputDirectory>/lib</outputDirectory>
       <useDefaultExcludes>true</useDefaultExcludes>
     </fileSet>

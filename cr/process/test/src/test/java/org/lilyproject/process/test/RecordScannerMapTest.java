@@ -18,7 +18,7 @@ package org.lilyproject.process.test;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Before;
 import org.junit.Test;

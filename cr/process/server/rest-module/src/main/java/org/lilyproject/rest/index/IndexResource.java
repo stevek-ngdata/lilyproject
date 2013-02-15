@@ -46,12 +46,11 @@ import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.json.JsonFormat;
-import org.restlet.representation.StringRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
-@Path("")
+@Path("index")
 public class IndexResource extends RepositoryEnabled {
 
     @Autowired
@@ -93,7 +92,8 @@ public class IndexResource extends RepositoryEnabled {
         json.put("zkDataVersion", index.getZkDataVersion());
         json.put("config", index.getConfiguration());
 
-        return Response.ok(new StringRepresentation(new String(JsonFormat.serializeAsBytes(json)))).build();
+        //return Response.ok(new StringRepresentation(new String(JsonFormat.serializeAsBytes(json)))).build();
+        throw new RuntimeException("XXX: removed during refactoring, reimplement");
     }
 
     /**

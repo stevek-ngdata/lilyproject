@@ -81,14 +81,14 @@ public class LauncherClasspathHelper {
         if (classPathEl == null) {
             throw new RuntimeException("Classloader configuration does not contain a classpath element.");
         } else {
-            String kauriVersion = getKauriVersion();
+            String lilyVersion = getProjectVersion();
             List<URL> artifactURLs = new ArrayList<URL>();
             children = classPathEl.getChildNodes();
             for (int i = 0; i < children.getLength(); i++) {
                 Node node = children.item(i);
                 if (node instanceof Element && node.getLocalName().equals("artifact")) {
                     Element artifactEl = (Element)node;
-                    URL artifactURL = getArtifactURL(artifactEl, repositoryLocation, kauriVersion);
+                    URL artifactURL = getArtifactURL(artifactEl, repositoryLocation, lilyVersion);
                     if (artifactURL != null)
                         artifactURLs.add(artifactURL);
                 }
@@ -97,12 +97,12 @@ public class LauncherClasspathHelper {
         }
     }
 
-    public static URL getArtifactURL(Element artifactEl, File repositoryLocation, String kauriVersion) {
+    public static URL getArtifactURL(Element artifactEl, File repositoryLocation, String lilyVersion) {
         String groupId = artifactEl.getAttribute("groupId");
         String artifactId = artifactEl.getAttribute("artifactId");
         String version = artifactEl.getAttribute("version");
         if (version.equals(""))
-            version = kauriVersion;
+            version = lilyVersion;
         String classifier = artifactEl.getAttribute("classifier");
 
         String sep = System.getProperty("file.separator");
@@ -143,18 +143,31 @@ public class LauncherClasspathHelper {
         return document;
     }
 
-    private static String getKauriVersion() {
-        Properties properties = new Properties();
-        InputStream is = LauncherClasspathHelper.class.getResourceAsStream("kauri.properties");
-        String kauriVersion = "";
+    private static String getProjectVersion() {
+        return readVersion("org.lilyproject", "lily-standalone-launcher");
+    }
+
+    public static String readVersion(String groupId, String artifactId) {
+        String propPath = "/META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
+        InputStream is = LauncherClasspathHelper.class.getResourceAsStream(propPath);
         if (is != null) {
+            Properties properties = new Properties();
             try {
                 properties.load(is);
-                is.close();
-                kauriVersion = properties.getProperty("kauri.version");
+                String version = properties.getProperty("version");
+                if (version != null) {
+                    return version;
+                }
             } catch (IOException e) {
+                // ignore
+            }
+            try {
+                is.close();
+            } catch (IOException e) {
+                // ignore
             }
         }
-        return kauriVersion;
+
+        return "undetermined (please report this as bug)";
     }
 }

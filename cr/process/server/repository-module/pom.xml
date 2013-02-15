@@ -30,7 +30,7 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <name>Lily: Kauri: repository module</name>
+  <name>Lily: repository runtime module</name>
 
   <dependencies>
     <dependency>
@@ -59,17 +59,16 @@
     </dependency>
     
     <dependency>
-      <groupId>org.kauriproject</groupId>
-      <artifactId>kauri-conf</artifactId>
-      <version>${version.kauri}</version>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-runtime-conf</artifactId>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
       </plugin>
 
       <plugin>
@@ -82,7 +81,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${basedir}/target/classes/KAURI-INF/conf</outputDirectory>
+              <outputDirectory>${basedir}/target/classes/LILY-INF/conf</outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}/../conf/repository</directory>

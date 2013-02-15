@@ -44,7 +44,7 @@ public class JsonObjectMessageBodyWriter implements MessageBodyWriter<ObjectNode
 	@Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
 			MediaType mediaType) {
-		if (mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
+		if (ObjectNode.class.isAssignableFrom(type) && mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
 			return true;
 		}
 		return false;

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema elementFormDefault="qualified" targetNamespace="http://lilyproject.org/runtime/1.0#springext" xmlns:s="http://lilyproject.org/runtime/1.0#springext" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="import-service">
+    <xs:complexType>
+      <xs:attribute name="id" type="xs:string" use="required"/>
+      <xs:attribute name="name" type="xs:string" use="optional"/>
+      <xs:attribute name="service" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="export-service">
+    <xs:complexType>
+      <xs:attribute name="ref" type="xs:string" use="required"/>
+      <xs:attribute name="name" type="xs:string" use="optional"/>
+      <xs:attribute name="service" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="module">
+    <xs:complexType>
+      <xs:attribute name="classLoader" type="xs:string" use="optional"/>
+      <xs:attribute name="handle" type="xs:string" use="optional"/>
+      <xs:attribute name="conf" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="conf">
+    <xs:complexType>
+      <xs:attribute name="path" type="xs:string" use="required"/>
+      <xs:attribute name="select" type="xs:string" use="optional"/>
+      <xs:attribute name="type" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

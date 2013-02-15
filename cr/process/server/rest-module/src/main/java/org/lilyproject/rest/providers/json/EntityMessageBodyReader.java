@@ -45,7 +45,7 @@ public class EntityMessageBodyReader extends RepositoryEnabled implements Messag
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+        if (mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
             for (Class clazz : EntityRegistry.SUPPORTED_TYPES.keySet()) {
                 if (type.isAssignableFrom(clazz))
                     return true;

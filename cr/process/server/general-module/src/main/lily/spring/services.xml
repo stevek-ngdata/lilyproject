@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+<!--
+/*
+ * Copyright 2010 Outerthought bvba
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<beans              xmlns = "http://www.springframework.org/schema/beans"
+                xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+              xmlns:lily = "http://lilyproject.org/runtime/1.0#springext"
+            xmlns:context = "http://www.springframework.org/schema/context"
+       xsi:schemaLocation = "http://www.springframework.org/schema/beans
+                             http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+                             http://www.springframework.org/schema/context
+                             http://www.springframework.org/schema/context/spring-context-2.5.xsd
+                             http://lilyproject.org/runtime/1.0#springext
+                             http://www.lilyproject.org/schemas/runtime/springext.xsd">
+
+  <context:annotation-config/>
+
+  <lily:module classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
+
+  <bean class="org.lilyproject.runtime.rapi.ConfPlaceholderConfigurer">
+    <constructor-arg ref="confRegistry"/>
+  </bean>
+
+  <lily:export-service
+      ref="hbaseConfiguration"
+      service="org.lilyproject.server.modules.general.HadoopConfigurationFactory"/>
+
+  <lily:export-service
+      ref="zooKeeper"
+      service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
+
+  <lily:export-service
+      ref="hbaseTableFactory"
+      service="org.lilyproject.util.hbase.HBaseTableFactory"/>
+  
+  <lily:export-service
+      ref="lilyInfo"
+      service="org.lilyproject.util.LilyInfo"/>
+
+  <lily:export-service
+      ref="networkItfInfo"
+      service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
+
+  <lily:export-service
+      ref="indexerModel"
+      service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
+
+  <lily:export-service
+      ref="sepModel"
+      service="com.ngdata.sep.SepModel"/>
+
+  <lily:export-service
+      ref="prematureRepository"
+      service="org.lilyproject.util.repo.PrematureRepository"/>
+
+  <!-- The depends-on zooKeeper is so that Lily's ZooKeeper connection establishment code
+       is the reference with regards to waiting until ZooKeeper is available. -->
+  <bean id="hbaseConfiguration"
+      class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl"
+      depends-on="zooKeeper">
+    <constructor-arg><lily:conf path="hadoop"/></constructor-arg>
+    <constructor-arg><lily:conf path="hbase"/></constructor-arg>
+    <constructor-arg><lily:conf path="mapreduce"/></constructor-arg>
+    <constructor-arg value="${zookeeper:connectString}"/>
+    <constructor-arg value="${zookeeper:sessionTimeout}"/>
+  </bean>
+
+  <bean id="metrics"
+      class="org.lilyproject.server.modules.general.Metrics">
+    <constructor-arg><lily:conf path="metrics"/></constructor-arg>
+  </bean>
+
+  <bean id="networkItfInfo" class="org.lilyproject.server.modules.general.NetworkInterfaceInfoImpl">
+    <constructor-arg value="${dns:interface}"/>
+    <constructor-arg value="${dns:nameserver}"/>
+  </bean>
+
+  <bean id="zooKeeper"
+        class="org.lilyproject.util.zookeeper.StateWatchingZooKeeper">
+    <constructor-arg value="${zookeeper:connectString}"/>
+    <constructor-arg value="${zookeeper:sessionTimeout}"/>
+    <constructor-arg value="${zookeeper:startupTimeout}"/>
+  </bean>
+
+  <bean id="zooKeeperAdapter"
+        class="org.lilyproject.sep.ZooKeeperItfAdapter">
+    <constructor-arg ref="zooKeeper"/>
+  </bean>
+
+  <bean id="hbaseConf"
+      factory-bean="hbaseConfiguration"
+      factory-method="getHBaseConf"/>
+      
+  <bean id="hbaseTableFactory"
+        class="org.lilyproject.util.hbase.HBaseTableFactoryImpl">
+    <constructor-arg ref="hbaseConf"/>
+    <constructor-arg>
+      <bean class="org.lilyproject.server.modules.general.TableConfigBuilder" factory-method="buildTableConfigs">
+        <constructor-arg><lily:conf path="tables"/></constructor-arg>
+      </bean>
+    </constructor-arg>
+    <constructor-arg>
+      <bean class="org.lilyproject.server.modules.general.TableConfigBuilder" factory-method="buildCfConfig">
+        <constructor-arg><lily:conf path="tables" select="familyDefaults" type="node"/></constructor-arg>
+      </bean>
+    </constructor-arg>
+  </bean>
+
+  <bean id="connectionDisposer"
+        class="org.lilyproject.server.modules.general.HBaseConnectionDisposer">
+    <constructor-arg ref="hbaseConf"/>
+  </bean>
+
+  <bean id="zooKeeperMXBean" class="org.lilyproject.util.zookeeper.ZooKeeperMXBean">
+    <constructor-arg value="${zookeeper:connectString}"/>
+    <constructor-arg value="${zookeeper:sessionTimeout}"/>
+    <constructor-arg ref="zooKeeper"/>
+  </bean>
+
+  <bean id="lilyInfo" class="org.lilyproject.server.modules.general.LilyInfoImpl">
+    <constructor-arg ref="zooKeeper"/>
+  </bean>
+
+  <bean id="mbeanExporter" class="org.springframework.jmx.export.MBeanExporter">
+    <property name="beans">
+      <map>
+        <entry key="Lily:name=ZooKeeper" value-ref="zooKeeperMXBean"/>
+        <entry key="Lily:name=Info" value-ref="lilyInfo"/>
+      </map>
+    </property>
+    <property name="server">
+      <bean class="java.lang.management.ManagementFactory" factory-method="getPlatformMBeanServer"/>
+    </property>
+  </bean>
+
+  <bean id="indexerModel" class="org.lilyproject.indexer.model.impl.IndexerModelImpl">
+    <constructor-arg ref="zooKeeper"/>
+  </bean>
+
+  <bean id="sepModel" class="com.ngdata.sep.impl.SepModelImpl">
+    <constructor-arg ref="zooKeeperAdapter"/>
+    <constructor-arg ref="hbaseConf"/>
+  </bean>
+
+  <bean id="prematureRepository" class="org.lilyproject.util.repo.PrematureRepositoryImpl">
+  </bean>
+
+  <bean class="org.lilyproject.server.modules.general.LinkIndexSetup">
+    <constructor-arg ref="sepModel"/>
+    <constructor-arg value="${linkindex:enabled}"/>
+    <constructor-arg value="${linkindex:threads}"/>
+    <constructor-arg ref="prematureRepository"/>
+    <constructor-arg ref="hbaseConf"/>
+    <constructor-arg ref="hbaseTableFactory"/>
+    <constructor-arg ref="zooKeeper"/>
+    <constructor-arg>
+      <bean factory-bean="networkItfInfo" factory-method="getHostName"/>
+    </constructor-arg>
+  </bean>
+
+</beans>

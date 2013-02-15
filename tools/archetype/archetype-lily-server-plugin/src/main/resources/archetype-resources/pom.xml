@@ -5,7 +5,6 @@
 
   <properties>
     <version.lily>@lilyversion@</version.lily>
-    <version.kauri>@kauriversion@</version.kauri>
 
     <!-- Tells maven plugins what file encoding to use -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -43,16 +42,15 @@
         <directory>src/main/resources</directory>
       </resource>
       <resource>
-        <directory>src/main/kauri</directory>
-        <targetPath>KAURI-INF</targetPath>
+        <directory>src/main/lily</directory>
+        <targetPath>LILY-INF</targetPath>
       </resource>
     </resources>
 
     <plugins>
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-genclassloader-plugin</artifactId>
-        <version>${version.kauri}</version>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
         <executions>
           <execution>
             <phase>compile</phase>

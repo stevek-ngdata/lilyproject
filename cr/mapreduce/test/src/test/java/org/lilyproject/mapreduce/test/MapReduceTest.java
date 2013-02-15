@@ -15,7 +15,7 @@
  */
 package org.lilyproject.mapreduce.test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -122,7 +122,7 @@ public class MapReduceTest {
         FileUtils.forceMkdir(generalConfDir);
 
         // Write configuration to activate the decorator
-        String tablesXml = "<tables xmlns:conf='http://kauriproject.org/configuration' conf:inherit='shallow'>" +
+        String tablesXml = "<tables xmlns:conf='http://lilyproject.org/configuration' conf:inherit='shallow'>" +
                 "<table name='record'><splits><regionCount>5</regionCount>" +
                 "<splitKeys>\\x00020,\\x00040,\\x00060,\\x00080</splitKeys></splits></table>" +
                 "</tables>";

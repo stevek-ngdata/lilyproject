@@ -30,9 +30,18 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <name>Lily: Kauri: web-ui module</name>
+  <name>Lily: Runtime: web-ui module</name>
 
   <dependencies>
+    <dependency>
+      <groupId>org.freemarker</groupId>
+      <artifactId>freemarker</artifactId>
+      <version>2.3.19</version>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-spring-mvc-helper</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -41,15 +50,15 @@
         <directory>src/main/resources</directory>
       </resource>
       <resource>
-        <directory>src/main/kauri</directory>
-        <targetPath>KAURI-INF</targetPath>
+        <directory>src/main/lily</directory>
+        <targetPath>LILY-INF</targetPath>
       </resource>
     </resources>
 
     <plugins>
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

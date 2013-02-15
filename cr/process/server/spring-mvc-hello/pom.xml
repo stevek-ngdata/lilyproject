@@ -62,11 +62,6 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-container-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
       <artifactId>lily-repository-api</artifactId>
     </dependency>
 
@@ -91,15 +86,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.restlet.jse</groupId>
-      <artifactId>org.restlet</artifactId>
-      <version>${version.restlet}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.kauriproject</groupId>
-      <artifactId>kauri-routing-api</artifactId>
-      <version>${version.kauri}</version>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-runtime-rapi</artifactId>
     </dependency>
 
     <dependency>
@@ -136,15 +124,15 @@
         <directory>src/main/resources</directory>
       </resource>
       <resource>
-        <directory>src/main/kauri</directory>
-        <targetPath>KAURI-INF</targetPath>
+        <directory>src/main/lily</directory>
+        <targetPath>LILY-INF</targetPath>
       </resource>
     </resources>
 
     <plugins>
       <plugin>
-        <groupId>org.kauriproject</groupId>
-        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
       </plugin>
 
       <plugin>
@@ -157,7 +145,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${basedir}/target/classes/KAURI-INF/conf</outputDirectory>
+              <outputDirectory>${basedir}/target/classes/LILY-INF/conf</outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}/../conf/rest</directory>

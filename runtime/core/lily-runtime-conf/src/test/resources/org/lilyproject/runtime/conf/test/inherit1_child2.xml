@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<conf xmlns:conf="http://lilyproject.org/configuration"
+      conf:inherit="deep">
+  <properties conf:inheritKey="">
+     <property key="key2">value2 - altered</property>
+     <property key="key3">value3</property>
+  </properties>
+</conf>

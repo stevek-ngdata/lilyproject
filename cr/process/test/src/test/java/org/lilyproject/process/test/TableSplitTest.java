@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -136,7 +136,7 @@ public class TableSplitTest {
         FileUtils.forceMkdir(generalConfDir);
 
         // Write configuration to activate the decorator
-        String tablesXml = "<tables xmlns:conf='http://kauriproject.org/configuration' conf:inherit='shallow' " +
+        String tablesXml = "<tables xmlns:conf='http://lilyproject.org/configuration' conf:inherit='shallow' " +
                 "conf:inheritKey=\"string(@name)\">" +
                 "<table name='record'>" +
                 // 0x01 is the identifier byte for UUID records
@@ -153,7 +153,7 @@ public class TableSplitTest {
         FileUtils.writeStringToFile(new File(generalConfDir, "tables.xml"), tablesXml, "UTF-8");
 
         // Write configuration to enable the linkindex
-        String linkindexXml = "<linkindex xmlns:conf='http://kauriproject.org/configuration' conf:inherit='deep'>" +
+        String linkindexXml = "<linkindex xmlns:conf='http://lilyproject.org/configuration' conf:inherit='deep'>" +
                 "<enabled>true</enabled></linkindex>";
 
         FileUtils.writeStringToFile(new File(generalConfDir, "linkindex.xml"), linkindexXml, "UTF-8");

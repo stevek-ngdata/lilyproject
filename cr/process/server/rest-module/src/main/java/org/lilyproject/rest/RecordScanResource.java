@@ -25,6 +25,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -37,6 +38,8 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.cache.Cache;
+
+import static javax.ws.rs.core.Response.Status.*;
 
 @Path("scan/{id}")
 public class RecordScanResource extends RepositoryEnabled {
@@ -56,18 +59,18 @@ public class RecordScanResource extends RepositoryEnabled {
                     records.add(record);
                 }
             } catch (RepositoryException e) {
-                throw new ResourceException(e, Status.INTERNAL_SERVER_ERROR.getStatusCode());
+                throw new ResourceException(e, INTERNAL_SERVER_ERROR.getStatusCode());
             } catch (InterruptedException e) {
-                throw new ResourceException(e, Status.INTERNAL_SERVER_ERROR.getStatusCode());
+                throw new ResourceException(e, INTERNAL_SERVER_ERROR.getStatusCode());
             }
             
             if (records.size() < 1) {
-                throw new ResourceException("No more records found in scanner " + scanId, Status.NO_CONTENT.getStatusCode());
+                throw new WebApplicationException(Response.status(NO_CONTENT).build());
             }
             
             return EntityList.create(records, uriInfo);
         } else {
-            throw new ResourceException("No scan with ID " + scanId + " found", Status.NOT_FOUND.getStatusCode());
+            throw new ResourceException("No scan with ID " + scanId + " found", NOT_FOUND.getStatusCode());
         }
     }
     
@@ -79,7 +82,7 @@ public class RecordScanResource extends RepositoryEnabled {
             this.recordScannerMap.invalidate(scanId);
             return Response.ok().build();
         } else {
-            throw new ResourceException("No scan with ID " + scanId + " found", Status.NOT_FOUND.getStatusCode());        
+            throw new ResourceException("No scan with ID " + scanId + " found", NOT_FOUND.getStatusCode());
         }
     }
 }

@@ -31,15 +31,13 @@
     <version.maven>3.0.4</version.maven>
     <version.solr>4.0.0</version.solr>
     <version.httpclient>4.1.3</version.httpclient>
+    <version.freemarker>2.3.19</version.freemarker>
+    <version.spring>3.2.1.RELEASE</version.spring>
+    <version.log4j>1.2.16</version.log4j>
+    <version.slf4j>1.6.1</version.slf4j>
+    <version.jaxrs>1.1.1</version.jaxrs>
 
     <version.avro>1.7.1-813-1154</version.avro>
-
-    <!-- The following properties are all Kauri-related, and should be brought in sync with
-         Kauri when moving to a new Kauri version. -->
-    <version.kauri>0.4-r1971</version.kauri>
-    <version.spring>3.2.1.RELEASE</version.spring>
-    <version.jaxrs>1.0</version.jaxrs>
-    <version.restlet>svn7960</version.restlet>
 
     <!-- Align jetty versions -->
     <version.jetty>6.1.26.cloudera.2</version.jetty>
@@ -80,6 +78,8 @@
   </scm>
 
   <modules>
+    <module>runtime</module>
+
     <module>cr/repository</module>
     <module>cr/indexer</module>
     <module>cr/linkindex</module>
@@ -108,8 +108,9 @@
     <module>global/clientmetrics</module>
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
+    <module>global/servlet</module>
 
-    <module>tools/lily-kauri-plugin</module>
+    <module>tools/lily-runtime-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
     <module>tools/genscript-plugin</module>
     <module>tools/doc-tools</module>
@@ -131,6 +132,125 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- lily runtime -->
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-util</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-template</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency> 
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-rapi</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>         
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-deploy-repo</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-testfw</artifactId>
+        <version>2.2-SNAPSHOT</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-xmlcore</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-cli</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-launcher</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-conf</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>joda-time</groupId>
+        <artifactId>joda-time</artifactId>
+        <version>1.6</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-jxpath</groupId>
+        <artifactId>commons-jxpath</artifactId>
+        <version>1.3</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-jci-core</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.annotation</groupId>
+        <artifactId>jsr250-api</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jcl-over-slf4j</artifactId>
+        <version>${version.slf4j}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jul-to-slf4j</artifactId>
+        <version>${version.slf4j}</version>
+      </dependency>
+      <dependency>
+        <groupId>cglib</groupId>
+        <artifactId>cglib-nodep</artifactId>
+        <version>2.1_3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.aspectj</groupId>
+        <artifactId>aspectjrt</artifactId>
+        <version>1.6.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.aspectj</groupId>
+        <artifactId>aspectjweaver</artifactId>
+        <version>1.6.0</version>
+      </dependency>
+
+      <!-- lily (non-runtime) -->
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-jersey-helper</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-spring-mvc-helper</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-servletregistry-api</artifactId>
@@ -143,12 +263,7 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-container-api</artifactId>
-        <version>2.2-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-container-jetty</artifactId>
+        <artifactId>lily-jetty-module</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -428,7 +543,7 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-kauri-plugin</artifactId>
+        <artifactId>lily-runtime-plugin</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -648,8 +763,7 @@
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
-        <version>1.2.16</version>
-        <scope>runtime</scope>
+        <version>${version.log4j}</version>
         <exclusions>
           <!-- jmxtools and jmxri dependencies were broken in repo -->
           <exclusion>
@@ -714,11 +828,6 @@
         <groupId>org.codehaus.jackson</groupId>
         <artifactId>jackson-mapper-asl</artifactId>
         <version>1.9.2</version>
-      </dependency>
-      <dependency>
-        <groupId>joda-time</groupId>
-        <artifactId>joda-time</artifactId>
-        <version>1.6</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.netty</groupId>
@@ -818,10 +927,37 @@
         <version>${version.httpclient}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpcore</artifactId>
-        <version>${version.httpclient}</version>
+        <groupId>org.freemarker</groupId>
+        <artifactId>freemarker</artifactId>
+        <version>${version.freemarker}</version>
       </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-core</artifactId>
+        <version>${version.spring}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-beans</artifactId>
+        <version>${version.spring}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-tx</artifactId>
+        <version>${version.spring}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context</artifactId>
+        <version>${version.spring}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-aop</artifactId>
+        <version>${version.spring}</version>
+      </dependency>
+    
+
     </dependencies>
   </dependencyManagement>
 
@@ -888,17 +1024,6 @@
         <enabled>true</enabled>
       </releases>
     </repository>
-
-    <!-- This repository is necessary to be able to download Kauri's restlet dependencies, but
-         only for users of Lily that have not build Lily locally. The reason is a current
-         limitation in the lily-kauri-plugin, which only makes use of the repository declarations
-         of Lily, rather than recursively using those from the projects to which the dependencies
-         belong.
-    -->
-    <repository>
-      <id>kauri-dev</id>
-      <url>http://kauriproject.org/maven/maven2/dev</url>
-    </repository>
   </repositories>
 
   <pluginRepositories>
@@ -920,6 +1045,27 @@
       <name>Lily snapshot plugin repository</name>
       <url>http://lilyproject.org/maven/maven2/deploy/</url>
     </pluginRepository>
+
+    <pluginRepository>
+      <id>kauri-dev</id>
+      <url>http://lilyproject.org/maven/maven2/dev</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <id>kauri-deploy</id>
+      <url>http://lilyproject.org/maven/maven2/deploy</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <name>oss.sonatype.org</name>
+      <id>oss.sonatype.org</id>
+      <url>http://oss.sonatype.org/content/groups/public</url>
+    </pluginRepository>
+
   </pluginRepositories>
 
 
@@ -1019,9 +1165,9 @@
           <version>${version.avro}</version>
         </plugin>
         <plugin>
-          <groupId>org.kauriproject</groupId>
-          <artifactId>kauri-genclassloader-plugin</artifactId>
-          <version>${version.kauri}</version>
+          <groupId>org.lilyproject</groupId>
+          <artifactId>lily-runtime-genclassloader-plugin</artifactId>
+          <version>${project.version}</version>
           <executions>
             <execution>
               <phase>compile</phase>
@@ -1149,6 +1295,16 @@
             </reports>
           </reportSet>
         </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <version>2.13</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jxr-plugin</artifactId>
+        <version>2.3</version>
       </plugin>
     </plugins>
   </reporting>

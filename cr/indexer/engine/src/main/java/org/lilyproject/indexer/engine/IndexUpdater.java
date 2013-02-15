@@ -136,7 +136,7 @@ public class IndexUpdater implements EventListener {
         long before = System.currentTimeMillis();
 
         // During the processing of this message, we switch the context class loader to the one
-        // of the Kauri module to which the index updater belongs. This is necessary for Tika
+        // of the Lily Runtime module to which the index updater belongs. This is necessary for Tika
         // to find its parser implementations.
 
         RecordEvent recordEvent = null;

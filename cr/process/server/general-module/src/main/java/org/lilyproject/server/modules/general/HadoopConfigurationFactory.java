@@ -16,7 +16,7 @@
 package org.lilyproject.server.modules.general;
 
 import org.apache.hadoop.conf.Configuration;
-import org.kauriproject.conf.Conf;
+import org.lilyproject.runtime.conf.Conf;
 
 public interface HadoopConfigurationFactory {
     Configuration getHBaseConf();

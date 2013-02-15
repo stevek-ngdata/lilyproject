@@ -24,7 +24,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.apache.zookeeper.KeeperException;
-import org.kauriproject.conf.Conf;
+import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.BlobIncubatorMonitor;

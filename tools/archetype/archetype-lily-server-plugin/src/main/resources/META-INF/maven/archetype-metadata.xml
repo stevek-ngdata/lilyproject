@@ -32,7 +32,7 @@ http://maven.apache.org/plugins/maven-archetype-plugin/specification/archetype-m
       </includes>
     </fileSet>
     <fileSet filtered="true">
-      <directory>src/main/kauri</directory>
+      <directory>src/main/lily</directory>
       <includes>
         <include>**/*.xml</include>
       </includes>

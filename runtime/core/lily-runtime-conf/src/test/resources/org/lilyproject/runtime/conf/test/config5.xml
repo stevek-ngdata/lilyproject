@@ -1,0 +1,7 @@
+<config boolean="true" int="5" long="6" float="3.3" double="5.5">
+  <boolean>true</boolean>
+  <int>5</int>
+  <long>6</long>
+  <float>3.3</float>
+  <double>5.5</double>
+</config>

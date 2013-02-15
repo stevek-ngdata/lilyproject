@@ -33,6 +33,7 @@ import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.CompareOp;
@@ -61,7 +62,8 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        if (type.equals(PostAction.class) && mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+        //TODO: check mediaType.equals vs .isCompatible;
+        if (type.equals(PostAction.class) && mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
             if (genericType instanceof ParameterizedType) {
                 ParameterizedType pt = (ParameterizedType)genericType;
                 Type[] types = pt.getActualTypeArguments();
@@ -81,7 +83,12 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
 
         Type entityType = ((ParameterizedType)genericType).getActualTypeArguments()[0];
 
-        JsonNode node = JsonFormat.deserializeNonStd(entityStream);
+        JsonNode node = null;
+        try {
+            node = JsonFormat.deserializeNonStd(entityStream);
+        } catch (JsonParseException e) {
+            throw new ResourceException(e, BAD_REQUEST.getStatusCode());
+        }
 
         if (!(node instanceof ObjectNode)) {
             throw new ResourceException("Request body should be a JSON object.", BAD_REQUEST.getStatusCode());

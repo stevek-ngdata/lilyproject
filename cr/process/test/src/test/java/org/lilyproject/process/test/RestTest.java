@@ -15,6 +15,25 @@
  */
 package org.lilyproject.process.test;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
@@ -24,29 +43,19 @@ import org.joda.time.LocalDate;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
-
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
-import org.restlet.*;
-import org.restlet.data.*;
-import org.restlet.representation.Representation;
-import org.restlet.representation.StringRepresentation;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class RestTest {
     private static String BASE_URI;
 
-    private static Client CLIENT;
+    private static HttpClient httpClient;
     private static LilyProxy lilyProxy;
 
     @BeforeClass
@@ -54,7 +63,7 @@ public class RestTest {
         lilyProxy = new LilyProxy();
         lilyProxy.start();
 
-        CLIENT = new Client(new Context(), Protocol.HTTP);
+        httpClient = new DefaultHttpClient();
 
         BASE_URI = "http://localhost:12060/repository";
     }
@@ -73,13 +82,13 @@ public class RestTest {
     @Test
     public void testGeneralErrors() throws Exception {
         // Perform request to non-existing resource class
-        Response response = get(BASE_URI + "/foobar");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+        ResponseAndContent response = get(BASE_URI + "/foobar");
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
 
         // Submit invalid json
         String body = json("{ f [ }");
         response = post(BASE_URI + "/schema/fieldType", body);
-        assertStatus(Status.CLIENT_ERROR_BAD_REQUEST, response);
+        assertStatus(HttpStatus.SC_BAD_REQUEST, response);
     }
 
     @Test
@@ -87,10 +96,10 @@ public class RestTest {
         // Create field type using POST
         String body = json("{action: 'create', fieldType: {name: 'n$field1', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
-        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
-        JsonNode json = readJson(response.getEntity());
+        JsonNode json = readJson(response);
 
         // verify location header
         assertEquals(BASE_URI + "/schema/fieldTypeById/" + json.get("id").getValueAsText(), response.getLocationRef().toString());
@@ -103,66 +112,66 @@ public class RestTest {
         body = json("{action: 'create', fieldType: {name: 'n$field1a', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/fieldType", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
         assertEquals(BASE_URI + "/schema/fieldType/n$field1a?ns.n=org.lilyproject.resttest", response.getLocationRef().toString());
 
         // Create field type using PUT
         body = json("{name: 'n$field2', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldType/n$field2?ns.n=org.lilyproject.resttest", body);
-        String fieldType2Id = readJson(response.getEntity()).get("id").getValueAsText();
-        assertStatus(Status.SUCCESS_CREATED, response);
+        String fieldType2Id = readJson(response).get("id").getValueAsText();
+        assertStatus(HttpStatus.SC_CREATED, response);
         assertEquals(BASE_URI + "/schema/fieldType/n$field2?ns.n=org.lilyproject.resttest", response.getLocationRef().toString());
 
         // Update a field type - by name : change field2 to field3
         body = json("{name: 'n$field3', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldType/n$field2?ns.n=org.lilyproject.resttest", body);
-        assertStatus(Status.REDIRECTION_PERMANENT, response);
+        assertStatus(HttpStatus.SC_MOVED_PERMANENTLY, response);
         assertEquals(BASE_URI + "/schema/fieldType/n$field3?ns.n=org.lilyproject.resttest", response.getLocationRef().toString());
 
         response = get(BASE_URI + "/schema/fieldType/n$field2?ns.n=org.lilyproject.resttest");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
 
         response = get(BASE_URI + "/schema/fieldType/n$field3?ns.n=org.lilyproject.resttest");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Update a field type - by ID : change field3 to field4
         body = json("{name: 'n$field4', valueType: 'STRING', "
                 + "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldTypeById/" + fieldType2Id, body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Test updating immutable properties
         body = json("{name: 'n$field4', valueType: 'INTEGER', "
                 + "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldTypeById/" + fieldType2Id, body);
-        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+        assertStatus(HttpStatus.SC_CONFLICT, response);
 
         body = json("{name: 'n$field4', valueType: 'STRING', "
                 + "scope: 'non_versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldTypeById/" + fieldType2Id, body);
-        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+        assertStatus(HttpStatus.SC_CONFLICT, response);
 
         body = json("{name: 'n$field4', valueType: 'LIST<STRING>', "
                 + "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldTypeById/" + fieldType2Id, body);
-        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+        assertStatus(HttpStatus.SC_CONFLICT, response);
 
         body = json("{name: 'n$field4', valueType: 'PATH<STRING>', "
                 + "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldType/n$field4?ns.n=org.lilyproject.resttest", body);
-        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+        assertStatus(HttpStatus.SC_CONFLICT, response);
 
         // Get list of field types
         response = get(BASE_URI + "/schema/fieldType");
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         assertTrue(json.get("results").size() > 0);
 
         response = get(BASE_URI + "/schema/fieldTypeById");
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         assertTrue(json.get("results").size() > 0);
     }
 
@@ -174,19 +183,19 @@ public class RestTest {
             String body = json("{action: 'create', fieldType: {name: 'n$rt_field" + i +
                     "', valueType: 'STRING', " +
                     "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
-            Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-            assertStatus(Status.SUCCESS_CREATED, response);
-            JsonNode json = readJson(response.getEntity());
+            ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+            assertStatus(HttpStatus.SC_CREATED, response);
+            JsonNode json = readJson(response);
             fieldTypeIds.add(json.get("id").getValueAsText());
         }
 
         // Create a record type using POST
         String body = json("{action: 'create', recordType: {name: 'n$recordType1', fields: [ {name: 'n$rt_field1'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
-        Response response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/recordTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
-        JsonNode json = readJson(response.getEntity());
+        JsonNode json = readJson(response);
 
         // verify location header
         assertEquals(BASE_URI + "/schema/recordTypeById/" + json.get("id").getValueAsText(),
@@ -207,16 +216,16 @@ public class RestTest {
         body = json("{action: 'create', recordType: {name: 'n$recordType1a', fields: [ {name: 'n$rt_field1'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/recordType", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
         assertEquals(BASE_URI + "/schema/recordType/n$recordType1a?ns.n=org.lilyproject.resttest", response.getLocationRef().toString());
 
         // Create a record type using PUT
         body = json("{name: 'n$recordType2', fields: [ {name: 'n$rt_field1'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/recordType/n$recordType2?ns.n=org.lilyproject.resttest", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
         assertEquals(BASE_URI + "/schema/recordType/n$recordType2?ns.n=org.lilyproject.resttest", response.getLocationRef().toString());
-        json = readJson(response.getEntity());
+        json = readJson(response);
         String secondRtId = json.get("id").getValueAsText();
 
         // Update a record type - by ID
@@ -224,8 +233,8 @@ public class RestTest {
                 "fields: [ {name: 'n$rt_field1', mandatory: true}, " +
                 " {name : 'n$rt_field2', mandatory: true} ], namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/recordTypeById/" + secondRtId, body);
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         assertEquals(secondRtId, json.get("id").getTextValue());
         assertEquals(2L, json.get("version").getLongValue());
         assertEquals(2, json.get("fields").size());
@@ -237,18 +246,18 @@ public class RestTest {
                 "fields: [ {name: 'n$rt_field1', mandatory: true}, " +
                 " {name : 'n$rt_field2', mandatory: true} ], namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/recordType/n$recordType2?ns.n=org.lilyproject.resttest", body);
-        assertStatus(Status.REDIRECTION_PERMANENT, response);
+        assertStatus(HttpStatus.SC_MOVED_PERMANENTLY, response);
         assertEquals(BASE_URI + "/schema/recordType/n$recordType3?ns.n=org.lilyproject.resttest", response.getLocationRef().toString());
 
         // Get list of record types
         response = get(BASE_URI + "/schema/recordType");
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         assertTrue(json.get("results").size() > 0);
 
         response = get(BASE_URI + "/schema/recordTypeById");
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         assertTrue(json.get("results").size() > 0);
 
         //
@@ -259,25 +268,25 @@ public class RestTest {
         body = json("{action: 'create', recordType: {name: 'n$mixin1', fields: [ {name: 'n$rt_field2'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
-        String mixin1Id = readJson(response.getEntity()).get("id").getTextValue();
+        assertStatus(HttpStatus.SC_CREATED, response);
+        String mixin1Id = readJson(response).get("id").getTextValue();
 
         body = json("{action: 'create', recordType: {name: 'n$mixin2', fields: [ {name: 'n$rt_field3'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
-        String mixin2Id = readJson(response.getEntity()).get("id").getTextValue();
+        assertStatus(HttpStatus.SC_CREATED, response);
+        String mixin2Id = readJson(response).get("id").getTextValue();
 
         // Create a record type using the mixins
         body = json("{action: 'create', recordType: {name: 'n$mixinUser', fields: [ {name: 'n$rt_field1'} ]," +
                 "mixins: [{name: 'n$mixin1', version: 1}, { id: '" + mixin2Id + "' } ], " +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         response = get(response.getLocationRef().toString());
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
 
         assertEquals(2, json.get("mixins").size());
 
@@ -287,33 +296,38 @@ public class RestTest {
                 "namespaces: { 'org.lilyproject.resttest': 'n' } }");
         String mixinUserUri = BASE_URI + "/schema/recordType/n$mixinUser?ns.n=org.lilyproject.resttest";
         response = put(mixinUserUri, body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         response = get(mixinUserUri);
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
 
         assertEquals(1, json.get("mixins").size());
     }
 
-    private void makeBookSchema() throws IOException {
+    private void makeBookSchema() throws Exception {
         // Create field type
         String body = json("{name: 'b$title', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'b' } }");
-        Response response = put(BASE_URI + "/schema/fieldType/b$title?ns.b=org.lilyproject.resttest", body);
-        assertTrue(response.getStatus().isSuccess());
+        ResponseAndContent response = put(BASE_URI + "/schema/fieldType/b$title?ns.b=org.lilyproject.resttest", body);
+        assertTrue(isSuccess(response));
 
         // Create field type
         body = json("{name: 'b$summary', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/schema/fieldType/b$summary?ns.b=org.lilyproject.resttest", body);
-        assertTrue(response.getStatus().isSuccess());
+        assertTrue(isSuccess(response));
 
         // Create a record type
         body = json("{name: 'b$book', fields: [ {name: 'b$title'}, {name: 'b$summary'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/schema/recordType/b$book?ns.b=org.lilyproject.resttest", body);
-        assertTrue(response.getStatus().isSuccess());
+        assertTrue(isSuccess(response));
+    }
+
+    private boolean isSuccess(ResponseAndContent response) {
+        int code = response.getResponse().getStatusLine().getStatusCode();
+        return (code >= 200 && code < 210);
     }
 
     @Test
@@ -322,117 +336,117 @@ public class RestTest {
 
         // Create a record using PUT and a user ID
         String body = json("{ type: 'b$book', fields: { 'b$title' : 'Faster Fishing' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
-        Response response = put(BASE_URI + "/record/USER.faster_fishing", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = put(BASE_URI + "/record/USER.faster_fishing", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Read the record
         response = get(BASE_URI + "/record/USER.faster_fishing");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Verify content
-        JsonNode json = readJson(response.getEntity());
+        JsonNode json = readJson(response);
         assertEquals(1L, json.get("fields").size());
         assertNull(json.get("schema")); // schema info should not be included by default
 
         // Read the record with schema info
         response = get(BASE_URI + "/record/USER.faster_fishing?schema=true");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Verify content
-        json = readJson(response.getEntity());
+        json = readJson(response);
         assertEquals(1L, json.get("fields").size());
         assertNotNull(json.get("schema"));
         assertEquals(1L, json.get("schema").size());
 
         // Read the record without namespace prefixes
         response = get(BASE_URI + "/record/USER.faster_fishing?nsprefixes=false");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Verify content
-        json = readJson(response.getEntity());
+        json = readJson(response);
         assertEquals("Faster Fishing", json.get("fields").get("{org.lilyproject.resttest}title").getTextValue());
 
         // Read the record as specific version
         response = get(BASE_URI + "/record/USER.faster_fishing/version/1");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Read a non-existing version
         response = get(BASE_URI + "/record/USER.faster_fishing/version/10");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
 
         // Specify non-numeric version
         response = get(BASE_URI + "/record/USER.faster_fishing/version/abc");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
 
         // Update the record
         body = json("{ action: 'update', record: { type: 'b$book', fields: { 'b$title' : 'Faster Fishing (new)' }, " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/record/USER.faster_fishing", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        json = readJson(response.getEntity());
+        json = readJson(response);
         assertEquals(2L, json.get("version").getLongValue());
 
         response = get(BASE_URI + "/record/USER.faster_fishing/version/2");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Update the record, specify the ID both in URI and json
         body = json("{ action: 'update', record: { id: 'USER.faster_fishing', type: 'b$book', " +
                 "fields: { 'b$title' : 'Faster Fishing (new 2)' }, " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/record/USER.faster_fishing", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Update the record, specify the ID both in URI and json but both different -- should be a bad request
         body = json("{ action: 'update', record: { id: 'USER.faster_fishing_smth', type: 'b$book', " +
                 "fields: { 'b$title' : 'Faster Fishing (new 2)' }, " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/record/USER.faster_fishing", body);
-        assertStatus(Status.CLIENT_ERROR_BAD_REQUEST, response);
+        assertStatus(HttpStatus.SC_BAD_REQUEST, response);
 
         // Update a record which does not exist, should fail
         body = json("{ action: 'update', record: { type: 'b$book', fields: { 'b$title' : 'Faster Fishing (new 3)' }, " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/record/USER.non_existing_record", body);
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
 
         // Delete the record
         response = delete(BASE_URI + "/record/USER.faster_fishing");
-        assertStatus(Status.SUCCESS_NO_CONTENT, response);
+        assertStatus(HttpStatus.SC_NO_CONTENT, response);
 
         // Verify deleted record is gone
         response = get(BASE_URI + "/record/USER.faster_fishing");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
 
         // Test delete of non-existing record
         response = delete(BASE_URI + "/record/USER.faster_fishing");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
 
         // Create a record using PUT and a client-specified UUID
         UUID uuid = UUID.randomUUID();
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Title 1' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/UUID." + uuid.toString(), body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         response = get(BASE_URI + "/record/UUID." + uuid.toString());
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Create a record using POST and a client-specified UUID
         uuid = UUID.randomUUID();
         body = json("{ action: 'create', record: { id: 'UUID." + uuid.toString() + "', type: 'b$book', " +
                 "fields: { 'b$title' : 'Title 1' }, namespaces : { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/record", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         response = get(BASE_URI + "/record/UUID." + uuid.toString());
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Update this record, specify the ID both in URI and json
         body = json("{ action: 'update', record: { id: 'UUID." + uuid.toString() + "', type: 'b$book', " +
                 "fields: { 'b$title' : 'Title 1 (new)' }, " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/record/UUID." + uuid.toString(), body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
     }
 
     @Test
@@ -440,43 +454,43 @@ public class RestTest {
         // Create two field types
         String body = json("{action: 'create', fieldType: {name: 'n$del_field1', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
-        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{action: 'create', fieldType: {name: 'n$del_field2', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a record type
         body = json("{action: 'create', recordType: {name: 'n$del', " +
                 "fields: [ {name: 'n$del_field1'}, {name: 'n$del_field2'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/recordType", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a record with a value for the two fields
         body = json("{ action: 'create', record: { type: 'n$del', " +
                 "fields: { 'n$del_field1' : 'foo', 'n$del_field2': 'bar' }, namespaces : { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/record", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
         String uri = response.getLocationRef().toString();
-        JsonNode json = readJson(response.getEntity());
+        JsonNode json = readJson(response);
         assertEquals(2L, json.get("fields").size());
 
         // Delete one of the fields. Do this 2 times, the second time should have no effect.
         for (int i = 0; i < 2; i++) {
             body = json("{ fieldsToDelete: ['n$del_field2'], namespaces : { 'org.lilyproject.resttest': 'n' } }");
             response = put(uri, body);
-            assertStatus(Status.SUCCESS_OK, response);
+            assertStatus(HttpStatus.SC_OK, response);
 
             // TODO FIXME we need to re-read the record here since the returned record contains only submitted fields
             response = get(uri);
-            assertStatus(Status.SUCCESS_OK, response);
-            json = readJson(response.getEntity());
+            assertStatus(HttpStatus.SC_OK, response);
+            json = readJson(response);
             assertEquals(1L, json.get("fields").size());
             assertEquals(2L, json.get("version").getLongValue());
-        }        
+        }
     }
 
     /**
@@ -487,68 +501,68 @@ public class RestTest {
         // Create two field types
         String body = json("{action: 'create', fieldType: {name: 'n$vrt_field1', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
-        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{action: 'create', fieldType: {name: 'n$vrt_field2', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a record type
         body = json("{action: 'create', recordType: {name: 'n$vrt', " +
                 "fields: [ {name: 'n$vrt_field1'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
         String rtIdUri = response.getLocationRef().toString();
 
         body = json("{name: 'n$vrt', " +
                 "fields: [ {name: 'n$vrt_field1'}, {name: 'n$vrt_field2'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/recordType/n$vrt?ns.n=org.lilyproject.resttest", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         response = get(BASE_URI + "/schema/recordType/n$vrt?ns.n=org.lilyproject.resttest");
-        assertStatus(Status.SUCCESS_OK, response);
-        JsonNode json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        JsonNode json = readJson(response);
         assertEquals(2L, json.get("version").getLongValue());
 
         response = get(BASE_URI + "/schema/recordType/n$vrt/version/2?ns.n=org.lilyproject.resttest");
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         assertEquals(2L, json.get("version").getLongValue());
 
         response = get(rtIdUri + "/version/2");
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         assertEquals(2L, json.get("version").getLongValue());
 
         // Create record
         body = json("{ type: {name: 'n$vrt', version: 1}, " +
                 "fields: { 'n$vrt_field1' : 'pink shoe laces' }, namespaces : { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/record/USER.pink_shoe_laces", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
-        json = readJson(response.getEntity());
+        json = readJson(response);
         assertEquals(1L, json.get("type").get("version").getLongValue());
 
         // Update record
         body = json("{ type: {name: 'n$vrt', version: 1}, " +
                 "fields: { 'n$vrt_field1' : 'pink shoe laces 2' }, namespaces : { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/record/USER.pink_shoe_laces", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        json = readJson(response.getEntity());
+        json = readJson(response);
         assertEquals(1L, json.get("type").get("version").getLongValue());
 
         // Update without specifying version, should move to last version
         body = json("{ type: {name: 'n$vrt'}, " +
                 "fields: { 'n$vrt_field1' : 'pink shoe laces 3' }, namespaces : { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/record/USER.pink_shoe_laces", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        json = readJson(response.getEntity());
+        json = readJson(response);
         assertEquals(2L, json.get("type").get("version").getLongValue());
     }
 
@@ -563,8 +577,8 @@ public class RestTest {
             String body = json("{action: 'create', fieldType: {name: 'n$f" + type +
                     "', valueType: '" + type + "', " +
                     "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
-            Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-            assertStatus(Status.SUCCESS_CREATED, response);
+            ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+            assertStatus(HttpStatus.SC_CREATED, response);
         }
 
         String body = json("{action: 'create', recordType: {name: 'n$types', fields: [" +
@@ -572,8 +586,8 @@ public class RestTest {
                 " , {name: 'n$fDECIMAL'}, {name: 'n$fBOOLEAN'}, {name: 'n$fURI'}, {name: 'n$fDATETIME'}, " +
                 " {name: 'n$fDATE'}, {name: 'n$fLINK'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
-        Response response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/recordTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{ action: 'create', record: { type: 'n$types', fields: { " +
                 "'n$fSTRING' : 'a string'," +
@@ -588,12 +602,12 @@ public class RestTest {
                 "'n$fLINK' : 'USER.foobar.!*,arg1=val1,+arg2,-arg3'" +
                 "}, namespaces : { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/record", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         response = get(response.getLocationRef().toString());
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        JsonNode json = readJson(response.getEntity());
+        JsonNode json = readJson(response);
         ObjectNode fieldsNode = (ObjectNode)json.get("fields");
         String prefix = json.get("namespaces").get("org.lilyproject.resttest").getTextValue();
         assertEquals("a string", fieldsNode.get(prefix + "$fSTRING").getTextValue());
@@ -614,29 +628,29 @@ public class RestTest {
         String body = json("{action: 'create', fieldType: {name: 'n$multiValue', " +
                 "valueType: 'LIST<STRING>', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
-        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Hierarchical field
         body = json("{action: 'create', fieldType: {name: 'n$hierarchical', " +
                 "valueType: 'PATH<STRING>', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Multi-value + hierarchical field
         body = json("{action: 'create', fieldType: {name: 'n$multiValueHierarchical', " +
                 "valueType: 'LIST<PATH<STRING>>', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Combine them into a record type
         body = json("{action: 'create', recordType: {name: 'n$mvAndHier', " +
                 "fields: [ {name: 'n$multiValue'}, {name: 'n$hierarchical'}, {name: 'n$multiValueHierarchical'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a record
         body = json("{ type: 'n$mvAndHier', " +
@@ -645,13 +659,13 @@ public class RestTest {
                 " 'n$multiValueHierarchical' : [['partA', 'partB'],['partC','partD']]" +
                 " }, namespaces : { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/record/USER.multiValueHierarchical", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Read the record
         response = get(BASE_URI + "/record/USER.multiValueHierarchical");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        JsonNode json = readJson(response.getEntity());
+        JsonNode json = readJson(response);
         JsonNode fieldsNode = json.get("fields");
         String prefix = json.get("namespaces").get("org.lilyproject.resttest").getTextValue();
 
@@ -680,24 +694,21 @@ public class RestTest {
         // Create a blob field type
         String body = json("{action: 'create', fieldType: {name: 'b$blob1', valueType: 'BLOB', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'b' } } }");
-        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a record type holding the blob field
         body = json("{action: 'create', recordType: {name: 'b$blobRT', fields: [ {name: 'b$blob1'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Upload a blob
-        Request req = new Request(Method.POST, BASE_URI + "/blob");
         String data = "Hello, blob world!";
-        Representation blobRepr = new StringRepresentation(data, MediaType.TEXT_PLAIN);
-        req.setEntity(blobRepr);
-        response = CLIENT.handle(req);
+        response = postText(BASE_URI + "/blob", data);
 
-        assertStatus(Status.SUCCESS_OK, response);
-        JsonNode jsonNode = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        JsonNode jsonNode = readJson(response);
         String blobValue = jsonNode.get("value").getTextValue();
         assertEquals("text/plain", jsonNode.get("mediaType").getTextValue());
         assertEquals((long)data.length(), jsonNode.get("size").getLongValue());
@@ -715,13 +726,13 @@ public class RestTest {
         nsNode.put("org.lilyproject.resttest", "b");
 
         response = put(BASE_URI + "/record/USER.blob1", recordNode.toString());
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Read the record
         response = get(BASE_URI + "/record/USER.blob1");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        jsonNode = readJson(response.getEntity());
+        jsonNode = readJson(response);
         String prefix = jsonNode.get("namespaces").get("org.lilyproject.resttest").getValueAsText();
         blobNode = (ObjectNode)jsonNode.get("fields").get(prefix + "$blob1");
         assertEquals("text/plain", blobNode.get("mediaType").getValueAsText());
@@ -731,8 +742,8 @@ public class RestTest {
 
         // Read the blob
         response = get(BASE_URI + "/record/USER.blob1/field/b$blob1/data?ns.b=org.lilyproject.resttest");
-        assertStatus(Status.SUCCESS_OK, response);
-        assertEquals(data, response.getEntityAsText());
+        assertStatus(HttpStatus.SC_OK, response);
+        assertEquals(data, new String(response.getContent()));
     }
 
     @Test
@@ -740,20 +751,20 @@ public class RestTest {
         // Create a blob field type
         String body = json("{action: 'create', fieldType: {name: 'b$blob2', valueType: 'LIST<PATH<BLOB>>', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'b' } } }");
-        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a record type holding the blob field
         body = json("{action: 'create', recordType: {name: 'b$blobRT2', fields: [ {name: 'b$blob2'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Upload some blobs
-        ObjectNode blob1Value = createTextBlob("My blob 1");
-        ObjectNode blob2Value = createTextBlob("My blob 2");
-        ObjectNode blob3Value = createTextBlob("My blob 3");
-        ObjectNode blob4Value = createTextBlob("My blob 4");
+        ObjectNode blob1Value = (ObjectNode)readJson(postText(BASE_URI + "/blob", "My blob 1"));
+        ObjectNode blob2Value = (ObjectNode)readJson(postText(BASE_URI + "/blob", "My blob 2"));
+        ObjectNode blob3Value = (ObjectNode)readJson(postText(BASE_URI + "/blob", "My blob 3"));
+        ObjectNode blob4Value = (ObjectNode)readJson(postText(BASE_URI + "/blob", "My blob 4"));
 
         // Create a record with these blobs
         ObjectNode recordNode = JsonNodeFactory.instance.objectNode();
@@ -774,13 +785,13 @@ public class RestTest {
         nsNode.put("org.lilyproject.resttest", "b");
 
         response = put(BASE_URI + "/record/USER.blob2", recordNode.toString());
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Read the record
         response = get(BASE_URI + "/record/USER.blob2");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        JsonNode jsonNode = readJson(response.getEntity());
+        JsonNode jsonNode = readJson(response);
         String prefix = jsonNode.get("namespaces").get("org.lilyproject.resttest").getValueAsText();
         blobNode = (ArrayNode)jsonNode.get("fields").get(prefix + "$blob2");
         assertEquals(2, blobNode.size());
@@ -790,24 +801,13 @@ public class RestTest {
             for (int hIndex = 0; hIndex < 2; hIndex++) {
                 response = get(BASE_URI + "/record/USER.blob2/field/b$blob2/data?ns.b=org.lilyproject.resttest" +
                         "&indexes=" + mvIndex + "," + hIndex);
-                assertStatus(Status.SUCCESS_OK, response);
+                assertStatus(HttpStatus.SC_OK, response);
             }
         }
 
         // Read a blob at non-existing indexes
         response = get(BASE_URI + "/record/USER.blob2/field/b$blob2/data?ns.b=org.lilyproject.resttest&mvIndex=5&hIndex=3");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
-    }
-
-    private ObjectNode createTextBlob(String data) throws IOException {
-        Request req = new Request(Method.POST, BASE_URI + "/blob");
-        Representation blobRepr = new StringRepresentation(data, MediaType.TEXT_PLAIN);
-        req.setEntity(blobRepr);
-        Response response = CLIENT.handle(req);
-
-        assertStatus(Status.SUCCESS_OK, response);
-        JsonNode jsonNode = readJson(response.getEntity());
-        return (ObjectNode)jsonNode;
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
     }
 
     @Test
@@ -815,42 +815,42 @@ public class RestTest {
         // Create some field types
         String body = json("{action: 'create', fieldType: {name: 'p$name', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'p' } } }");
-        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{action: 'create', fieldType: {name: 'p$price', valueType: 'DOUBLE', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'p' } } }");
         response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{action: 'create', fieldType: {name: 'p$colour', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'p' } } }");
         response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a record type
         body = json("{action: 'create', recordType: {name: 'p$product', fields: [ {name: 'p$name'}, " +
                 "{name: 'p$price'}, {name: 'p$colour'} ], namespaces: { 'org.lilyproject.resttest': 'p' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a record with some versions
         body = json("{ type: 'p$product', fields: { 'p$name' : 'Product 1' }, namespaces : { 'org.lilyproject.resttest': 'p' } }");
         response = put(BASE_URI + "/record/USER.product1", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{ fields: { 'p$name' : 'Product 1', 'p$price': 5.5 }, namespaces : { 'org.lilyproject.resttest': 'p' } }");
         response = put(BASE_URI + "/record/USER.product1", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         body = json("{ fields: { 'p$name' : 'Product 1', 'p$price': 5.5, 'p$colour': 'red' }, namespaces : { 'org.lilyproject.resttest': 'p' } }");
         response = put(BASE_URI + "/record/USER.product1", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Get list of versions
         response = get(BASE_URI + "/record/USER.product1/version");
-        assertStatus(Status.SUCCESS_OK, response);
-        JsonNode json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        JsonNode json = readJson(response);
         assertEquals(3, json.get("results").size());
         JsonNode results = json.get("results");
         assertEquals(1, results.get(0).get("fields").size());
@@ -858,23 +858,23 @@ public class RestTest {
         assertEquals(3, results.get(2).get("fields").size());
 
         response = get(BASE_URI + "/record/USER.product1/version?max-results=1");
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         assertEquals(1, json.get("results").size());
         results = json.get("results");
         assertEquals(1, results.get(0).get("version").getLongValue());
 
         response = get(BASE_URI + "/record/USER.product1/version?start-index=2&max-results=1");
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         assertEquals(1, json.get("results").size());
         results = json.get("results");
         assertEquals(2, results.get(0).get("version").getLongValue());
 
         // Retrieve only one field
         response = get(BASE_URI + "/record/USER.product1/version?fields=n$name&ns.n=org.lilyproject.resttest");
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         results = json.get("results");
         assertEquals(1, results.get(0).get("fields").size());
         assertEquals(1, results.get(1).get("fields").size());
@@ -886,21 +886,21 @@ public class RestTest {
         makeBookSchema();
 
         String body = json("{ type: 'b$book', fields: { 'b$title' : 'Hunting' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
-        Response response = put(BASE_URI + "/record/USER.hunting.lang=en", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = put(BASE_URI + "/record/USER.hunting.lang=en", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Jagen' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.hunting.lang=nl", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{ type: 'b$book', fields: { 'b$title' : 'La chasse' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.hunting.lang=fr", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         response = get(BASE_URI + "/record/USER.hunting/variant");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        JsonNode jsonNode = readJson(response.getEntity());
+        JsonNode jsonNode = readJson(response);
         ArrayNode resultsNode = (ArrayNode)jsonNode.get("results");
 
         assertEquals(3, resultsNode.size());
@@ -918,28 +918,28 @@ public class RestTest {
         // Create 'active' vtag field
         String body = json("{action: 'create', fieldType: {name: 'v$active', valueType: 'LONG', " +
                 "scope: 'non_versioned', namespaces: { 'org.lilyproject.vtag': 'v' } } }");
-        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Title version 1' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.vtagtest", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Title version 2', 'v$active': 1 }, " +
                 "namespaces : { 'org.lilyproject.resttest': 'b', 'org.lilyproject.vtag': 'v' } }");
         response = put(BASE_URI + "/record/USER.vtagtest", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         response = get(BASE_URI + "/record/USER.vtagtest/vtag/active");
-        assertStatus(Status.SUCCESS_OK, response);
-        assertEquals(1L, readJson(response.getEntity()).get("version").getLongValue());
+        assertStatus(HttpStatus.SC_OK, response);
+        assertEquals(1L, readJson(response).get("version").getLongValue());
 
         response = get(BASE_URI + "/record/USER.vtagtest/vtag/last");
-        assertStatus(Status.SUCCESS_OK, response);
-        assertEquals(2L, readJson(response.getEntity()).get("version").getLongValue());
+        assertStatus(HttpStatus.SC_OK, response);
+        assertEquals(2L, readJson(response).get("version").getLongValue());
 
         response = get(BASE_URI + "/record/USER.vtagtest/vtag/aNotExistingVTagName");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
     }
 
     @Test
@@ -947,32 +947,32 @@ public class RestTest {
         // Create a versioned field type
         String body = json("{action: 'create', fieldType: {name: 'b$subject', valueType: 'STRING', " +
                 "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'b' } } }");
-        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a versioned-mutable field type
         body = json("{action: 'create', fieldType: {name: 'b$state', valueType: 'STRING', " +
                 "scope: 'versioned_mutable', namespaces: { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a record type
         body = json("{action: 'create', recordType: {name: 'b$article', " +
                 "fields: [ {name: 'b$subject'}, {name: 'b$state'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Create a record
         body = json("{ type: 'b$article', fields: { 'b$subject': 'Peace', 'b$state': 'draft' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.peace", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Read the record
         response = get(BASE_URI + "/record/USER.peace");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        JsonNode json = readJson(response.getEntity());
+        JsonNode json = readJson(response);
         JsonNode fieldsNode = json.get("fields");
         String prefix = json.get("namespaces").get("org.lilyproject.resttest").getTextValue();
 
@@ -982,12 +982,12 @@ public class RestTest {
         // Update the versioned-mutable field
         body = json("{ fields: { 'b$state': 'in_review' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.peace/version/1", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         response = get(BASE_URI + "/record/USER.peace");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        json = readJson(response.getEntity());
+        json = readJson(response);
         fieldsNode = json.get("fields");
         prefix = json.get("namespaces").get("org.lilyproject.resttest").getTextValue();
 
@@ -997,12 +997,12 @@ public class RestTest {
         // Update versioned-mutable field without changes, change to versioned field should be ignored
         body = json("{ fields: { 'b$subject': 'Peace2', 'b$state': 'in_review' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.peace/version/1", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         response = get(BASE_URI + "/record/USER.peace");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        json = readJson(response.getEntity());
+        json = readJson(response);
         fieldsNode = json.get("fields");
         prefix = json.get("namespaces").get("org.lilyproject.resttest").getTextValue();
 
@@ -1015,8 +1015,8 @@ public class RestTest {
         makeBookSchema();
 
         String body = json("{ type: 'b$book', fields: { 'b$title' : 'ABC1' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
-        Response response = put(BASE_URI + "/record/USER.ABC", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = put(BASE_URI + "/record/USER.ABC", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Test update with failing condition
         body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC2' } }, " +
@@ -1024,13 +1024,13 @@ public class RestTest {
                 "namespaces : { 'org.lilyproject.resttest': 'b' } }");
 
         response = post(BASE_URI + "/record/USER.ABC", body);
-        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+        assertStatus(HttpStatus.SC_CONFLICT, response);
 
         // Verify update did not go through
         response = get(BASE_URI + "/record/USER.ABC");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        JsonNode json = readJson(response.getEntity());
+        JsonNode json = readJson(response);
         assertEquals("ABC1", getFieldValue(json, "title").getTextValue());
 
         // Test update with succeeding condition
@@ -1040,13 +1040,13 @@ public class RestTest {
 
         response = post(BASE_URI + "/record/USER.ABC", body);
 
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         // Verify update did not through
         response = get(BASE_URI + "/record/USER.ABC");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
-        json = readJson(response.getEntity());
+        json = readJson(response);
         assertEquals("ABC2", getFieldValue(json, "title").getTextValue());
 
         //
@@ -1057,7 +1057,7 @@ public class RestTest {
                 "namespaces : { 'org.lilyproject.resttest': 'b' } }");
 
         response = post(BASE_URI + "/record/USER.ABC", body);
-        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+        assertStatus(HttpStatus.SC_CONFLICT, response);
 
         //
         // Test allowMissing flag
@@ -1067,14 +1067,14 @@ public class RestTest {
                 "namespaces : { 'org.lilyproject.resttest': 'b' } }");
 
         response = post(BASE_URI + "/record/USER.ABC", body);
-        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+        assertStatus(HttpStatus.SC_CONFLICT, response);
 
         body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC3' } }, " +
                 "conditions: [{field: 'b$summary', value: 'some summary', allowMissing: true}], " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } }");
 
         response = post(BASE_URI + "/record/USER.ABC", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         //
         // Test null value
@@ -1084,21 +1084,21 @@ public class RestTest {
                 "fieldsToDelete: ['b$summary'], " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/record/USER.ABC", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC4' } }, " +
                 "conditions: [{field: 'b$summary', value: null, operator: 'not_equal'}], " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
 
         response = post(BASE_URI + "/record/USER.ABC", body);
-        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+        assertStatus(HttpStatus.SC_CONFLICT, response);
 
         body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC4' } }, " +
                 "conditions: [{field: 'b$summary', value: null, operator: 'equal'}], " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
 
         response = post(BASE_URI + "/record/USER.ABC", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
 
         //
         // Test system field check
@@ -1106,7 +1106,7 @@ public class RestTest {
         // Create a new record
         body = json("{ type: 'b$book', fields: { 'b$title' : 'ABC1' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.sysfieldcheck", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         // Test update with failing condition
         body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC2' } }, " +
@@ -1114,7 +1114,7 @@ public class RestTest {
                 "namespaces : { 'org.lilyproject.resttest': 'b', 'org.lilyproject.system': 's' } }");
 
         response = post(BASE_URI + "/record/USER.sysfieldcheck", body);
-        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+        assertStatus(HttpStatus.SC_CONFLICT, response);
 
         // Test update with succeeding condition
         body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC2' } }, " +
@@ -1122,7 +1122,7 @@ public class RestTest {
                 "namespaces : { 'org.lilyproject.resttest': 'b', 'org.lilyproject.system': 's' } }");
 
         response = post(BASE_URI + "/record/USER.sysfieldcheck", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(HttpStatus.SC_OK, response);
     }
 
     @Test
@@ -1130,104 +1130,105 @@ public class RestTest {
         makeBookSchema();
 
         String body = json("{ type: 'b$book', fields: { 'b$title' : 'CondDel' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
-        Response response = put(BASE_URI + "/record/USER.ConDel", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        ResponseAndContent response = put(BASE_URI + "/record/USER.ConDel", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
 
         body = json("{ action: 'delete'," +
                 "conditions: [{field: 'b$title', value: 'foo'}], " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
 
         response = post(BASE_URI + "/record/USER.ConDel", body);
-        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+        assertStatus(HttpStatus.SC_CONFLICT, response);
 
         body = json("{ action: 'delete'," +
                 "conditions: [{field: 'b$title', value: 'CondDel'}], " +
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
 
         response = post(BASE_URI + "/record/USER.ConDel", body);
-        assertStatus(Status.SUCCESS_NO_CONTENT, response);
+        assertStatus(HttpStatus.SC_NO_CONTENT, response);
     }
-    
+
     private void setupRecordScannerTest () throws Exception{
         makeBookSchema();
 
         // Create a record using PUT and a user ID
+        //TODO: validate response
         String body = json("{ type: 'b$book', fields: { 'b$title' : 'Faster Fishing' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
-        Response response = put(BASE_URI + "/record/USER.scan_faster_fishing", body);        
+        ResponseAndContent response = put(BASE_URI + "/record/USER.scan_faster_fishing", body);
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Fister Fashing' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.scan_fister_fashing", body);
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Fly fishing with Flash' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.scan_fly_fishing_with_flash", body);
     }
-    
-    @Test 
+
+    @Test
     public void testRecordScanPost() throws Exception {
         setupRecordScannerTest();
-        
+
         // Create a scanner to see if it gest created. Check the location header
         String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', " +
                 "'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
-        Response response = post(BASE_URI + "/scan", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
-        String location = response.getLocationRef().toUri().toString();
-        assertTrue(location.contains("/repository/scan/"));          
+        ResponseAndContent response = post(BASE_URI + "/scan", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
+        String location = response.getLocationRef().toString();
+        assertTrue(location.contains("/repository/scan/"));
     }
-    
-    @Test 
+
+    @Test
     public void testRecordScanGet() throws Exception {
         setupRecordScannerTest();
-        
+
      // Create a scanner to see if it gest created. Check the location header
         String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', " +
                 "'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
-        Response response = post(BASE_URI + "/scan", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
-        String location = response.getLocationRef().toUri().toString();
+        ResponseAndContent response = post(BASE_URI + "/scan", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
+        String location = response.getLocationRef().toString();
 
      // Check if the scanner can be retrieved. Retrieve 1 record by default
         response = get(location);
-        assertStatus(Status.SUCCESS_OK, response);
-        JsonNode json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        JsonNode json = readJson(response);
         assertTrue(json.get("results").size() == 1);
-        
+
         // Check to see if the batch parameter gets more records
         response = get(location + "?batch=2");
-        assertStatus(Status.SUCCESS_OK, response);
-        json = readJson(response.getEntity());
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
         assertTrue(json.get("results").size() == 2);
-        
+
         // When the scanner runs out send 204 NO CONTENT
         response = get(location);
-        assertStatus(Status.SUCCESS_NO_CONTENT, response);        
-        
+        assertStatus(HttpStatus.SC_NO_CONTENT, response);
+
         // GETs on non existing scanners get 404
         response = get(location + "blablabla");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response); 
-        
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
+
     }
-    
+
     @Test
     public void testRecordScanDelete() throws Exception {
         setupRecordScannerTest();
-        
+
         // Create a scanner to see if it gest created. Check the location header
         String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', " +
                 "'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
-        Response response = post(BASE_URI + "/scan", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
-        String location = response.getLocationRef().toUri().toString();
-        
+        ResponseAndContent response = post(BASE_URI + "/scan", body);
+        assertStatus(HttpStatus.SC_CREATED, response);
+        String location = response.getLocationRef().toString();
+
         // Delete scanner
         response = delete(location);
-        assertStatus(Status.SUCCESS_OK, response);
-        
+        assertStatus(HttpStatus.SC_OK, response);
+
         // Check that scanner is gone
         response = get(location);
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
 
         // Delete a non existing scanner gets a 404
         response = delete(location + "not_here");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);    
+        assertStatus(HttpStatus.SC_NOT_FOUND, response);
     }
 
     private JsonNode getFieldValue(JsonNode recordJson, String fieldName) {
@@ -1236,17 +1237,23 @@ public class RestTest {
         return fieldsNode.get(prefix + "$" + fieldName);
     }
 
-    private void assertStatus(Status expectedStatus, Response response) throws IOException {
-        if (!expectedStatus.equals(response.getStatus())) {
-            System.err.println("Detected unexpected response status, body of the response is:");
+    private void assertStatus(int expectedStatus, ResponseAndContent response) throws IOException {
+        StackTraceElement[] trace = new Exception().getStackTrace();
+        if (expectedStatus != response.getResponse().getStatusLine().getStatusCode()) {
+            System.err.println("Detected unexpected response status.");
+            System.err.println("Expected status: " + expectedStatus);
+            System.err.println("Got status: " + response.getResponse().getStatusLine().getStatusCode());
+            System.err.println("Called from: " + trace[1].toString());
+            System.err.println("Body of the response is:");
             printErrorResponse(response);
-            assertEquals(expectedStatus, response.getStatus());
+            assertEquals(expectedStatus, response.getResponse().getStatusLine().getStatusCode());
         }
     }
 
-    private void printErrorResponse(Response response) throws IOException {
-        if (response.getEntity() != null && MediaType.APPLICATION_JSON.equals(response.getEntity().getMediaType())) {
-            JsonNode json = readJson(response.getEntity());
+    private void printErrorResponse(ResponseAndContent response) throws IOException {
+        if (response.getResponse().getEntity() != null && response.getResponse().getEntity().getContentType() != null
+                && "application/json".equals(response.getResponse().getEntity().getContentType().getValue())) {
+            JsonNode json = JsonFormat.deserializeNonStd(response.getContent());
             System.err.println("Error:");
             System.err.println("  Description: " +
                     (json.get("description") != null ? json.get("description").getTextValue() : null));
@@ -1254,42 +1261,62 @@ public class RestTest {
             System.err.println("  StackTrace:");
             JsonNode stackTrace = json.get("stackTrace");
             System.out.println(stackTrace != null ? stackTrace.getValueAsText() : null);
+        } else if (response.getContent() != null) {
+            System.err.println(new String(response.getContent(), "UTF-8"));
         } else {
-            System.err.println(response.getEntityAsText());
+            System.err.println("response has no content)");
         }
     }
-    
-    private Response post(String uri, String body) {
-        Request req = new Request(Method.POST, uri);
-        req.setEntity(body, MediaType.APPLICATION_JSON);
-        return CLIENT.handle(req);
+
+    private ResponseAndContent post(String uri, String body) throws Exception {
+        HttpPost post = new HttpPost(uri);
+        post.setEntity(new StringEntity(body, "application/json", "UTF-8"));
+        return processResponseAndContent(post);
     }
 
-    private Response put(String uri, String body) {
-        Request req = new Request(Method.PUT, uri);
-        req.setEntity(body, MediaType.APPLICATION_JSON);
-        return CLIENT.handle(req);
+    private ResponseAndContent postText(String uri, String body) throws Exception {
+        HttpPost post = new HttpPost(uri);
+        post.setEntity(new StringEntity(body, "text/plain", "UTF-8"));
+        return processResponseAndContent(post);
     }
 
-    private Response get(String uri) {
-        return CLIENT.handle(new Request(Method.GET, uri));
+    private ResponseAndContent put(String uri, String body) throws Exception {
+        HttpPut put = new HttpPut(uri);
+        put.setEntity(new StringEntity(body, "application/json", "UTF-8"));
+        return processResponseAndContent(put);
     }
 
-    private Response delete(String uri) {
-        return CLIENT.handle(new Request(Method.DELETE, uri));
+    private ResponseAndContent get(String uri) throws Exception {
+        return processResponseAndContent(new HttpGet(uri));
     }
 
-    public static JsonNode readJson(Representation representation) throws IOException {
-        InputStream is = representation.getStream();
-        try {
-            return JsonFormat.deserializeNonStd(is);
-        } finally {
-            Closer.close(is);
-        }
+    private ResponseAndContent delete(String uri) throws Exception {
+        return processResponseAndContent(new HttpDelete(uri));
+    }
+
+    public static JsonNode readJson(ResponseAndContent rac) throws IOException {
+        return JsonFormat.deserializeNonStd(rac.getContent());
     }
 
     private String json(String input) {
         return input.replaceAll("'", "\"");
+    }
+
+    private ResponseAndContent processResponseAndContent(HttpUriRequest request) throws Exception {
+        HttpResponse response = null;
+        byte[] data = null;
+        try {
+            response = httpClient.execute(request);
+            if (response.getEntity() != null) {
+                data = IOUtils.toByteArray(response.getEntity().getContent());
+            }
+        } finally {
+            if (response != null) {
+                EntityUtils.consume(response.getEntity());
+            }
+        }
+
+        return new ResponseAndContent(response, data);
     }
 
 }
