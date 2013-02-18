@@ -1,4 +1,4 @@
-package org.lilyproject.runtime;
+package org.lilyproject.runtime.test;
 
 import junit.framework.TestCase;
 import org.lilyproject.runtime.ClassLoaderConfigurer;
