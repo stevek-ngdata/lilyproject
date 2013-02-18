@@ -35,8 +35,8 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.util.exception.ExceptionUtil;
@@ -55,24 +55,24 @@ import org.lilyproject.util.repo.VTaggedRecord;
  * Keeps the {@link LinkIndex} up to date when changes happen to records.
  */
 public class LinkIndexUpdater implements EventListener {
-    private Repository repository;
+    private RepositoryManager repositoryManager;
     private LinkIndex linkIndex;
 
     private Log log = LogFactory.getLog(getClass());
     private LinkIndexUpdaterMetrics metrics;
 
-    public LinkIndexUpdater(Repository repository, LinkIndex linkIndex) throws RepositoryException, InterruptedException {
-        this.repository = repository;
+    public LinkIndexUpdater(RepositoryManager repositoryManager, LinkIndex linkIndex) throws RepositoryException, InterruptedException {
+        this.repositoryManager = repositoryManager;
         this.linkIndex = linkIndex;
         metrics = new LinkIndexUpdaterMetrics("linkIndexUpdater");
     }
 
     @Override
     public void processEvent(SepEvent event) {
-        RecordId recordId = repository.getIdGenerator().fromBytes(event.getRow());
+        RecordId recordId = repositoryManager.getDefaultRepository().getIdGenerator().fromBytes(event.getRow());
         RecordEvent recordEvent;
         try {
-            recordEvent = new RecordEvent(event.getPayload(), repository.getIdGenerator());
+            recordEvent = new RecordEvent(event.getPayload(), repositoryManager.getDefaultRepository().getIdGenerator());
         } catch (IOException e) {
             log.error("Error reading record event, processing of message cancelled", e);
             return;
@@ -105,11 +105,11 @@ public class LinkIndexUpdater implements EventListener {
                 boolean isNewRecord = recordEvent.getType().equals(CREATE);
 
                 RecordEventHelper eventHelper = new RecordEventHelper(recordEvent, LINK_FIELD_FILTER,
-                        repository.getTypeManager());
+                        repositoryManager.getDefaultRepository().getTypeManager());
 
                 VTaggedRecord vtRecord;
                 try {
-                    vtRecord = new VTaggedRecord(recordId, eventHelper, repository);
+                    vtRecord = new VTaggedRecord(recordId, eventHelper, repositoryManager.getDefaultRepository());
                 } catch (RecordNotFoundException e) {
                     // record not found: delete all links for all vtags
                     linkIndex.deleteLinks(recordId);
@@ -189,7 +189,7 @@ public class LinkIndexUpdater implements EventListener {
                 links = Collections.emptySet();
             } else {
                 LinkCollector collector = new LinkCollector();
-                RecordLinkExtractor.extract(versionRecord, collector, repository);
+                RecordLinkExtractor.extract(versionRecord, collector, repositoryManager.getDefaultRepository());
                 links = collector.getLinks();
             }
             return links;
@@ -212,7 +212,7 @@ public class LinkIndexUpdater implements EventListener {
             return "null";
 
         try {
-            return repository.getTypeManager().getFieldTypeById(fieldTypeId).getName().getName();
+            return repositoryManager.getDefaultRepository().getTypeManager().getFieldTypeById(fieldTypeId).getName().getName();
         } catch (Throwable t) {
             return "failed to load name";
         }

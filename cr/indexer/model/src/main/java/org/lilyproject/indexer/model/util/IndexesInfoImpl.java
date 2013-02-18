@@ -38,14 +38,14 @@ import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryManager;
 
 /**
  * See {@link IndexesInfo}.
  */
 public class IndexesInfoImpl implements IndexesInfo {
     private final IndexerModel indexerModel;
-    private final Repository repository;
+    private final RepositoryManager repositoryManager;
 
     private Map<String, IndexInfo> indexInfos;
     private Set<QName> recordFilterFieldDependencies;
@@ -59,9 +59,9 @@ public class IndexesInfoImpl implements IndexesInfo {
     /** Has the initial load of the indexes been done? */
     private volatile boolean initialized = false;
 
-    public IndexesInfoImpl(IndexerModel indexerModel, Repository repository) {
+    public IndexesInfoImpl(IndexerModel indexerModel, RepositoryManager repositoryManager) {
         this.indexerModel = indexerModel;
-        this.repository = repository;
+        this.repositoryManager = repositoryManager;
 
         indexerModel.registerListener(listener);
     }
@@ -79,7 +79,7 @@ public class IndexesInfoImpl implements IndexesInfo {
             byte[] indexerConfXml = indexDef.getConfiguration();
             IndexerConf indexerConf = null;
             try {
-                indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfXml), repository);
+                indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfXml), repositoryManager);
             } catch (Throwable t) {
                 log.error("Error parsing indexer conf", t);
             }

@@ -18,25 +18,38 @@ package org.lilyproject.rest;
 import org.apache.commons.lang.BooleanUtils;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.tools.import_.core.*;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
-import javax.ws.rs.*;
+import java.net.URI;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import java.net.URI;
-
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.tools.import_.core.IdentificationMode;
+import org.lilyproject.tools.import_.core.ImportMode;
+import org.lilyproject.tools.import_.core.ImportResult;
+import org.lilyproject.tools.import_.core.ImportResultType;
+import org.lilyproject.tools.import_.core.RecordTypeImport;
 
 @Path("schema/recordType/{name}")
-public class RecordTypeResource extends RepositoryEnabled {
+public class RecordTypeResource extends TypeManagerEnabled {
     @GET
     @Produces("application/json")
     public Entity<RecordType> get(@PathParam("name") String name, @Context UriInfo uriInfo) {
         QName qname = ResourceClassUtil.parseQName(name, uriInfo.getQueryParameters());
         try {
-            return Entity.create(repository.getTypeManager().getRecordTypeByName(qname, null), uriInfo);
+            return Entity.create(typeManager.getRecordTypeByName(qname, null), uriInfo);
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -58,7 +71,7 @@ public class RecordTypeResource extends RepositoryEnabled {
         ImportResult<RecordType> result;
         try {
             result = RecordTypeImport.importRecordType(recordType, ImportMode.CREATE_OR_UPDATE, IdentificationMode.NAME,
-                    qname, refreshSubtypes, repository.getTypeManager());
+                    qname, refreshSubtypes, typeManager);
         } catch (Exception e) {
             throw new ResourceException("Error creating or updating record type named " + qname, e,
                     INTERNAL_SERVER_ERROR.getStatusCode());

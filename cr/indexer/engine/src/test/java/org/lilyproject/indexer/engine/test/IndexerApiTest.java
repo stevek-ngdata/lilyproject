@@ -2,6 +2,10 @@ package org.lilyproject.indexer.engine.test;
 
 import static org.junit.Assert.assertEquals;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
+import org.lilyproject.repository.api.RepositoryManager;
+
 import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -45,6 +49,7 @@ public class IndexerApiTest {
     private IndexerConf INDEXER_CONF;
     private SolrTestingUtility SOLR_TEST_UTIL;
     private Repository repository;
+    private RepositoryManager repositoryManager;
     private TypeManager typeManager;
     private ClassicSolrShardManager solrShardManager;
 
@@ -67,14 +72,15 @@ public class IndexerApiTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = repoSetup.getRepository();
+        repositoryManager = repoSetup.getRepositoryManager();
+        repository = repositoryManager.getRepository(Table.RECORD.name);
         typeManager = repoSetup.getTypeManager();
 
         setupSchema();
 
         solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
 
-        indexerApi = new IndexerApiImpl(repository, indexerRegistry);
+        indexerApi = new IndexerApiImpl(repositoryManager, indexerRegistry);
     }
 
     @After
@@ -86,7 +92,7 @@ public class IndexerApiTest {
     }
 
     public void changeIndexUpdater(String confName) throws Exception {
-        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
+        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repoSetup.getRepositoryManager());
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
         Indexer indexer =
                 new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker, new IndexerMetrics("test"),

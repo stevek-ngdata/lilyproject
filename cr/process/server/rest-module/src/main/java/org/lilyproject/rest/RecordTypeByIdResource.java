@@ -15,26 +15,35 @@
  */
 package org.lilyproject.rest;
 
-import org.apache.commons.lang.BooleanUtils;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.tools.import_.core.*;
-
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import static javax.ws.rs.core.Response.Status.*;
+import org.apache.commons.lang.BooleanUtils;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.tools.import_.core.IdentificationMode;
+import org.lilyproject.tools.import_.core.ImportMode;
+import org.lilyproject.tools.import_.core.ImportResult;
+import org.lilyproject.tools.import_.core.ImportResultType;
+import org.lilyproject.tools.import_.core.RecordTypeImport;
 
 @Path("schema/recordTypeById/{id}")
-public class RecordTypeByIdResource extends RepositoryEnabled {
+public class RecordTypeByIdResource extends TypeManagerEnabled {
 
     @GET
     @Produces("application/json")
     public Entity<RecordType> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
         try {
-            SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
-            return Entity.create(repository.getTypeManager().getRecordTypeById(schemaId, null), uriInfo);
+            SchemaId schemaId = idGenerator.getSchemaId(id);
+            return Entity.create(typeManager.getRecordTypeById(schemaId, null), uriInfo);
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -46,7 +55,7 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response put(@PathParam("id") String id, RecordType recordType, @Context UriInfo uriInfo) {
-        SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
+        SchemaId schemaId = idGenerator.getSchemaId(id);
 
         if (recordType.getId() != null && !recordType.getId().equals(schemaId)) {
             throw new ResourceException("ID in submitted record type does not match the id in URI.",
@@ -59,7 +68,7 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
         ImportResult<RecordType> result;
         try {
             result = RecordTypeImport.importRecordType(recordType, ImportMode.UPDATE, IdentificationMode.ID,
-                    null, refreshSubtypes, repository.getTypeManager());
+                    null, refreshSubtypes, typeManager);
         } catch (Exception e) {
             throw new ResourceException("Error creating or updating record type with id " + id, e,
                     INTERNAL_SERVER_ERROR.getStatusCode());

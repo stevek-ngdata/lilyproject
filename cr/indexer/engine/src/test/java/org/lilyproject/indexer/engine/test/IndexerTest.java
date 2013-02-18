@@ -15,9 +15,9 @@
  */
 package org.lilyproject.indexer.engine.test;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
 import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
@@ -112,8 +112,8 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.Pair;
-import org.lilyproject.util.repo.PrematureRepository;
-import org.lilyproject.util.repo.PrematureRepositoryImpl;
+import org.lilyproject.util.repo.PrematureRepositoryManager;
+import org.lilyproject.util.repo.PrematureRepositoryManagerImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
@@ -187,16 +187,16 @@ public class IndexerTest {
         repoSetup.setupCore();
 
         indexerModel = new IndexerModelImpl(repoSetup.getZk());
-        PrematureRepository prematureRepository = new PrematureRepositoryImpl();
+        PrematureRepositoryManager prematureRepositoryManager = new PrematureRepositoryManagerImpl();
 
-        indexesInfo = new IndexesInfoImpl(indexerModel, prematureRepository);
+        indexesInfo = new IndexesInfoImpl(indexerModel, prematureRepositoryManager);
         RecordUpdateHook hook = new IndexRecordFilterHook(indexesInfo);
 
         repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
 
         repoSetup.setupRepository();
 
-        prematureRepository.setRepository(repoSetup.getRepository());
+        prematureRepositoryManager.setRepositoryManager(repoSetup.getRepositoryManager());
         indexUpdaterRepository.setDelegate(repoSetup.getRepository());
 
         repository = repoSetup.getRepository();
@@ -239,7 +239,7 @@ public class IndexerTest {
         // warning: the below line will throw an exception in case of invalid conf, which is an exception
         // which some test cases expect, and hence it won't be visible but will cause the remainder of the
         // code in this method not to be executed! (so keep this in mind for anything related to resource cleanup)
-        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
+        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repoSetup.getRepositoryManager());
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
 
         Configuration hbaseConf = repoSetup.getHadoopConf();

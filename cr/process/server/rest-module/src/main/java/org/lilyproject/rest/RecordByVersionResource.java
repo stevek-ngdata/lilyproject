@@ -15,17 +15,25 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.*;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.VersionNotFoundException;
 
 @Path("record/{id}/version/{version:\\d+}")
 public class RecordByVersionResource extends RepositoryEnabled {
@@ -33,7 +41,10 @@ public class RecordByVersionResource extends RepositoryEnabled {
     @Produces("application/json")
     public Entity<Record> get(@PathParam("id") String id, @PathParam("version") Long version,
             @Context UriInfo uriInfo) {
+        
+        Repository repository = getRepository();
         RecordId recordId = repository.getIdGenerator().fromString(id);
+        
         try {
             return Entity.create(repository.read(recordId, version), uriInfo);
         } catch (RecordNotFoundException e) {
@@ -50,7 +61,8 @@ public class RecordByVersionResource extends RepositoryEnabled {
     @Consumes("application/json")
     public Response put(@PathParam("id") String id, @PathParam("version") Long version, Record record,
             @Context UriInfo uriInfo) {
-        RecordId recordId = repository.getIdGenerator().fromString(id);
+
+        RecordId recordId = getRepository().getIdGenerator().fromString(id);
 
         if (record.getId() != null && !record.getId().equals(recordId)) {
             throw new ResourceException("Record id in submitted record does not match record id in URI.",
@@ -67,7 +79,7 @@ public class RecordByVersionResource extends RepositoryEnabled {
 
         try {
             boolean useLatestRecordType = record.getRecordTypeName() == null || record.getRecordTypeVersion() == null;
-            record = repository.update(record, true, useLatestRecordType);
+            record = getRepository().update(record, true, useLatestRecordType);
         } catch (RecordNotFoundException e) {
             throw new ResourceException("Record not found: " + recordId, NOT_FOUND.getStatusCode());
         } catch (VersionNotFoundException e) {

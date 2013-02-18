@@ -19,7 +19,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -28,11 +34,31 @@ import org.joda.time.LocalDate;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.*;
-import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.BlobManagerImpl;
+import org.lilyproject.repository.impl.BlobStoreAccessConfig;
+import org.lilyproject.repository.impl.DFSBlobStoreAccess;
+import org.lilyproject.repository.impl.HBaseRepository;
+import org.lilyproject.repository.impl.HBaseRepositoryManager;
+import org.lilyproject.repository.impl.HBaseTypeManager;
+import org.lilyproject.repository.impl.RecordFactoryImpl;
+import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
@@ -52,6 +78,7 @@ public class TutorialTest {
     private static final String ANS = "article";
 
     private static TypeManager typeManager;
+    private static HBaseRepositoryManager repositoryManager;
     private static HBaseRepository repository;
     private static Configuration configuration;
     private static ZooKeeperItf zooKeeper;
@@ -71,14 +98,14 @@ public class TutorialTest {
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
 
         typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
-
         
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         List<BlobStoreAccess> blobStoreAccesses = Collections.<BlobStoreAccess>singletonList(dfsBlobStoreAccess);
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-        repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager);
+        repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, new RecordFactoryImpl(typeManager, idGenerator), hbaseTableFactory, blobManager);
+        repository = (HBaseRepository)repositoryManager.getDefaultRepository();
 
     }
 
@@ -87,6 +114,7 @@ public class TutorialTest {
         Closer.close(typeManager);
         Closer.close(repository);
         Closer.close(zooKeeper);
+        Closer.close(repositoryManager);
         HBASE_PROXY.stop();
     }
 
@@ -267,7 +295,7 @@ public class TutorialTest {
             System.out.println();
         } finally {
             if (is != null) is.close();
-        }        
+        }
     }
 
     @Test

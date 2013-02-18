@@ -29,7 +29,7 @@ public class BlobByFieldResource extends RepositoryEnabled {
     @GET
     @Produces("*/*")
     public Response get(@PathParam("id") String id, @PathParam("fieldName") String fieldName, @Context UriInfo uriInfo) {
-        return BlobByVersionAndFieldResource.getBlob(id, null, fieldName, uriInfo, repository);
+        return BlobByVersionAndFieldResource.getBlob(id, null, fieldName, uriInfo, getRepository());
     }
 
 }

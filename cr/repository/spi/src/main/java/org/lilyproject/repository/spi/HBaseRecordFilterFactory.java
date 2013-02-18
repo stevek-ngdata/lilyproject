@@ -15,10 +15,10 @@
  */
 package org.lilyproject.repository.spi;
 
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.filter.RecordFilter;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.filter.RecordFilter;
 
 /**
  * Implements the translation from a {@link RecordFilter} definition to an actual HBase filter
@@ -39,6 +39,6 @@ public interface HBaseRecordFilterFactory {
      *
      * @param factory to be used for creating nested filters
      */
-    Filter createHBaseFilter(RecordFilter filter, Repository repository, HBaseRecordFilterFactory factory)
+    Filter createHBaseFilter(RecordFilter filter, RepositoryManager repositoryManager, HBaseRecordFilterFactory factory)
             throws RepositoryException, InterruptedException;
 }

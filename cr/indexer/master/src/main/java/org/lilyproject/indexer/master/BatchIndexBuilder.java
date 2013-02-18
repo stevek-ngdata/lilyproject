@@ -110,7 +110,7 @@ public class BatchIndexBuilder {
         // creation preferences (otherwise would need to serialize that config towards the mappers).
         // This also requires to parse the indexerconf, to know if we actually need a derefmap.
         IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
-                repository);
+                repository.getRepositoryManager());
         if (indexerConf.containsDerefExpressions()) {
             DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory, repository.getIdGenerator());
         }

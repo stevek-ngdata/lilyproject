@@ -21,6 +21,8 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 
+import org.lilyproject.repository.api.RepositoryManager;
+
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobAccess;
 import org.lilyproject.repository.api.BlobStoreAccess;
@@ -270,5 +272,10 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     @Override
     public RecordBuilder recordBuilder() throws RecordException, InterruptedException {
         return delegate.recordBuilder();
+    }
+    
+    @Override
+    public RepositoryManager getRepositoryManager() {
+        return delegate.getRepositoryManager();
     }
 }

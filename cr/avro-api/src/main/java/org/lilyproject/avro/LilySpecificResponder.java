@@ -40,12 +40,10 @@ import org.apache.commons.logging.LogFactory;
 public class LilySpecificResponder extends GenericResponder {
     private Object impl;
     private SpecificData data;
-    private AvroConverter converter;
     private Log log = LogFactory.getLog(getClass());
 
-    public LilySpecificResponder(Class iface, Object impl, AvroConverter converter) {
+    public LilySpecificResponder(Class iface, Object impl) {
         this(SpecificData.get().getProtocol(iface), impl);
-        this.converter = converter;
     }
 
     public LilySpecificResponder(Protocol protocol, Object impl) {
@@ -94,7 +92,7 @@ public class LilySpecificResponder extends GenericResponder {
             if (e.getTargetException() instanceof SpecificRecord) {
                 throw (Exception) e.getTargetException();
             } else {
-                throw converter.convertOtherException(e.getTargetException());
+                throw AvroConverter.convertOtherException(e.getTargetException());
             }
         } catch (NoSuchMethodException e) {
             throw new AvroRuntimeException(e);

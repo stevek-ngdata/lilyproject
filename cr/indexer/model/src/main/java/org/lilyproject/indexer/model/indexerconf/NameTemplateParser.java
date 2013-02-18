@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.repo.SystemFields;
 import org.w3c.dom.Element;
 
@@ -20,15 +20,15 @@ public class NameTemplateParser {
     private static Pattern fieldPattern = Pattern.compile("([^:]+):([^:]+)?");
 
     // used for parsing qnames
-    private Repository repository;
+    private RepositoryManager repositoryManager;
     private SystemFields systemFields;
 
     public NameTemplateParser() {
         this(null, null);
     }
 
-    public NameTemplateParser(Repository repository, SystemFields systemFields) {
-        this.repository = repository;
+    public NameTemplateParser(RepositoryManager repositoryManager, SystemFields systemFields) {
+        this.repositoryManager = repositoryManager;
         this.systemFields = systemFields;
     }
 
@@ -84,7 +84,7 @@ public class NameTemplateParser {
     private TemplatePart buildFieldTemplatePart(Element el, String template, String expr)
             throws IndexerConfException, InterruptedException, RepositoryException {
         QName field = ConfUtil.parseQName(expr, el);
-        FieldType fieldType = ConfUtil.getFieldType(field, systemFields, repository.getTypeManager());
+        FieldType fieldType = ConfUtil.getFieldType(field, systemFields, repositoryManager.getTypeManager());
         return new FieldTemplatePart(fieldType, field);
     }
 

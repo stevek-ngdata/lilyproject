@@ -1,4 +1,4 @@
-package org.lilyproject.client;
+package org.lilyproject.repository.impl;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;

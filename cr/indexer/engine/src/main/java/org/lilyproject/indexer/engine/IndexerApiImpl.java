@@ -3,6 +3,8 @@ package org.lilyproject.indexer.engine;
 import java.io.IOException;
 import java.util.Set;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.IndexerException;
@@ -10,21 +12,21 @@ import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 
 /**
  *
  */
 public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
-    private Repository repository;
+    private RepositoryManager repositoryManager;
 
     private IndexerRegistry indexerRegistry;
 
     private Log log = LogFactory.getLog(getClass());
 
-    public IndexerApiImpl(Repository repository, IndexerRegistry indexerRegistry) {
-        this.repository = repository;
+    public IndexerApiImpl(RepositoryManager repositoryManager, IndexerRegistry indexerRegistry) {
+        this.repositoryManager = repositoryManager;
         this.indexerRegistry = indexerRegistry;
     }
 
@@ -69,9 +71,11 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
 
     private IdRecord tryReadRecord(RecordId recordId) throws IndexerException, InterruptedException {
         try {
-            return repository.readWithIds(recordId, null, null);
+            return repositoryManager.getRepository(Table.RECORD.name).readWithIds(recordId, null, null);
         } catch (RepositoryException e) {
             throw new IndexerException("failed to read from repository", e);
+        } catch (IOException e) {
+            throw new IndexerException("error retrieving repository", e);
         }
     }
 

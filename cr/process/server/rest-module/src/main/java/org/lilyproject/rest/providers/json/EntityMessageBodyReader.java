@@ -68,7 +68,7 @@ public class EntityMessageBodyReader extends RepositoryEnabled implements Messag
         ObjectNode objectNode = (ObjectNode)node;
 
         try {
-            return EntityRegistry.findReader(type).fromJson(objectNode, null, repository, linkTransformer);
+            return EntityRegistry.findReader(type).fromJson(objectNode, null, getRepository(), linkTransformer);
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
         } catch (Exception e) {

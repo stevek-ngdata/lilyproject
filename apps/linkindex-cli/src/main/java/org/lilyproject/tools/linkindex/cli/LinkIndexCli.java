@@ -15,6 +15,9 @@
  */
 package org.lilyproject.tools.linkindex.cli;
 
+import java.util.List;
+import java.util.Set;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -25,13 +28,16 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.linkindex.FieldedLink;
 import org.lilyproject.linkindex.LinkIndex;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
-
-import java.util.List;
-import java.util.Set;
 
 public class LinkIndexCli extends BaseZkCliTool {
     private Option indexOption;
@@ -111,7 +117,7 @@ public class LinkIndexCli extends BaseZkCliTool {
 
         IndexManager indexManager = new IndexManager(hbaseConf, new HBaseTableFactoryImpl(hbaseConf));
 
-        LinkIndex linkIndex = new LinkIndex(indexManager, repository);
+        LinkIndex linkIndex = new LinkIndex(indexManager, repository.getRepositoryManager());
 
         //
         // Determine the index to query

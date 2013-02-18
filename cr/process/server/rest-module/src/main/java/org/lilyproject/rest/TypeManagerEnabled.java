@@ -13,13 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.server.modules.repository;
+package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.util.repo.PrematureRepository;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.TypeManager;
+import org.springframework.beans.factory.annotation.Autowired;
 
-public class PrematureRepositoryActivator {
-    public PrematureRepositoryActivator(PrematureRepository prematureRepository, Repository repository) {
-        prematureRepository.setRepository(repository);
+public class TypeManagerEnabled {
+
+    protected TypeManager typeManager;
+    protected IdGenerator idGenerator;
+    
+    @Autowired
+    public void setTypeManager(TypeManager typeManager) {
+        this.typeManager = typeManager;
+    }
+    
+    @Autowired
+    public void setIdGenerator(IdGenerator idGenerator) {
+        this.idGenerator = idGenerator;
     }
 }

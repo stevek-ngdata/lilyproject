@@ -40,8 +40,10 @@ import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.BlobStoreAccessFactory;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractSchemaCache;
 import org.lilyproject.repository.impl.BlobManagerImpl;
@@ -49,12 +51,16 @@ import org.lilyproject.repository.impl.BlobStoreAccessConfig;
 import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseRepository;
+import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.InlineBlobStoreAccess;
+import org.lilyproject.repository.impl.RecordFactoryImpl;
 import org.lilyproject.repository.impl.SchemaCache;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+import org.lilyproject.repository.remote.AvroLilyTransceiver;
 import org.lilyproject.repository.remote.RemoteRepository;
+import org.lilyproject.repository.remote.RemoteRepositoryManager;
 import org.lilyproject.repository.remote.RemoteTypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.sep.LilyHBaseEventPublisher;
@@ -63,6 +69,7 @@ import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -81,7 +88,7 @@ public class RepositorySetup {
     private IdGenerator idGenerator;
     private HBaseTypeManager typeManager;
     private RemoteTypeManager remoteTypeManager;
-    private HBaseRepository repository;
+    private RepositoryManager repositoryManager;
     private RemoteRepository remoteRepository;
 
     private Server lilyServer;
@@ -98,7 +105,7 @@ public class RepositorySetup {
 
     private boolean coreSetup;
     private boolean typeManagerSetup;
-    private boolean repositorySetup;
+    private boolean repositoryManagerSetup;
     
     private long hbaseBlobLimit = -1;
     private long inlineBlobLimit = -1;
@@ -135,21 +142,29 @@ public class RepositorySetup {
     }
 
     public void setupRepository() throws Exception {
-        if (repositorySetup)
+        if (repositoryManagerSetup)
             return;
 
         setupTypeManager();
 
         blobStoreAccessFactory = createBlobAccess();
         blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
+        RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
 
-        repository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory, blobManager);
-        repository.setRecordUpdateHooks(recordUpdateHooks);
+        repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory, blobManager) {
+            @Override
+            protected Repository createRepository(String tableName) throws IOException, InterruptedException {
+                HBaseRepository repository = (HBaseRepository)super.createRepository(tableName);
+                repository.setRecordUpdateHooks(recordUpdateHooks);
+                return repository;
+            }
+        };
+        
         
         sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
         eventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory));
 
-        repositorySetup = true;
+        repositoryManagerSetup = true;
     }
 
     private BlobStoreAccessFactory createBlobAccess() throws Exception {
@@ -184,29 +199,30 @@ public class RepositorySetup {
     }
 
     public void setupRemoteAccess() throws Exception {
-        AvroConverter serverConverter = new AvroConverter();
-        serverConverter.setRepository(repository);
         lilyServer = new NettyServer(
-                new LilySpecificResponder(AvroLily.class, new AvroLilyImpl(repository, null, serverConverter),
-                        serverConverter), new InetSocketAddress(0));
+                new LilySpecificResponder(AvroLily.class, new AvroLilyImpl(repositoryManager, typeManager, null)
+                        ), new InetSocketAddress(0));
         lilyServer.start();
-
-        final AvroConverter remoteConverter = new AvroConverter();
+        
+        final AvroConverter avroConverter = new AvroConverter();
         final InetSocketAddress remoteAddr = new InetSocketAddress(lilyServer.getPort());
 
         remoteSchemaCache = new RemoteTestSchemaCache(zk);
-        remoteTypeManager = new RemoteTypeManager(remoteAddr, remoteConverter, idGenerator, zk, remoteSchemaCache);
+        remoteTypeManager = new RemoteTypeManager(remoteAddr, avroConverter, idGenerator, zk, remoteSchemaCache);
         remoteSchemaCache.setTypeManager(remoteTypeManager);
+        RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
+        
+        
+        
+        RepositoryManager remoteRepoManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
+                new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory);
+        avroConverter.setRepositoryManager(remoteRepoManager);
 
         remoteBlobStoreAccessFactory = createBlobAccess();
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);
 
-        remoteRepository =
-                new RemoteRepository(remoteAddr, remoteConverter, remoteTypeManager, idGenerator, remoteBlobManager,
-                        getHadoopConf());
+        remoteRepository = (RemoteRepository)remoteRepoManager.getDefaultRepository();
 
-        remoteConverter.setRepository(repository);
-        remoteTypeManager.start();
         remoteSchemaCache.start();
     }
 
@@ -231,7 +247,7 @@ public class RepositorySetup {
         Closer.close(remoteRepository);
 
         Closer.close(typeManager);
-        Closer.close(repository);
+        Closer.close(repositoryManager);
 
         if (lilyServer != null) {
             lilyServer.close();
@@ -241,7 +257,7 @@ public class RepositorySetup {
         Closer.close(zk);
         Closer.close(hbaseProxy);
         coreSetup = false;
-        repositorySetup = false;
+        repositoryManagerSetup = false;
         typeManagerSetup = false;
     }
 
@@ -254,7 +270,15 @@ public class RepositorySetup {
     }
 
     public Repository getRepository() {
-        return repository;
+        try {
+            return repositoryManager.getRepository(Table.RECORD.name);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public RepositoryManager getRepositoryManager() {
+        return repositoryManager;
     }
 
     public Repository getRemoteRepository() {

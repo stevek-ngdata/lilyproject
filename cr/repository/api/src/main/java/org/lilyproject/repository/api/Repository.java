@@ -555,4 +555,10 @@ public interface Repository extends Closeable {
      * repository.
      */
     RecordBuilder recordBuilder() throws RecordException, InterruptedException;
+    
+    /**
+     * Returns the RepositoryManager that is responsible for this Repository.
+     * @return owning RepositoryManager
+     */
+    RepositoryManager getRepositoryManager();
 }

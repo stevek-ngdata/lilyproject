@@ -15,8 +15,10 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.*;
-import org.lilyproject.util.repo.VersionTag;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+
+import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -25,10 +27,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
-import java.util.List;
-
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.util.repo.VersionTag;
 
 @Path("record/{id}/vtag/{vtag}")
 public class RecordByVtagResource extends RepositoryEnabled {
@@ -38,6 +43,7 @@ public class RecordByVtagResource extends RepositoryEnabled {
     public Entity<Record> get(@PathParam("id") String id, @PathParam("vtag") String vtag, @Context UriInfo uriInfo) {
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
 
+        Repository repository = getRepository();
         RecordId recordId = repository.getIdGenerator().fromString(id);
         Record record;
         try {

@@ -40,6 +40,7 @@ import org.lilyproject.repository.api.CompareOp;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.rest.PostAction;
 import org.lilyproject.rest.RepositoryEnabled;
@@ -107,7 +108,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             if (!action.equals("delete")) {
                 EntityRegistry.RegistryEntry registryEntry = EntityRegistry.findReaderRegistryEntry((Class)entityType);
                 ObjectNode objectNode = JsonUtil.getObject(postNode, registryEntry.getPropertyName());
-                entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces, repository, linkTransformer);
+                entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces, getRepository(), linkTransformer);
             }
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
@@ -124,6 +125,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             return null;
         }
 
+        Repository repository = getRepository();
         List<MutationCondition> result = new ArrayList<MutationCondition>();
         SystemFields systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
 

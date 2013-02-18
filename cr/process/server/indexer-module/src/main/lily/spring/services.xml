@@ -40,8 +40,8 @@
       service="org.lilyproject.server.modules.general.HadoopConfigurationFactory"/>
 
   <lily:import-service
-      id="repository"
-      service="org.lilyproject.repository.api.Repository"/>
+      id="repositoryManager"
+      service="org.lilyproject.repository.api.RepositoryManager"/>
 
   <lily:import-service
       id="zooKeeper"
@@ -83,7 +83,7 @@
   <bean id="indexerMaster" class="org.lilyproject.indexer.master.IndexerMaster">
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="indexerModel"/>
-    <constructor-arg ref="repository"/>
+    <constructor-arg ref="repositoryManager"/>
     <constructor-arg>
       <bean factory-bean="hadoopConfFactory" factory-method="getMapReduceConf"/>
     </constructor-arg>
@@ -116,7 +116,7 @@
 
   <bean id="indexerWorker" class="org.lilyproject.indexer.worker.IndexerWorker">
     <constructor-arg ref="indexerModel"/>
-    <constructor-arg ref="repository"/>
+    <constructor-arg ref="repositoryManager"/>
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="solrClientConfig"/>
@@ -136,7 +136,7 @@
   </bean>
 
   <bean id="indexer" class="org.lilyproject.indexer.engine.IndexerApiImpl">
-    <constructor-arg ref="repository"/>
+    <constructor-arg ref="repositoryManager"/>
     <constructor-arg ref="indexerRegistry"/>
   </bean>
 

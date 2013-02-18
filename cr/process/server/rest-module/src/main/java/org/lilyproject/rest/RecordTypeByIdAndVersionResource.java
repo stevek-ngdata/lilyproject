@@ -30,14 +30,14 @@ import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("schema/recordTypeById/{id}/version/{version:\\d+}")
-public class RecordTypeByIdAndVersionResource extends RepositoryEnabled {
+public class RecordTypeByIdAndVersionResource extends TypeManagerEnabled {
     @GET
     @Produces("application/json")
     public Entity<RecordType> get(@PathParam("id") String id, @PathParam("version") Long version,
             @Context UriInfo uriInfo) {
         try {
-            SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
-            RecordType recordType = repository.getTypeManager().getRecordTypeById(schemaId, version);
+            SchemaId schemaId = idGenerator.getSchemaId(id);
+            RecordType recordType = typeManager.getRecordTypeById(schemaId, version);
             return Entity.create(recordType, uriInfo);
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());

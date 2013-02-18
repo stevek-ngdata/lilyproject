@@ -29,7 +29,7 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
 
     @Override
-    public Filter createHBaseFilter(RecordFilter uncastFilter, Repository repository, HBaseRecordFilterFactory factory)
+    public Filter createHBaseFilter(RecordFilter uncastFilter, RepositoryManager repositoryManager, HBaseRecordFilterFactory factory)
             throws RepositoryException, InterruptedException {
 
         if (!(uncastFilter instanceof RecordTypeFilter)) {

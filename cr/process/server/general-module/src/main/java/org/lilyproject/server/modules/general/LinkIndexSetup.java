@@ -15,6 +15,7 @@ import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -25,19 +26,19 @@ public class LinkIndexSetup {
     private final SepModel sepModel;
     private final boolean linkIndexEnabled;
     private final int threads;
-    private final Repository repository;
+    private final RepositoryManager repositoryManager;
     private final Configuration hbaseConf;
     private final HBaseTableFactory tableFactory;
     private final ZooKeeperItf zk;
     private final String hostName;
     private SepConsumer sepConsumer;
 
-    public LinkIndexSetup(SepModel sepModel, boolean linkIndexEnabled, int threads, Repository repository,
+    public LinkIndexSetup(SepModel sepModel, boolean linkIndexEnabled, int threads, RepositoryManager repositoryManager,
             Configuration hbaseConf, HBaseTableFactory tableFactory, ZooKeeperItf zk, String hostName) {
         this.sepModel = sepModel;
         this.linkIndexEnabled = linkIndexEnabled;
         this.threads = threads;
-        this.repository = repository;
+        this.repositoryManager = repositoryManager;
         this.hbaseConf = hbaseConf;
         this.tableFactory = tableFactory;
         this.zk = zk;
@@ -59,9 +60,9 @@ public class LinkIndexSetup {
         if (linkIndexEnabled) {
             IndexManager indexManager = new IndexManager(hbaseConf, tableFactory);
 
-            LinkIndex linkIndex = new LinkIndex(indexManager, repository);
+            LinkIndex linkIndex = new LinkIndex(indexManager, repositoryManager);
 
-            LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repository, linkIndex);
+            LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repositoryManager, linkIndex);
 
             sepConsumer = new SepConsumer("LinkIndexUpdater", 0L, linkIndexUpdater, threads, hostName,
                     new ZooKeeperItfAdapter(zk), hbaseConf, new LilyPayloadExtractor());

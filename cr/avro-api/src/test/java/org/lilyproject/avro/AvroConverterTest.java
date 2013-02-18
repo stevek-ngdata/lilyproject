@@ -15,6 +15,11 @@
  */
 package org.lilyproject.avro;
 
+import static org.easymock.EasyMock.createControl;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertEquals;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,6 +44,7 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -51,14 +57,10 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repository.impl.valuetype.StringValueType;
 
-import static org.easymock.EasyMock.createControl;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.isA;
-import static org.junit.Assert.assertEquals;
-
 
 public class AvroConverterTest {
 
+    private static RepositoryManager repositoryManager;
     private static Repository repository;
     private static TypeManager typeManager;
     private static AvroConverter converter;
@@ -67,6 +69,7 @@ public class AvroConverterTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         control = createControl();
+        repositoryManager = control.createMock(RepositoryManager.class);
         repository = control.createMock(Repository.class);
         typeManager = control.createMock(TypeManager.class);
     }
@@ -89,8 +92,7 @@ public class AvroConverterTest {
     @Test
     public void testQName() {
         control.replay();
-        converter = new AvroConverter();
-        converter.setRepository(repository);
+        converter = new AvroConverter(repositoryManager);
         // Full name
         QName qname = new QName("namespace", "name");
         AvroQName avroQName = new AvroQName();
@@ -107,8 +109,7 @@ public class AvroConverterTest {
         expectLastCall().andReturn(valueType);
 
         control.replay();
-        converter = new AvroConverter();
-        converter.setRepository(repository);
+        converter = new AvroConverter(repositoryManager);
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.valueType = "STRING";
 
@@ -125,8 +126,7 @@ public class AvroConverterTest {
         expectLastCall().andReturn(fieldTypeEntry);
 
         control.replay();
-        converter = new AvroConverter();
-        converter.setRepository(repository);
+        converter = new AvroConverter(repositoryManager);
         AvroFieldTypeEntry avroFieldTypeEntry = new AvroFieldTypeEntry();
         AvroSchemaId avroSchemaId = new AvroSchemaId();
         avroSchemaId.idBytes = ByteBuffer.wrap(id.getBytes());
@@ -149,8 +149,7 @@ public class AvroConverterTest {
         expectLastCall().andReturn(fieldType);
 
         control.replay();
-        converter = new AvroConverter();
-        converter.setRepository(repository);
+        converter = new AvroConverter(repositoryManager);
         AvroFieldType avroFieldType = new AvroFieldType();
         AvroSchemaId avroSchemaId = new AvroSchemaId();
         avroSchemaId.idBytes = ByteBuffer.wrap(fieldTypeId.getBytes());
@@ -180,8 +179,7 @@ public class AvroConverterTest {
         expectLastCall().andReturn(fieldType);
 
         control.replay();
-        converter = new AvroConverter();
-        converter.setRepository(repository);
+        converter = new AvroConverter(repositoryManager);
         AvroFieldType avroFieldType = new AvroFieldType();
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
@@ -207,8 +205,7 @@ public class AvroConverterTest {
         expectLastCall().andReturn(recordType);
 
         control.replay();
-        converter = new AvroConverter();
-        converter.setRepository(repository);
+        converter = new AvroConverter(repositoryManager);
         AvroRecordType avroRecordType = new AvroRecordType();
         AvroSchemaId avroSchemaId = new AvroSchemaId();
         avroSchemaId.idBytes = ByteBuffer.wrap(id.getBytes());
@@ -235,8 +232,7 @@ public class AvroConverterTest {
         expectLastCall().andReturn(recordType);
 
         control.replay();
-        converter = new AvroConverter();
-        converter.setRepository(repository);
+        converter = new AvroConverter(repositoryManager);
         recordType.setVersion(1L);
         AvroRecordType avroRecordType = new AvroRecordType();
         AvroSchemaId avroSchemaId = new AvroSchemaId();
@@ -274,8 +270,7 @@ public class AvroConverterTest {
         expectLastCall().andReturn(fieldTypeEntry2);
 
         control.replay();
-        converter = new AvroConverter();
-        converter.setRepository(repository);
+        converter = new AvroConverter(repositoryManager);
         recordType.addFieldTypeEntry(fieldTypeEntry1);
         recordType.addFieldTypeEntry(fieldTypeEntry2);
         AvroRecordType avroRecordType = new AvroRecordType();
@@ -326,12 +321,11 @@ public class AvroConverterTest {
         expectLastCall().andReturn(recordType);
 
         control.replay();
-        converter = new AvroConverter();
-        converter.setRepository(repository);
-        SchemaId supertypeId1 = new SchemaIdImpl(UUID.randomUUID());
-        recordType.addSupertype(supertypeId1, 1L);
-        SchemaId supertypeId2 = new SchemaIdImpl(UUID.randomUUID());
-        recordType.addSupertype(supertypeId2, 2L);
+        converter = new AvroConverter(repositoryManager);
+        SchemaId mixinId1 = new SchemaIdImpl(UUID.randomUUID());
+        recordType.addMixin(supertypeId1, 1L);
+        SchemaId mixinId2 = new SchemaIdImpl(UUID.randomUUID());
+        recordType.addMixin(supertypeId2, 2L);
         AvroRecordType avroRecordType = new AvroRecordType();
         AvroSchemaId avroRecordTypeId = new AvroSchemaId();
         avroRecordTypeId.idBytes = ByteBuffer.wrap(recordTypeId.getBytes());
@@ -379,8 +373,6 @@ public class AvroConverterTest {
         typeManager.getFieldTypesSnapshot();
         expectLastCall().andReturn(fieldTypesSnapshot).anyTimes();
         control.replay();
-        converter = new AvroConverter();
-        converter.setRepository(repository);
         Record record = new RecordImpl();
         record.setRecordType(new QName("ns", "recordTypeName"), null);
 
@@ -410,8 +402,6 @@ public class AvroConverterTest {
         expectLastCall().andReturn(valueType).anyTimes();
         control.replay();
 
-        converter = new AvroConverter();
-        converter.setRepository(repository);
         Record record = new RecordImpl();
         RecordId recordId = repository.getIdGenerator().newRecordId();
         record.setId(recordId);

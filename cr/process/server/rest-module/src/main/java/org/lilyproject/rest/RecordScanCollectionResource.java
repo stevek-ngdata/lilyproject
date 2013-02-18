@@ -24,15 +24,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.cache.Cache;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.google.common.cache.Cache;
 
 @Path("scan")
 public class RecordScanCollectionResource extends RepositoryEnabled {
@@ -44,15 +42,15 @@ public class RecordScanCollectionResource extends RepositoryEnabled {
     @POST
     @Consumes("application/json")
     public Response post(RecordScan scan, @Context UriInfo uriInfo) {
-        String scanId = String.valueOf(rand.nextLong());        
+        String scanId = String.valueOf(rand.nextLong());
         try {
-            recordScannerMap.put(scanId, repository.getScanner(scan));            
+            recordScannerMap.put(scanId, getRepository().getScanner(scan));
         } catch (RepositoryException e) {
-           throw new ResourceException(e, Status.BAD_REQUEST.getStatusCode());           
+           throw new ResourceException(e, Status.BAD_REQUEST.getStatusCode());
         } catch (InterruptedException e) {
             throw new ResourceException(e, Status.INTERNAL_SERVER_ERROR.getStatusCode());
         }
         URI uri = uriInfo.getBaseUriBuilder().path(RecordScanResource.class).build(scanId);
-        return Response.created(uri).build();     
+        return Response.created(uri).build();
     }
 }

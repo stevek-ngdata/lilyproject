@@ -15,38 +15,58 @@
  */
 package org.lilyproject.avro;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.avro.AvroRemoteException;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.indexer.Indexer;
 import org.lilyproject.indexer.IndexerException;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeBucket;
 import org.lilyproject.repository.api.TypeManager;
 
 public class AvroLilyImpl implements AvroLily {
 
-    private final Repository repository;
+    private final RepositoryManager repositoryManager;
     private final TypeManager typeManager;
     private final Indexer indexer;
-    private final AvroConverter converter;
+    private AvroConverter converter;
 
-    public AvroLilyImpl(Repository repository, Indexer indexer, AvroConverter converter) {
-        this.repository = repository;
+    public AvroLilyImpl(RepositoryManager repositoryManager, TypeManager typeManager, Indexer indexer) {
+        this.repositoryManager = repositoryManager;
         this.indexer = indexer;
-        this.typeManager = repository.getTypeManager();
+        this.typeManager = typeManager;
+        this.converter = new AvroConverter(repositoryManager);
+    }
+    
+    @VisibleForTesting
+    public void setAvroConverter(AvroConverter converter) {
         this.converter = converter;
+    }
+    
+    private Repository getRepository(ByteBuffer tableNameBuffer) throws InterruptedException, RepositoryException {
+        byte[] tableNameBytes = new byte[tableNameBuffer.remaining()];
+        tableNameBuffer.get(tableNameBytes);
+        try {
+            return repositoryManager.getRepository(Bytes.toString(tableNameBytes));
+        } catch (IOException e) {
+            throw new RepositoryException(e);
+        }
     }
 
     @Override
     public ByteBuffer create(ByteBuffer record, ByteBuffer tableName) throws AvroRepositoryException, AvroInterruptedException {
         try {
+            Repository repository = getRepository(tableName);
             return converter.convert(repository.create(converter.convertRecord(record)));
         } catch (RepositoryException e) {
             throw converter.convert(e);
@@ -59,6 +79,7 @@ public class AvroLilyImpl implements AvroLily {
     public ByteBuffer createOrUpdate(ByteBuffer record, ByteBuffer tableName, boolean useLatestRecordType)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
+            Repository repository = getRepository(tableName);
             return converter.convert(repository.createOrUpdate(converter.convertRecord(record), useLatestRecordType));
         } catch (RepositoryException e) {
             throw converter.convert(e);
@@ -72,9 +93,8 @@ public class AvroLilyImpl implements AvroLily {
                             Map<String,String> attributes)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
+            Repository repository = getRepository(tableName);
             RecordId decodedRecordId = converter.convertAvroRecordId(recordId);
-            
-            
             Record record = null;
             if (attributes == null) {
                 record = repository.delete(decodedRecordId, converter.convertFromAvro(conditions));
@@ -99,6 +119,7 @@ public class AvroLilyImpl implements AvroLily {
     public ByteBuffer update(ByteBuffer record, ByteBuffer tableName, boolean updateVersion, boolean useLatestRecordType,
                              List<AvroMutationCondition> conditions) throws AvroRemoteException {
         try {
+            Repository repository = getRepository(tableName);
             return converter.convert(repository.update(converter.convertRecord(record), updateVersion,
                     useLatestRecordType, converter.convertFromAvro(conditions)));
         } catch (RepositoryException e) {
@@ -308,6 +329,7 @@ public class AvroLilyImpl implements AvroLily {
     @Override
     public List<String> getVariants(ByteBuffer recordId, ByteBuffer tableName) throws AvroRepositoryException, AvroInterruptedException {
         try {
+            Repository repository = getRepository(tableName);
             return converter.convert(repository.getVariants(converter.convertAvroRecordId(recordId)));
         } catch (RepositoryException e) {
             throw converter.convert(e);

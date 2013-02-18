@@ -60,10 +60,10 @@ public class LinkIndexTest {
 
         IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
 
-        linkIndex = new LinkIndex(indexManager, repository);
+        linkIndex = new LinkIndex(indexManager, repoSetup.getRepositoryManager());
 
         repoSetup.getSepModel().addSubscription("LinkIndexUpdater");
-        repoSetup.startSepEventSlave("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
+        repoSetup.startSepEventSlave("LinkIndexUpdater", new LinkIndexUpdater(repoSetup.getRepositoryManager(), linkIndex));
     }
 
     @AfterClass

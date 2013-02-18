@@ -60,7 +60,7 @@ public class IndexerMasterTest {
         hBaseAdmin = new HBaseAdmin(repoSetup.getHadoopConf());
 
         final IndexerModelImpl model = new IndexerModelImpl(repoSetup.getZk());
-        indexesInfo = new IndexesInfoImpl(model, repository);
+        indexesInfo = new IndexesInfoImpl(model, repoSetup.getRepositoryManager());
     }
 
     @After

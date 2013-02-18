@@ -64,7 +64,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.sep.LilyHBaseEventPublisher;
 import org.lilyproject.sep.LilyPayloadExtractor;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
@@ -89,7 +89,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 public class IndexerWorker {
     private final IndexerModel indexerModel;
 
-    private final Repository repository;
+    private final RepositoryManager repositoryManager;
 
     private final Configuration hbaseConf;
 
@@ -123,12 +123,12 @@ public class IndexerWorker {
 
     private final Log log = LogFactory.getLog(getClass());
 
-    public IndexerWorker(IndexerModel indexerModel, Repository repository, ZooKeeperItf zk, Configuration hbaseConf,
+    public IndexerWorker(IndexerModel indexerModel, RepositoryManager repositoryManager, ZooKeeperItf zk, Configuration hbaseConf,
                          SolrClientConfig solrClientConfig, String hostName, IndexerWorkerSettings settings,
                          IndexerRegistry indexerRegistry, HBaseTableFactory tableFactory)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException, InterruptedException {
         this.indexerModel = indexerModel;
-        this.repository = repository;
+        this.repositoryManager = repositoryManager;
         this.hbaseConf = hbaseConf;
         this.zk = zk;
         this.settings = settings;
@@ -186,7 +186,7 @@ public class IndexerWorker {
         IndexUpdaterHandle handle = null;
         try {
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
-                    repository);
+                    repositoryManager);
 
             final SolrShardManager solrShardMgr = getSolrShardManager(index);
 
@@ -197,16 +197,16 @@ public class IndexerWorker {
             // we should maintain a deref map.
             DerefMap derefMap = index.isEnableDerefMap() && indexerConf.containsDerefExpressions() ?
                     DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory,
-                            repository.getIdGenerator()) : null;
+                            repositoryManager.getIdGenerator()) : null;
 
             // create and register the indexer
-            Indexer indexer = new Indexer(index.getName(), indexerConf, repository, solrShardMgr, indexLocker,
+            Indexer indexer = new Indexer(index.getName(), indexerConf, repositoryManager.getDefaultRepository(), solrShardMgr, indexLocker,
                     indexerMetrics, derefMap);
             indexerRegistry.register(indexer);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
             EventPublisher hbaseEventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(tableFactory));
-            IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, updaterMetrics, derefMap,
+            IndexUpdater indexUpdater = new IndexUpdater(indexer, repositoryManager.getDefaultRepository(), indexLocker, updaterMetrics, derefMap,
                     hbaseEventPublisher, index.getQueueSubscriptionId());
 
             SepConsumer sepConsumer = new SepConsumer(index.getQueueSubscriptionId(),

@@ -22,8 +22,6 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Set;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.hadoop.conf.Configuration;
@@ -41,10 +39,12 @@ import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.impl.BaseRepository;
 import org.lilyproject.repository.impl.RecordBuilderImpl;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 
 // ATTENTION: when adding new methods, do not forget to add handling for UndeclaredThrowableException! This is
@@ -56,19 +56,19 @@ public class RemoteRepository extends BaseRepository {
     private final AvroConverter converter;
     private Transceiver client;
 
-    public RemoteRepository(InetSocketAddress address, AvroConverter converter, RemoteTypeManager typeManager,
-                            IdGenerator idGenerator, BlobManager blobManager, Configuration hbaseConf)
+    public RemoteRepository(InetSocketAddress address, AvroConverter converter, RepositoryManager repositoryManager,
+                BlobManager blobManager, Configuration hbaseConf)
             throws IOException, InterruptedException {
-        this(new AvroLilyTransceiver(address), converter, typeManager, idGenerator, blobManager,
+        // true flag to getRecordTable: we don't let the remote side create the record table if it
+        // would not yet exist, as it is not aware of creation parameters (such as splits, compression, etc.)
+        this(new AvroLilyTransceiver(address), converter, repositoryManager, blobManager,
                     LilyHBaseSchema.getRecordTable(new HBaseTableFactoryImpl(hbaseConf), true));
     }
     
-    protected RemoteRepository(AvroLilyTransceiver lilyTransceiver, AvroConverter converter, RemoteTypeManager typeManager,
-                                IdGenerator idGenerator, BlobManager blobManager, HTableInterface recordTable)
+    public RemoteRepository(AvroLilyTransceiver lilyTransceiver, AvroConverter converter, RepositoryManager repositoryManager,
+                    BlobManager blobManager, HTableInterface recordTable)
                 throws IOException, InterruptedException {
-        // true flag to getRecordTable: we don't let the remote side create the record table if it
-        // would not yet exist, as it is not aware of creation parameters (such as splits, compression, etc.)
-        super(typeManager, blobManager, idGenerator, recordTable, null);
+        super(repositoryManager, blobManager, recordTable, null);
         this.converter = converter;
         client = lilyTransceiver.getTransceiver();
         lilyProxy = lilyTransceiver.getLilyProxy();

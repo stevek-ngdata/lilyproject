@@ -40,8 +40,16 @@
       service="org.lilyproject.servletregistry.api.ServletRegistry"/>
 
   <lily:import-service
-      id="repository"
-      service="org.lilyproject.repository.api.Repository"/>
+      id="repositoryManager"
+      service="org.lilyproject.repository.api.RepositoryManager"/>
+
+  <lily:import-service
+      id="typeManager"
+      service="org.lilyproject.repository.api.TypeManager"/>
+
+  <lily:import-service
+      id="idGenerator"
+      service="org.lilyproject.repository.api.IdGenerator"/>
 
   <lily:import-service
       id="indexer"

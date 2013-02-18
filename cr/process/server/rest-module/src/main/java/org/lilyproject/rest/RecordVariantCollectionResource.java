@@ -15,9 +15,12 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordNotFoundException;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -25,12 +28,11 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
 
 @Path("record/{id}/variant")
 public class RecordVariantCollectionResource extends RepositoryEnabled {
@@ -38,6 +40,7 @@ public class RecordVariantCollectionResource extends RepositoryEnabled {
     @GET
     @Produces("application/json")
     public EntityList<Record> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
+        Repository repository = getRepository();
         RecordId recordId = repository.getIdGenerator().fromString(id);
         try {
             Set<RecordId> recordIds = repository.getVariants(recordId);

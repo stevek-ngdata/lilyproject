@@ -15,16 +15,25 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.*;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.UriInfo;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
+
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
 
 @Path("record/{id}/version")
 public class RecordVersionCollectionResource extends RepositoryEnabled {
@@ -36,6 +45,7 @@ public class RecordVersionCollectionResource extends RepositoryEnabled {
             @DefaultValue("10") @QueryParam("max-results") Long maxResults,
             @Context UriInfo uriInfo) {
 
+        Repository repository = getRepository();
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
 
         RecordId recordId = repository.getIdGenerator().fromString(id);

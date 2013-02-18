@@ -15,14 +15,27 @@
  */
 package org.lilyproject.rest;
 
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.util.exception.ExceptionUtil;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class RepositoryEnabled {
-    protected Repository repository;
+    protected RepositoryManager repositoryMgr;
 
     @Autowired
-    public void setRepository(Repository repository) {
-        this.repository = repository;
+    public void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryMgr = repositoryManager;
+    }
+    
+    public Repository getRepository() {
+        try {
+            return repositoryMgr.getRepository(Table.RECORD.name);
+        } catch (Exception e) {
+            ExceptionUtil.handleInterrupt(e);
+            throw new ResourceException("Error retrieving repository", e, INTERNAL_SERVER_ERROR.getStatusCode());
+        }
     }
 }

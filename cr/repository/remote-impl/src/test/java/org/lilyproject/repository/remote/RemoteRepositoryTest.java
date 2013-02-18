@@ -24,8 +24,6 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -35,10 +33,10 @@ import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.AvroMutationCondition;
 import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 public class RemoteRepositoryTest {
 
@@ -56,8 +54,8 @@ public class RemoteRepositoryTest {
         avroConverter = mock(AvroConverter.class);
         recordTable = mock(HTableInterface.class);
 
-        remoteRepository = new RemoteRepository(avroLilyTransceiver, avroConverter, mock(RemoteTypeManager.class),
-                mock(IdGenerator.class), mock(BlobManager.class), recordTable);
+        remoteRepository = new RemoteRepository(avroLilyTransceiver, avroConverter,
+                mock(RemoteRepositoryManager.class), mock(BlobManager.class), recordTable);
     }
 
     @Test

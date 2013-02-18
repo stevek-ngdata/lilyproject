@@ -64,8 +64,8 @@
       service="com.ngdata.sep.SepModel"/>
 
   <lily:export-service
-      ref="prematureRepository"
-      service="org.lilyproject.util.repo.PrematureRepository"/>
+      ref="prematureRepositoryManager"
+      service="org.lilyproject.util.repo.PrematureRepositoryManager"/>
 
   <!-- The depends-on zooKeeper is so that Lily's ZooKeeper connection establishment code
        is the reference with regards to waiting until ZooKeeper is available. -->
@@ -156,14 +156,14 @@
     <constructor-arg ref="hbaseConf"/>
   </bean>
 
-  <bean id="prematureRepository" class="org.lilyproject.util.repo.PrematureRepositoryImpl">
+  <bean id="prematureRepositoryManager" class="org.lilyproject.util.repo.PrematureRepositoryManagerImpl">
   </bean>
 
   <bean class="org.lilyproject.server.modules.general.LinkIndexSetup">
     <constructor-arg ref="sepModel"/>
     <constructor-arg value="${linkindex:enabled}"/>
     <constructor-arg value="${linkindex:threads}"/>
-    <constructor-arg ref="prematureRepository"/>
+    <constructor-arg ref="prematureRepositoryManager"/>
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="hbaseTableFactory"/>
     <constructor-arg ref="zooKeeper"/>

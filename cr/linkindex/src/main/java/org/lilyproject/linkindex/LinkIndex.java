@@ -33,7 +33,7 @@ import org.lilyproject.hbaseindex.QueryResult;
 import org.lilyproject.linkindex.LinkIndexMetrics.Action;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.io.Closer;
@@ -52,7 +52,7 @@ import org.lilyproject.util.io.Closer;
 // the backward table, is not arbitrary. It is such that if the process would fail in between, there would
 // never be left any state in the backward table which would not be found via the forward index.
 public class LinkIndex {
-    private Repository repository;
+    private RepositoryManager repositoryManager;
     private IdGenerator lazyIdGenerator;
     private LinkIndexMetrics metrics;
     private Index forwardIndex;
@@ -61,10 +61,10 @@ public class LinkIndex {
     private static final byte[] SOURCE_FIELD_KEY = Bytes.toBytes("sf");
     private static final byte[] VTAG_KEY = Bytes.toBytes("vt");
 
-    public LinkIndex(final IndexManager indexManager, Repository repository) throws IndexNotFoundException, IOException,
+    public LinkIndex(final IndexManager indexManager, RepositoryManager repositoryManager) throws IndexNotFoundException, IOException,
             InterruptedException {
         metrics = new LinkIndexMetrics("linkIndex");
-        this.repository = repository;
+        this.repositoryManager = repositoryManager;
 
         // About the structure of these indexes:
         //  - the vtag comes after the recordid because this way we can delete all
@@ -437,7 +437,7 @@ public class LinkIndex {
         // synchronization not an issue, doesn't matter if this happens twice
         // can't assign IdGenerator in constructor since the repository is a premature one
         if (lazyIdGenerator == null) {
-            lazyIdGenerator = repository.getIdGenerator();
+            lazyIdGenerator = repositoryManager.getIdGenerator();
         }
 
         return lazyIdGenerator;

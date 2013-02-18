@@ -36,8 +36,8 @@
   </bean>
 
   <lily:import-service
-      id="prematureRepository"
-      service="org.lilyproject.util.repo.PrematureRepository"/>
+      id="prematureRepositoryManager"
+      service="org.lilyproject.util.repo.PrematureRepositoryManager"/>
 
   <lily:import-service
       id="indexerModel"
@@ -49,7 +49,7 @@
 
   <bean id="indexesInfo" class="org.lilyproject.indexer.model.util.IndexesInfoImpl">
     <constructor-arg ref="indexerModel"/>
-    <constructor-arg ref="prematureRepository"/>
+    <constructor-arg ref="prematureRepositoryManager"/>
   </bean>
 
   <bean id="indexRecordFilterHook" class="org.lilyproject.indexer.integration.IndexRecordFilterHook">

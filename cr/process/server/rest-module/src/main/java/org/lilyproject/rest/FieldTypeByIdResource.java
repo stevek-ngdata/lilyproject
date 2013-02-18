@@ -26,14 +26,14 @@ import javax.ws.rs.core.UriInfo;
 import static javax.ws.rs.core.Response.Status.*;
 
 @Path("schema/fieldTypeById/{id}")
-public class FieldTypeByIdResource extends RepositoryEnabled {
+public class FieldTypeByIdResource extends TypeManagerEnabled {
 
     @GET
     @Produces("application/json")
     public Entity<FieldType> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
         try {
-            SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
-            return Entity.create(repository.getTypeManager().getFieldTypeById(schemaId), uriInfo);
+            SchemaId schemaId = idGenerator.getSchemaId(id);
+            return Entity.create(typeManager.getFieldTypeById(schemaId), uriInfo);
         } catch (FieldTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -45,7 +45,7 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response put(@PathParam("id") String id, FieldType fieldType, @Context UriInfo uriInfo) {
-        SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
+        SchemaId schemaId = idGenerator.getSchemaId(id);
 
         if (fieldType.getId() != null && !fieldType.getId().equals(schemaId)) {
             throw new ResourceException("ID in submitted field type does not match the id in URI.",
@@ -56,7 +56,7 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
         ImportResult<FieldType> result;
         try {
             result = FieldTypeImport.importFieldType(fieldType, ImportMode.UPDATE, IdentificationMode.ID,
-                    null, repository.getTypeManager());
+                    null, typeManager);
         } catch (Exception e) {
             throw new ResourceException("Error creating or updating field type with id " + id, e,
                     INTERNAL_SERVER_ERROR.getStatusCode());

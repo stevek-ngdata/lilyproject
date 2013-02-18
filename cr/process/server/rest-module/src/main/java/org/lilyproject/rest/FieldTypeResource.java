@@ -26,14 +26,14 @@ import java.net.URI;
 import static javax.ws.rs.core.Response.Status.*;
 
 @Path("schema/fieldType/{name}")
-public class FieldTypeResource extends RepositoryEnabled {
+public class FieldTypeResource extends TypeManagerEnabled {
 
     @GET
     @Produces("application/json")
     public Entity<FieldType> get(@PathParam("name") String name, @Context UriInfo uriInfo) {
         QName qname = ResourceClassUtil.parseQName(name, uriInfo.getQueryParameters());
         try {
-            return Entity.create(repository.getTypeManager().getFieldTypeByName(qname), uriInfo);
+            return Entity.create(typeManager.getFieldTypeByName(qname), uriInfo);
         } catch (FieldTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -52,7 +52,7 @@ public class FieldTypeResource extends RepositoryEnabled {
         ImportResult<FieldType> result;
         try {
             result = FieldTypeImport.importFieldType(fieldType, ImportMode.CREATE_OR_UPDATE, IdentificationMode.NAME,
-                    qname, repository.getTypeManager());
+                    qname, typeManager);
         } catch (Exception e) {
             throw new ResourceException("Error creating or updating field type named " + qname, e,
                     INTERNAL_SERVER_ERROR.getStatusCode());

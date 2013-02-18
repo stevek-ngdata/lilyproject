@@ -361,7 +361,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 LilyClient lilyClient = null;
                 try {
                     lilyClient = new LilyClient(zkConnectionString, 10000);
-                    IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration), lilyClient.getRepository());
+                    IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration), lilyClient.getRepository().getRepositoryManager());
                 } catch (Exception e) {
                     System.out.println(); // separator line because LilyClient might have produced some error logs
                     System.out.println("Failed to parse & build the indexer configuration.");

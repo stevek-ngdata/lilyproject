@@ -15,21 +15,37 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.*;
-import org.lilyproject.tools.import_.core.ImportMode;
-import org.lilyproject.tools.import_.core.ImportResult;
-import org.lilyproject.tools.import_.core.ImportResultType;
-import org.lilyproject.tools.import_.core.RecordImport;
-
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.*;
-import javax.ws.rs.core.UriInfo;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 
 import java.net.URI;
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.tools.import_.core.ImportMode;
+import org.lilyproject.tools.import_.core.ImportResult;
+import org.lilyproject.tools.import_.core.ImportResultType;
+import org.lilyproject.tools.import_.core.RecordImport;
 
 @Path("record/{id}")
 public class RecordResource extends RepositoryEnabled {
@@ -37,6 +53,7 @@ public class RecordResource extends RepositoryEnabled {
     @GET
     @Produces("application/json")
     public Entity<Record> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
+        Repository repository = getRepository();
         RecordId recordId = repository.getIdGenerator().fromString(id);
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
         try {
@@ -52,6 +69,7 @@ public class RecordResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response put(@PathParam("id") String id, Record record, @Context UriInfo uriInfo) {
+        Repository repository = getRepository();
         RecordId recordId = repository.getIdGenerator().fromString(id);
 
         if (record.getId() != null && !record.getId().equals(recordId)) {
@@ -94,6 +112,7 @@ public class RecordResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response post(@PathParam("id") String id, PostAction<Record> postAction, @Context UriInfo uriInfo) {
+        Repository repository = getRepository();
         if (postAction.getAction().equals("update")) {
             RecordId recordId = repository.getIdGenerator().fromString(id);
             Record record = postAction.getEntity();
@@ -153,6 +172,7 @@ public class RecordResource extends RepositoryEnabled {
 
     @DELETE
     public Response delete(@PathParam("id") String id) {
+        Repository repository = getRepository();
         RecordId recordId = repository.getIdGenerator().fromString(id);
         try {
             repository.delete(recordId);

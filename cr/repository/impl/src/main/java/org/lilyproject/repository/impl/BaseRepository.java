@@ -55,6 +55,7 @@ import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeException;
@@ -69,9 +70,10 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public abstract class BaseRepository implements Repository {
-    protected final BlobManager blobManager;
+    protected final RepositoryManager repositoryManager;
     protected final TypeManager typeManager;
     protected final IdGenerator idGenerator;
+    protected final BlobManager blobManager;
     protected final RecordDecoder recdec;
     protected final HTableInterface recordTable;
     protected RepositoryMetrics metrics;
@@ -91,11 +93,13 @@ public abstract class BaseRepository implements Repository {
         REAL_RECORDS_FILTER.setFilterIfMissing(true);
     }
 
-    protected BaseRepository(TypeManager typeManager, BlobManager blobManager, IdGenerator idGenerator,
+    protected BaseRepository(RepositoryManager repositoryManager, BlobManager blobManager,
                              HTableInterface recordTable, RepositoryMetrics metrics) {
-        this.typeManager = typeManager;
+        
+        this.repositoryManager = repositoryManager;
+        this.typeManager = repositoryManager.getTypeManager();
         this.blobManager = blobManager;
-        this.idGenerator = idGenerator;
+        this.idGenerator = repositoryManager.getIdGenerator();
         this.recordTable = recordTable;
         this.recdec = new RecordDecoder(typeManager, idGenerator);
         this.metrics = metrics;
@@ -104,17 +108,6 @@ public abstract class BaseRepository implements Repository {
     @Override
     public TypeManager getTypeManager() {
         return typeManager;
-    }
-
-    @Override
-    public Record newRecord() {
-        return recdec.newRecord();
-    }
-
-    @Override
-    public Record newRecord(RecordId recordId) {
-        ArgumentValidator.notNull(recordId, "recordId");
-        return recdec.newRecord(recordId);
     }
 
     @Override
@@ -228,7 +221,7 @@ public abstract class BaseRepository implements Repository {
 
         // add user's filter
         if (scan.getRecordFilter() != null) {
-            Filter filter = filterFactory.createHBaseFilter(scan.getRecordFilter(), this, filterFactory);
+            Filter filter = filterFactory.createHBaseFilter(scan.getRecordFilter(), repositoryManager, filterFactory);
             filterList.addFilter(filter);
         }
 
@@ -281,10 +274,10 @@ public abstract class BaseRepository implements Repository {
 
     private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {
         @Override
-        public Filter createHBaseFilter(RecordFilter filter, Repository repository, HBaseRecordFilterFactory factory)
+        public Filter createHBaseFilter(RecordFilter filter, RepositoryManager repositoryManager, HBaseRecordFilterFactory factory)
                 throws RepositoryException, InterruptedException {
             for (HBaseRecordFilterFactory filterFactory : FILTER_FACTORIES) {
-                Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repository, factory);
+                Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repositoryManager, factory);
                 if (hbaseFilter != null)
                     return hbaseFilter;
             }
@@ -293,19 +286,23 @@ public abstract class BaseRepository implements Repository {
     };
 
     /* READING */
+    @Override
     public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
 
+    @Override
     public Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames);
     }
 
+    @Override
     public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
         return read(recordIds, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
 
+    @Override
     public List<Record> read(List<RecordId> recordIds, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
@@ -314,11 +311,13 @@ public abstract class BaseRepository implements Repository {
         return read(recordIds, fields, fieldTypes);
     }
 
+    @Override
     public Record read(RecordId recordId, Long version, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
         return read(recordId, version, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
 
+    @Override
     public Record read(RecordId recordId, Long version, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
@@ -327,6 +326,7 @@ public abstract class BaseRepository implements Repository {
         return read(recordId, version, fields, fieldTypes);
     }
 
+    @Override
     public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)
             throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
@@ -518,12 +518,14 @@ public abstract class BaseRepository implements Repository {
         return results;
     }
 
+    @Override
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
         return readVersions(recordId, fromVersion, toVersion,
                 fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
 
+    @Override
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
@@ -551,12 +553,14 @@ public abstract class BaseRepository implements Repository {
         return recdec.decodeRecords(recordId, versionsToRead, result, fieldTypes);
     }
 
+    @Override
     public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
         return readVersions(recordId, versions,
                 fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
 
+    @Override
     public List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
@@ -585,6 +589,20 @@ public abstract class BaseRepository implements Repository {
         }
         return recdec.decodeRecords(recordId, validVersions, result, fieldTypes);
     }
+    
+    @Override
+    public Record newRecord() throws RecordException {
+        return repositoryManager.getRecordFactory().newRecord();
+    }
+    
+    @Override
+    public Record newRecord(RecordId recordId) throws RecordException {
+        return repositoryManager.getRecordFactory().newRecord(recordId);
+    }
 
-
+    @Override
+    public RepositoryManager getRepositoryManager() {
+        return repositoryManager;
+    }
+    
 }

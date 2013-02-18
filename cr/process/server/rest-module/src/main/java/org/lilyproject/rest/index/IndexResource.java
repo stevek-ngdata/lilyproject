@@ -15,11 +15,14 @@
  */
 package org.lilyproject.rest.index;
 
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -42,16 +45,14 @@ import org.lilyproject.indexer.model.api.IndexGeneralState;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
-import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
+import org.lilyproject.rest.TypeManagerEnabled;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.json.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-
 @Path("index")
-public class IndexResource extends RepositoryEnabled {
+public class IndexResource extends TypeManagerEnabled {
 
     @Autowired
     protected WriteableIndexerModel model;
@@ -180,7 +181,7 @@ public class IndexResource extends RepositoryEnabled {
     public void indexOn(@QueryParam("action") String action, @PathParam("name") String indexName,
                         @QueryParam("id") String recordId) throws Exception {
         if ("index".equals(action)) {
-            indexer.indexOn(repository.getIdGenerator().fromString(recordId),
+            indexer.indexOn(idGenerator.fromString(recordId),
                     new HashSet<String>(Arrays.asList(indexName)));
         } else {
             throw new ResourceException("Unsupported POST action: " + action, BAD_REQUEST.getStatusCode());
@@ -197,9 +198,9 @@ public class IndexResource extends RepositoryEnabled {
         if ("index".equals(action)) {
             final Set<String> indexNames = parse(commaSeparatedIndexNames);
             if (indexNames.isEmpty()) {
-                indexer.index(repository.getIdGenerator().fromString(recordId));
+                indexer.index(idGenerator.fromString(recordId));
             } else {
-                indexer.indexOn(repository.getIdGenerator().fromString(recordId), indexNames);
+                indexer.indexOn(idGenerator.fromString(recordId), indexNames);
             }
         } else {
             throw new ResourceException("Unsupported POST action: " + action, BAD_REQUEST.getStatusCode());

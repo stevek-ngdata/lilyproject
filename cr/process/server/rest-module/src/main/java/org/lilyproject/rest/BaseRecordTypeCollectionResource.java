@@ -28,12 +28,12 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
-public abstract class BaseRecordTypeCollectionResource extends RepositoryEnabled {
+public abstract class BaseRecordTypeCollectionResource extends TypeManagerEnabled {
     @GET
     @Produces("application/json")
     public EntityList<RecordType> get(@Context UriInfo uriInfo) {
         try {
-            return EntityList.create(repository.getTypeManager().getRecordTypes(), uriInfo);
+            return EntityList.create(typeManager.getRecordTypes(), uriInfo);
         } catch (Exception e) {
             throw new ResourceException("Error loading record type list.", e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
@@ -43,8 +43,6 @@ public abstract class BaseRecordTypeCollectionResource extends RepositoryEnabled
         if (!postAction.getAction().equals("create")) {
             throw new ResourceException("Unsupported POST action: " + postAction.getAction(), BAD_REQUEST.getStatusCode());
         }
-
-        TypeManager typeManager = repository.getTypeManager();
 
         RecordType recordType = postAction.getEntity();
         try {

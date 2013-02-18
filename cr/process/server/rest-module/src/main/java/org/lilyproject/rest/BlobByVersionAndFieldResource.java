@@ -30,7 +30,7 @@ public class BlobByVersionAndFieldResource extends RepositoryEnabled {
     @Produces("*/*")
     public Response get(@PathParam("id") String id, @PathParam("version") String version,
             @PathParam("fieldName") String fieldName, @Context UriInfo uriInfo) {
-        return getBlob(id, version, fieldName, uriInfo, repository);
+        return getBlob(id, version, fieldName, uriInfo, getRepository());
     }
 
 

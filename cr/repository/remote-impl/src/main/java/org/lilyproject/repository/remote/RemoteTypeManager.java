@@ -19,13 +19,13 @@ import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
 import java.util.List;
+
 import javax.annotation.PreDestroy;
 
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.commons.logging.LogFactory;
-import org.apache.zookeeper.KeeperException;
 import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.avro.AvroFieldType;
 import org.lilyproject.avro.AvroGenericException;
@@ -75,20 +75,6 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
 
         lilyProxy = SpecificRequestor.getClient(AvroLily.class, client);
         registerDefaultValueTypes();
-    }
-
-    /**
-     * Start should be called for the RemoteTypeManager after the typemanager
-     * has been assigned to the repository, after the repository has been
-     * assigned to the AvroConverter and before using the typemanager and
-     * repository.
-     *
-     * @throws InterruptedException
-     * @throws KeeperException
-     * @throws RepositoryException
-     */
-    public void start() throws InterruptedException, KeeperException, RepositoryException {
-        // schemaCache.start();
     }
 
     @Override
