@@ -24,6 +24,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -67,7 +69,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(recordId);
 
-        verify(avroLily).delete(encodedRecordId, null, null);
+        verify(avroLily).delete(encodedRecordId, ByteBuffer.wrap(Table.RECORD.bytes), null, null);
     }
 
     @Test
@@ -83,7 +85,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(recordId, mutationConditions);
 
-        verify(avroLily).delete(encodedRecordId, encodedMutationConditions, null);
+        verify(avroLily).delete(encodedRecordId, ByteBuffer.wrap(Table.RECORD.bytes), encodedMutationConditions, null);
     }
 
     @Test
@@ -101,7 +103,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(record);
 
-        verify(avroLily).delete(encodedRecordId, null, attributes);
+        verify(avroLily).delete(encodedRecordId, ByteBuffer.wrap(Table.RECORD.bytes), null, attributes);
     }
 
 }

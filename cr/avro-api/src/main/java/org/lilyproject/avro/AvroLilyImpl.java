@@ -45,7 +45,7 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer create(ByteBuffer record) throws AvroRepositoryException, AvroInterruptedException {
+    public ByteBuffer create(ByteBuffer record, ByteBuffer tableName) throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(repository.create(converter.convertRecord(record)));
         } catch (RepositoryException e) {
@@ -56,7 +56,7 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer createOrUpdate(ByteBuffer record, boolean useLatestRecordType)
+    public ByteBuffer createOrUpdate(ByteBuffer record, ByteBuffer tableName, boolean useLatestRecordType)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(repository.createOrUpdate(converter.convertRecord(record), useLatestRecordType));
@@ -68,7 +68,7 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer delete(ByteBuffer recordId, List<AvroMutationCondition> conditions, 
+    public ByteBuffer delete(ByteBuffer recordId, ByteBuffer tableName, List<AvroMutationCondition> conditions,
                             Map<String,String> attributes)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
@@ -96,7 +96,7 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer update(ByteBuffer record, boolean updateVersion, boolean useLatestRecordType,
+    public ByteBuffer update(ByteBuffer record, ByteBuffer tableName, boolean updateVersion, boolean useLatestRecordType,
                              List<AvroMutationCondition> conditions) throws AvroRemoteException {
         try {
             return converter.convert(repository.update(converter.convertRecord(record), updateVersion,
@@ -306,7 +306,7 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public List<String> getVariants(ByteBuffer recordId) throws AvroRepositoryException, AvroInterruptedException {
+    public List<String> getVariants(ByteBuffer recordId, ByteBuffer tableName) throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(repository.getVariants(converter.convertAvroRecordId(recordId)));
         } catch (RepositoryException e) {

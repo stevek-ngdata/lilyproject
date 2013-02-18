@@ -23,6 +23,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.junit.Before;
@@ -64,7 +66,7 @@ public class AvroLilyImplTest {
         Record toDelete = mock(Record.class);
         when(wrappedRepository.newRecord(recordId)).thenReturn(toDelete);
 
-        avroLilyImpl.delete(recordIdBytes, null, attributes);
+        avroLilyImpl.delete(recordIdBytes, ByteBuffer.wrap(Table.RECORD.bytes), null, attributes);
 
         verify(toDelete).setAttributes(attributes);
         verify(wrappedRepository).delete(toDelete);
@@ -81,7 +83,7 @@ public class AvroLilyImplTest {
         when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
         when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
 
-        avroLilyImpl.delete(recordIdBytes, avroMutationConditions, null);
+        avroLilyImpl.delete(recordIdBytes, ByteBuffer.wrap(Table.RECORD.bytes), avroMutationConditions, null);
 
         verify(wrappedRepository).delete(recordId, mutationConditions);
     }
@@ -99,7 +101,7 @@ public class AvroLilyImplTest {
         when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
         when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
 
-        avroLilyImpl.delete(recordIdBytes, avroMutationConditions, attributes);
+        avroLilyImpl.delete(recordIdBytes, ByteBuffer.wrap(Table.RECORD.bytes), avroMutationConditions, attributes);
     }
 
 }

@@ -180,7 +180,9 @@
     // repository api functionality
 
     "create": {
-      "request": [{"name": "record", "type": "bytes"}],
+      "request": [
+        {"name": "record", "type": "bytes"}, 
+        {"name": "tableName", "type": "bytes"}],
       "response": "bytes",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
@@ -188,6 +190,7 @@
     "update": {
       "request": [
         {"name": "record", "type": "bytes"},
+        {"name": "tableName", "type": "bytes"},
         {"name": "updateVersion", "type": "boolean"},
         {"name": "useLatestRecordType", "type": "boolean"},
         {"name": "conditions", "type": [{"type": "array", "items": "AvroMutationCondition"}, "null"]}],
@@ -198,6 +201,7 @@
     "createOrUpdate": {
       "request": [
         {"name": "record", "type": "bytes"},
+        {"name": "tableName", "type": "bytes"},
         {"name": "useLatestRecordType", "type": "boolean"}
       ],
       "response": "bytes",
@@ -207,6 +211,7 @@
     "delete": {
       "request": [
         {"name": "recordId", "type": "bytes"},
+        {"name": "tableName", "type": "bytes"},
         {"name": "conditions", "type": [{"type": "array", "items": "AvroMutationCondition"}, "null"]},
         {"name": "attributes", "type": [{"type": "map", "values": "string"}, "null"]}
       ],
@@ -215,7 +220,9 @@
     },
     
     "getVariants": {
-      "request": [{"name": "recordId", "type": "bytes"}],
+      "request": [
+        {"name": "recordId", "type": "bytes"},
+        {"name": "tableName", "type": "bytes"}],
       "response": {"type": "array", "items": "string"},
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
