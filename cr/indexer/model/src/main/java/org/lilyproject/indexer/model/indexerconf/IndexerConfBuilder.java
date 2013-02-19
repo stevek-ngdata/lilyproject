@@ -152,7 +152,7 @@ public class IndexerConfBuilder {
         }
 
         // This is for backwards compatibility: previously, <recordFilter> was called <records> and didn't have
-        // excludes.
+        // excludes. This syntax was deprecated in 2.0.
         List<Element> cases = INDEX_CASES.get().evalAsNativeElementList(doc);
         for (Element caseEl : cases) {
             WildcardPattern matchNamespace = null;
@@ -182,7 +182,8 @@ public class IndexerConfBuilder {
             Map<String, String> varPropsPattern = parseVariantPropertiesPattern(caseEl, "matchVariant");
             Set<SchemaId> vtags = parseVersionTags(vtagsSpec);
 
-            RecordMatcher recordMatcher = new RecordMatcher(matchNamespace, matchName, null, null, null, varPropsPattern);
+            RecordMatcher recordMatcher = new RecordMatcher(matchNamespace, matchName, null, null, null, null,
+                    varPropsPattern, typeManager);
             recordFilter.addInclude(recordMatcher, new IndexCase(vtags));
         }
 
@@ -201,6 +202,15 @@ public class IndexerConfBuilder {
             QName rtName = ConfUtil.parseQName(recordTypeAttr, element, true);
             rtNamespacePattern = new WildcardPattern(rtName.getNamespace());
             rtNamePattern = new WildcardPattern(rtName.getName());
+        }
+
+        //
+        // "Instance of" condition
+        //
+        String instanceOfAttr = DocumentHelper.getAttribute(element, "instanceOf", false);
+        QName instanceOfType = null;
+        if (instanceOfAttr != null) {
+            instanceOfType = ConfUtil.parseQName(instanceOfAttr, element, false);
         }
 
         //
@@ -242,8 +252,8 @@ public class IndexerConfBuilder {
             }
         }
 
-        RecordMatcher matcher = new RecordMatcher(rtNamespacePattern, rtNamePattern, fieldType, comparator, fieldValue,
-                varPropsPattern);
+        RecordMatcher matcher = new RecordMatcher(rtNamespacePattern, rtNamePattern, instanceOfType, fieldType,
+                comparator, fieldValue, varPropsPattern, typeManager);
 
         return matcher;
     }

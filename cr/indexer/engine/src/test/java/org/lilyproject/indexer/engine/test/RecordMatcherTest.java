@@ -31,6 +31,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -49,6 +50,8 @@ public class RecordMatcherTest {
     private static FieldType vtag1;
     private static FieldType vtag2;
 
+    private static FieldType stringField;
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         repoSetup.setupCore();
@@ -57,7 +60,7 @@ public class RecordMatcherTest {
         repository = repoSetup.getRepository();
         typeManager = repository.getTypeManager();
 
-        FieldType stringField = typeManager.createFieldType("STRING", new QName("ns", "string"), Scope.NON_VERSIONED);
+        stringField = typeManager.createFieldType("STRING", new QName("ns", "string"), Scope.NON_VERSIONED);
         FieldType booleanField = typeManager.createFieldType("BOOLEAN", new QName("ns", "bool"), Scope.NON_VERSIONED);
         FieldType intField = typeManager.createFieldType("INTEGER", new QName("ns", "int"), Scope.NON_VERSIONED);
 
@@ -160,6 +163,99 @@ public class RecordMatcherTest {
 
         assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs1TypeC));
         assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs2TypeC));
+    }
+
+    @Test
+    public void testInstanceOf() throws Exception {
+        // Create the following type hierarchy, with one additional type not part of the hierarchy
+        //
+        //     rt1 rt5  rt6
+        //      |   |
+        //     rt2 rt4
+        //      |  /
+        //     rt3
+        //
+
+        // First create the types without supertype links
+        RecordType rt1 = typeManager.recordTypeBuilder()
+                .defaultNamespace("ns1")
+                .name("rt1")
+                .field(stringField.getId(), false)
+                .create();
+
+        RecordType rt2 = typeManager.recordTypeBuilder()
+                .defaultNamespace("ns1")
+                .name("rt2")
+                .field(stringField.getId(), false)
+                .create();
+
+        RecordType rt3 = typeManager.recordTypeBuilder()
+                .defaultNamespace("ns1")
+                .name("rt3")
+                .field(stringField.getId(), false)
+                .create();
+
+        RecordType rt4 = typeManager.recordTypeBuilder()
+                .defaultNamespace("ns1")
+                .name("rt4")
+                .field(stringField.getId(), false)
+                .create();
+
+        RecordType rt5 = typeManager.recordTypeBuilder()
+                .defaultNamespace("ns1")
+                .name("rt5")
+                .field(stringField.getId(), false)
+                .create();
+
+        RecordType rt6 = typeManager.recordTypeBuilder()
+                .defaultNamespace("ns1")
+                .name("rt6")
+                .field(stringField.getId(), false)
+                .create();
+
+        // Now make the links between the types
+        rt2 = typeManager.recordTypeBuilder()
+                .name(rt2.getName())
+                .supertype().use(rt1).add()
+                .field(stringField.getId(), false)
+                .update();
+
+        rt4 = typeManager.recordTypeBuilder()
+                .name(rt4.getName())
+                .supertype().use(rt5).add()
+                .field(stringField.getId(), false)
+                .update();
+
+        rt3 = typeManager.recordTypeBuilder()
+                .name(rt3.getName())
+                .supertype().use(rt2).add()
+                .supertype().use(rt4).add()
+                .field(stringField.getId(), false)
+                .update();
+
+        // Create a record of type rt3 and check that this record is instanceOf any type in the hierarchy,
+        // except rt6 which is outside of the hierarchy
+        Record record = newRecordOfType(new QName("ns1", "rt3"));
+
+        for (String rt : Lists.newArrayList("rt1", "rt2", "rt3", "rt4", "rt5", "rt6")) {
+            String conf = makeIndexerConf(
+                    "xmlns:ns1='ns1'",
+                    Lists.newArrayList(
+                            "instanceOf='ns1:" + rt + "' vtags='vtag1'"),
+                    Collections.<String>emptyList()
+            );
+
+            IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+            if (rt.equals("rt6")) {
+                assertNull(idxConf.getRecordFilter().getIndexCase(record));
+            } else {
+                assertNotNull("don't expect null for case instanceOf=" + rt,
+                        idxConf.getRecordFilter().getIndexCase(record));
+                assertEquals(ImmutableSet.of(vtag1.getId()),
+                        idxConf.getRecordFilter().getIndexCase(record).getVersionTags());
+            }
+        }
     }
 
     @Test

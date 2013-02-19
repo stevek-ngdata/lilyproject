@@ -2,6 +2,7 @@
 <xs:schema elementFormDefault="unqualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:attributeGroup name="recordMatcherAttrs">
     <xs:attribute name="recordType" type="xs:string" use="optional"/>
+    <xs:attribute name="instanceOf" type="xs:string" use="optional"/>
     <xs:attribute name="field" type="xs:string" use="optional"/>
     <xs:attribute name="variant" type="xs:string" use="optional"/>
   </xs:attributeGroup>

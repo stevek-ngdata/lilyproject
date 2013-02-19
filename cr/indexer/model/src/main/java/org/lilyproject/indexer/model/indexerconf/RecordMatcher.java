@@ -22,7 +22,10 @@ import java.util.Set;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.util.repo.RecordUtil;
 
 
 /**
@@ -34,9 +37,13 @@ public class RecordMatcher {
     private WildcardPattern recordTypeNamespace;
     private WildcardPattern recordTypeName;
 
+    private QName instanceOfType;
+
     private FieldType fieldType;
     private FieldComparator fieldComparator;
     private Object fieldValue;
+
+    private TypeManager typeManager;
 
     /**
      * The variant properties the record should have. Evaluation rules: a key named
@@ -47,14 +54,17 @@ public class RecordMatcher {
      */
     private final Map<String, String> variantPropsPattern;
 
-    public RecordMatcher(WildcardPattern recordTypeNamespace, WildcardPattern recordTypeName, FieldType fieldType,
-            FieldComparator fieldComparator, Object fieldValue, Map<String, String> variantPropsPattern) {
+    public RecordMatcher(WildcardPattern recordTypeNamespace, WildcardPattern recordTypeName, QName instanceOfType,
+            FieldType fieldType, FieldComparator fieldComparator, Object fieldValue,
+            Map<String, String> variantPropsPattern, TypeManager typeManager) {
         this.recordTypeNamespace = recordTypeNamespace;
         this.recordTypeName = recordTypeName;
+        this.instanceOfType = instanceOfType;
         this.fieldType = fieldType;
         this.fieldComparator = fieldComparator != null ? fieldComparator : FieldComparator.EQUAL;
         this.fieldValue = fieldValue;
         this.variantPropsPattern = variantPropsPattern;
+        this.typeManager = typeManager;
     }
 
     public boolean matches(Record record) {
@@ -71,6 +81,18 @@ public class RecordMatcher {
         if (this.recordTypeName != null
                 && (recordTypeName == null || !this.recordTypeName.lightMatch(recordTypeName.getName()))) {
             return false;
+        }
+
+        try {
+            if (this.instanceOfType != null
+                    && (recordTypeName == null || !RecordUtil.instanceOf(record, instanceOfType, typeManager))) {
+                return false;
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } catch (RepositoryException e) {
+            throw new RuntimeException(e);
         }
 
         if (variantPropsPattern != null) {
@@ -107,7 +129,6 @@ public class RecordMatcher {
         }
 
         return true;
-
     }
 
     public Set<QName> getFieldDependencies() {
