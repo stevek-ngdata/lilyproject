@@ -245,6 +245,11 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         return fieldTypesCache.getFieldType(name);
     }
 
+    @Override
+    public Set<SchemaId> findDirectSubTypes(SchemaId recordTypeId) throws InterruptedException {
+        return recordTypes.findDirectSubTypes(recordTypeId);
+    }
+
     public FieldType getFieldType(SchemaId id) throws TypeException, InterruptedException {
         return fieldTypesCache.getFieldType(id);
     }

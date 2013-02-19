@@ -18,6 +18,7 @@ package org.lilyproject.repository.api;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.lilyproject.util.Pair;
 
@@ -76,6 +77,50 @@ public interface TypeManager extends Closeable {
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
     RecordType getRecordTypeByName(QName name, Long version) throws RepositoryException, InterruptedException;
+
+    /**
+     * Gets the set of record types that inherit from the given record type.
+     *
+     * <p>This returns subtypes from any level deep, thus the complete type hierarchy.
+     *
+     * <p>This is based on information from the latest version of each record type, and ignores the version
+     * aspect of the record types. For example, if the latest version record type B points to the non-latest version
+     * of record type A, then when using this method to find the subtypes of A will also return B, even if
+     * B is not a subtype of the latest version of A, because the latest version of B, where the actual
+     * extends-pointers are stored, does inherit from A.
+     *
+     * <p>If the specified schema id does not exist, this method throws a {@link RecordTypeNotFoundException}.
+     *
+     * @return the found sub types, or an empty set if there are none.
+     */
+    Set<SchemaId> findSubTypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException;
+
+    /**
+     * Get the set of record types that directly inherit from the given record type, i.e. only the child
+     * types but not other descendants.
+     *
+     * <p>See {@link #findSubTypes(SchemaId)} for more details.
+     *
+     * @return the found sub types, or an empty set if there are none.
+     */
+    Set<SchemaId> findDirectSubTypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException;
+
+    /**
+     * Gets the set of record types that inherit from the given record type.
+     *
+     * <p>See {@link #findSubTypes(SchemaId)} for more details.
+     */
+    Set<QName> findSubTypes(QName recordTypeName) throws InterruptedException, RepositoryException;
+
+    /**
+     * Get the set of record types that directly inherit from the given record type, i.e. only the child
+     * types but not other descendants.
+     *
+     * <p>See {@link #findSubTypes(SchemaId)} for more details.
+     *
+     * @return the found sub types, or an empty set if there are none.
+     */
+    Set<QName> findDirectSubTypes(QName recordTypeName) throws InterruptedException, RepositoryException;
 
     /**
      * Updates an existing record type.

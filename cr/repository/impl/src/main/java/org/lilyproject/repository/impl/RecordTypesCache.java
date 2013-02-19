@@ -36,13 +36,22 @@ public class RecordTypesCache {
     // a bucket. This means that if the nameCache is requested, it should be
     // refreshed first. Once it is refreshed it can be put back to false.
     private volatile boolean nameCacheOutOfDate = false;
+    private volatile boolean childRecordTypesOutOfDate = false;
     // The count indicates how many buckets are being updated. As long as the
     // count is higher than 0, the nameCache can not be updated since this could
     // lead to an inconsistent state (two types could get the same name).
     private volatile int count = 0;
 
     private Map<QName, RecordType> nameCache;
+
+    /**
+     * Normally a record type points to the record types from which it extends, i.e. to their parent type.
+     * This map allows to traverse the reverse relation: from parent to child.
+     */
+    private Map<SchemaId, Set<SchemaId>> childRecordTypes;
+
     private Map<String, Map<SchemaId, RecordType>> buckets;
+
     private ConcurrentHashMap<String, Set<SchemaId>> localUpdateBuckets = new ConcurrentHashMap<String, Set<SchemaId>>();
 
     public RecordTypesCache() {
@@ -73,6 +82,42 @@ public class RecordTypesCache {
         return nameCache;
     }
 
+    private Map<SchemaId, Set<SchemaId>> getChildRecordTypes() throws InterruptedException {
+        // First check if the childRecordTypes is out of date
+        if (childRecordTypesOutOfDate) {
+            synchronized (monitor) {
+                // Wait until no buckets are being updated
+                while (count > 0) {
+                    monitor.wait();
+                }
+                if (childRecordTypesOutOfDate) {
+                    // Re-initialize the childRecordTypes
+                    Map<SchemaId, Set<SchemaId>> newChildRecordTypes = new HashMap<SchemaId, Set<SchemaId>>() {
+                        @Override
+                        public Set<SchemaId> get(Object key) {
+                            Set<SchemaId> set = super.get(key);
+                            if (set == null) {
+                                set = new HashSet<SchemaId>();
+                                super.put((SchemaId)key, set);
+                            }
+                            return set;
+                        }
+                    };
+                    for (Map<SchemaId, RecordType> bucket : buckets.values()) {
+                        for (RecordType recordType : bucket.values()) {
+                            for (SchemaId parent : recordType.getMixins().keySet()) {
+                                newChildRecordTypes.get(parent).add(recordType.getId());
+                            }
+                        }
+                    }
+                    childRecordTypes = newChildRecordTypes;
+                    childRecordTypesOutOfDate = false;
+                }
+            }
+        }
+        return childRecordTypes;
+    }
+
     /**
      * Increment the number of buckets being updated
      */
@@ -91,6 +136,7 @@ public class RecordTypesCache {
         synchronized (monitor) {
             count--;
             nameCacheOutOfDate = true;
+            childRecordTypesOutOfDate = true;
             monitor.notify();
         }
     }
@@ -146,6 +192,11 @@ public class RecordTypesCache {
         return getNameCache().get(name);
     }
 
+    public Set<SchemaId> findDirectSubTypes(SchemaId recordTypeId) throws InterruptedException {
+        Set<SchemaId> childTypes = getChildRecordTypes().get(recordTypeId);
+        return childTypes != null ? childTypes : Collections.<SchemaId>emptySet();
+    }
+
     /**
      * Get the record type based on its id
      * 
@@ -174,6 +225,7 @@ public class RecordTypesCache {
                 monitor.wait();
             }
             nameCacheOutOfDate = true;
+            childRecordTypesOutOfDate = true;
             // One would expect that existing buckets need to be cleared first.
             // But since record types cannot be deleted we will just overwrite
             // them.

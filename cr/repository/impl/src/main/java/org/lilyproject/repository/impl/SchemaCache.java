@@ -18,6 +18,7 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.repository.api.*;
@@ -101,6 +102,19 @@ public interface SchemaCache {
      * @throws TypeException
      */
     FieldType getFieldType(QName name) throws FieldTypeNotFoundException, InterruptedException, TypeException;
+
+    /**
+     * Returns the direct child types of the given record type.
+     *
+     * <p>See {@link TypeManager#findSubTypes(SchemaId)} for more detail on the behavior with relation
+     * to schema versioning.
+     *
+     * <p>This method should be reasonably fast, i.e. be based on some kind of index and not iterate over
+     * all record types.
+     *
+     * <p>Returns an empty set if none are found. Does not validate the schema id presents a valid existing type.
+     */
+    Set<SchemaId> findDirectSubTypes(SchemaId recordTypeId) throws InterruptedException;
 
     /**
      * Returns the field type with the given id from the cache.

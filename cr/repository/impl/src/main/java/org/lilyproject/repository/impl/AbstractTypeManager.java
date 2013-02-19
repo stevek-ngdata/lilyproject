@@ -106,7 +106,115 @@ public abstract class AbstractTypeManager implements TypeManager {
         }
         return recordType.clone();
     }
-    
+
+    @Override
+    public Set<QName> findSubTypes(QName recordTypeName) throws InterruptedException, RepositoryException {
+        return findSubTypes(recordTypeName, true);
+    }
+
+    @Override
+    public Set<QName> findDirectSubTypes(QName recordTypeName) throws InterruptedException, RepositoryException {
+        return findSubTypes(recordTypeName, false);
+    }
+
+    private Set<QName> findSubTypes(QName recordTypeName, boolean recursive)
+            throws InterruptedException, RepositoryException {
+        ArgumentValidator.notNull(recordTypeName, "recordTypeName");
+
+        RecordType recordType = getRecordTypeByName(recordTypeName, null);
+        Set<SchemaId> result = new HashSet<SchemaId>();
+        collectSubTypes(recordType.getId(), result, recursive);
+
+        // Translate schema id's to QName's
+        Set<QName> names = new HashSet<QName>();
+        for (SchemaId id : result) {
+            try {
+                names.add(getRecordTypeById(id, null).getName());
+            } catch (RecordTypeNotFoundException e) {
+                // skip, this should only occur in border cases, i.e. the schema is being modified while
+                // this method is called
+            }
+        }
+
+        return names;
+    }
+
+    @Override
+    public Set<SchemaId> findSubTypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException {
+        return findSubTypes(recordTypeId, true);
+    }
+
+    @Override
+    public Set<SchemaId> findDirectSubTypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException {
+        return findSubTypes(recordTypeId, false);
+    }
+
+    private Set<SchemaId> findSubTypes(SchemaId recordTypeId, boolean recursive)
+            throws InterruptedException, RepositoryException {
+        ArgumentValidator.notNull(recordTypeId, "recordTypeId");
+
+        // This is to validate the requested ID exists
+        getRecordTypeById(recordTypeId, null);
+
+        Set<SchemaId> result = new HashSet<SchemaId>();
+        collectSubTypes(recordTypeId, result, recursive);
+
+        return result;
+    }
+
+    private void collectSubTypes(SchemaId recordTypeId, Set<SchemaId> result, boolean recursive)
+            throws InterruptedException {
+        collectSubTypes(recordTypeId, result, new ArrayDeque<SchemaId>(), recursive);
+    }
+
+    private void collectSubTypes(SchemaId recordTypeId, Set<SchemaId> result, Deque<SchemaId> parents,
+            boolean recursive) throws InterruptedException {
+        // the parent-stack is to protect against endless loops in the type hierarchy. If a type is a subtype
+        // of itself, it will not be included in the result. Thus if record type A extends (directly or indirectly)
+        // from A, and we search the subtypes of A, then the resulting set will not include A.
+        parents.push(recordTypeId);
+        Set<SchemaId> childTypes = schemaCache.findDirectSubTypes(recordTypeId);
+        for (SchemaId childType : childTypes) {
+            if (!parents.contains(childType)) {
+                result.add(childType);
+                if (recursive) {
+                    collectSubTypes(childType, result, parents, recursive);
+                }
+            } else {
+                // Loop detected in type hierarchy, log a warning about this
+                List<SchemaId> parentsList = new ArrayList<SchemaId>(parents);
+                Collections.reverse(parentsList);
+
+                // find the place where the current childType occurred (we don't want to log any parents higher
+                // up, doesn't add any value for the user)
+                int pos = parentsList.indexOf(childType);
+
+                StringBuilder msg = new StringBuilder();
+                for (int i = pos; i < parentsList.size(); i++) {
+                    if (msg.length() > 0)
+                        msg.append(" <- ");
+                    msg.append(getNameSafe(parentsList.get(i)));
+                }
+                msg.append(" <- ");
+                msg.append(getNameSafe(childType));
+
+                log.warn("Loop in record type inheritance: " + msg);
+            }
+        }
+        parents.pop();
+    }
+
+    /**
+     * Tries to look up the name of the record type, but returns the id if it fails.
+     */
+    private String getNameSafe(SchemaId schemaId) {
+        try {
+            return getRecordTypeById(schemaId, null).getName().toString();
+        } catch (Exception e) {
+            return schemaId.toString();
+        }
+    }
+
     abstract protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException;
     
     @Override
