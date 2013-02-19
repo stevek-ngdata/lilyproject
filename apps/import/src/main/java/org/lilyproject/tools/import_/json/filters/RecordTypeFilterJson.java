@@ -47,6 +47,10 @@ public class RecordTypeFilterJson implements RecordFilterJsonConverter<RecordTyp
         if (filter.getVersion() != null) {
             node.put("version", filter.getVersion());
         }
+
+        if (filter.getOperator() != null) {
+            node.put("operator", filter.getOperator().toString());
+        }
         
         return node;
     }
@@ -67,7 +71,12 @@ public class RecordTypeFilterJson implements RecordFilterJsonConverter<RecordTyp
         if (version != null) {
             filter.setVersion(version);
         }
-        
+
+        String operator = JsonUtil.getString(node, "operator", null);
+        if (operator != null) {
+            filter.setOperator(RecordTypeFilter.Operator.valueOf(operator));
+        }
+
         return filter;
     }
 }

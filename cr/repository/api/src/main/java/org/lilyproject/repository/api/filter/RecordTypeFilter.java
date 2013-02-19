@@ -18,13 +18,22 @@ package org.lilyproject.repository.api.filter;
 import org.lilyproject.repository.api.QName;
 
 /**
- * Filters on the record type of records.
+ * Filters on the record type of records. You can search for exact matches or search for records that
+ * are "instance of" ("is a") the given record type, i.e. records which are either of the given type, or one
+ * of the ancestor records from which it extends is this type.
  *
  * <p>It is the record type from the non-versioned scope based on which the filtering is performed.</p>
  */
 public class RecordTypeFilter implements RecordFilter {
     private QName recordType;
+    private Operator operator;
+    /** version is only supported when operator == Operator.EQUALS */
     private Long version;
+
+    public static enum Operator {
+        EQUALS,
+        INSTANCE_OF
+    }
 
     public RecordTypeFilter() {
     }
@@ -33,6 +42,15 @@ public class RecordTypeFilter implements RecordFilter {
         this.recordType = recordType;
     }
 
+    public RecordTypeFilter(QName recordType, Operator operator) {
+        this.recordType = recordType;
+        this.operator = operator;
+    }
+
+    /**
+     * Creates a record type filter that searches for record that are of exactly the given record
+     * type and version.
+     */
     public RecordTypeFilter(QName recordType, Long version) {
         this.recordType = recordType;
         this.version = version;
@@ -58,5 +76,13 @@ public class RecordTypeFilter implements RecordFilter {
      */
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public Operator getOperator() {
+        return operator;
+    }
+
+    public void setOperator(Operator operator) {
+        this.operator = operator;
     }
 }

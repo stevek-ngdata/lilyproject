@@ -2271,29 +2271,12 @@ public abstract class AbstractRepositoryTest {
                 .name("RecordTypeFilter", "rt2")
                 .update();
 
-        // create third version of the record type
-        rt2 = typeManager.recordTypeBuilder()
-                .name("RecordTypeFilter", "rt2")
-                .fieldEntry().use(fieldType1).add()
-                .update();
-
-        // create fourth version of the record type
-        rt2 = typeManager.recordTypeBuilder()
-                .name("RecordTypeFilter", "rt2")
-                .update();
-
-        // create fifth version of the record type
-        rt2 = typeManager.recordTypeBuilder()
-                .name("RecordTypeFilter", "rt2")
-                .fieldEntry().use(fieldType1).add()
-                .update();
-
-        assertEquals(new Long(5), rt2.getVersion());
+        assertEquals(new Long(2), rt2.getVersion());
 
         repository.recordBuilder().recordType(rt1.getName()).field(fieldType1.getName(), "value").create();
         repository.recordBuilder().recordType(rt1.getName()).field(fieldType1.getName(), "value").create();
         repository.recordBuilder().recordType(rt2.getName()).field(fieldType1.getName(), "value").create();
-        repository.recordBuilder().recordType(rt2.getName()).field(fieldType1.getName(), "value").create();
+        repository.recordBuilder().recordType(rt2.getName(), 1L).field(fieldType1.getName(), "value").create();
 
         RecordScan scan = new RecordScan();
         scan.setRecordFilter(new RecordTypeFilter(rt1.getName()));
@@ -2304,13 +2287,261 @@ public abstract class AbstractRepositoryTest {
         assertEquals(2, countResults(repository.getScanner(scan)));
 
         scan = new RecordScan();
-        scan.setRecordFilter(new RecordTypeFilter(rt2.getName(), 5L));
+        scan.setRecordFilter(new RecordTypeFilter(rt2.getName(), 2L));
+        assertEquals(1, countResults(repository.getScanner(scan)));
+    }
+
+    @Test
+    public void testRecordTypeFilterInstanceOf() throws Exception {
+        // The following code creates the following record type hierarchy:
+        //
+        //          rtA
+        //         /   \
+        //      rtB     rtC    rtE
+        //               |
+        //              rtD
+        //
+
+        RecordType rtA = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOf", "rtA")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+        RecordType rtB = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOf", "rtB")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().use(rtA).add()
+                .create();
+
+        RecordType rtC = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOf", "rtC")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().use(rtA).add()
+                .create();
+
+        RecordType rtD = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOf", "rtD")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().use(rtC).add()
+                .create();
+
+        RecordType rtE = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOf", "rtE")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+        // Create a record of each type
+        repository.recordBuilder().recordType(rtA.getName()).field(fieldType1.getName(), "value").create();
+        repository.recordBuilder().recordType(rtB.getName()).field(fieldType1.getName(), "value").create();
+        repository.recordBuilder().recordType(rtC.getName()).field(fieldType1.getName(), "value").create();
+        repository.recordBuilder().recordType(rtD.getName()).field(fieldType1.getName(), "value").create();
+        repository.recordBuilder().recordType(rtE.getName()).field(fieldType1.getName(), "value").create();
+
+        // Check that with "instance of" searches we get the expected number of results for each type in the hierarchy
+        RecordScan scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtA.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(4, countResults(repository.getScanner(scan)));
+
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtB.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(1, countResults(repository.getScanner(scan)));
+
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtC.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
         assertEquals(2, countResults(repository.getScanner(scan)));
 
-        // This test assumes we're the only one who created a record type with 5 versions
         scan = new RecordScan();
-        scan.setRecordFilter(new RecordTypeFilter(null, 5L));
+        scan.setRecordFilter(new RecordTypeFilter(rtD.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(1, countResults(repository.getScanner(scan)));
+    }
+
+    @Test
+    public void testRecordTypeFilterInstanceOfRecursionLoop() throws Exception {
+        // Create a record type hierarchy which contains some endless loop in it:
+        //   - the base hierarchy is C extends from B extends from A
+        //   - A also extends from A and from C
+        //   - B also extends from C
+        //
+
+        // The expected behavior is that it does not go in an endless loop but instead just stops when
+        // encountering a loop (i.e. it doesn't throw an exception either)
+
+        RecordType rtA = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfRecursionLoop", "rtA")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+        RecordType rtB = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfRecursionLoop", "rtB")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+        RecordType rtC = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfRecursionLoop", "rtC")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+
+        rtA = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfRecursionLoop", "rtA")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().id(rtA.getId()).version(2L).add()
+                .mixin().id(rtC.getId()).version(2L).add()
+                .update();
+
+        rtB = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfRecursionLoop", "rtB")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().id(rtA.getId()).version(2L).add()
+                .mixin().id(rtC.getId()).version(2L).add()
+                .update();
+
+        rtC = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfRecursionLoop", "rtC")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().id(rtB.getId()).version(2L).add()
+                .update();
+
+
+        // Create a record of each type
+        repository.recordBuilder().recordType(rtA.getName()).field(fieldType1.getName(), "value").create();
+        repository.recordBuilder().recordType(rtB.getName()).field(fieldType1.getName(), "value").create();
+        repository.recordBuilder().recordType(rtC.getName()).field(fieldType1.getName(), "value").create();
+
+
+        RecordScan scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtA.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(3, countResults(repository.getScanner(scan)));
+
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtB.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(3, countResults(repository.getScanner(scan)));
+
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtB.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(3, countResults(repository.getScanner(scan)));
+    }
+
+    @Test
+    public void testRecordTypeFilterInstanceOfVersionSpecifics() throws Exception {
+        // The instance-of check for record types is version unaware, or rather, looks at the latest version
+        // of each record type. This is explained in the TypeManager.findSubTypes(SchemaId) docs.
+
+        // Below we create a record type A with two versions, and type B extends from the first (non-latest)
+        // version, and type C extends from the second (latest) version of type A.
+        //
+        //        rtA-version1       rtA-version2     rtD-version1
+        //          |                 |                |
+        //        rtB-version1       rtC-version2     rtC-version1
+        //
+
+        RecordType rtA = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfVersionSpecifics", "rtA")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+        rtA = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfVersionSpecifics", "rtA")
+                .fieldEntry().use(fieldType1).add()
+                .fieldEntry().use(fieldType2).add()
+                .update();
+
+        RecordType rtB = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfVersionSpecifics", "rtB")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().id(rtA.getId()).version(1L).add()
+                .create();
+
+        RecordType rtD = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfVersionSpecifics", "rtD")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+        RecordType rtC = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfVersionSpecifics", "rtC")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().id(rtD.getId()).version(1L).add()
+                .create();
+
+        rtC = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfVersionSpecifics", "rtC")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().id(rtA.getId()).version(2L).add()
+                .update();
+
+        repository.recordBuilder().recordType(rtB.getName()).field(fieldType1.getName(), "value").create();
+        repository.recordBuilder().recordType(rtC.getName()).field(fieldType1.getName(), "value").create();
+
+
+        RecordScan scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtA.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
         assertEquals(2, countResults(repository.getScanner(scan)));
+
+        // Since it is not the latest version of C that extends from D, searching for records that are an
+        // instance of D will not return any results, even though C points to the latest version of D (because
+        // it is the latest version of C which counts).
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtD.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(0, countResults(repository.getScanner(scan)));
+    }
+
+    @Test
+    public void testRecordTypeFilterInstanceOfUpdate() throws Exception {
+        // Verify correctness of scans with a "instance of" record type filter in case the record type
+        // inheritance is updated.
+        //
+        //  Initial state:
+        //
+        //       rtA     rtC
+        //          \
+        //           rtB
+        //
+        //  After update of rtB:
+        //
+        //       rtA     rtC
+        //              /
+        //           rtB
+        //
+
+        RecordType rtA = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfUpdate", "rtA")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+        RecordType rtB = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfUpdate", "rtB")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().use(rtA).add()
+                .create();
+
+        RecordType rtC = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfUpdate", "rtC")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+        repository.recordBuilder().recordType(rtB.getName()).field(fieldType1.getName(), "value").create();
+
+        RecordScan scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtA.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(1, countResults(repository.getScanner(scan)));
+
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtC.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(0, countResults(repository.getScanner(scan)));
+
+        rtB = typeManager.recordTypeBuilder()
+                .name("RecordTypeFilterInstanceOfUpdate", "rtB")
+                .fieldEntry().use(fieldType1).add()
+                .mixin().use(rtC).add()
+                .update();
+
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtC.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(1, countResults(repository.getScanner(scan)));
+
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rtA.getName(), RecordTypeFilter.Operator.INSTANCE_OF));
+        assertEquals(0, countResults(repository.getScanner(scan)));
     }
 
     @Test

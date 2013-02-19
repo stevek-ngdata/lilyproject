@@ -22,6 +22,8 @@ import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 
+import java.util.Set;
+
 import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 
 public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
@@ -36,37 +38,56 @@ public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
 
         RecordTypeFilter filter = (RecordTypeFilter)uncastFilter;
 
-        Filter nameFilter = null;
-        Filter versionFilter = null;
-        
-        if (filter.getRecordType() != null) {
-            RecordType recordType = repository.getTypeManager().getRecordTypeByName(filter.getRecordType(), null);
-            nameFilter = new SingleColumnValueFilter(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_ID.bytes,
-                    CompareFilter.CompareOp.EQUAL, recordType.getId().getBytes());
+        Filter result = null;
+
+        if (filter.getRecordType() == null) {
+            throw new IllegalArgumentException("A RecordTypeFilter should at least specify the record type name.");
         }
-        
-        if (filter.getVersion() != null) {
-            versionFilter = new SingleColumnValueFilter(RecordCf.DATA.bytes,
-                    RecordColumn.NON_VERSIONED_RT_VERSION.bytes, CompareFilter.CompareOp.EQUAL,
-                    Bytes.toBytes(filter.getVersion()));
-        }
-        
-        Filter result;
-        if (nameFilter == null && versionFilter == null) {
-            throw new IllegalArgumentException("A RecordTypeFilter should at least specify the record type or its version.");
-        } else if (nameFilter != null && versionFilter != null) {
-            FilterList list = new FilterList(FilterList.Operator.MUST_PASS_ALL);
-            list.addFilter(nameFilter);
-            list.addFilter(versionFilter);
-            result = list;
-        } else if (nameFilter != null) {
-            result = nameFilter;
-        } else if (versionFilter != null) {
-            result = versionFilter;
-        } else {
-            throw new RuntimeException("Expected this to be unreachable.");
+
+        RecordType recordType = repository.getTypeManager().getRecordTypeByName(filter.getRecordType(), null);
+
+        RecordTypeFilter.Operator operator =
+                filter.getOperator() != null ? filter.getOperator() : RecordTypeFilter.Operator.EQUALS;
+
+        switch (operator) {
+            case EQUALS:
+                Filter nameFilter = createRecordTypeFilter(recordType.getId());
+
+                Filter versionFilter = null;
+                if (filter.getVersion() != null) {
+                    versionFilter = new SingleColumnValueFilter(RecordCf.DATA.bytes,
+                            RecordColumn.NON_VERSIONED_RT_VERSION.bytes, CompareFilter.CompareOp.EQUAL,
+                            Bytes.toBytes(filter.getVersion()));
+                }
+
+                if (versionFilter == null) {
+                    result = nameFilter;
+                } else {
+                    FilterList list = new FilterList(FilterList.Operator.MUST_PASS_ALL);
+                    list.addFilter(nameFilter);
+                    list.addFilter(versionFilter);
+                    result = list;
+                }
+
+                break;
+            case INSTANCE_OF:
+                Set<SchemaId> subTypes = repository.getTypeManager().findSubTypes(recordType.getId());
+                FilterList list = new FilterList(FilterList.Operator.MUST_PASS_ONE);
+                list.addFilter(createRecordTypeFilter(recordType.getId()));
+                for (SchemaId subType : subTypes) {
+                    list.addFilter(createRecordTypeFilter(subType));
+                }
+                result = list;
+                break;
+            default:
+                throw new RuntimeException("Unexpected operator: " + filter.getOperator());
         }
 
         return result;
+    }
+
+    private Filter createRecordTypeFilter(SchemaId schemaId) {
+        return new SingleColumnValueFilter(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_ID.bytes,
+                                   CompareFilter.CompareOp.EQUAL, schemaId.getBytes());
     }
 }
