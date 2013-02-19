@@ -23,6 +23,7 @@
             order) and included (these should be wiring files)
     -->
     <directory id="plugin" basePath="${lily.plugin.dir}" path="load-before-repository"/>
+
     <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="2.2-SNAPSHOT">
     </artifact>
 
