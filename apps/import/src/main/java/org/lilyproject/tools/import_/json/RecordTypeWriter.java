@@ -64,11 +64,11 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
         rtNode.put("version", recordType.getVersion());
 
 
-        ArrayNode mixinsNode = rtNode.putArray("mixins");
-        for (Map.Entry<SchemaId, Long> mixin : recordType.getMixins().entrySet()) {
-            ObjectNode entryNode = mixinsNode.addObject();
-            entryNode.put("id", mixin.getKey().toString());
-            entryNode.put("version", mixin.getValue());
+        ArrayNode supertypesNode = rtNode.putArray("supertypes");
+        for (Map.Entry<SchemaId, Long> supertype : recordType.getSupertypes().entrySet()) {
+            ObjectNode entryNode = supertypesNode.addObject();
+            entryNode.put("id", supertype.getKey().toString());
+            entryNode.put("version", supertype.getValue());
         }
         
         return rtNode;

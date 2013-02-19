@@ -2048,20 +2048,20 @@ public class IndexerTest {
 
         FieldType field2 = typeManager.createFieldType(linkValueType, new QName(NS, "sf_field2"), Scope.VERSIONED);
 
-        RecordType mixin1 = typeManager.newRecordType(new QName(NS, "sf_mixin1"));
-        mixin1 = typeManager.createRecordType(mixin1);
+        RecordType supertype1 = typeManager.newRecordType(new QName(NS, "sf_supertype1"));
+        supertype1 = typeManager.createRecordType(supertype1);
 
-        RecordType mixin2 = typeManager.newRecordType(new QName(NS, "sf_mixin2"));
-        mixin2 = typeManager.createRecordType(mixin2);
+        RecordType supertype2 = typeManager.newRecordType(new QName(NS, "sf_supertype2"));
+        supertype2 = typeManager.createRecordType(supertype2);
 
         // Create a record type with two versions
         RecordType rt = typeManager.newRecordType(new QName(NS, "sf_rt"));
         rt.addFieldTypeEntry(field1.getId(), false);
         rt.addFieldTypeEntry(field2.getId(), false);
-        rt.addMixin(mixin1.getId());
+        rt.addSupertype(supertype1.getId());
         rt = typeManager.createRecordType(rt);
 
-        rt.addMixin(mixin2.getId(), mixin2.getVersion());
+        rt.addSupertype(supertype2.getId(), supertype2.getVersion());
         rt = typeManager.updateRecordType(rt);
 
         RecordType rt2 = typeManager.newRecordType(new QName(NS, "sf_rt2"));
@@ -2138,51 +2138,51 @@ public class IndexerTest {
         verifyResultCount("+sf_field1_string:acute +recordTypeVersion_literal:1", 1);
         verifyResultCount("+sf_field1_string:obtuse +recordTypeVersion_literal:2", 1);
 
-        // mixins
-        verifyResultCount("+sf_field1_string:acute +mixins_literal_mv:" +
-                qesc("{org.lilyproject.indexer.test}sf_mixin1"), 1);
-        verifyResultCount("+sf_field1_string:acute +mixins_literal_mv:" +
-                qesc("{org.lilyproject.indexer.test}sf_mixin2"), 0);
-        verifyResultCount("+sf_field1_string:acute +mixins_literal_mv:" +
+        // supertypes
+        verifyResultCount("+sf_field1_string:acute +supertypes_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_supertype1"), 1);
+        verifyResultCount("+sf_field1_string:acute +supertypes_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_supertype2"), 0);
+        verifyResultCount("+sf_field1_string:acute +supertypes_literal_mv:" +
                 qesc("{org.lilyproject.indexer.test}sf_rt"), 0);
 
-        verifyResultCount("+sf_field1_string:obtuse +mixins_literal_mv:" +
-                qesc("{org.lilyproject.indexer.test}sf_mixin1"), 1);
-        verifyResultCount("+sf_field1_string:obtuse +mixins_literal_mv:" +
-                qesc("{org.lilyproject.indexer.test}sf_mixin2"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +supertypes_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_supertype1"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +supertypes_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_supertype2"), 1);
 
-        // mixinsWithVersion
-        verifyResultCount("+sf_field1_string:acute +mixinsWithVersion_literal_mv:" +
-                qesc("{org.lilyproject.indexer.test}sf_mixin1:1"), 1);
+        // supertypesWithVersion
+        verifyResultCount("+sf_field1_string:acute +supertypesWithVersion_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_supertype1:1"), 1);
 
-        // mixinNames
-        verifyResultCount("+sf_field1_string:obtuse +mixinNames_literal_mv:" + qesc("sf_mixin1"), 1);
-        verifyResultCount("+sf_field1_string:obtuse +mixinNames_literal_mv:" + qesc("sf_mixin2"), 1);
-        verifyResultCount("+sf_field1_string:obtuse +mixinNames_literal_mv:" + qesc("sf_mixin_not_existing"), 0);
+        // supertypeNames
+        verifyResultCount("+sf_field1_string:obtuse +supertypeNames_literal_mv:" + qesc("sf_supertype1"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +supertypeNames_literal_mv:" + qesc("sf_supertype2"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +supertypeNames_literal_mv:" + qesc("sf_supertype_not_existing"), 0);
 
-        // mixinNamespaces
-        verifyResultCount("+sf_field1_string:obtuse +mixinNamespaces_literal_mv:" +
+        // supertypeNamespaces
+        verifyResultCount("+sf_field1_string:obtuse +supertypeNamespaces_literal_mv:" +
                 qesc("org.lilyproject.indexer.test"), 1);
 
-        // recordTypes (record type + mixins)
+        // recordTypes (record type + supertypes)
         verifyResultCount("+sf_field1_string:acute +recordTypes_literal_mv:" +
-                qesc("{org.lilyproject.indexer.test}sf_mixin1"), 1);
+                qesc("{org.lilyproject.indexer.test}sf_supertype1"), 1);
         verifyResultCount("+sf_field1_string:acute +recordTypes_literal_mv:" +
-                qesc("{org.lilyproject.indexer.test}sf_mixin2"), 0);
+                qesc("{org.lilyproject.indexer.test}sf_supertype2"), 0);
         verifyResultCount("+sf_field1_string:acute +recordTypes_literal_mv:" +
                 qesc("{org.lilyproject.indexer.test}sf_rt"), 1);
 
         // recordTypesWithVersion
         verifyResultCount("+sf_field1_string:obtuse +recordTypesWithVersion_literal_mv:" +
-                qesc("{org.lilyproject.indexer.test}sf_mixin1:1"), 1);
+                qesc("{org.lilyproject.indexer.test}sf_supertype1:1"), 1);
         verifyResultCount("+sf_field1_string:obtuse +recordTypesWithVersion_literal_mv:" +
-                qesc("{org.lilyproject.indexer.test}sf_mixin2:1"), 1);
+                qesc("{org.lilyproject.indexer.test}sf_supertype2:1"), 1);
         verifyResultCount("+sf_field1_string:obtuse +recordTypesWithVersion_literal_mv:" +
                 qesc("{org.lilyproject.indexer.test}sf_rt:2"), 1);
 
         // recordTypeNames
-        verifyResultCount("+sf_field1_string:obtuse +recordTypeNames_literal_mv:" + qesc("sf_mixin1"), 1);
-        verifyResultCount("+sf_field1_string:obtuse +recordTypeNames_literal_mv:" + qesc("sf_mixin2"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +recordTypeNames_literal_mv:" + qesc("sf_supertype1"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +recordTypeNames_literal_mv:" + qesc("sf_supertype2"), 1);
         verifyResultCount("+sf_field1_string:obtuse +recordTypeNames_literal_mv:" + qesc("sf_rt"), 1);
 
         // recordTypeNamespaces

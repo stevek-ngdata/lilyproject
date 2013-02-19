@@ -225,97 +225,99 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     }
 
     @Test
-    public void testMixin() throws Exception {
-        QName mixinName = new QName("mixinNS", "testMixin");
-        RecordType mixinType = typeManager.newRecordType(mixinName);
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
-        mixinType = typeManager.createRecordType(mixinType);
+    public void testSupertype() throws Exception {
+        QName supertypeName = new QName("supertypeNS", "testSupertype");
+        RecordType supertypeRt = typeManager.newRecordType(supertypeName);
+        supertypeRt.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        supertypeRt.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        supertypeRt.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        supertypeRt = typeManager.createRecordType(supertypeRt);
 
-        QName recordName = new QName("recordNS", "testMixin");
+        QName recordName = new QName("recordNS", "testSupertype");
         RecordType recordType = typeManager.newRecordType(recordName);
-        recordType.addMixin(mixinType.getId(), mixinType.getVersion());
+        recordType.addSupertype(supertypeRt.getId(), supertypeRt.getVersion());
         recordType = typeManager.createRecordType(recordType);
         assertEquals(Long.valueOf(1), recordType.getVersion());
         assertEquals(recordType, typeManager.getRecordTypeById(recordType.getId(), null));
     }
     
     @Test
-    public void testMixinLatestVersion() throws Exception {
-        QName mixinName = new QName("mixinNS", "testMixinLatestVersion");
-        RecordType mixinType = typeManager.newRecordType(mixinName);
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType = typeManager.createRecordType(mixinType);
+    public void testSupertypeLatestVersion() throws Exception {
+        QName supertypeName = new QName("supertypeNS", "testSupertypeLatestVersion");
+        RecordType supertypeType = typeManager.newRecordType(supertypeName);
+        supertypeType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        supertypeType = typeManager.createRecordType(supertypeType);
 
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
-        mixinType = typeManager.updateRecordType(mixinType);
+        supertypeType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        supertypeType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        supertypeType = typeManager.updateRecordType(supertypeType);
 
-        QName recordName = new QName("recordNS", "testMixinLatestVersion");
+        QName recordName = new QName("recordNS", "testSupertypeLatestVersion");
         RecordType recordType = typeManager.newRecordType(recordName);
-        recordType.addMixin(mixinType.getId());
+        recordType.addSupertype(supertypeType.getId());
         recordType = typeManager.createRecordType(recordType);
         assertEquals(Long.valueOf(1), recordType.getVersion());
         
-        recordType.addMixin(mixinType.getId(), 2L); // Assert latest version of the Mixin RecordType got filled in
+        recordType.addSupertype(supertypeType.getId(), 2L); // Assert latest version of the supertype RecordType got filled in
         assertEquals(recordType, typeManager.getRecordTypeById(recordType.getId(), null));
     }
 
     @Test
-    public void testMixinUpdate() throws Exception {
-        QName mixinName = new QName("mixinNS", "testMixinUpdate");
-        RecordType mixinType1 = typeManager.newRecordType(mixinName);
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
-        mixinType1 = typeManager.createRecordType(mixinType1);
-        QName mixinName2 = new QName("mixinNS", "testMixinUpdate2");
-        RecordType mixinType2 = typeManager.newRecordType(mixinName2);
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
-        mixinType2 = typeManager.createRecordType(mixinType2);
+    public void testSupertypeUpdate() throws Exception {
+        QName supertypeName = new QName("supertypeNS", "testSupertypeUpdate");
+        RecordType supertypeRt1 = typeManager.newRecordType(supertypeName);
+        supertypeRt1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        supertypeRt1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        supertypeRt1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        supertypeRt1 = typeManager.createRecordType(supertypeRt1);
+
+        QName supertypeName2 = new QName("supertypeNS", "testSupertypeUpdate2");
+        RecordType supertypeRt2 = typeManager.newRecordType(supertypeName2);
+        supertypeRt2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        supertypeRt2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        supertypeRt2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        supertypeRt2 = typeManager.createRecordType(supertypeRt2);
         
-        QName recordName = new QName("recordNS", "testMixinUpdate");
+        QName recordName = new QName("recordNS", "testSupertypeUpdate");
         RecordType recordType = typeManager.newRecordType(recordName);
-        recordType.addMixin(mixinType1.getId(), mixinType1.getVersion());
+        recordType.addSupertype(supertypeRt1.getId(), supertypeRt1.getVersion());
         recordType = typeManager.createRecordType(recordType);
         
-        recordType.addMixin(mixinType2.getId(), mixinType2.getVersion());
+        recordType.addSupertype(supertypeRt2.getId(), supertypeRt2.getVersion());
         recordType = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(2), recordType.getVersion());
         assertEquals(recordType, typeManager.getRecordTypeById(recordType.getId(), null));
     }
 
     @Test
-    public void testMixinRemove() throws Exception {
-        QName mixinName = new QName("mixinNS", "testMixinRemove");
-        RecordType mixinType1 = typeManager.newRecordType(mixinName);
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
-        mixinType1 = typeManager.createRecordType(mixinType1);
-        QName mixinName2 = new QName("mixinNS", "testMixinRemove2");
-        RecordType mixinType2 = typeManager.newRecordType(mixinName2);
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
-        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
-        mixinType2 = typeManager.createRecordType(mixinType2);
+    public void testSupertypeRemove() throws Exception {
+        QName supertypeName = new QName("supertypeNS", "testSupertypeRemove");
+        RecordType supertypeRt1 = typeManager.newRecordType(supertypeName);
+        supertypeRt1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        supertypeRt1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        supertypeRt1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        supertypeRt1 = typeManager.createRecordType(supertypeRt1);
+
+        QName supertypeName2 = new QName("supertypeNS", "testSupertypeRemove2");
+        RecordType supertypeRt2 = typeManager.newRecordType(supertypeName2);
+        supertypeRt2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        supertypeRt2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        supertypeRt2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
+        supertypeRt2 = typeManager.createRecordType(supertypeRt2);
         
-        QName recordTypeName = new QName("recordNS", "testMixinRemove");
+        QName recordTypeName = new QName("recordNS", "testSupertypeRemove");
         RecordType recordType = typeManager.newRecordType(recordTypeName);
-        recordType.addMixin(mixinType1.getId(), mixinType1.getVersion());
+        recordType.addSupertype(supertypeRt1.getId(), supertypeRt1.getVersion());
         recordType = typeManager.createRecordType(recordType);
         
-        recordType.addMixin(mixinType2.getId(), mixinType2.getVersion());
-        recordType.removeMixin(mixinType1.getId());
+        recordType.addSupertype(supertypeRt2.getId(), supertypeRt2.getVersion());
+        recordType.removeSupertype(supertypeRt1.getId());
         recordType = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(2), recordType.getVersion());
         RecordType readRecordType = typeManager.getRecordTypeById(recordType.getId(), null);
-        Map<SchemaId, Long> mixins = readRecordType.getMixins();
-        assertEquals(1, mixins.size());
-        assertEquals(Long.valueOf(1), mixins.get(mixinType2.getId()));
+        Map<SchemaId, Long> supertypes = readRecordType.getSupertypes();
+        assertEquals(1, supertypes.size());
+        assertEquals(Long.valueOf(1), supertypes.get(supertypeRt2.getId()));
     }
     
     @Test
@@ -423,8 +425,8 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     }
 
     @Test
-    public void testRecordTypeBuilderFieldsAndMixins() throws Exception {
-        String NS = "testRecordTypeBuilderFieldsAndMixins";
+    public void testRecordTypeBuilderFieldsAndSupertypes() throws Exception {
+        String NS = "testRecordTypeBuilderFieldsAndSupertypes";
 
         //
         // Create some field types
@@ -436,7 +438,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         FieldType field5 = typeManager.createFieldType("STRING", new QName(NS, "field5"), VERSIONED);
 
         //
-        // Create some mixins
+        // Create some supertypes
         //
         FieldType field21 = typeManager.createFieldType("STRING", new QName(NS, "field21"), VERSIONED);
         FieldType field22 = typeManager.createFieldType("STRING", new QName(NS, "field22"), VERSIONED);
@@ -448,18 +450,18 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         FieldType field28 = typeManager.createFieldType("STRING", new QName(NS, "field28"), VERSIONED);
         FieldType field29 = typeManager.createFieldType("STRING", new QName(NS, "field29"), VERSIONED);
 
-        RecordType mixinType1 = typeManager.recordTypeBuilder().name(NS, "mixin1").fieldEntry().use(field21).add().create();
-        RecordType mixinType2 = typeManager.recordTypeBuilder().name(NS, "mixin2").fieldEntry().use(field22).add().create();
-        RecordType mixinType3 = typeManager.recordTypeBuilder().name(NS, "mixin3").fieldEntry().use(field23).add().create();
-        RecordType mixinType4 = typeManager.recordTypeBuilder().name(NS, "mixin4").fieldEntry().use(field24).add().create();
-        RecordType mixinType5 = typeManager.recordTypeBuilder().name(NS, "mixin5").fieldEntry().use(field25).add().create();
-        RecordType mixinType6 = typeManager.recordTypeBuilder().name(NS, "mixin6").fieldEntry().use(field26).add().create();
-        RecordType mixinType7 = typeManager.recordTypeBuilder().name(NS, "mixin7").fieldEntry().use(field27).add().create();
-        // give mixin7 two more versions
-        mixinType7.addFieldTypeEntry(field28.getId(), false);
-        mixinType7 = typeManager.updateRecordType(mixinType7);
-        mixinType7.addFieldTypeEntry(field29.getId(), false);
-        mixinType7 = typeManager.updateRecordType(mixinType7);
+        RecordType supertype1 = typeManager.recordTypeBuilder().name(NS, "supertype1").fieldEntry().use(field21).add().create();
+        RecordType supertype2 = typeManager.recordTypeBuilder().name(NS, "supertype2").fieldEntry().use(field22).add().create();
+        RecordType supertype3 = typeManager.recordTypeBuilder().name(NS, "supertype3").fieldEntry().use(field23).add().create();
+        RecordType supertype4 = typeManager.recordTypeBuilder().name(NS, "supertype4").fieldEntry().use(field24).add().create();
+        RecordType supertype5 = typeManager.recordTypeBuilder().name(NS, "supertype5").fieldEntry().use(field25).add().create();
+        RecordType supertype6 = typeManager.recordTypeBuilder().name(NS, "supertype6").fieldEntry().use(field26).add().create();
+        RecordType supertype7 = typeManager.recordTypeBuilder().name(NS, "supertype7").fieldEntry().use(field27).add().create();
+        // give supertype7 two more versions
+        supertype7.addFieldTypeEntry(field28.getId(), false);
+        supertype7 = typeManager.updateRecordType(supertype7);
+        supertype7.addFieldTypeEntry(field29.getId(), false);
+        supertype7 = typeManager.updateRecordType(supertype7);
 
         RecordType recordType = typeManager
                 .recordTypeBuilder()
@@ -493,13 +495,13 @@ public abstract class AbstractTypeManagerRecordTypeTest {
                 /* Using indirect qualified name*/
                 .fieldEntry().defineField().name(NS, "field15").create().add()
 
-                /* Adding mixins */
-                .mixin().id(mixinType1.getId()).add()
-                .mixin().name("mixin2").add()
-                .mixin().name(new QName(NS, "mixin3")).add()
-                .mixin().name(NS, "mixin4").add()
-                .mixin().use(mixinType5).add()
-                .mixin().name(NS, "mixin7").version(2L).add()
+                /* Adding supertypes */
+                .supertype().id(supertype1.getId()).add()
+                .supertype().name("supertype2").add()
+                .supertype().name(new QName(NS, "supertype3")).add()
+                .supertype().name(NS, "supertype4").add()
+                .supertype().use(supertype5).add()
+                .supertype().name(NS, "supertype7").version(2L).add()
 
                 .create();
 
@@ -535,20 +537,20 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(Scope.VERSIONED, field14.getScope());
 
         //
-        // Verify mixins
+        // Verify supertypes
         //
-        Map<SchemaId, Long> mixins = recordType.getMixins();
-        assertEquals(6, mixins.size());
-        assertTrue(mixins.containsKey(mixinType1.getId()));
-        assertTrue(mixins.containsKey(mixinType2.getId()));
-        assertTrue(mixins.containsKey(mixinType3.getId()));
-        assertTrue(mixins.containsKey(mixinType4.getId()));
-        assertTrue(mixins.containsKey(mixinType5.getId()));
-        assertFalse(mixins.containsKey(mixinType6.getId()));
-        assertTrue(mixins.containsKey(mixinType7.getId()));
+        Map<SchemaId, Long> supertypes = recordType.getSupertypes();
+        assertEquals(6, supertypes.size());
+        assertTrue(supertypes.containsKey(supertype1.getId()));
+        assertTrue(supertypes.containsKey(supertype2.getId()));
+        assertTrue(supertypes.containsKey(supertype3.getId()));
+        assertTrue(supertypes.containsKey(supertype4.getId()));
+        assertTrue(supertypes.containsKey(supertype5.getId()));
+        assertFalse(supertypes.containsKey(supertype6.getId()));
+        assertTrue(supertypes.containsKey(supertype7.getId()));
 
-        assertEquals(new Long(1), mixins.get(mixinType1.getId()));
-        assertEquals(new Long(2), mixins.get(mixinType7.getId()));
+        assertEquals(new Long(1), supertypes.get(supertype1.getId()));
+        assertEquals(new Long(2), supertypes.get(supertype7.getId()));
     }
 
     @Test

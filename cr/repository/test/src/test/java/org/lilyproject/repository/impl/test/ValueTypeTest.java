@@ -687,7 +687,7 @@ public class ValueTypeTest {
 
         RecordType rt2 = typeManager.recordTypeBuilder()
             .name(new QName(ns, "rt2"))
-            .mixin().id(rt1.getId()).add()
+            .supertype().id(rt1.getId()).add()
             .create();
 
 

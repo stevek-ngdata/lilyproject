@@ -48,7 +48,7 @@ public class LilyHBaseSchema {
         typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.DATA.bytes));
         typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.FIELDTYPE_ENTRY.bytes, HConstants.ALL_VERSIONS,
                 "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-        typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.MIXIN.bytes, HConstants.ALL_VERSIONS, "none",
+        typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.SUPERTYPE.bytes, HConstants.ALL_VERSIONS, "none",
                 false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
     }
 
@@ -139,7 +139,7 @@ public class LilyHBaseSchema {
     public static enum TypeCf {
         DATA("data"),
         FIELDTYPE_ENTRY("fieldtype-entry"),
-        MIXIN("mixin");
+        SUPERTYPE("mixin") /* actual CF name is 'mixin' for backwards compatibility */;
 
         public final byte[] bytes;
         public final String name;

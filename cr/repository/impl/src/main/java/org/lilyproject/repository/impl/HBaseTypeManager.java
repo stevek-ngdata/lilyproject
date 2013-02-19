@@ -117,10 +117,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 putFieldTypeEntry(recordTypeVersion, put, fieldTypeEntry);
             }
 
-            Map<SchemaId, Long> mixins = recordType.getMixins();
-            for (Entry<SchemaId, Long> mixin : mixins.entrySet()) {
-                newRecordType.addMixin(mixin.getKey(), putMixinOnRecordType(recordTypeVersion, put, mixin.getKey(),
-                        mixin.getValue()));
+            Map<SchemaId, Long> supertypes = recordType.getSupertypes();
+            for (Entry<SchemaId, Long> supertype : supertypes.entrySet()) {
+                newRecordType.addSupertype(supertype.getKey(), putSupertypeOnRecordType(recordTypeVersion, put,
+                        supertype.getKey(), supertype.getValue()));
             }
 
             // Put the record type on the table
@@ -141,11 +141,11 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return newRecordType;
     }
 
-    private Long putMixinOnRecordType(Long recordTypeVersion, Put put, SchemaId mixinId, Long mixinVersion)
+    private Long putSupertypeOnRecordType(Long recordTypeVersion, Put put, SchemaId supertypeId, Long supertypeVersion)
             throws TypeException {
-        Long newMixinVersion = getRecordTypeByIdWithoutCache(mixinId, mixinVersion).getVersion();
-        put.add(TypeCf.MIXIN.bytes, mixinId.getBytes(), recordTypeVersion, Bytes.toBytes(newMixinVersion));
-        return newMixinVersion;
+        Long newSupertypeVersion = getRecordTypeByIdWithoutCache(supertypeId, supertypeVersion).getVersion();
+        put.add(TypeCf.SUPERTYPE.bytes, supertypeId.getBytes(), recordTypeVersion, Bytes.toBytes(newSupertypeVersion));
+        return newSupertypeVersion;
     }
 
     @Override
@@ -205,12 +205,12 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             boolean fieldTypeEntriesChanged = updateFieldTypeEntries(put, newRecordTypeVersion, newRecordType,
                     latestRecordType);
 
-            boolean mixinsChanged = updateMixins(put, newRecordTypeVersion, newRecordType, latestRecordType);
+            boolean supertypesChanged = updateSupertypes(put, newRecordTypeVersion, newRecordType, latestRecordType);
 
             boolean nameChanged = updateName(put, newRecordType, latestRecordType);
 
             // Update the record type on the table
-            if (fieldTypeEntriesChanged || mixinsChanged || nameChanged) {
+            if (fieldTypeEntriesChanged || supertypesChanged || nameChanged) {
                 put.add(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes, Bytes.toBytes(newRecordTypeVersion));
                 getTypeTable().put(put);
                 newRecordType.setVersion(newRecordTypeVersion);
@@ -323,7 +323,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             recordType.setVersion(currentVersion);
         }
         extractFieldTypeEntries(result, version, recordType);
-        extractMixins(result, version, recordType);
+        extractSupertypes(result, version, recordType);
         return recordType;
     }
 
@@ -364,22 +364,22 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         put.add(TypeCf.FIELDTYPE_ENTRY.bytes, idBytes, version, encodeFieldTypeEntry(fieldTypeEntry));
     }
 
-    private boolean updateMixins(Put put, Long newRecordTypeVersion, RecordType recordType, RecordType latestRecordType) {
+    private boolean updateSupertypes(Put put, Long newRecordTypeVersion, RecordType recordType, RecordType latestRecordType) {
         boolean changed = false;
-        Map<SchemaId, Long> latestMixins = latestRecordType.getMixins();
-        // Update mixins
-        for (Entry<SchemaId, Long> entry : recordType.getMixins().entrySet()) {
-            SchemaId mixinId = entry.getKey();
-            Long mixinVersion = entry.getValue();
-            if (!mixinVersion.equals(latestMixins.get(mixinId))) {
-                put.add(TypeCf.MIXIN.bytes, mixinId.getBytes(), newRecordTypeVersion, Bytes.toBytes(mixinVersion));
+        Map<SchemaId, Long> latestSupertypes = latestRecordType.getSupertypes();
+        // Update supertypes
+        for (Entry<SchemaId, Long> entry : recordType.getSupertypes().entrySet()) {
+            SchemaId supertypeId = entry.getKey();
+            Long supertypeVersion = entry.getValue();
+            if (!supertypeVersion.equals(latestSupertypes.get(supertypeId))) {
+                put.add(TypeCf.SUPERTYPE.bytes, supertypeId.getBytes(), newRecordTypeVersion, Bytes.toBytes(supertypeVersion));
                 changed = true;
             }
-            latestMixins.remove(mixinId);
+            latestSupertypes.remove(supertypeId);
         }
-        // Remove remaining mixins
-        for (Entry<SchemaId, Long> entry : latestMixins.entrySet()) {
-            put.add(TypeCf.MIXIN.bytes, entry.getKey().getBytes(), newRecordTypeVersion, DELETE_MARKER);
+        // Remove remaining supertypes
+        for (Entry<SchemaId, Long> entry : latestSupertypes.entrySet()) {
+            put.add(TypeCf.SUPERTYPE.bytes, entry.getKey().getBytes(), newRecordTypeVersion, DELETE_MARKER);
             changed = true;
         }
         return changed;
@@ -416,27 +416,27 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
     }
 
-    private void extractMixins(Result result, Long version, RecordType recordType) {
+    private void extractSupertypes(Result result, Long version, RecordType recordType) {
         if (version != null) {
             NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
-            NavigableMap<byte[], NavigableMap<Long, byte[]>> mixinVersionsMap = allVersionsMap.get(TypeCf.MIXIN.bytes);
-            if (mixinVersionsMap != null) {
-                for (Entry<byte[], NavigableMap<Long, byte[]>> entry : mixinVersionsMap.entrySet()) {
-                    SchemaId mixinId = new SchemaIdImpl(entry.getKey());
+            NavigableMap<byte[], NavigableMap<Long, byte[]>> supertypeVersionsMap = allVersionsMap.get(TypeCf.SUPERTYPE.bytes);
+            if (supertypeVersionsMap != null) {
+                for (Entry<byte[], NavigableMap<Long, byte[]>> entry : supertypeVersionsMap.entrySet()) {
+                    SchemaId supertypeId = new SchemaIdImpl(entry.getKey());
                     Entry<Long, byte[]> ceilingEntry = entry.getValue().ceilingEntry(version);
                     if (ceilingEntry != null) {
                         if (!EncodingUtil.isDeletedField(ceilingEntry.getValue())) {
-                            recordType.addMixin(mixinId, Bytes.toLong(ceilingEntry.getValue()));
+                            recordType.addSupertype(supertypeId, Bytes.toLong(ceilingEntry.getValue()));
                         }
                     }
                 }
             }
         } else {
-            NavigableMap<byte[], byte[]> mixinMap = result.getFamilyMap(TypeCf.MIXIN.bytes);
-            if (mixinMap != null) {
-                for (Entry<byte[], byte[]> entry : mixinMap.entrySet()) {
+            NavigableMap<byte[], byte[]> supertypeMap = result.getFamilyMap(TypeCf.SUPERTYPE.bytes);
+            if (supertypeMap != null) {
+                for (Entry<byte[], byte[]> entry : supertypeMap.entrySet()) {
                     if (!EncodingUtil.isDeletedField(entry.getValue())) {
-                        recordType.addMixin(new SchemaIdImpl(entry.getKey()), Bytes.toLong(entry.getValue()));
+                        recordType.addSupertype(new SchemaIdImpl(entry.getKey()), Bytes.toLong(entry.getValue()));
                     }
                 }
             }
@@ -797,7 +797,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             scan.addColumn(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes);
             scan.addColumn(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes);
             scan.addFamily(TypeCf.FIELDTYPE_ENTRY.bytes);
-            scan.addFamily(TypeCf.MIXIN.bytes);
+            scan.addFamily(TypeCf.SUPERTYPE.bytes);
 
             scanner = getTypeTable().getScanner(scan);
         } catch (IOException e) {
@@ -829,7 +829,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         scan.addColumn(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes);
         scan.addColumn(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes);
         scan.addFamily(TypeCf.FIELDTYPE_ENTRY.bytes);
-        scan.addFamily(TypeCf.MIXIN.bytes);
+        scan.addFamily(TypeCf.SUPERTYPE.bytes);
 
         try {
             scanner = getTypeTable().getScanner(scan);
@@ -874,7 +874,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         scan.addColumn(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes);
         scan.addColumn(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes);
         scan.addFamily(TypeCf.FIELDTYPE_ENTRY.bytes);
-        scan.addFamily(TypeCf.MIXIN.bytes);
+        scan.addFamily(TypeCf.SUPERTYPE.bytes);
 
         TypeBucket typeBucket = new TypeBucket(bucketId);
         ResultScanner scanner = null;

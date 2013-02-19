@@ -20,13 +20,13 @@
 
     <field name="recordTypeVersion_literal" value="sys:recordTypeVersion"/>
 
-    <field name="mixins_literal_mv" value="sys:mixins"/>
+    <field name="supertypes_literal_mv" value="sys:supertypes"/>
 
-    <field name="mixinsWithVersion_literal_mv" value="sys:mixinsWithVersion"/>
+    <field name="supertypesWithVersion_literal_mv" value="sys:supertypesWithVersion"/>
 
-    <field name="mixinNames_literal_mv" value="sys:mixinNames"/>
+    <field name="supertypeNames_literal_mv" value="sys:supertypeNames"/>
 
-    <field name="mixinNamespaces_literal_mv" value="sys:mixinNamespaces"/>
+    <field name="supertypeNamespaces_literal_mv" value="sys:supertypeNamespaces"/>
 
     <field name="recordTypes_literal_mv" value="sys:recordTypes"/>
 

@@ -216,10 +216,10 @@ public class AvroConverter {
                 recordType.addFieldTypeEntry(convert(avroFieldTypeEntry));
             }
         }
-        List<AvroMixin> mixins = avroRecordType.getMixins();
-        if (mixins != null) {
-            for (AvroMixin avroMixin : mixins) {
-                recordType.addMixin(convert(avroMixin.getRecordTypeId()), avroMixin.getRecordTypeVersion());
+        List<AvroSupertype> supertypes = avroRecordType.getSupertypes();
+        if (supertypes != null) {
+            for (AvroSupertype avroSupertype : supertypes) {
+                recordType.addSupertype(convert(avroSupertype.getRecordTypeId()), avroSupertype.getRecordTypeVersion());
             }
         }
         return recordType;
@@ -238,10 +238,10 @@ public class AvroConverter {
         for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
             avroRecordType.getFieldTypeEntries().add(convert(fieldTypeEntry));
         }
-        Set<Entry<SchemaId, Long>> mixinEntries = recordType.getMixins().entrySet();
-        avroRecordType.setMixins(new ArrayList<AvroMixin>(mixinEntries.size()));
-        for (Entry<SchemaId, Long> mixinEntry : mixinEntries) {
-            avroRecordType.getMixins().add(convert(mixinEntry));
+        Set<Entry<SchemaId, Long>> supertypeEntries = recordType.getSupertypes().entrySet();
+        avroRecordType.setSupertypes(new ArrayList<AvroSupertype>(supertypeEntries.size()));
+        for (Entry<SchemaId, Long> supertypeEntry : supertypeEntries) {
+            avroRecordType.getSupertypes().add(convert(supertypeEntry));
         }
         return avroRecordType;
     }
@@ -332,14 +332,14 @@ public class AvroConverter {
         return avroQName;
     }
 
-    public AvroMixin convert(Entry<SchemaId, Long> mixinEntry) {
-        AvroMixin avroMixin = new AvroMixin();
-        avroMixin.setRecordTypeId(convert(mixinEntry.getKey()));
-        Long version = mixinEntry.getValue();
+    public AvroSupertype convert(Entry<SchemaId, Long> supertypeEntry) {
+        AvroSupertype avroSupertype = new AvroSupertype();
+        avroSupertype.setRecordTypeId(convert(supertypeEntry.getKey()));
+        Long version = supertypeEntry.getValue();
         if (version != null) {
-            avroMixin.setRecordTypeVersion(version);
+            avroSupertype.setRecordTypeVersion(version);
         }
-        return avroMixin;
+        return avroSupertype;
     }
 
     public FieldTypeEntry convert(AvroFieldTypeEntry avroFieldTypeEntry) {

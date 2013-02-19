@@ -30,13 +30,12 @@ import java.util.Map;
  * <ul>
  * <li>a list of field types, associated via {@link FieldTypeEntry} which defines properties specific to the use
  * of a field type within this record type.
- * <li>a list of mixins, these are references to other record types to be mixed in (imported within) this record
- * type.
+ * <li>a list of supertypes, these are references to other record types that are parent types for this record type.
  * </ul>
  *
  * <p>Record types are versioned: upon each update, a new version of the record type is created. Record store a
  * pointer to the particular version of a record type that was used when creating/updating a record type. The references
- * to the mixin record types are also to specific versions.
+ * to the supertype record types are also to specific versions.
  *
  * <p>A record type has two unique identifiers:
  * <ul>
@@ -90,25 +89,55 @@ public interface RecordType {
     void removeFieldTypeEntry(SchemaId fieldTypeId);
     
     Collection<FieldTypeEntry> getFieldTypeEntries();
-    
+
+    /**
+     * Adds a super type to the record type.
+     *
+     * <p>When no version is given, the latest recordType version will be filled in.
+     */
+    void addSupertype(SchemaId recordTypeId, Long recordTypeVersion);
+
+    /**
+     * Same as {@link #addSupertype(SchemaId, Long)}} but with null for the recordTypeVersion.
+     */
+    void addSupertype(SchemaId recordTypeId);
+
+    /**
+     * Removes a supertype from the recordType.
+     */
+    void removeSupertype(SchemaId recordTypeId);
+
+    /**
+     * Returns a map of the recordTypeIds and versions of the supertypes of the RecordType.
+     */
+    Map<SchemaId, Long> getSupertypes();
+
     /**
      * Adds a mixin to the record type.
      * When no version is given, the latest recordType version will be filled in.
+     *
+     * @deprecated mixins are renamed to supertypes in 2.2, use {@link #addSupertype(SchemaId, Long)} instead.
      */
     void addMixin(SchemaId recordTypeId, Long recordTypeVersion);
 
     /**
      * Same as {@link #addMixin(SchemaId, Long)} but with null for the recordTypeVersion.
+     *
+     * @deprecated mixins are renamed to supertypes in 2.2, use {@link #addSupertype(SchemaId)} instead
      */
     void addMixin(SchemaId recordTypeId);
     
     /**
      * Removes a mixin from the recordType.
+     *
+     * @deprecated mixins are renamed to supertypes in 2.2, use {@link #removeSupertype(SchemaId)} instead.
      */
     void removeMixin(SchemaId recordTypeId);
     
     /**
      * Returns a map of the recordTypeIds and versions of the mixins of the RecordType.
+     *
+     * @deprecated mixins are renamed to supertypes in 2.2, use {@link #getSupertypes()} instead.
      */
     Map<SchemaId, Long> getMixins();
     

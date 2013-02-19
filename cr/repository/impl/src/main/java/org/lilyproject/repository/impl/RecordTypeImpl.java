@@ -26,7 +26,7 @@ public class RecordTypeImpl implements RecordType, Cloneable {
     private SchemaId id;
     private QName name;
     private Long version;
-    private Map<SchemaId, Long> mixins = new HashMap<SchemaId, Long>();
+    private Map<SchemaId, Long> supertypes = new HashMap<SchemaId, Long>();
     private Map<SchemaId, FieldTypeEntry> fieldTypeEntries;
     private static final ByteArrayComparator byteArrayComparator = new ByteArrayComparator();
     private static final Comparator<SchemaId> comparator = new Comparator<SchemaId>() {
@@ -106,24 +106,48 @@ public class RecordTypeImpl implements RecordType, Cloneable {
     }
 
     @Override
-    public void addMixin(SchemaId recordTypeId, Long recordTypeVersion) {
+    public void addSupertype(SchemaId recordTypeId, Long recordTypeVersion) {
         ArgumentValidator.notNull(recordTypeId, "recordTypeId");
-        mixins.put(recordTypeId, recordTypeVersion);
+        supertypes.put(recordTypeId, recordTypeVersion);
+    }
+
+    @Override
+    public void addSupertype(SchemaId recordTypeId) {
+        addSupertype(recordTypeId, null);
+    }
+
+    @Override
+    public void removeSupertype(SchemaId recordTypeId) {
+        supertypes.remove(recordTypeId);
+    }
+
+    @Override
+    public Map<SchemaId, Long> getSupertypes() {
+        return supertypes;
+    }
+
+    @Override
+    @Deprecated
+    public void addMixin(SchemaId recordTypeId, Long recordTypeVersion) {
+        addSupertype(recordTypeId, recordTypeVersion);
     }
     
     @Override
+    @Deprecated
     public void addMixin(SchemaId recordTypeId) {
-        addMixin(recordTypeId, null);
+        addSupertype(recordTypeId, null);
     }
     
     @Override
+    @Deprecated
     public void removeMixin(SchemaId recordTypeId) {
-        mixins.remove(recordTypeId);
+        removeSupertype(recordTypeId);
     }
     
     @Override
+    @Deprecated
     public Map<SchemaId, Long> getMixins() {
-        return mixins;
+        return supertypes;
     }
 
     @Override
@@ -131,7 +155,7 @@ public class RecordTypeImpl implements RecordType, Cloneable {
         RecordTypeImpl clone = new RecordTypeImpl(this.id, this.name);
         clone.version = this.version;
         clone.fieldTypeEntries.putAll(fieldTypeEntries);
-        clone.mixins.putAll(mixins);
+        clone.supertypes.putAll(supertypes);
         return clone;
     }
 
@@ -141,7 +165,7 @@ public class RecordTypeImpl implements RecordType, Cloneable {
         int result = 1;
         result = prime * result + ((fieldTypeEntries == null) ? 0 : fieldTypeEntries.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((mixins == null) ? 0 : mixins.hashCode());
+        result = prime * result + ((supertypes == null) ? 0 : supertypes.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((version == null) ? 0 : version.hashCode());
         return result;
@@ -166,10 +190,10 @@ public class RecordTypeImpl implements RecordType, Cloneable {
                 return false;
         } else if (!id.equals(other.id))
             return false;
-        if (mixins == null) {
-            if (other.mixins != null)
+        if (supertypes == null) {
+            if (other.supertypes != null)
                 return false;
-        } else if (!mixins.equals(other.mixins))
+        } else if (!supertypes.equals(other.supertypes))
             return false;
         if (name == null) {
             if (other.name != null)
@@ -187,7 +211,7 @@ public class RecordTypeImpl implements RecordType, Cloneable {
     @Override
     public String toString() {
         return "RecordTypeImpl [name=" + name + ", id=" + id + ", version=" + version + ", fieldTypeEntries="
-                + fieldTypeEntries + ", mixins=" + mixins + "]";
+                + fieldTypeEntries + ", supertypes=" + supertypes + "]";
     }
 
 }

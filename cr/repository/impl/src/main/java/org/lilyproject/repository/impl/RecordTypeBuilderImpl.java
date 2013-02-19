@@ -72,6 +72,12 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
     }
 
     @Override
+    public SupertypeBuilder supertype() {
+        return new SupertypeBuilderImpl();
+    }
+
+    @Override
+    @Deprecated
     public MixinBuilder mixin() {
         return new MixinBuilderImpl();
     }
@@ -243,41 +249,99 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
         }
     }
 
+    public class SupertypeBuilderImpl implements SupertypeBuilder {
+        private SchemaId id;
+        private Long version;
+
+        @Override
+        public SupertypeBuilder id(SchemaId id) {
+            this.id = id;
+            return this;
+        }
+
+        @Override
+        public SupertypeBuilder name(String name) throws RepositoryException, InterruptedException {
+            this.id = typeManager.getRecordTypeByName(resolveNamespace(name), null).getId();
+            return this;
+        }
+
+        @Override
+        public SupertypeBuilder name(String namespace, String name) throws RepositoryException, InterruptedException {
+            this.id = typeManager.getRecordTypeByName(new QName(namespace, name), null).getId();
+            return this;
+        }
+
+        @Override
+        public SupertypeBuilder name(QName name) throws RepositoryException, InterruptedException {
+            this.id = typeManager.getRecordTypeByName(name, null).getId();
+            return this;
+        }
+
+        @Override
+        public SupertypeBuilder version(long version) {
+            this.version = version;
+            return this;
+        }
+
+        @Override
+        public SupertypeBuilder use(RecordType recordType) {
+            this.id = recordType.getId();
+            this.version = recordType.getVersion();
+            return this;
+        }
+
+        @Override
+        public RecordTypeBuilder add() {
+            if (id == null) {
+                throw new IllegalStateException("Cannot add supertype: record type not set.");
+            }
+            recordType.addSupertype(id, version);
+            return RecordTypeBuilderImpl.this;
+        }
+    }
+
+    @Deprecated
     public class MixinBuilderImpl implements MixinBuilder {
         private SchemaId id;
         private Long version;
 
         @Override
+        @Deprecated
         public MixinBuilder id(SchemaId id) {
             this.id = id;
             return this;
         }
 
         @Override
+        @Deprecated
         public MixinBuilder name(String name) throws RepositoryException, InterruptedException {
             this.id = typeManager.getRecordTypeByName(resolveNamespace(name), null).getId();
             return this;
         }
 
         @Override
+        @Deprecated
         public MixinBuilder name(String namespace, String name) throws RepositoryException, InterruptedException {
             this.id = typeManager.getRecordTypeByName(new QName(namespace, name), null).getId();
             return this;
         }
 
         @Override
+        @Deprecated
         public MixinBuilder name(QName name) throws RepositoryException, InterruptedException {
             this.id = typeManager.getRecordTypeByName(name, null).getId();
             return this;
         }
 
         @Override
+        @Deprecated
         public MixinBuilder version(long version) {
             this.version = version;
             return this;
         }
 
         @Override
+        @Deprecated
         public MixinBuilder use(RecordType recordType) {
             this.id = recordType.getId();
             this.version = recordType.getVersion();
@@ -285,6 +349,7 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
         }
 
         @Override
+        @Deprecated
         public RecordTypeBuilder add() {
             if (id == null) {
                 throw new IllegalStateException("Cannot add mixin: record type not set.");

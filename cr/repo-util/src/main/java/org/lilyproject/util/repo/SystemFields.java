@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.IdGenerator;
@@ -100,12 +101,71 @@ public class SystemFields {
                     return formatNameVersion(record.getRecordTypeName(), record.getRecordTypeVersion());
                 }
             },
-            new SystemField("mixins", "STRING", true) {
+            new SystemField("supertypes", "STRING", true) {
                 @Override
                 public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
                         InterruptedException {
                     final List<String> result = new NoDupsList<String>();
-                    forEachMixin(record, typeManager, false, new MixinCallback() {
+                    forEachSupertype(record, typeManager, false, new SupertypeCallback() {
+                        @Override
+                        public void handle(RecordType recordType) {
+                            result.add(formatName(recordType.getName()));
+                        }
+                    });
+                    return result;
+                }
+            },
+            new SystemField("supertypesWithVersion", "STRING", true) {
+                @Override
+                public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
+                        InterruptedException {
+                    final List<String> result = new NoDupsList<String>();
+                    forEachSupertype(record, typeManager, false, new SupertypeCallback() {
+                        @Override
+                        public void handle(RecordType recordType) {
+                            result.add(formatNameVersion(recordType.getName(), recordType.getVersion()));
+                        }
+                    });
+                    return result;
+                }
+            },
+            new SystemField("supertypeNames", "STRING", true) {
+                @Override
+                public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
+                        InterruptedException {
+                    final List<String> result = new NoDupsList<String>();
+                    forEachSupertype(record, typeManager, false, new SupertypeCallback() {
+                        @Override
+                        public void handle(RecordType recordType) {
+                            result.add(recordType.getName().getName());
+                        }
+                    });
+                    return result;
+                }
+            },
+            new SystemField("supertypeNamespaces", "STRING", true) {
+                @Override
+                public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
+                        InterruptedException {
+                    final List<String> result = new NoDupsList<String>();
+                    forEachSupertype(record, typeManager, false, new SupertypeCallback() {
+                        @Override
+                        public void handle(RecordType recordType) {
+                            result.add(recordType.getName().getNamespace());
+                        }
+                    });
+                    return result;
+                }
+            },
+            /* The mixin related fields were deprecated in 2.2, they can be removed in 2.4 */
+            new SystemField("mixins", "STRING", true) {
+                @Override
+                public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
+                        InterruptedException {
+                    LogFactory.getLog("lily.deprecation")
+                            .warn("System field mixins is deprecated, use supertypes instead.");
+                    final List<String> result = new NoDupsList<String>();
+                    forEachSupertype(record, typeManager, false, new SupertypeCallback() {
                         @Override
                         public void handle(RecordType recordType) {
                             result.add(formatName(recordType.getName()));
@@ -118,8 +178,10 @@ public class SystemFields {
                 @Override
                 public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
                         InterruptedException {
+                    LogFactory.getLog("lily.deprecation")
+                            .warn("System field mixinsWithVersion is deprecated, use supertypesWithVersion instead.");
                     final List<String> result = new NoDupsList<String>();
-                    forEachMixin(record, typeManager, false, new MixinCallback() {
+                    forEachSupertype(record, typeManager, false, new SupertypeCallback() {
                         @Override
                         public void handle(RecordType recordType) {
                             result.add(formatNameVersion(recordType.getName(), recordType.getVersion()));
@@ -132,8 +194,10 @@ public class SystemFields {
                 @Override
                 public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
                         InterruptedException {
+                    LogFactory.getLog("lily.deprecation")
+                            .warn("System field mixinNames is deprecated, use supertypeNames instead.");
                     final List<String> result = new NoDupsList<String>();
-                    forEachMixin(record, typeManager, false, new MixinCallback() {
+                    forEachSupertype(record, typeManager, false, new SupertypeCallback() {
                         @Override
                         public void handle(RecordType recordType) {
                             result.add(recordType.getName().getName());
@@ -146,8 +210,10 @@ public class SystemFields {
                 @Override
                 public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
                         InterruptedException {
+                    LogFactory.getLog("lily.deprecation")
+                            .warn("System field mixinNamespaces is deprecated, use supertypeNamespaces instead.");
                     final List<String> result = new NoDupsList<String>();
-                    forEachMixin(record, typeManager, false, new MixinCallback() {
+                    forEachSupertype(record, typeManager, false, new SupertypeCallback() {
                         @Override
                         public void handle(RecordType recordType) {
                             result.add(recordType.getName().getNamespace());
@@ -161,7 +227,7 @@ public class SystemFields {
                 public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
                         InterruptedException {
                     final List<String> result = new NoDupsList<String>();
-                    forEachMixin(record, typeManager, true, new MixinCallback() {
+                    forEachSupertype(record, typeManager, true, new SupertypeCallback() {
                         @Override
                         public void handle(RecordType recordType) {
                             result.add(formatName(recordType.getName()));
@@ -175,7 +241,7 @@ public class SystemFields {
                 public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
                         InterruptedException {
                     final List<String> result = new NoDupsList<String>();
-                    forEachMixin(record, typeManager, true, new MixinCallback() {
+                    forEachSupertype(record, typeManager, true, new SupertypeCallback() {
                         @Override
                         public void handle(RecordType recordType) {
                             result.add(formatNameVersion(recordType.getName(), recordType.getVersion()));
@@ -189,7 +255,7 @@ public class SystemFields {
                 public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
                         InterruptedException {
                     final List<String> result = new NoDupsList<String>();
-                    forEachMixin(record, typeManager, true, new MixinCallback() {
+                    forEachSupertype(record, typeManager, true, new SupertypeCallback() {
                         @Override
                         public void handle(RecordType recordType) {
                             result.add(recordType.getName().getName());
@@ -203,7 +269,7 @@ public class SystemFields {
                 public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
                         InterruptedException {
                     final List<String> result = new NoDupsList<String>();
-                    forEachMixin(record, typeManager, true, new MixinCallback() {
+                    forEachSupertype(record, typeManager, true, new SupertypeCallback() {
                         @Override
                         public void handle(RecordType recordType) {
                             result.add(recordType.getName().getNamespace());
@@ -356,12 +422,12 @@ public class SystemFields {
         return "{" + name.getNamespace() + "}" + name.getName() + ":" + version;
     }
 
-    private static interface MixinCallback {
+    private static interface SupertypeCallback {
         void handle(RecordType recordType);
     }
 
-    private static void forEachMixin(Record record, TypeManager typeManager, boolean includeRecordType,
-            MixinCallback callback) throws RepositoryException, InterruptedException {
+    private static void forEachSupertype(Record record, TypeManager typeManager, boolean includeRecordType,
+            SupertypeCallback callback) throws RepositoryException, InterruptedException {
 
         RecordType recordType = typeManager.getRecordTypeByName(record.getRecordTypeName(),
                 record.getRecordTypeVersion());
@@ -370,9 +436,9 @@ public class SystemFields {
             callback.handle(recordType);
         }
 
-        for (Map.Entry<SchemaId, Long> mixin : recordType.getMixins().entrySet()) {
-            RecordType mixinType = typeManager.getRecordTypeById(mixin.getKey(), mixin.getValue());
-            callback.handle(mixinType);
+        for (Map.Entry<SchemaId, Long> supertype : recordType.getSupertypes().entrySet()) {
+            RecordType supertypeRt = typeManager.getRecordTypeById(supertype.getKey(), supertype.getValue());
+            callback.handle(supertypeRt);
         }
     }
 

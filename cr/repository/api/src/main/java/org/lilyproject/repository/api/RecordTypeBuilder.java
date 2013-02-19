@@ -89,8 +89,16 @@ public interface RecordTypeBuilder {
     FieldEntryBuilder fieldEntry();
 
     /**
+     * Gives a builder for adding a supertype. When done, call {@link MixinBuilder#add()}
+     * to return to the record type builder.
+     */
+    SupertypeBuilder supertype();
+
+    /**
      * Gives a builder for adding mixins. When done, call {@link MixinBuilder#add()}
      * to return to the record type builder.
+     *
+     * @deprecated mixins are renamed to supertypes in 2.2, use {@link #supertype()} instead
      */
     MixinBuilder mixin();
 
@@ -242,48 +250,111 @@ public interface RecordTypeBuilder {
     }
 
     /**
+     * A builder for adding supertypes to a record type. Identify the record type to be
+     * added as supertype by either supplying the id, name or RecordType object. Then optionally
+     * set the version. Finally, call {@link #add()} to return to the {@link RecordTypeBuilder}.
+     */
+    interface SupertypeBuilder {
+        /**
+         * Identify the supertype record type by id, if you use this you do not
+         * have to use any of the other methods to identify the field type,
+         * and vice-versa.
+         */
+        SupertypeBuilder id(SchemaId id);
+
+        /**
+         * Identify the supertype record type by name, the namespace is taken from
+         * the one set using {@link RecordTypeBuilder#defaultNamespace(String)}.
+         */
+        SupertypeBuilder name(String name) throws RepositoryException, InterruptedException;
+
+        /**
+         * Identify the supertype record type by name.
+         */
+        SupertypeBuilder name(String namespace, String name) throws RepositoryException, InterruptedException;
+
+        /**
+         * Identify the supertype record type by name.
+         */
+        SupertypeBuilder name(QName name) throws RepositoryException, InterruptedException;
+
+        /**
+         * Identify the supertype record type by the supplied RecordType object. This will use
+         * both the ID and the version from the supplied RecordType.
+         */
+        SupertypeBuilder use(RecordType recordType);
+
+        /**
+         * Sets the version of the record type. This is optional, by default the current latest
+         * version will be used.
+         */
+        SupertypeBuilder version(long version);
+
+        /**
+         * Adds a new supertype to the record type and returns the {@link RecordTypeBuilder}.
+         */
+        RecordTypeBuilder add();
+    }
+
+    /**
      * A builder for adding mixins to a record type. Identify the record type to be
      * mixed by either supplying the id, name or RecordType object. Then optionally
      * set the version. Finally, call {@link #add()} to return to the {@link RecordTypeBuilder}.
+     *
+     * @deprecated mixins are renamed to supertypes in 2.2, use {@link #supertype()} instead
      */
     interface MixinBuilder {
         /**
          * Identify the mixin record type by id, if you use this you do not
          * have to use any of the other methods to identify the field type,
          * and vice-versa.
+         *
+         * @deprecated mixins are renamed to supertypes in 2.2, use {@link SupertypeBuilder} instead
          */
         MixinBuilder id(SchemaId id);
 
         /**
          * Identify the mixin record type by name, the namespace is taken from
          * the one set using {@link RecordTypeBuilder#defaultNamespace(String)}.
+         *
+         * @deprecated mixins are renamed to supertypes in 2.2, use {@link SupertypeBuilder} instead
          */
         MixinBuilder name(String name) throws RepositoryException, InterruptedException;
 
         /**
          * Identify the mixin record type by name.
+         *
+         * @deprecated mixins are renamed to supertypes in 2.2, use {@link SupertypeBuilder} instead
          */
         MixinBuilder name(String namespace, String name) throws RepositoryException, InterruptedException;
 
         /**
          * Identify the mixin record type by name.
+         *
+         * @deprecated mixins are renamed to supertypes in 2.2, use {@link SupertypeBuilder} instead
          */
         MixinBuilder name(QName name) throws RepositoryException, InterruptedException;
 
         /**
          * Identify the mixin record type by the supplied RecordType object. This will use
          * both the ID and the version from the supplied RecordType.
+         *
+         * @deprecated mixins are renamed to supertypes in 2.2, use {@link SupertypeBuilder} instead
          */
         MixinBuilder use(RecordType recordType);
 
         /**
          * Sets the version of the record type. This is optional, by default the current latest
          * version will be used.
+         *
+         * @deprecated mixins are renamed to supertypes in 2.2, use {@link SupertypeBuilder} instead
          */
         MixinBuilder version(long version);
 
         /**
          * Adds a new mixin to the record type and returns the {@link RecordTypeBuilder}.
+         *
+         * @deprecated mixins are renamed to supertypes in 2.2, use {@link SupertypeBuilder} instead
          */
         RecordTypeBuilder add();
     }

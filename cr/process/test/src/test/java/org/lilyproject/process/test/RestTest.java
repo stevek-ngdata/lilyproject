@@ -261,25 +261,25 @@ public class RestTest {
         assertTrue(json.get("results").size() > 0);
 
         //
-        // Test mixins
+        // Test supertypes
         //
 
-        // Create two mixin record types
-        body = json("{action: 'create', recordType: {name: 'n$mixin1', fields: [ {name: 'n$rt_field2'} ]," +
+        // Create two supertype record types
+        body = json("{action: 'create', recordType: {name: 'n$supertype1', fields: [ {name: 'n$rt_field2'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
         assertStatus(HttpStatus.SC_CREATED, response);
-        String mixin1Id = readJson(response).get("id").getTextValue();
+        String supertype1Id = readJson(response).get("id").getTextValue();
 
-        body = json("{action: 'create', recordType: {name: 'n$mixin2', fields: [ {name: 'n$rt_field3'} ]," +
+        body = json("{action: 'create', recordType: {name: 'n$supertype2', fields: [ {name: 'n$rt_field3'} ]," +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
         assertStatus(HttpStatus.SC_CREATED, response);
-        String mixin2Id = readJson(response).get("id").getTextValue();
+        String supertype2Id = readJson(response).get("id").getTextValue();
 
-        // Create a record type using the mixins
-        body = json("{action: 'create', recordType: {name: 'n$mixinUser', fields: [ {name: 'n$rt_field1'} ]," +
-                "mixins: [{name: 'n$mixin1', version: 1}, { id: '" + mixin2Id + "' } ], " +
+        // Create a record type using the supertypes
+        body = json("{action: 'create', recordType: {name: 'n$subtype', fields: [ {name: 'n$rt_field1'} ]," +
+                "supertypes: [{name: 'n$supertype1', version: 1}, { id: '" + supertype2Id + "' } ], " +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/schema/recordTypeById", body);
         assertStatus(HttpStatus.SC_CREATED, response);
@@ -288,21 +288,21 @@ public class RestTest {
         assertStatus(HttpStatus.SC_OK, response);
         json = readJson(response);
 
-        assertEquals(2, json.get("mixins").size());
+        assertEquals(2, json.get("supertypes").size());
 
-        // Update to remove one of the mixins
-        body = json("{name: 'n$mixinUser', fields: [ {name: 'n$rt_field1'} ]," +
-                "mixins: [{name: 'n$mixin1', version: 1}], " +
+        // Update to remove one of the supertypes
+        body = json("{name: 'n$subtype', fields: [ {name: 'n$rt_field1'} ]," +
+                "supertypes: [{name: 'n$supertype1', version: 1}], " +
                 "namespaces: { 'org.lilyproject.resttest': 'n' } }");
-        String mixinUserUri = BASE_URI + "/schema/recordType/n$mixinUser?ns.n=org.lilyproject.resttest";
-        response = put(mixinUserUri, body);
+        String subtypeUri = BASE_URI + "/schema/recordType/n$subtype?ns.n=org.lilyproject.resttest";
+        response = put(subtypeUri, body);
         assertStatus(HttpStatus.SC_OK, response);
 
-        response = get(mixinUserUri);
+        response = get(subtypeUri);
         assertStatus(HttpStatus.SC_OK, response);
         json = readJson(response);
 
-        assertEquals(1, json.get("mixins").size());
+        assertEquals(1, json.get("supertypes").size());
     }
 
     private void makeBookSchema() throws Exception {

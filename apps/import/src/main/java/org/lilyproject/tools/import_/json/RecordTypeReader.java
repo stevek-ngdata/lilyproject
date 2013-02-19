@@ -20,6 +20,7 @@ import static org.lilyproject.util.json.JsonUtil.getBoolean;
 import static org.lilyproject.util.json.JsonUtil.getLong;
 import static org.lilyproject.util.json.JsonUtil.getString;
 
+import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
@@ -90,7 +91,39 @@ public class RecordTypeReader implements EntityReader<RecordType> {
             }
         }
 
-        if (node.get("mixins") != null) {
+        if (node.get("supertypes") != null && node.get("mixins") != null) {
+            throw new JsonFormatException("Only one of 'supertypes' or 'mixins' can be specified " +
+                    "(they are synonyms, and mixins is deprecated).");
+        }
+
+        if (node.get("supertypes") != null) {
+            ArrayNode supertypes = getArray(node, "supertypes", null);
+            for (int i = 0; i < supertypes.size(); i++) {
+                JsonNode supertype = supertypes.get(i);
+
+                String rtIdString = getString(supertype, "id", null);
+                String rtName = getString(supertype, "name", null);
+                Long rtVersion = getLong(supertype, "version", null);
+
+                if (rtIdString != null) {
+                    recordType.addSupertype(new SchemaIdImpl(rtIdString), rtVersion);
+                } else if (rtName != null) {
+                    QName rtQName = QNameConverter.fromJson(rtName, namespaces);
+
+                    try {
+                        SchemaId rtId = typeManager.getRecordTypeByName(rtQName, null).getId();
+                        recordType.addSupertype(rtId, rtVersion);
+                    } catch (RepositoryException e) {
+                        throw new JsonFormatException("Record type " + name +
+                                ": error looking up supertype record type with name: " + rtQName, e);
+                    }
+                } else {
+                    throw new JsonFormatException("Record type " + name + ": supertype should specify an id or name");
+                }
+            }
+        } else if (node.get("mixins") != null) {
+            // This was deprecated in 2.2, and can be removed in 2.4
+            LogFactory.getLog("lily.deprecation").warn("The use of 'mixins' is deprecated, please use supertypes instead");
             ArrayNode mixins = getArray(node, "mixins", null);
             for (int i = 0; i < mixins.size(); i++) {
                 JsonNode mixin = mixins.get(i);

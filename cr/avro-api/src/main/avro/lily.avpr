@@ -135,7 +135,7 @@
     },
 
     {
-      "name": "AvroMixin",
+      "name": "AvroSupertype",
       "type": "record",
       "fields": [
         {"name": "recordTypeId", "type": "AvroSchemaId"},
@@ -151,7 +151,7 @@
         {"name": "name", "type": ["AvroQName", "null"]},
         {"name": "version", "type": ["long", "null"]},
         {"name": "fieldTypeEntries", "type": {"type": "array", "items": "AvroFieldTypeEntry"}},
-        {"name": "mixins", "type": {"type": "array", "items": "AvroMixin"}}
+        {"name": "supertypes", "type": {"type": "array", "items": "AvroSupertype"}}
       ]
     },
     

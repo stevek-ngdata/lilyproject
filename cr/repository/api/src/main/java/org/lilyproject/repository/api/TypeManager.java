@@ -51,7 +51,7 @@ public interface TypeManager extends Closeable {
      * Creates a RecordType in the repository.
      *
      * @throws RecordTypeExistsException when a recordType with the same id already exists on the repository 
-     * @throws RecordTypeNotFoundException when a mixin of the recordType refers to a non-existing {@link RecordType} 
+     * @throws RecordTypeNotFoundException when a supertype of the recordType refers to a non-existing {@link RecordType}
      * @throws TypeException when the given recordType has no name specified
      * @throws FieldTypeNotFoundException 
      * @throws RepositoryException when an unexpected exception occurs on the repository

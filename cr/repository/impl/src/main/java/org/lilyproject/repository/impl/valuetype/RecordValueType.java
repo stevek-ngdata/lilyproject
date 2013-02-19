@@ -206,10 +206,10 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         
         // Wrap the list as an array list since we don't know if the collection will actually support the .addAll() methodq
         Collection<FieldTypeEntry> fieldTypeEntries = new ArrayList<FieldTypeEntry>(recordType.getFieldTypeEntries());
-        Map<SchemaId, Long> mixins = recordType.getMixins();
-        for (Entry<SchemaId, Long> mixinEntry: mixins.entrySet()) {
-            RecordType mixinRecordType = typeManager.getRecordTypeById(mixinEntry.getKey(), mixinEntry.getValue());
-            fieldTypeEntries.addAll(getFieldTypeEntries(mixinRecordType));
+        Map<SchemaId, Long> supertypes = recordType.getSupertypes();
+        for (Entry<SchemaId, Long> supertypeEntry: supertypes.entrySet()) {
+            RecordType supertypeRecordType = typeManager.getRecordTypeById(supertypeEntry.getKey(), supertypeEntry.getValue());
+            fieldTypeEntries.addAll(getFieldTypeEntries(supertypeRecordType));
         }
         return fieldTypeEntries;
     }

@@ -105,7 +105,7 @@ public class RecordTypesCache {
                     };
                     for (Map<SchemaId, RecordType> bucket : buckets.values()) {
                         for (RecordType recordType : bucket.values()) {
-                            for (SchemaId parent : recordType.getMixins().keySet()) {
+                            for (SchemaId parent : recordType.getSupertypes().keySet()) {
                                 newChildRecordTypes.get(parent).add(recordType.getId());
                             }
                         }

@@ -217,10 +217,10 @@ public class AvroConverterTest {
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
         avroRecordType.name = avroQName;
-        // fieldTypeEntries and mixins are by default empty instead of null
+        // fieldTypeEntries and supertypes are by default empty instead of null
         avroRecordType.fieldTypeEntries =
                 new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
-        avroRecordType.mixins = new GenericData.Array<AvroMixin>(0, Schema.createArray(AvroMixin.SCHEMA$));
+        avroRecordType.supertypes = new GenericData.Array<AvroSupertype>(0, Schema.createArray(AvroSupertype.SCHEMA$));
         assertEquals(recordType, converter.convert(avroRecordType));
         assertEquals(avroRecordType, converter.convert(recordType));
         control.verify();
@@ -247,10 +247,10 @@ public class AvroConverterTest {
         avroQName.name = "aName";
         avroRecordType.name = avroQName;
         avroRecordType.version = 1L;
-        // fieldTypeEntries and mixins are by default empty instead of null
+        // fieldTypeEntries and supertypes are by default empty instead of null
         avroRecordType.fieldTypeEntries =
                 new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
-        avroRecordType.mixins = new GenericData.Array<AvroMixin>(0, Schema.createArray(AvroMixin.SCHEMA$));
+        avroRecordType.supertypes = new GenericData.Array<AvroSupertype>(0, Schema.createArray(AvroSupertype.SCHEMA$));
         assertEquals(recordType, converter.convert(avroRecordType));
         assertEquals(avroRecordType, converter.convert(recordType));
         control.verify();
@@ -286,7 +286,7 @@ public class AvroConverterTest {
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
         avroRecordType.name = avroQName;
-        // fieldTypeEntries and mixins are by default empty instead of null
+        // fieldTypeEntries and supertypes are by default empty instead of null
         avroRecordType.fieldTypeEntries =
                 new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
         AvroFieldTypeEntry avroFieldTypeEntry = new AvroFieldTypeEntry();
@@ -304,7 +304,7 @@ public class AvroConverterTest {
         avroFieldTypeEntry.mandatory = false;
         avroRecordType.fieldTypeEntries.add(avroFieldTypeEntry);
         expectedFieldTypeEntries.add(avroFieldTypeEntry);
-        avroRecordType.mixins = new GenericData.Array<AvroMixin>(0, Schema.createArray(AvroMixin.SCHEMA$));
+        avroRecordType.supertypes = new GenericData.Array<AvroSupertype>(0, Schema.createArray(AvroSupertype.SCHEMA$));
         assertEquals(recordType, converter.convert(avroRecordType));
         AvroRecordType actualAvroRecordType = converter.convert(recordType);
         List<AvroFieldTypeEntry> fieldTypeEntries = actualAvroRecordType.fieldTypeEntries;
@@ -318,7 +318,7 @@ public class AvroConverterTest {
     }
 
     @Test
-    public void testRecordTypeMixins() throws Exception {
+    public void testRecordTypeSupertypes() throws Exception {
         QName name = new QName("aNamespace", "aName");
         SchemaId recordTypeId = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(recordTypeId, name);
@@ -328,10 +328,10 @@ public class AvroConverterTest {
         control.replay();
         converter = new AvroConverter();
         converter.setRepository(repository);
-        SchemaId mixinId1 = new SchemaIdImpl(UUID.randomUUID());
-        recordType.addMixin(mixinId1, 1L);
-        SchemaId mixinId2 = new SchemaIdImpl(UUID.randomUUID());
-        recordType.addMixin(mixinId2, 2L);
+        SchemaId supertypeId1 = new SchemaIdImpl(UUID.randomUUID());
+        recordType.addSupertype(supertypeId1, 1L);
+        SchemaId supertypeId2 = new SchemaIdImpl(UUID.randomUUID());
+        recordType.addSupertype(supertypeId2, 2L);
         AvroRecordType avroRecordType = new AvroRecordType();
         AvroSchemaId avroRecordTypeId = new AvroSchemaId();
         avroRecordTypeId.idBytes = ByteBuffer.wrap(recordTypeId.getBytes());
@@ -340,34 +340,34 @@ public class AvroConverterTest {
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
         avroRecordType.name = avroQName;
-        // fieldTypeEntries and mixins are by default empty instead of null
+        // fieldTypeEntries and supertypes are by default empty instead of null
         avroRecordType.fieldTypeEntries =
                 new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
-        avroRecordType.mixins = new GenericData.Array<AvroMixin>(0, Schema.createArray(AvroMixin.SCHEMA$));
-        AvroMixin avroMixin1 = new AvroMixin();
-        AvroSchemaId avroMixinId1 = new AvroSchemaId();
-        avroMixinId1.idBytes = ByteBuffer.wrap(mixinId1.getBytes());
-        avroMixin1.recordTypeId = avroMixinId1;
-        avroMixin1.recordTypeVersion = 1L;
-        avroRecordType.mixins.add(avroMixin1);
-        Set<AvroMixin> expectedMixins = new HashSet<AvroMixin>();
-        expectedMixins.add(avroMixin1);
-        AvroMixin avroMixin2 = new AvroMixin();
-        AvroSchemaId avroMixinId2 = new AvroSchemaId();
-        avroMixinId2.idBytes = ByteBuffer.wrap(mixinId2.getBytes());
-        avroMixin2.recordTypeId = avroMixinId2;
-        avroMixin2.recordTypeVersion = 2L;
-        avroRecordType.mixins.add(avroMixin2);
-        expectedMixins.add(avroMixin2);
+        avroRecordType.supertypes = new GenericData.Array<AvroSupertype>(0, Schema.createArray(AvroSupertype.SCHEMA$));
+        AvroSupertype avroSupertype1 = new AvroSupertype();
+        AvroSchemaId avroSupertypeId1 = new AvroSchemaId();
+        avroSupertypeId1.idBytes = ByteBuffer.wrap(supertypeId1.getBytes());
+        avroSupertype1.recordTypeId = avroSupertypeId1;
+        avroSupertype1.recordTypeVersion = 1L;
+        avroRecordType.supertypes.add(avroSupertype1);
+        Set<AvroSupertype> expectedSupertypes = new HashSet<AvroSupertype>();
+        expectedSupertypes.add(avroSupertype1);
+        AvroSupertype avroSupertype2 = new AvroSupertype();
+        AvroSchemaId avroSupertypeId2 = new AvroSchemaId();
+        avroSupertypeId2.idBytes = ByteBuffer.wrap(supertypeId2.getBytes());
+        avroSupertype2.recordTypeId = avroSupertypeId2;
+        avroSupertype2.recordTypeVersion = 2L;
+        avroRecordType.supertypes.add(avroSupertype2);
+        expectedSupertypes.add(avroSupertype2);
         assertEquals(recordType, converter.convert(avroRecordType));
         AvroRecordType actualAvroRecordType = converter.convert(recordType);
-        List<AvroMixin> mixins = actualAvroRecordType.mixins;
-        assertEquals(2, mixins.size());
-        Set<AvroMixin> actualMixins = new HashSet<AvroMixin>();
-        for (AvroMixin entry : mixins) {
-            actualMixins.add(entry);
+        List<AvroSupertype> supertypes = actualAvroRecordType.supertypes;
+        assertEquals(2, supertypes.size());
+        Set<AvroSupertype> actualSupertypes = new HashSet<AvroSupertype>();
+        for (AvroSupertype entry : supertypes) {
+            actualSupertypes.add(entry);
         }
-        assertEquals(expectedMixins, actualMixins);
+        assertEquals(expectedSupertypes, actualSupertypes);
         control.verify();
     }
 

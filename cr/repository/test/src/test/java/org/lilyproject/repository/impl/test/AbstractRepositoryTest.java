@@ -1333,10 +1333,10 @@ public abstract class AbstractRepositoryTest {
     }
 
     @Test
-    public void testMixinLatestVersion() throws Exception {
+    public void testSupertypeLatestVersion() throws Exception {
         RecordType recordType4 = typeManager.newRecordType(new QName(namespace, "RT4"));
         recordType4.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
-        recordType4.addMixin(recordType1.getId()); // In fact recordType1B should be taken as Mixin
+        recordType4.addSupertype(recordType1.getId()); // In fact recordType1B should be taken as supertype
         recordType4 = typeManager.createRecordType(recordType4);
 
         Record record = repository.newRecord(idGenerator.newRecordId());
@@ -1344,7 +1344,7 @@ public abstract class AbstractRepositoryTest {
         record.setField(fieldType1.getName(), "foo");
         record.setField(fieldType2.getName(), 555);
         record.setField(fieldType3.getName(), true);
-        record.setField(fieldType1B.getName(), "fromLatestMixinRecordTypeVersion");
+        record.setField(fieldType1B.getName(), "fromLatestSupertypeRecordTypeVersion");
         record.setField(fieldType6.getName(), "bar");
         record = repository.create(record);
 
@@ -1353,7 +1353,7 @@ public abstract class AbstractRepositoryTest {
         assertEquals("foo", readRecord.getField(fieldType1.getName()));
         assertEquals(555, readRecord.getField(fieldType2.getName()));
         assertEquals(true, readRecord.getField(fieldType3.getName()));
-        assertEquals("fromLatestMixinRecordTypeVersion", readRecord.getField(fieldType1B.getName()));
+        assertEquals("fromLatestSupertypeRecordTypeVersion", readRecord.getField(fieldType1B.getName()));
         assertEquals("bar", readRecord.getField(fieldType6.getName()));
     }
 
@@ -2310,19 +2310,19 @@ public abstract class AbstractRepositoryTest {
         RecordType rtB = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOf", "rtB")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().use(rtA).add()
+                .supertype().use(rtA).add()
                 .create();
 
         RecordType rtC = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOf", "rtC")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().use(rtA).add()
+                .supertype().use(rtA).add()
                 .create();
 
         RecordType rtD = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOf", "rtD")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().use(rtC).add()
+                .supertype().use(rtC).add()
                 .create();
 
         RecordType rtE = typeManager.recordTypeBuilder()
@@ -2385,21 +2385,21 @@ public abstract class AbstractRepositoryTest {
         rtA = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOfRecursionLoop", "rtA")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().id(rtA.getId()).version(2L).add()
-                .mixin().id(rtC.getId()).version(2L).add()
+                .supertype().id(rtA.getId()).version(2L).add()
+                .supertype().id(rtC.getId()).version(2L).add()
                 .update();
 
         rtB = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOfRecursionLoop", "rtB")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().id(rtA.getId()).version(2L).add()
-                .mixin().id(rtC.getId()).version(2L).add()
+                .supertype().id(rtA.getId()).version(2L).add()
+                .supertype().id(rtC.getId()).version(2L).add()
                 .update();
 
         rtC = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOfRecursionLoop", "rtC")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().id(rtB.getId()).version(2L).add()
+                .supertype().id(rtB.getId()).version(2L).add()
                 .update();
 
 
@@ -2449,7 +2449,7 @@ public abstract class AbstractRepositoryTest {
         RecordType rtB = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOfVersionSpecifics", "rtB")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().id(rtA.getId()).version(1L).add()
+                .supertype().id(rtA.getId()).version(1L).add()
                 .create();
 
         RecordType rtD = typeManager.recordTypeBuilder()
@@ -2460,13 +2460,13 @@ public abstract class AbstractRepositoryTest {
         RecordType rtC = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOfVersionSpecifics", "rtC")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().id(rtD.getId()).version(1L).add()
+                .supertype().id(rtD.getId()).version(1L).add()
                 .create();
 
         rtC = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOfVersionSpecifics", "rtC")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().id(rtA.getId()).version(2L).add()
+                .supertype().id(rtA.getId()).version(2L).add()
                 .update();
 
         repository.recordBuilder().recordType(rtB.getName()).field(fieldType1.getName(), "value").create();
@@ -2511,7 +2511,7 @@ public abstract class AbstractRepositoryTest {
         RecordType rtB = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOfUpdate", "rtB")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().use(rtA).add()
+                .supertype().use(rtA).add()
                 .create();
 
         RecordType rtC = typeManager.recordTypeBuilder()
@@ -2532,7 +2532,7 @@ public abstract class AbstractRepositoryTest {
         rtB = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilterInstanceOfUpdate", "rtB")
                 .fieldEntry().use(fieldType1).add()
-                .mixin().use(rtC).add()
+                .supertype().use(rtC).add()
                 .update();
 
         scan = new RecordScan();

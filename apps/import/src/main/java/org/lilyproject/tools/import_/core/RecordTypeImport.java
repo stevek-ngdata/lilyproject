@@ -72,25 +72,25 @@ public class RecordTypeImport {
                         }
                     }
 
-                    // Update mixins
-                    Map<SchemaId, Long> oldMixins = oldRecordType.getMixins();
-                    Map<SchemaId, Long> newMixins = newRecordType.getMixins();
+                    // Update supertypes
+                    Map<SchemaId, Long> oldSupertypes = oldRecordType.getSupertypes();
+                    Map<SchemaId, Long> newSupertypes = newRecordType.getSupertypes();
 
                     // Resolve any 'null' versions to actual version numbers, otherwise we are unable to compare
                     // with the old state.
-                    for (Map.Entry<SchemaId, Long> entry : newMixins.entrySet()) {
+                    for (Map.Entry<SchemaId, Long> entry : newSupertypes.entrySet()) {
                         if (entry.getValue() == null) {
                             entry.setValue(typeManager.getRecordTypeById(entry.getKey(), null).getVersion());
                         }
                     }
 
-                    if (!oldMixins.equals(newMixins)) {
+                    if (!oldSupertypes.equals(newSupertypes)) {
                         updated = true;
 
-                        oldRecordType.getMixins().clear();
+                        oldRecordType.getSupertypes().clear();
 
-                        for (Map.Entry<SchemaId, Long> entry : newMixins.entrySet()) {
-                            oldRecordType.addMixin(entry.getKey(), entry.getValue());
+                        for (Map.Entry<SchemaId, Long> entry : newSupertypes.entrySet()) {
+                            oldRecordType.addSupertype(entry.getKey(), entry.getValue());
                         }
                     }
 
