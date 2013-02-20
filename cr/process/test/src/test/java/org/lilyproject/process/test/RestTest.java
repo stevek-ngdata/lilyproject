@@ -303,6 +303,20 @@ public class RestTest {
         json = readJson(response);
 
         assertEquals(1, json.get("supertypes").size());
+
+        // Update supertype1 with refreshSubtypes=true
+        body = json("{name: 'n$supertype1', fields: [ {name: 'n$rt_field1'}, {name: 'n$rt_field2'} ]," +
+                "namespaces: { 'org.lilyproject.resttest': 'n' } }");
+        String supertype1Uri = BASE_URI + "/schema/recordType/n$supertype1?ns.n=org.lilyproject.resttest&refreshSubtypes=true";
+        response = put(supertype1Uri, body);
+        assertStatus(HttpStatus.SC_OK, response);
+
+        // Check subtype got updated (because refresSubtypes=true)
+        response = get(subtypeUri);
+        assertStatus(HttpStatus.SC_OK, response);
+        json = readJson(response);
+        assertEquals(2, json.get("supertypes").get(0).get("version").getIntValue());
+        assertEquals(3, json.get("version").getIntValue());
     }
 
     private void makeBookSchema() throws Exception {

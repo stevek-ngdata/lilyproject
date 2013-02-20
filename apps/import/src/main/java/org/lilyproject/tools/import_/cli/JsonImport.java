@@ -253,7 +253,7 @@ public class JsonImport {
         }
 
         ImportResult<RecordType> result = RecordTypeImport.importRecordType(recordType, ImportMode.CREATE_OR_UPDATE,
-                IdentificationMode.NAME, recordType.getName(), typeManager);
+                IdentificationMode.NAME, recordType.getName(), true, typeManager);
         RecordType newRecordType = result.getEntity();
 
         switch (result.getResultType()) {

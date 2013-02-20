@@ -15,6 +15,7 @@
  */
 package org.lilyproject.rest;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.tools.import_.core.*;
 
@@ -53,10 +54,12 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
         }
         recordType.setId(schemaId);
 
+        boolean refreshSubtypes = BooleanUtils.toBoolean(uriInfo.getQueryParameters().getFirst("refreshSubtypes"));
+
         ImportResult<RecordType> result;
         try {
             result = RecordTypeImport.importRecordType(recordType, ImportMode.UPDATE, IdentificationMode.ID,
-                    null, repository.getTypeManager());
+                    null, refreshSubtypes, repository.getTypeManager());
         } catch (Exception e) {
             throw new ResourceException("Error creating or updating record type with id " + id, e,
                     INTERNAL_SERVER_ERROR.getStatusCode());

@@ -15,13 +15,13 @@
  */
 package org.lilyproject.rest;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.tools.import_.core.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import java.net.URI;
@@ -53,10 +53,12 @@ public class RecordTypeResource extends RepositoryEnabled {
         // is different from the name in the URI.
         QName qname = ResourceClassUtil.parseQName(name, uriInfo.getQueryParameters());
 
+        boolean refreshSubtypes = BooleanUtils.toBoolean(uriInfo.getQueryParameters().getFirst("refreshSubtypes"));
+
         ImportResult<RecordType> result;
         try {
             result = RecordTypeImport.importRecordType(recordType, ImportMode.CREATE_OR_UPDATE, IdentificationMode.NAME,
-                    qname, repository.getTypeManager());
+                    qname, refreshSubtypes, repository.getTypeManager());
         } catch (Exception e) {
             throw new ResourceException("Error creating or updating record type named " + qname, e,
                     INTERNAL_SERVER_ERROR.getStatusCode());
