@@ -104,8 +104,18 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
     }
 
     @Override
+    public RecordType createOrUpdate(boolean refreshSubtypes) throws RepositoryException, InterruptedException {
+        return typeManager.createOrUpdateRecordType(recordType, refreshSubtypes);
+    }
+
+    @Override
     public RecordType update() throws RepositoryException, InterruptedException {
         return typeManager.updateRecordType(recordType);
+    }
+
+    @Override
+    public RecordType update(boolean refreshSubtypes) throws RepositoryException, InterruptedException {
+        return typeManager.updateRecordType(recordType, refreshSubtypes);
     }
 
     @Override

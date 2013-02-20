@@ -93,34 +93,34 @@ public interface TypeManager extends Closeable {
      *
      * @return the found sub types, or an empty set if there are none.
      */
-    Set<SchemaId> findSubTypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException;
+    Set<SchemaId> findSubtypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException;
 
     /**
      * Get the set of record types that directly inherit from the given record type, i.e. only the child
      * types but not other descendants.
      *
-     * <p>See {@link #findSubTypes(SchemaId)} for more details.
+     * <p>See {@link #findSubtypes(SchemaId)} for more details.
      *
      * @return the found sub types, or an empty set if there are none.
      */
-    Set<SchemaId> findDirectSubTypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException;
+    Set<SchemaId> findDirectSubtypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException;
 
     /**
      * Gets the set of record types that inherit from the given record type.
      *
-     * <p>See {@link #findSubTypes(SchemaId)} for more details.
+     * <p>See {@link #findSubtypes(SchemaId)} for more details.
      */
-    Set<QName> findSubTypes(QName recordTypeName) throws InterruptedException, RepositoryException;
+    Set<QName> findSubtypes(QName recordTypeName) throws InterruptedException, RepositoryException;
 
     /**
      * Get the set of record types that directly inherit from the given record type, i.e. only the child
      * types but not other descendants.
      *
-     * <p>See {@link #findSubTypes(SchemaId)} for more details.
+     * <p>See {@link #findSubtypes(SchemaId)} for more details.
      *
      * @return the found sub types, or an empty set if there are none.
      */
-    Set<QName> findDirectSubTypes(QName recordTypeName) throws InterruptedException, RepositoryException;
+    Set<QName> findDirectSubtypes(QName recordTypeName) throws InterruptedException, RepositoryException;
 
     /**
      * Updates an existing record type.
@@ -140,7 +140,27 @@ public interface TypeManager extends Closeable {
      * @throws FieldTypeNotFoundException 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType updateRecordType(RecordType recordType) throws  RepositoryException, InterruptedException;
+    RecordType updateRecordType(RecordType recordType) throws RepositoryException, InterruptedException;
+
+    /**
+     * Updates an existing record type, and refreshes links in subtypes to point to the new version of
+     * this record type.
+     *
+     * <p>This method is the same as {@link #updateRecordType(RecordType)} but additionally updates subtypes
+     * if any, as described below, if the refreshSubtypes argument is true.</p>
+     *
+     * <p>The supertype links in a record type point to specific versions of parent (supertype) record types.
+     * When updating such a supertype record type, you thus need to update the links in the subtypes to point
+     * to the new version of the supertype, and then repeat that recursively (because updating those subtypes
+     * will need to a new version of those subtypes which means that the subtypes of these subtypes then
+     * need to be updated). This method does that for you when the argument refreshSubtypes is true.</p>
+     *
+     * <p>This method relies on the information provided by {@link #findDirectSubtypes(SchemaId)} (might occasionally
+     * be wrong in case the schema cache is out of date) and is not transactional: from the moment an update
+     * to one of the subtype fails, the method stops.</p>
+     */
+    RecordType updateRecordType(RecordType recordType, boolean refreshSubtypes)
+            throws RepositoryException, InterruptedException;
 
     /**
      * Either creates or updates the record type, depending on whether it exists in
@@ -153,6 +173,16 @@ public interface TypeManager extends Closeable {
      * @return the created or updated record type
      */
     RecordType createOrUpdateRecordType(RecordType recordType) throws RepositoryException, InterruptedException;
+
+    /**
+     * Creates or updates a record type.
+     *
+     * <p>For an explanation on the createOrUpdate, see {@link #createOrUpdateRecordType(RecordType)}.</p>
+     *
+     * <p>For an explanation of the refreshSubtypes argument, see {@link #updateRecordType(RecordType, boolean)}</p>
+     */
+    RecordType createOrUpdateRecordType(RecordType recordType, boolean refreshSubtypes)
+            throws RepositoryException, InterruptedException;
 
     /**
      * Get the list of all record types that exist in the repository. This returns the latest version of

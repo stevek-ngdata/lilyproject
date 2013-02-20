@@ -117,9 +117,15 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
 
     @Override
     public RecordType createOrUpdateRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
+        return createOrUpdateRecordType(recordType, false);
+    }
+
+    @Override
+    public RecordType createOrUpdateRecordType(RecordType recordType, boolean refreshSubtypes)
+            throws RepositoryException, InterruptedException {
         try {
             RecordType newRecordType =
-                    converter.convert(lilyProxy.createOrUpdateRecordType(converter.convert(recordType)));
+                    converter.convert(lilyProxy.createOrUpdateRecordType(converter.convert(recordType), refreshSubtypes));
             updateRecordTypeCache(newRecordType.clone());
             return newRecordType;
         } catch (AvroRepositoryException e) {
@@ -157,8 +163,15 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
 
     @Override
     public RecordType updateRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
+        return updateRecordType(recordType, false);
+    }
+
+    @Override
+    public RecordType updateRecordType(RecordType recordType, boolean refreshSubtypes)
+            throws RepositoryException, InterruptedException {
         try {
-            RecordType newRecordType = converter.convert(lilyProxy.updateRecordType(converter.convert(recordType)));
+            RecordType newRecordType = converter.convert(
+                    lilyProxy.updateRecordType(converter.convert(recordType), refreshSubtypes));
             updateRecordTypeCache(newRecordType);
             return newRecordType;
         } catch (AvroRepositoryException e) {

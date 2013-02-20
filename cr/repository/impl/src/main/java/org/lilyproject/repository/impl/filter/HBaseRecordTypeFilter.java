@@ -71,10 +71,10 @@ public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
 
                 break;
             case INSTANCE_OF:
-                Set<SchemaId> subTypes = repository.getTypeManager().findSubTypes(recordType.getId());
+                Set<SchemaId> subtypes = repository.getTypeManager().findSubtypes(recordType.getId());
                 FilterList list = new FilterList(FilterList.Operator.MUST_PASS_ONE);
                 list.addFilter(createRecordTypeFilter(recordType.getId()));
-                for (SchemaId subType : subTypes) {
+                for (SchemaId subType : subtypes) {
                     list.addFilter(createRecordTypeFilter(subType));
                 }
                 result = list;

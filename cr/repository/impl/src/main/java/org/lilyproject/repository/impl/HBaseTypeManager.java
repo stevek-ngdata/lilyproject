@@ -236,9 +236,61 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     @Override
+    public RecordType updateRecordType(RecordType recordType, boolean refreshSubtypes)
+            throws RepositoryException, InterruptedException {
+        return updateRecordType(recordType, refreshSubtypes, new ArrayDeque<SchemaId>());
+    }
+
+    private RecordType updateRecordType(RecordType recordType, boolean refreshSubtypes, Deque<SchemaId> parents)
+            throws RepositoryException, InterruptedException {
+        // First update the record type
+        RecordType updatedRecordType = updateRecordType(recordType);
+
+        if (!refreshSubtypes)
+            return updatedRecordType;
+
+        parents.push(updatedRecordType.getId());
+
+        try {
+            Set<SchemaId> subtypes = findDirectSubtypes(updatedRecordType.getId());
+
+            for (SchemaId subtype : subtypes) {
+                if (!parents.contains(subtype)) {
+                    RecordType subRecordType = getRecordTypeById(subtype, null);
+                    for (Map.Entry<SchemaId, Long> supertype : subRecordType.getSupertypes().entrySet()) {
+                        if (supertype.getKey().equals(updatedRecordType.getId())) {
+                            if (!supertype.getValue().equals(updatedRecordType.getVersion())) {
+                                subRecordType.addSupertype(updatedRecordType.getId(), updatedRecordType.getVersion());
+                                // Store the change, and recursively adjust the pointers in this record type's subtypes as well
+                                updateRecordType(subRecordType, true, parents);
+                            }
+                            break;
+                        }
+                    }
+                } else {
+                    // Loop detected in type hierarchy, log a warning about this
+                    log.warn(formatSupertypeLoopError(subtype, parents));
+                }
+            }
+        } catch (RepositoryException e) {
+            throw new RepositoryException("Error while refreshing subtypes of record type " + recordType.getName(), e);
+        }
+
+        parents.pop();
+
+        return updatedRecordType;
+    }
+
+    @Override
     public RecordType createOrUpdateRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
+        return createOrUpdateRecordType(recordType, false);
+    }
+
+    @Override
+    public RecordType createOrUpdateRecordType(RecordType recordType, boolean refreshSubtypes)
+            throws RepositoryException, InterruptedException {
         if (recordType.getId() != null) {
-            return updateRecordType(recordType);
+            return updateRecordType(recordType, refreshSubtypes);
         } else {
             if (recordType.getName() == null) {
                 throw new IllegalArgumentException("No id or name specified in supplied record type.");
@@ -250,7 +302,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             for (attempts = 0; attempts < 3; attempts++) {
                 if (exists) {
                     try {
-                        return updateRecordType(recordType);
+                        return updateRecordType(recordType, refreshSubtypes);
                     } catch (RecordTypeNotFoundException e) {
                         // record type was renamed in the meantime, retry
                         exists = false;

@@ -20,6 +20,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.hadooptestfw.TestHelper;
 
@@ -52,5 +54,17 @@ public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordType
 
     @After
     public void tearDown() throws Exception {
+    }
+
+    protected void waitOnRecordTypeVersion(long version, SchemaId recordTypeId)
+            throws InterruptedException, RepositoryException {
+        long tryUntil = System.currentTimeMillis() + 20000;
+        long currentVersion;
+        while ((currentVersion = typeManager.getRecordTypeById(recordTypeId, null).getVersion()) != version) {
+            if (System.currentTimeMillis() > tryUntil)
+                throw new RuntimeException("RecordType was not updated to expected version within time, " +
+                        "expected version: " + version + ", current version = " + currentVersion);
+            Thread.sleep(20);
+        }
     }
 }

@@ -124,7 +124,7 @@ public interface RecordTypeBuilder {
     /**
      * Performs a createOrUpdateRecordType operation on {@link TypeManager}.
      *
-     * <p>This method is interesting in case you don't know if the type </p>
+     * <p>This method is interesting in case you don't know and don't care if the type exists already.</p>
      *
      * @see {@link TypeManager#createOrUpdateRecordType(RecordType)}
      * @return the created or updated record type
@@ -132,14 +132,35 @@ public interface RecordTypeBuilder {
     RecordType createOrUpdate() throws RepositoryException, InterruptedException;
     
     /**
-     * Updates a record type on the repository with the properties
-     * that were added to the builder..
+     * Performs a createOrUpdateRecordType operation on {@link TypeManager}.
+     *
+     * <p>This method is interesting in case you don't know and don't care if the type exists already.</p>
+     *
+     * @param refreshSubtypes should any record types that have this record as supertype be automatically
+     *                        updated to point to the new version of this record type?
+     * @see {@link TypeManager#createOrUpdateRecordType(RecordType)}
+     * @return the created or updated record type
+     */
+    RecordType createOrUpdate(boolean refreshSubtypes) throws RepositoryException, InterruptedException;
+
+    /**
+     * Updates a record type on the repository to bring it in line with the state of the builder.
      *
      * @see {@link TypeManager#updateRecordType(RecordType)}
      * @return the updated record type
      */
     RecordType update() throws RepositoryException, InterruptedException;
     
+    /**
+     * Updates a record type on the repository to bring it in line with the state of the builder.
+     *
+     * @param refreshSubtypes should any record types that have this record as supertype be automatically
+     *                        updated to point to the new version of this record type?
+     * @see {@link TypeManager#updateRecordType(RecordType)}
+     * @return the updated record type
+     */
+    RecordType update(boolean refreshSubtypes) throws RepositoryException, InterruptedException;
+
     /**
      * Returns a RecordType object containing the properties that were added
      * to the builder without actually creating it on the repository.

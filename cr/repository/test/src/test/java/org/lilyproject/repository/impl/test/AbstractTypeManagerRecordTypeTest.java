@@ -35,9 +35,9 @@ public abstract class AbstractTypeManagerRecordTypeTest {
 
     private static String namespace1 = "ns1";
     protected static TypeManager typeManager;
-    private static FieldType fieldType1;
-    private static FieldType fieldType2;
-    private static FieldType fieldType3;
+    protected static FieldType fieldType1;
+    protected static FieldType fieldType2;
+    protected static FieldType fieldType3;
 
     protected static void setupFieldTypes() throws Exception {
         fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),
@@ -581,4 +581,84 @@ public abstract class AbstractTypeManagerRecordTypeTest {
 
         assertEquals(new Long(2L), recordType.getVersion());
     }
+
+    @Test
+    public void testRefreshSubtypes() throws Exception {
+        // The following code creates this type hierarchy:
+        //
+        //     rtA
+        //      | \
+        //     rtB rtD
+        //      | /
+        //     rtC
+        //
+
+        RecordType rtA = typeManager.recordTypeBuilder()
+                .name("RefreshSubtypes", "rtA")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+        RecordType rtB = typeManager.recordTypeBuilder()
+                .name("RefreshSubtypes", "rtB")
+                .fieldEntry().use(fieldType1).add()
+                .supertype().use(rtA).add()
+                .create();
+
+        RecordType rtD = typeManager.recordTypeBuilder()
+                .name("RefreshSubtypes", "rtD")
+                .fieldEntry().use(fieldType1).add()
+                .supertype().use(rtA).add()
+                .create();
+
+        RecordType rtC = typeManager.recordTypeBuilder()
+                .name("RefreshSubtypes", "rtC")
+                .fieldEntry().use(fieldType1).add()
+                .supertype().use(rtB).add()
+                .supertype().use(rtD).add()
+                .create();
+
+        // Check currently the all point to the first version of their supertype
+        assertEquals(Long.valueOf(1L), rtD.getSupertypes().get(rtA.getId()));
+        assertEquals(Long.valueOf(1L), rtB.getSupertypes().get(rtA.getId()));
+        assertEquals(Long.valueOf(1L), rtC.getSupertypes().get(rtB.getId()));
+        assertEquals(Long.valueOf(1L), rtC.getSupertypes().get(rtD.getId()));
+
+        // Update record type B, pointer in record type C should be updated
+        rtB.addFieldTypeEntry(fieldType2.getId(), false);
+        rtB = typeManager.updateRecordType(rtB, true);
+
+        // Now C should point to new version of B
+        waitOnRecordTypeVersion(2L, rtC.getId());
+        rtC = typeManager.getRecordTypeById(rtC.getId(), null);
+        assertEquals(Long.valueOf(2L), rtC.getSupertypes().get(rtB.getId()));
+        // And thus C itself should have two versions
+        assertEquals(Long.valueOf(2L), rtC.getVersion());
+
+        // Update record type A, this should cause updates to B, C and D
+        rtA.addFieldTypeEntry(fieldType2.getId(), false);
+        rtA = typeManager.updateRecordType(rtA, true);
+
+        // Check the subtypes were updated
+        waitOnRecordTypeVersion(3L, rtB.getId());
+        rtB = typeManager.getRecordTypeById(rtB.getId(), null);
+        assertEquals(Long.valueOf(3L), rtB.getVersion());
+        assertEquals(Long.valueOf(2L), rtB.getSupertypes().get(rtA.getId()));
+
+        waitOnRecordTypeVersion(2L, rtD.getId());
+        rtD = typeManager.getRecordTypeById(rtD.getId(), null);
+        assertEquals(Long.valueOf(2L), rtD.getVersion());
+        assertEquals(Long.valueOf(2L), rtD.getSupertypes().get(rtA.getId()));
+
+        waitOnRecordTypeVersion(4L, rtC.getId());
+        rtC = typeManager.getRecordTypeById(rtC.getId(), null);
+        assertEquals(Long.valueOf(4L), rtC.getVersion());
+        assertEquals(Long.valueOf(3L), rtC.getSupertypes().get(rtB.getId()));
+        assertEquals(Long.valueOf(2L), rtC.getSupertypes().get(rtD.getId()));
+    }
+
+    protected void waitOnRecordTypeVersion(long version, SchemaId recordTypeId)
+            throws InterruptedException, RepositoryException {
+        // do nothing
+    }
+
 }

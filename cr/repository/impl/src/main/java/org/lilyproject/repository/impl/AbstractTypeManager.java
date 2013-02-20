@@ -108,12 +108,12 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
 
     @Override
-    public Set<QName> findSubTypes(QName recordTypeName) throws InterruptedException, RepositoryException {
+    public Set<QName> findSubtypes(QName recordTypeName) throws InterruptedException, RepositoryException {
         return findSubTypes(recordTypeName, true);
     }
 
     @Override
-    public Set<QName> findDirectSubTypes(QName recordTypeName) throws InterruptedException, RepositoryException {
+    public Set<QName> findDirectSubtypes(QName recordTypeName) throws InterruptedException, RepositoryException {
         return findSubTypes(recordTypeName, false);
     }
 
@@ -140,12 +140,12 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
 
     @Override
-    public Set<SchemaId> findSubTypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException {
+    public Set<SchemaId> findSubtypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException {
         return findSubTypes(recordTypeId, true);
     }
 
     @Override
-    public Set<SchemaId> findDirectSubTypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException {
+    public Set<SchemaId> findDirectSubtypes(SchemaId recordTypeId) throws InterruptedException, RepositoryException {
         return findSubTypes(recordTypeId, false);
     }
 
@@ -173,35 +173,40 @@ public abstract class AbstractTypeManager implements TypeManager {
         // of itself, it will not be included in the result. Thus if record type A extends (directly or indirectly)
         // from A, and we search the subtypes of A, then the resulting set will not include A.
         parents.push(recordTypeId);
-        Set<SchemaId> childTypes = schemaCache.findDirectSubTypes(recordTypeId);
-        for (SchemaId childType : childTypes) {
-            if (!parents.contains(childType)) {
-                result.add(childType);
+        Set<SchemaId> subtypes = schemaCache.findDirectSubTypes(recordTypeId);
+        for (SchemaId subtype : subtypes) {
+            if (!parents.contains(subtype)) {
+                result.add(subtype);
                 if (recursive) {
-                    collectSubTypes(childType, result, parents, recursive);
+                    collectSubTypes(subtype, result, parents, recursive);
                 }
             } else {
                 // Loop detected in type hierarchy, log a warning about this
-                List<SchemaId> parentsList = new ArrayList<SchemaId>(parents);
-                Collections.reverse(parentsList);
-
-                // find the place where the current childType occurred (we don't want to log any parents higher
-                // up, doesn't add any value for the user)
-                int pos = parentsList.indexOf(childType);
-
-                StringBuilder msg = new StringBuilder();
-                for (int i = pos; i < parentsList.size(); i++) {
-                    if (msg.length() > 0)
-                        msg.append(" <- ");
-                    msg.append(getNameSafe(parentsList.get(i)));
-                }
-                msg.append(" <- ");
-                msg.append(getNameSafe(childType));
-
-                log.warn("Loop in record type inheritance: " + msg);
+                log.warn(formatSupertypeLoopError(subtype, parents));
             }
         }
         parents.pop();
+    }
+
+    protected String formatSupertypeLoopError(SchemaId subtype, Deque<SchemaId> parents) {
+        // Loop detected in type hierarchy, log a warning about this
+        List<SchemaId> parentsList = new ArrayList<SchemaId>(parents);
+        Collections.reverse(parentsList);
+
+        // find the place where the current childType occurred (we don't want to log any parents higher
+        // up, doesn't add any value for the user)
+        int pos = parentsList.indexOf(subtype);
+
+        StringBuilder msg = new StringBuilder();
+        for (int i = pos; i < parentsList.size(); i++) {
+            if (msg.length() > 0)
+                msg.append(" <- ");
+            msg.append(getNameSafe(parentsList.get(i)));
+        }
+        msg.append(" <- ");
+        msg.append(getNameSafe(subtype));
+
+        return "Loop in record type inheritance: " + msg;
     }
 
     /**

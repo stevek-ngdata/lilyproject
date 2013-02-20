@@ -245,13 +245,19 @@
     },
 
     "updateRecordType": {
-      "request": [{"name": "recordType", "type": "AvroRecordType"}],
+      "request": [
+        {"name": "recordType", "type": "AvroRecordType"},
+        {"name": "refreshSubtypes", "type": "boolean"}
+      ],
       "response": "AvroRecordType",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
 
     "createOrUpdateRecordType": {
-      "request": [{"name": "recordType", "type": "AvroRecordType"}],
+      "request": [
+        {"name": "recordType", "type": "AvroRecordType"},
+        {"name": "refreshSubtypes", "type": "boolean"}
+      ],
       "response": "AvroRecordType",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },

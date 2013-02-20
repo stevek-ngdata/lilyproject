@@ -135,11 +135,12 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public AvroRecordType createOrUpdateRecordType(AvroRecordType avroRecordType) throws AvroRepositoryException,
-            AvroInterruptedException {
+    public AvroRecordType createOrUpdateRecordType(AvroRecordType avroRecordType, boolean refreshSubtypes)
+            throws AvroRepositoryException, AvroInterruptedException {
 
         try {
-            return converter.convert(typeManager.createOrUpdateRecordType(converter.convert(avroRecordType)));
+            return converter.convert(typeManager.createOrUpdateRecordType(
+                    converter.convert(avroRecordType), refreshSubtypes));
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {
@@ -174,11 +175,11 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public AvroRecordType updateRecordType(AvroRecordType recordType)
+    public AvroRecordType updateRecordType(AvroRecordType recordType, boolean refreshSubtypes)
             throws AvroRepositoryException, AvroInterruptedException {
 
         try {
-            return converter.convert(typeManager.updateRecordType(converter.convert(recordType)));
+            return converter.convert(typeManager.updateRecordType(converter.convert(recordType), refreshSubtypes));
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {
