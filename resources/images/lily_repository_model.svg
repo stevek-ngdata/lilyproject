@@ -13,7 +13,7 @@
    height="744.09448"
    id="svg4011"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="lily_repository_model.svg"
    inkscape:export-filename="/home/bruno/tmp/lily repository model.png"
    inkscape:export-xdpi="64.300003"
@@ -50,14 +50,14 @@
      inkscape:pageshadow="2"
      inkscape:zoom="1.4142136"
      inkscape:cx="444.74469"
-     inkscape:cy="246.96111"
+     inkscape:cy="360.09819"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1680"
-     inkscape:window-height="975"
-     inkscape:window-x="0"
-     inkscape:window-y="25"
+     inkscape:window-width="1920"
+     inkscape:window-height="1176"
+     inkscape:window-x="1920"
+     inkscape:window-y="24"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata4016">
@@ -226,7 +226,7 @@
     <rect
        style="fill:#ffffff;stroke:#000000;stroke-width:0.98403525;stroke-opacity:1"
        id="rect4087"
-       width="243.01596"
+       width="268.4718"
        height="140.01596"
        x="115.99202"
        y="680.35419" />
@@ -308,7 +308,7 @@
          sodipodi:role="line"
          x="133"
          y="776.86218"
-         id="tspan4085">   as &quot;mixins&quot;</tspan><tspan
+         id="tspan4085">   through inheritance (supertypes)</tspan><tspan
          sodipodi:role="line"
          x="133"
          y="794.36218"
@@ -319,7 +319,7 @@
          id="tspan3571">* Namespaced name</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#EmptyDiamondL)"
-       d="m 249,826.86218 0,29.5 151,0 0,-89 -43,0"
+       d="m 249,826.86218 0,29.5 169,0 0,-89 -33,0"
        id="path4622"
        sodipodi:nodetypes="ccccc"
        inkscape:connector-curvature="0" />
@@ -336,12 +336,12 @@
     <text
        xml:space="preserve"
        style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="365"
+       x="389"
        y="760.36218"
        id="text5076"><tspan
          sodipodi:role="line"
          id="tspan5078"
-         x="365"
+         x="389"
          y="760.36218">*</tspan></text>
     <text
        xml:space="preserve"
@@ -352,7 +352,7 @@
          sodipodi:role="line"
          id="tspan5082"
          x="309"
-         y="848.36218">mixin</tspan></text>
+         y="848.36218">supertype</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:16px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
