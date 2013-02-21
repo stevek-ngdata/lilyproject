@@ -378,8 +378,8 @@ public class RecordEvent {
      * necessary information both from the old and new record state, so that we know what matched
      * before and what matches now, which enables important optimisations.</p>
      *
-     * <p>For example, this information is used by the IndexAwareMQFeeder to only sent events
-     * to subscriptions from relevant indexes, as well as by IndexUpdater to know what
+     * <p>For example, this information is used by the IndexerEditFilter to only sent events
+     * to sep consumers from relevant indexes, as well as by IndexUpdater to know what
      * index inclusion rule matches before & now.</p>
      *
      * <p>At the time of this writing, the indexerconf only allows selection
