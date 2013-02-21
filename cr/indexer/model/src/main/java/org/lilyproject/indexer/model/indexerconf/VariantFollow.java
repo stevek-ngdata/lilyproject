@@ -1,6 +1,9 @@
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.io.IOException;
 import java.util.Set;
+
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 import com.google.common.collect.Sets;
 import org.lilyproject.repository.api.IdGenerator;
@@ -25,8 +28,10 @@ public class VariantFollow implements Follow {
         return dimensions;
     }
 
-    public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback) throws RepositoryException, InterruptedException {
-        Repository repository = indexUpdateBuilder.getRepository();
+    @Override
+    public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback)
+            throws RepositoryException, IOException, InterruptedException {
+        Repository repository = indexUpdateBuilder.getRepositoryManager().getRepository(Table.RECORD.name);
         IdGenerator idGenerator = repository.getIdGenerator();
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
 
@@ -41,7 +46,7 @@ public class VariantFollow implements Follow {
 
         Record lessDimensionedRecord = null;
         try {
-            lessDimensionedRecord = VersionTag.getIdRecord(newDep.id, indexUpdateBuilder.getVTag(), indexUpdateBuilder.getRepository());
+            lessDimensionedRecord = VersionTag.getIdRecord(newDep.id, indexUpdateBuilder.getVTag(), repository);
         } catch (RecordNotFoundException e) {
             // It's ok that the variant does not exist
         } catch (VersionNotFoundException e) {

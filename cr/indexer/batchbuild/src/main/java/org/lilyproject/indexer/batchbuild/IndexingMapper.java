@@ -99,7 +99,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             final DerefMap derefMap = indexerConf.containsDerefExpressions() ?
                     DerefMapHbaseImpl.create(indexName, LilyClient.getHBaseConfiguration(zk), null,
                             repository.getIdGenerator()) : null;
-            indexer = new Indexer(indexName, indexerConf, repository, solrShardMgr, indexLocker,
+            indexer = new Indexer(indexName, indexerConf, repository.getRepositoryManager(), solrShardMgr, indexLocker,
                     new IndexerMetrics(indexName), derefMap);
 
             int workers = getIntProp("org.lilyproject.indexer.batchbuild.threads", 5, jobConf);

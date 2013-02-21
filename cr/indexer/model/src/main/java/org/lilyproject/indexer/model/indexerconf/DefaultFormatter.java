@@ -39,13 +39,13 @@ public class DefaultFormatter implements Formatter {
     private static final ValueFormatter ALL_FORMATTER = new AllFormatter();
 
     @Override
-    public List<String> format(List<IndexValue> indexValues, Repository repository)
+    public List<String> format(List<IndexValue> indexValues, RepositoryManager repositoryManager)
             throws InterruptedException {
 
         List<String> results = new ArrayList<String>();
 
         for (IndexValue value : filterValues(indexValues)) {
-            FormatContext formatCtx = new FormatContext(repository);
+            FormatContext formatCtx = new FormatContext(repositoryManager);
 
             ValueType valueType = value.fieldType.getValueType();
             if (valueType.getBaseName().equals("LIST")) {
@@ -81,11 +81,11 @@ public class DefaultFormatter implements Formatter {
          * want to format each nesting level differently.
          */
         Deque<ValueType> valueTypeStack = new ArrayDeque<ValueType>();
-        Repository repository;
+        RepositoryManager repositoryManager;
         List<String> results = new ArrayList<String>();
 
-        public FormatContext(Repository repository) {
-            this.repository = repository;
+        public FormatContext(RepositoryManager repositoryManager) {
+            this.repositoryManager = repositoryManager;
         }
 
         @Override
@@ -158,7 +158,7 @@ public class DefaultFormatter implements Formatter {
         @Override
         public String format(Object record, ValueType valueType, FormatContext formatCtx) throws InterruptedException {
             StringBuilder builder = new StringBuilder();
-            TypeManager typeManager = formatCtx.repository.getTypeManager();
+            TypeManager typeManager = formatCtx.repositoryManager.getTypeManager();
 
             for (Map.Entry<QName, Object> field : ((Record)record).getFields().entrySet()) {
                 ValueType fieldValueType;

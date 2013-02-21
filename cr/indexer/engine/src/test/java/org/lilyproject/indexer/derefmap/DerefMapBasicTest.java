@@ -24,6 +24,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repotestfw.RepositorySetup;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 
 /**
@@ -48,7 +49,7 @@ public class DerefMapBasicTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = repoSetup.getRepository();
+        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
         ids = repository.getIdGenerator();
 
         derefMap = (DerefMapHbaseImpl) DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), null, ids);

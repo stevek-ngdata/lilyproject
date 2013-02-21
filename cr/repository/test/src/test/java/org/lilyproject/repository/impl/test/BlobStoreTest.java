@@ -20,8 +20,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 public class BlobStoreTest extends AbstractBlobStoreTest {
 
@@ -31,7 +32,7 @@ public class BlobStoreTest extends AbstractBlobStoreTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = repoSetup.getRepository();
+        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
         typeManager = repoSetup.getTypeManager();
         blobManager = repoSetup.getBlobManager();
 

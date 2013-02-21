@@ -32,6 +32,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 import com.ngdata.sep.EventPublisher;
 import com.ngdata.sep.impl.SepConsumer;
 import org.apache.commons.logging.Log;
@@ -200,13 +202,15 @@ public class IndexerWorker {
                             repositoryManager.getIdGenerator()) : null;
 
             // create and register the indexer
-            Indexer indexer = new Indexer(index.getName(), indexerConf, repositoryManager.getDefaultRepository(), solrShardMgr, indexLocker,
-                    indexerMetrics, derefMap);
+            Indexer indexer = new Indexer(index.getName(), indexerConf,
+                    repositoryManager, solrShardMgr, indexLocker, indexerMetrics,
+                    derefMap);
             indexerRegistry.register(indexer);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
-            EventPublisher hbaseEventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(tableFactory));
-            IndexUpdater indexUpdater = new IndexUpdater(indexer, repositoryManager.getDefaultRepository(), indexLocker, updaterMetrics, derefMap,
+            EventPublisher hbaseEventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(tableFactory, Table.RECORD.name));
+            IndexUpdater indexUpdater = new IndexUpdater(indexer,
+                    repositoryManager.getRepository(Table.RECORD.name), indexLocker, updaterMetrics, derefMap,
                     hbaseEventPublisher, index.getQueueSubscriptionId());
 
             SepConsumer sepConsumer = new SepConsumer(index.getQueueSubscriptionId(),

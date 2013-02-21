@@ -41,7 +41,7 @@ import org.lilyproject.util.repo.RecordEvent.Type;
 import org.mockito.Mockito;
 
 public class IndexRecordFilterHookTest {
-
+    
     private Record oldRecord;
     private Record newRecord;
     private Repository repository;

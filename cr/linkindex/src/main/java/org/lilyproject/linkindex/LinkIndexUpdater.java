@@ -69,10 +69,10 @@ public class LinkIndexUpdater implements EventListener {
 
     @Override
     public void processEvent(SepEvent event) {
-        RecordId recordId = repositoryManager.getDefaultRepository().getIdGenerator().fromBytes(event.getRow());
+        RecordId recordId = repositoryManager.getIdGenerator().fromBytes(event.getRow());
         RecordEvent recordEvent;
         try {
-            recordEvent = new RecordEvent(event.getPayload(), repositoryManager.getDefaultRepository().getIdGenerator());
+            recordEvent = new RecordEvent(event.getPayload(), repositoryManager.getIdGenerator());
         } catch (IOException e) {
             log.error("Error reading record event, processing of message cancelled", e);
             return;
@@ -105,11 +105,11 @@ public class LinkIndexUpdater implements EventListener {
                 boolean isNewRecord = recordEvent.getType().equals(CREATE);
 
                 RecordEventHelper eventHelper = new RecordEventHelper(recordEvent, LINK_FIELD_FILTER,
-                        repositoryManager.getDefaultRepository().getTypeManager());
+                        repositoryManager.getTypeManager());
 
                 VTaggedRecord vtRecord;
                 try {
-                    vtRecord = new VTaggedRecord(recordId, eventHelper, repositoryManager.getDefaultRepository());
+                    vtRecord = new VTaggedRecord(recordId, eventHelper, repositoryManager.getRepository(recordEvent.getTableName()));
                 } catch (RecordNotFoundException e) {
                     // record not found: delete all links for all vtags
                     linkIndex.deleteLinks(recordId);
@@ -189,7 +189,7 @@ public class LinkIndexUpdater implements EventListener {
                 links = Collections.emptySet();
             } else {
                 LinkCollector collector = new LinkCollector();
-                RecordLinkExtractor.extract(versionRecord, collector, repositoryManager.getDefaultRepository());
+                RecordLinkExtractor.extract(versionRecord, collector, repositoryManager);
                 links = collector.getLinks();
             }
             return links;
@@ -212,7 +212,7 @@ public class LinkIndexUpdater implements EventListener {
             return "null";
 
         try {
-            return repositoryManager.getDefaultRepository().getTypeManager().getFieldTypeById(fieldTypeId).getName().getName();
+            return repositoryManager.getTypeManager().getFieldTypeById(fieldTypeId).getName().getName();
         } catch (Throwable t) {
             return "failed to load name";
         }

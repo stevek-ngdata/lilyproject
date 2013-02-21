@@ -53,6 +53,7 @@ public class RecordEvent {
     private long versionCreated = -1;
     private long versionUpdated = -1;
     private Type type;
+    private String tableName;
     private Set<SchemaId> updatedFields;
     private boolean recordTypeChanged = false;
     /** For index-type events: affected vtags */
@@ -113,6 +114,8 @@ public class RecordEvent {
                 } else {
                     throw new RuntimeException("Unexpected kind of message type: " + messageType);
                 }
+            } else if (fieldName.equals("tableName")) {
+                this.tableName = jp.getText();
             } else if (fieldName.equals("versionCreated")) {
                 versionCreated = jp.getLongValue();
             } else if (fieldName.equals("versionUpdated")) {
@@ -132,7 +135,7 @@ public class RecordEvent {
                 }
                 while (jp.nextToken() != JsonToken.END_ARRAY) {
                     addVTagToIndex(idGenerator.getSchemaId(jp.getBinaryValue()));
-                }            
+                }
             } else if (fieldName.equals("attributes")) {
                 if (current != JsonToken.START_OBJECT) {
                     throw new RuntimeException("Attributes is not a JSON object");
@@ -163,6 +166,14 @@ public class RecordEvent {
 
     public void setVersionUpdated(long versionUpdated) {
         this.versionUpdated = versionUpdated;
+    }
+    
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+    
+    public String getTableName() {
+        return tableName;
     }
 
     /**
@@ -217,7 +228,7 @@ public class RecordEvent {
      * see also {@link Record#setAttributes(Map)}.
      *
      * @return A map of Strings containing attributes.
-     */ 
+     */
     public Map<String,String> getAttributes() {
         if (this.attributes == null) {
             this.attributes = new HashMap<String,String>();
@@ -252,6 +263,10 @@ public class RecordEvent {
 
         if (type != null) {
             gen.writeStringField("type", type.getName());
+        }
+        
+        if (tableName != null) {
+            gen.writeStringField("tableName", tableName);
         }
 
         if (versionUpdated != -1) {
@@ -294,7 +309,7 @@ public class RecordEvent {
             gen.writeFieldName("indexFilterData");
             indexRecordFilterData.toJson(gen);
         }
-
+        
         gen.writeEndObject();
         gen.flush();
     }
@@ -571,7 +586,7 @@ public class RecordEvent {
          */
         public boolean appliesToSubscription(String indexSubscriptionId) {
             if (includeSubscriptions) {
-                return indexSubscriptionIds == null 
+                return indexSubscriptionIds == null
                         || indexSubscriptionIds.contains(indexSubscriptionId);
             } else {
                 return indexSubscriptionIds != null

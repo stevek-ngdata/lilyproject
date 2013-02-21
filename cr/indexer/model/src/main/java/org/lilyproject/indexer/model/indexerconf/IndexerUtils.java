@@ -1,5 +1,6 @@
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,11 +19,12 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.repository.api.filter.RecordVariantFilter;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.VersionTag;
 
 public class IndexerUtils {
 
-    public static ArrayList<Record> getVariantsAsRecords(IndexUpdateBuilder indexUpdateBuilder, Dep newDep) throws RepositoryException, InterruptedException {
+    public static ArrayList<Record> getVariantsAsRecords(IndexUpdateBuilder indexUpdateBuilder, Dep newDep) throws IOException, RepositoryException, InterruptedException {
 
         // build a variant properties map which is a combination of dep.id.variantProperties + dep.moreDimensionedVariants
         final Map<String, String> varProps = new HashMap<String, String>(newDep.id.getVariantProperties());
@@ -35,12 +37,12 @@ public class IndexerUtils {
 
         final RecordScan scan = new RecordScan();
         scan.setRecordFilter(new RecordVariantFilter(newDep.id.getMaster(), varProps));
-        Repository repository = indexUpdateBuilder.getRepository();
+        Repository repository = indexUpdateBuilder.getRepositoryManager().getRepository(Table.RECORD.name);
         final IdRecordScanner scanner = repository.getScannerWithIds(scan);
         IdRecord next;
         while ((next = scanner.next()) != null) {
             try {
-                final Record record = VersionTag.getIdRecord(next, indexUpdateBuilder.getVTag(), indexUpdateBuilder.getRepository());
+                final Record record = VersionTag.getIdRecord(next, indexUpdateBuilder.getVTag(), repository);
                 result.add(record);
             } catch (RecordNotFoundException rnfe) {
                 //ok

@@ -60,16 +60,6 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
         return recordFactory;
     }
     
-    @Override
-    public Repository getDefaultRepository() {
-        try {
-            return getRepository(Table.RECORD.name);
-        } catch (Exception e) {
-            ExceptionUtil.handleInterrupt(e);
-            throw new RuntimeException("Error while getting default repository", e);
-        }
-    }
-    
     /**
      * Create a new Repository object for the repository cache.
      * @param tableName Name of the backing HTable for the repository

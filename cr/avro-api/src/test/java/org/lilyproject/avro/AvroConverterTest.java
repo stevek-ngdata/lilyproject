@@ -41,9 +41,9 @@ import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -61,8 +61,8 @@ import org.lilyproject.repository.impl.valuetype.StringValueType;
 public class AvroConverterTest {
 
     private static RepositoryManager repositoryManager;
-    private static Repository repository;
     private static TypeManager typeManager;
+    private static RecordFactory recordFactory;
     private static AvroConverter converter;
     private static IMocksControl control;
 
@@ -70,8 +70,8 @@ public class AvroConverterTest {
     public static void setUpBeforeClass() throws Exception {
         control = createControl();
         repositoryManager = control.createMock(RepositoryManager.class);
-        repository = control.createMock(Repository.class);
         typeManager = control.createMock(TypeManager.class);
+        recordFactory = control.createMock(RecordFactory.class);
     }
 
     @AfterClass
@@ -80,8 +80,11 @@ public class AvroConverterTest {
 
     @Before
     public void setUp() throws Exception {
-        repository.getTypeManager();
+        repositoryManager.getTypeManager();
         expectLastCall().andReturn(typeManager).anyTimes();
+        
+        repositoryManager.getRecordFactory();
+        expectLastCall().andReturn(recordFactory).anyTimes();
     }
 
     @After
@@ -322,10 +325,10 @@ public class AvroConverterTest {
 
         control.replay();
         converter = new AvroConverter(repositoryManager);
-        SchemaId mixinId1 = new SchemaIdImpl(UUID.randomUUID());
-        recordType.addMixin(supertypeId1, 1L);
-        SchemaId mixinId2 = new SchemaIdImpl(UUID.randomUUID());
-        recordType.addMixin(supertypeId2, 2L);
+        SchemaId supertypeId1 = new SchemaIdImpl(UUID.randomUUID());
+        recordType.addSupertype(supertypeId1, 1L);
+        SchemaId supertypeId2 = new SchemaIdImpl(UUID.randomUUID());
+        recordType.addSupertype(supertypeId2, 2L);
         AvroRecordType avroRecordType = new AvroRecordType();
         AvroSchemaId avroRecordTypeId = new AvroSchemaId();
         avroRecordTypeId.idBytes = ByteBuffer.wrap(recordTypeId.getBytes());
@@ -367,8 +370,9 @@ public class AvroConverterTest {
 
     @Test
     public void testEmptyRecord() throws Exception {
+        converter = new AvroConverter(repositoryManager);
         FieldTypes fieldTypesSnapshot = control.createMock(FieldTypes.class);
-        repository.newRecord();
+        recordFactory.newRecord();
         expectLastCall().andReturn(new RecordImpl()).anyTimes();
         typeManager.getFieldTypesSnapshot();
         expectLastCall().andReturn(fieldTypesSnapshot).anyTimes();
@@ -383,14 +387,15 @@ public class AvroConverterTest {
 
     @Test
     public void testRecord() throws Exception {
+        converter = new AvroConverter(repositoryManager);
         FieldType fieldType = control.createMock(FieldType.class);
         FieldTypes fieldTypesSnapshot = control.createMock(FieldTypes.class);
         ValueType valueType = new StringValueType();
         IdGenerator idGenerator = new IdGeneratorImpl();
 
-        repository.newRecord();
+        recordFactory.newRecord();
         expectLastCall().andReturn(new RecordImpl()).anyTimes();
-        repository.getIdGenerator();
+        repositoryManager.getIdGenerator();
         expectLastCall().andReturn(idGenerator).anyTimes();
         typeManager.getFieldTypesSnapshot();
         expectLastCall().andReturn(fieldTypesSnapshot).anyTimes();
@@ -403,7 +408,7 @@ public class AvroConverterTest {
         control.replay();
 
         Record record = new RecordImpl();
-        RecordId recordId = repository.getIdGenerator().newRecordId();
+        RecordId recordId = repositoryManager.getIdGenerator().newRecordId();
         record.setId(recordId);
         // Scope.NON_VERSIONED recordType and master record type are the same
         record.setRecordType(Scope.NON_VERSIONED, new QName("ns", "nvrt"), 1L);

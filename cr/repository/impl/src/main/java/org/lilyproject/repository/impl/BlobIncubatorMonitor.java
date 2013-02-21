@@ -18,6 +18,8 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -80,7 +82,9 @@ public class BlobIncubatorMonitor {
         this.runDelay = runDelay;
 
         this.blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(tableFactory, false);
-        this.recordTable = LilyHBaseSchema.getRecordTable(tableFactory);
+        
+        // TODO repository - this shouldn't be linked to a single repository
+        this.recordTable = LilyHBaseSchema.getRecordTable(tableFactory, Table.RECORD.name);
     }
 
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {

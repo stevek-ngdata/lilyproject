@@ -41,6 +41,7 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 public class RecordMatcherTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -59,7 +60,7 @@ public class RecordMatcherTest {
         repoSetup.setupRepository();
 
         repositoryManager = repoSetup.getRepositoryManager();
-        repository = repoSetup.getRepository();
+        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
         typeManager = repository.getTypeManager();
 
         stringField = typeManager.createFieldType("STRING", new QName("ns", "string"), Scope.NON_VERSIONED);
@@ -247,7 +248,7 @@ public class RecordMatcherTest {
                     Collections.<String>emptyList()
             );
 
-            IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+            IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
 
             if (rt.equals("rt6")) {
                 assertNull(idxConf.getRecordFilter().getIndexCase(record));

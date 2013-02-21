@@ -1,5 +1,6 @@
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -29,8 +30,9 @@ public class ForwardVariantFollow implements Follow {
         return dimensions;
     }
 
+    @Override
     public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback)
-            throws RepositoryException, InterruptedException {
+            throws RepositoryException, IOException, InterruptedException {
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
         Set<String> currentDimensions = Sets.newHashSet(ctx.dep.moreDimensionedVariants);
         currentDimensions.addAll(ctx.dep.id.getVariantProperties().keySet());
@@ -39,7 +41,7 @@ public class ForwardVariantFollow implements Follow {
             // the record already contains all of the new dimensions -> stop here
             return;
         } else {
-            IdGenerator idGenerator = indexUpdateBuilder.getRepository().getIdGenerator();
+            IdGenerator idGenerator = indexUpdateBuilder.getRepositoryManager().getIdGenerator();
             Dep newDep = ctx.dep.plus(idGenerator, dimensions);
             // now find all the records of this newly defined variant
             final ArrayList<Record> result = IndexerUtils.getVariantsAsRecords(indexUpdateBuilder, newDep);

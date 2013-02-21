@@ -38,6 +38,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -88,8 +89,6 @@ import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Pair;
-import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
@@ -105,10 +104,9 @@ public class HBaseRepository extends BaseRepository {
 
     private final Log log = LogFactory.getLog(getClass());
 
-    public HBaseRepository(RepositoryManager repositoryManager, HBaseTableFactory hbaseTableFactory,
+    public HBaseRepository(RepositoryManager repositoryManager, HTableInterface hbaseTable,
             BlobManager blobManager) throws IOException, InterruptedException {
-        super(repositoryManager, blobManager, LilyHBaseSchema.getRecordTable(hbaseTableFactory),
-                new RepositoryMetrics("hbaserepository"));
+        super(repositoryManager, blobManager, hbaseTable, new RepositoryMetrics("hbaserepository"));
     }
 
     @Override
@@ -236,6 +234,7 @@ public class HBaseRepository extends BaseRepository {
 
                 RecordEvent recordEvent = new RecordEvent();
                 recordEvent.setType(Type.CREATE);
+                recordEvent.setTableName(getTableName());
 
                 Record newRecord = record.cloneRecord();
                 newRecord.setId(recordId);
@@ -371,6 +370,7 @@ public class HBaseRepository extends BaseRepository {
 
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.UPDATE);
+            recordEvent.setTableName(getTableName());
 
             for (RecordUpdateHook hook : updateHooks) {
                 hook.beforeUpdate(record, originalRecord, this, fieldTypes, recordEvent);
@@ -715,6 +715,7 @@ public class HBaseRepository extends BaseRepository {
 
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.UPDATE);
+            recordEvent.setTableName(getTableName());
             recordEvent.setVersionUpdated(version);
 
             for (RecordUpdateHook hook : updateHooks) {
@@ -894,6 +895,7 @@ public class HBaseRepository extends BaseRepository {
 
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.DELETE);
+            recordEvent.setTableName(getTableName());
 
             for (RecordUpdateHook hook : updateHooks) {
                 hook.beforeDelete(originalRecord, this, fieldTypes, recordEvent);

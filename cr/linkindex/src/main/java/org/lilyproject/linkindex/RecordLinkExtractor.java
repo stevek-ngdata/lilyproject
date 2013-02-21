@@ -15,27 +15,37 @@
  */
 package org.lilyproject.linkindex;
 
-import org.lilyproject.repository.api.*;
-
 import java.util.List;
 import java.util.Map;
+
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.ValueType;
 
 public class RecordLinkExtractor {
     /**
      * Extracts the links from a record. The provided Record object should
      * be "fully loaded" (= contain all fields).
      */
-    public static void extract(IdRecord record, LinkCollector collector, Repository repository)
+    public static void extract(IdRecord record, LinkCollector collector, RepositoryManager repositoryManager)
             throws RepositoryException, InterruptedException {
         for (Map.Entry<SchemaId, Object> field : record.getFieldsById().entrySet()) {
             FieldType fieldType;
             try {
-                fieldType = repository.getTypeManager().getFieldTypeById(field.getKey());
+                fieldType = repositoryManager.getTypeManager().getFieldTypeById(field.getKey());
             } catch (FieldTypeNotFoundException e) {
                 // Can not do anything with a field if we cannot load its type
                 continue;
             }
-            extract(field.getValue(), fieldType, collector, fieldType, record.getId(), repository);
+            extract(field.getValue(), fieldType, collector, fieldType, record.getId(), repositoryManager);
         }
     }
 
@@ -43,12 +53,12 @@ public class RecordLinkExtractor {
      * This is for link extraction from nested records.
      */
     private static void extractRecord(Record record, LinkCollector collector, FieldType ctxField, RecordId ctxRecord,
-            Repository repository)
+            RepositoryManager repositoryManager)
             throws RepositoryException, InterruptedException {
         for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
             FieldType fieldType;
             try {
-                fieldType = repository.getTypeManager().getFieldTypeByName(field.getKey());
+                fieldType = repositoryManager.getTypeManager().getFieldTypeByName(field.getKey());
             } catch (FieldTypeNotFoundException e) {
                 // Can not do anything with a field if we cannot load its type
                 continue;
@@ -57,34 +67,34 @@ public class RecordLinkExtractor {
             // The ctxField and ctxRecord need to stay the top-level ones! It does not matter how
             // deeply nested a link occurs, as far as the link index is concerned, it still occurs
             // with the field of the top level record.
-            extract(field.getValue(), fieldType, collector, ctxField, ctxRecord, repository);
+            extract(field.getValue(), fieldType, collector, ctxField, ctxRecord, repositoryManager);
         }
     }
 
     private static void extract(Object value, FieldType fieldType, LinkCollector collector, FieldType ctxField,
-            RecordId ctxRecord, Repository repository) throws RepositoryException, InterruptedException {
+            RecordId ctxRecord, RepositoryManager repositoryManager) throws RepositoryException, InterruptedException {
 
         ValueType valueType = fieldType.getValueType();
 
         String baseType = valueType.getDeepestValueType().getBaseName();
 
         if (baseType.equals("LINK") || baseType.equals("RECORD")) {
-            extract(value, collector, ctxField, ctxRecord, repository);
+            extract(value, collector, ctxField, ctxRecord, repositoryManager);
         }
     }
 
     private static void extract(Object value, LinkCollector collector, FieldType ctxField, RecordId ctxRecord,
-            Repository repository) throws RepositoryException, InterruptedException {
+            RepositoryManager repositoryManager) throws RepositoryException, InterruptedException {
 
         if (value instanceof List) {
             List list = (List)value;
             for (Object item : list) {
-                extract(item, collector, ctxField, ctxRecord, repository);
+                extract(item, collector, ctxField, ctxRecord, repositoryManager);
             }
         } else if (value instanceof Record) {
-            extractRecord((Record)value, collector, ctxField, ctxRecord, repository);
+            extractRecord((Record)value, collector, ctxField, ctxRecord, repositoryManager);
         } else if (value instanceof Link) {
-            RecordId recordId = ((Link)value).resolve(ctxRecord, repository.getIdGenerator());
+            RecordId recordId = ((Link)value).resolve(ctxRecord, repositoryManager.getIdGenerator());
             collector.addLink(recordId, ctxField.getId());
         } else {
             throw new RuntimeException("Encountered an unexpected kind of object from a link field: " +

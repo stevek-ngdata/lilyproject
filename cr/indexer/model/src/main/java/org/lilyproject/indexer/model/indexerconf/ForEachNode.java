@@ -15,6 +15,8 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.io.IOException;
+
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.Scope;
@@ -58,7 +60,7 @@ public class ForEachNode extends ContainerMappingNode {
 
     @Override
     public void collectIndexUpdate(final IndexUpdateBuilder indexUpdateBuilder)
-            throws InterruptedException, RepositoryException {
+            throws InterruptedException, IOException, RepositoryException {
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
         if (fieldType != null && !systemFields.isSystemField(fieldType.getName())) {
             indexUpdateBuilder.addDependency(fieldType.getId());
@@ -69,7 +71,7 @@ public class ForEachNode extends ContainerMappingNode {
 
         follow.follow(indexUpdateBuilder, new FollowCallback() {
             @Override
-            public void call() throws RepositoryException, InterruptedException {
+            public void call() throws RepositoryException, InterruptedException, IOException {
                 ForEachNode.super.collectIndexUpdate(indexUpdateBuilder);
             }
         });

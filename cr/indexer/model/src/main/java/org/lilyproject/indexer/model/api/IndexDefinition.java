@@ -19,7 +19,7 @@ import java.util.Map;
 
 public interface IndexDefinition {
     String getName();
-
+    
     IndexGeneralState getGeneralState();
 
     void setGeneralState(IndexGeneralState state);

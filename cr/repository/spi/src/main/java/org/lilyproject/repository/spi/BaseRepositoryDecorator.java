@@ -278,4 +278,9 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     public RepositoryManager getRepositoryManager() {
         return delegate.getRepositoryManager();
     }
+    
+    @Override
+    public String getTableName() {
+        return delegate.getTableName();
+    }
 }

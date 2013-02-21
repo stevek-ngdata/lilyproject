@@ -21,9 +21,10 @@ import static org.junit.Assert.assertEquals;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 
 public class HBaseRepositoryTest extends AbstractRepositoryTest {
@@ -35,7 +36,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
         repoSetup.setupRepository();
 
         idGenerator = repoSetup.getIdGenerator();
-        repository = repoSetup.getRepository();
+        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
         typeManager = repoSetup.getTypeManager();
 
         setupTypes();

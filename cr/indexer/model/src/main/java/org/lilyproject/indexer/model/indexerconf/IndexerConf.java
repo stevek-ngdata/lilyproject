@@ -56,7 +56,7 @@ public class IndexerConf {
             vtags.addAll(indexCase.getVersionTags());
         }
     }
-
+    
     /**
      * @return null if there is no matching IndexCase
      */

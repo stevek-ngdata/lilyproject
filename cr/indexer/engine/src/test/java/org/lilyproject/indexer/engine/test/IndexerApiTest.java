@@ -95,7 +95,7 @@ public class IndexerApiTest {
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repoSetup.getRepositoryManager());
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
         Indexer indexer =
-                new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker, new IndexerMetrics("test"),
+                new Indexer("test", INDEXER_CONF, repositoryManager, solrShardManager, indexLocker, new IndexerMetrics("test"),
                         null);
         indexerRegistry.register(indexer);
     }

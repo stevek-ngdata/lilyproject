@@ -16,6 +16,8 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 
+import java.io.IOException;
+
 import com.google.common.base.Predicate;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.Scope;
@@ -32,7 +34,7 @@ public interface MappingNode {
     /**
      * Traverse the MappingNode hierarchy and report context records and data to index to the indexUpdateBuilder.
      */
-    public abstract void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException;
+    public abstract void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, IOException, RepositoryException;
 
     /**
      * Evaluate the predicate for this node. If predicate.apply returns true, descend into children

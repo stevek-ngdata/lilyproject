@@ -56,15 +56,6 @@ public class RemoteRepository extends BaseRepository {
     private final AvroConverter converter;
     private Transceiver client;
 
-    public RemoteRepository(InetSocketAddress address, AvroConverter converter, RepositoryManager repositoryManager,
-                BlobManager blobManager, Configuration hbaseConf)
-            throws IOException, InterruptedException {
-        // true flag to getRecordTable: we don't let the remote side create the record table if it
-        // would not yet exist, as it is not aware of creation parameters (such as splits, compression, etc.)
-        this(new AvroLilyTransceiver(address), converter, repositoryManager, blobManager,
-                    LilyHBaseSchema.getRecordTable(new HBaseTableFactoryImpl(hbaseConf), true));
-    }
-    
     public RemoteRepository(AvroLilyTransceiver lilyTransceiver, AvroConverter converter, RepositoryManager repositoryManager,
                     BlobManager blobManager, HTableInterface recordTable)
                 throws IOException, InterruptedException {

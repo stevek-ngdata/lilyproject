@@ -44,7 +44,7 @@ public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
             throw new IllegalArgumentException("A RecordTypeFilter should at least specify the record type name.");
         }
 
-        RecordType recordType = repository.getTypeManager().getRecordTypeByName(filter.getRecordType(), null);
+        RecordType recordType = repositoryManager.getTypeManager().getRecordTypeByName(filter.getRecordType(), null);
 
         RecordTypeFilter.Operator operator =
                 filter.getOperator() != null ? filter.getOperator() : RecordTypeFilter.Operator.EQUALS;
@@ -71,7 +71,7 @@ public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
 
                 break;
             case INSTANCE_OF:
-                Set<SchemaId> subtypes = repository.getTypeManager().findSubtypes(recordType.getId());
+                Set<SchemaId> subtypes = repositoryManager.getTypeManager().findSubtypes(recordType.getId());
                 FilterList list = new FilterList(FilterList.Operator.MUST_PASS_ONE);
                 list.addFilter(createRecordTypeFilter(recordType.getId()));
                 for (SchemaId subType : subtypes) {

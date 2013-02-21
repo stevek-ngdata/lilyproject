@@ -76,6 +76,7 @@ public abstract class BaseRepository implements Repository {
     protected final BlobManager blobManager;
     protected final RecordDecoder recdec;
     protected final HTableInterface recordTable;
+    private final String tableName;
     protected RepositoryMetrics metrics;
     /**
      * Not all rows in the HBase record table are real records, this filter excludes non-valid
@@ -101,6 +102,7 @@ public abstract class BaseRepository implements Repository {
         this.blobManager = blobManager;
         this.idGenerator = repositoryManager.getIdGenerator();
         this.recordTable = recordTable;
+        this.tableName = Bytes.toString(recordTable.getTableName());
         this.recdec = new RecordDecoder(typeManager, idGenerator);
         this.metrics = metrics;
     }
@@ -603,6 +605,11 @@ public abstract class BaseRepository implements Repository {
     @Override
     public RepositoryManager getRepositoryManager() {
         return repositoryManager;
+    }
+    
+    @Override
+    public String getTableName() {
+        return tableName;
     }
     
 }

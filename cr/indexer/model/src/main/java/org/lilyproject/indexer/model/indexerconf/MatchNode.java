@@ -16,6 +16,8 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 
+import java.io.IOException;
+
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
@@ -64,7 +66,8 @@ public class MatchNode extends ContainerMappingNode {
         }
     }
 
-    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException  {
+    @Override
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, IOException, RepositoryException  {
         for (SchemaId fieldId: recordMatcher.getFieldDependencyIds()) {
             indexUpdateBuilder.addDependency(fieldId);
         }

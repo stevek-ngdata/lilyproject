@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -62,10 +63,9 @@ import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.tools.import_.json.RecordScanWriter;
 import org.lilyproject.tools.import_.json.RecordWriter;
 import org.lilyproject.tools.import_.json.WriteOptions;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
-
-import com.google.common.collect.Lists;
 
 public class JsonConversionTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -78,7 +78,7 @@ public class JsonConversionTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = repoSetup.getRepository();
+        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
 
         TypeManager typeManager = repository.getTypeManager();
         typeManager.createFieldType("STRING", new QName("ns", "stringField"), Scope.NON_VERSIONED);

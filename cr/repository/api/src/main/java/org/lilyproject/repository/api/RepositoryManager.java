@@ -40,13 +40,6 @@ public interface RepositoryManager extends Closeable {
     TypeManager getTypeManager();
 
     /**
-     * Get the default repository.
-     * 
-     * @return default repository
-     */
-    Repository getDefaultRepository();
-
-    /**
      * Get the {@code Repository} for a specific HBase table.
      * 
      * @param tableName Name of the table for which the repository is to be fetched

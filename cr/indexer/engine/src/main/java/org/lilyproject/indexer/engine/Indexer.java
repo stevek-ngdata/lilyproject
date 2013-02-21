@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.response.UpdateResponse;
@@ -41,6 +43,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
@@ -57,7 +60,7 @@ import org.lilyproject.util.repo.VTaggedRecord;
 public class Indexer {
     private final String indexName;
     private final IndexerConf conf;
-    private final Repository repository;
+    private final RepositoryManager repositoryManager;
     private final TypeManager typeManager;
     private final SystemFields systemFields;
     private final SolrShardManager solrShardMgr;
@@ -74,15 +77,15 @@ public class Indexer {
 
     private final Log log = LogFactory.getLog(getClass());
 
-    public Indexer(String indexName, IndexerConf conf, Repository repository, SolrShardManager solrShardMgr,
+    public Indexer(String indexName, IndexerConf conf, RepositoryManager repositoryManager, SolrShardManager solrShardMgr,
                    IndexLocker indexLocker, IndexerMetrics metrics, DerefMap derefMap) {
         this.indexName = indexName;
         this.conf = conf;
-        this.repository = repository;
+        this.repositoryManager = repositoryManager;
         this.solrShardMgr = solrShardMgr;
         this.indexLocker = indexLocker;
-        this.typeManager = repository.getTypeManager();
-        this.systemFields = SystemFields.getInstance(typeManager, repository.getIdGenerator());
+        this.typeManager = repositoryManager.getTypeManager();
+        this.systemFields = SystemFields.getInstance(typeManager, repositoryManager.getIdGenerator());
         this.valueEvaluator = new ValueEvaluator(conf);
         this.metrics = metrics;
         this.derefMap = derefMap;
@@ -108,7 +111,7 @@ public class Indexer {
     public void index(RecordId recordId) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
 
-        VTaggedRecord vtRecord = new VTaggedRecord(recordId, repository);
+        VTaggedRecord vtRecord = new VTaggedRecord(recordId, repositoryManager.getRepository(Table.RECORD.name));
         IdRecord record = vtRecord.getRecord();
 
         IndexCase indexCase = conf.getIndexCase(record);
@@ -117,7 +120,7 @@ public class Indexer {
 
     public void index(IdRecord idRecord) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
-        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repository);
+        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repositoryManager.getRepository(Table.RECORD.name));
         index(vtRecord, idRecord);
     }
 
@@ -133,7 +136,7 @@ public class Indexer {
 
     void index(IdRecord idRecord, Set<SchemaId> vtags)
             throws RepositoryException, IOException, ShardSelectorException, SolrClientException, InterruptedException {
-        final VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repository);
+        final VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repositoryManager.getRepository(Table.RECORD.name));
 
         Set<SchemaId> vtagsToIndex = retainExistingVtagsOnly(vtags, vtRecord);
 
@@ -209,7 +212,7 @@ public class Indexer {
         for (SchemaId vtag : vtags) {
 
             SolrDocumentBuilder solrDocumentBuilder =
-                    new SolrDocumentBuilder(repository, getConf().getRecordFilter(), systemFields, valueEvaluator,
+                    new SolrDocumentBuilder(repositoryManager, getConf().getRecordFilter(), systemFields, valueEvaluator,
                             record, getIndexId(record.getId(), vtag), vtag, version);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
@@ -231,7 +234,7 @@ public class Indexer {
                             String fieldName = evalName(dynField, match, fieldType);
 
                             List<String> values = valueEvaluator.format(record, fieldType, dynField.extractContext(),
-                                    dynField.getFormatter(), repository);
+                                    dynField.getFormatter(), repositoryManager);
 
                             solrDocumentBuilder.addField(fieldName, values);
 

@@ -1,5 +1,6 @@
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -9,8 +10,10 @@ import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.VersionTag;
 
 public class LinkFieldFollow implements Follow {
@@ -39,13 +42,15 @@ public class LinkFieldFollow implements Follow {
         this.ownerFieldType = ownerFieldType;
     }
 
-    public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback) throws RepositoryException, InterruptedException {
+    @Override
+    public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback) throws RepositoryException, IOException, InterruptedException {
         if (!indexUpdateBuilder.getSystemFields().isSystemField(fieldType.getName())) {
             indexUpdateBuilder.addDependency(fieldType.getId());
         }
-        IdGenerator idGenerator = indexUpdateBuilder.getRepository().getIdGenerator();
+        IdGenerator idGenerator = indexUpdateBuilder.getRepositoryManager().getIdGenerator();
 
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
+        Repository repository = indexUpdateBuilder.getRepositoryManager().getRepository(Table.RECORD.name);
 
         // FIXME: it's more efficient to read all records at once
         // but make sure missing records are also treated (handled here via null linkedRecord in case of RecordNotFoundException
@@ -55,7 +60,7 @@ public class LinkFieldFollow implements Follow {
                 RecordId linkedRecordId = link.resolve(ctx.contextRecord, idGenerator);
                 Record linkedRecord = null;
                 try {
-                    linkedRecord = VersionTag.getIdRecord(linkedRecordId, indexUpdateBuilder.getVTag(), indexUpdateBuilder.getRepository());
+                    linkedRecord = VersionTag.getIdRecord(linkedRecordId, indexUpdateBuilder.getVTag(), repository);
                 } catch (RecordNotFoundException rnfe) {
                     // ok, continue with null value
                 } catch (VersionNotFoundException e) {

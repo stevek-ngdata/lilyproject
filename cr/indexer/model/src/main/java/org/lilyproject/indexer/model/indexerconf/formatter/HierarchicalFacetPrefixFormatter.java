@@ -1,14 +1,14 @@
 package org.lilyproject.indexer.model.indexerconf.formatter;
 
-import com.google.common.base.Splitter;
-import org.lilyproject.indexer.model.indexerconf.Formatter;
-import org.lilyproject.indexer.model.indexerconf.IndexValue;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.ValueType;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import com.google.common.base.Splitter;
+import org.lilyproject.indexer.model.indexerconf.Formatter;
+import org.lilyproject.indexer.model.indexerconf.IndexValue;
+import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.ValueType;
 
 /**
  * Formatter which formats values suitable for hierarchical faceting in Solr.
@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class HierarchicalFacetPrefixFormatter implements Formatter {
     @Override
-    public List<String> format(List<IndexValue> indexValues, Repository repository) throws InterruptedException {
+    public List<String> format(List<IndexValue> indexValues, RepositoryManager repositoryManager) throws InterruptedException {
         List<String> result = new ArrayList<String>();
         for (IndexValue indexValue : indexValues) {
             ValueType valueType = indexValue.fieldType.getValueType();

@@ -102,6 +102,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -112,6 +113,7 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.Pair;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.PrematureRepositoryManager;
 import org.lilyproject.util.repo.PrematureRepositoryManagerImpl;
 import org.lilyproject.util.repo.RecordEvent;
@@ -121,6 +123,7 @@ public class IndexerTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
     private static IndexerConf INDEXER_CONF;
     private static SolrTestingUtility SOLR_TEST_UTIL;
+    private static RepositoryManager repositoryManager;
     private static Repository repository;
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
@@ -197,9 +200,11 @@ public class IndexerTest {
         repoSetup.setupRepository();
 
         prematureRepositoryManager.setRepositoryManager(repoSetup.getRepositoryManager());
-        indexUpdaterRepository.setDelegate(repoSetup.getRepository());
+        repositoryManager = repoSetup.getRepositoryManager();
+        repository = repositoryManager.getRepository(Table.RECORD.name);
+        indexUpdaterRepository.setDelegate(repository);
 
-        repository = repoSetup.getRepository();
+        
         typeManager = repoSetup.getTypeManager();
         idGenerator = repository.getIdGenerator();
 
@@ -254,8 +259,8 @@ public class IndexerTest {
                 htable.close();
             }
         }
-        derefMap = DerefMapHbaseImpl.create("test", hbaseConf, null, repository.getIdGenerator());
-        Indexer indexer = new Indexer(indexName, INDEXER_CONF, repository, solrShardManager, indexLocker,
+        derefMap = DerefMapHbaseImpl.create("test", hbaseConf, null, repositoryManager.getIdGenerator());
+        Indexer indexer = new Indexer(indexName, INDEXER_CONF, repositoryManager, solrShardManager, indexLocker,
                 new IndexerMetrics(indexName), derefMap);
 
         // The registration of the index into the IndexerModel is only needed for the IndexRecordFilterHook

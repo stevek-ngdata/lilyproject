@@ -15,11 +15,9 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.ValueType;
-
 import java.util.List;
-import java.util.Set;
+
+import org.lilyproject.repository.api.RepositoryManager;
 
 /**
  * Formats field values to string for transfer to Solr.
@@ -53,6 +51,6 @@ public interface Formatter {
      * those in the input list: they can be more or less items or they can be
      * in a different order.
      */
-    List<String> format(List<IndexValue> indexValues, Repository repository)
+    List<String> format(List<IndexValue> indexValues, RepositoryManager repositoryManager)
             throws InterruptedException;
 }

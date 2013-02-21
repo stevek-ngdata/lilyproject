@@ -561,4 +561,10 @@ public interface Repository extends Closeable {
      * @return owning RepositoryManager
      */
     RepositoryManager getRepositoryManager();
+    
+    /**
+     * Returns the name of the underlying storage table that this repository uses.
+     * @return HBase table name
+     */
+    String getTableName();
 }

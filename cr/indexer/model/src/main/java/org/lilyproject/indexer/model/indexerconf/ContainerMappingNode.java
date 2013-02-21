@@ -15,6 +15,7 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.google.common.base.Predicate;
@@ -45,12 +46,13 @@ public abstract class ContainerMappingNode implements MappingNode {
     }
 
     @Override
-    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException {
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, IOException, RepositoryException {
         for (MappingNode child: getChildren()) {
             child.collectIndexUpdate(indexUpdateBuilder);
         }
     }
 
+    @Override
     public void visitAll(Predicate<MappingNode> predicate) {
         if (predicate.apply(this)) {
             for (MappingNode child: children) {

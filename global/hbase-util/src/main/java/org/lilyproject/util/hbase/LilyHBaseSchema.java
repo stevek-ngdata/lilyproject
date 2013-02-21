@@ -28,17 +28,14 @@ public class LilyHBaseSchema {
     public static final byte DELETE_FLAG = (byte) 1;
     public static final byte[] DELETE_MARKER = new byte[] { DELETE_FLAG };
 
-
-    private static final HTableDescriptor recordTableDescriptor;
+    private static HColumnDescriptor DATA_CF;
 
     static {
-        recordTableDescriptor = new HTableDescriptor(Table.RECORD.bytes);
-        HColumnDescriptor dataCf = new HColumnDescriptor(RecordCf.DATA.bytes,
+        DATA_CF = new HColumnDescriptor(RecordCf.DATA.bytes,
                 HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER);
-        dataCf.setScope(1); // replication scope: HBase docs: "a scope of 0 (default) means that it won't be
-                            // replicated and a scope of 1 means it's going to be. In the future, different scope can
-                            // be used for routing policies."
-        recordTableDescriptor.addFamily(dataCf);
+        DATA_CF.setScope(1);    // replication scope: HBase docs: "a scope of 0 (default) means that it won't be
+                                // replicated and a scope of 1 means it's going to be. In the future, different scope can
+                                // be used for routing policies."
     }
 
     private static final HTableDescriptor typeTableDescriptor;
@@ -58,13 +55,20 @@ public class LilyHBaseSchema {
         blobIncubatorDescriptor = new HTableDescriptor(Table.BLOBINCUBATOR.bytes);
         blobIncubatorDescriptor.addFamily(new HColumnDescriptor(BlobIncubatorCf.REF.bytes));
     }
-
-    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory) throws IOException, InterruptedException {
-        return tableFactory.getTable(recordTableDescriptor);
+    
+    private static HTableDescriptor createRecordTableDescriptor(String tableName) {
+        HTableDescriptor recordTableDescriptor = new HTableDescriptor(tableName);
+        recordTableDescriptor.addFamily(DATA_CF);
+        return recordTableDescriptor;
     }
 
-    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, boolean clientMode) throws IOException, InterruptedException {
-        return tableFactory.getTable(recordTableDescriptor, !clientMode);
+    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName) throws IOException, InterruptedException {
+        return tableFactory.getTable(createRecordTableDescriptor(tableName));
+    }
+
+    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName, boolean clientMode) throws IOException, InterruptedException {
+        
+        return tableFactory.getTable(createRecordTableDescriptor(tableName), !clientMode);
     }
 
     public static HTableInterface getTypeTable(HBaseTableFactory tableFactory) throws IOException, InterruptedException {

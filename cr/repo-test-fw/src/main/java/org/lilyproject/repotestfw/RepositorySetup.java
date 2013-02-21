@@ -89,8 +89,8 @@ public class RepositorySetup {
     private HBaseTypeManager typeManager;
     private RemoteTypeManager remoteTypeManager;
     private RepositoryManager repositoryManager;
-    private RemoteRepository remoteRepository;
-
+    private RemoteRepositoryManager remoteRepositoryManager;
+    
     private Server lilyServer;
 
     private BlobStoreAccessFactory blobStoreAccessFactory;
@@ -162,7 +162,7 @@ public class RepositorySetup {
         
         
         sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
-        eventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory));
+        eventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory, Table.RECORD.name));
 
         repositoryManagerSetup = true;
     }
@@ -214,14 +214,12 @@ public class RepositorySetup {
         
         
         
-        RepositoryManager remoteRepoManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
+        remoteRepositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
                 new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory);
-        avroConverter.setRepositoryManager(remoteRepoManager);
+        avroConverter.setRepositoryManager(remoteRepositoryManager);
 
         remoteBlobStoreAccessFactory = createBlobAccess();
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);
-
-        remoteRepository = (RemoteRepository)remoteRepoManager.getDefaultRepository();
 
         remoteSchemaCache.start();
     }
@@ -244,9 +242,9 @@ public class RepositorySetup {
         Closer.close(sepConsumer);
         Closer.close(remoteSchemaCache);
         Closer.close(remoteTypeManager);
-        Closer.close(remoteRepository);
 
         Closer.close(typeManager);
+        Closer.close(remoteRepositoryManager);
         Closer.close(repositoryManager);
 
         if (lilyServer != null) {
@@ -269,20 +267,12 @@ public class RepositorySetup {
         return remoteTypeManager;
     }
 
-    public Repository getRepository() {
-        try {
-            return repositoryManager.getRepository(Table.RECORD.name);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-    
     public RepositoryManager getRepositoryManager() {
         return repositoryManager;
     }
 
-    public Repository getRemoteRepository() {
-        return remoteRepository;
+    public RemoteRepositoryManager getRemoteRepositoryManager() {
+        return remoteRepositoryManager;
     }
     
     

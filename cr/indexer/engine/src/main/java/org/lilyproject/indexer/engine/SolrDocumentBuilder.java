@@ -15,6 +15,7 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,10 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.common.SolrInputDocument;
@@ -43,22 +48,17 @@ import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.repo.SystemFields;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Sets;
 
 public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
     private final Log log = LogFactory.getLog(getClass());
 
-    private final Repository repository;
+    private final RepositoryManager repositoryManager;
     private final IndexRecordFilter indexRecordFilter;
     private final SystemFields systemFields;
     private final TypeManager typeManager;
@@ -76,12 +76,12 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     private SchemaId vtag;
     private long version;
 
-    public SolrDocumentBuilder(Repository repository, IndexRecordFilter indexRecordFilter, SystemFields systemFields,
+    public SolrDocumentBuilder(RepositoryManager repositoryManager, IndexRecordFilter indexRecordFilter, SystemFields systemFields,
                                ValueEvaluator valueEvaluator, IdRecord record, String key, SchemaId vtag, long version) {
-        this.repository = repository;
+        this.repositoryManager = repositoryManager;
         this.indexRecordFilter = indexRecordFilter;
         this.systemFields = systemFields;
-        this.typeManager = repository.getTypeManager();
+        this.typeManager = repositoryManager.getTypeManager();
         this.valueEvaluator = valueEvaluator;
         this.recordId = record.getId();
         this.key = key;
@@ -117,12 +117,12 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     }
 
     @Override
-    public Repository getRepository() {
-        return repository;
+    public RepositoryManager getRepositoryManager() {
+        return repositoryManager;
     }
 
     @Override
-    public List<String> eval(Value value) throws RepositoryException, InterruptedException {
+    public List<String> eval(Value value) throws RepositoryException, IOException, InterruptedException {
         return valueEvaluator.eval(value, this);
     }
 

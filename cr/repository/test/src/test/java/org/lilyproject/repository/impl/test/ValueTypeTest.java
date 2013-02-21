@@ -15,6 +15,11 @@
  */
 package org.lilyproject.repository.impl.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -60,11 +65,7 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 import org.lilyproject.repository.impl.valuetype.AbstractValueType;
 import org.lilyproject.repotestfw.RepositorySetup;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 public class ValueTypeTest {
 
@@ -83,7 +84,7 @@ public class ValueTypeTest {
         repoSetup.setupRepository();
 
         typeManager = repoSetup.getTypeManager();
-        repository = repoSetup.getRepository();
+        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
         idGenerator = repoSetup.getIdGenerator();
     }
 

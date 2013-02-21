@@ -1,5 +1,6 @@
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.lilyproject.repository.api.FieldType;
@@ -17,7 +18,8 @@ public class RecordFieldFollow implements Follow {
         return fieldType;
     }
 
-    public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback followCallback) throws RepositoryException, InterruptedException {
+    @Override
+    public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback followCallback) throws RepositoryException, IOException, InterruptedException {
         if (!indexUpdateBuilder.getSystemFields().isSystemField(fieldType.getName())) {
             indexUpdateBuilder.addDependency(fieldType.getId());
         }

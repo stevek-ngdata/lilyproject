@@ -16,6 +16,7 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 
+import java.io.IOException;
 import java.util.List;
 
 import com.google.common.base.Predicate;
@@ -54,7 +55,7 @@ public class IndexField implements MappingNode {
     }
 
     @Override
-    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException {
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException, IOException {
         // We must evaluate both name and values (even if there is no context record - to make sure
         // all dependencies are added.
         String formattedName = indexUpdateBuilder.evalIndexFieldName(nameTemplate);

@@ -17,6 +17,8 @@ package org.lilyproject.repository.impl;
 
 import java.io.IOException;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema;
+
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordFactory;
@@ -37,7 +39,7 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
     
     @Override
     protected Repository createRepository(String tableName) throws IOException, InterruptedException {
-        return new HBaseRepository(this, hbaseTableFactory, blobManager);
+        return new HBaseRepository(this, LilyHBaseSchema.getRecordTable(hbaseTableFactory, tableName), blobManager);
     }
 
 }

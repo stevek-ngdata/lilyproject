@@ -22,6 +22,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.repository.api.FieldType;
@@ -66,7 +68,7 @@ public class ForEachNodeTest {
     }
 
     @Test
-    public void testCollectIndexUpdate_LinkedRecordFieldType() throws InterruptedException, RepositoryException {
+    public void testCollectIndexUpdate_LinkedRecordFieldType() throws InterruptedException, RepositoryException, IOException {
 
         when(recordContextRecord.hasField(USERDEFINED_FIELDTYPE_NAME)).thenReturn(true);
 
@@ -82,7 +84,7 @@ public class ForEachNodeTest {
 
     @Test
     public void testCollectIndexUpdate_LinkedRecordFieldType_FieldIsNotWithinRecordContextRecord()
-            throws InterruptedException, RepositoryException {
+            throws InterruptedException, RepositoryException, IOException {
 
         when(recordContextRecord.hasField(USERDEFINED_FIELDTYPE_NAME)).thenReturn(false);
 
@@ -97,7 +99,7 @@ public class ForEachNodeTest {
     }
 
     @Test
-    public void testCollectIndexUpdate_EmbeddedRecordFieldType() throws InterruptedException, RepositoryException {
+    public void testCollectIndexUpdate_EmbeddedRecordFieldType() throws InterruptedException, RepositoryException, IOException {
 
         when(recordContextRecord.hasField(USERDEFINED_FIELDTYPE_NAME)).thenReturn(true);
 
@@ -113,7 +115,7 @@ public class ForEachNodeTest {
 
     @Test
     public void testCollectIndexUpdate_EmbeddedRecordFieldType_FieldIsNotWithinRecordContextRecord()
-            throws InterruptedException, RepositoryException {
+            throws InterruptedException, RepositoryException, IOException {
 
         when(recordContextRecord.hasField(USERDEFINED_FIELDTYPE_NAME)).thenReturn(false);
 
