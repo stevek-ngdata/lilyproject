@@ -49,9 +49,11 @@ public class RecordEventTest {
     
     @Before
     public void setUp() throws Exception {
+        final String subscriptionId = "MessageVerifier";
         messageVerifier = new CountingMessageVerifier();
-        repoSetup.getSepModel().addSubscription("MessageVerifier");
-        repoSetup.startSepEventSlave("MessageVerifier", messageVerifier);
+        repoSetup.getSepModel().addSubscription(subscriptionId);
+        repoSetup.startSepEventSlave(subscriptionId, messageVerifier);
+        repoSetup.getHBaseProxy().waitOnReplicationPeerReady(subscriptionId);
     }
     
     @After
