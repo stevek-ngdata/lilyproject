@@ -15,13 +15,21 @@
  */
 package org.lilyproject.process.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -45,12 +53,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.util.json.JsonFormat;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 public class RestTest {
     private static String BASE_URI;
@@ -725,7 +727,7 @@ public class RestTest {
         JsonNode jsonNode = readJson(response);
         String blobValue = jsonNode.get("value").getTextValue();
         assertEquals("text/plain", jsonNode.get("mediaType").getTextValue());
-        assertEquals((long)data.length(), jsonNode.get("size").getLongValue());
+        assertEquals(data.length(), jsonNode.get("size").getLongValue());
 
         // Create a record with this blob
         ObjectNode recordNode = JsonNodeFactory.instance.objectNode();
@@ -1244,7 +1246,37 @@ public class RestTest {
         response = delete(location + "not_here");
         assertStatus(HttpStatus.SC_NOT_FOUND, response);
     }
-
+    
+    @Test
+    public void testTables() throws Exception {
+        ResponseAndContent getResponse = get(BASE_URI + "/table");
+        assertStatus(HttpStatus.SC_OK, getResponse);
+        
+        List<String> tableNames = getStringList(readJson(getResponse));
+        assertEquals(Lists.newArrayList("record"), tableNames);
+        
+        ResponseAndContent postResponse = post(BASE_URI + "/table/resttesttable", "");
+        assertStatus(HttpStatus.SC_OK, postResponse);
+        
+        getResponse = get(BASE_URI + "/table");
+        tableNames = getStringList(readJson(getResponse));
+        Collections.sort(tableNames);
+        
+        assertEquals(Lists.newArrayList("record", "resttesttable"), tableNames);
+        
+        ResponseAndContent deleteResponse = delete(BASE_URI + "/table/resttesttable");
+        assertStatus(HttpStatus.SC_OK, deleteResponse);
+        
+        getResponse = get(BASE_URI + "/table");
+        tableNames = getStringList(readJson(getResponse));
+        
+        assertEquals(Lists.newArrayList("record"), tableNames);
+        
+        deleteResponse = delete(BASE_URI + "/table/resttesttable");
+        assertStatus(HttpStatus.SC_NOT_FOUND, deleteResponse);
+        
+    }
+    
     private JsonNode getFieldValue(JsonNode recordJson, String fieldName) {
         String prefix = recordJson.get("namespaces").get("org.lilyproject.resttest").getTextValue();
         JsonNode fieldsNode = recordJson.get("fields");
@@ -1314,6 +1346,17 @@ public class RestTest {
 
     private String json(String input) {
         return input.replaceAll("'", "\"");
+    }
+    
+    private List<String> getStringList(JsonNode json) {
+        if (!json.isArray()) {
+            throw new RuntimeException("Supplied JSON is not an array: " +  json.toString());
+        }
+        List<String> stringList = Lists.newArrayList();
+        for (int i = 0; i < json.size(); i++) {
+            stringList.add(json.get(i).asText());
+        }
+        return stringList;
     }
 
     private ResponseAndContent processResponseAndContent(HttpUriRequest request) throws Exception {

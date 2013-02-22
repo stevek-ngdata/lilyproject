@@ -16,6 +16,9 @@
 package org.lilyproject.rest;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+
+import java.io.IOException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -65,10 +68,16 @@ public class TableResource {
     @Path("{name}")
     public Response dropTable(@PathParam("name") String tableName) {
         try {
+            if (!tableManager.tableExists(tableName)) {
+                throw new ResourceException("Table '" + tableName + "' not found", NOT_FOUND.getStatusCode());
+            }
             tableManager.dropTable(tableName);
             return Response.ok().build();
-        } catch (Exception e) {
-            throw new ResourceException("Error dropping table '" + tableName + "'", e,
+        } catch (IOException ioe) {
+            throw new ResourceException("Error dropping table '" + tableName + "'", ioe,
+                    INTERNAL_SERVER_ERROR.getStatusCode());
+        } catch (InterruptedException ie) {
+            throw new ResourceException("Interrupted while dropping table '" + tableName + "'", ie,
                     INTERNAL_SERVER_ERROR.getStatusCode());
         }
     }
