@@ -169,19 +169,29 @@ public class LilyClient implements Closeable {
         return isClosed;
     }
 
+
+    /**
+     * Returns the default plain repository.
+     * @return the default plain repository
+     * @see #getPlainRepository(String)
+     */
+    public Repository getPlainRepository() throws IOException, NoServersException, InterruptedException,
+            KeeperException, RepositoryException {
+        return getPlainRepository(Table.RECORD.name);
+    }
+    
     /**
      * Returns a Repository that uses one of the available Lily servers (randomly selected).
      * This repository instance will not automatically retry operations and to balance requests
      * over multiple Lily servers, you need to recall this method regularly to retrieve other
-     * repository instances. Most of the time, you will rather use {@link #getRepository()}.
+     * repository instances. Most of the time, you will rather use {@link #getRepository(String)}.
      */
-    public Repository getPlainRepository() throws IOException, NoServersException, InterruptedException,
-            KeeperException, RepositoryException {
+    public Repository getPlainRepository(String tableName) throws IOException, InterruptedException, NoServersException, RepositoryException, KeeperException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
 
-        return getServerNode().repoMgr.getRepository(Table.RECORD.name);
+        return getServerNode().repoMgr.getRepository(tableName);
     }
     
     /**
@@ -218,10 +228,20 @@ public class LilyClient implements Closeable {
      * the category org.lilyproject.client.
      */
     public Repository getRepository() {
+        return getRepository(Table.RECORD.name);
+    }
+    
+    /**
+     * Returns a repository instance that is bound to a non-default storage table. The returned
+     * repository will automatically balance requests over the available Lily servers, and will
+     * retry operations according to what is specified in {@link RetryConf}.
+     * @param tableName name of the storage table for the requested repository
+     */
+    public Repository getRepository(String tableName) {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
-        return balancingAndRetryingLilyConnection.getRepository();
+        return balancingAndRetryingLilyConnection.getRepository(tableName);
     }
     
     

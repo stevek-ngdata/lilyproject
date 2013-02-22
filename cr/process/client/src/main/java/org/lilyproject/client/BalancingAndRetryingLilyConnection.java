@@ -15,6 +15,7 @@
  */
 package org.lilyproject.client;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -30,10 +31,12 @@ import org.lilyproject.repository.api.IORecordException;
 import org.lilyproject.repository.api.IOTypeException;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.RetriesExhaustedBlobException;
 import org.lilyproject.repository.api.RetriesExhaustedRecordException;
 import org.lilyproject.repository.api.RetriesExhaustedTypeException;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 
 /**
@@ -43,41 +46,59 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
  */
 public class BalancingAndRetryingLilyConnection {
 
-    private final Repository repository;
+    private final RepositoryManager repositoryManager;
 
     private final TypeManager typeManager;
 
     private final Indexer indexer;
 
-    private BalancingAndRetryingLilyConnection(Repository repository, TypeManager typeManager, Indexer indexer) {
-        this.repository = repository;
+    private BalancingAndRetryingLilyConnection(RepositoryManager repositoryManager, TypeManager typeManager, Indexer indexer) {
+        this.repositoryManager = repositoryManager;
         this.typeManager = typeManager;
         this.indexer = indexer;
     }
 
-    public Repository getRepository() {
-        return repository;
+    public Repository getRepository(String tableName) {
+        try {
+            return repositoryManager.getRepository(tableName);
+        } catch (IOException e) {
+            // In reality this will never happen, becuse the getRepository call is just creating an invocation handler
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            // Same comment here as with the IOException -- it shouldn't be possible for this exception to be thrown in reality
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
     }
 
     public Indexer getIndexer() {
         return indexer;
     }
 
-    public static BalancingAndRetryingLilyConnection getInstance(LilyClient lilyClient) {
+    public static BalancingAndRetryingLilyConnection getInstance(final LilyClient lilyClient) {
 
         InvocationHandler typeManagerHandler = new TypeManagerInvocationHandler(lilyClient);
-        TypeManager typeManager = (TypeManager) Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
+        final TypeManager typeManager = (TypeManager) Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
                 new Class[]{TypeManager.class}, typeManagerHandler);
 
-        InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, typeManager);
-        Repository repository = (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),
-                new Class[]{Repository.class}, repositoryHandler);
+        
 
         InvocationHandler indexerHandler = new IndexerInvocationHandler(lilyClient);
         Indexer indexer = (Indexer) Proxy.newProxyInstance(Indexer.class.getClassLoader(),
                 new Class[]{Indexer.class}, indexerHandler);
+        
+        RepositoryManager repositoryManager = new AbstractRepositoryManager(null, null, null) {
+            
+            @Override
+            protected Repository createRepository(String tableName) throws IOException, InterruptedException {
+                InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, tableName, typeManager);
+                Repository repository = (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),
+                        new Class[]{Repository.class}, repositoryHandler);
+                return repository;
+            }
+        };
 
-        return new BalancingAndRetryingLilyConnection(repository, typeManager, indexer);
+        return new BalancingAndRetryingLilyConnection(repositoryManager, typeManager, indexer);
     }
 
     private static final class TypeManagerInvocationHandler extends RetryBase implements InvocationHandler {
@@ -117,12 +138,14 @@ public class BalancingAndRetryingLilyConnection {
 
     private static final class RepositoryInvocationHandler extends RetryBase implements InvocationHandler {
         private final LilyClient lilyClient;
+        private final String tableName;
         private final TypeManager typeManager;
         private final IdGenerator idGenerator = new IdGeneratorImpl();
 
-        private RepositoryInvocationHandler(LilyClient lilyClient, TypeManager typeManager) {
+        private RepositoryInvocationHandler(LilyClient lilyClient, String tableName, TypeManager typeManager) {
             super(lilyClient.getRetryConf());
             this.lilyClient = lilyClient;
+            this.tableName = tableName;
             this.typeManager = typeManager;
         }
 
@@ -144,7 +167,7 @@ public class BalancingAndRetryingLilyConnection {
 
             while (true) {
                 try {
-                    Repository repository = lilyClient.getPlainRepository();
+                    Repository repository = lilyClient.getPlainRepository(tableName);
                     return method.invoke(repository, args);
                 } catch (NoServersException e) {
                     // Needs to be wrapped because NoServersException is not in the throws clause of the
