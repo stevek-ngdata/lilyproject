@@ -29,6 +29,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
+
+import org.lilyproject.repository.api.RepositoryTableManager;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -178,6 +182,14 @@ public class LilyClient implements Closeable {
         }
 
         return getServerNode().repoMgr.getRepository(Table.RECORD.name);
+    }
+    
+    /**
+     * Get a {@link RepositoryTableManager} for handling the lifecycle of repository tables.
+     */
+    public RepositoryTableManager getTableManager() {
+        Configuration conf = getHBaseConfiguration(zk);
+        return new RepositoryTableManagerImpl(conf, new HBaseTableFactoryImpl(conf));
     }
 
     private synchronized ServerNode getServerNode() throws NoServersException, RepositoryException, IOException,

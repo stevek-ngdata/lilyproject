@@ -29,6 +29,9 @@ public class LilyHBaseSchema {
     public static final byte[] DELETE_MARKER = new byte[] { DELETE_FLAG };
 
     private static HColumnDescriptor DATA_CF;
+    
+    static final byte[] IS_RECORD_TABLE_PROPERTY = Bytes.toBytes("isLilyRecordTable");
+    static final byte[] IS_RECORD_TABLE_VALUE = Bytes.toBytes(true);
 
     static {
         DATA_CF = new HColumnDescriptor(RecordCf.DATA.bytes,
@@ -59,11 +62,21 @@ public class LilyHBaseSchema {
     private static HTableDescriptor createRecordTableDescriptor(String tableName) {
         HTableDescriptor recordTableDescriptor = new HTableDescriptor(tableName);
         recordTableDescriptor.addFamily(DATA_CF);
+        recordTableDescriptor.setValue(IS_RECORD_TABLE_PROPERTY, IS_RECORD_TABLE_VALUE);
         return recordTableDescriptor;
+    }
+
+    public static boolean isRecordTableDescriptor(HTableDescriptor htableDescriptor) {
+        byte[] value = htableDescriptor.getValue(IS_RECORD_TABLE_PROPERTY);
+        return value != null && Bytes.equals(value, IS_RECORD_TABLE_VALUE);
     }
 
     public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName) throws IOException, InterruptedException {
         return tableFactory.getTable(createRecordTableDescriptor(tableName));
+    }
+    
+    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName, byte[][] splitKeys) throws IOException, InterruptedException {
+        return tableFactory.getTable(createRecordTableDescriptor(tableName), splitKeys);
     }
 
     public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName, boolean clientMode) throws IOException, InterruptedException {

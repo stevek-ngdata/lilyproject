@@ -89,6 +89,7 @@
     <module>cr/avro-api</module>
     <module>cr/process</module>
     <module>cr/repository-api-tutorial</module>
+    <module>cr/repository/admin-cli</module>
     <module>cr/server-test-fw</module>
     <module>cr/standalone-launcher</module>
     <module>cr/mapreduce</module>
