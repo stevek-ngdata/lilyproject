@@ -83,6 +83,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
             Closer.close(repository);
         }
         repositoryCache.clear();
+        Closer.close(typeManager);
     }
 
 }

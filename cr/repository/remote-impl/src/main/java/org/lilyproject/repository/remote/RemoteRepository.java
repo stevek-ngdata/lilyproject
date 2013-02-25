@@ -66,7 +66,6 @@ public class RemoteRepository extends BaseRepository {
 
     @Override
     public void close() throws IOException {
-        Closer.close(typeManager);
         Closer.close(client);
     }
 
