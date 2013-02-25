@@ -36,7 +36,7 @@ public class ListTablesCli extends BaseTableCliTool {
         if (tableNames.isEmpty()) {
             System.out.println("No repository tables found");
         } else {
-            System.out.printf("Number of indexes: %d\n", tableNames.size());
+            System.out.printf("Number of tables: %d\n", tableNames.size());
             for (String tableName : tableNames) {
                 System.out.println("    " + tableName);
             }
