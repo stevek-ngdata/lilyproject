@@ -15,10 +15,12 @@
  */
 package org.lilyproject.rest;
 
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -31,10 +33,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.JsonNodeFactory;
+import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.RepositoryTableManager;
-import org.lilyproject.util.json.JsonFormat;
+import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
+import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path("table")
@@ -52,13 +55,9 @@ public class TableResource {
      */
     @GET
     @Produces("application/json")
-    public String get(@Context UriInfo uriInfo) {
+    public List<RepositoryTable> get(@Context UriInfo uriInfo) {
         try {
-            ArrayNode array = JsonNodeFactory.instance.arrayNode();
-            for (String tableName : tableManager.getTableNames()) {
-                array.add(tableName);
-            }
-            return JsonFormat.serializeAsString(array);
+            return tableManager.getTables();
         } catch (Exception e) {
             throw new ResourceException("Error getting repository tables", e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
@@ -84,11 +83,28 @@ public class TableResource {
 
     // TODO Allow providing split information
     @POST
-    @Path("{name}")
     @Consumes("application/json")
-    public Response createTable(@PathParam("name") String tableName) {
+    public Response createTable(ObjectNode descriptorJson) {
         try {
-            tableManager.createTable(tableName);
+            if (!descriptorJson.has("name")) {
+                throw new ResourceException("Name must be included in POST body", BAD_REQUEST.getStatusCode());
+            }
+            String tableName = descriptorJson.get("name").asText();
+            String keyPrefix = null;
+            TableCreateDescriptor descriptor = null;
+            if (descriptorJson.has("keyPrefix")) {
+                keyPrefix = descriptorJson.get("keyPrefix").asText();
+            }
+            if (descriptorJson.has("splitKeys")) {
+                descriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys(tableName, keyPrefix, descriptorJson.get("splitKeys").asText());
+            } else
+            
+            if (descriptorJson.has("numRegions")) {
+               descriptor = TableCreateDescriptorImpl.createInstance(tableName, keyPrefix, descriptorJson.get("numRegions").asInt());
+            } else {
+                descriptor = TableCreateDescriptorImpl.createInstance(tableName);
+            }
+            tableManager.createTable(descriptor);
             return Response.ok().build();
         } catch (Exception e) {
             throw new ResourceException("Error creating table", e, INTERNAL_SERVER_ERROR.getStatusCode());

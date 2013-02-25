@@ -23,7 +23,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.RepositoryTableManager;
-import org.lilyproject.util.hbase.TableConfig;
+import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
+import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 
 /**
  * Command-line utility for creating new record tables in Lily.
@@ -35,34 +36,22 @@ public class CreateTableCli extends BaseTableCliTool {
     private Option splitKeyPrefixOpt;
     private Option splitKeysOpt;
 
-    private String tableName;
-    private TableConfig tableConfig;
+    private TableCreateDescriptor createDescriptor;
 
     @SuppressWarnings("static-access")
     public CreateTableCli() {
         tableNameOpt = OptionBuilder.withArgName("table").hasArg().withDescription("Name of the table to be created").withLongOpt(
                 "table").create("t");
 
-        regionCountOpt = OptionBuilder
-                            .withArgName("regions")
-                            .hasArg()
-                            .withDescription("Number of initial regions to create")
-                            .withLongOpt("regions")
-                            .create("c");
+        regionCountOpt = OptionBuilder.withArgName("regions").hasArg().withDescription(
+                "Number of initial regions to create").withLongOpt("regions").create("c");
 
-        splitKeyPrefixOpt = OptionBuilder
-                            .withArgName("prefix")
-                            .hasArg()
-                            .withDescription("Key prefix to append to each region split")
-                            .withLongOpt("prefix")
-                            .create("p");
+        splitKeyPrefixOpt = OptionBuilder.withArgName("prefix").hasArg().withDescription(
+                "Key prefix to append to each region split").withLongOpt("prefix").create("p");
 
-        splitKeysOpt = OptionBuilder
-                            .withArgName("keys")
-                            .hasArg()
-                            .withDescription("Comma-separated list of split keys to be used for pre-creating region splits")
-                            .withLongOpt("keys")
-                            .create("k");
+        splitKeysOpt = OptionBuilder.withArgName("keys").hasArg().withDescription(
+                "Comma-separated list of split keys to be used for pre-creating region splits").withLongOpt("keys").create(
+                "k");
 
     }
 
@@ -71,17 +60,15 @@ public class CreateTableCli extends BaseTableCliTool {
         return "lily-create-table";
     }
 
-
-    
     @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
-        
+
         options.add(tableNameOpt);
         options.add(regionCountOpt);
         options.add(splitKeyPrefixOpt);
         options.add(splitKeysOpt);
-        
+
         return options;
     }
 
@@ -97,7 +84,7 @@ public class CreateTableCli extends BaseTableCliTool {
             return 1;
         }
 
-        tableName = cmd.getOptionValue(tableNameOpt.getOpt());
+        String tableName = cmd.getOptionValue(tableNameOpt.getOpt());
 
         int regionCount = -1;
         if (cmd.hasOption(regionCountOpt.getOpt())) {
@@ -109,36 +96,41 @@ public class CreateTableCli extends BaseTableCliTool {
             }
         }
 
-        byte[] splitKeyPrefix = null;
+        String splitKeyPrefix = null;
         if (cmd.hasOption(splitKeyPrefixOpt.getOpt())) {
-            splitKeyPrefix = Bytes.toBytesBinary(cmd.getOptionValue(splitKeyPrefixOpt.getOpt()));
+            splitKeyPrefix = cmd.getOptionValue(splitKeyPrefixOpt.getOpt());
         }
 
         String splitKeys = null;
         if (cmd.hasOption(splitKeysOpt.getOpt())) {
             splitKeys = cmd.getOptionValue(splitKeysOpt.getOpt());
         }
-        
+
         if (regionCount != -1 && splitKeys != null) {
             System.err.println("Region count and split keys cannot be combined, region count will be ignored");
         }
-        
-        tableConfig = new TableConfig(regionCount, splitKeys, splitKeyPrefix);
 
+        if (splitKeys != null) {
+            createDescriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys(tableName, splitKeyPrefix, splitKeys);
+        } else if (regionCount != -1) {
+            createDescriptor = TableCreateDescriptorImpl.createInstance(tableName, splitKeyPrefix, regionCount);
+        } else {
+            createDescriptor = TableCreateDescriptorImpl.createInstance(tableName);
+        }
         return 0;
     }
 
     @Override
     protected int execute(RepositoryTableManager tableManager) throws InterruptedException, IOException {
-        byte[][] splitKeys = tableConfig.getSplitKeys();
+        byte[][] splitKeys = createDescriptor.getSplitKeys();
         int numRegions = splitKeys != null ? splitKeys.length + 1 : 1;
-        System.out.printf("Creating table '%s' with %d region%s...\n", tableName, numRegions, numRegions == 1 ? ""
-                : "s");
-        tableManager.createTable(tableName, splitKeys);
-        System.out.printf("Table '%s' created\n", tableName);
+        System.out.printf("Creating table '%s' with %d region%s...\n", createDescriptor.getName(), numRegions,
+                numRegions == 1 ? "" : "s");
+        tableManager.createTable(createDescriptor);
+        System.out.printf("Table '%s' created\n", createDescriptor.getName());
         return 0;
     }
-    
+
     public static void main(String[] args) {
         new CreateTableCli().start(args);
     }

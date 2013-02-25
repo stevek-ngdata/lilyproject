@@ -23,6 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -39,16 +40,17 @@ public class RepositoryTableManagerImpl implements RepositoryTableManager {
     }
 
     @Override
-    public void createTable(String tableName) throws InterruptedException, IOException {
-        createTable(tableName, null);
+    public RepositoryTable createTable(String tableName) throws InterruptedException, IOException {
+        return createTable(TableCreateDescriptorImpl.createInstance(tableName));
     }
     
     @Override
-    public void createTable(String tableName, byte[][] splitKeys) throws InterruptedException, IOException {
-        if (tableExists(tableName)) {
-            throw new IllegalArgumentException(String.format("Table '%s' already exists", tableName));
+    public RepositoryTable createTable(TableCreateDescriptor descriptor) throws InterruptedException, IOException {
+        if (tableExists(descriptor.getName())) {
+            throw new IllegalArgumentException(String.format("Table '%s' already exists", descriptor.getName()));
         }
-        LilyHBaseSchema.getRecordTable(tableFactory, tableName, splitKeys);
+        LilyHBaseSchema.getRecordTable(tableFactory, descriptor.getName(), descriptor.getSplitKeys());
+        return new RepositoryTableImpl(descriptor.getName());
     }
 
     @Override
@@ -75,19 +77,19 @@ public class RepositoryTableManagerImpl implements RepositoryTableManager {
     }
 
     @Override
-    public List<String> getTableNames() throws InterruptedException, IOException {
+    public List<RepositoryTable> getTables() throws InterruptedException, IOException {
         HBaseAdmin hbaseAdmin = new HBaseAdmin(configuration);
-        List<String> recordTableNames = Lists.newArrayList();
+        List<RepositoryTable> recordTables = Lists.newArrayList();
         try {
             for (HTableDescriptor tableDescriptor : hbaseAdmin.listTables()) {
                 if (LilyHBaseSchema.isRecordTableDescriptor(tableDescriptor)) {
-                    recordTableNames.add(tableDescriptor.getNameAsString());
+                    recordTables.add(new RepositoryTableImpl(tableDescriptor.getNameAsString()));
                 }
             }
         } finally {
             hbaseAdmin.close();
         }
-        return recordTableNames;
+        return recordTables;
     }
 
     @Override
