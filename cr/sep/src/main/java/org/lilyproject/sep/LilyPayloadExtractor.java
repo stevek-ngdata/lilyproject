@@ -15,15 +15,20 @@
  */
 package org.lilyproject.sep;
 
-import com.ngdata.sep.impl.PayloadExtractor;
+import com.ngdata.sep.PayloadExtractor;
+import org.apache.hadoop.hbase.KeyValue;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
-public class LilyPayloadExtractor extends PayloadExtractor {
+public class LilyPayloadExtractor implements PayloadExtractor {
 
-    public LilyPayloadExtractor() {
-        super(Table.RECORD.bytes, RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes);
+    @Override
+    public byte[] extractPayload(byte[] tableName, KeyValue keyValue) {
+        if (keyValue.matchingColumn(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes)){
+            return keyValue.getValue();
+        } else {
+            return null;
+        }
     }
-
+    
 }
