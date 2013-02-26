@@ -38,6 +38,8 @@ import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdRecordScanner;
 import org.lilyproject.repository.api.InvalidRecordException;
 import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.Metadata;
+import org.lilyproject.repository.api.MetadataBuilder;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -3081,6 +3083,299 @@ public abstract class AbstractRepositoryTest {
             assertEquals(variant, scanner.next().getId());
             assertNull(scanner.next()); // it doesn't match the other variants
             scanner.close();
+        }
+    }
+
+    @Test
+    public void testMetadataSimpleStoreLoad() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "field value");
+
+        Metadata metadata = new MetadataBuilder().value("field1", "value1").value("field2", "value2").build();
+
+        record.setMetadata(fieldType1.getName(), metadata);
+        assertEquals(2, record.getMetadataMap().get(fieldType1.getName()).getMap().size());
+
+        record = repository.create(record);
+
+        // Check state of returned record object
+        Metadata returnedMetadata = record.getMetadata(fieldType1.getName());
+        assertNotNull(returnedMetadata);
+        assertEquals(2, returnedMetadata.getMap().size());
+        assertEquals("value1", returnedMetadata.get("field1"));
+        assertEquals("value2", returnedMetadata.get("field2"));
+
+        // Check state when freshly reading record
+        record = repository.read(record.getId());
+
+        assertEquals(1, record.getMetadataMap().size());
+        Metadata readMetadata = record.getMetadataMap().get(fieldType1.getName());
+        assertNotNull(readMetadata);
+        assertEquals(2, readMetadata.getMap().size());
+        assertEquals("value1", readMetadata.get("field1"));
+        assertEquals("value2", readMetadata.get("field2"));
+    }
+
+    @Test
+    public void testMetadataPartialUpdate() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "field value");
+
+        Metadata metadata = new MetadataBuilder()
+                .value("field1", "value1")
+                .value("field2", "value2")
+                .value("field3", "value3").build();
+
+        record.setMetadata(fieldType1.getName(), metadata);
+        record = repository.create(record);
+        RecordId recordId = record.getId();
+
+        // Now update metadata:
+        //   - field1 is left unchanged and not specified
+        //   - field2 is updated
+        //   - field3 is deleted
+        //   - a new field4 is added
+        metadata = new MetadataBuilder()
+                .value("field2", "value2a")
+                .delete("field3")
+                .value("field4", "value4").build();
+
+        record = repository.newRecord(recordId);
+        record.setMetadata(fieldType1.getName(), metadata);
+        record = repository.update(record);
+
+        // Check state of returned record object
+        Metadata returnedMetadata = record.getMetadata(fieldType1.getName());
+        assertNotNull(returnedMetadata);
+        assertEquals(2, returnedMetadata.getMap().size());
+        assertEquals("value2a", returnedMetadata.get("field2"));
+        assertEquals("value4", returnedMetadata.get("field4"));
+        assertEquals(0, returnedMetadata.getFieldsToDelete().size());
+
+        // Check state when freshly reading record
+        record = repository.read(record.getId());
+
+        Metadata readMetadata = record.getMetadataMap().get(fieldType1.getName());
+        assertNotNull(readMetadata);
+        assertEquals(3, readMetadata.getMap().size());
+        assertEquals("value1", readMetadata.get("field1"));
+        assertEquals("value2a", readMetadata.get("field2"));
+        assertEquals("value4", readMetadata.get("field4"));
+    }
+
+    @Test
+    public void testMetadataOnUndefinedField() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "field value");
+        // Set metadata on a field which does not have a value, such metadata should be ignored
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder().value("field1", "value1").build());
+
+        record = repository.create(record);
+
+        // Check state of returned record object
+        assertNull(record.getMetadata(fieldType1.getName()));
+        assertNull(record.getMetadata(fieldType2.getName()));
+        assertEquals(0, record.getMetadataMap().size());
+
+        // Check state of freshly read record
+        record = repository.read(record.getId());
+        assertNull(record.getMetadata(fieldType1.getName()));
+        assertNull(record.getMetadata(fieldType2.getName()));
+        assertEquals(0, record.getMetadataMap().size());
+    }
+
+    @Test
+    public void testMetadataVersionedField() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType2.getName(), new Integer(5));
+
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder().value("field1", "value1").build());
+        record = repository.create(record);
+
+        record = repository.read(record.getId());
+
+        Metadata readMetadata = record.getMetadataMap().get(fieldType2.getName());
+        assertNotNull(readMetadata);
+        assertEquals(1, readMetadata.getMap().size());
+        assertEquals("value1", readMetadata.get("field1"));
+    }
+
+    @Test
+    public void testMetadataUpdateFieldAndMetadata() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType2.getName(), new Integer(5));
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder()
+                .value("field1", "value1")
+                .value("field2", "value2").build());
+        record = repository.create(record);
+
+        // do update to field and metadata
+        record.setField(fieldType2.getName(), new Integer(6));
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder()
+                .value("field1", "value1a")
+                .value("field3", "value3").build()); // note that we leave field2 unchanged, this tests the merging
+                                                     // of old and new metadata
+        record = repository.update(record);
+
+        // validate state of returned record object
+        assertEquals(2L, record.getVersion().longValue());
+        assertEquals(new Integer(6), record.getField(fieldType2.getName()));
+
+        Metadata metadata = record.getMetadataMap().get(fieldType2.getName());
+        assertNotNull(metadata);
+        assertEquals(2, metadata.getMap().size());
+        assertEquals("value1a", metadata.get("field1"));
+        assertEquals("value3", metadata.get("field3"));
+
+        // validate state of read record
+        record = repository.read(record.getId());
+        assertEquals(2L, record.getVersion().longValue());
+        assertEquals(new Integer(6), record.getField(fieldType2.getName()));
+
+        metadata = record.getMetadataMap().get(fieldType2.getName());
+        assertNotNull(metadata);
+        assertEquals(3, metadata.getMap().size());
+        assertEquals("value1a", metadata.get("field1"));
+        assertEquals("value2", metadata.get("field2"));
+        assertEquals("value3", metadata.get("field3"));
+    }
+
+    @Test
+    public void testMetadataUpdateFieldOnly() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType2.getName(), new Integer(5));
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder().value("field1", "value1").build());
+        record = repository.create(record);
+        RecordId recordId = record.getId();
+
+        // update only field value, metadata should not be lost be inherited from previous record state
+        record = repository.newRecord();
+        record.setId(recordId);
+        record.setField(fieldType2.getName(), new Integer(7));
+        record = repository.update(record);
+
+        // validate state of read record
+        record = repository.read(record.getId());
+        assertEquals(2L, record.getVersion().longValue());
+        assertEquals(new Integer(7), record.getField(fieldType2.getName()));
+
+        Metadata readMetadata = record.getMetadataMap().get(fieldType2.getName());
+        assertNotNull(readMetadata);
+        assertEquals(1, readMetadata.getMap().size());
+        assertEquals("value1", readMetadata.get("field1"));
+    }
+
+    @Test
+    public void testMetadataUpdateMetadataOnly() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType2.getName(), new Integer(5));
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder()
+                .value("field1", "value1")
+                .value("field2", "value2").build());
+        record = repository.create(record);
+        RecordId recordId = record.getId();
+
+        // Update only metadata -- should create new version
+        record = repository.newRecord();
+        record.setId(recordId);
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder().value("field1", "value1a").build());
+        record = repository.update(record);
+
+        Metadata metadata;
+
+        // validate state of returned record
+        assertEquals(2L, record.getVersion().longValue());
+        metadata = record.getMetadataMap().get(fieldType2.getName());
+        assertNotNull(metadata);
+        assertEquals(1, metadata.getMap().size());
+        assertEquals("value1a", metadata.get("field1"));
+
+        // validate state of read record
+        record = repository.read(record.getId());
+        assertEquals(2L, record.getVersion().longValue());
+        metadata = record.getMetadataMap().get(fieldType2.getName());
+        assertNotNull(metadata);
+        assertEquals(2, metadata.getMap().size());
+        assertEquals("value1a", metadata.get("field1"));
+        assertEquals("value2", metadata.get("field2"));
+    }
+
+    @Test
+    public void testMetadataNoUpdate() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType2.getName(), new Integer(1));
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder().value("field1", "value1").build());
+        record = repository.create(record);
+
+        assertEquals(1, record.getVersion().longValue());
+        assertEquals(1, record.getMetadata(fieldType2.getName()).getMap().size());
+
+        // resubmit the same record object, this should not cause an update
+        record = repository.update(record);
+        assertEquals(1, record.getVersion().longValue());
+
+        // Delete a non-existing field from the metadata, this should also not cause an update
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder().delete("field2").build());
+        record = repository.update(record);
+        assertEquals(1, record.getVersion().longValue());
+
+        // Once more with an empty metadata object
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder().build());
+        record = repository.update(record);
+        assertEquals(1, record.getVersion().longValue());
+
+        // But if we do a real update, we should get a new version
+        record.setMetadata(fieldType2.getName(), new MetadataBuilder().value("field1", "value1a").build());
+        record = repository.update(record);
+        assertEquals(2, record.getVersion().longValue());
+    }
+
+    @Test
+    public void testMetadataOnDeletedField() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "field value");
+        record.setField(fieldType2.getName(), new Integer(1));
+        record.setMetadata(fieldType1.getName(), new MetadataBuilder().value("field1", "value1").build());
+        record = repository.create(record);
+        RecordId recordId = record.getId();
+
+        record = repository.newRecord(recordId);
+        record.delete(fieldType1.getName(), true);
+        record.setMetadata(fieldType1.getName(), new MetadataBuilder().value("field1", "value1a").build());
+        record = repository.update(record);
+
+        // validate state of returned record
+        assertFalse(record.hasField(fieldType1.getName()));
+        assertNull(record.getMetadata(fieldType1.getName()));
+
+        // validate state of read record
+        record = repository.read(recordId);
+        assertFalse(record.hasField(fieldType1.getName()));
+        assertNull(record.getMetadata(fieldType1.getName()));
+        assertNotNull(record.getField(fieldType2.getName()));
+    }
+
+    @Test
+    public void testMetadataNotSupportedOnVersionedMutableFields() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "field value");
+        record.setField(fieldType3.getName(), Boolean.TRUE);
+        record.setMetadata(fieldType3.getName(), new MetadataBuilder().value("field1", "value1").build());
+        try {
+            record = repository.create(record);
+            fail("Expected an exception trying to set metadata on a versioned-mutable field");
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains("Field metadata is not supported for versioned-mutable fields."));
         }
     }
 }

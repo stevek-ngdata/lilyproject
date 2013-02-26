@@ -222,6 +222,21 @@ public class UnmodifiableRecord implements Record, Cloneable {
     public void setAttributes(Map<String, String> attributes) {
         throw new RuntimeException(MSG);
     }
-    
-    
+
+    @Override
+    public Metadata getMetadata(QName fieldName) {
+        // Metadata objects are immutable
+        return delegate.getMetadata(fieldName);
+    }
+
+    @Override
+    public void setMetadata(QName fieldName, Metadata metadata) {
+        throw new RuntimeException(MSG);
+    }
+
+    @Override
+    public Map<QName, Metadata> getMetadataMap() {
+        // Metadata objects are immutable
+        return Collections.unmodifiableMap(delegate.getMetadataMap());
+    }
 }

@@ -323,4 +323,22 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
         decode(true);
         delegate.setAttributes(attributes);        
     }
+
+    @Override
+    public Metadata getMetadata(QName fieldName) {
+        decode(false);
+        return delegate.getMetadata(fieldName);
+    }
+
+    @Override
+    public void setMetadata(QName fieldName, Metadata metadata) {
+        decode(true);
+        delegate.setMetadata(fieldName, metadata);
+    }
+
+    @Override
+    public Map<QName, Metadata> getMetadataMap() {
+        decode(true);
+        return delegate.getMetadataMap();
+    }
 }

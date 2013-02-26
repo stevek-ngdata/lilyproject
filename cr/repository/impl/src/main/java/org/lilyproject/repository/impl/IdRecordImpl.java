@@ -282,6 +282,19 @@ public class IdRecordImpl implements IdRecord, Cloneable {
     public void setAttributes(Map<String, String> attributes) {
         record.setAttributes(attributes);
     }
-    
-    
+
+    @Override
+    public Metadata getMetadata(QName fieldName) {
+        return record.getMetadata(fieldName);
+    }
+
+    @Override
+    public void setMetadata(QName fieldName, Metadata metadata) {
+        record.setMetadata(fieldName, metadata);
+    }
+
+    @Override
+    public Map<QName, Metadata> getMetadataMap() {
+        return record.getMetadataMap();
+    }
 }

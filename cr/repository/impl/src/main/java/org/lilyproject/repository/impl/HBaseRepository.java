@@ -18,7 +18,6 @@ package org.lilyproject.repository.impl;
 import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_ID_QUALIFIERS;
 import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_VERSION_QUALIFIERS;
 import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,6 +26,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -66,6 +66,8 @@ import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdentityRecordStack;
 import org.lilyproject.repository.api.InvalidRecordException;
+import org.lilyproject.repository.api.Metadata;
+import org.lilyproject.repository.api.MetadataBuilder;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -88,6 +90,7 @@ import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
@@ -103,6 +106,8 @@ public class HBaseRepository extends BaseRepository {
     private List<RecordUpdateHook> updateHooks = Collections.emptyList();
 
     private final Log log = LogFactory.getLog(getClass());
+
+    private static final Object METADATA_ONLY_UPDATE = new Object();
 
     public HBaseRepository(RepositoryManager repositoryManager, HTableInterface hbaseTable,
             BlobManager blobManager) throws IOException, InterruptedException {
@@ -278,7 +283,7 @@ public class HBaseRepository extends BaseRepository {
                 blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
 
                 newRecord.setResponseStatus(ResponseStatus.CREATED);
-                newRecord.getFieldsToDelete().clear();
+                removeUnidirectionalState(newRecord);
                 return newRecord;
 
             } catch (IOException e) {
@@ -294,6 +299,33 @@ public class HBaseRepository extends BaseRepository {
             }
         } finally {
             metrics.report(Action.CREATE, System.currentTimeMillis() - before);
+        }
+    }
+
+    /**
+     * Removes state from the record which was present on submit, but shouldn't be present in the record
+     * returned to the client.
+     */
+    private void removeUnidirectionalState(Record record) {
+        record.getFieldsToDelete().clear();
+
+        // Clearing the fieldsToDelete of the metadata's is a bit more complex since those objects are immutable
+        Map<QName, Metadata> changedMetadata = null;
+        for (Map.Entry<QName, Metadata> metadataEntry : record.getMetadataMap().entrySet()) {
+            if (metadataEntry.getValue().getFieldsToDelete().size() > 0) {
+                MetadataBuilder builder = new MetadataBuilder();
+                for (Map.Entry<String, Object> entry : metadataEntry.getValue().getMap().entrySet()) {
+                    builder.object(entry.getKey(), entry.getValue());
+                }
+                if (changedMetadata == null) {
+                    changedMetadata = new HashMap<QName, Metadata>();
+                }
+                changedMetadata.put(metadataEntry.getKey(), builder.build());
+            }
+        }
+
+        if (changedMetadata != null) {
+            record.getMetadataMap().putAll(changedMetadata);
         }
     }
 
@@ -416,7 +448,7 @@ public class HBaseRepository extends BaseRepository {
                 newRecord.setResponseStatus(ResponseStatus.UP_TO_DATE);
             }
 
-            newRecord.getFieldsToDelete().clear();
+            removeUnidirectionalState(newRecord);
             return newRecord;
 
         } catch (IOException e) {
@@ -549,8 +581,9 @@ public class HBaseRepository extends BaseRepository {
 
         Map<QName, Object> fields = getFieldsToUpdate(record);
 
-        changedScopes.addAll(calculateUpdateFields(record, fields, originalFields, null, version, put, recordEvent,
-                referencedBlobs, unReferencedBlobs, false, fieldTypes));
+        changedScopes.addAll(calculateUpdateFields(record, fields, record.getMetadataMap(), originalFields,
+                originalRecord.getMetadataMap(), null, version, put, recordEvent, referencedBlobs, unReferencedBlobs,
+                false, fieldTypes));
         for (BlobReference referencedBlob : referencedBlobs) {
             referencedBlob.setRecordId(record.getId());
         }
@@ -601,13 +634,69 @@ public class HBaseRepository extends BaseRepository {
 
     // Checks for each field if it is different from its previous value and indeed needs to be updated.
     private Set<Scope> calculateUpdateFields(Record parentRecord, Map<QName, Object> fields,
-                                             Map<QName, Object> originalFields,
-                                             Map<QName, Object> originalNextFields, Long version, Put put,
-                                             RecordEvent recordEvent,
-                                             Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs,
-                                             boolean mutableUpdate,
-                                             FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
+            Map<QName, Metadata> fieldMetadata, Map<QName, Object> originalFields,
+            Map<QName, Metadata> originalFieldMetadata, Map<QName, Object> originalNextFields, Long version, Put put,
+            RecordEvent recordEvent, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs,
+            boolean mutableUpdate, FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
+
         Set<Scope> changedScopes = EnumSet.noneOf(Scope.class);
+
+        // In the below algorithm, the following facts are good to know about metadata:
+        //  - there can only be field metadata when there is a field value
+        //  - metadata is updated in the same way as fields: only updated values need to be specified, and deletes
+        //    are explicit (Metadata.deletedFields).
+        //  - it is possible/supported that only metadata changes, and that the field value stayed the same. Thus it
+        //    can be that a Record object contains metadata for a field but no field value (because that stays
+        //    the same). For versioned fields, this causes a new version.
+
+        // Map containing the actual new metadata that needs to be applied: thus the merged view of the old
+        // and new metadata. In case the metadata has not changed, there will be not an entry in here, and
+        // the metadata from the old field needs to be copied.
+        Map<QName, Metadata> newMetadata = new HashMap<QName, Metadata>();
+
+        Iterator<Entry<QName, Metadata>> fieldMetadataIt = fieldMetadata.entrySet().iterator();
+        while (fieldMetadataIt.hasNext()) {
+            Entry<QName, Metadata> entry = fieldMetadataIt.next();
+            // If it's not a deleted field
+            if (fields.get(entry.getKey()) != (Object)DELETE_MARKER) { // identity equality ok
+                // If the metadata has changed
+                if (isChanged(entry.getValue(), originalFieldMetadata.get(entry.getKey()))) {
+                    boolean needMetadata;
+
+                    // And the field itself didn't change
+                    if (!fields.containsKey(entry.getKey())) {
+                        // And if the field existed before (you can't add metadata without having a field value)
+                        if (originalFields.containsKey(entry.getKey())) {
+                            // Then add the field in the fields map so that it will be treated in the loop that
+                            // handles updated field values below
+                            fields.put(entry.getKey(), METADATA_ONLY_UPDATE);
+                            needMetadata = true;
+                        } else {
+                            // No new or old field value: can't have metadata for a field without a value
+                            needMetadata = false;
+                            // Remove this invalid metadata from the record object (the idea being that the record
+                            // object returned to the user should correspond to persisted state).
+                            fieldMetadataIt.remove();
+                        }
+                    } else {
+                        // Both field & metadata changed
+                        needMetadata = true;
+                    }
+
+                    if (needMetadata) {
+                        // Now that we've done all the checks to determine we need the metadata, calculate it
+                        newMetadata.put(entry.getKey(),
+                                mergeMetadata(entry.getValue(), originalFieldMetadata.get(entry.getKey())));
+                    }
+                }
+            } else {
+                // Field is deleted.
+                // Remove this invalid metadata from the record object (the idea being that the record
+                // object returned to the user should correspond to persisted state).
+                fieldMetadataIt.remove();
+            }
+        }
+
         for (Entry<QName, Object> field : fields.entrySet()) {
             QName fieldName = field.getKey();
             Object newValue = field.getValue();
@@ -616,24 +705,39 @@ public class HBaseRepository extends BaseRepository {
             if (!(
                     ((newValue == null) && (originalValue == null))         // Don't update if both are null
                             || (isDeleteMarker(newValue) && fieldIsNewOrDeleted)    // Don't delete if it doesn't exist
-                            ||
-                            (newValue.equals(originalValue)))) {                 // Don't update if they didn't change
+                            || (newValue.equals(originalValue)))     // Don't update if they didn't change
+                    || newMetadata.containsKey(field.getKey())) { // But do update if the metadata changed
                 FieldTypeImpl fieldType = (FieldTypeImpl) fieldTypes.getFieldType(fieldName);
                 Scope scope = fieldType.getScope();
 
-                // Check if the newValue contains blobs
-                Set<BlobReference> newReferencedBlobs = getReferencedBlobs(fieldType, newValue);
-                referencedBlobs.addAll(newReferencedBlobs);
+                boolean metadataOnlyUpdate = false;
+                if (newValue == METADATA_ONLY_UPDATE) {
+                    // The metadata was updated, but the field itself not
+                    metadataOnlyUpdate = true;
+                    newValue = originalFields.get(fieldName);
+                }
 
-                byte[] encodedFieldValue = encodeFieldValue(parentRecord, fieldType, newValue);
+                // Either use new or inherit old metadata (newMetadata map contains the merged metadata)
+                Metadata metadata = newMetadata.get(fieldName);
+                if (metadata == null) {
+                    metadata = originalFieldMetadata.get(fieldName);
+                }
 
-                // Check if the previousValue contained blobs which should be deleted since they are no longer used
-                // In case of a mutable update, it is checked later if no other versions use the blob before deciding to delete it
-                if (Scope.NON_VERSIONED.equals(scope) || (mutableUpdate && Scope.VERSIONED_MUTABLE.equals(scope))) {
-                    if (originalValue != null) {
-                        Set<BlobReference> previouslyReferencedBlobs = getReferencedBlobs(fieldType, originalValue);
-                        previouslyReferencedBlobs.removeAll(newReferencedBlobs);
-                        unReferencedBlobs.addAll(previouslyReferencedBlobs);
+                byte[] encodedFieldValue = encodeFieldValue(parentRecord, fieldType, newValue, metadata);
+
+                if (!metadataOnlyUpdate) {
+                    // Check if the newValue contains blobs
+                    Set<BlobReference> newReferencedBlobs = getReferencedBlobs(fieldType, newValue);
+                    referencedBlobs.addAll(newReferencedBlobs);
+
+                    // Check if the previousValue contained blobs which should be deleted since they are no longer used
+                    // In case of a mutable update, it is checked later if no other versions use the blob before deciding to delete it
+                    if (Scope.NON_VERSIONED.equals(scope) || (mutableUpdate && Scope.VERSIONED_MUTABLE.equals(scope))) {
+                        if (originalValue != null) {
+                            Set<BlobReference> previouslyReferencedBlobs = getReferencedBlobs(fieldType, originalValue);
+                            previouslyReferencedBlobs.removeAll(newReferencedBlobs);
+                            unReferencedBlobs.addAll(previouslyReferencedBlobs);
+                        }
                     }
                 }
 
@@ -659,15 +763,87 @@ public class HBaseRepository extends BaseRepository {
         return changedScopes;
     }
 
-    private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue)
+    /**
+     * Determines if the new metadata has changed compared to the old metadata.
+     */
+    private boolean isChanged(Metadata newMetadata, Metadata oldMetadata) {
+        if (oldMetadata == null)
+            return true;
+
+        // Metadata has not changed if:
+        //   - all KV's in the new metadata are also in the old metadata
+        //   - any deletes in the new metadata refer to fields that didn't exist in the old metadata
+
+        for (Entry<String, Object> entry : newMetadata.getMap().entrySet()) {
+            Object oldValue = oldMetadata.get(entry.getKey());
+            if (!ObjectUtils.safeEquals(oldValue, entry.getValue())) {
+                return true;
+            }
+        }
+
+        for (String key : newMetadata.getFieldsToDelete()) {
+            if (oldMetadata.contains(key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Merges old & new metadata (metadata supports partial updating just like records).
+     *
+     * <p>Does not modify its arguments, but might return one of them.</p>
+     */
+    private Metadata mergeMetadata(Metadata newMetadata, Metadata oldMetadata) {
+        if (oldMetadata == null || oldMetadata.isEmpty()) {
+            return newMetadata;
+        }
+
+        if (newMetadata == null || newMetadata.isEmpty()) {
+            return oldMetadata;
+        }
+
+        MetadataBuilder result = new MetadataBuilder();
+
+        // Run over the old values
+        for (Entry<String, Object> entry : oldMetadata.getMap().entrySet()) {
+            // If it's not deleted
+            if (!newMetadata.getFieldsToDelete().contains(entry.getKey())) {
+                // If it's not updated
+                if (!newMetadata.contains(entry.getKey())) {
+                    result.object(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+        // Run over the new values
+        for (Entry<String, Object> entry : newMetadata.getMap().entrySet()) {
+            result.object(entry.getKey(), entry.getValue());
+        }
+
+        return result.build();
+    }
+
+    private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue, Metadata metadata)
             throws RepositoryException, InterruptedException {
         if (isDeleteMarker(fieldValue))
-            return DELETE_MARKER;
+            return FieldFlags.getAsArray(false);
         ValueType valueType = fieldType.getValueType();
 
         DataOutput dataOutput = new DataOutputImpl();
-        dataOutput.writeByte(EXISTS_FLAG);
+        boolean hasMetadata = metadata != null && !metadata.isEmpty();
+
+        dataOutput.writeByte(FieldFlags.get(true, hasMetadata ? MetadataSerDeser.ENCODING_VERSION : FieldFlags.NO_METADATA));
         valueType.write(fieldValue, dataOutput, new IdentityRecordStack(parentRecord));
+
+        if (hasMetadata) {
+            if (fieldType.getScope() == Scope.VERSIONED_MUTABLE) {
+                throw new RuntimeException("Field metadata is not supported for versioned-mutable fields.");
+            }
+            MetadataSerDeser.write(metadata, dataOutput);
+        }
+
         return dataOutput.toByteArray();
     }
 
@@ -722,8 +898,8 @@ public class HBaseRepository extends BaseRepository {
                 hook.beforeUpdate(record, originalRecord, this, fieldTypes, recordEvent);
             }
 
-            Set<Scope> changedScopes = calculateUpdateFields(record, fields, originalFields, originalNextFields,
-                    version, put,
+            Set<Scope> changedScopes = calculateUpdateFields(record, fields, record.getMetadataMap(), originalFields,
+                    originalRecord.getMetadataMap(), originalNextFields, version, put,
                     recordEvent, referencedBlobs, unReferencedBlobs, true, fieldTypes);
             for (BlobReference referencedBlob : referencedBlobs) {
                 referencedBlob.setRecordId(recordId);
@@ -829,7 +1005,7 @@ public class HBaseRepository extends BaseRepository {
                     e);
         }
 
-        newRecord.getFieldsToDelete().clear();
+        removeUnidirectionalState(newRecord);
         return newRecord;
     }
 
@@ -858,7 +1034,7 @@ public class HBaseRepository extends BaseRepository {
         Object originalNextValue = originalNextFields.get(fieldName);
         if ((originalValue == null && originalNextValue == null) || originalValue.equals(originalNextValue)) {
             FieldTypeImpl fieldType = (FieldTypeImpl) fieldTypes.getFieldType(fieldName);
-            byte[] encodedValue = encodeFieldValue(parentRecord, fieldType, originalValue);
+            byte[] encodedValue = encodeFieldValue(parentRecord, fieldType, originalValue, null);
             put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), version + 1, encodedValue);
         }
     }

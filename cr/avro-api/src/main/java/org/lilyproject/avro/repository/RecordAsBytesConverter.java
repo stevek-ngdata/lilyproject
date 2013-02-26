@@ -26,6 +26,7 @@ import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
@@ -37,6 +38,7 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.IdRecordImpl;
+import org.lilyproject.repository.impl.MetadataSerDeser;
 
 /**
  * (De)serialization of Record objects from/to bytes.
@@ -48,6 +50,8 @@ public class RecordAsBytesConverter {
     private static final byte NULL_MARKER = 0;
     private static final byte NOT_NULL_MARKER = 1;
     private static final int VERSION_1 = 1;
+    /** Version 2 adds metadata serialization. */
+    private static final int VERSION_2 = 2;
 
     public static final byte[] write(Record record, RepositoryManager repositoryManager)
             throws RepositoryException, InterruptedException {
@@ -59,7 +63,7 @@ public class RecordAsBytesConverter {
     public static final void write(Record record, DataOutput output, RepositoryManager repositoryManager)
             throws RepositoryException, InterruptedException {
         // Write serialization format version
-        output.writeShort(VERSION_1);
+        output.writeShort(VERSION_2);
 
         // Write ID or null
         writeNullOrBytes(record.getId() != null ? record.getId().toBytes() : null, output);
@@ -117,13 +121,25 @@ public class RecordAsBytesConverter {
 
         // Write response status or null
         writeNullOrVInt(record.getResponseStatus() != null ? record.getResponseStatus().ordinal() : null, output);
+
+        // Write metadata
+        Map<QName, Metadata> metadatas = record.getMetadataMap();
+        if (metadatas.size() > 0) {
+            output.writeVInt(metadatas.size());
+            for (Map.Entry<QName, Metadata> entry : metadatas.entrySet()) {
+                writeQName(entry.getKey(), output);
+                MetadataSerDeser.write(entry.getValue(), output);
+            }
+        } else {
+            output.writeVInt(0);
+        }
     }
 
     public static final Record read(DataInput input, RepositoryManager repositoryManager)
             throws RepositoryException, InterruptedException {
         // Read & check version
         int version = input.readShort();
-        if (version != VERSION_1) {
+        if (version != VERSION_1 && version != VERSION_2) {
             throw new RuntimeException("Unsupported record serialization version: " + version);
         }
 
@@ -175,6 +191,16 @@ public class RecordAsBytesConverter {
         Integer responseStatusOrdinal = readNullOrVInt(input);
         if (responseStatusOrdinal != null) {
             record.setResponseStatus(ResponseStatus.values()[responseStatusOrdinal]);
+        }
+
+        // Read metadata
+        if (version >= VERSION_2) {
+            size = input.readVInt();
+            for (int i = 0; i < size; i++) {
+                QName fieldName = readQName(input);
+                Metadata metadata = MetadataSerDeser.read(input);
+                record.setMetadata(fieldName, metadata);
+            }
         }
 
         return record;

@@ -28,10 +28,12 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
@@ -125,10 +127,13 @@ public class RecordDecoder {
                     Map.Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(versionToRead);
                     if (ceilingEntry != null) {
                         // Extract and decode the value of the field
-                        Pair<FieldType, Object> field =
+                        ExtractedField field =
                                 extractField(key, ceilingEntry.getValue(), readContext, fieldTypes);
                         if (field != null) {
-                            record.setField(field.getV1().getName(), field.getV2());
+                            record.setField(field.type.getName(), field.value);
+                            if (field.metadata != null) {
+                                record.setMetadata(field.type.getName(), field.metadata);
+                            }
                         }
                     }
                 }
@@ -211,7 +216,7 @@ public class RecordDecoder {
                     // between versions (sparse storage). Note that lastDecodedField can be null, in case of a field
                     // deletion marker
                     Long lastDecodedFieldVersion = null;
-                    Pair<FieldType, Object> lastDecodedField = null;
+                    ExtractedField lastDecodedField = null;
                     for (Long versionToRead : requestedVersions) {
                         Record record = records.get(versionToRead);
                         // Get the entry for the version (can be a cell with a lower version number if the field was
@@ -225,8 +230,11 @@ public class RecordDecoder {
                                 lastDecodedField = extractField(key, ceilingEntry.getValue(), null, fieldTypes);
                             }
                             if (lastDecodedField != null) {
-                                record.setField(lastDecodedField.getV1().getName(), lastDecodedField.getV2());
-                                scopes.get(versionToRead).add(lastDecodedField.getV1().getScope());
+                                record.setField(lastDecodedField.type.getName(), lastDecodedField.value);
+                                scopes.get(versionToRead).add(lastDecodedField.type.getScope());
+                                if (lastDecodedField.metadata != null) {
+                                    record.setMetadata(lastDecodedField.type.getName(), lastDecodedField.metadata);
+                                }
                             }
                         }
                     }
@@ -266,19 +274,48 @@ public class RecordDecoder {
         return new RecordImpl(recordId);
     }
 
-    private Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context,
+    private static class ExtractedField {
+        FieldType type;
+        Object value;
+        Metadata metadata;
+
+        public ExtractedField(FieldType type, Object value, Metadata metadata) {
+            this.type = type;
+            this.value = value;
+            this.metadata = metadata;
+        }
+    }
+
+    private ExtractedField extractField(byte[] key, byte[] prefixedValue, ReadContext context,
                                                  FieldTypes fieldTypes)
             throws RepositoryException, InterruptedException {
-        byte prefix = prefixedValue[0];
-        if (LilyHBaseSchema.DELETE_FLAG == prefix) {
+        byte flags = prefixedValue[0];
+        if (FieldFlags.isDeletedField(flags)) {
             return null;
         }
         FieldType fieldType = fieldTypes.getFieldType(new SchemaIdImpl(Bytes.tail(key, key.length - 1)));
         if (context != null)
             context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();
-        Object value = valueType.read(EncodingUtil.stripPrefix(prefixedValue));
-        return new Pair<FieldType, Object>(fieldType, value);
+
+        Metadata metadata = null;
+        int metadataSpace = 0; // space taken up by metadata (= metadata itself + length suffix)
+        int metadataEncodingVersion = FieldFlags.getFieldMetadataVersion(flags);
+        if (metadataEncodingVersion == 0) {
+            // there is no metadata
+        } else if (metadataEncodingVersion == 1) {
+            int metadataSize = Bytes.toInt(prefixedValue, prefixedValue.length - Bytes.SIZEOF_INT, Bytes.SIZEOF_INT);
+            metadataSpace = metadataSize + Bytes.SIZEOF_INT;
+            metadata = MetadataSerDeser.read(
+                    new DataInputImpl(prefixedValue, prefixedValue.length - metadataSpace, metadataSize));
+        } else {
+            throw new RuntimeException("Unsupported metadata encoding version: " + metadataEncodingVersion);
+        }
+
+        Object value = valueType.read(new DataInputImpl(prefixedValue, FieldFlags.SIZE,
+                prefixedValue.length - FieldFlags.SIZE - metadataSpace));
+
+        return new ExtractedField(fieldType, value, metadata);
     }
 
     /**

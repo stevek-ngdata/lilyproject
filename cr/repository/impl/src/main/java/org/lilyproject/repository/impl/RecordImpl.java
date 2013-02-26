@@ -18,9 +18,8 @@ package org.lilyproject.repository.impl;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Maps;
-
 import org.lilyproject.repository.api.*;
+import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.ObjectUtils;
 
 public class RecordImpl implements Record, Cloneable {
@@ -35,6 +34,8 @@ public class RecordImpl implements Record, Cloneable {
     private Map<String,String> attributes;
     
     private String defaultNamespace = null;
+
+    private Map<QName, Metadata> metadatas;
     
     /**
      * This constructor should not be called directly.
@@ -203,6 +204,12 @@ public class RecordImpl implements Record, Cloneable {
         parentRecords.pop();
         if (fieldsToDelete.size() > 0) { // addAll seems expensive even when list is empty
             record.fieldsToDelete.addAll(fieldsToDelete);
+        }
+
+        if (metadatas != null) {
+            for (Map.Entry<QName, Metadata> metadata : metadatas.entrySet()) {
+                record.setMetadata(metadata.getKey(), metadata.getValue());
+            }
         }
         
         // the ResponseStatus is not cloned, on purpose
@@ -487,5 +494,32 @@ public class RecordImpl implements Record, Cloneable {
     public void setAttributes(Map<String, String> attributes) {
         this.attributes = attributes;
     }
-    
+
+    @Override
+    public Metadata getMetadata(QName fieldName) {
+        if (metadatas == null) {
+            return null;
+        } else {
+            return metadatas.get(fieldName);
+        }
+    }
+
+    @Override
+    public void setMetadata(QName fieldName, Metadata metadata) {
+        ArgumentValidator.notNull(fieldName, "fieldName");
+        ArgumentValidator.notNull(metadata, "metadata");
+        if (metadatas == null) {
+            metadatas = new HashMap<QName, Metadata>();
+        }
+        metadatas.put(fieldName, metadata);
+    }
+
+    @Override
+    public Map<QName, Metadata> getMetadataMap() {
+        if (metadatas == null) {
+            return Collections.emptyMap();
+        } else {
+            return metadatas;
+        }
+    }
 }

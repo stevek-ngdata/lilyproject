@@ -360,5 +360,42 @@ public interface Record {
      * thus in the record object returned from create, update, etc.</p>
      */
     void setAttributes(Map<String, String> attributes);
-    
+
+    /**
+     * Returns the {@link Metadata} object for the specified field.
+     *
+     * <p>For more information on metadata, see {@link #setMetadata(QName, Metadata)}.</p>
+     *
+     * @return null if there is no metadata for the field
+     */
+    Metadata getMetadata(QName fieldName);
+
+    /**
+     * Sets the metadata for some field.
+     *
+     * <p>Metadata is a set of schema-free key-values associated with a field value. It can be used for metadata
+     * about the value itself, for example to describe its source, creator or quality. Such information could
+     * also be modelled within the Lily schema (for example using complex field types), but this could make the
+     * schema very complex.</p>
+     *
+     * <p>If you set metadata for a field which does not exist, it will be ignored.</p>
+     *
+     * <p>Similar to record fields, metadata can be partially updated: you only need to specify the metadata keys you
+     * want to change, the other metadata will be inherited from the current record state. Therefore, deleting
+     * metadata needs to be done explicitly through {@link MetadataBuilder#delete(String)}</p>.
+     *
+     * <p>For versioned fields, changing only the metadata (without changing the field value itself) will also
+     * cause a new version to be created.</p>
+     *
+     * <p>Metadata is currently not supported for versioned-mutable fields.</p>
+     */
+    void setMetadata(QName fieldName, Metadata metadata);
+
+    /**
+     * Returns the metadata for all fields.
+     *
+     * <p>The returned map can be manipulated, except if it is empty, because in that case a
+     * Collections.emptyCollection() is returned.</p>
+     */
+    Map<QName, Metadata> getMetadataMap();
 }
