@@ -52,6 +52,12 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
             delegateAvailable.notifyAll();
         }
     }
+    
+    @Override
+    public Repository getDefaultRepository() throws IOException, InterruptedException {
+        waitOnRepoManager();
+        return delegate.getDefaultRepository();
+    }
 
     @Override
     public Repository getRepository(String tableName) throws IOException, InterruptedException {

@@ -78,7 +78,44 @@ public class LinkTest {
 
         String fullStr = "USER.AB\\.CD.foo\\.com=bar\\.com";
         Link fullLink = Link.fromString(fullStr, idGenerator);
+        
 
+    }
+    
+    @Test
+    public void testFromString_WithTable() {
+        String idString = "mytable:USER.1234";
+        Link link = Link.fromString(idString, idGenerator);
+        
+        assertEquals("mytable", link.getTable());
+        assertEquals("USER.1234", link.getMasterRecordId().toString());
+    }
+    
+    @Test
+    public void testFromString_NoTable() {
+        String idString = "USER.1234";
+        Link link = Link.fromString(idString, idGenerator);
+        
+        assertNull(link.getTable());
+        assertEquals("USER.1234", link.getMasterRecordId().toString());
+    }
+    
+    @Test
+    public void testFromString_WithTable_WithColonsInId() {
+        String idString = "mytable:USER.12:34";
+        Link link = Link.fromString(idString, idGenerator);
+        
+        assertEquals("mytable", link.getTable());
+        assertEquals("USER.12:34", link.getMasterRecordId().toString());
+    }
+    
+    @Test
+    public void testFromString_NoTable_WithColonsInId() {
+        String idString = "USER.12:34";
+        Link link = Link.fromString(idString, idGenerator);
+        
+        assertNull(link.getTable());
+        assertEquals("USER.12:34", link.getMasterRecordId().toString());
     }
 
     @Test

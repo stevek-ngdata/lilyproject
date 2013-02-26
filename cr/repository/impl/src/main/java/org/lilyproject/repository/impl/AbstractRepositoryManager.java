@@ -24,6 +24,7 @@ import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 
 /**
@@ -64,6 +65,11 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
      * @return newly-created repository
      */
     protected abstract Repository createRepository(String tableName) throws IOException, InterruptedException;
+    
+    @Override
+    public Repository getDefaultRepository() throws IOException, InterruptedException {
+        return getRepository(Table.RECORD.name);
+    }
     
     @Override
     public Repository getRepository(String tableName) throws IOException, InterruptedException {

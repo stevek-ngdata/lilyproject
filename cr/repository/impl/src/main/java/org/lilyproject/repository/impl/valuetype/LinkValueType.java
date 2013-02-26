@@ -17,6 +17,8 @@ package org.lilyproject.repository.impl.valuetype;
 
 import java.util.Comparator;
 
+import org.lilyproject.repository.impl.compat.Lily20LinkDecoder;
+
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.*;
@@ -37,6 +39,11 @@ public class LinkValueType extends AbstractValueType implements ValueType {
      * Changes to the recordId encoding (not the link encoding itself).
      */
     private static final byte VERSION_TWO = 2;
+    
+    /**
+     * Addition of optional table name to Link fields.
+     */
+    private static final byte VERSION_THREE = 3;
 
     public LinkValueType(IdGenerator idGenerator, TypeManager typeManager, String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
         this.idGenerator = idGenerator;
@@ -72,6 +79,9 @@ public class LinkValueType extends AbstractValueType implements ValueType {
                 link = Lily11RecordIdDecoder.decodeLink(dataInput, idGenerator);
                 break;
             case VERSION_TWO:
+                link = Lily20LinkDecoder.decode(dataInput, idGenerator);
+                break;
+            case VERSION_THREE:
                 link = Link.read(dataInput, idGenerator);
                 break;
             default:
@@ -84,7 +94,7 @@ public class LinkValueType extends AbstractValueType implements ValueType {
     public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords) {
         // We're not storing any recordType information together with the data
         // The recordType information is only available in the schema
-        dataOutput.writeByte((byte)VERSION_TWO);
+        dataOutput.writeByte(VERSION_THREE);
         ((Link)value).write(dataOutput);
     }
 

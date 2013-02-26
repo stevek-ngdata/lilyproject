@@ -15,7 +15,6 @@
  */
 package org.lilyproject.util.repo;
 
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
 
 /**

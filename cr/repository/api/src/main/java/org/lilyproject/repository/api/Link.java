@@ -88,6 +88,7 @@ import org.lilyproject.util.ObjectUtils;
  * <p>To resolve a link to a RecordId, using the {@link #resolve(RecordId, IdGenerator)} method.
  */
 public class Link {
+    private String table;
     private RecordId masterRecordId;
     private boolean copyAll = true;
     private SortedMap<String, PropertyValue> variantProps;
@@ -110,6 +111,15 @@ public class Link {
      * when resolving this link.
      */
     public Link(RecordId recordId) {
+        this((String)null, recordId);
+    }
+    
+    /**
+     * An absolute link to the specified recordId. Nothing will be copied from the context
+     * when resolving this link, also with a repository table name supplied.
+     */
+    public Link(String table, RecordId recordId) {
+        this.table = table;
         this.masterRecordId = recordId != null ? recordId.getMaster() : null;
         variantProps = createVariantProps(recordId);
     }
@@ -120,7 +130,16 @@ public class Link {
      * specified on the recordId.
      */
     public Link(RecordId recordId, boolean copyAll) {
-        this(recordId);
+        this((String)null, recordId, copyAll);
+    }
+    
+    /**
+     * A relative link to the specified recordId. All variant properties will be copied
+     * from the context when resolving this link, except those that would be explicitly
+     * specified on the recordId. A table name is also supplied.
+     */
+    public Link(String tableName, RecordId recordId, boolean copyAll) {
+        this(tableName, recordId);
         this.copyAll = copyAll;
     }
 
@@ -145,7 +164,7 @@ public class Link {
     }
 
     /** FIXME: copy-paste job from IdGeneratorImpl, add to utility class? */
-    private static String[] escapedSplit(String s, char delimiter) {
+    private static String[] escapedSplit(String s, char delimiter, int maxSplits) {
         ArrayList<String> split = new ArrayList<String>();
         StringBuffer sb = new StringBuffer();
         boolean escaped = false;
@@ -155,8 +174,12 @@ public class Link {
                 escaped = false;
                 sb.append(c);
             } else if (delimiter == c) {
-                split.add(sb.toString());
-                sb = new StringBuffer();
+                if (maxSplits == -1 || split.size() < maxSplits) {
+                    split.add(sb.toString());
+                    sb = new StringBuffer();
+                } else {
+                    sb.append(c);
+                }
             } else if ('\\' == c) {
                 escaped = true;
                 sb.append(c);
@@ -189,6 +212,8 @@ public class Link {
             return new Link();
         }
 
+        
+        String table = null;
         RecordId recordId;
         String variantString;
 
@@ -197,12 +222,20 @@ public class Link {
             variantString = link.substring(1);
         } else {
             int firstDotPos = link.indexOf('.');
+            int firstColonPos = link.indexOf(':');
+            
 
             if (firstDotPos == -1) {
                 throw new IllegalArgumentException("Invalid link, contains no dot: " + link);
             }
+            
+            if (firstColonPos != -1 && firstColonPos < firstDotPos) {
+                String[] tableSplitParts = escapedSplit(link, ':', 1);
+                table = tableSplitParts[0];
+                link = tableSplitParts[1];
+            }
 
-            String[] parts = escapedSplit(link, '.');
+            String[] parts = escapedSplit(link, '.', -1);
             String masterIdString = parts[0] + "." + parts[1];
 
             if (parts.length < 3) {
@@ -215,10 +248,10 @@ public class Link {
         }
 
         if (variantString == null) {
-            return new Link(recordId, true);
+            return new Link(table, recordId, true);
         }
 
-        LinkBuilder builder = Link.newBuilder().recordId(recordId);
+        LinkBuilder builder = Link.newBuilder().recordId(recordId).table(table);
 
         argsFromString(variantString, builder, link);
 
@@ -252,6 +285,15 @@ public class Link {
                 builder.set(name, value);
             }
         }
+    }
+    
+    /**
+     * Returns the (optional) repository table name for resolving this link.
+     * 
+     * @return the repository table name, or null if no repository table name has been supplied
+     */
+    public String getTable() {
+        return table;
     }
 
     public RecordId getMasterRecordId() {
@@ -302,6 +344,10 @@ public class Link {
         }
 
         StringBuilder builder = new StringBuilder();
+        
+        if (table != null) {
+            builder.append(table + ":");
+        }
 
         if (masterRecordId != null) {
             builder.append(masterRecordId.toString());
@@ -348,8 +394,14 @@ public class Link {
 
     public void write(DataOutput dataOutput) {
         // The bytes format is as follows:
-        // [byte representation of master record id, if not null][args: bytes of the string representation]
+        // [byte representation of table, byte representation of master record id, if not null][args: bytes of the string representation]
 
+        byte[] tableBytes = table == null ? new byte[0] : table.getBytes();
+        dataOutput.writeInt(tableBytes.length);
+        if (tableBytes.length > 0) {
+            dataOutput.writeBytes(tableBytes);
+        }
+        
         byte[] recordIdBytes = masterRecordId == null ? new byte[0] : masterRecordId.toBytes();
         dataOutput.writeInt(recordIdBytes.length);
         if (recordIdBytes.length > 0) {
@@ -362,8 +414,11 @@ public class Link {
     }
 
     public static Link read(DataInput dataInput, IdGenerator idGenerator) {
-        // Format: see toBytes.
+        // Format: see write(DataOutput).
 
+        int tableLength = dataInput.readInt();
+        byte[] tableBytes = dataInput.readBytes(tableLength);
+        
         int recordIdLength = dataInput.readInt();
         byte[] recordIdBytes = null;
         if (recordIdLength > 0) {
@@ -376,6 +431,11 @@ public class Link {
         }
 
         LinkBuilder builder = Link.newBuilder();
+        
+        if (tableLength > 0) {
+            builder.table(new String(tableBytes));
+        }
+        
         if (recordIdLength > 0) {
             RecordId id = idGenerator.fromBytes(recordIdBytes);
             builder.recordId(id);
@@ -562,6 +622,7 @@ public class Link {
     }
 
     public static class LinkBuilder {
+        private String table;
         private RecordId masterRecordId;
         private boolean copyAll = true;
         private Map<String, PropertyValue> variantProps;
@@ -581,6 +642,11 @@ public class Link {
                 this.masterRecordId = null;
                 this.variantProps = null;
             }
+            return this;
+        }
+        
+        public LinkBuilder table(String table) {
+            this.table = table;
             return this;
         }
 
