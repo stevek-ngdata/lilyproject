@@ -114,7 +114,7 @@ public class IndexerApiTest {
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
-        indexerApi.index(record.getId());
+        indexerApi.index(Table.RECORD.name, record.getId());
 
         // now we triggered indexing
         commitIndex();
@@ -135,7 +135,7 @@ public class IndexerApiTest {
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
-        indexerApi.index(record.getId());
+        indexerApi.index(Table.RECORD.name, record.getId());
 
         // still nothing will be indexed, because the record type doesn't match
         commitIndex();
@@ -156,7 +156,7 @@ public class IndexerApiTest {
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
-        indexerApi.indexOn(record.getId(), Sets.newHashSet("this-index-does-not-exist"));
+        indexerApi.indexOn(Table.RECORD.name, record.getId(), Sets.newHashSet("this-index-does-not-exist"));
     }
 
     private void setupSchema() throws RepositoryException, InterruptedException {

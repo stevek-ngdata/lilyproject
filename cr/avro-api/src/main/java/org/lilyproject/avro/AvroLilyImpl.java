@@ -53,20 +53,18 @@ public class AvroLilyImpl implements AvroLily {
         this.converter = converter;
     }
     
-    private Repository getRepository(ByteBuffer tableNameBuffer) throws InterruptedException, RepositoryException {
-        byte[] tableNameBytes = new byte[tableNameBuffer.remaining()];
-        tableNameBuffer.get(tableNameBytes);
+    private Repository getRepository(String table) throws InterruptedException, RepositoryException {
         try {
-            return repositoryManager.getRepository(Bytes.toString(tableNameBytes));
+            return repositoryManager.getRepository(table);
         } catch (IOException e) {
             throw new RepositoryException(e);
         }
     }
 
     @Override
-    public ByteBuffer create(ByteBuffer record, ByteBuffer tableName) throws AvroRepositoryException, AvroInterruptedException {
+    public ByteBuffer create(ByteBuffer record, String table) throws AvroRepositoryException, AvroInterruptedException {
         try {
-            Repository repository = getRepository(tableName);
+            Repository repository = getRepository(table);
             return converter.convert(repository.create(converter.convertRecord(record)));
         } catch (RepositoryException e) {
             throw converter.convert(e);
@@ -76,10 +74,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer createOrUpdate(ByteBuffer record, ByteBuffer tableName, boolean useLatestRecordType)
+    public ByteBuffer createOrUpdate(ByteBuffer record, String table, boolean useLatestRecordType)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
-            Repository repository = getRepository(tableName);
+            Repository repository = getRepository(table);
             return converter.convert(repository.createOrUpdate(converter.convertRecord(record), useLatestRecordType));
         } catch (RepositoryException e) {
             throw converter.convert(e);
@@ -89,11 +87,11 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer delete(ByteBuffer recordId, ByteBuffer tableName, List<AvroMutationCondition> conditions,
+    public ByteBuffer delete(ByteBuffer recordId, String table, List<AvroMutationCondition> conditions,
                             Map<String,String> attributes)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
-            Repository repository = getRepository(tableName);
+            Repository repository = getRepository(table);
             RecordId decodedRecordId = converter.convertAvroRecordId(recordId);
             Record record = null;
             if (attributes == null) {
@@ -116,10 +114,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer update(ByteBuffer record, ByteBuffer tableName, boolean updateVersion, boolean useLatestRecordType,
+    public ByteBuffer update(ByteBuffer record, String table, boolean updateVersion, boolean useLatestRecordType,
                              List<AvroMutationCondition> conditions) throws AvroRemoteException {
         try {
-            Repository repository = getRepository(tableName);
+            Repository repository = getRepository(table);
             return converter.convert(repository.update(converter.convertRecord(record), updateVersion,
                     useLatestRecordType, converter.convertFromAvro(conditions)));
         } catch (RepositoryException e) {
@@ -327,9 +325,9 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public List<String> getVariants(ByteBuffer recordId, ByteBuffer tableName) throws AvroRepositoryException, AvroInterruptedException {
+    public List<String> getVariants(ByteBuffer recordId, String table) throws AvroRepositoryException, AvroInterruptedException {
         try {
-            Repository repository = getRepository(tableName);
+            Repository repository = getRepository(table);
             return converter.convert(repository.getVariants(converter.convertAvroRecordId(recordId)));
         } catch (RepositoryException e) {
             throw converter.convert(e);
@@ -386,9 +384,9 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public Object index(ByteBuffer recordId) throws AvroInterruptedException, AvroIndexerException {
+    public Object index(String table, ByteBuffer recordId) throws AvroInterruptedException, AvroIndexerException {
         try {
-            indexer.index(converter.convertAvroRecordId(recordId));
+            indexer.index(table, converter.convertAvroRecordId(recordId));
             return null;
         } catch (InterruptedException e) {
             throw converter.convert(e);
@@ -398,10 +396,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public Object indexOn(ByteBuffer recordId, List<String> indexes)
+    public Object indexOn(String table, ByteBuffer recordId, List<String> indexes)
             throws AvroInterruptedException, AvroIndexerException {
         try {
-            indexer.indexOn(converter.convertAvroRecordId(recordId), new HashSet<String>(indexes));
+            indexer.indexOn(table, converter.convertAvroRecordId(recordId), new HashSet<String>(indexes));
             return null;
         } catch (IndexerException e) {
             throw converter.convert(e);

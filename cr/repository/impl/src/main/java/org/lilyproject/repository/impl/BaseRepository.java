@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
 
+import com.google.common.base.Preconditions;
+
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
@@ -96,6 +98,10 @@ public abstract class BaseRepository implements Repository {
 
     protected BaseRepository(RepositoryManager repositoryManager, BlobManager blobManager,
                              HTableInterface recordTable, RepositoryMetrics metrics) {
+        
+        Preconditions.checkNotNull(repositoryManager, "repositoryManager cannot be null");
+        Preconditions.checkNotNull(blobManager, "blobManager cannot be null");
+        Preconditions.checkNotNull(recordTable, "recordTable cannot be null");
         
         this.repositoryManager = repositoryManager;
         this.typeManager = repositoryManager.getTypeManager();

@@ -23,6 +23,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 import net.iharder.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -189,14 +191,17 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
     @Override
     public void map(RecordIdWritable recordIdWritable, IdRecordWritable recordWritable, Context context)
             throws IOException, InterruptedException {
-        executor.submit(new MappingTask(recordWritable.getRecord(), context));
+        // TODO repository - remove hardcoded record table name
+        executor.submit(new MappingTask(Table.RECORD.name, recordWritable.getRecord(), context));
     }
 
     public class MappingTask implements Runnable {
+        private final String table;
         private final IdRecord idRecord;
         private final Context context;
 
-        private MappingTask(IdRecord idRecord, Context context) {
+        private MappingTask(String table, IdRecord idRecord, Context context) {
+            this.table = table;
             this.idRecord = idRecord;
             this.context = context;
         }
@@ -208,7 +213,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             try {
                 indexLocker.lock(recordId);
                 locked = true;
-                indexer.index(idRecord);
+                indexer.index(table, idRecord);
             } catch (Throwable t) {
                 context.getCounter(IndexBatchBuildCounters.NUM_FAILED_RECORDS).increment(1);
 

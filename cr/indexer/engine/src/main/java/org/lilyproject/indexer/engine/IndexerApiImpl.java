@@ -31,8 +31,8 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
     }
 
     @Override
-    public void index(RecordId recordId) throws IndexerException, InterruptedException {
-        final IdRecord idRecord = tryReadRecord(recordId);
+    public void index(String table, RecordId recordId) throws IndexerException, InterruptedException {
+        final IdRecord idRecord = tryReadRecord(table, recordId);
 
         if (indexerRegistry.getAllIndexers().isEmpty()) {
             log.warn("cannot index record [" + recordId + "] because there are no known indexes");
@@ -43,7 +43,7 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
             final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(idRecord);
             if (indexCase != null) {
                 matched = true;
-                tryIndex(indexer, idRecord, indexCase);
+                tryIndex(indexer, table, idRecord, indexCase);
             }
         }
 
@@ -53,25 +53,25 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
     }
 
     @Override
-    public void indexOn(RecordId recordId, Set<String> indexes) throws IndexerException, InterruptedException {
+    public void indexOn(String table, RecordId recordId, Set<String> indexes) throws IndexerException, InterruptedException {
         for (String indexName : indexes) {
             final org.lilyproject.indexer.engine.Indexer indexer = indexerRegistry.getIndexer(indexName);
             if (indexer == null) {
                 throw new IndexerException("index " + indexName + " could not be found");
             } else {
-                final IdRecord idRecord = tryReadRecord(recordId);
+                final IdRecord idRecord = tryReadRecord(table, recordId);
                 final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(idRecord);
                 if (indexCase != null) // it matches -> index
-                    tryIndex(indexer, idRecord, indexCase);
+                    tryIndex(indexer, table, idRecord, indexCase);
                 else // it doesn't match -> explicitly delete
                     tryDelete(indexer, recordId);
             }
         }
     }
 
-    private IdRecord tryReadRecord(RecordId recordId) throws IndexerException, InterruptedException {
+    private IdRecord tryReadRecord(String table, RecordId recordId) throws IndexerException, InterruptedException {
         try {
-            return repositoryManager.getRepository(Table.RECORD.name).readWithIds(recordId, null, null);
+            return repositoryManager.getRepository(table).readWithIds(recordId, null, null);
         } catch (RepositoryException e) {
             throw new IndexerException("failed to read from repository", e);
         } catch (IOException e) {
@@ -79,10 +79,10 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
         }
     }
 
-    private void tryIndex(Indexer indexer, IdRecord idRecord, IndexCase indexCase)
+    private void tryIndex(Indexer indexer, String table, IdRecord idRecord, IndexCase indexCase)
             throws InterruptedException, IndexerException {
         try {
-            indexer.index(idRecord, indexCase.getVersionTags());
+            indexer.index(table, idRecord, indexCase.getVersionTags());
         } catch (SolrClientException e) {
             throw new IndexerException("failed to index on solr", e);
         } catch (ShardSelectorException e) {
