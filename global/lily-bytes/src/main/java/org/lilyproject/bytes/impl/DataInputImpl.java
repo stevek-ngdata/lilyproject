@@ -75,7 +75,7 @@ public class DataInputImpl implements DataInput {
         this.source = source;
         this.startPosition = startPosition;
         this.size = size;
-        this.pos = 0;
+        this.pos = startPosition;
     }
 
     /**
