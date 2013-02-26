@@ -19,6 +19,8 @@ import java.io.ByteArrayInputStream;
 import java.io.OutputStream;
 import java.util.Set;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -174,7 +176,7 @@ public class LilyClientTest {
         repository.create(record);
 
         // explicitly index the record (if this succeeds, the test succeeded to verify that we can access the indexer through lily-client)
-        client.getIndexer().index(record.getId());
+        client.getIndexer().index(Table.RECORD.name, record.getId());
     }
 
     @Test

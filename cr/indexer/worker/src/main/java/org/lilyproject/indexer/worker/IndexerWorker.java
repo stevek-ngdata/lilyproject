@@ -210,8 +210,8 @@ public class IndexerWorker {
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
             EventPublisher hbaseEventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(tableFactory, Table.RECORD.name));
             IndexUpdater indexUpdater = new IndexUpdater(indexer,
-                    repositoryManager.getRepository(Table.RECORD.name), indexLocker, updaterMetrics, derefMap,
-                    hbaseEventPublisher, index.getQueueSubscriptionId());
+                            repositoryManager, indexLocker, updaterMetrics, derefMap,
+                            hbaseEventPublisher, index.getQueueSubscriptionId());
 
             SepConsumer sepConsumer = new SepConsumer(index.getQueueSubscriptionId(),
                     index.getSubscriptionTimestamp(), indexUpdater, settings.getListenersPerIndex(), hostName,

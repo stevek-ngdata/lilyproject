@@ -26,10 +26,13 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.*;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 public class JsonImportTool extends BaseZkCliTool {
     private Option schemaOnlyOption;
     private Option workersOption;
     private Option quietOption;
+    private Option tableOption;
     private LilyClient lilyClient;
 
     @Override
@@ -69,6 +72,14 @@ public class JsonImportTool extends BaseZkCliTool {
                 .withLongOpt("quiet")
                 .create("q");
         options.add(quietOption);
+        
+        tableOption = OptionBuilder
+                .withArgName("table")
+                .hasArg()
+                .withDescription("Repository table to import to, defaults to record table")
+                .withLongOpt("table")
+                .create("t");
+        options.add(tableOption);
 
         return options;
     }
@@ -80,6 +91,8 @@ public class JsonImportTool extends BaseZkCliTool {
             return result;
 
         int workers = OptionUtil.getIntOption(cmd, workersOption, 1);
+        
+        String table = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
 
         if (cmd.getArgList().size() < 1) {
             System.out.println("No import file specified!");
@@ -92,13 +105,13 @@ public class JsonImportTool extends BaseZkCliTool {
 
         for (String arg : (List<String>)cmd.getArgList()) {
             System.out.println("----------------------------------------------------------------------");
-            System.out.println("Importing " + arg);
+            System.out.println("Importing " + arg + " to " + table + " table");
             InputStream is = new FileInputStream(arg);
             try {
                 if (cmd.hasOption(quietOption.getOpt())) {
-                    JsonImport.load(lilyClient.getRepository(), new DefaultImportListener(System.out, EntityType.RECORD), is, schemaOnly, workers);
+                    JsonImport.load(lilyClient.getRepository(table), new DefaultImportListener(System.out, EntityType.RECORD), is, schemaOnly, workers);
                 } else {
-                    JsonImport.load(lilyClient.getRepository(), is, schemaOnly, workers);
+                    JsonImport.load(lilyClient.getRepository(table), is, schemaOnly, workers);
                 }
             } finally {
                 Closer.close(is);

@@ -99,6 +99,7 @@
    <!-- Fields which are required by Lily -->
    <field name="lily.key" type="string" indexed="true" stored="true" required="true"/>
    <field name="lily.id" type="string" indexed="true" stored="true" required="true"/>
+   <field name="lily.table" type="string" indexed="true" stored="true" required="true"/>
    <field name="lily.vtagId" type="string" indexed="true" stored="true"/>
    <field name="lily.vtag" type="string" indexed="true" stored="true"/>
    <field name="lily.version" type="long" indexed="true" stored="true"/>

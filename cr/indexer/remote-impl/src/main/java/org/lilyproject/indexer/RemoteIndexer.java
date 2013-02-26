@@ -58,9 +58,9 @@ public class RemoteIndexer implements Indexer, Closeable {
     }
 
     @Override
-    public void index(RecordId recordId) throws IndexerException, InterruptedException {
+    public void index(String table, RecordId recordId) throws IndexerException, InterruptedException {
         try {
-            lilyProxy.index(converter.convert(recordId));
+            lilyProxy.index(table, converter.convert(recordId));
         } catch (AvroIndexerException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -73,9 +73,9 @@ public class RemoteIndexer implements Indexer, Closeable {
     }
 
     @Override
-    public void indexOn(RecordId recordId, Set<String> indexes) throws IndexerException, InterruptedException {
+    public void indexOn(String table, RecordId recordId, Set<String> indexes) throws IndexerException, InterruptedException {
         try {
-            lilyProxy.indexOn(converter.convert(recordId), new ArrayList<String>(indexes));
+            lilyProxy.indexOn(table, converter.convert(recordId), new ArrayList<String>(indexes));
         } catch (AvroIndexerException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {

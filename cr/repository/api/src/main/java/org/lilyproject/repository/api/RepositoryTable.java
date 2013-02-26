@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.sep;
+package org.lilyproject.repository.api;
 
-import com.ngdata.sep.PayloadExtractor;
-import org.apache.hadoop.hbase.KeyValue;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
-
-public class LilyPayloadExtractor implements PayloadExtractor {
-
-    @Override
-    public byte[] extractPayload(byte[] tableName, KeyValue keyValue) {
-        if (keyValue.matchingColumn(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes)){
-            return keyValue.getValue();
-        } else {
-            return null;
-        }
-    }
+/**
+ * Represents a single storage table for storing Lily {@link Record} objects.
+ */
+public interface RepositoryTable {
     
+    /**
+     * Returns the name of this table.
+     */
+    String getName();
+
 }

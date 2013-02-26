@@ -36,6 +36,8 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import org.lilyproject.repository.api.RecordFactory;
+
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -131,7 +133,7 @@ public class IndexerTest {
     private static DerefMap derefMap;
     private static WriteableIndexerModel indexerModel;
     private static IndexesInfo indexesInfo;
-    private static TrackingRepository indexUpdaterRepository = new TrackingRepository();
+    private static TrackingRepositoryManager indexUpdaterRepositoryMgr;
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -202,7 +204,7 @@ public class IndexerTest {
         prematureRepositoryManager.setRepositoryManager(repoSetup.getRepositoryManager());
         repositoryManager = repoSetup.getRepositoryManager();
         repository = repositoryManager.getRepository(Table.RECORD.name);
-        indexUpdaterRepository.setDelegate(repository);
+        indexUpdaterRepositoryMgr = new TrackingRepositoryManager(repoSetup.getRepositoryManager());
 
         
         typeManager = repoSetup.getTypeManager();
@@ -275,7 +277,7 @@ public class IndexerTest {
 
         repoSetup.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + indexName);
 
-        IndexUpdater indexUpdater = new IndexUpdater(indexer, indexUpdaterRepository, indexLocker,
+        IndexUpdater indexUpdater = new IndexUpdater(indexer, indexUpdaterRepositoryMgr, indexLocker,
                 new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisher(), "IndexUpdater_" + indexName);
         repoSetup.startSepEventSlave("IndexUpdater_" + indexName,
                 new CompositeEventListener(indexUpdater, messageVerifier, otherListener));
@@ -889,7 +891,7 @@ public class IndexerTest {
             record.setRecordType(nvRecordType1.getName());
             record.setField(nvfield1.getName(), "apple");
             record.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record.getId(), nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record.getId(), nvfield1.getId(), nvTag.getId());
             record = repository.create(record);
 
             commitIndex();
@@ -899,7 +901,7 @@ public class IndexerTest {
             // Update the record
             log.debug("Begin test NV2");
             record.setField(nvfield1.getName(), "pear");
-            expectEvent(UPDATE, record.getId(), nvfield1.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record.getId(), nvfield1.getId());
             repository.update(record);
 
             System.out.println("Updated " + record.getId());
@@ -919,7 +921,7 @@ public class IndexerTest {
             // Add a vtag field pointing to a version. For versionless records, this should have no effect
             log.debug("Begin test NV4");
             record.setField(liveTag.getName(), new Long(1));
-            expectEvent(UPDATE, record.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record.getId(), liveTag.getId());
             repository.update(record);
 
             commitIndex();
@@ -928,7 +930,7 @@ public class IndexerTest {
 
             // Delete the record
             log.debug("Begin test NV5");
-            expectEvent(DELETE, record.getId());
+            expectEvent(DELETE, Table.RECORD.name, record.getId());
             repository.delete(record.getId());
 
             commitIndex();
@@ -945,14 +947,14 @@ public class IndexerTest {
             record1.setRecordType(nvRecordType1.getName());
             record1.setField(nvfield1.getName(), "pear");
             record1.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record1.getId(), nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), nvfield1.getId(), nvTag.getId());
             record1 = repository.create(record1);
 
             Record record2 = repository.newRecord();
             record2.setRecordType(nvRecordType1.getName());
             record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
             record2.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record2.getId(), nvLinkField1.getId(), nvTag.getId());
             record2 = repository.create(record2);
 
             commitIndex();
@@ -969,7 +971,7 @@ public class IndexerTest {
             masterRecord.setRecordType(nvRecordType1.getName());
             masterRecord.setField(nvfield1.getName(), "yellow");
             masterRecord.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, masterRecord.getId(), nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, masterRecord.getId(), nvfield1.getId(), nvTag.getId());
             masterRecord = repository.create(masterRecord);
 
             RecordId var1Id = idGenerator.newRecordId(masterRecord.getId(), Collections.singletonMap("lang", "en"));
@@ -977,7 +979,7 @@ public class IndexerTest {
             var1Record.setRecordType(nvRecordType1.getName());
             var1Record.setField(nvfield1.getName(), "green");
             var1Record.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, var1Id, nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, var1Id, nvfield1.getId(), nvTag.getId());
             repository.create(var1Record);
 
             Map<String, String> varProps = new HashMap<String, String>();
@@ -988,7 +990,7 @@ public class IndexerTest {
             var2Record.setRecordType(nvRecordType1.getName());
             var2Record.setField(nvfield1.getName(), "blue");
             var2Record.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, var2Id, nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, var2Id, nvfield1.getId(), nvTag.getId());
             repository.create(var2Record);
 
             commitIndex();
@@ -1013,7 +1015,7 @@ public class IndexerTest {
             record1.setRecordType(nvRecordType1.getName());
             record1.setField(nvfield1.getName(), "cucumber");
             record1.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record1.getId(), nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), nvfield1.getId(), nvTag.getId());
             record1 = repository.create(record1);
 
             // Create a record which will contain denormalized data through linking
@@ -1022,7 +1024,7 @@ public class IndexerTest {
             record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
             record2.setField(nvfield1.getName(), "mushroom");
             record2.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record2.getId(), nvLinkField1.getId(), nvfield1.getId(), nvTag.getId());
             record2 = repository.create(record2);
 
             // Create a record which will contain denormalized data through master-dereferencing and forward-variant-dereferencing
@@ -1031,7 +1033,7 @@ public class IndexerTest {
             record3.setRecordType(nvRecordType1.getName());
             record3.setField(nvfield1.getName(), "eggplant");
             record3.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record3.getId(), nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record3.getId(), nvfield1.getId(), nvTag.getId());
             record3 = repository.create(record3);
 
             // Create a record which will contain denormalized data through variant-dereferencing
@@ -1043,7 +1045,7 @@ public class IndexerTest {
             record4.setRecordType(nvRecordType1.getName());
             record4.setField(nvfield1.getName(), "broccoli");
             record4.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record4.getId(), nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record4.getId(), nvfield1.getId(), nvTag.getId());
             record4 = repository.create(record4);
 
             commitIndex();
@@ -1058,7 +1060,7 @@ public class IndexerTest {
             // Update record1, check if the others are updated in the index
             log.debug("Begin test NV9");
             record1.setField(nvfield1.getName(), "tomato");
-            expectEvent(UPDATE, record1.getId(), nvfield1.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), nvfield1.getId());
             record1 = repository.update(record1);
 
             commitIndex();
@@ -1073,7 +1075,7 @@ public class IndexerTest {
             // Update record3, index for record4 should be updated
             log.debug("Begin test NV10");
             record3.setField(nvfield1.getName(), "courgette");
-            expectEvent(UPDATE, record3.getId(), nvfield1.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record3.getId(), nvfield1.getId());
             repository.update(record3);
 
             commitIndex();
@@ -1083,7 +1085,7 @@ public class IndexerTest {
             // Update record4, index for record3 and record1 should be updated
             log.debug("Begin test NV10.1");
             record4.setField(nvfield1.getName(), "cauliflower"); //FIXME: 2nd courgette; use something else here
-            expectEvent(UPDATE, record4.getId(), nvfield1.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record4.getId(), nvfield1.getId());
             repository.update(record4);
 
             commitIndex();
@@ -1098,7 +1100,7 @@ public class IndexerTest {
             // Delete record 3: index for record 4 should be updated
             log.debug("Begin test NV11");
             verifyResultCount("lily.id:" + ClientUtils.escapeQueryChars(record3.getId().toString()), 1);
-            expectEvent(DELETE, record3.getId());
+            expectEvent(DELETE, Table.RECORD.name, record3.getId());
             repository.delete(record3.getId());
 
             commitIndex();
@@ -1108,7 +1110,7 @@ public class IndexerTest {
 
             // Delete record 4
             log.debug("Begin test NV12");
-            expectEvent(DELETE, record4.getId());
+            expectEvent(DELETE, Table.RECORD.name, record4.getId());
             repository.delete(record4.getId());
 
             commitIndex();
@@ -1118,7 +1120,7 @@ public class IndexerTest {
 
             // Delete record 1: index of record 2 should be updated
             log.debug("Begin test NV13");
-            expectEvent(DELETE, record1.getId());
+            expectEvent(DELETE, Table.RECORD.name, record1.getId());
             repository.delete(record1.getId());
 
             commitIndex();
@@ -1145,7 +1147,7 @@ public class IndexerTest {
             record.setRecordType(vRecordType1.getName());
             record.setField(vfield1.getName(), "apple");
             record.setField(liveTag.getName(), new Long(1));
-            expectEvent(CREATE, record.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record = repository.create(record);
 
             commitIndex();
@@ -1156,7 +1158,7 @@ public class IndexerTest {
             // Update the record, this will create a new version, but we leave the live version tag pointing to version 1
             log.debug("Begin test V2");
             record.setField(vfield1.getName(), "pear");
-            expectEvent(UPDATE, record.getId(), 2L, null, vfield1.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record.getId(), 2L, null, vfield1.getId());
             repository.update(record);
 
             commitIndex();
@@ -1166,7 +1168,7 @@ public class IndexerTest {
             // Now move the live version tag to point to version 2
             log.debug("Begin test V3");
             record.setField(liveTag.getName(), new Long(2));
-            expectEvent(UPDATE, record.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record.getId(), liveTag.getId());
             record = repository.update(record);
 
             commitIndex();
@@ -1176,7 +1178,7 @@ public class IndexerTest {
             // Now remove the live version tag
             log.debug("Begin test V4");
             record.delete(liveTag.getName(), true);
-            expectEvent(UPDATE, record.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record.getId(), liveTag.getId());
             record = repository.update(record);
 
             commitIndex();
@@ -1187,7 +1189,7 @@ public class IndexerTest {
             record.setField(liveTag.getName(), new Long(1));
             record.setField(previewTag.getName(), new Long(2));
             record.setField(latestTag.getName(), new Long(2));
-            expectEvent(UPDATE, record.getId(), liveTag.getId(), previewTag.getId(), latestTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record.getId(), liveTag.getId(), previewTag.getId(), latestTag.getId());
             record = repository.update(record);
 
             commitIndex();
@@ -1210,14 +1212,14 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(vfield1.getName(), "fig");
             record1.setField(liveTag.getName(), Long.valueOf(1));
-            expectEvent(CREATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             Record record2 = repository.newRecord();
             record2.setRecordType(vRecordType1.getName());
             record2.setField(vLinkField1.getName(), new Link(record1.getId()));
             record2.setField(liveTag.getName(), Long.valueOf(1));
-            expectEvent(CREATE, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
             record2 = repository.create(record2);
 
             commitIndex();
@@ -1229,7 +1231,7 @@ public class IndexerTest {
             record3.setRecordType(vRecordType1.getName());
             record3.setField(vfield1.getName(), "banana");
             record3.setField(liveTag.getName(), Long.valueOf(1));
-            expectEvent(CREATE, record3.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record3.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record3 = repository.create(record3);
 
             commitIndex();
@@ -1244,7 +1246,7 @@ public class IndexerTest {
             record4.setRecordType(vRecordType1.getName());
             record4.setField(vfield1.getName(), "coconut");
             record4.setField(liveTag.getName(), Long.valueOf(1));
-            expectEvent(CREATE, record4.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record4.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record4 = repository.create(record4);
 
             commitIndex();
@@ -1256,7 +1258,7 @@ public class IndexerTest {
             // remove the live tag from record1
             log.debug("Begin test V7");
             record1.delete(liveTag.getName(), true);
-            expectEvent(UPDATE, record1.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), liveTag.getId());
             record1 = repository.update(record1);
 
             commitIndex();
@@ -1265,7 +1267,7 @@ public class IndexerTest {
             // and add the live tag again record1
             log.debug("Begin test V8");
             record1.setField(liveTag.getName(), Long.valueOf(1));
-            expectEvent(UPDATE, record1.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), liveTag.getId());
             record1 = repository.update(record1);
 
             commitIndex();
@@ -1276,11 +1278,11 @@ public class IndexerTest {
             log.debug("Begin test V9");
             record1.setField(vfield1.getName(), "strawberries");
             record1.setField(previewTag.getName(), Long.valueOf(2));
-            expectEvent(UPDATE, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
             record1 = repository.update(record1);
 
             record2.setField(previewTag.getName(), Long.valueOf(1));
-            expectEvent(UPDATE, record2.getId(), previewTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record2.getId(), previewTag.getId());
             record2 = repository.update(record2);
 
             commitIndex();
@@ -1294,12 +1296,12 @@ public class IndexerTest {
             // Now do something similar with a 3th version, but first update record2 and then record1
             log.debug("Begin test V10");
             record2.setField(latestTag.getName(), Long.valueOf(1));
-            expectEvent(UPDATE, record2.getId(), latestTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record2.getId(), latestTag.getId());
             record2 = repository.update(record2);
 
             record1.setField(vfield1.getName(), "kiwi");
             record1.setField(latestTag.getName(), Long.valueOf(3));
-            expectEvent(UPDATE, record1.getId(), 3L, null, vfield1.getId(), latestTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), 3L, null, vfield1.getId(), latestTag.getId());
             record1 = repository.update(record1);
 
             commitIndex();
@@ -1313,7 +1315,7 @@ public class IndexerTest {
             // Perform updates to record3 and check if denorm'ed data in index of record4 follows
             log.debug("Begin test V11");
             record3.delete(vfield1.getName(), true);
-            expectEvent(UPDATE, record3.getId(), 2L, null, vfield1.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record3.getId(), 2L, null, vfield1.getId());
             record3 = repository.update(record3);
 
             commitIndex();
@@ -1322,7 +1324,7 @@ public class IndexerTest {
             log.debug("Begin test V11.1");
             repository.read(record3Id, Long.valueOf(2)); // check version 2 really exists
             record3.setField(liveTag.getName(), Long.valueOf(2));
-            expectEvent(UPDATE, record3.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record3.getId(), liveTag.getId());
             repository.update(record3);
 
             commitIndex();
@@ -1332,7 +1334,7 @@ public class IndexerTest {
             // Perform updates to record4 and check if denorm'ed data in index of record3 follows
             log.debug("Begin test V12");
             record4.delete(vfield1.getName(), true);
-            expectEvent(UPDATE, record4.getId(), 2L, null, vfield1.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record4.getId(), 2L, null, vfield1.getId());
             record4 = repository.update(record4);
 
             commitIndex();
@@ -1341,7 +1343,7 @@ public class IndexerTest {
             log.debug("Begin test V12.1");
             repository.read(record4Id, Long.valueOf(2)); // check version 2 really exists
             record4.setField(liveTag.getName(), Long.valueOf(2));
-            expectEvent(UPDATE, record4.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record4.getId(), liveTag.getId());
             repository.update(record4);
 
             commitIndex();
@@ -1349,7 +1351,7 @@ public class IndexerTest {
 
             // Delete master
             log.debug("Begin test V13");
-            expectEvent(DELETE, record1.getId());
+            expectEvent(DELETE, Table.RECORD.name, record1.getId());
             repository.delete(record1.getId());
 
             commitIndex();
@@ -1370,7 +1372,7 @@ public class IndexerTest {
             record1.setField(vfield1.getName(), "bicycle");
             record1.setField(liveTag.getName(), 1L);
             record1.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record1.getId(), 1L, null, nvfield1.getId(), vfield1.getId(), liveTag.getId(),
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, nvfield1.getId(), vfield1.getId(), liveTag.getId(),
                     nvTag.getId());
             record1 = repository.create(record1);
 
@@ -1387,7 +1389,7 @@ public class IndexerTest {
             record2.setField(nvLinkField2.getName(), new Link(record1.getId()));
             record2.setField(nvTag.getName(), 0L);
             record2.setField(liveTag.getName(), 0L);
-            expectEvent(CREATE, record2.getId(), nvLinkField2.getId(), nvTag.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record2.getId(), nvLinkField2.getId(), nvTag.getId(), liveTag.getId());
             record2 = repository.create(record2);
 
             commitIndex();
@@ -1406,21 +1408,21 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(nvfield1.getName(), "Brussels");
             record1.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record1.getId(), (Long) null, null, nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), (Long) null, null, nvfield1.getId(), nvTag.getId());
             record1 = repository.create(record1);
 
             Record record2 = repository.newRecord();
             record2.setRecordType(vRecordType1.getName());
             record2.setField(vLinkField1.getName(), new Link(record1.getId()));
             record2.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record2.getId(), 1L, null, vLinkField1.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record2.getId(), 1L, null, vLinkField1.getId(), nvTag.getId());
             record2 = repository.create(record2);
 
             Record record3 = repository.newRecord();
             record3.setRecordType(vRecordType1.getName());
             record3.setField(nvLinkField2.getName(), new Link(record2.getId()));
             record3.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record3.getId(), (Long) null, null, nvLinkField2.getId(), nvTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record3.getId(), (Long) null, null, nvLinkField2.getId(), nvTag.getId());
             record3 = repository.create(record3);
 
             commitIndex();
@@ -1429,15 +1431,15 @@ public class IndexerTest {
             // Give the records a live tag
             log.debug("Begin test V19");
             record1.setField(liveTag.getName(), 0L);
-            expectEvent(UPDATE, record1.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), liveTag.getId());
             record1 = repository.update(record1);
 
             record2.setField(liveTag.getName(), 1L);
-            expectEvent(UPDATE, record2.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record2.getId(), liveTag.getId());
             record2 = repository.update(record2);
 
             record3.setField(liveTag.getName(), 0L);
-            expectEvent(UPDATE, record3.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record3.getId(), liveTag.getId());
             record3 = repository.update(record3);
 
             commitIndex();
@@ -1458,7 +1460,7 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(vfield1.getName(), "hyponiem");
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             // Create multiple records
@@ -1467,7 +1469,7 @@ public class IndexerTest {
                 record2.setRecordType(vRecordType1.getName());
                 record2.setField(vLinkField1.getName(), new Link(record1.getId()));
                 record2.setField(liveTag.getName(), 1L);
-                expectEvent(CREATE, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
+                expectEvent(CREATE, Table.RECORD.name, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
                 record2 = repository.create(record2);
             }
 
@@ -1476,7 +1478,7 @@ public class IndexerTest {
 
             record1.setField(vfield1.getName(), "hyperoniem");
             record1.setField(liveTag.getName(), 2L);
-            expectEvent(UPDATE, record1.getId(), 2L, null, vfield1.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), 2L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.update(record1);
             commitIndex();
             verifyResultCount("v_deref1:hyperoniem", COUNT);
@@ -1492,7 +1494,7 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(vStringMvField.getName(), Arrays.asList("Dog", "Cat"));
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vStringMvField.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, vStringMvField.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             commitIndex();
@@ -1520,7 +1522,7 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(vLongField.getName(), 123L);
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vLongField.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, vLongField.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             commitIndex();
@@ -1537,7 +1539,7 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(vDateTimeField.getName(), new DateTime(2010, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             commitIndex();
@@ -1550,7 +1552,7 @@ public class IndexerTest {
             record2.setRecordType(vRecordType1.getName());
             record2.setField(vDateTimeField.getName(), new DateTime(2010, 10, 14, 15, 30, 12, 000, DateTimeZone.UTC));
             record2.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record2.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record2.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
             record2 = repository.create(record2);
 
             commitIndex();
@@ -1568,7 +1570,7 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(vDateField.getName(), new LocalDate(2020, 1, 30));
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vDateField.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, vDateField.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             commitIndex();
@@ -1584,7 +1586,7 @@ public class IndexerTest {
             record2.setRecordType(vRecordType1.getName());
             record2.setField(vDateField.getName(), new LocalDate(2020, 1, 30));
             record2.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record2.getId(), 1L, null, vDateField.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record2.getId(), 1L, null, vDateField.getId(), liveTag.getId());
             record2 = repository.create(record2);
 
             commitIndex();
@@ -1608,7 +1610,7 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(vBlobField.getName(), blob1);
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vBlobField.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, vBlobField.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             commitIndex();
@@ -1626,7 +1628,7 @@ public class IndexerTest {
             record2.setRecordType(vRecordType1.getName());
             record2.setField(vBlobMvHierField.getName(), blobs);
             record2.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record2.getId(), 1L, null, vBlobMvHierField.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record2.getId(), 1L, null, vBlobMvHierField.getId(), liveTag.getId());
             record2 = repository.create(record2);
 
             commitIndex();
@@ -1659,7 +1661,7 @@ public class IndexerTest {
             record3.setRecordType(vRecordType1.getName());
             record3.setField(vBlobNestedField.getName(), nestedBlobs);
             record3.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record3.getId(), 1L, null, vBlobNestedField.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record3.getId(), 1L, null, vBlobNestedField.getId(), liveTag.getId());
             record3 = repository.create(record3);
 
             commitIndex();
@@ -1680,7 +1682,7 @@ public class IndexerTest {
             record1.setField(vDateTimeField.getName(), new DateTime(2058, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
             record1.setField(vStringMvField.getName(), Arrays.asList("wood", "plastic"));
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vDateTimeField.getId(), vStringMvField.getId(),
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, vDateTimeField.getId(), vStringMvField.getId(),
                     liveTag.getId());
             record1 = repository.create(record1);
 
@@ -1704,7 +1706,7 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(vfield1.getName(), "venus");
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             RecordId record2Id = repository.getIdGenerator().newRecordId(varProps);
@@ -1713,7 +1715,7 @@ public class IndexerTest {
             // Notice we make the link to the record without variant properties
             record2.setField(vLinkField1.getName(), new Link(record1.getId().getMaster()));
             record2.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
             record2 = repository.create(record2);
 
             commitIndex();
@@ -1722,7 +1724,7 @@ public class IndexerTest {
             log.debug("Begin test V101");
             record1.setField(vfield1.getName(), "mars");
             record1.setField(liveTag.getName(), 2L);
-            expectEvent(UPDATE, record1.getId(), 2L, null, vfield1.getId(), liveTag.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), 2L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.update(record1);
 
             commitIndex();
@@ -1736,11 +1738,11 @@ public class IndexerTest {
             Record record1 = repository.newRecord();
             record1.setRecordType(vRecordType1.getName());
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             record1.setField(vfield1.getName(), "stool");
-            expectEvent(UPDATE, record1.getId(), 1L, null, vfield1.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), 1L, null, vfield1.getId());
             record1 = repository.update(record1);
 
             commitIndex();
@@ -1755,11 +1757,11 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(liveTag.getName(), 2L);
             record1.setField(vfield1.getName(), "wall");
-            expectEvent(CREATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             record1.setField(vfield1.getName(), "floor");
-            expectEvent(UPDATE, record1.getId(), 2L, null, vfield1.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), 2L, null, vfield1.getId());
             record1 = repository.update(record1);
 
             commitIndex();
@@ -1775,14 +1777,14 @@ public class IndexerTest {
             Record record1 = repository.newRecord();
             record1.setRecordType(lastRecordType.getName());
             record1.setField(nvfield1.getName(), "north");
-            expectEvent(CREATE, record1.getId(), nvfield1.getId());
+            expectEvent(CREATE, Table.RECORD.name, record1.getId(), nvfield1.getId());
             record1 = repository.create(record1);
 
             commitIndex();
             verifyResultCount("+lily.vtagId:" + qesc(lastTag.getId().toString()) + " +nv_field1:north", 1);
 
             record1.setField(vfield1.getName(), "south");
-            expectEvent(UPDATE, record1.getId(), 1L, null, vfield1.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record1.getId(), 1L, null, vfield1.getId());
             record1 = repository.update(record1);
 
             commitIndex();
@@ -1876,7 +1878,7 @@ public class IndexerTest {
             // hierarchical match fields
             record.setField(field10.getName(), new HierarchyPath("triangle", "knot"));
 
-            expectEvent(CREATE, record.getId(), 1L, null, field1.getId(), field2.getId(), field3.getId(),
+            expectEvent(CREATE,  Table.RECORD.name, record.getId(), 1L, null, field1.getId(), field2.getId(), field3.getId(),
                     field4.getId(), field5.getId(), field6.getId(), field7.getId(), field8.getId(), field9.getId(),
                     field10.getId());
             record = repository.create(record);
@@ -1920,7 +1922,7 @@ public class IndexerTest {
             record.setField(field11.getName(), "parallelepiped");
             record.setField(field12.getName(), "rectangle");
 
-            expectEvent(CREATE, record.getId(), 1L, null, field11.getId(), field12.getId());
+            expectEvent(CREATE, Table.RECORD.name, record.getId(), 1L, null, field11.getId(), field12.getId());
             record = repository.create(record);
 
             commitIndex();
@@ -1930,14 +1932,14 @@ public class IndexerTest {
 
             // Update only the dynamically indexed field
             record.setField(field12.getName(), "square");
-            expectEvent(UPDATE, record.getId(), null, 1L, field12.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record.getId(), null, 1L, field12.getId());
             record = repository.update(record, true, true);
             commitIndex();
             verifyResultCount("field12_string:square", 1);
 
             // Update only the statically indexed field
             record.setField(field11.getName(), "square");
-            expectEvent(UPDATE, record.getId(), null, 1L, field11.getId());
+            expectEvent(UPDATE, Table.RECORD.name, record.getId(), null, 1L, field11.getId());
             record = repository.update(record, true, true);
             commitIndex();
             verifyResultCount("field11_string:square", 1);
@@ -1958,7 +1960,7 @@ public class IndexerTest {
             record.setField(field13.getName(), blob1);
             record.setField(field14.getName(), blob2);
 
-            expectEvent(CREATE, record.getId(), 1L, null, field13.getId(), field14.getId());
+            expectEvent(CREATE, Table.RECORD.name, record.getId(), 1L, null, field13.getId(), field14.getId());
             record = repository.create(record);
 
             commitIndex();
@@ -1987,7 +1989,7 @@ public class IndexerTest {
             record.setField(field1.getName(), "mega");
             record.setField(field2.getName(), "giga");
 
-            expectEvent(CREATE, record.getId(), 1L, null, field1.getId(), field2.getId());
+            expectEvent(CREATE, Table.RECORD.name, record.getId(), 1L, null, field1.getId(), field2.getId());
             record = repository.create(record);
 
             commitIndex();
@@ -2023,7 +2025,7 @@ public class IndexerTest {
             record.setField(field4.getName(), new Long(1024));
             record.setField(field14.getName(), blob);
 
-            expectEvent(CREATE, record.getId(), 1L, null, field1.getId(), field2.getId(), field4.getId(),
+            expectEvent(CREATE, Table.RECORD.name, record.getId(), 1L, null, field1.getId(), field2.getId(), field4.getId(),
                     field14.getId());
             record = repository.create(record);
 
@@ -2089,7 +2091,7 @@ public class IndexerTest {
         Record record1 = repository.newRecord(idGenerator.newRecordId());
         record1.setRecordType(rt.getName(), 1L);
         record1.setField(field1.getName(), "acute");
-        expectEvent(CREATE, record1.getId(), 1L, null, field1.getId());
+        expectEvent(CREATE, Table.RECORD.name, record1.getId(), 1L, null, field1.getId());
         record1 = repository.createOrUpdate(record1);
 
         // Create a record that uses version 2 of the record type
@@ -2097,7 +2099,7 @@ public class IndexerTest {
         Record record2 = repository.newRecord(idGenerator.newRecordId());
         record2.setRecordType(rt.getName(), 2L);
         record2.setField(field1.getName(), "obtuse");
-        expectEvent(CREATE, record2.getId(), 1L, null, field1.getId());
+        expectEvent(CREATE, Table.RECORD.name, record2.getId(), 1L, null, field1.getId());
         record2 = repository.createOrUpdate(record2);
 
         // Create a record which links to one of the other records
@@ -2105,7 +2107,7 @@ public class IndexerTest {
         Record record3 = repository.newRecord(idGenerator.newRecordId());
         record3.setRecordType(rt.getName());
         record3.setField(field2.getName(), new Link(record2.getId()));
-        expectEvent(CREATE, record3.getId(), 1L, null, field2.getId());
+        expectEvent(CREATE, Table.RECORD.name, record3.getId(), 1L, null, field2.getId());
         record3 = repository.createOrUpdate(record3);
 
         //
@@ -2201,7 +2203,7 @@ public class IndexerTest {
         // update of expressions pointing to the fake system fields does not give problems
         log.debug("Begin test V408");
         record2.setField(field1.getName(), "obtuse2");
-        expectEvent(UPDATE, record2.getId(), 2L, null, field1.getId());
+        expectEvent(UPDATE, Table.RECORD.name, record2.getId(), 2L, null, field1.getId());
         record2 = repository.createOrUpdate(record2);
 
         // Change record type of record 2. The denormalized reference of it stored in the index entry
@@ -2211,7 +2213,7 @@ public class IndexerTest {
         record2.setRecordType(rt2.getName());
         record2.setField(field1.getName(),
                 "obtuse3"); // currently can't only change record type, so touch field as well
-        expectEvent(UPDATE, record2.getId(), 3L, null, true, field1.getId());
+        expectEvent(UPDATE, Table.RECORD.name, record2.getId(), 3L, null, true, field1.getId());
         record2 = repository.update(record2);
 
         commitIndex();
@@ -2221,7 +2223,7 @@ public class IndexerTest {
 
         // Touch record 3 and retest
         record3.setField(field1.getName(), "right");
-        expectEvent(UPDATE, record3.getId(), 2L, null, field1.getId());
+        expectEvent(UPDATE, Table.RECORD.name, record3.getId(), 2L, null, field1.getId());
         record3 = repository.update(record3);
 
         commitIndex();
@@ -2265,7 +2267,7 @@ public class IndexerTest {
             // Test
             //
             RecordId recordId = idGenerator.newRecordId();
-            expectEvent(CREATE, recordId, nestedListsField.getId(), recordField.getId(), recordListField.getId());
+            expectEvent(CREATE, Table.RECORD.name, recordId, nestedListsField.getId(), recordField.getId(), recordListField.getId());
 
             repository
                     .recordBuilder()
@@ -2332,7 +2334,7 @@ public class IndexerTest {
                     .recordType(cfRecordType.getName())
                     .field(recordField.getName(), beta)
                     .field(recordListField.getName(), Lists.newArrayList(beta, gamma)).build();
-            expectEvent(CREATE, alplhaId, recordField.getId(), recordListField.getId());
+            expectEvent(CREATE, Table.RECORD.name, alplhaId, recordField.getId(), recordListField.getId());
             alpha = repository.create(alpha);
 
             commitIndex();
@@ -2742,7 +2744,9 @@ public class IndexerTest {
         messageVerifier.disable();
 
         // reset current read count
-        indexUpdaterRepository.reads();
+        indexUpdaterRepositoryMgr.reset();
+        
+        TrackingRepository indexUpdaterRepository = (TrackingRepository)indexUpdaterRepositoryMgr.getRepository(Table.RECORD.name);
 
         Record record = repository.newRecord();
         record.setRecordType(vRecordType1.getName());
@@ -3002,20 +3006,21 @@ public class IndexerTest {
                 response.getResults().get(0).getFieldValues(fieldName).toArray(new Object[]{}));
     }
 
-    private void expectEvent(RecordEvent.Type type, RecordId recordId, SchemaId... updatedFields) {
-        expectEvent(type, recordId, null, null, updatedFields);
+    private void expectEvent(RecordEvent.Type type, String table, RecordId recordId, SchemaId... updatedFields) {
+        expectEvent(type, table, recordId, null, null, updatedFields);
     }
 
-    private void expectEvent(RecordEvent.Type type, RecordId recordId, Long versionCreated, Long versionUpdated,
+    private void expectEvent(RecordEvent.Type type, String table, RecordId recordId, Long versionCreated, Long versionUpdated,
                              SchemaId... updatedFields) {
-        expectEvent(type, recordId, versionCreated, versionUpdated, false, updatedFields);
+        expectEvent(type, table, recordId, versionCreated, versionUpdated, false, updatedFields);
     }
 
-    private void expectEvent(RecordEvent.Type type, RecordId recordId, Long versionCreated, Long versionUpdated,
+    private void expectEvent(RecordEvent.Type type, String table, RecordId recordId, Long versionCreated, Long versionUpdated,
                              boolean recordTypeChanged, SchemaId... updatedFields) {
         RecordEvent event = new RecordEvent();
 
         event.setType(type);
+        event.setTableName(table);
 
         for (SchemaId updatedField : updatedFields) {
             event.addUpdatedField(updatedField);
@@ -3154,6 +3159,58 @@ public class IndexerTest {
         }
         
         
+    }
+    
+    private static class TrackingRepositoryManager implements RepositoryManager {
+        
+        private RepositoryManager delegate;
+        private Map<String,TrackingRepository> repositoryCache = Maps.newHashMap();
+        
+        public TrackingRepositoryManager(RepositoryManager delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void close() throws IOException {
+            delegate.close();
+        }
+
+        @Override
+        public RecordFactory getRecordFactory() {
+            return delegate.getRecordFactory();
+        }
+
+        @Override
+        public IdGenerator getIdGenerator() {
+            return delegate.getIdGenerator();
+        }
+
+        @Override
+        public TypeManager getTypeManager() {
+            return delegate.getTypeManager();
+        }
+
+        @Override
+        public Repository getDefaultRepository() throws IOException, InterruptedException {
+            throw new RuntimeException("Default repository should not be used by indexer");
+        }
+
+        @Override
+        public synchronized Repository getRepository(String tableName) throws IOException, InterruptedException {
+            if (!repositoryCache.containsKey(tableName)) {
+                Repository repository = delegate.getRepository(tableName);
+                TrackingRepository trackingRepository = new TrackingRepository();
+                trackingRepository.setDelegate(repository);
+                repositoryCache.put(tableName, trackingRepository);
+            }
+            return repositoryCache.get(tableName);
+        }
+        
+        public void reset() {
+            for (TrackingRepository repo : repositoryCache.values()) {
+                repo.reads();
+            }
+        }
     }
 
     private static class TrackingRepository extends BaseRepositoryDecorator {

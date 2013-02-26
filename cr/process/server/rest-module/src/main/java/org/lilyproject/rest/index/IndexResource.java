@@ -48,6 +48,7 @@ import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.rest.TypeManagerEnabled;
 import org.lilyproject.util.ObjectUtils;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.json.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -178,10 +179,13 @@ public class IndexResource extends TypeManagerEnabled {
      */
     @POST
     @Path("{name}")
-    public void indexOn(@QueryParam("action") String action, @PathParam("name") String indexName,
-                        @QueryParam("id") String recordId) throws Exception {
+    public void indexOn(@QueryParam("action") String action, @PathParam("table") String table,
+            @PathParam("name") String indexName, @QueryParam("id") String recordId) throws Exception {
         if ("index".equals(action)) {
-            indexer.indexOn(idGenerator.fromString(recordId),
+            if (table == null) {
+                table = Table.RECORD.name;
+            }
+            indexer.indexOn(table, idGenerator.fromString(recordId),
                     new HashSet<String>(Arrays.asList(indexName)));
         } else {
             throw new ResourceException("Unsupported POST action: " + action, BAD_REQUEST.getStatusCode());
@@ -194,13 +198,16 @@ public class IndexResource extends TypeManagerEnabled {
     @POST
     @Path("")
     public void index(@QueryParam("action") String action, @QueryParam("indexes") String commaSeparatedIndexNames,
-                      @QueryParam("id") String recordId) throws Exception {
+                      @QueryParam("table") String table, @QueryParam("id") String recordId) throws Exception {
         if ("index".equals(action)) {
+            if (table == null) {
+                table = Table.RECORD.name;
+            }
             final Set<String> indexNames = parse(commaSeparatedIndexNames);
             if (indexNames.isEmpty()) {
-                indexer.index(idGenerator.fromString(recordId));
+                indexer.index(table, idGenerator.fromString(recordId));
             } else {
-                indexer.indexOn(idGenerator.fromString(recordId), indexNames);
+                indexer.indexOn(table, idGenerator.fromString(recordId), indexNames);
             }
         } else {
             throw new ResourceException("Unsupported POST action: " + action, BAD_REQUEST.getStatusCode());

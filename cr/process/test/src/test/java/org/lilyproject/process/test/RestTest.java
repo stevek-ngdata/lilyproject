@@ -1252,14 +1252,14 @@ public class RestTest {
         ResponseAndContent getResponse = get(BASE_URI + "/table");
         assertStatus(HttpStatus.SC_OK, getResponse);
         
-        List<String> tableNames = getStringList(readJson(getResponse));
+        List<String> tableNames = getTableNameList(readJson(getResponse));
         assertEquals(Lists.newArrayList("record"), tableNames);
         
-        ResponseAndContent postResponse = post(BASE_URI + "/table/resttesttable", "");
+        ResponseAndContent postResponse = post(BASE_URI + "/table", "{\"name\": \"resttesttable\"}");
         assertStatus(HttpStatus.SC_OK, postResponse);
         
         getResponse = get(BASE_URI + "/table");
-        tableNames = getStringList(readJson(getResponse));
+        tableNames = getTableNameList(readJson(getResponse));
         Collections.sort(tableNames);
         
         assertEquals(Lists.newArrayList("record", "resttesttable"), tableNames);
@@ -1268,7 +1268,7 @@ public class RestTest {
         assertStatus(HttpStatus.SC_OK, deleteResponse);
         
         getResponse = get(BASE_URI + "/table");
-        tableNames = getStringList(readJson(getResponse));
+        tableNames = getTableNameList(readJson(getResponse));
         
         assertEquals(Lists.newArrayList("record"), tableNames);
         
@@ -1348,13 +1348,13 @@ public class RestTest {
         return input.replaceAll("'", "\"");
     }
     
-    private List<String> getStringList(JsonNode json) {
+    private List<String> getTableNameList(JsonNode json) {
         if (!json.isArray()) {
             throw new RuntimeException("Supplied JSON is not an array: " +  json.toString());
         }
         List<String> stringList = Lists.newArrayList();
         for (int i = 0; i < json.size(); i++) {
-            stringList.add(json.get(i).asText());
+            stringList.add(json.get(i).get("name").asText());
         }
         return stringList;
     }

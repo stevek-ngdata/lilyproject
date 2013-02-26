@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import org.lilyproject.repository.api.RepositoryManager;
+
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Link;
@@ -50,7 +52,7 @@ public class LinkFieldFollow implements Follow {
         IdGenerator idGenerator = indexUpdateBuilder.getRepositoryManager().getIdGenerator();
 
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
-        Repository repository = indexUpdateBuilder.getRepositoryManager().getRepository(Table.RECORD.name);
+        RepositoryManager repoMgr = indexUpdateBuilder.getRepositoryManager();
 
         // FIXME: it's more efficient to read all records at once
         // but make sure missing records are also treated (handled here via null linkedRecord in case of RecordNotFoundException
@@ -59,6 +61,8 @@ public class LinkFieldFollow implements Follow {
             for (Link link: (List<Link>)links) {
                 RecordId linkedRecordId = link.resolve(ctx.contextRecord, idGenerator);
                 Record linkedRecord = null;
+                String table = link.getTable();
+                Repository repository = table == null ? repoMgr.getDefaultRepository() : repoMgr.getRepository(table);
                 try {
                     linkedRecord = VersionTag.getIdRecord(linkedRecordId, indexUpdateBuilder.getVTag(), repository);
                 } catch (RecordNotFoundException rnfe) {

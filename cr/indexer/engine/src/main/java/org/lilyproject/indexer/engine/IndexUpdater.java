@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.ngdata.sep.SepEvent;
-
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
@@ -35,6 +33,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.ngdata.sep.EventListener;
 import com.ngdata.sep.EventPublisher;
+import com.ngdata.sep.SepEvent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
@@ -50,9 +49,11 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.Pair;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
 import org.lilyproject.util.repo.RecordEventHelper;
@@ -93,7 +94,7 @@ import org.lilyproject.util.repo.VTaggedRecord;
  * Updates the index in response to repository events.
  */
 public class IndexUpdater implements EventListener {
-    private Repository repository;
+    private RepositoryManager repositoryManager;
     private Indexer indexer;
     private IndexUpdaterMetrics metrics;
     private ClassLoader myContextClassLoader;
@@ -115,12 +116,12 @@ public class IndexUpdater implements EventListener {
      *                       because the IndexUpdater generates events itself, which should only be sent to
      *                       this subscription.
      */
-    public IndexUpdater(Indexer indexer, Repository repository, IndexLocker indexLocker,
+    public IndexUpdater(Indexer indexer, RepositoryManager repositoryManager, IndexLocker indexLocker,
             IndexUpdaterMetrics metrics, DerefMap derefMap, EventPublisher eventPublisher, String subscriptionId)
             throws IOException {
         this.indexer = indexer;
-        this.repository = repository;
-        this.idGenerator = repository.getIdGenerator();
+        this.repositoryManager = repositoryManager;
+        this.idGenerator = repositoryManager.getIdGenerator();
         this.indexLocker = indexLocker;
         this.derefMap = derefMap;
         this.eventPublisher = eventPublisher;
@@ -158,7 +159,8 @@ public class IndexUpdater implements EventListener {
                     log.debug(String.format("Record %1$s: reindex requested for these vtags: %2$s", recordId,
                             indexer.vtagSetToNameString(recordEvent.getVtagsToIndex())));
                 }
-                index(recordId, recordEvent.getVtagsToIndex());
+                String tableName = recordEvent.getTableName();
+                index(repositoryManager.getRepository(tableName), tableName, recordId, recordEvent.getVtagsToIndex());
             } else if (recordEvent.getType().equals(DELETE)) {
                 // Record is deleted: delete its index entry. We do not check for a matching index case, since
                 // we can't (record is not available anymore), and besides IndexAwareMQFeeder takes care of sending us
@@ -185,7 +187,8 @@ public class IndexUpdater implements EventListener {
                 // now match a different IndexCase than before, and if so, if the new case would have less vtags
                 // than the old one, perform the necessary deletes on Solr.
                 Pair<Record,Record> oldAndNewRecords =
-                        IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, recordEvent, repository);
+                        IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, recordEvent,
+                                                        repositoryManager.getRepository(recordEvent.getTableName()));
                 Record oldRecord = oldAndNewRecords.getV1();
                 Record newRecord = oldAndNewRecords.getV2();
                 IndexCase caseOld = oldRecord != null ? indexer.getConf().getIndexCase(oldRecord) : null;
@@ -217,7 +220,7 @@ public class IndexUpdater implements EventListener {
                     doIndexing = caseOld.getVersionTags().size() > 0;
                 }
 
-                RecordEventHelper eventHelper = new RecordEventHelper(recordEvent, null, repository.getTypeManager());
+                RecordEventHelper eventHelper = new RecordEventHelper(recordEvent, null, repositoryManager.getTypeManager());
 
                 if (doIndexing) {
                     indexLocker.lock(recordId);
@@ -227,7 +230,8 @@ public class IndexUpdater implements EventListener {
                             // meanwhile undergo changes. However, we continuously work with the snapshot of the vtags
                             // mappings read here. The processing of later events will bring the index up to date with
                             // any new changes.
-                            vtRecord = new VTaggedRecord(recordId, eventHelper, repository);
+                            vtRecord = new VTaggedRecord(recordId, eventHelper,
+                                            repositoryManager.getRepository(recordEvent.getTableName()));
                         } catch (RecordNotFoundException e) {
                             // The record has been deleted in the meantime.
                             // For now, we do nothing, when the delete event is received the record will be removed
@@ -395,7 +399,7 @@ public class IndexUpdater implements EventListener {
             //
             // Index
             //
-            indexer.index(vtRecord, vtagsToIndex);
+            indexer.index(event.getTableName(), vtRecord, vtagsToIndex);
         }
     }
 
@@ -452,6 +456,8 @@ public class IndexUpdater implements EventListener {
         for (RecordId referrer : referrersAndVTags.keySet()) {
 
             RecordEvent payload = new RecordEvent();
+            // TODO repository - remove use of record table name here
+            payload.setTableName(Table.RECORD.name);
             payload.setType(INDEX);
             for (SchemaId vtag : referrersAndVTags.get(referrer)) {
                 payload.addVTagToIndex(vtag);
@@ -494,7 +500,7 @@ public class IndexUpdater implements EventListener {
      *
      * @throws IOException
      */
-    private void index(RecordId recordId, Set<SchemaId> vtagsToIndex) throws RepositoryException, InterruptedException,
+    private void index(Repository repository, String table, RecordId recordId, Set<SchemaId> vtagsToIndex) throws RepositoryException, InterruptedException,
             SolrClientException, ShardSelectorException, IndexLockException, IOException {
         boolean lockObtained = false;
         try {
@@ -520,7 +526,7 @@ public class IndexUpdater implements EventListener {
             // Only keep vtags which exist on the record
             vtagsToIndex.retainAll(vtRecord.getVTags().keySet());
 
-            indexer.index(vtRecord, vtagsToIndex);
+            indexer.index(table, vtRecord, vtagsToIndex);
         } finally {
             if (lockObtained) {
                 indexLocker.unlockLogFailure(recordId);

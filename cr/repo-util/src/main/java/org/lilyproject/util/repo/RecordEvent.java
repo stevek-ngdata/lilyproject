@@ -25,14 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
-
-import org.apache.commons.lang.builder.HashCodeBuilder;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-
 import com.google.common.collect.ImmutableSet;
-
+import com.google.common.collect.Sets;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
@@ -259,6 +255,7 @@ public class RecordEvent {
     }
 
     public void toJson(JsonGenerator gen) throws IOException {
+        
         gen.writeStartObject();
 
         if (type != null) {
@@ -367,6 +364,9 @@ public class RecordEvent {
             return false;
         
         if(!ObjectUtils.safeEquals(other.attributes, this.attributes))
+            return false;
+        
+        if (!ObjectUtils.safeEquals(other.tableName, tableName))
             return false;
 
         // TODO implement equals for IndexRecordFilterData

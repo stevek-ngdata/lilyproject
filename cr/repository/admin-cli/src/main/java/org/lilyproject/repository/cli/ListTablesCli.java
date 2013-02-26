@@ -17,6 +17,7 @@ package org.lilyproject.repository.cli;
 
 import java.util.List;
 
+import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.RepositoryTableManager;
 
 /**
@@ -32,13 +33,13 @@ public class ListTablesCli extends BaseTableCliTool {
 
     @Override
     protected int execute(RepositoryTableManager tableManager) throws Exception {
-        List<String> tableNames = tableManager.getTableNames();
-        if (tableNames.isEmpty()) {
+        List<RepositoryTable> tables = tableManager.getTables();
+        if (tables.isEmpty()) {
             System.out.println("No repository tables found");
         } else {
-            System.out.printf("Number of indexes: %d\n", tableNames.size());
-            for (String tableName : tableNames) {
-                System.out.println("    " + tableName);
+            System.out.printf("Number of tables: %d\n", tables.size());
+            for (RepositoryTable table : tables) {
+                System.out.println("    " + table.getName());
             }
         }
         return 0;

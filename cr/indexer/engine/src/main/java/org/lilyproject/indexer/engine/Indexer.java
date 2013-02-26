@@ -108,39 +108,39 @@ public class Indexer {
      * @param recordId
      * @throws IOException
      */
-    public void index(RecordId recordId) throws RepositoryException, SolrClientException,
+    public void index(String table, RecordId recordId) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
 
-        VTaggedRecord vtRecord = new VTaggedRecord(recordId, repositoryManager.getRepository(Table.RECORD.name));
+        VTaggedRecord vtRecord = new VTaggedRecord(recordId, repositoryManager.getRepository(table));
         IdRecord record = vtRecord.getRecord();
 
         IndexCase indexCase = conf.getIndexCase(record);
-        index(vtRecord, record);
+        index(table, vtRecord, record);
     }
 
-    public void index(IdRecord idRecord) throws RepositoryException, SolrClientException,
+    public void index(String table, IdRecord idRecord) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
-        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repositoryManager.getRepository(Table.RECORD.name));
-        index(vtRecord, idRecord);
+        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repositoryManager.getRepository(table));
+        index(table, vtRecord, idRecord);
     }
 
-    private void index(VTaggedRecord vtRecord, IdRecord record) throws RepositoryException, SolrClientException,
+    private void index(String table, VTaggedRecord vtRecord, IdRecord record) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
         IndexCase indexCase = conf.getIndexCase(record);
         if (indexCase == null) {
             return;
         }
 
-        index(vtRecord, retainExistingVtagsOnly(indexCase.getVersionTags(), vtRecord));
+        index(table, vtRecord, retainExistingVtagsOnly(indexCase.getVersionTags(), vtRecord));
     }
 
-    void index(IdRecord idRecord, Set<SchemaId> vtags)
+    void index(String table, IdRecord idRecord, Set<SchemaId> vtags)
             throws RepositoryException, IOException, ShardSelectorException, SolrClientException, InterruptedException {
-        final VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repositoryManager.getRepository(Table.RECORD.name));
+        final VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repositoryManager.getRepository(table));
 
         Set<SchemaId> vtagsToIndex = retainExistingVtagsOnly(vtags, vtRecord);
 
-        index(vtRecord, vtagsToIndex);
+        index(table, vtRecord, vtagsToIndex);
     }
 
     /**
@@ -151,7 +151,7 @@ public class Indexer {
      * @param vtagsToIndex all vtags for which to index the record, not all vtags need to exist on the record,
      *                     but this should only contain appropriate vtags as defined by the IndexCase for this record.
      */
-    protected void index(VTaggedRecord vtRecord, Set<SchemaId> vtagsToIndex)
+    protected void index(String table, VTaggedRecord vtRecord, Set<SchemaId> vtagsToIndex)
             throws RepositoryException, ShardSelectorException, InterruptedException, SolrClientException, IOException {
 
         RecordId recordId = vtRecord.getId();
@@ -184,7 +184,7 @@ public class Indexer {
                             vtagSetToNameString(entry.getValue())));
                 }
             } else {
-                index(version, entry.getKey(), entry.getValue());
+                index(table, version, entry.getKey(), entry.getValue());
             }
         }
     }
@@ -197,7 +197,7 @@ public class Indexer {
      *                record.getVersion().
      * @param vtags   the version tags under which to index
      */
-    protected void index(IdRecord record, long version, Set<SchemaId> vtags)
+    protected void index(String table, IdRecord record, long version, Set<SchemaId> vtags)
             throws ShardSelectorException, RepositoryException, InterruptedException, SolrClientException, IOException {
         verifyLock(record.getId());
 
@@ -213,7 +213,7 @@ public class Indexer {
 
             SolrDocumentBuilder solrDocumentBuilder =
                     new SolrDocumentBuilder(repositoryManager, getConf().getRecordFilter(), systemFields, valueEvaluator,
-                            record, getIndexId(record.getId(), vtag), vtag, version);
+                            table, record, getIndexId(record.getId(), vtag), vtag, version);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
 

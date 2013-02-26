@@ -71,18 +71,20 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     private Stack<RecordContext> contexts;
     private LoadingCache<DependencyEntry, Set<SchemaId>> dependencies;
 
+    private String table;
     private RecordId recordId;
     private String key;
     private SchemaId vtag;
     private long version;
 
     public SolrDocumentBuilder(RepositoryManager repositoryManager, IndexRecordFilter indexRecordFilter, SystemFields systemFields,
-                               ValueEvaluator valueEvaluator, IdRecord record, String key, SchemaId vtag, long version) {
+                               ValueEvaluator valueEvaluator, String table, IdRecord record, String key, SchemaId vtag, long version) {
         this.repositoryManager = repositoryManager;
         this.indexRecordFilter = indexRecordFilter;
         this.systemFields = systemFields;
         this.typeManager = repositoryManager.getTypeManager();
         this.valueEvaluator = valueEvaluator;
+        this.table = table;
         this.recordId = record.getId();
         this.key = key;
         this.vtag = vtag;
@@ -109,6 +111,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
     public SolrInputDocument build() throws InterruptedException, RepositoryException {
         solrDoc.setField("lily.id", recordId.toString());
+        solrDoc.setField("lily.table", table);
         solrDoc.setField("lily.key", key);
         solrDoc.setField("lily.vtagId", vtag.toString());
         solrDoc.setField("lily.vtag", typeManager.getFieldTypeById(vtag).getName().getName());

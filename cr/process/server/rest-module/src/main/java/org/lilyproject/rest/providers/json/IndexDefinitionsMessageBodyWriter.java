@@ -18,7 +18,9 @@ package org.lilyproject.rest.providers.json;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Collection;
 
 import javax.ws.rs.WebApplicationException;
@@ -35,7 +37,7 @@ import org.lilyproject.indexer.model.impl.IndexDefinitionConverter;
 import org.lilyproject.util.json.JsonFormat;
 
 /**
- * MessageBodyWriter for writing Collection<IndexDefinition> instances  
+ * MessageBodyWriter for writing Collection<IndexDefinition> instances
  */
 @Provider
 public class IndexDefinitionsMessageBodyWriter implements MessageBodyWriter<Collection<IndexDefinition>> {
@@ -50,7 +52,12 @@ public class IndexDefinitionsMessageBodyWriter implements MessageBodyWriter<Coll
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
 			MediaType mediaType) {
 		if (Collection.class.isAssignableFrom(type) && mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-			return true;
+		    if (genericType instanceof ParameterizedType) {
+		        ParameterizedType parameterizedType = (ParameterizedType)genericType;
+		        if (Arrays.asList(parameterizedType.getActualTypeArguments()).contains(IndexDefinition.class)) {
+		            return true;
+		        }
+		    }
 		}
 		return false;
 	}
@@ -67,6 +74,6 @@ public class IndexDefinitionsMessageBodyWriter implements MessageBodyWriter<Coll
 	        array.add(converter.toJson(index));
 	    }
 	    
-	    IOUtils.write(JsonFormat.serializeAsBytes(array), outputStream);		
+	    IOUtils.write(JsonFormat.serializeAsBytes(array), outputStream);
 	}
 }

@@ -159,6 +159,7 @@
    <!-- Fields which are required by Lily -->
    <field name="lily.key" type="string" indexed="true" stored="true" required="true"/>
    <field name="lily.id" type="string" indexed="true" stored="true" required="true"/>
+   <field name="lily.table" type="string" indexed="true" stored="true" required="true"/>
 
    <!-- Fields which are required by Lily, but which are not required to be indexed or stored -->
    <field name="lily.vtagId" type="string" indexed="true" stored="true"/>
