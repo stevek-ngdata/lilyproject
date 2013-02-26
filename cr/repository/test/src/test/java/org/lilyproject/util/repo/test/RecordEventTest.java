@@ -25,6 +25,7 @@ import org.lilyproject.util.repo.RecordEvent;
 
 public class RecordEventTest {
     private static final String NS = "org.lilyproject.util.repo.test";
+    private static final String subscriptionId = "MessageVerifier";
 
     private final static RepositorySetup repoSetup = new RepositorySetup();
 
@@ -50,7 +51,6 @@ public class RecordEventTest {
     
     @Before
     public void setUp() throws Exception {
-        final String subscriptionId = "MessageVerifier";
         messageVerifier = new CountingMessageVerifier();
         repoSetup.getSepModel().addSubscription(subscriptionId);
         repoSetup.startSepEventSlave(subscriptionId, messageVerifier);
@@ -60,7 +60,8 @@ public class RecordEventTest {
     @After
     public void tearDown() throws Exception {
         repoSetup.stopSepEventSlave();
-        repoSetup.getSepModel().removeSubscription("MessageVerifier");
+        repoSetup.getSepModel().removeSubscription(subscriptionId);
+        repoSetup.getHBaseProxy().waitOnReplicationPeerStopped(subscriptionId);
     }
 
     @Test
