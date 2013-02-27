@@ -383,16 +383,18 @@ public class HBaseRepository extends BaseRepository {
             Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
             long newVersion = originalRecord.getVersion() == null ? 1 : originalRecord.getVersion() + 1;
 
+            // Check the mutation conditions.
+            // It is important that we do this before checking if the record needs updating at all: otherwise,
+            // another client might already have performed the update we intended to do, which is problematic
+            // in cases like incrementing a counter (the counter should be updated twice, not once).
+            Record conditionsResponse = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
+                    record);
+            if (conditionsResponse != null) {
+                return conditionsResponse;
+            }
+
             if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent, referencedBlobs,
                     unReferencedBlobs, useLatestRecordType, fieldTypes)) {
-
-                // Check the conditions after establishing that the record really needs updating, this makes the
-                // conditional update operation idempotent.
-                Record conditionsResponse = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
-                        record);
-                if (conditionsResponse != null) {
-                    return conditionsResponse;
-                }
 
                 if (record.hasAttributes()) {
                     recordEvent.setAttributes(record.getAttributes());
