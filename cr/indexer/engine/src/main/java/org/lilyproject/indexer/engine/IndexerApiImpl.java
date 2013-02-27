@@ -40,7 +40,7 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
 
         boolean matched = false;
         for (Indexer indexer : indexerRegistry.getAllIndexers()) {
-            final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(idRecord);
+            final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(table, idRecord);
             if (indexCase != null) {
                 matched = true;
                 tryIndex(indexer, table, idRecord, indexCase);
@@ -60,7 +60,7 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
                 throw new IndexerException("index " + indexName + " could not be found");
             } else {
                 final IdRecord idRecord = tryReadRecord(table, recordId);
-                final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(idRecord);
+                final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(table, idRecord);
                 if (indexCase != null) // it matches -> index
                     tryIndex(indexer, table, idRecord, indexCase);
                 else // it doesn't match -> explicitly delete

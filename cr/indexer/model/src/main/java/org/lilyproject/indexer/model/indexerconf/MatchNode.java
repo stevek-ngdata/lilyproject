@@ -59,7 +59,7 @@ public class MatchNode extends ContainerMappingNode {
             }
         }
 
-        if (recordMatcher.matches(vtRecord.getRecord())) {
+        if (recordMatcher.matches(vtRecord.getRecordEvent().getTableName(), vtRecord.getRecord())) {
             return childrenAffectedByUpdate(vtRecord, scope);
         } else {
             return false;
@@ -71,7 +71,7 @@ public class MatchNode extends ContainerMappingNode {
         for (SchemaId fieldId: recordMatcher.getFieldDependencyIds()) {
             indexUpdateBuilder.addDependency(fieldId);
         }
-        if (recordMatcher.matches(indexUpdateBuilder.getRecordContext().record)) {
+        if (recordMatcher.matches(indexUpdateBuilder.getTable(), indexUpdateBuilder.getRecordContext().record)) {
             super.collectIndexUpdate(indexUpdateBuilder);
         }
     }

@@ -210,7 +210,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
      * dependency will not trigger 'denormalized data updates'.
      */
     private void warnForUnmatchedDependencies(Record dependency) {
-        if (dependency != null && dependency.getId() != null && this.indexRecordFilter.getIndexCase(dependency) == null)
+        if (dependency != null && dependency.getId() != null && this.indexRecordFilter.getIndexCase(table, dependency) == null)
             log.warn(String.format("discovered dependency on record [%s] which will not be matched by the record filter of the index", dependency.getId()));
     }
 
@@ -247,6 +247,11 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     @Override
     public SystemFields getSystemFields() {
         return systemFields;
+    }
+    
+    @Override
+    public String getTable() {
+        return table;
     }
 
 }

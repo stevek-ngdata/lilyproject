@@ -191,8 +191,10 @@ public class IndexUpdater implements EventListener {
                                                         repositoryManager.getRepository(recordEvent.getTableName()));
                 Record oldRecord = oldAndNewRecords.getV1();
                 Record newRecord = oldAndNewRecords.getV2();
-                IndexCase caseOld = oldRecord != null ? indexer.getConf().getIndexCase(oldRecord) : null;
-                IndexCase caseNew = newRecord != null ? indexer.getConf().getIndexCase(newRecord) : null;
+                IndexCase caseOld = oldRecord != null ? indexer.getConf().getIndexCase(
+                                                                recordEvent.getTableName(), oldRecord) : null;
+                IndexCase caseNew = newRecord != null ? indexer.getConf().getIndexCase(
+                                                                recordEvent.getTableName(), newRecord) : null;
 
                 if (oldRecord != null && newRecord != null) {
                     if (caseOld != null && caseNew != null) {
@@ -281,7 +283,7 @@ public class IndexUpdater implements EventListener {
         //  The indexing of all versions is determined by the record type of the non-versioned scope.
         //  This makes that the indexing behavior of all versions is equal, and can be changed (the
         //  record type of the versioned scope is immutable).
-        IndexCase indexCase = indexer.getConf().getIndexCase(vtRecord.getRecord());
+        IndexCase indexCase = indexer.getConf().getIndexCase(event.getTableName(), vtRecord.getRecord());
 
         if (indexCase == null) {
             // The record should not be indexed
@@ -515,7 +517,7 @@ public class IndexUpdater implements EventListener {
                 return;
             }
 
-            IndexCase indexCase = indexer.getConf().getIndexCase(vtRecord.getRecord());
+            IndexCase indexCase = indexer.getConf().getIndexCase(table, vtRecord.getRecord());
 
             if (indexCase == null) {
                 return;

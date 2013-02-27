@@ -114,7 +114,7 @@ public class Indexer {
         VTaggedRecord vtRecord = new VTaggedRecord(recordId, repositoryManager.getRepository(table));
         IdRecord record = vtRecord.getRecord();
 
-        IndexCase indexCase = conf.getIndexCase(record);
+        IndexCase indexCase = conf.getIndexCase(table, record);
         index(table, vtRecord, record);
     }
 
@@ -126,7 +126,7 @@ public class Indexer {
 
     private void index(String table, VTaggedRecord vtRecord, IdRecord record) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
-        IndexCase indexCase = conf.getIndexCase(record);
+        IndexCase indexCase = conf.getIndexCase(table, record);
         if (indexCase == null) {
             return;
         }

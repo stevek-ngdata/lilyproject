@@ -34,6 +34,8 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import com.google.common.collect.Lists;
+
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
@@ -184,7 +186,7 @@ public class IndexerConfBuilder {
             Set<SchemaId> vtags = parseVersionTags(vtagsSpec);
 
             RecordMatcher recordMatcher = new RecordMatcher(matchNamespace, matchName, null, null, null, null,
-                    varPropsPattern, typeManager);
+                    varPropsPattern, null, typeManager);
             recordFilter.addInclude(recordMatcher, new IndexCase(vtags));
         }
 
@@ -213,6 +215,8 @@ public class IndexerConfBuilder {
         if (instanceOfAttr != null) {
             instanceOfType = ConfUtil.parseQName(instanceOfAttr, element, false);
         }
+        
+        List<String> tableNames = extractTableNames(DocumentHelper.getAttribute(element, "tables", false));
 
         //
         // Condition on variant properties
@@ -254,7 +258,7 @@ public class IndexerConfBuilder {
         }
 
         RecordMatcher matcher = new RecordMatcher(rtNamespacePattern, rtNamePattern, instanceOfType, fieldType,
-                comparator, fieldValue, varPropsPattern, typeManager);
+                comparator, fieldValue, varPropsPattern, tableNames, typeManager);
 
         return matcher;
     }
@@ -787,6 +791,21 @@ public class IndexerConfBuilder {
         } catch (Exception e) {
             throw new IndexerConfException("Error validating indexer configuration against XML Schema.", e);
         }
+    }
+    
+    static List<String> extractTableNames(String tableNameAttr) {
+        if (tableNameAttr == null) {
+            return null;
+        }
+        List<String> tableNames = Lists.newArrayList();
+        tableNameAttr = tableNameAttr.trim();
+        for (String tableName : tableNameAttr.split(",")) {
+            tableName = tableName.trim();
+            if (!tableName.isEmpty()) {
+                tableNames.add(tableName);
+            }
+        }
+        return tableNames.isEmpty() ? null : tableNames;
     }
 
     public static void validate(InputStream is) throws IndexerConfException {
