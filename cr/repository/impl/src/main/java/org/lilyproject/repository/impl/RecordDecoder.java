@@ -309,7 +309,7 @@ public class RecordDecoder {
             metadata = MetadataSerDeser.read(
                     new DataInputImpl(prefixedValue, prefixedValue.length - metadataSpace, metadataSize));
         } else {
-            throw new RuntimeException("Unsupported metadata encoding version: " + metadataEncodingVersion);
+            throw new RuntimeException("Unsupported field metadata encoding version: " + metadataEncodingVersion);
         }
 
         Object value = valueType.read(new DataInputImpl(prefixedValue, FieldFlags.SIZE,

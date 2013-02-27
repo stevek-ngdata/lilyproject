@@ -19,7 +19,7 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.hbaseext.ContainsValueComparator;
+import org.lilyproject.repository.impl.hbase.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
 
 public class BlobValueType extends AbstractValueType implements ValueType {

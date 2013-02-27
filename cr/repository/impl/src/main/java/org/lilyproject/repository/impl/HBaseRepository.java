@@ -53,7 +53,7 @@ import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
-import org.lilyproject.hbaseext.ContainsValueComparator;
+import org.lilyproject.repository.impl.hbase.ContainsValueComparator;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobException;
 import org.lilyproject.repository.api.BlobManager;

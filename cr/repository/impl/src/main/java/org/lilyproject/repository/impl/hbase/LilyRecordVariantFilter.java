@@ -1,4 +1,4 @@
-package org.lilyproject.hbaseext;
+package org.lilyproject.repository.impl.hbase;
 
 import java.io.DataInput;
 import java.io.DataOutput;

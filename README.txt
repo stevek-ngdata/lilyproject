@@ -60,7 +60,7 @@ this is also easier for debugging.
 
 To easily launch a mini HBase without having to install it, execute:
 
-cd global/hadoop-test-fw
+cd global/hadoop-test-fw-standalone
 ./target/launch-hadoop
 
 This will print some non-log informational messages once everything is up.
@@ -75,6 +75,10 @@ runs should be way faster.
 
 Each time this 'mini' HBase is restarted, it looses its state so the first run
 after restart will again be a bit slower.
+
+Some tests rely on extra Lily libs to be on the classpath of the HBase regionserver.
+When the code of these libs is changed, it is necessary to restart launch-hadoop.
+So when working on that kind of code, connect mode will be less convenient.
 
 When you run testcases without -Pconnect, and you have a mini HBase launched,
 it might get confused (because some of the same ports are used), and you

@@ -20,7 +20,7 @@ import java.util.Arrays;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
-import org.lilyproject.hbaseext.LilyRecordVariantFilter;
+import org.lilyproject.repository.impl.hbase.LilyRecordVariantFilter;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.RecordFilter;

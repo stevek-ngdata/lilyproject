@@ -85,7 +85,6 @@
     <module>cr/linkindex</module>
     <module>cr/repo-util</module>
     <module>cr/repo-test-fw</module>
-    <module>cr/hbase-ext</module>
     <module>cr/avro-api</module>
     <module>cr/process</module>
     <module>cr/repository-api-tutorial</module>
@@ -98,6 +97,7 @@
     <module>global/hbaseindex</module>
     <module>global/util</module>
     <module>global/hadoop-test-fw</module>
+    <module>global/hadoop-test-fw-standalone</module>
     <module>global/hbase-util</module>
     <module>global/hadoop-test</module>
     <module>global/zk-util</module>
@@ -287,11 +287,6 @@
         <artifactId>lily-repo-test-fw</artifactId>
         <version>2.2-SNAPSHOT</version>
         <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-hbase-ext</artifactId>
-        <version>2.2-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>

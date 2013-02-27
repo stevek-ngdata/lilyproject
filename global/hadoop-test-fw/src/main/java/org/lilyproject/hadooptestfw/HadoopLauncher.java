@@ -27,6 +27,8 @@ import java.io.File;
 /**
  * Utility to easily launch a full HBase with a temporary storage. Intended to be used to run testcases
  * against (see HBaseProxy connect mode).
+ *
+ * <p>The shell script to actually launch this in the project hadoop-test-fw-standalone.</p>
  */
 public class HadoopLauncher extends BaseCliTool {
     private File baseTempDir;

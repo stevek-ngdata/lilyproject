@@ -49,11 +49,6 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hadoop-test-fw</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
       <artifactId>lily-repository-api</artifactId>
     </dependency>
 
@@ -70,11 +65,6 @@
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-repo-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hbase-ext</artifactId>
     </dependency>
 
     <dependency>

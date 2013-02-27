@@ -3378,4 +3378,20 @@ public abstract class AbstractRepositoryTest {
             assertTrue(e.getMessage().contains("Field metadata is not supported for versioned-mutable fields."));
         }
     }
+
+    @Test
+    public void testFieldValueFilterWhenFieldHasMetadata() throws Exception {
+        // The purpose of this test is to verify that the FieldValueFilter also works when there
+        // is metadata for the field (metadata is stored in the same cell as the value, and should be ignored
+        // by the FieldValueFilter)
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "stop drinking coke");
+        record.setMetadata(fieldType1.getName(), new MetadataBuilder().value("field1", "foobar").build());
+        repository.create(record);
+
+        RecordScan scan = new RecordScan();
+        scan.setRecordFilter(new FieldValueFilter(fieldType1.getName(), "stop drinking coke"));
+        assertEquals(1, countResults(repository.getScanner(scan)));
+    }
 }

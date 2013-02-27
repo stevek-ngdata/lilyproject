@@ -36,7 +36,7 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
-import org.lilyproject.hbaseext.ContainsValueComparator;
+import org.lilyproject.repository.impl.hbase.ContainsValueComparator;
 import org.lilyproject.repository.api.BlobException;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;

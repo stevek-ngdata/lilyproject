@@ -32,6 +32,7 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.FieldValueFilter;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.impl.FieldTypeImpl;
+import org.lilyproject.repository.impl.hbase.LilyFieldSingleColumnValueFilter;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 
@@ -61,25 +62,13 @@ public class HBaseFieldValueFilter implements HBaseRecordFilterFactory {
 
         FieldType fieldType = repositoryManager.getTypeManager().getFieldTypeByName(filter.getField());
         DataOutput dataOutput = new DataOutputImpl();
-        dataOutput.writeByte(EXISTS_FLAG);
         fieldType.getValueType().write(filter.getFieldValue(), dataOutput, new IdentityRecordStack());
         byte[] fieldValue = dataOutput.toByteArray();
 
-        SingleColumnValueFilter hbaseFilter = new SingleColumnValueFilter(RecordCf.DATA.bytes,
+        LilyFieldSingleColumnValueFilter hbaseFilter = new LilyFieldSingleColumnValueFilter(RecordCf.DATA.bytes,
                 ((FieldTypeImpl)fieldType).getQualifier(), HBaseRecordFilterUtil.translateCompareOp(compareOp), fieldValue);
         hbaseFilter.setFilterIfMissing(filter.getFilterIfMissing());
 
-        if (compareOp == CompareOp.NOT_EQUAL && filter.getFilterIfMissing()) {
-            // In some cases delete markers get written rather than really deleting the field. Such delete markers
-            // are also not equal to the searched field, therefore in case of the not equal operator we need to add
-            // and extra filter to exclude the delete marker matches, except if filterIfMissing would be false.
-            FilterList list = new FilterList();
-            list.addFilter(new SingleColumnValueFilter(RecordCf.DATA.bytes,
-                    ((FieldTypeImpl)fieldType).getQualifier(), CompareFilter.CompareOp.NOT_EQUAL, DELETE_MARKER));
-            list.addFilter(hbaseFilter);
-            return list;
-        } else {
-            return hbaseFilter;
-        }
+        return hbaseFilter;
     }
 }
