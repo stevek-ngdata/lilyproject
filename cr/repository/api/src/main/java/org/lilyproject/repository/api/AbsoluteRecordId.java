@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 NGDATA nv
+ * Copyright 2013 NGDATA nv
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.indexer.derefmap;
+package org.lilyproject.repository.api;
 
-import java.util.Set;
+/**
+ * Represents the information to absolutely resolve a record -- both its storage table and its table-unique record id.
+ */
+public interface AbsoluteRecordId {
+    
+    /**
+     * Returns the table-unique record id.
+     */
+    RecordId getRecordId();
+    
+    /**
+     * Returns the name of the repository table used for storage.
+     */
+    String getTable();
+    
+    /**
+     * Returns the byte representation of this identifier.
+     */
+    byte[] toBytes();
 
-import org.lilyproject.repository.api.AbsoluteRecordId;
-
-public class DerefMapUtil {
-
-    private DerefMapUtil() {
-        // prevent construction
-    }
-
-    static public DependencyEntry newEntry(AbsoluteRecordId id, Set<String> moreDimensions) {
-        if (moreDimensions == null) {
-            return new DependencyEntry(id);
-        } else {
-            return new DependencyEntry(id, moreDimensions);
-        }
-    }
-
+    
 }

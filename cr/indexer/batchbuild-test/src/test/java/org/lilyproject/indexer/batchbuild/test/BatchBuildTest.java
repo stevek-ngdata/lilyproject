@@ -18,7 +18,6 @@ import org.apache.solr.common.SolrDocumentList;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
@@ -30,16 +29,20 @@ import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.LilyServerProxy;
+import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.solrtestfw.SolrProxy;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.VersionTag;
@@ -305,7 +308,8 @@ public class BatchBuildTest {
         DependantRecordIdsIterator it = null;
 
         try {
-            it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
+            it = derefMap.findDependantsOf(absId(linkedRecord.getId()),
+                    ft1.getId(), vtag);
             assertTrue(!it.hasNext());
         } finally {
             it.close();
@@ -319,7 +323,7 @@ public class BatchBuildTest {
         assertEquals(1, response.getResults().size());
 
         try {
-            it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
+            it = derefMap.findDependantsOf(absId(linkedRecord.getId()), ft1.getId(), vtag);
             assertTrue(it.hasNext());
         } finally {
             it.close();
@@ -329,7 +333,7 @@ public class BatchBuildTest {
         waitForIndexAndCommit(BUILD_TIMEOUT);
 
         try {
-            it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
+            it = derefMap.findDependantsOf(absId(linkedRecord.getId()), ft1.getId(), vtag);
             assertTrue(!it.hasNext());
         } finally {
             it.close();
@@ -392,5 +396,9 @@ public class BatchBuildTest {
         } finally {
             model.unlockIndex(lock);
         }
+    }
+    
+    private static AbsoluteRecordId absId(RecordId recordId) {
+        return new AbsoluteRecordIdImpl(Table.RECORD.name, recordId);
     }
 }

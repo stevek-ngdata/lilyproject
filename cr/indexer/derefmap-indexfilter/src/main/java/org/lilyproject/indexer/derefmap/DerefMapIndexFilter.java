@@ -18,8 +18,6 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 
 /**
  * Index filter (hbase-index) used when filtering results from a query on the dereference map.
- *
- *
  */
 public class DerefMapIndexFilter extends IndexFilter {
 

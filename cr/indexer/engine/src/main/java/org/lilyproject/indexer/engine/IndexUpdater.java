@@ -42,6 +42,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.indexer.model.util.IndexRecordFilterUtil;
 import org.lilyproject.linkindex.LinkIndexException;
+import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Record;
@@ -52,6 +53,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.RecordEvent;
@@ -179,7 +181,7 @@ public class IndexUpdater implements EventListener {
 
                 // After this we can go to update denormalized data
                 if (derefMap != null)
-                    updateDenormalizedData(recordId, null, null);
+                    updateDenormalizedData(recordEvent.getTableName(), recordId, null, null);
             } else { // CREATE or UPDATE
                 VTaggedRecord vtRecord;
 
@@ -249,7 +251,7 @@ public class IndexUpdater implements EventListener {
                 }
 
                 if (derefMap != null) {
-                    updateDenormalizedData(recordId, eventHelper.getUpdatedFieldsByScope(),
+                    updateDenormalizedData(recordEvent.getTableName(), recordId, eventHelper.getUpdatedFieldsByScope(),
                             eventHelper.getModifiedVTags());
                 }
             }
@@ -405,11 +407,11 @@ public class IndexUpdater implements EventListener {
         }
     }
 
-    private void updateDenormalizedData(RecordId recordId, Map<Scope, Set<FieldType>> updatedFieldsByScope,
+    private void updateDenormalizedData(String table, RecordId recordId, Map<Scope, Set<FieldType>> updatedFieldsByScope,
                                         Set<SchemaId> changedVTagFields)
             throws RepositoryException, InterruptedException, LinkIndexException, IOException {
 
-        Multimap<RecordId, SchemaId> referrersAndVTags = ArrayListMultimap.create();
+        Multimap<AbsoluteRecordId, SchemaId> referrersAndVTags = ArrayListMultimap.create();
 
         Set<SchemaId> allVTags = indexer.getConf().getVtags();
 
@@ -423,10 +425,11 @@ public class IndexUpdater implements EventListener {
         for (SchemaId vtag : allVTags) {
             if ((changedVTagFields != null && changedVTagFields.contains(vtag)) || updatedFieldsByScope == null) {
                 // changed vtags or delete: reindex regardless of fields
-                DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId);
+                AbsoluteRecordId absRecordId = new AbsoluteRecordIdImpl(table, recordId);
+                DependantRecordIdsIterator dependants = derefMap.findDependantsOf(absRecordId);
                 if (log.isDebugEnabled()) {
                     log.debug("changed vtag: dependants of " + recordId + ": " +
-                            depIds(derefMap.findDependantsOf(recordId)));
+                            depIds(derefMap.findDependantsOf(absRecordId)));
                 }
                 while (dependants.hasNext()) {
                     referrersAndVTags.put(dependants.next(), vtag);
@@ -437,7 +440,8 @@ public class IndexUpdater implements EventListener {
                 for (Scope scope : updatedFieldsByScope.keySet()) {
                     fields.addAll(toSchemaIds(updatedFieldsByScope.get(scope)));
                 }
-                final DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId, fields, vtag);
+                AbsoluteRecordId absRecordId = new AbsoluteRecordIdImpl(table, recordId);
+                final DependantRecordIdsIterator dependants = derefMap.findDependantsOf(absRecordId, fields, vtag);
                 while (dependants.hasNext()) {
                     referrersAndVTags.put(dependants.next(), vtag);
                 }
@@ -455,7 +459,7 @@ public class IndexUpdater implements EventListener {
         // Now add an index message to each of the found referrers, their actual indexing
         // will be triggered by the message queue.
         //
-        for (RecordId referrer : referrersAndVTags.keySet()) {
+        for (AbsoluteRecordId referrer : referrersAndVTags.keySet()) {
 
             RecordEvent payload = new RecordEvent();
             // TODO repository - remove use of record table name here
@@ -469,7 +473,7 @@ public class IndexUpdater implements EventListener {
             payload.setIndexRecordFilterData(filterData);
 
             try {
-                eventPublisher.publishEvent(referrer.toBytes(), payload.toJsonBytes());
+                eventPublisher.publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.
@@ -489,8 +493,8 @@ public class IndexUpdater implements EventListener {
         }));
     }
 
-    private List<RecordId> depIds(DependantRecordIdsIterator dependants) throws IOException {
-        List<RecordId> recordIds = Lists.newArrayList();
+    private List<AbsoluteRecordId> depIds(DependantRecordIdsIterator dependants) throws IOException {
+        List<AbsoluteRecordId> recordIds = Lists.newArrayList();
         while (dependants.hasNext()) {
             recordIds.add(dependants.next());
         }
