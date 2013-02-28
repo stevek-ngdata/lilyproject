@@ -62,30 +62,38 @@ public class PrintUtil {
         // We always print out the non-versioned scope, to show its record type
         out.println("Non-versioned scope:");
         printRecordType(record, Scope.NON_VERSIONED, out);
-        printFields(fieldsByScope.get(Scope.NON_VERSIONED), out);
+        printFields(fieldsByScope.get(Scope.NON_VERSIONED), record, out);
 
         if (fieldsByScope.get(Scope.VERSIONED).size() > 0) {
             out.println("Versioned scope:");
             printRecordType(record, Scope.VERSIONED, out);
-            printFields(fieldsByScope.get(Scope.VERSIONED), out);
+            printFields(fieldsByScope.get(Scope.VERSIONED), record, out);
         }
 
         if (fieldsByScope.get(Scope.VERSIONED_MUTABLE).size() > 0) {
             out.println("Versioned-mutable scope:");
             printRecordType(record, Scope.VERSIONED_MUTABLE, out);
-            printFields(fieldsByScope.get(Scope.VERSIONED_MUTABLE), out);
+            printFields(fieldsByScope.get(Scope.VERSIONED_MUTABLE), record, out);
         }
 
         if (undeterminedFields.size() > 0) {
             out.println("Fields of which the field type was not found:");
-            printFields(undeterminedFields, out);
+            printFields(undeterminedFields, record, out);
         }
 
     }
 
-    private static void printFields(Map<QName, Object> fields, PrintStream out) {
+    private static void printFields(Map<QName, Object> fields, Record record, PrintStream out) {
         for (Map.Entry<QName, Object> field : fields.entrySet()) {
             printField(out, 2, field.getKey(), field.getValue());
+
+            Metadata metadata = record.getMetadata(field.getKey());
+            if (metadata != null && metadata.getMap().size() > 0) {
+                println(out, 4, "metadata:");
+                for (Map.Entry<String, Object> entry : metadata.getMap().entrySet()) {
+                    println(out, 6, entry.getKey() + " = " + entry.getValue());
+                }
+            }
         }
     }
     
