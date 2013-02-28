@@ -48,6 +48,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -72,6 +73,7 @@ import org.lilyproject.util.json.JsonFormat;
 
 public class JsonConversionTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
+    private static RepositoryManager repositoryManager;
     private static Repository repository;
     private RecordScanWriter writer;
     private RecordScanReader reader;
@@ -81,6 +83,7 @@ public class JsonConversionTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
+        repositoryManager = repoSetup.getRepositoryManager();
         repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
 
         TypeManager typeManager = repository.getTypeManager();
@@ -127,12 +130,12 @@ public class JsonConversionTest {
 
     private byte[] scanToBytes(RecordScan scan) throws RepositoryException, InterruptedException, IOException {
         return JsonFormat.serializeAsBytes(
-                writer.toJson(scan, new WriteOptions(), new NamespacesImpl(false), repository));
+                writer.toJson(scan, new WriteOptions(), new NamespacesImpl(false), repositoryManager));
     }
 
     private RecordScan scanFromBytes(byte[] data) throws IOException, RepositoryException, JsonFormatException,
             InterruptedException {
-        return reader.fromJson(JsonFormat.deserializeNonStd(data), new NamespacesImpl(false), repository);
+        return reader.fromJson(JsonFormat.deserializeNonStd(data), new NamespacesImpl(false), repositoryManager);
     }
 
     @Test
@@ -388,7 +391,7 @@ public class JsonConversionTest {
 
         // Test serialization with namespace prefixes
         byte[] dataWithPrefixes = JsonFormat.serializeAsBytes(
-                writer.toJson(scan, new WriteOptions(), repository));
+                writer.toJson(scan, new WriteOptions(), repositoryManager));
 
         JsonNode nodeWithPrefixes = new ObjectMapper().readTree(dataWithPrefixes);
         assertNotNull(nodeWithPrefixes.get("namespaces"));
@@ -400,7 +403,7 @@ public class JsonConversionTest {
         Record record = repository.newRecord();
         record.getAttributes().put("one", "onevalue");
 
-        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repository);
+        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repositoryManager);
         ObjectNode attributes = (ObjectNode) recordNode.get("attributes");
         for (String key : record.getAttributes().keySet()) {
             Assert.assertEquals(record.getAttributes().get(key), attributes.get(key).asText());
@@ -408,7 +411,7 @@ public class JsonConversionTest {
 
         attributes.put("write", "something new");
 
-        record = RecordReader.INSTANCE.fromJson(recordNode, repository);
+        record = RecordReader.INSTANCE.fromJson(recordNode, repositoryManager);
         Iterator<Entry<String, JsonNode>> it = attributes.getFields();
         while (it.hasNext()) {
             Entry<String,JsonNode> attr = it.next();

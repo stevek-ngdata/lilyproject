@@ -177,7 +177,7 @@ public class MapReduceTest {
 
             job.setNumReduceTasks(0);
 
-            LilyMapReduceUtil.initMapperJob(null, "localhost", repository, job);
+            LilyMapReduceUtil.initMapperJob(null, "localhost", client, job);
 
             boolean b = job.waitForCompletion(true);
             if (!b) {
@@ -212,7 +212,7 @@ public class MapReduceTest {
             scan.setStartRecordId(idGenerator.newRecordId(String.format("%1$03d", 15)));
             scan.setStopRecordId(idGenerator.newRecordId(String.format("%1$03d", 25)));
 
-            LilyMapReduceUtil.initMapperJob(scan, "localhost", repository, job);
+            LilyMapReduceUtil.initMapperJob(scan, "localhost", client, job);
 
             boolean b = job.waitForCompletion(true);
             if (!b) {

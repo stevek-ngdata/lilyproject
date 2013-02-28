@@ -15,17 +15,16 @@
  */
 package org.lilyproject.tools.import_.json.filters;
 
-import org.apache.hadoop.hbase.filter.Filter;
+import java.util.ServiceLoader;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.Namespaces;
 import org.lilyproject.util.json.JsonUtil;
-
-import java.util.ServiceLoader;
 
 public class RecordFilterJsonConverters implements RecordFilterJsonConverter<RecordFilter> {
     private ServiceLoader<RecordFilterJsonConverter> filterLoader = ServiceLoader.load(RecordFilterJsonConverter.class);
@@ -38,7 +37,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
     }
 
     @Override
-    public ObjectNode toJson(RecordFilter filter, Namespaces namespaces, Repository repository,
+    public ObjectNode toJson(RecordFilter filter, Namespaces namespaces, RepositoryManager repositoryManager,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
         
@@ -46,7 +45,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
 
         for (RecordFilterJsonConverter json : filterLoader) {
             if (json.supports(className)) {
-                ObjectNode node = json.toJson(filter, namespaces, repository, converter);
+                ObjectNode node = json.toJson(filter, namespaces, repositoryManager, converter);
                 node.put("@class", className);
                 return node;
             }
@@ -56,7 +55,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
     }
 
     @Override
-    public RecordFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
+    public RecordFilter fromJson(JsonNode node, Namespaces namespaces, RepositoryManager repositoryManager,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
@@ -64,7 +63,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
         
         for (RecordFilterJsonConverter json : filterLoader) {
             if (json.supports(className)) {
-                return json.fromJson(node, namespaces, repository, converter);                
+                return json.fromJson(node, namespaces, repositoryManager, converter);
             }
         }
         

@@ -21,6 +21,7 @@ import org.lilyproject.repository.api.CompareOp;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.filter.FieldValueFilter;
 import org.lilyproject.repository.api.filter.RecordFilter;
@@ -44,7 +45,7 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
     }
 
     @Override
-    public FieldValueFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
+    public FieldValueFilter fromJson(JsonNode node, Namespaces namespaces, RepositoryManager repositoryManager,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
         FieldValueFilter filter = new FieldValueFilter();
@@ -60,8 +61,9 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
         if (field != null && fieldValue != null) {
             QName fieldQName = QNameConverter.fromJson(field, namespaces);
             filter.setField(fieldQName);
-            ValueType valueType = repository.getTypeManager().getFieldTypeByName(fieldQName).getValueType();
-            Object value = RecordReader.INSTANCE.readValue(fieldValue, valueType, "fieldValue", new NamespacesImpl(), repository, defaultLinkTransformer);
+            ValueType valueType = repositoryManager.getTypeManager().getFieldTypeByName(fieldQName).getValueType();
+            Object value = RecordReader.INSTANCE.readValue(fieldValue, valueType, "fieldValue", new NamespacesImpl(),
+                                                                repositoryManager, defaultLinkTransformer);
             filter.setFieldValue(value);
         }
 
@@ -77,7 +79,7 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
     }
 
     @Override
-    public ObjectNode toJson(FieldValueFilter filter, Namespaces namespaces, Repository repository,
+    public ObjectNode toJson(FieldValueFilter filter, Namespaces namespaces, RepositoryManager repositoryManager,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();
@@ -91,9 +93,9 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
         if (filter.getField() != null && filter.getFieldValue() != null) {
             node.put("field", QNameConverter.toJson(filter.getField(), namespaces));
 
-            ValueType valueType = repository.getTypeManager().getFieldTypeByName(filter.getField()).getValueType();
+            ValueType valueType = repositoryManager.getTypeManager().getFieldTypeByName(filter.getField()).getValueType();
             JsonNode valueAsJson = RecordWriter.INSTANCE.valueToJson(filter.getFieldValue(), valueType,
-                    new WriteOptions(), namespaces, repository);
+                    new WriteOptions(), namespaces, repositoryManager);
 
             node.put("fieldValue", valueAsJson);
             ObjectNode valueNode = node.putObject("value");

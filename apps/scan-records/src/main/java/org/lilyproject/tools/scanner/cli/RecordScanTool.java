@@ -82,7 +82,7 @@ public class RecordScanTool {
         Date start = new Date();
         try {
             int i = 0;
-            while ((record = scanner.next()) != null) {                
+            while ((record = scanner.next()) != null) {
                 i++;
                 if (i % 1000 == 0) {
                     System.out.println("Record no° : " + i + ", Record id : " + record.getId() );
@@ -120,7 +120,7 @@ public class RecordScanTool {
         
         if (scanConfFile != null) {
             JsonNode jsonNode = JsonFormat.deserializeNonStd(new FileInputStream(scanConfFile));
-            scan = RecordScanReader.INSTANCE.fromJson(jsonNode, repository);
+            scan = RecordScanReader.INSTANCE.fromJson(jsonNode, repository.getRepositoryManager());
         }
 
         scan = scan != null ? scan : new RecordScan();
@@ -133,7 +133,7 @@ public class RecordScanTool {
         
         if (stopId != null && stopId.length() > 0) {
             scan.setStopRecordId(repository.getIdGenerator().fromString(stopId));
-        }  
+        }
         
         if (recordTypeFilter != null && !recordTypeFilter.isEmpty()) {
             RecordFilterList filterList = new RecordFilterList(Operator.MUST_PASS_ONE);

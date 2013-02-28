@@ -21,6 +21,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import org.lilyproject.repository.api.RecordFactory;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.Indexer;
@@ -44,20 +46,43 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
  * over different Lily nodes, and can optionally retry operations when they fail due to
  * IO related exceptions or when no Lily servers are available.
  */
-public class BalancingAndRetryingLilyConnection {
+public class BalancingAndRetryingLilyConnection implements RepositoryManager {
 
     private final RepositoryManager repositoryManager;
-
-    private final TypeManager typeManager;
 
     private final Indexer indexer;
 
     private BalancingAndRetryingLilyConnection(RepositoryManager repositoryManager, TypeManager typeManager, Indexer indexer) {
         this.repositoryManager = repositoryManager;
-        this.typeManager = typeManager;
         this.indexer = indexer;
     }
+    
+    @Override
+    public IdGenerator getIdGenerator() {
+        return repositoryManager.getIdGenerator();
+    }
+    
+    @Override
+    public void close() throws IOException {
+        // Do nothing
+    }
+    
+    @Override
+    public TypeManager getTypeManager() {
+        return repositoryManager.getTypeManager();
+    }
+    
+    @Override
+    public RecordFactory getRecordFactory() {
+        return repositoryManager.getRecordFactory();
+    }
+    
+    @Override
+    public Repository getDefaultRepository() throws IOException, InterruptedException {
+        return repositoryManager.getDefaultRepository();
+    }
 
+    @Override
     public Repository getRepository(String tableName) {
         try {
             return repositoryManager.getRepository(tableName);

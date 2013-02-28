@@ -16,11 +16,11 @@
 package org.lilyproject.tools.import_.json;
 
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 
 public interface EntityWriter<T> {
-    ObjectNode toJson(T entity, WriteOptions options, Repository repository) throws RepositoryException,
+    ObjectNode toJson(T entity, WriteOptions options, RepositoryManager repositoryManager) throws RepositoryException,
             InterruptedException;
 
     /**
@@ -28,6 +28,6 @@ public interface EntityWriter<T> {
      * re-uses the given Namespaces object (the namespaces are assumed to be added to a parent
      * object).
      */
-    ObjectNode toJson(T entity, WriteOptions options, Namespaces namespaces, Repository repository)
+    ObjectNode toJson(T entity, WriteOptions options, Namespaces namespaces, RepositoryManager repositoryManager)
             throws RepositoryException, InterruptedException;
 }

@@ -29,9 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
+import org.lilyproject.repository.api.IdGenerator;
 
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TypeManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,12 +55,14 @@ import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.BlobStoreAccessConfig;
 import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
 import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
+import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.AvroLilyTransceiver;
@@ -82,7 +84,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
  *
  * <p>Connects to zookeeper to find out available repository nodes.
  */
-public class LilyClient implements Closeable {
+public class LilyClient implements Closeable, RepositoryManager {
     private ZooKeeperItf zk;
     private boolean managedZk;
     private List<ServerNode> servers = Collections.synchronizedList(new ArrayList<ServerNode>());
@@ -237,6 +239,7 @@ public class LilyClient implements Closeable {
      * retry operations according to what is specified in {@link RetryConf}.
      * @param tableName name of the storage table for the requested repository
      */
+    @Override
     public Repository getRepository(String tableName) {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
@@ -244,6 +247,26 @@ public class LilyClient implements Closeable {
         return balancingAndRetryingLilyConnection.getRepository(tableName);
     }
     
+    
+    @Override
+    public Repository getDefaultRepository() throws IOException, InterruptedException {
+        return balancingAndRetryingLilyConnection.getDefaultRepository();
+    }
+    
+    @Override
+    public RecordFactory getRecordFactory() {
+        return balancingAndRetryingLilyConnection.getRecordFactory();
+    }
+    
+    @Override
+    public TypeManager getTypeManager() {
+        return balancingAndRetryingLilyConnection.getTypeManager();
+    }
+    
+    @Override
+    public IdGenerator getIdGenerator() {
+        return balancingAndRetryingLilyConnection.getIdGenerator();
+    }
     
 
     /**

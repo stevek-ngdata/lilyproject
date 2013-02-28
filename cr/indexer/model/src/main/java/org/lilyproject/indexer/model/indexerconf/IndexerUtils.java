@@ -37,7 +37,7 @@ public class IndexerUtils {
 
         final RecordScan scan = new RecordScan();
         scan.setRecordFilter(new RecordVariantFilter(newDep.id.getMaster(), varProps));
-        Repository repository = indexUpdateBuilder.getRepositoryManager().getRepository(Table.RECORD.name);
+        Repository repository = indexUpdateBuilder.getRepositoryManager().getRepository(indexUpdateBuilder.getTable());
         final IdRecordScanner scanner = repository.getScannerWithIds(scan);
         IdRecord next;
         while ((next = scanner.next()) != null) {

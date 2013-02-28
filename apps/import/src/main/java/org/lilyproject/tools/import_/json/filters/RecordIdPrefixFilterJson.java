@@ -17,8 +17,8 @@ package org.lilyproject.tools.import_.json.filters;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.api.filter.RecordIdPrefixFilter;
 import org.lilyproject.tools.import_.json.JsonFormatException;
@@ -33,7 +33,7 @@ public class RecordIdPrefixFilterJson implements RecordFilterJsonConverter<Recor
     }
 
     @Override
-    public ObjectNode toJson(RecordIdPrefixFilter filter, Namespaces namespaces, Repository repository,
+    public ObjectNode toJson(RecordIdPrefixFilter filter, Namespaces namespaces, RepositoryManager repositoryManager,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
         
@@ -47,15 +47,15 @@ public class RecordIdPrefixFilterJson implements RecordFilterJsonConverter<Recor
     }
 
     @Override
-    public RecordIdPrefixFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
+    public RecordIdPrefixFilter fromJson(JsonNode node, Namespaces namespaces, RepositoryManager repositoryManager,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
         
         RecordIdPrefixFilter filter = new RecordIdPrefixFilter();
 
         String recordId = JsonUtil.getString(node, "recordId", null);
-        if (recordId != null) {            
-            filter.setRecordId(repository.getIdGenerator().fromString(recordId));
+        if (recordId != null) {
+            filter.setRecordId(repositoryManager.getIdGenerator().fromString(recordId));
         }
         
         return filter;

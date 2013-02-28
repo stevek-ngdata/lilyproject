@@ -108,7 +108,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             if (!action.equals("delete")) {
                 EntityRegistry.RegistryEntry registryEntry = EntityRegistry.findReaderRegistryEntry((Class)entityType);
                 ObjectNode objectNode = JsonUtil.getObject(postNode, registryEntry.getPropertyName());
-                entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces, getRepository(), linkTransformer);
+                entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces, repositoryMgr, linkTransformer);
             }
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
@@ -142,7 +142,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             if (!valueNode.isNull()) {
                 FieldType fieldType = systemFields.isSystemField(fieldName) ? systemFields.get(fieldName) :
                         repository.getTypeManager().getFieldTypeByName(fieldName);
-                value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces, repository, linkTransformer);
+                value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces, repositoryMgr, linkTransformer);
             }
 
             boolean allowMissing = JsonUtil.getBoolean(conditionNode, "allowMissing", false);

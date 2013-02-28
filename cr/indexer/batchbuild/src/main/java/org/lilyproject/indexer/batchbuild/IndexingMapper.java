@@ -23,6 +23,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
+import org.apache.hadoop.hbase.mapreduce.TableSplit;
+
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 import net.iharder.Base64;
@@ -63,6 +67,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Result> {
     private Indexer indexer;
+    private String table;
     private ThreadSafeClientConnManager connectionManager;
     private IndexLocker indexLocker;
     private ZooKeeperItf zk;
@@ -90,6 +95,8 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes), repository.getRepositoryManager());
 
             String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
+            
+            table = Bytes.toString(((TableSplit)context.getInputSplit()).getTableName());
 
             SolrShardManager solrShardMgr = getShardManager(jobConf);
 
@@ -191,8 +198,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
     @Override
     public void map(RecordIdWritable recordIdWritable, IdRecordWritable recordWritable, Context context)
             throws IOException, InterruptedException {
-        // TODO repository - remove hardcoded record table name
-        executor.submit(new MappingTask(Table.RECORD.name, recordWritable.getRecord(), context));
+        executor.submit(new MappingTask(table, recordWritable.getRecord(), context));
     }
 
     public class MappingTask implements Runnable {

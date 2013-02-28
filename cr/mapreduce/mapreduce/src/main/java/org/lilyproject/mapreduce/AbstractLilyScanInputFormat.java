@@ -18,7 +18,10 @@ package org.lilyproject.mapreduce;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configurable;
@@ -34,10 +37,11 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.RepositoryTable;
+import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.util.exception.ExceptionUtil;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.zookeeper.ZkConnectException;
@@ -73,10 +77,10 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
 
     @Override
     public List<InputSplit> getSplits(JobContext jobContext) throws IOException, InterruptedException {
-        HTable table = null;
         ZooKeeperItf zk = null;
         LilyClient lilyClient = null;
         Configuration hbaseConf = null;
+        List<InputSplit> inputSplits = Lists.newArrayList();
         try {
             zk = ZkUtil.connect(zkConnectString, 30000);
 
@@ -87,7 +91,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
             } catch (Exception e) {
                 throw new IOException("Error setting up LilyClient", e);
             }
-            RecordScan scan = getScan(lilyClient.getRepository());
+            RecordScan scan = getScan(lilyClient);
 
             // Determine start and stop row
             byte[] startRow;
@@ -110,19 +114,52 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
 
             //
             hbaseConf = LilyClient.getHBaseConfiguration(zk);
-            table = new HTable(hbaseConf, LilyHBaseSchema.Table.RECORD.bytes);
-
-            return getSplits(table, startRow, stopRow);
+            
+            for (String tableName : getRepositoryTables(lilyClient.getTableManager(), jobContext.getConfiguration())) {
+                HTable table = new HTable(hbaseConf, tableName);
+                try {
+                    inputSplits.addAll(getSplits(table, startRow, stopRow));
+                } finally {
+                    Closer.close(table);
+                }
+            }
+            return inputSplits;
         } catch (ZkConnectException e) {
             throw new IOException("Error setting up splits", e);
         } finally {
-            Closer.close(table);
             Closer.close(zk);
             if (hbaseConf != null) {
                 HConnectionManager.deleteConnection(hbaseConf, true);
             }
             Closer.close(lilyClient);
         }
+    }
+    
+    /**
+     * Returns the list of repository tables to be included in this job.
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private List<String> getRepositoryTables(RepositoryTableManager tableManager, Configuration conf) throws InterruptedException, IOException {
+        Set<String> allRepoTables = Sets.newHashSet();
+        for (RepositoryTable repoTable : tableManager.getTables()) {
+            allRepoTables.add(repoTable.getName());
+        }
+        
+        List<String> tablesToInclude = Lists.newArrayList();
+        String tableListStr = conf.get(LilyMapReduceUtil.REPOSITORY_TABLES);
+        if (tableListStr == null) {
+            tablesToInclude.addAll(allRepoTables);
+        } else {
+            for (String toInclude : tableListStr.split(",")) {
+                if (!allRepoTables.contains(toInclude)) {
+                    throw new IllegalArgumentException(String.format("'%s' is not a repository table", toInclude));
+                }
+                tablesToInclude.add(toInclude);
+            }
+        }
+        return tablesToInclude;
+
     }
 
     /**
@@ -176,13 +213,13 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
 
 
     
-    protected RecordScan getScan(Repository repository) {
+    protected RecordScan getScan(RepositoryManager repositoryManager) {
         RecordScan scan;
         String scanData = conf.get(SCAN);
         if (scanData != null) {
             try {
                 JsonNode node = JsonFormat.deserializeNonStd(scanData);
-                scan = RecordScanReader.INSTANCE.fromJson(node, repository);
+                scan = RecordScanReader.INSTANCE.fromJson(node, repositoryManager);
             } catch (Exception e) {
                 ExceptionUtil.handleInterrupt(e);
                 throw new RuntimeException(e);

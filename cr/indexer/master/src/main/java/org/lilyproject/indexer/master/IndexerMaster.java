@@ -33,8 +33,6 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
 import com.ngdata.sep.SepModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -63,7 +61,6 @@ import org.lilyproject.indexer.model.api.IndexerModelEvent;
 import org.lilyproject.indexer.model.api.IndexerModelEventType;
 import org.lilyproject.indexer.model.api.IndexerModelListener;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.Logs;
@@ -308,9 +305,8 @@ public class IndexerMaster {
                     boolean jobStarted;
                     try {
                         job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
-                                repositoryManager.getRepository(Table.RECORD.name),
-                                zkConnectString, zkSessionTimeout, solrClientConfig, batchIndexConfiguration,
-                                enableLocking, tableFactory);
+                                repositoryManager, zkConnectString, zkSessionTimeout, solrClientConfig,
+                                batchIndexConfiguration, enableLocking, tableFactory);
                         jobStarted = true;
                     } catch (Throwable t) {
                         jobStarted = false;

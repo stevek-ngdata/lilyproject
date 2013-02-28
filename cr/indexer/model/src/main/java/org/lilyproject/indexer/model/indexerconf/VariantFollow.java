@@ -31,7 +31,7 @@ public class VariantFollow implements Follow {
     @Override
     public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback)
             throws RepositoryException, IOException, InterruptedException {
-        Repository repository = indexUpdateBuilder.getRepositoryManager().getRepository(Table.RECORD.name);
+        Repository repository = indexUpdateBuilder.getRepositoryManager().getRepository(indexUpdateBuilder.getTable());
         IdGenerator idGenerator = repository.getIdGenerator();
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
 

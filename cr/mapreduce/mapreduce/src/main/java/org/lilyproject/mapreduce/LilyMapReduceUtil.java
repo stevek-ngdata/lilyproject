@@ -15,12 +15,18 @@
  */
 package org.lilyproject.mapreduce;
 
+import java.util.List;
+
+import com.google.common.base.Joiner;
+
+import com.google.common.collect.Sets;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.tools.import_.json.RecordScanWriter;
 import org.lilyproject.tools.import_.json.WriteOptions;
 import org.lilyproject.util.exception.ExceptionUtil;
@@ -28,28 +34,52 @@ import org.lilyproject.util.json.JsonFormat;
 
 public class LilyMapReduceUtil {
     public static final String ZK_CONNECT_STRING = "lily.mapreduce.zookeeper";
+    
+    /**
+     * Config key for storing the list of repository tables to be run through the mapper.
+     */
+    public static final String REPOSITORY_TABLES = "lily.mapreduce.tables";
 
     /**
      * Set the necessary parameters inside the job configuration for using Lily as input.
      */
-    public static void initMapperJob(RecordScan scan, String zooKeeperConnectString, Repository repository, Job job) {
-        initMapperJob(scan, false, zooKeeperConnectString, repository, job);
+    public static void initMapperJob(RecordScan scan, String zooKeeperConnectString, RepositoryManager repositoryManager, Job job) {
+        initMapperJob(scan, false, zooKeeperConnectString, repositoryManager, job, null);
+    }
+    
+    /**
+     * Initialize a mapper job to run on a specific set of repository tables.
+     */
+    public static void initMapperJob(RecordScan scan, String zooKeeperConnectString, RepositoryManager repositoryManager,
+                                        Job job, List<String> repositoryTables) {
+        initMapperJob(scan, false, zooKeeperConnectString, repositoryManager, job, repositoryTables);
+        
+    }
+    
+    public static void initMapperJob(RecordScan scan, boolean returnIdRecords, String zooKeeperConnectString,
+            RepositoryManager repositoryManager, Job job) {
+        initMapperJob(scan, returnIdRecords, zooKeeperConnectString, repositoryManager, job, null);
     }
     
     /**
      * Set the necessary parameters inside the job configuration for using Lily as input.
      */
-    public static void initMapperJob(RecordScan scan, boolean returnIdRecords, String zooKeeperConnectString, Repository repository, Job job) {
+    public static void initMapperJob(RecordScan scan, boolean returnIdRecords, String zooKeeperConnectString,
+                        RepositoryManager repositoryManager, Job job, List<String> repositoryTables) {
         if (returnIdRecords)
             job.setInputFormatClass(LilyIdScanInputFormat.class);
-        else 
+        else
             job.setInputFormatClass(LilyScanInputFormat.class);
         
         job.getConfiguration().set(ZK_CONNECT_STRING, zooKeeperConnectString);
+        
+        if (repositoryTables != null && !repositoryTables.isEmpty()) {
+            job.getConfiguration().set(REPOSITORY_TABLES, Joiner.on(',').join(repositoryTables));
+        }
 
         if (scan != null) {
             try {
-                JsonNode node = RecordScanWriter.INSTANCE.toJson(scan, new WriteOptions(), repository);
+                JsonNode node = RecordScanWriter.INSTANCE.toJson(scan, new WriteOptions(), repositoryManager);
                 String scanData = JsonFormat.serializeAsString(node);
                 job.getConfiguration().set(AbstractLilyScanInputFormat.SCAN, scanData);
             } catch (Exception e) {

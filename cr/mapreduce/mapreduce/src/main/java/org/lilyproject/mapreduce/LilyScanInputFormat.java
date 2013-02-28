@@ -45,7 +45,7 @@ public class LilyScanInputFormat extends AbstractLilyScanInputFormat<RecordIdWri
         }
 
         // Build RecordScan
-        RecordScan scan = getScan(lilyClient.getRepository());
+        RecordScan scan = getScan(lilyClient);
 
         // Change the start/stop record IDs on the scan to the current split
         TableSplit split = (TableSplit)inputSplit;

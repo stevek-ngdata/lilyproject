@@ -26,11 +26,11 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
     public static EntityWriter<RecordType> INSTANCE = new RecordTypeWriter();
 
     @Override
-    public ObjectNode toJson(RecordType recordType, WriteOptions options, Repository repository) {
+    public ObjectNode toJson(RecordType recordType, WriteOptions options, RepositoryManager repositoryManager) {
         Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
                         NamespacesImpl.DEFAULT_USE_PREFIXES);
 
-        ObjectNode rtNode = toJson(recordType, options, namespaces, repository);
+        ObjectNode rtNode = toJson(recordType, options, namespaces, repositoryManager);
 
         if (namespaces.usePrefixes()) {
             rtNode.put("namespaces", NamespacesConverter.toJson(namespaces));
@@ -40,7 +40,7 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
     }
 
     @Override
-    public ObjectNode toJson(RecordType recordType, WriteOptions options, Namespaces namespaces, Repository repository) {
+    public ObjectNode toJson(RecordType recordType, WriteOptions options, Namespaces namespaces, RepositoryManager repositoryManager) {
         return toJson(recordType, options, namespaces, true);
     }
 
