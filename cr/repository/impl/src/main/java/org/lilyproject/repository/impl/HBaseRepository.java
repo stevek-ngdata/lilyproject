@@ -839,7 +839,10 @@ public class HBaseRepository extends BaseRepository {
 
         if (hasMetadata) {
             if (fieldType.getScope() == Scope.VERSIONED_MUTABLE) {
-                throw new RuntimeException("Field metadata is not supported for versioned-mutable fields.");
+                throw new RuntimeException("Field metadata is currently not supported for versioned-mutable fields.");
+            }
+            if (fieldType.getValueType().getDeepestValueType().getBaseName().equals("BLOB")) {
+                throw new RuntimeException("Field metadata is currently not supported for BLOB fields.");
             }
             MetadataSerDeser.write(metadata, dataOutput);
         }

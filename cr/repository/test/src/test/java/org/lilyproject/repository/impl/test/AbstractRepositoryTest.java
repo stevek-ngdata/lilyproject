@@ -15,6 +15,7 @@
  */
 package org.lilyproject.repository.impl.test;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.bytes.api.ByteArray;
+import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.CompareOp;
 import org.lilyproject.repository.api.FieldNotFoundException;
 import org.lilyproject.repository.api.FieldType;
@@ -3375,7 +3377,33 @@ public abstract class AbstractRepositoryTest {
             record = repository.create(record);
             fail("Expected an exception trying to set metadata on a versioned-mutable field");
         } catch (Exception e) {
-            assertTrue(e.getMessage().contains("Field metadata is not supported for versioned-mutable fields."));
+            assertTrue(e.getMessage().contains("Field metadata is currently not supported for versioned-mutable fields."));
+        }
+    }
+
+    @Test
+    public void testMetadataNotSupportedOnBlobFields() throws Exception {
+        String[] types = new String[] {"BLOB", "LIST<BLOB>", "LIST<PATH<BLOB>>"};
+
+        for (int i = 0; i < types.length; i++) {
+            FieldType blobField = typeManager
+                    .createFieldType("BLOB", new QName("metadata-blob", "blob" + i), Scope.NON_VERSIONED);
+
+            Blob blob = new Blob("text/plain", 5L, "foo");
+            OutputStream os = repository.getOutputStream(blob);
+            os.write("12345".getBytes());
+            os.close();
+
+            Record record = repository.newRecord();
+            record.setRecordType(recordType1.getName());
+            record.setField(blobField.getName(), blob);
+            record.setMetadata(blobField.getName(), new MetadataBuilder().value("field1", "value1").build());
+            try {
+                record = repository.create(record);
+                fail("Expected an exception trying to set metadata on a blob field");
+            } catch (Exception e) {
+                assertTrue(e.getMessage().contains("Field metadata is currently not supported for BLOB fields."));
+            }
         }
     }
 
