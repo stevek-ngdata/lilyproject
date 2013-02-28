@@ -49,10 +49,13 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
         options.add(forceOption);
         options.add(defaultBatchIndexConfigurationOption);
         options.add(batchIndexConfigurationOption);
+        options.add(defaultBatchIndexTablesOption);
+        options.add(batchIndexTablesOption);
         options.add(solrCollectionOption);
         options.add(solrZkOption);
         options.add(solrModeOption);
         options.add(enableDerefMapOption);
+        options.add(batchIndexTablesOption);
 
         return options;
     }
@@ -160,9 +163,19 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
 
                 changes = true;
             }
-
+            
             if (batchIndexConfiguration != null) {
                 index.setBatchIndexConfiguration(batchIndexConfiguration);
+                changes = true;
+            }
+
+            if (batchIndexTables != null && !batchIndexTables.equals(index.getBatchTables())) {
+                index.setBatchTables(batchIndexTables);
+                changes = true;
+            }
+            
+            if (defaultBatchIndexTables != null && !defaultBatchIndexTables.equals(index.getDefaultBatchTables())) {
+                index.setDefaultBatchTables(defaultBatchIndexTables);
                 changes = true;
             }
 
@@ -196,7 +209,7 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
      */
     private boolean setShardingConfiguration(byte[] conf, IndexDefinition index) {
         if (conf != null) {
-            if (index.getShardingConfiguration() == null) { 
+            if (index.getShardingConfiguration() == null) {
                 if (!ObjectUtils.safeEquals(conf, index.getShardingConfiguration())) {
                     index.setShardingConfiguration(conf);
                     return true;

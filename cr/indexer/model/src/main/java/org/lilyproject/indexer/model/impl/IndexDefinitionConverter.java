@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import net.iharder.Base64;
@@ -56,6 +57,9 @@ public class IndexDefinitionConverter {
 
         String queueSubscriptionId = JsonUtil.getString(node, "queueSubscriptionId", null);
         long subscriptionTimestamp = JsonUtil.getLong(node, "subscriptionTimestamp", 0L);
+        
+        List<String> defaultBatchTables = JsonUtil.getStrings(node, "defaultBatchTables", null);
+        List<String> batchTables = JsonUtil.getStrings(node, "batchTables", null);
 
         byte[] configuration;
         try {
@@ -148,6 +152,8 @@ public class IndexDefinitionConverter {
         index.setLastBatchBuildInfo(lastBatchBuild);
         index.setBatchIndexConfiguration(batchIndexConfiguration);
         index.setDefaultBatchIndexConfiguration(defaultBatchIndexConfiguration);
+        index.setDefaultBatchTables(defaultBatchTables);
+        index.setBatchTables(batchTables);
     }
 
     public byte[] toJsonBytes(IndexDefinition index) {
@@ -241,6 +247,22 @@ public class IndexDefinitionConverter {
         }
 
         node.put("maintainDerefMap", index.isEnableDerefMap());
+        
+        List<String> defaultBatchTables = index.getDefaultBatchTables();
+        if (defaultBatchTables != null) {
+            ArrayNode defaultBatchTableNode = node.putArray("defaultBatchTables");
+            for (String defaultBatchTable : defaultBatchTables) {
+                defaultBatchTableNode.add(defaultBatchTable);
+            }
+        }
+        
+        List<String> batchTables = index.getBatchTables();
+        if (batchTables != null) {
+            ArrayNode batchTableNode = node.putArray("batchTables");
+            for (String batchTable : batchTables) {
+                batchTableNode.add(batchTable);
+            }
+        }
 
         return node;
     }

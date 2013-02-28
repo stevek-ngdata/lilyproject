@@ -15,11 +15,14 @@
  */
 package org.lilyproject.util.json;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
-
-import java.io.IOException;
 
 public class JsonUtil {
     public static JsonNode getNode(JsonNode node, String prop) throws JsonFormatException {
@@ -179,5 +182,18 @@ public class JsonUtil {
         } catch (IOException e) {
             throw new JsonFormatException("Error reading binary data in property " + prop, e);
         }
+    }
+    
+    public static List<String> getStrings(JsonNode node, String prop, List<String> defaultValue) throws JsonFormatException {
+        ArrayNode arrayNode = getArray(node, prop, null);
+        if (arrayNode == null) {
+            return defaultValue;
+        }
+        List<String> elements = new ArrayList<String>();
+        Iterator<JsonNode> elementItr = arrayNode.getElements();
+        while (elementItr.hasNext()) {
+            elements.add(elementItr.next().asText());
+        }
+        return elements;
     }
 }

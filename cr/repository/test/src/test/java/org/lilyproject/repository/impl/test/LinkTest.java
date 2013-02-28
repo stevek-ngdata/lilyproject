@@ -31,6 +31,8 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.lilyproject.repository.api.Link.LinkBuilder;
+
 public class LinkTest {
     private IdGenerator idGenerator;
 
@@ -306,5 +308,28 @@ public class LinkTest {
 
         Assert.assertEquals(link3, link3);
         Assert.assertFalse(link3.equals(link4));
+    }
+    
+    @Test
+    public void testLinkBuilder_WithTable() {
+        RecordId recordId = idGenerator.newRecordId("42");
+        Link link = Link.newBuilder()
+                        .recordId(recordId)
+                        .table("mytable")
+                        .create();
+        
+        assertEquals(recordId, link.getMasterRecordId());
+        assertEquals("mytable", link.getTable());
+    }
+    
+    @Test
+    public void testLinkBuilder_WithoutTable() {
+        RecordId recordId = idGenerator.newRecordId("42");
+        Link link = Link.newBuilder()
+                         .recordId(recordId)
+                         .create();
+        
+        assertEquals(recordId, link.getMasterRecordId());
+        assertEquals(null, link.getTable());
     }
 }

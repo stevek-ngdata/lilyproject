@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Lists;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -65,6 +67,8 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected Option outputFileOption;
     protected Option batchIndexConfigurationOption;
     protected Option defaultBatchIndexConfigurationOption;
+    protected Option batchIndexTablesOption;
+    protected Option defaultBatchIndexTablesOption;
     protected Option printBatchConfigurationOption;
     protected Option printShardingConfigurationOption;
     protected Option solrCollectionOption;
@@ -81,6 +85,8 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected byte[] shardingConfiguration;
     protected byte[] batchIndexConfiguration;
     protected byte[] defaultBatchIndexConfiguration;
+    protected List<String> batchIndexTables;
+    protected List<String> defaultBatchIndexTables;
     protected WriteableIndexerModel model;
     private ZooKeeperItf zk;
     protected String outputFileName;
@@ -113,7 +119,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
         solrShardsOption = OptionBuilder
                 .withArgName("solr-shards")
                 .hasArg()
-                .withDescription("Comma separated list of 'shardname:URL' pairs pointing to Solr instances.")
+                .withDescription("Comma-separated list of 'shardname:URL' pairs pointing to Solr instances.")
                 .withLongOpt("solr-shards")
                 .create("s");
 
@@ -146,6 +152,20 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 		" to BUILD_REQUESTED.")
                 .withLongOpt("batch-config")
                 .create("bi");
+        
+        batchIndexTablesOption = OptionBuilder
+                .withArgName("batch-tables")
+                .hasArg()
+                .withDescription("Comma-separated list of tables to be included in the next batch index rebuild")
+                .withLongOpt("batch-tables")
+                .create("t");
+        
+        defaultBatchIndexTablesOption = OptionBuilder
+                .withArgName("default-batch-tables")
+                .hasArg()
+                .withDescription("Comma-separated list of default tables to be included in batch index rebuilds")
+                .withLongOpt("default-batch-tables")
+                .create("dt");
 
         generalStateOption = OptionBuilder
                 .withArgName("state")
@@ -457,6 +477,15 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
             }
 
             batchIndexConfiguration = FileUtils.readFileToByteArray(configurationFile);
+        }
+        
+        if (cmd.hasOption(batchIndexTablesOption.getOpt())) {
+            batchIndexTables = Lists.newArrayList(cmd.getOptionValue(batchIndexTablesOption.getOpt()).split(","));
+        }
+        
+        if (cmd.hasOption(defaultBatchIndexTablesOption.getOpt())) {
+            defaultBatchIndexTables = Lists.newArrayList(
+                    cmd.getOptionValue(defaultBatchIndexTablesOption.getOpt()).split(","));
         }
 
         if (cmd.hasOption(solrCollectionOption.getOpt())) {

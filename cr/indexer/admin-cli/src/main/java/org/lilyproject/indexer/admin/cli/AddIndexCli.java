@@ -44,6 +44,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         options.add(buildStateOption);
         options.add(forceOption);
         options.add(defaultBatchIndexConfigurationOption);
+        options.add(defaultBatchIndexTablesOption);
         options.add(solrCollectionOption);
         options.add(solrZkOption);
         options.add(solrModeOption);
@@ -102,6 +103,9 @@ public class AddIndexCli extends BaseIndexerAdminCli {
 
         if (defaultBatchIndexConfiguration != null)
             index.setDefaultBatchIndexConfiguration(defaultBatchIndexConfiguration);
+        
+        if (defaultBatchIndexTables != null)
+            index.setDefaultBatchTables(defaultBatchIndexTables);
 
         if (batchIndexConfiguration != null)
             index.setBatchIndexConfiguration(batchIndexConfiguration);

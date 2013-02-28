@@ -16,6 +16,7 @@
 package org.lilyproject.indexer.master;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 import java.util.Map;
 
 import net.iharder.Base64;
@@ -46,7 +47,7 @@ public class BatchIndexBuilder {
                                          RepositoryManager repositoryManager, String zkConnectString, int zkSessionTimeout,
                                          SolrClientConfig solrConfig,
                                          byte[] batchIndexConfiguration, boolean enableLocking,
-                                         HBaseTableFactory tableFactory) throws Exception {
+                                         List<String> tableList, HBaseTableFactory tableFactory) throws Exception {
 
         Configuration conf = new Configuration(mapReduceConf);
         Job job = new Job(conf, "BatchIndexBuild Job");
@@ -119,7 +120,7 @@ public class BatchIndexBuilder {
         job.getConfiguration().set("hbase.zookeeper.property.clientPort",
                 hbaseConf.get("hbase.zookeeper.property.clientPort"));
 
-        LilyMapReduceUtil.initMapperJob(recordScan, true, zkConnectString, repositoryManager, job);
+        LilyMapReduceUtil.initMapperJob(recordScan, true, zkConnectString, repositoryManager, job, tableList);
 
         //
         // Provide Lily ZooKeeper props

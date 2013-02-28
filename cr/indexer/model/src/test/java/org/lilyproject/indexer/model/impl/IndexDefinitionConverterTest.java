@@ -17,6 +17,7 @@ package org.lilyproject.indexer.model.impl;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 
@@ -56,6 +57,24 @@ public class IndexDefinitionConverterTest {
         IndexDefinition deserialized = doJsonRoundtrip(indexDefinition);
         assertEquals(42L, deserialized.getSubscriptionTimestamp());
         assertEquals(indexDefinition, deserialized);
+    }
+    
+    @Test
+    public void testJsonRoundtrip_WithDefaultBatchTables() {
+        IndexDefinition indexDefinition = createEmptyIndexDefinition();
+        indexDefinition.setDefaultBatchTables(Lists.newArrayList("one", "two"));
+        
+        IndexDefinition deserialized = doJsonRoundtrip(indexDefinition);
+        assertEquals(Lists.newArrayList("one", "two"), deserialized.getDefaultBatchTables());
+    }
+    
+    @Test
+    public void testJsonRoundtrip_WithBatchTables() {
+        IndexDefinition indexDefinition = createEmptyIndexDefinition();
+        indexDefinition.setBatchTables(Lists.newArrayList("one", "two"));
+        
+        IndexDefinition deserialized = doJsonRoundtrip(indexDefinition);
+        assertEquals(Lists.newArrayList("one", "two"), deserialized.getBatchTables());
     }
     
     

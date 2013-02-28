@@ -300,13 +300,15 @@ public class IndexerMaster {
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 byte[] batchIndexConfiguration = getBatchIndexConfiguration(index);
                 index.setBatchIndexConfiguration(null);
+                List<String> batchTables = getBatchTables(index);
+                index.setBatchTables(null);
                 if (needsBatchBuildStart(index)) {
                     Job job = null;
                     boolean jobStarted;
                     try {
                         job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
                                 repositoryManager, zkConnectString, zkSessionTimeout, solrClientConfig,
-                                batchIndexConfiguration, enableLocking, tableFactory);
+                                batchIndexConfiguration, enableLocking, batchTables, tableFactory);
                         jobStarted = true;
                     } catch (Throwable t) {
                         jobStarted = false;
@@ -358,6 +360,14 @@ public class IndexerMaster {
             return index.getDefaultBatchIndexConfiguration();
         } else {
             return this.fullTableScanConf;
+        }
+    }
+    
+    private List<String> getBatchTables(IndexDefinition index) {
+        if (index.getBatchTables() != null) {
+            return index.getBatchTables();
+        } else {
+            return index.getDefaultBatchTables();
         }
     }
 

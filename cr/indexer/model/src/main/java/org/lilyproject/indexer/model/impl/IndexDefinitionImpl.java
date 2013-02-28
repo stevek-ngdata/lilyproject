@@ -17,6 +17,7 @@ package org.lilyproject.indexer.model.impl;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -37,6 +38,8 @@ public class IndexDefinitionImpl implements IndexDefinition {
     private byte[] shardingConfiguration;
     private byte[] defaultBatchIndexConfiguration;
     private byte[] batchIndexConfiguration;
+    private List<String> defaultBatchTables;
+    private List<String> batchTables;
     private Map<String, String> solrShards = Collections.emptyMap();
     private int zkDataVersion = -1;
     private BatchBuildInfo lastBatchBuildInfo;
@@ -200,6 +203,26 @@ public class IndexDefinitionImpl implements IndexDefinition {
     public void setBatchIndexConfiguration(byte[] batchIndexConfiguration) {
         this.batchIndexConfiguration = batchIndexConfiguration;
     }
+    
+    @Override
+    public void setDefaultBatchTables(List<String> tables) {
+        this.defaultBatchTables = (tables == null || tables.isEmpty()) ? null : tables;
+    }
+    
+    @Override
+    public List<String> getDefaultBatchTables() {
+        return this.defaultBatchTables;
+    }
+    
+    @Override
+    public void setBatchTables(List<String> tables) {
+        this.batchTables = (tables == null || tables.isEmpty()) ? null : tables;
+    }
+    
+    @Override
+    public List<String> getBatchTables() {
+        return this.batchTables;
+    }
 
     @Override
     public String getZkConnectionString() {
@@ -226,6 +249,7 @@ public class IndexDefinitionImpl implements IndexDefinition {
         return this.enableDerefMap;
     }
 
+    @Override
     public void setEnableDerefMap(boolean enableDerefMap) {
         this.enableDerefMap = enableDerefMap;
     }

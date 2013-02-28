@@ -119,6 +119,12 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                     System.out.println("    + Batch build config : " +
                             prettyPrintJson(lastBatchBuild.getBatchIndexConfiguration(), 6));
             }
+            if (index.getBatchTables() != null) {
+                System.out.println("  + Batch build tables: " + index.getBatchTables());
+            }
+            if (index.getDefaultBatchTables() != null) {
+                System.out.println("  + Default batch build tables: " + index.getDefaultBatchTables());
+            }
         }
 
         return 0;

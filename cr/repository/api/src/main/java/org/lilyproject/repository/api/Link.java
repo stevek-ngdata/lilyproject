@@ -143,7 +143,8 @@ public class Link {
         this.copyAll = copyAll;
     }
 
-    private Link(RecordId masterRecordId, boolean copyAll, SortedMap<String, PropertyValue> props) {
+    private Link(String table, RecordId masterRecordId, boolean copyAll, SortedMap<String, PropertyValue> props) {
+        this.table = table;
         this.masterRecordId = masterRecordId;
         this.copyAll = copyAll;
         this.variantProps = props;
@@ -679,9 +680,9 @@ public class Link {
 
         public Link create() {
             if (variantProps == null) {
-                return new Link(masterRecordId, copyAll);
+                return new Link(table, masterRecordId, copyAll);
             } else {
-                return new Link(masterRecordId, copyAll, new TreeMap<String, PropertyValue>(variantProps));
+                return new Link(table, masterRecordId, copyAll, new TreeMap<String, PropertyValue>(variantProps));
             }
         }
 
