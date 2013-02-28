@@ -32,17 +32,18 @@ public class MetadataTest {
      */
     @Test
     public void testSerDeser() {
-        MetadataBuilder metadataBuilder = new MetadataBuilder();
-        metadataBuilder.value("string", "value");
-        metadataBuilder.value("int", 5);
-        metadataBuilder.value("long", 99999999999L);
-        metadataBuilder.value("float", 3.33f);
-        metadataBuilder.value("double", 6.66d);
-        metadataBuilder.value("boolean", Boolean.TRUE);
-        metadataBuilder.value("bytes", new ByteArray("foobar".getBytes()));
+        Metadata metadata = new MetadataBuilder()
+                .value("string", "value")
+                .value("int", 5)
+                .value("long", 99999999999L)
+                .value("float", 3.33f)
+                .value("double", 6.66d)
+                .value("boolean", Boolean.TRUE)
+                .value("bytes", new ByteArray("foobar".getBytes()))
+                .build();
 
         DataOutput output = new DataOutputImpl();
-        MetadataSerDeser.write(metadataBuilder.build(), output);
+        MetadataSerDeser.write(metadata, output);
         byte[] metadataBytes = output.toByteArray();
 
         Metadata readMetadata = MetadataSerDeser.read(new DataInputImpl(metadataBytes));

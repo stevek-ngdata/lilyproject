@@ -38,7 +38,14 @@ public class Metadata implements Cloneable {
     }
 
     public String get(String key) {
-        return (String)data.get(key);
+        return data.get(key).toString();
+    }
+
+    /**
+     * Returns the metadata value without any type coercion.
+     */
+    public Object getObject(String key) {
+        return data.get(key);
     }
 
     public Integer getInt(String key, Integer defaultValue) {
@@ -111,6 +118,12 @@ public class Metadata implements Cloneable {
         return data.containsKey(key);
     }
 
+    /**
+     * Checks there are no metadata fields and that the fields-to-delete is empty.
+     *
+     * <p>If you only want to know if there are no fields (ignoring fieldsToDelete), use
+     * {@link #getMap()}.isEmtpy().</p>
+     */
     public boolean isEmpty() {
         return data.isEmpty() && fieldsToDelete.isEmpty();
     }

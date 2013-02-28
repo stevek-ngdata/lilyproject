@@ -69,14 +69,10 @@ import org.lilyproject.repository.api.filter.RecordIdPrefixFilter;
 import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repository.api.filter.RecordVariantFilter;
 import org.lilyproject.repotestfw.RepositorySetup;
+import org.lilyproject.util.Pair;
 
 import static org.easymock.EasyMock.createControl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public abstract class AbstractRepositoryTest {
 
@@ -3120,6 +3116,56 @@ public abstract class AbstractRepositoryTest {
     }
 
     @Test
+    public void testMetadataAllTypes() throws Exception {
+        // This test verifies that the change detection logic works correctly for all data types
+
+        List<Pair> testValues = new ArrayList<Pair>();
+        testValues.add(Pair.create("string1", "string2"));
+        testValues.add(Pair.create(new Integer(1), new Integer(2)));
+        testValues.add(Pair.create(new Long(1), new Long(2)));
+        testValues.add(Pair.create(new Float(1f), new Float(2f)));
+        testValues.add(Pair.create(new Double(1d), new Double(2d)));
+        testValues.add(Pair.create(Boolean.TRUE, Boolean.FALSE));
+        testValues.add(Pair.create(new ByteArray("A".getBytes()), new ByteArray("B".getBytes())));
+
+        for (Pair testValue : testValues) {
+            String ctx = "testing " + testValue.getV1() + " of type " + testValue.getV1().getClass().getName();
+
+            Record record = repository.newRecord();
+            record.setRecordType(recordType1.getName());
+            record.setField(fieldType2.getName(), new Integer(1));
+            record.setMetadata(fieldType2.getName(), new MetadataBuilder()
+                    .object("somefield", testValue.getV1())
+                    .build());
+            record = repository.create(record);
+
+            // test the type of the metadata has been retained
+            assertEquals(ctx, testValue.getV1().getClass(),
+                    record.getMetadata(fieldType2.getName()).getMap().get("somefield").getClass());
+
+            // do dummy update, should not create new version
+            //  (apparently, this also works fine for the float & double tests)
+            record.setMetadata(fieldType2.getName(), new MetadataBuilder()
+                    .object("somefield", testValue.getV1())
+                    .build());
+            record = repository.update(record);
+            assertEquals(ctx, 1L, record.getVersion().longValue());
+
+            // do update, should create new version
+            record.setMetadata(fieldType2.getName(), new MetadataBuilder()
+                    .object("somefield", testValue.getV2())
+                    .build());
+            record = repository.update(record);
+            assertEquals(ctx, 2L, record.getVersion().longValue());
+
+            // test the type of the metadata has been retained
+            record = repository.read(record.getId());
+            assertEquals(ctx, testValue.getV1().getClass(),
+                    record.getMetadata(fieldType2.getName()).getMap().get("somefield").getClass());
+        }
+    }
+
+    @Test
     public void testMetadataPartialUpdate() throws Exception {
         Record record = repository.newRecord();
         record.setRecordType(recordType1.getName());
@@ -3364,6 +3410,35 @@ public abstract class AbstractRepositoryTest {
         assertFalse(record.hasField(fieldType1.getName()));
         assertNull(record.getMetadata(fieldType1.getName()));
         assertNotNull(record.getField(fieldType2.getName()));
+    }
+
+    @Test
+    public void testMetadataSuperfluousUpdates() throws Exception {
+        // This test verifies that we don't write metadata if there are zero fields in it
+
+        // Record with empty Metadata object
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "field value");
+        record.setField(fieldType2.getName(), new Integer(1));
+        record.setMetadata(fieldType1.getName(), new MetadataBuilder().build());
+        record = repository.create(record);
+
+        // validate state of read record
+        record = repository.read(record.getId());
+        assertNull(record.getMetadata(fieldType1.getName()));
+
+        // Record with Metadata object containing only delets
+        record = repository.newRecord();
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "field value");
+        record.setField(fieldType2.getName(), new Integer(1));
+        record.setMetadata(fieldType1.getName(), new MetadataBuilder().delete("field1").build());
+        record = repository.create(record);
+
+        // validate state of read record
+        record = repository.read(record.getId());
+        assertNull(record.getMetadata(fieldType1.getName()));
     }
 
     @Test

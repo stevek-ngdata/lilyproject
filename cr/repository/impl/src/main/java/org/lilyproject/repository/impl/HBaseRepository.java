@@ -775,7 +775,7 @@ public class HBaseRepository extends BaseRepository {
         //   - any deletes in the new metadata refer to fields that didn't exist in the old metadata
 
         for (Entry<String, Object> entry : newMetadata.getMap().entrySet()) {
-            Object oldValue = oldMetadata.get(entry.getKey());
+            Object oldValue = oldMetadata.getObject(entry.getKey());
             if (!ObjectUtils.safeEquals(oldValue, entry.getValue())) {
                 return true;
             }
@@ -832,7 +832,7 @@ public class HBaseRepository extends BaseRepository {
         ValueType valueType = fieldType.getValueType();
 
         DataOutput dataOutput = new DataOutputImpl();
-        boolean hasMetadata = metadata != null && !metadata.isEmpty();
+        boolean hasMetadata = metadata != null && !metadata.getMap().isEmpty();
 
         dataOutput.writeByte(FieldFlags.get(true, hasMetadata ? MetadataSerDeser.ENCODING_VERSION : FieldFlags.NO_METADATA));
         valueType.write(fieldValue, dataOutput, new IdentityRecordStack(parentRecord));
