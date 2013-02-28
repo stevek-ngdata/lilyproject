@@ -17,7 +17,6 @@ package org.lilyproject.repository.impl;
 
 import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_ID_QUALIFIERS;
 import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_VERSION_QUALIFIERS;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -627,7 +626,7 @@ public class HBaseRepository extends BaseRepository {
         Map<QName, Object> fields = new HashMap<QName, Object>();
         fields.putAll(record.getFields());
         for (QName qName : record.getFieldsToDelete()) {
-            fields.put(qName, DELETE_MARKER);
+            fields.put(qName, FieldFlags.getDeleteMarker());
         }
         return fields;
     }
@@ -658,7 +657,7 @@ public class HBaseRepository extends BaseRepository {
         while (fieldMetadataIt.hasNext()) {
             Entry<QName, Metadata> entry = fieldMetadataIt.next();
             // If it's not a deleted field
-            if (fields.get(entry.getKey()) != (Object)DELETE_MARKER) { // identity equality ok
+            if (!isDeleteMarker(fields.get(entry.getKey()))) {
                 // If the metadata has changed
                 if (isChanged(entry.getValue(), originalFieldMetadata.get(entry.getKey()))) {
                     boolean needMetadata;
@@ -828,13 +827,13 @@ public class HBaseRepository extends BaseRepository {
     private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue, Metadata metadata)
             throws RepositoryException, InterruptedException {
         if (isDeleteMarker(fieldValue))
-            return FieldFlags.getAsArray(false);
+            return FieldFlags.getDeleteMarker();
         ValueType valueType = fieldType.getValueType();
 
         DataOutput dataOutput = new DataOutputImpl();
         boolean hasMetadata = metadata != null && !metadata.getMap().isEmpty();
 
-        dataOutput.writeByte(FieldFlags.get(true, hasMetadata ? MetadataSerDeser.ENCODING_VERSION : FieldFlags.NO_METADATA));
+        dataOutput.writeByte((byte)(hasMetadata ? FieldFlags.METADATA_V1 : FieldFlags.DEFAULT));
         valueType.write(fieldValue, dataOutput, new IdentityRecordStack(parentRecord));
 
         if (hasMetadata) {
@@ -851,7 +850,7 @@ public class HBaseRepository extends BaseRepository {
     }
 
     private boolean isDeleteMarker(Object fieldValue) {
-        return (fieldValue instanceof byte[]) && Arrays.equals(DELETE_MARKER, (byte[]) fieldValue);
+        return (fieldValue instanceof byte[]) && FieldFlags.isDeletedField(((byte[])fieldValue)[0]);
     }
 
     private Record updateMutableFields(Record record, boolean latestRecordType, List<MutationCondition> conditions,
@@ -1099,7 +1098,7 @@ public class HBaseRepository extends BaseRepository {
             for (Entry<QName, Object> fieldEntry : fields.entrySet()) {
                 FieldTypeImpl fieldType = (FieldTypeImpl) fieldTypes.getFieldType(fieldEntry.getKey());
                 if (Scope.NON_VERSIONED == fieldType.getScope()) {
-                    put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), 1L, DELETE_MARKER);
+                    put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), 1L, FieldFlags.getDeleteMarker());
                 }
 
             }

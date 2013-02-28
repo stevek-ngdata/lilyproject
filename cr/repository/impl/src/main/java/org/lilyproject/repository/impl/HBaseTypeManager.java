@@ -15,9 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
@@ -48,6 +45,10 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 public class HBaseTypeManager extends AbstractTypeManager implements TypeManager {
 
     private static final Long CONCURRENT_TIMEOUT = 5000L; // The concurrent timeout should be large enough to allow for type caches to be refreshed an a clock skew between the servers
+
+    public static final byte EXISTS_FLAG = (byte) 0;
+    public static final byte DELETE_FLAG = (byte) 1;
+    public static final byte[] DELETE_MARKER = new byte[] { DELETE_FLAG };
 
     private HTableInterface typeTable;
 
@@ -477,7 +478,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                     SchemaId supertypeId = new SchemaIdImpl(entry.getKey());
                     Entry<Long, byte[]> ceilingEntry = entry.getValue().ceilingEntry(version);
                     if (ceilingEntry != null) {
-                        if (!EncodingUtil.isDeletedField(ceilingEntry.getValue())) {
+                        if (!isDeletedField(ceilingEntry.getValue())) {
                             recordType.addSupertype(supertypeId, Bytes.toLong(ceilingEntry.getValue()));
                         }
                     }
@@ -487,7 +488,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             NavigableMap<byte[], byte[]> supertypeMap = result.getFamilyMap(TypeCf.SUPERTYPE.bytes);
             if (supertypeMap != null) {
                 for (Entry<byte[], byte[]> entry : supertypeMap.entrySet()) {
-                    if (!EncodingUtil.isDeletedField(entry.getValue())) {
+                    if (!isDeletedField(entry.getValue())) {
                         recordType.addSupertype(new SchemaIdImpl(entry.getKey()), Bytes.toLong(entry.getValue()));
                     }
                 }
@@ -505,7 +506,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     private FieldTypeEntry decodeFieldTypeEntry(byte[] bytes, SchemaId fieldTypeId) {
-        if (EncodingUtil.isDeletedField(bytes)) {
+        if (isDeletedField(bytes)) {
             return null;
         }
         byte[] encodedBytes = EncodingUtil.stripPrefix(bytes);
@@ -1026,6 +1027,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
 
         return getValueType(dataInput.readUTF());
+    }
+
+    private boolean isDeletedField(byte[] value) {
+        return value[0] == DELETE_FLAG;
     }
 
     @Override

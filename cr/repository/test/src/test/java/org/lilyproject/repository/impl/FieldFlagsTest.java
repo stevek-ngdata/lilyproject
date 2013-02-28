@@ -26,12 +26,12 @@ public class FieldFlagsTest {
     public void testExistsFlag() {
         byte flags;
 
-        flags = FieldFlags.get(true);
+        flags = FieldFlags.DEFAULT;
         assertEquals(0, flags);
         assertTrue(FieldFlags.exists(flags));
         assertFalse(FieldFlags.isDeletedField(flags));
 
-        flags = FieldFlags.get(false);
+        flags = FieldFlags.DELETED;
         assertEquals(1, flags);
         assertFalse(FieldFlags.exists(flags));
         assertTrue(FieldFlags.isDeletedField(flags));
@@ -41,12 +41,12 @@ public class FieldFlagsTest {
     public void testMetadataVersion() {
         byte flags;
 
-        flags = FieldFlags.get(true, 1);
+        flags = FieldFlags.METADATA_V1;
         assertEquals(0x02, flags);
         assertEquals(1, FieldFlags.getFieldMetadataVersion(flags));
 
         for (int i = 0; i < 8; i++) {
-            flags = FieldFlags.get(true, i);
+            flags = (byte)(i << 1);
             assertEquals(i, FieldFlags.getFieldMetadataVersion(flags));
         }
     }

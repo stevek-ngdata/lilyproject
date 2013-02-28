@@ -45,6 +45,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.EncodingUtil;
+import org.lilyproject.repository.impl.FieldFlags;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
@@ -187,7 +188,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
                     }
 
                     Object decodedValue;
-                    if (EncodingUtil.isDeletedField(value)) {
+                    if (FieldFlags.isDeletedField(value[0])) {
                         decodedValue = Fields.DELETED;
                     } else {
                         decodedValue = fieldType.getValueType().read(new DataInputImpl(EncodingUtil.stripPrefix(value)));

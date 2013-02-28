@@ -15,10 +15,8 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-
 /**
- * Helper code to deal with the prefix-byte that is stored before each serialized field.
+ * Helper code to deal with the prefix-byte that is stored before each serialized field value.
  *
  * <p>This prefix byte contains a number of flags or other metadata, currently these are,
  * counting from the rightmost bit:</p>
@@ -35,50 +33,36 @@ public class FieldFlags {
      * Number of bytes taken up by the field flags. Since it is just one byte, this is 1, but it's useful
      * to have to constant for semantic reasons.
      */
-    public static final int SIZE = 1;
-    public static final int NO_METADATA = 0;
+    public static final int SIZE_OF_FIELD_FLAGS = 1;
 
-    public static byte get(boolean exists) {
-        if (exists) {
-            return LilyHBaseSchema.EXISTS_FLAG;
-        } else {
-            return LilyHBaseSchema.DELETE_FLAG;
-        }
+    public static final byte DEFAULT = 0;
+
+    /**
+     * Flag to indicate deleted field, default is existing field.
+     */
+    public static final byte DELETED = 1; // 00 00 00 01
+
+    /**
+     * Flag to indicate metadata presence, default is no metadata.
+     */
+    public static final byte METADATA_V1 = 2; // 00 00 00 10
+
+    private static final byte[] DELETE_MARKER = new byte[] { DELETED };
+
+
+    public static final byte[] getDeleteMarker() {
+        return DELETE_MARKER;
     }
 
-    public static byte[] getAsArray(boolean exists) {
-        if (exists) {
-            return new byte[] {LilyHBaseSchema.EXISTS_FLAG};
-        } else {
-            return new byte[] {LilyHBaseSchema.DELETE_FLAG};
-        }
+    public static final boolean isDeletedField(byte flags) {
+        return (flags & DELETED) == 1;
     }
 
-    public static byte get(boolean exists, int fieldMetadataVersion) {
-        byte result = 0;
-        if (!exists) {
-            result = (byte)(result | LilyHBaseSchema.DELETE_FLAG);
-        }
-
-        if (fieldMetadataVersion != 0) {
-            if (fieldMetadataVersion < 0 || fieldMetadataVersion >= 8) {
-                throw new IllegalArgumentException("Field metadata version out of range: " + fieldMetadataVersion);
-            }
-            result = (byte)(result | (fieldMetadataVersion << 1));
-        }
-
-        return result;
+    public static final boolean exists(byte flags) {
+        return (flags & DELETED) == 0;
     }
 
-    public static boolean isDeletedField(byte flags) {
-        return (flags & 1) == 1;
-    }
-
-    public static boolean exists(byte flags) {
-        return (flags & 1) == 0;
-    }
-
-    public static int getFieldMetadataVersion(byte flags) {
-        return (flags & 0x0E) >> 1;
+    public static final int getFieldMetadataVersion(byte flags) {
+        return (flags & 0x0E /* 00 00 11 10 */) >> 1;
     }
 }

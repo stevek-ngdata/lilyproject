@@ -24,10 +24,6 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class LilyHBaseSchema {
-    public static final byte EXISTS_FLAG = (byte) 0;
-    public static final byte DELETE_FLAG = (byte) 1;
-    public static final byte[] DELETE_MARKER = new byte[] { DELETE_FLAG };
-
     private static HColumnDescriptor DATA_CF;
     
     static final byte[] IS_RECORD_TABLE_PROPERTY = Bytes.toBytes("isLilyRecordTable");

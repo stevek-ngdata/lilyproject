@@ -31,8 +31,6 @@ import java.util.Set;
  * type-specific serialization, so that type information is retained and storage size optimal.
  */
 public class MetadataSerDeser {
-    public static final int ENCODING_VERSION = 1;
-
     /**
      * Writes the metadata to the given output. It can be read back from a variable-length input using
      * {@link #read(DataInput)}, i.o.w. the metadata can be read back when it is part of a bigger stream,

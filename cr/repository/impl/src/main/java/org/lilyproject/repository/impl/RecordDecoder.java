@@ -312,8 +312,8 @@ public class RecordDecoder {
             throw new RuntimeException("Unsupported field metadata encoding version: " + metadataEncodingVersion);
         }
 
-        Object value = valueType.read(new DataInputImpl(prefixedValue, FieldFlags.SIZE,
-                prefixedValue.length - FieldFlags.SIZE - metadataSpace));
+        Object value = valueType.read(new DataInputImpl(prefixedValue, FieldFlags.SIZE_OF_FIELD_FLAGS,
+                prefixedValue.length - FieldFlags.SIZE_OF_FIELD_FLAGS - metadataSpace));
 
         return new ExtractedField(fieldType, value, metadata);
     }
