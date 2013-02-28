@@ -27,6 +27,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Maps;
+
+import org.lilyproject.util.hbase.LilyHBaseSchema;
+
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest.CompactionState;
 
 import org.apache.hadoop.conf.Configuration;
@@ -70,7 +74,22 @@ public class CleanupUtil {
     }
 
     public Map<String, byte[]> getDefaultTimestampReusingTables() {
-        return Collections.unmodifiableMap(DEFAULT_TIMESTAMP_REUSING_TABLES);
+        Map<String, byte[]> defaultTables = Maps.newHashMap(DEFAULT_TIMESTAMP_REUSING_TABLES);
+        try {
+            HBaseAdmin hbaseAdmin = new HBaseAdmin(conf);
+            HTableDescriptor[] descriptors = hbaseAdmin.listTables();
+            hbaseAdmin.close();
+            if (descriptors != null) {
+                for (HTableDescriptor descriptor : descriptors) {
+                    if (LilyHBaseSchema.isRecordTableDescriptor(descriptor)) {
+                        defaultTables.put(descriptor.getNameAsString(), Bytes.toBytes("data"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error listing repository tables", e);
+        }
+        return Collections.unmodifiableMap(defaultTables);
     }
 
     public void cleanZooKeeper() throws Exception {
