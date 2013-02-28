@@ -383,7 +383,7 @@ public class HBaseProxy {
      * of the new peer and that the peer's mbean is registered, otherwise this method might skip
      * that peer (usually will go so fast that this problem doesn't really exist, but just to be sure).</p>
      */
-    public boolean waitOnReplication(long timeout) throws Exception {
+    public boolean waitOnReplication(String tableName, long timeout) throws Exception {
         // Wait for the SEP to have processed all events.
         // The idea is as follows:
         //   - we want to be sure hbase replication processed all outstanding events in the hlog
@@ -399,7 +399,7 @@ public class HBaseProxy {
         // Make sure there actually is something within the hlog, otherwise it won't roll
         // This assumes the record table exits (doing the same with the .META. tables gives an exception
         // "Failed openScanner" at KeyComparator.compareWithoutRow in connect mode)
-        HTable table = new HTable(conf, "record");
+        HTable table = new HTable(conf, tableName);
         Delete delete = new Delete(Bytes.toBytes("i-am-quite-sure-this-row-does-not-exist-ha-ha-ha"));
         table.delete(delete);
 

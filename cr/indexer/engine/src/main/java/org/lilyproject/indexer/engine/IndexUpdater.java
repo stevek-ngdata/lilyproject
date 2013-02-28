@@ -136,6 +136,7 @@ public class IndexUpdater implements EventListener {
 
     @Override
     public void processEvent(SepEvent event) {
+        
         long before = System.currentTimeMillis();
 
         // During the processing of this message, we switch the context class loader to the one
@@ -462,8 +463,7 @@ public class IndexUpdater implements EventListener {
         for (AbsoluteRecordId referrer : referrersAndVTags.keySet()) {
 
             RecordEvent payload = new RecordEvent();
-            // TODO repository - remove use of record table name here
-            payload.setTableName(table);
+            payload.setTableName(referrer.getTable());
             payload.setType(INDEX);
             for (SchemaId vtag : referrersAndVTags.get(referrer)) {
                 payload.addVTagToIndex(vtag);
@@ -473,7 +473,7 @@ public class IndexUpdater implements EventListener {
             payload.setIndexRecordFilterData(filterData);
 
             try {
-                eventPublisherMgr.getEventPublisher(table).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
+                eventPublisherMgr.getEventPublisher(referrer.getTable()).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.

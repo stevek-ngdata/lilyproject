@@ -24,6 +24,8 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.lilyproject.hadooptestfw.HBaseProxy;
@@ -290,7 +292,7 @@ public class LilyProxy {
      * @return false if the timeout was reached before all events were processed
      */
     public boolean waitSepEventsProcessed(long timeout, boolean commitSolr) throws Exception {
-        boolean success = hbaseProxy.waitOnReplication(timeout);
+        boolean success = hbaseProxy.waitOnReplication(Table.RECORD.name, timeout);
         if (success && commitSolr) {
             solrProxy.commit();
         }

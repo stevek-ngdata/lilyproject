@@ -43,6 +43,7 @@ import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractSchemaCache;
 import org.lilyproject.repository.impl.BlobManagerImpl;
@@ -54,6 +55,7 @@ import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
+import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
 import org.lilyproject.repository.impl.SchemaCache;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
@@ -66,6 +68,7 @@ import org.lilyproject.sep.LilyPayloadExtractor;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -86,6 +89,7 @@ public class RepositorySetup {
     private RemoteTypeManager remoteTypeManager;
     private RepositoryManager repositoryManager;
     private RemoteRepositoryManager remoteRepositoryManager;
+    private RepositoryTableManager tableManager;
     
     private Server lilyServer;
 
@@ -160,6 +164,8 @@ public class RepositorySetup {
         sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
         eventPublisherManager = new LilyEventPublisherManager(hbaseTableFactory);
 
+        tableManager = new RepositoryTableManagerImpl(hadoopConf, hbaseTableFactory);
+        
         repositoryManagerSetup = true;
     }
 
@@ -226,8 +232,17 @@ public class RepositorySetup {
      * <p>New events that are generated after/during a call to this method will not be waited for.</p>
      */
     public void waitForSepProcessing() throws Exception {
+        waitForSepProcessing(Table.RECORD.name);
+    }
+    
+    /**
+     * Wait until all currently queued SEP events are processed on a specific table.
+     *
+     * <p>New events that are generated after/during a call to this method will not be waited for.</p>
+     */
+    public void waitForSepProcessing(String tableName) throws Exception {
         long timeout = 60000L;
-        boolean success = hbaseProxy.waitOnReplication(timeout);
+        boolean success = hbaseProxy.waitOnReplication(tableName, timeout);
         if (!success) {
             throw new Exception("Events were not processed within a timeout of " + timeout + "ms");
         }
@@ -265,6 +280,10 @@ public class RepositorySetup {
 
     public RepositoryManager getRepositoryManager() {
         return repositoryManager;
+    }
+    
+    public RepositoryTableManager getTableManager() {
+        return tableManager;
     }
 
     public RemoteRepositoryManager getRemoteRepositoryManager() {
