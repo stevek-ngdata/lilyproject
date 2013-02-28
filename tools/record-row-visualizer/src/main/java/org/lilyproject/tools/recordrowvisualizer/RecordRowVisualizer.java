@@ -64,6 +64,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
  */
 public class RecordRowVisualizer extends BaseZkCliTool {
     protected Option recordIdOption;
+    protected Option tableOption;
     protected RecordRow recordRow;
     protected TypeManager typeMgr;
     protected ZooKeeperItf zk;
@@ -88,8 +89,15 @@ public class RecordRowVisualizer extends BaseZkCliTool {
                 .withDescription("A Lily record ID: UUID.something or USER.something")
                 .withLongOpt("record-id")
                 .create("r");
-
         options.add(recordIdOption);
+        
+        tableOption = OptionBuilder
+                .withArgName("table")
+                .hasArg()
+                .withDescription("Repository table name (defaults to record)")
+                .withLongOpt("table")
+                .create("t");
+        options.add(tableOption);
 
         return options;
     }
@@ -110,17 +118,25 @@ public class RecordRowVisualizer extends BaseZkCliTool {
             return 1;
         }
 
+        String tableName;
+        if (cmd.hasOption(tableOption.getOpt())) {
+            tableName = cmd.getOptionValue(tableOption.getOpt());
+        } else {
+            tableName = Table.RECORD.name;
+        }
+
         IdGenerator idGenerator = new IdGeneratorImpl();
         RecordId recordId = idGenerator.fromString(recordIdString);
 
         recordRow = new RecordRow();
         recordRow.recordId = recordId;
+        
 
 
         // HBase record table
         Configuration conf = HBaseConfiguration.create();
         conf.set("hbase.zookeeper.quorum", zkConnectionString);
-        HTableInterface table = new HTable(conf, Table.RECORD.bytes);
+        HTableInterface table = new HTable(conf, tableName);
 
         // Type manager
         zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
@@ -231,24 +247,28 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     }
 
     public static class LongValueDecoder implements ValueDecoder<Long> {
+        @Override
         public Long decode(byte[] bytes) {
             return Bytes.toLong(bytes);
         }
     }
 
     public static class BooleanValueDecoder implements ValueDecoder<Boolean> {
+        @Override
         public Boolean decode(byte[] bytes) {
             return Bytes.toBoolean(bytes);
         }
     }
 
     public static class StringValueDecoder implements ValueDecoder<String> {
+        @Override
         public String decode(byte[] bytes) {
             return Bytes.toString(bytes);
         }
     }
 
     public static class Base64ValueDecoder implements ValueDecoder<String> {
+        @Override
         public String decode(byte[] bytes) {
             if (bytes == null)
                 return null;
@@ -272,6 +292,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
             this.typeManager = typeManager;
         }
 
+        @Override
         public RecordTypeInfo decode(byte[] bytes) {
             SchemaId id = new SchemaIdImpl(bytes);
             QName name;
