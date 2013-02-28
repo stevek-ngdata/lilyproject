@@ -168,6 +168,16 @@ public class RecordBuilderImpl implements RecordBuilder {
     }
 
     @Override
+    public RecordBuilder metadata(QName fieldName, Metadata metadata) throws RecordException {
+        if (mode == Mode.ROOT_RECORD) {
+            record.setMetadata(fieldName, metadata);
+        } else {
+            throw new IllegalStateException("Metadata is only supported for top-level records.");
+        }
+        return this;
+    }
+
+    @Override
     public RecordBuilder reset() throws RecordException {
         record = repository.newRecord();
         mutationConditions = null;

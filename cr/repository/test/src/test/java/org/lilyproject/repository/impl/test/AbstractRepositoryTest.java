@@ -3394,4 +3394,16 @@ public abstract class AbstractRepositoryTest {
         scan.setRecordFilter(new FieldValueFilter(fieldType1.getName(), "stop drinking coke"));
         assertEquals(1, countResults(repository.getScanner(scan)));
     }
+
+    @Test
+    public void testMetadataViaRecordBuilder() throws Exception {
+        Record record = repository.recordBuilder()
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "hi")
+                .metadata(fieldType1.getName(), new MetadataBuilder().value("x", "y").build())
+                .create();
+
+        record = repository.read(record.getId());
+        assertEquals("y", record.getMetadata(fieldType1.getName()).get("x"));
+    }
 }

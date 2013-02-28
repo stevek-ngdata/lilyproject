@@ -184,6 +184,15 @@ public interface RecordBuilder {
     RecordBuilder recordListField(QName name) throws RecordException;
 
     /**
+     * Sets the metadata for a field. Metadata can be created using a MetadataBuilder:
+     *
+     * <pre>
+     * recordBuilder.metadata(qname, new MetadataBuilder().value("x", "y").build())
+     * </pre>
+     */
+    RecordBuilder metadata(QName fieldName, Metadata metadata) throws RecordException;
+
+    /**
      * Adds a mutation condition that should be checked when updating a record.
      * <p>
      * When calling this method several times, the order of the method calls
