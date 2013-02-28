@@ -218,6 +218,9 @@ public class IndexerTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+        // cleanup the last created index (especially the SEP part), this is important when running tests in connect mode
+        cleanupIndex("test" + idxChangeCnt);
+
         repoSetup.stop();
 
         if (SOLR_TEST_UTIL != null)
@@ -232,15 +235,10 @@ public class IndexerTest {
         idxChangeCnt++;
         String indexName = "test" + idxChangeCnt;
 
-        System.out.println("changeIndexUpdater invocation " + idxChangeCnt);
+        System.out.println("changeIndexUpdater invocation " + idxChangeCnt + " - " + confName);
 
         // First clean up stuff of old index, to be sure this also gets executed in case of invalid indexerconf
-        if (indexerModel.hasIndex(prevIndexName)) {
-            indexerModel.deleteIndex(prevIndexName);
-            repoSetup.getSepModel().removeSubscription("IndexUpdater_" + prevIndexName);
-            repoSetup.getHBaseProxy().waitOnReplicationPeerStopped("IndexUpdater_" + prevIndexName);
-            repoSetup.stopSepEventSlave();
-        }
+        cleanupIndex(prevIndexName);
         waitForIndexesInfoUpdate(0);
 
         // warning: the below line will throw an exception in case of invalid conf, which is an exception
@@ -283,6 +281,22 @@ public class IndexerTest {
                 new CompositeEventListener(indexUpdater, messageVerifier, otherListener));
 
         waitForIndexesInfoUpdate(1);
+    }
+
+    private static void cleanupIndex(String indexName) throws Exception {
+        if (indexerModel != null) {
+            if (indexerModel.hasIndex(indexName)) {
+                System.out.println("doing the cleanup of " + indexName);
+                indexerModel.deleteIndex(indexName);
+                repoSetup.getSepModel().removeSubscription("IndexUpdater_" + indexName);
+                repoSetup.getHBaseProxy().waitOnReplicationPeerStopped("IndexUpdater_" + indexName);
+                repoSetup.stopSepEventSlave();
+            } else {
+                System.out.println("Not doing cleanup because index does not exist in indexer model, index name = " + indexName);
+            }
+        } else {
+            System.out.println("Not doing cleanup because indexerModel is null, index name = " + indexName);
+        }
     }
 
     protected static void waitForIndexesInfoUpdate(int expectedCount) throws InterruptedException {
