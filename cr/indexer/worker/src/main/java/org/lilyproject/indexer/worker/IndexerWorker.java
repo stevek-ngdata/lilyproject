@@ -32,9 +32,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
-import com.ngdata.sep.EventPublisher;
 import com.ngdata.sep.impl.SepConsumer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -67,13 +64,12 @@ import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.sep.LilyHBaseEventPublisher;
+import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -208,10 +204,10 @@ public class IndexerWorker {
             indexerRegistry.register(indexer);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
-            EventPublisher hbaseEventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(tableFactory, Table.RECORD.name));
+            LilyEventPublisherManager eventPublisherManager = new LilyEventPublisherManager(tableFactory);
             IndexUpdater indexUpdater = new IndexUpdater(indexer,
                             repositoryManager, indexLocker, updaterMetrics, derefMap,
-                            hbaseEventPublisher, index.getQueueSubscriptionId());
+                            eventPublisherManager, index.getQueueSubscriptionId());
 
             SepConsumer sepConsumer = new SepConsumer(index.getQueueSubscriptionId(),
                     index.getSubscriptionTimestamp(), indexUpdater, settings.getListenersPerIndex(), hostName,

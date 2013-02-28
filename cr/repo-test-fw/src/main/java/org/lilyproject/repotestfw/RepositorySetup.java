@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.ngdata.sep.EventListener;
-import com.ngdata.sep.EventPublisher;
 import com.ngdata.sep.SepModel;
 import com.ngdata.sep.impl.SepConsumer;
 import com.ngdata.sep.impl.SepModelImpl;
@@ -59,17 +58,14 @@ import org.lilyproject.repository.impl.SchemaCache;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.AvroLilyTransceiver;
-import org.lilyproject.repository.remote.RemoteRepository;
 import org.lilyproject.repository.remote.RemoteRepositoryManager;
 import org.lilyproject.repository.remote.RemoteTypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
-import org.lilyproject.sep.LilyHBaseEventPublisher;
+import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -101,7 +97,7 @@ public class RepositorySetup {
     
     private SepModel sepModel;
     private SepConsumer sepConsumer;
-    private EventPublisher eventPublisher;
+    private LilyEventPublisherManager eventPublisherManager;
 
     private boolean coreSetup;
     private boolean typeManagerSetup;
@@ -162,7 +158,7 @@ public class RepositorySetup {
         
         
         sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
-        eventPublisher = new LilyHBaseEventPublisher(LilyHBaseSchema.getRecordTable(hbaseTableFactory, Table.RECORD.name));
+        eventPublisherManager = new LilyEventPublisherManager(hbaseTableFactory);
 
         repositoryManagerSetup = true;
     }
@@ -280,8 +276,8 @@ public class RepositorySetup {
         return sepModel;
     }
     
-    public EventPublisher getEventPublisher() {
-        return eventPublisher;
+    public LilyEventPublisherManager getEventPublisherManager() {
+        return eventPublisherManager;
     }
     
     public void stopSepEventSlave() {

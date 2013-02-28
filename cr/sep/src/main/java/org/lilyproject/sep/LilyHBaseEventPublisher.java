@@ -17,12 +17,11 @@ package org.lilyproject.sep;
 
 import java.io.IOException;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-
 import com.ngdata.sep.impl.HBaseEventPublisher;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 

@@ -127,7 +127,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
     @Override
     public List<String> eval(Value value) throws RepositoryException, IOException, InterruptedException {
-        return valueEvaluator.eval(value, this);
+        return valueEvaluator.eval(table, value, this);
     }
 
     @Override

@@ -231,7 +231,7 @@ public class Indexer {
                         if (match.match) {
                             String fieldName = evalName(dynField, match, fieldType);
 
-                            List<String> values = valueEvaluator.format(record, fieldType, dynField.extractContext(),
+                            List<String> values = valueEvaluator.format(table, record, fieldType, dynField.extractContext(),
                                     dynField.getFormatter(), repositoryManager);
 
                             solrDocumentBuilder.addField(fieldName, values);

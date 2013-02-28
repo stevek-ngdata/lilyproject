@@ -47,7 +47,6 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.SystemFields;
 
@@ -72,7 +71,7 @@ public class ValueEvaluator {
      * Evaluates a value for a given record & vtag.
      * @return null if there is no value
      */
-    public List<String> eval(Value valueDef, IndexUpdateBuilder indexUpdateBuilder)
+    public List<String> eval(String table, Value valueDef, IndexUpdateBuilder indexUpdateBuilder)
             throws RepositoryException, IOException, InterruptedException {
 
         List<IndexValue> indexValues = evalValue(valueDef, indexUpdateBuilder);
@@ -82,7 +81,7 @@ public class ValueEvaluator {
 
         RepositoryManager repositoryManager = indexUpdateBuilder.getRepositoryManager();
         if (valueDef.extractContent()) {
-            return extractContent(indexValues, repositoryManager);
+            return extractContent(table, indexValues, repositoryManager);
         }
 
         Formatter formatter = conf.getFormatters().getFormatter(valueDef.getFormatter());
@@ -95,7 +94,7 @@ public class ValueEvaluator {
      * from a record. Should only be called if the field is present in the
      * record.
      */
-    public List<String> format(Record record, FieldType fieldType, boolean extractContent, String formatterName,
+    public List<String> format(String table, Record record, FieldType fieldType, boolean extractContent, String formatterName,
             RepositoryManager repositoryManager) throws InterruptedException {
         Object value = record.getField(fieldType.getName());
 
@@ -112,7 +111,7 @@ public class ValueEvaluator {
         }
 
         if (fieldType.getValueType().getDeepestValueType().getBaseName().equals("BLOB") && extractContent) {
-            return extractContent(indexValues, repositoryManager);
+            return extractContent(table, indexValues, repositoryManager);
         }
 
         Formatter formatter = conf.getFormatters().getFormatter(formatterName);
@@ -120,7 +119,7 @@ public class ValueEvaluator {
         return formatter.format(indexValues, repositoryManager);
     }
 
-    private List<String> extractContent(List<IndexValue> indexValues, RepositoryManager repositoryManager) {
+    private List<String> extractContent(String table, List<IndexValue> indexValues, RepositoryManager repositoryManager) {
         // At this point we can be sure the value will be a blob, this is
         // validated during
         // the construction of the indexer conf.
@@ -135,28 +134,28 @@ public class ValueEvaluator {
             if (indexValue.listIndex != null)
                 indexes.addLast(indexValue.listIndex);
 
-            extractContent(indexValue.value, indexes, indexValue.record, indexValue.fieldType, result, repositoryManager);
+            extractContent(table, indexValue.value, indexes, indexValue.record, indexValue.fieldType, result, repositoryManager);
         }
 
         return result.isEmpty() ? null : result;
     }
 
-    private void extractContent(Object value, Deque<Integer> indexes, Record record, FieldType fieldType,
+    private void extractContent(String table, Object value, Deque<Integer> indexes, Record record, FieldType fieldType,
             List<String> result, RepositoryManager repositoryManager) {
 
         if (value instanceof List) { // this covers both LIST and PATH types
             List values = (List) value;
             for (int i = 0; i < values.size(); i++) {
                 indexes.addLast(i);
-                extractContent(values.get(i), indexes, record, fieldType, result, repositoryManager);
+                extractContent(table, values.get(i), indexes, record, fieldType, result, repositoryManager);
                 indexes.removeLast();
             }
         } else {
-            extractContent(value, record, fieldType, Ints.toArray(indexes), result, repositoryManager);
+            extractContent(table, value, record, fieldType, Ints.toArray(indexes), result, repositoryManager);
         }
     }
 
-    private void extractContent(Object value, Record record, FieldType fieldType, int[] indexes, List<String> result,
+    private void extractContent(String table, Object value, Record record, FieldType fieldType, int[] indexes, List<String> result,
             RepositoryManager repositoryManager) {
 
         Blob blob = (Blob) value;
@@ -167,7 +166,7 @@ public class ValueEvaluator {
         BodyContentHandler ch = new BodyContentHandler(woh);
 
         try {
-            is = repositoryManager.getRepository(Table.RECORD.name).getInputStream(record, fieldType.getName(), indexes);
+            is = repositoryManager.getRepository(table).getInputStream(record, fieldType.getName(), indexes);
 
             Metadata metadata = new Metadata();
             metadata.add(Metadata.CONTENT_TYPE, blob.getMediaType());

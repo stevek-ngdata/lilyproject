@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.ngdata.sep.EventListener;
-import com.ngdata.sep.EventPublisher;
 import com.ngdata.sep.SepEvent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,6 +53,7 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
+import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.RecordEvent;
@@ -101,7 +101,7 @@ public class IndexUpdater implements EventListener {
     private IndexUpdaterMetrics metrics;
     private ClassLoader myContextClassLoader;
     private IndexLocker indexLocker;
-    private EventPublisher eventPublisher;
+    private LilyEventPublisherManager eventPublisherMgr;
     private String subscriptionId;
 
     /**
@@ -119,14 +119,14 @@ public class IndexUpdater implements EventListener {
      *                       this subscription.
      */
     public IndexUpdater(Indexer indexer, RepositoryManager repositoryManager, IndexLocker indexLocker,
-            IndexUpdaterMetrics metrics, DerefMap derefMap, EventPublisher eventPublisher, String subscriptionId)
-            throws IOException {
+            IndexUpdaterMetrics metrics, DerefMap derefMap, LilyEventPublisherManager eventPublisherMgr,
+            String subscriptionId) throws IOException {
         this.indexer = indexer;
         this.repositoryManager = repositoryManager;
         this.idGenerator = repositoryManager.getIdGenerator();
         this.indexLocker = indexLocker;
         this.derefMap = derefMap;
-        this.eventPublisher = eventPublisher;
+        this.eventPublisherMgr = eventPublisherMgr;
         this.subscriptionId = subscriptionId;
 
         this.myContextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -463,7 +463,7 @@ public class IndexUpdater implements EventListener {
 
             RecordEvent payload = new RecordEvent();
             // TODO repository - remove use of record table name here
-            payload.setTableName(Table.RECORD.name);
+            payload.setTableName(table);
             payload.setType(INDEX);
             for (SchemaId vtag : referrersAndVTags.get(referrer)) {
                 payload.addVTagToIndex(vtag);
@@ -473,7 +473,7 @@ public class IndexUpdater implements EventListener {
             payload.setIndexRecordFilterData(filterData);
 
             try {
-                eventPublisher.publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
+                eventPublisherMgr.getEventPublisher(table).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.

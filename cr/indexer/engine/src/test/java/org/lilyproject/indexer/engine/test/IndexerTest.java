@@ -36,6 +36,8 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import org.lilyproject.sep.LilyEventPublisherManager;
+
 import org.lilyproject.repository.api.RecordFactory;
 
 import com.google.common.base.Function;
@@ -274,9 +276,9 @@ public class IndexerTest {
         repoSetup.getSepModel().addSubscription(indexDef.getQueueSubscriptionId());
 
         repoSetup.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + indexName);
-
+        
         IndexUpdater indexUpdater = new IndexUpdater(indexer, indexUpdaterRepositoryMgr, indexLocker,
-                new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisher(), "IndexUpdater_" + indexName);
+                new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisherManager(), "IndexUpdater_" + indexName);
         repoSetup.startSepEventSlave("IndexUpdater_" + indexName,
                 new CompositeEventListener(indexUpdater, messageVerifier, otherListener));
 
