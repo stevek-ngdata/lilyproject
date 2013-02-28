@@ -206,7 +206,7 @@ public class IndexUpdater implements EventListener {
                         if (droppedVtags.size() > 0) {
                             // Perform deletes
                             for (SchemaId vtag : droppedVtags) {
-                                indexer.delete(recordId, vtag);
+                                indexer.delete(recordEvent.getTableName(), recordId, vtag);
                             }
                         }
                     }
@@ -390,7 +390,7 @@ public class IndexUpdater implements EventListener {
                         vtagsToIndex.add(vtag);
                     } else {
                         // The vtag does not exist anymore on the document, or does not need to be indexed: delete from index
-                        indexer.delete(vtRecord.getId(), vtag);
+                        indexer.delete(event.getTableName(), vtRecord.getId(), vtag);
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s: deleted from index for deleted vtag %2$s",
                                     vtRecord.getId(), indexer.safeLoadTagName(vtag)));

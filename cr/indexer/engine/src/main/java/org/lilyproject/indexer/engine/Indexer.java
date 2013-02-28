@@ -172,7 +172,7 @@ public class Indexer {
                 // do this any way when it later receives a message about the delete.
                 for (SchemaId vtag : entry.getValue()) {
                     verifyLock(recordId);
-                    solrShardMgr.getSolrClient(recordId).deleteById(getIndexId(recordId, vtag));
+                    solrShardMgr.getSolrClient(recordId).deleteById(getIndexId(table, recordId, vtag));
                     metrics.deletesById.inc();
                 }
 
@@ -211,7 +211,7 @@ public class Indexer {
 
             SolrDocumentBuilder solrDocumentBuilder =
                     new SolrDocumentBuilder(repositoryManager, getConf().getRecordFilter(), systemFields, valueEvaluator,
-                            table, record, getIndexId(record.getId(), vtag), vtag, version);
+                            table, record, getIndexId(table, record.getId(), vtag), vtag, version);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
 
@@ -254,7 +254,7 @@ public class Indexer {
                 // because with deref-expressions we are never sure) that we did.
 
                 // There can be a previous entry in the index which we should try to delete
-                solrShardMgr.getSolrClient(record.getId()).deleteById(getIndexId(record.getId(), vtag));
+                solrShardMgr.getSolrClient(record.getId()).deleteById(getIndexId(table, record.getId(), vtag));
                 metrics.deletesById.inc();
 
                 if (log.isDebugEnabled())
@@ -364,10 +364,10 @@ public class Indexer {
     /**
      * <p>This method requires you obtained the {@link IndexLocker} for the record.
      */
-    public void delete(RecordId recordId, SchemaId vtag) throws SolrClientException, ShardSelectorException,
+    public void delete(String table, RecordId recordId, SchemaId vtag) throws SolrClientException, ShardSelectorException,
             InterruptedException {
         verifyLock(recordId);
-        solrShardMgr.getSolrClient(recordId).deleteById(getIndexId(recordId, vtag));
+        solrShardMgr.getSolrClient(recordId).deleteById(getIndexId(table, recordId, vtag));
         metrics.deletesByQuery.inc();
     }
 
@@ -404,8 +404,8 @@ public class Indexer {
         return result;
     }
 
-    protected String getIndexId(RecordId recordId, SchemaId vtag) {
-        return recordId + "-" + vtag.toString();
+    protected String getIndexId(String table, RecordId recordId, SchemaId vtag) {
+        return table + "-" + recordId + "-" + vtag.toString();
     }
 
     /**
