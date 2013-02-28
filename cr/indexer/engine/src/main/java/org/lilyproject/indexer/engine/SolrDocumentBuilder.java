@@ -52,6 +52,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.util.repo.SystemFields;
 
 public class SolrDocumentBuilder implements IndexUpdateBuilder {
@@ -180,7 +181,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
         RecordContext ctx = contexts.peek();
         try {
             if (!ctx.dep.moreDimensionedVariants.isEmpty() || !ctx.dep.id.equals(recordId)) { // avoid adding unnecesary self-references
-                dependencies.get(DerefMapUtil.newEntry(ctx.dep.id, ctx.dep.moreDimensionedVariants)).add(field);
+                dependencies.get(DerefMapUtil.newEntry(new AbsoluteRecordIdImpl(table, ctx.dep.id), ctx.dep.moreDimensionedVariants)).add(field);
             }
         } catch (ExecutionException ee) {
             throw new RuntimeException("Failed to update dependencies");
@@ -210,7 +211,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
      * dependency will not trigger 'denormalized data updates'.
      */
     private void warnForUnmatchedDependencies(Record dependency) {
-        if (dependency != null && dependency.getId() != null && this.indexRecordFilter.getIndexCase(dependency) == null)
+        if (dependency != null && dependency.getId() != null && this.indexRecordFilter.getIndexCase(table, dependency) == null)
             log.warn(String.format("discovered dependency on record [%s] which will not be matched by the record filter of the index", dependency.getId()));
     }
 
@@ -247,6 +248,11 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     @Override
     public SystemFields getSystemFields() {
         return systemFields;
+    }
+    
+    @Override
+    public String getTable() {
+        return table;
     }
 
 }

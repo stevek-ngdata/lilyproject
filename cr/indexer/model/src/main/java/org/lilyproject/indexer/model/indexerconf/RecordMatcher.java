@@ -16,8 +16,11 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.Sets;
 
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
@@ -42,6 +45,7 @@ public class RecordMatcher {
     private FieldType fieldType;
     private FieldComparator fieldComparator;
     private Object fieldValue;
+    private Set<String> tableNames;
 
     private TypeManager typeManager;
 
@@ -56,7 +60,7 @@ public class RecordMatcher {
 
     public RecordMatcher(WildcardPattern recordTypeNamespace, WildcardPattern recordTypeName, QName instanceOfType,
             FieldType fieldType, FieldComparator fieldComparator, Object fieldValue,
-            Map<String, String> variantPropsPattern, TypeManager typeManager) {
+            Map<String, String> variantPropsPattern, List<String> tableNames, TypeManager typeManager) {
         this.recordTypeNamespace = recordTypeNamespace;
         this.recordTypeName = recordTypeName;
         this.instanceOfType = instanceOfType;
@@ -64,10 +68,11 @@ public class RecordMatcher {
         this.fieldComparator = fieldComparator != null ? fieldComparator : FieldComparator.EQUAL;
         this.fieldValue = fieldValue;
         this.variantPropsPattern = variantPropsPattern;
+        this.tableNames = tableNames == null ? Sets.<String>newHashSet() : Sets.newHashSet(tableNames);
         this.typeManager = typeManager;
     }
 
-    public boolean matches(Record record) {
+    public boolean matches(String table, Record record) {
         QName recordTypeName = record.getRecordTypeName();
         Map<String, String> varProps = record.getId().getVariantProperties();
 
@@ -75,6 +80,10 @@ public class RecordMatcher {
         // be in the case of IndexAwareMQFeeder
         if (this.recordTypeNamespace != null &&
                 (recordTypeName == null || !this.recordTypeNamespace.lightMatch(recordTypeName.getNamespace()))) {
+            return false;
+        }
+        
+        if (!tableNames.isEmpty() && !tableNames.contains(table)) {
             return false;
         }
 

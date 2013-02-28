@@ -23,8 +23,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.easymock.IMocksControl;
 import org.junit.After;
@@ -33,6 +39,7 @@ import org.junit.Test;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.CompareOp;
+import org.lilyproject.repository.api.ConcurrentRecordUpdateException;
 import org.lilyproject.repository.api.FieldNotFoundException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
@@ -1650,26 +1657,6 @@ public abstract class AbstractRepositoryTest {
         record = repository.read(record.getId());
         assertEquals("value1", record.getField(fieldType1.getName()));
 
-        //
-        // Record state already matches supplied state, conditions should not be checked, so we expect response
-        // UP_TO_DATE rather than CONFLICT.
-        //
-        record.setField(fieldType1.getName(), "value1");
-        record = repository
-                .update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "xyz")));
-
-        assertEquals(ResponseStatus.UP_TO_DATE, record.getResponseStatus());
-
-        // Do the same update twice (as can happen when auto-retrying in case of IO exceptions)
-        record.setField(fieldType1.getName(), "value2");
-        record = repository
-                .update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "value1")));
-        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
-
-        record = repository
-                .update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "value1")));
-        assertEquals(ResponseStatus.UP_TO_DATE, record.getResponseStatus());
-
         // reset record state
         record = createDefaultRecord();
 
@@ -1843,6 +1830,71 @@ public abstract class AbstractRepositoryTest {
         record.setField(fieldType3.getName(), true);
         record = repository.update(record, true, true, conditions);
         assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+    }
+
+    @Test
+    public void testConditionUpdateConcurrency() throws Exception {
+        // This test uses MutationCondition's to let multiple threads concurrently increment a counter field
+        // in the same record.
+
+        // Create record with counter field initially set to 0
+        Record record = repository.newRecord();
+        record.setId(repository.getIdGenerator().newRecordId());
+        record.setRecordType(recordType2.getName());
+        record.setField(fieldType4.getName(), new Integer(0));
+        repository.createOrUpdate(record);
+        final RecordId recordId = record.getId();
+
+        // Run concurrent threads to increment the counter field
+        int threads = 5;
+        int count = 200;
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(threads, threads, 10, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(count));
+
+        List<Future> futures = new ArrayList<Future>();
+        for (int i = 0; i < count; i++) {
+            futures.add(executor.submit(new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                    int iteration = 0;
+                    while (true) {
+                        try {
+                            iteration++;
+                            Record record = repository.read(recordId);
+                            int oldValue = (Integer)record.getField(fieldType4.getName());
+                            record.setField(fieldType4.getName(), new Integer(oldValue + 1));
+                            MutationCondition cond = new MutationCondition(fieldType4.getName(), oldValue, false);
+                            record = repository.update(record, Lists.newArrayList(cond));
+
+                            if (record.getResponseStatus() == ResponseStatus.CONFLICT) {
+                                if (iteration > 20)
+                                    System.out.println("cas failed, will retry, iteration " + iteration);
+                                Thread.sleep((int)(Math.random() * 50));
+                            } else if (record.getResponseStatus() == ResponseStatus.UPDATED) {
+                                // success
+                                return null;
+                            } else {
+                                fail("unexpected response status = " + record.getResponseStatus());
+                            }
+                        } catch (ConcurrentRecordUpdateException e) {
+                            if (iteration > 20)
+                                System.out.println("concurrent update, will retry, iteration " + iteration);
+                            Thread.sleep((int)(Math.random() * 50));
+                        }
+                    }
+                }
+            }));
+        }
+
+        for (Future future : futures) {
+            future.get();
+        }
+
+        executor.shutdown();
+
+        // verify the value of the counter field is as expected
+        record = repository.read(record.getId());
+        assertEquals(count, record.getField(fieldType4.getName()));
     }
 
     @Test

@@ -23,6 +23,10 @@ import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.List;
 
+import org.lilyproject.repository.api.RecordException;
+
+import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -119,9 +123,9 @@ public class RecordMatcherTest {
         Record recordTypeB = newRecordOfType(new QName("ns1", "typeB"));
 
         assertEquals(ImmutableSet.of(vtag1.getId()),
-                idxConf.getRecordFilter().getIndexCase(recordTypeA).getVersionTags());
+                idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordTypeA).getVersionTags());
         assertEquals(ImmutableSet.of(vtag2.getId()),
-                idxConf.getRecordFilter().getIndexCase(recordTypeB).getVersionTags());
+                idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordTypeB).getVersionTags());
     }
 
     @Test
@@ -137,8 +141,8 @@ public class RecordMatcherTest {
         Record recordNs1TypeA = newRecordOfType(new QName("ns1", "typeA"));
         Record recordNs2TypeA = newRecordOfType(new QName("ns2", "typeA"));
 
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs1TypeA));
-        assertNull(idxConf.getRecordFilter().getIndexCase(recordNs2TypeA));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordNs1TypeA));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordNs2TypeA));
     }
 
     @Test
@@ -159,13 +163,13 @@ public class RecordMatcherTest {
         Record recordNs2TypeC = newRecordOfType(new QName("ns2", "typeC"));
         Record recordNs1TypeA = newRecordOfType(new QName("ns1", "typeA"));
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(recordNs1TypeA));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordNs1TypeA));
 
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs1TypeB));
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs2TypeB));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordNs1TypeB));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordNs2TypeB));
 
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs1TypeC));
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs2TypeC));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordNs1TypeC));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordNs2TypeC));
     }
 
     @Test
@@ -251,12 +255,12 @@ public class RecordMatcherTest {
             IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
 
             if (rt.equals("rt6")) {
-                assertNull(idxConf.getRecordFilter().getIndexCase(record));
+                assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record));
             } else {
                 assertNotNull("don't expect null for case instanceOf=" + rt,
-                        idxConf.getRecordFilter().getIndexCase(record));
+                        idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record));
                 assertEquals(ImmutableSet.of(vtag1.getId()),
-                        idxConf.getRecordFilter().getIndexCase(record).getVersionTags());
+                        idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record).getVersionTags());
             }
         }
     }
@@ -274,7 +278,7 @@ public class RecordMatcherTest {
 
         Record record = repository.recordBuilder().id("record").build();
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(record));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record));
     }
 
     @Test
@@ -290,7 +294,7 @@ public class RecordMatcherTest {
 
         Record record = repository.recordBuilder().id("record").build();
 
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(record));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record));
     }
 
     @Test
@@ -323,8 +327,9 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "int"), 10)
                 .build();
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(hera));
-        assertEquals(ImmutableSet.of(vtag1.getId()), idxConf.getRecordFilter().getIndexCase(zeus).getVersionTags());
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, hera));
+        assertEquals(ImmutableSet.of(vtag1.getId()), idxConf.getRecordFilter()
+                        .getIndexCase(Table.RECORD.name, zeus).getVersionTags());
 
         //
         // Test boolean field
@@ -341,9 +346,9 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "bool"), Boolean.FALSE)
                 .build();
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(falseRecord));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, falseRecord));
         assertEquals(ImmutableSet.of(vtag2.getId()),
-                idxConf.getRecordFilter().getIndexCase(trueRecord).getVersionTags());
+                idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, trueRecord).getVersionTags());
     }
 
     @Test
@@ -373,11 +378,11 @@ public class RecordMatcherTest {
                 .recordType(new QName("ns1", "typeA"))
                 .build();
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(trueRecord));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, trueRecord));
 
         // false and null field value are both treated as being not equal to true
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(falseRecord));
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(nullRecord));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, falseRecord));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, nullRecord));
     }
 
     @Test
@@ -402,7 +407,7 @@ public class RecordMatcherTest {
                 .build();
 
         assertEquals(Sets.newHashSet(vtag1.getId()),
-                idxConf.getRecordFilter().getIndexCase(recordProp1Prop2).getVersionTags());
+                idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordProp1Prop2).getVersionTags());
 
         //
         // Record with more properties than prop1 & prop2 should be matched by second rule
@@ -414,7 +419,7 @@ public class RecordMatcherTest {
                 .build();
 
         assertEquals(Sets.newHashSet(vtag2.getId()),
-                idxConf.getRecordFilter().getIndexCase(recordProp1Prop2Prop3).getVersionTags());
+                idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordProp1Prop2Prop3).getVersionTags());
 
         //
         // Record with one prop should not be matched by any rules
@@ -425,7 +430,7 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "string"), "something")
                 .build();
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(recordProp1));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordProp1));
     }
 
     @Test
@@ -445,7 +450,7 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "string"), "something")
                 .build();
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(recordProp1));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordProp1));
 
         Record record = repository.recordBuilder()
                 .id("record")
@@ -453,7 +458,7 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "string"), "something")
                 .build();
 
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(record));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record));
     }
 
     @Test
@@ -473,7 +478,7 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "string"), "something")
                 .build();
 
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(recordProp1));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordProp1));
     }
 
     @Test
@@ -489,8 +494,8 @@ public class RecordMatcherTest {
         Record recordNs1TypeA = newRecordOfType(new QName("ns1", "typeA"));
         Record recordNs2TypeA = newRecordOfType(new QName("ns2", "typeA"));
 
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs1TypeA));
-        assertNull(idxConf.getRecordFilter().getIndexCase(recordNs2TypeA));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordNs1TypeA));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, recordNs2TypeA));
     }
 
     @Test
@@ -509,7 +514,7 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "int"), new Integer(10))
                 .build();
 
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(record1));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record1));
 
         Record record2 = repository.recordBuilder()
                 .id("record", ImmutableMap.of("prop1", "val1"))
@@ -517,7 +522,7 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "int"), new Integer(11))
                 .build();
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(record2));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record2));
 
         Record record3 = repository.recordBuilder()
                 .id("record", ImmutableMap.of("prop1", "val1"))
@@ -525,7 +530,7 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "int"), new Integer(10))
                 .build();
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(record3));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record3));
 
         Record record4 = repository.recordBuilder()
                 .id("record", ImmutableMap.of("prop1", "val2"))
@@ -533,7 +538,7 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "int"), new Integer(10))
                 .build();
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(record4));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record4));
     }
 
     @Test
@@ -553,7 +558,7 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "int"), new Integer(10))
                 .build();
 
-        assertNotNull(idxConf.getRecordFilter().getIndexCase(record1));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record1));
     }
 
     @Test
@@ -573,7 +578,61 @@ public class RecordMatcherTest {
                 .field(new QName("ns", "int"), new Integer(10))
                 .build();
 
-        assertNull(idxConf.getRecordFilter().getIndexCase(record1));
+        assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record1));
+    }
+    
+    @Test
+    public void testInclude_WithTableMatch() throws IndexerConfException, RecordException, InterruptedException {
+        String conf = makeIndexerConf(
+                        "xmlns:ns1='ns1' xmlns:ns='ns'",
+                        Lists.newArrayList("vtags='last' tables='myrecordtable'"),
+                        Lists.<String>newArrayList());
+        
+        
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        
+        Record record = repository.recordBuilder().id("record").field(new QName("ns", "int"), new Integer(42)).build();
+        
+        assertNotNull(idxConf.getRecordFilter().getIndexCase("myrecordtable", record));
+    }
+    
+    @Test
+    public void testInclude_NoTableMatch() throws IndexerConfException, RecordException, InterruptedException {
+        String conf = makeIndexerConf("xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList("vtags='last' tables='myrecordtable'"),
+                Lists.<String>newArrayList());
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+
+        Record record = repository.recordBuilder().id("record").field(new QName("ns", "int"), new Integer(42)).build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase("notmyrecordtable", record));
+    }
+    
+    @Test
+    public void testExclude_WithTableMatch() throws IndexerConfException, RecordException, InterruptedException {
+        String conf = makeIndexerConf("xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList("vtags='last'"),
+                Lists.newArrayList("tables='myrecordtable'"));
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+
+        Record record = repository.recordBuilder().id("record").field(new QName("ns", "int"), new Integer(42)).build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase("myrecordtable", record));
+    }
+    
+    @Test
+    public void testExclude_NoTableMatch() throws RecordException, InterruptedException, IndexerConfException {
+        String conf = makeIndexerConf("xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList("vtags='last'"),
+                Lists.newArrayList("tables='myrecordtable'"));
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+
+        Record record = repository.recordBuilder().id("record").field(new QName("ns", "int"), new Integer(42)).build();
+
+        assertNotNull(idxConf.getRecordFilter().getIndexCase("notmyrecordtable", record));
     }
 
     private Record newRecordOfType(QName recordType) throws Exception {

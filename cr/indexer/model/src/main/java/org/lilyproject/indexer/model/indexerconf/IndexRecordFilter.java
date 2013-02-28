@@ -70,17 +70,17 @@ public class IndexRecordFilter {
         return false;
     }
 
-    public IndexCase getIndexCase(Record record) {
+    public IndexCase getIndexCase(String table, Record record) {
         // If an exclude matches, the record is not included in this index.
         // Excludes have higher precedence than includes.
         for (RecordMatcher exclude : excludes) {
-            if (exclude.matches(record)) {
+            if (exclude.matches(table, record)) {
                 return null;
             }
         }
 
         for (Pair<RecordMatcher, IndexCase> include : includes) {
-            if (include.getV1().matches(record)) {
+            if (include.getV1().matches(table, record)) {
                 return include.getV2();
             }
         }

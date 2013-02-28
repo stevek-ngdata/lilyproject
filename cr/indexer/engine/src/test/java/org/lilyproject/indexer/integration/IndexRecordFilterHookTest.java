@@ -23,6 +23,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -70,13 +72,14 @@ public class IndexRecordFilterHookTest {
 
         RecordEvent recordEvent = new RecordEvent();
         recordEvent.setType(Type.UPDATE);
+        recordEvent.setTableName(Table.RECORD.name);
 
         indexFilterHook.beforeUpdate(newRecord, oldRecord, repository, fieldTypes, recordEvent);
 
         IndexRecordFilterData idxFilterData = recordEvent.getIndexRecordFilterData();
         assertTrue(idxFilterData.getOldRecordExists());
         assertTrue(idxFilterData.getNewRecordExists());
-        verify(indexFilterHook).calculateIndexInclusion(oldRecord, newRecord, idxFilterData);
+        verify(indexFilterHook).calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, idxFilterData);
     }
     
     @Test
@@ -86,13 +89,14 @@ public class IndexRecordFilterHookTest {
 
         RecordEvent recordEvent = new RecordEvent();
         recordEvent.setType(Type.CREATE);
+        recordEvent.setTableName(Table.RECORD.name);
 
         indexFilterHook.beforeCreate(newRecord, repository, fieldTypes, recordEvent);
 
         IndexRecordFilterData idxFilterData = recordEvent.getIndexRecordFilterData();
         assertFalse(idxFilterData.getOldRecordExists());
         assertTrue(idxFilterData.getNewRecordExists());
-        verify(indexFilterHook).calculateIndexInclusion(null, newRecord, idxFilterData);
+        verify(indexFilterHook).calculateIndexInclusion(Table.RECORD.name, null, newRecord, idxFilterData);
     }
 
     @Test
@@ -102,13 +106,14 @@ public class IndexRecordFilterHookTest {
 
         RecordEvent recordEvent = new RecordEvent();
         recordEvent.setType(Type.DELETE);
+        recordEvent.setTableName(Table.RECORD.name);
 
         indexFilterHook.beforeDelete(oldRecord, repository, fieldTypes, recordEvent);
 
         IndexRecordFilterData idxFilterData = recordEvent.getIndexRecordFilterData();
         assertTrue(idxFilterData.getOldRecordExists());
         assertFalse(idxFilterData.getNewRecordExists());
-        verify(indexFilterHook).calculateIndexInclusion(oldRecord, null, idxFilterData);
+        verify(indexFilterHook).calculateIndexInclusion(Table.RECORD.name, oldRecord, null, idxFilterData);
     }
 
     @Test
@@ -120,7 +125,7 @@ public class IndexRecordFilterHookTest {
 
         when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusionA, inclusionB, exclusion));
 
-        indexFilterHook.calculateIndexInclusion(oldRecord, newRecord, indexFilterData);
+        indexFilterHook.calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionInclusions(ImmutableSet.of("includeA", "includeB"));
     }
@@ -134,7 +139,7 @@ public class IndexRecordFilterHookTest {
 
         when(this.indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusion, exclusionA, exclusionB));
 
-        indexFilterHook.calculateIndexInclusion(oldRecord, newRecord, indexFilterData);
+        indexFilterHook.calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionExclusions(ImmutableSet.of("excludeA", "excludeB"));
     }
@@ -146,7 +151,7 @@ public class IndexRecordFilterHookTest {
 
         when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusion));
 
-        indexFilterHook.calculateIndexInclusion(oldRecord, newRecord, indexFilterData);
+        indexFilterHook.calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionInclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
     }
@@ -158,7 +163,7 @@ public class IndexRecordFilterHookTest {
 
         when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusion));
 
-        indexFilterHook.calculateIndexInclusion(oldRecord, newRecord, indexFilterData);
+        indexFilterHook.calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
     }
@@ -168,7 +173,7 @@ public class IndexRecordFilterHookTest {
         IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
         when(indexesInfo.getIndexInfos()).thenReturn(Lists.<IndexInfo>newArrayList());
 
-        indexFilterHook.calculateIndexInclusion(oldRecord, newRecord, indexFilterData);
+        indexFilterHook.calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
     }
@@ -178,7 +183,7 @@ public class IndexRecordFilterHookTest {
         IndexRecordFilter indexRecordFilter = mock(IndexRecordFilter.class);
 
         when(indexInfo.getIndexerConf().getRecordFilter()).thenReturn(indexRecordFilter);
-        doReturn(include).when(indexFilterHook).indexIsApplicable(indexRecordFilter, oldRecord, newRecord);
+        doReturn(include).when(indexFilterHook).indexIsApplicable(indexRecordFilter, Table.RECORD.name, oldRecord, newRecord);
         when(indexInfo.getIndexDefinition().getQueueSubscriptionId()).thenReturn(queueSubscriptionId);
 
         return indexInfo;
@@ -188,36 +193,36 @@ public class IndexRecordFilterHookTest {
     public void testIndexIsApplicable_TrueForOldRecord() {
         IndexRecordFilter indexRecordFilter = mock(IndexRecordFilter.class);
         Record oldRecord = mock(Record.class);
-        when(indexRecordFilter.getIndexCase(oldRecord)).thenReturn(mock(IndexCase.class));
+        when(indexRecordFilter.getIndexCase(Table.RECORD.name, oldRecord)).thenReturn(mock(IndexCase.class));
 
-        assertTrue(indexFilterHook.indexIsApplicable(indexRecordFilter, oldRecord, null));
+        assertTrue(indexFilterHook.indexIsApplicable(indexRecordFilter, Table.RECORD.name, oldRecord, null));
     }
 
     @Test
     public void testIndexIsApplicable_FalseForOldRecord() {
         IndexRecordFilter indexRecordFilter = mock(IndexRecordFilter.class);
         Record oldRecord = mock(Record.class);
-        when(indexRecordFilter.getIndexCase(oldRecord)).thenReturn(null);
+        when(indexRecordFilter.getIndexCase(Table.RECORD.name, oldRecord)).thenReturn(null);
 
-        assertFalse(indexFilterHook.indexIsApplicable(indexRecordFilter, oldRecord, null));
+        assertFalse(indexFilterHook.indexIsApplicable(indexRecordFilter, Table.RECORD.name, oldRecord, null));
     }
 
     @Test
     public void testIndexIsApplicable_TrueForNewRecord() {
         IndexRecordFilter indexRecordFilter = mock(IndexRecordFilter.class);
         Record newRecord = mock(Record.class);
-        when(indexRecordFilter.getIndexCase(newRecord)).thenReturn(mock(IndexCase.class));
+        when(indexRecordFilter.getIndexCase(Table.RECORD.name, newRecord)).thenReturn(mock(IndexCase.class));
 
-        assertTrue(indexFilterHook.indexIsApplicable(indexRecordFilter, null, newRecord));
+        assertTrue(indexFilterHook.indexIsApplicable(indexRecordFilter, Table.RECORD.name, null, newRecord));
     }
 
     @Test
     public void testIndexIsApplicable_FalseForNewRecord() {
         IndexRecordFilter indexRecordFilter = mock(IndexRecordFilter.class);
         Record newRecord = mock(Record.class);
-        when(indexRecordFilter.getIndexCase(newRecord)).thenReturn(null);
+        when(indexRecordFilter.getIndexCase(Table.RECORD.name, newRecord)).thenReturn(null);
 
-        assertFalse(indexFilterHook.indexIsApplicable(indexRecordFilter, null, newRecord));
+        assertFalse(indexFilterHook.indexIsApplicable(indexRecordFilter, Table.RECORD.name,  null, newRecord));
     }
 
 }

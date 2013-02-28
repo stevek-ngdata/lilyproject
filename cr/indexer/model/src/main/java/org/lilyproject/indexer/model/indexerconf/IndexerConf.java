@@ -60,8 +60,8 @@ public class IndexerConf {
     /**
      * @return null if there is no matching IndexCase
      */
-    public IndexCase getIndexCase(Record record) {
-        return recordFilter.getIndexCase(record);
+    public IndexCase getIndexCase(String table, Record record) {
+        return recordFilter.getIndexCase(table, record);
     }
 
     public IndexFields getIndexFields() {

@@ -5,6 +5,7 @@
     <xs:attribute name="instanceOf" type="xs:string" use="optional"/>
     <xs:attribute name="field" type="xs:string" use="optional"/>
     <xs:attribute name="variant" type="xs:string" use="optional"/>
+    <xs:attribute name="tables" type="xs:string" use="optional"/>
   </xs:attributeGroup>
   <xs:element name="indexer">
     <xs:complexType>

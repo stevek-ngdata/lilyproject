@@ -7,14 +7,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 
 /**
  *
@@ -40,9 +40,9 @@ public class DerefMapSerializationUtilTest {
     @Test
     public void serializeEntriesForward() throws Exception {
         final Set<DependencyEntry> dependencies = new HashSet<DependencyEntry>();
-        dependencies.add(new DependencyEntry(ids.newRecordId("id1"), new HashSet<String>()));
+        dependencies.add(new DependencyEntry(new AbsoluteRecordIdImpl("tableA", ids.newRecordId("id1")), new HashSet<String>()));
         dependencies
-                .add(new DependencyEntry(ids.newRecordId("id2", ImmutableMap.of("bar", "x")), Sets.newHashSet(
+                .add(new DependencyEntry(new AbsoluteRecordIdImpl("tableB", ids.newRecordId("id2", ImmutableMap.of("bar", "x"))), Sets.newHashSet(
                         "foo")));
 
         final Set<DependencyEntry> deserialized = serializationUtil.deserializeDependenciesForward(

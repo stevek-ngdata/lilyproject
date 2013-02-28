@@ -107,7 +107,7 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
                 }
             }
 
-            calculateIndexInclusion(originalRecord, record, idxSel);
+            calculateIndexInclusion(recordEvent.getTableName(), originalRecord, record, idxSel);
 
         }
     }
@@ -138,7 +138,7 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
                     addField(type, null, newValue, idxSel);
                 }
             }
-            calculateIndexInclusion(null, newRecord, idxSel);
+            calculateIndexInclusion(recordEvent.getTableName(), null, newRecord, idxSel);
         }
     }
 
@@ -167,7 +167,7 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
                     addField(type, oldValue, null, idxSel);
                 }
             }
-            calculateIndexInclusion(originalRecord, null, idxSel);
+            calculateIndexInclusion(recordEvent.getTableName(), originalRecord, null, idxSel);
         }
     }
 
@@ -193,17 +193,18 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
      * Calculate the inclusion/exclusion sets for index subscriptions based on the old and new
      * records, and update the {@code IndexRecordFilterData} with this information.
      *
+     * @param table table where the record update has occurred
      * @param oldRecord Previous version of the record, null if the record is being newly created
      * @param newRecord New version of the record, null if the record is being deleted
      * @param indexFilterData To be updated with index subscription inclusion/exclusion information
      */
-    void calculateIndexInclusion(Record oldRecord, Record newRecord, IndexRecordFilterData indexFilterData) {
+    void calculateIndexInclusion(String table, Record oldRecord, Record newRecord, IndexRecordFilterData indexFilterData) {
         
         Set<String> applicableIndexes = Sets.newHashSet();
         Set<String> nonApplicableIndexes = Sets.newHashSet();
         for (IndexInfo indexInfo : indexesInfo.getIndexInfos()) {
             String queueSubscriptionId = indexInfo.getIndexDefinition().getQueueSubscriptionId();
-            if (indexIsApplicable(indexInfo.getIndexerConf().getRecordFilter(), oldRecord, newRecord)) {
+            if (indexIsApplicable(indexInfo.getIndexerConf().getRecordFilter(), table, oldRecord, newRecord)) {
                 applicableIndexes.add(queueSubscriptionId);
             } else {
                 nonApplicableIndexes.add(queueSubscriptionId);
@@ -227,9 +228,9 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
      *
      * @return true if the index is applicable for either the new or old version of the record
      */
-    boolean indexIsApplicable(IndexRecordFilter filter, Record oldRecord, Record newRecord) {
-        return ((oldRecord != null && filter.getIndexCase(oldRecord) != null)
-                || (newRecord != null && filter.getIndexCase(newRecord) != null));
+    boolean indexIsApplicable(IndexRecordFilter filter, String table, Record oldRecord, Record newRecord) {
+        return ((oldRecord != null && filter.getIndexCase(table, oldRecord) != null)
+                || (newRecord != null && filter.getIndexCase(table, newRecord) != null));
     }
 
 }

@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.response.UpdateResponse;
@@ -41,13 +39,13 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VTaggedRecord;
 
@@ -114,7 +112,7 @@ public class Indexer {
         VTaggedRecord vtRecord = new VTaggedRecord(recordId, repositoryManager.getRepository(table));
         IdRecord record = vtRecord.getRecord();
 
-        IndexCase indexCase = conf.getIndexCase(record);
+        IndexCase indexCase = conf.getIndexCase(table, record);
         index(table, vtRecord, record);
     }
 
@@ -126,7 +124,7 @@ public class Indexer {
 
     private void index(String table, VTaggedRecord vtRecord, IdRecord record) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
-        IndexCase indexCase = conf.getIndexCase(record);
+        IndexCase indexCase = conf.getIndexCase(table, record);
         if (indexCase == null) {
             return;
         }
@@ -263,11 +261,11 @@ public class Indexer {
                     log.debug(String.format("Record %1$s, vtag %2$s: no index fields produced output, " +
                             "removed from index if present", record.getId(), safeLoadTagName(vtag)));
 
-                processDependencies(record, vtag, solrDocumentBuilder);
+                processDependencies(table, record, vtag, solrDocumentBuilder);
             } else {
                 SolrInputDocument solrDoc = solrDocumentBuilder.build();
 
-                processDependencies(record, vtag, solrDocumentBuilder);
+                processDependencies(table, record, vtag, solrDocumentBuilder);
 
                 log.debug("index response " + solrShardMgr.getSolrClient(record.getId()).add(solrDoc).toString());
                 metrics.adds.inc();
@@ -280,7 +278,7 @@ public class Indexer {
         }
     }
 
-    private void processDependencies(IdRecord record, SchemaId vtag, SolrDocumentBuilder solrDocumentBuilder)
+    private void processDependencies(String table, IdRecord record, SchemaId vtag, SolrDocumentBuilder solrDocumentBuilder)
             throws IOException, RepositoryException, InterruptedException {
         if (log.isDebugEnabled()) {
             log.debug("Constructed Solr doc: " + solrDocumentBuilder.build());
@@ -289,7 +287,7 @@ public class Indexer {
         }
 
         if (derefMap != null)
-            derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
+            derefMap.updateDependants(new AbsoluteRecordIdImpl(table, record.getId()), vtag, solrDocumentBuilder.getDependencies());
     }
 
     private void logDependencies(RecordId recordId, Map<DependencyEntry, Set<SchemaId>> dependencies) {

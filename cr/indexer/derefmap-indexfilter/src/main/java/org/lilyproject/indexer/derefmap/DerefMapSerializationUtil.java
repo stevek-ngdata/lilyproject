@@ -9,12 +9,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
+import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
+
+import org.lilyproject.repository.api.AbsoluteRecordId;
+
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
 
 /**
@@ -48,12 +52,15 @@ final class DerefMapSerializationUtil {
 
         for (DependencyEntry dependencyEntry : dependencies) {
             // we store the master record id, because that is how they are stored in the backward table
-            final byte[] masterBytes = dependencyEntry.getDependency().getMaster().toBytes();
+            final byte[] masterTableBytes = Bytes.toBytes(dependencyEntry.getDependency().getTable());
+            final byte[] masterBytes = dependencyEntry.getDependency().getRecordId().getMaster().toBytes();
+            dataOutput.writeInt(masterTableBytes.length);
+            dataOutput.writeBytes(masterTableBytes);
             dataOutput.writeInt(masterBytes.length);
             dataOutput.writeBytes(masterBytes);
 
             final byte[] variantPropertiesBytes = serializeVariantPropertiesPattern(createVariantPropertiesPattern(
-                    dependencyEntry.getDependency().getVariantProperties(),
+                    dependencyEntry.getDependency().getRecordId().getVariantProperties(),
                     dependencyEntry.getMoreDimensionedVariants()));
             dataOutput.writeBytes(variantPropertiesBytes);
         }
@@ -68,15 +75,17 @@ final class DerefMapSerializationUtil {
         final Set<DependencyEntry> result = new HashSet<DependencyEntry>(nDependencies);
 
         while (result.size() < nDependencies) {
+            final int tableLength = dataInput.readInt();
+            final String table = Bytes.toString(dataInput.readBytes(tableLength));
             final int masterBytesLength = dataInput.readInt();
             final byte[] masterBytes = dataInput.readBytes(masterBytesLength);
 
             final DerefMapVariantPropertiesPattern variantPropertiesPattern =
                     deserializeVariantPropertiesPattern(dataInput);
 
-            result.add(new DependencyEntry(
+            result.add(new DependencyEntry(new AbsoluteRecordIdImpl(table,
                     idGenerator.newRecordId(idGenerator.fromBytes(masterBytes),
-                            variantPropertiesPattern.getConcreteProperties()),
+                            variantPropertiesPattern.getConcreteProperties())),
                     variantPropertiesPattern.getPatternProperties()));
         }
 
@@ -182,8 +191,8 @@ final class DerefMapSerializationUtil {
 
     // RECORD ID
 
-    RecordId deserializeRecordId(byte[] serialized) {
-        return idGenerator.fromBytes(serialized);
+    AbsoluteRecordId deserializeDependantRecordId(byte[] serialized) {
+        return AbsoluteRecordIdImpl.fromBytes(serialized, idGenerator);
     }
 
     // SCHEMA ID

@@ -3,7 +3,7 @@ package org.lilyproject.indexer.derefmap;
 import java.io.IOException;
 
 import org.lilyproject.hbaseindex.QueryResult;
-import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.AbsoluteRecordId;
 
 /**
  * Implementation of {@link org.lilyproject.indexer.derefmap.DependantRecordIdsIterator}.
@@ -24,16 +24,16 @@ final class DependantRecordIdsIteratorImpl implements DependantRecordIdsIterator
         queryResult.close();
     }
 
-    RecordId next = null;
+    AbsoluteRecordId next = null;
 
-    private RecordId getNextFromQueryResult() throws IOException {
+    private AbsoluteRecordId getNextFromQueryResult() throws IOException {
         // the identifier is the record id of the record that depends on the queried record
 
         final byte[] nextIdentifier = queryResult.next();
         if (nextIdentifier == null)
             return null;
         else
-            return serializationUtil.deserializeRecordId(nextIdentifier);
+            return serializationUtil.deserializeDependantRecordId(nextIdentifier);
     }
 
     @Override
@@ -51,11 +51,11 @@ final class DependantRecordIdsIteratorImpl implements DependantRecordIdsIterator
     }
 
     @Override
-    public RecordId next() throws IOException {
+    public AbsoluteRecordId next() throws IOException {
         synchronized (this) { // to protect setting/resetting the next value from race conditions
             if (next != null) {
                 // the next was already set, but not yet used
-                RecordId nextToReturn = next;
+                AbsoluteRecordId nextToReturn = next;
                 next = null;
                 return nextToReturn;
             } else {
