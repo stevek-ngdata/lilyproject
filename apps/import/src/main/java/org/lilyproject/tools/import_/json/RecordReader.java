@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import org.joda.time.LocalDate;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.MetadataBuilder;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.Repository;
@@ -122,6 +124,40 @@ public class RecordReader implements EntityReader<Record> {
             while(it.hasNext()) {
                 Map.Entry<String, JsonNode> entry = it.next();
                 record.getAttributes().put(entry.getKey(), entry.getValue().getTextValue());
+            }
+        }
+
+        Map<QName, MetadataBuilder> metadataBuilders = null;
+        ObjectNode metadata = getObject(node, "metadata", null);
+        if (metadata != null) {
+            metadataBuilders = new HashMap<QName, MetadataBuilder>();
+            Iterator<Map.Entry<String, JsonNode>> it = metadata.getFields();
+            while (it.hasNext()) {
+                Map.Entry<String, JsonNode> entry = it.next();
+                QName qname = QNameConverter.fromJson(entry.getKey(), namespaces);
+                MetadataBuilder builder = readMetadata(entry.getValue(), qname);
+                metadataBuilders.put(qname, builder);
+            }
+        }
+
+        ObjectNode metadataToDelete = getObject(node, "metadataToDelete", null);
+        if (metadataToDelete != null) {
+            if (metadataBuilders == null) {
+                metadataBuilders = new HashMap<QName, MetadataBuilder>();
+            }
+
+            Iterator<Map.Entry<String, JsonNode>> it = metadataToDelete.getFields();
+            while (it.hasNext()) {
+                Map.Entry<String, JsonNode> entry = it.next();
+                QName qname = QNameConverter.fromJson(entry.getKey(), namespaces);
+                MetadataBuilder builder = readMetadataToDelete(entry.getValue(), metadataBuilders.get(qname), qname);
+                metadataBuilders.put(qname, builder);
+            }
+        }
+
+        if (metadataBuilders != null) {
+            for (Map.Entry<QName, MetadataBuilder> entry : metadataBuilders.entrySet()) {
+                record.setMetadata(entry.getKey(), entry.getValue().build());
             }
         }
 
@@ -241,4 +277,86 @@ public class RecordReader implements EntityReader<Record> {
             throw new JsonFormatException("Value type not supported: " + name);
         }
     }
+
+    private MetadataBuilder readMetadata(JsonNode metadata, QName recordField) throws JsonFormatException {
+        if (!metadata.isObject()) {
+            throw new JsonFormatException("The value for the metadata should be an object, field: " + recordField);
+        }
+
+        ObjectNode object = (ObjectNode)metadata;
+        MetadataBuilder builder = new MetadataBuilder();
+
+        Iterator<Map.Entry<String, JsonNode>> it = object.getFields();
+        while (it.hasNext()) {
+            Map.Entry<String, JsonNode> entry = it.next();
+            String name = entry.getKey();
+            JsonNode value = entry.getValue();
+
+            if (value.isTextual()) {
+                builder.value(name, value.getTextValue());
+            } else if (value.isInt()) {
+                builder.value(name, value.getIntValue());
+            } else if (value.isLong()) {
+                builder.value(name, value.getLongValue());
+            } else if (value.isBoolean()) {
+                builder.value(name, value.getBooleanValue());
+            } else if (value.isFloatingPointNumber()) {
+                // In the JSON format, for simplicity, we don't make distinction between float & double, so you
+                // can't control which of the two is created.
+                builder.value(name, value.getDoubleValue());
+            } else if (value.isObject()) {
+                String type = JsonUtil.getString(value, "type", null);
+                if (type == null) {
+                    throw new JsonFormatException("Missing required 'type' property on object in metadata field '"
+                            + name + "' of record field " + recordField);
+                }
+
+                if (!type.equals("binary")) {
+                    throw new JsonFormatException("Unsupported type value '" + type + "' for metadata field '"
+                            + name + "' of record field " + recordField);
+                }
+
+                JsonNode binaryValue = value.get("value");
+                if (!binaryValue.isTextual()) {
+                    throw new JsonFormatException("Invalid binary value for metadata field '"
+                            + name + "' of record field " + recordField);
+                }
+
+                try {
+                    builder.value(name, new ByteArray(binaryValue.getBinaryValue()));
+                } catch (IOException e) {
+                    throw new JsonFormatException("Invalid binary value for metadata field '"
+                            + name + "' of record field " + recordField);
+                }
+            } else {
+                throw new JsonFormatException("Unsupported type of value for metadata field '" + name
+                        + "' of record field " + recordField);
+            }
+        }
+
+        return builder;
+    }
+
+    private MetadataBuilder readMetadataToDelete(JsonNode metadataToDelete, MetadataBuilder builder,
+            QName recordField) throws JsonFormatException {
+        if (!metadataToDelete.isArray()) {
+            throw new JsonFormatException("The value for the metadataToDelete should be an array, field: " + recordField);
+        }
+
+        ArrayNode array = (ArrayNode)metadataToDelete;
+        if (builder == null) {
+            builder = new MetadataBuilder();
+        }
+
+        for (int i = 0; i < array.size(); i++) {
+            JsonNode entry = array.get(i);
+            if (!entry.isTextual()) {
+                throw new JsonFormatException("Non-string found in the metadataToDelete array of field: " + recordField);
+            }
+            builder.delete(entry.getTextValue());
+        }
+
+        return builder;
+    }
+
 }

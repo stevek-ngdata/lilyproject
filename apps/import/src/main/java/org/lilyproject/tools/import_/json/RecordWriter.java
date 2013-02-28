@@ -25,6 +25,7 @@ import org.lilyproject.repository.api.*;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class RecordWriter implements EntityWriter<Record> {
     public static RecordWriter INSTANCE = new RecordWriter();
@@ -103,6 +104,57 @@ public class RecordWriter implements EntityWriter<Record> {
             for (String key : attributes.keySet()) {
                 attributesNode.put(key, attributes.get(key));
             }            
+        }
+
+        Map<QName, Metadata> metadatas = record.getMetadataMap();
+        if (!metadatas.isEmpty()) {
+            ObjectNode metadatasNode = recordNode.putObject("metadata");
+
+            for (Map.Entry<QName, Metadata> entry : metadatas.entrySet()) {
+                String fieldName = QNameConverter.toJson(entry.getKey(), namespaces);
+                ObjectNode metadataNode = metadatasNode.putObject(fieldName);
+
+                for (Map.Entry<String, Object> metadata : entry.getValue().getMap().entrySet()) {
+                    Object value = metadata.getValue();
+                    if (value instanceof String) {
+                        metadataNode.put(metadata.getKey(), (String)value);
+                    } else if (value instanceof Integer) {
+                        metadataNode.put(metadata.getKey(), (Integer)value);
+                    } else if (value instanceof Long) {
+                        metadataNode.put(metadata.getKey(), (Long)value);
+                    } else if (value instanceof Float) {
+                        metadataNode.put(metadata.getKey(), (Float)value);
+                    } else if (value instanceof Double) {
+                        metadataNode.put(metadata.getKey(), (Double)value);
+                    } else if (value instanceof Boolean) {
+                        metadataNode.put(metadata.getKey(), (Boolean)value);
+                    } else if (value instanceof ByteArray) {
+                        ObjectNode binaryNode = metadataNode.putObject(metadata.getKey());
+                        binaryNode.put("type", "binary");
+                        binaryNode.put("value", ((ByteArray)value).getBytes());
+                    } else {
+                        throw new RuntimeException("Unsupported type of metadata value: " + value.getClass().getName()
+                                + " for value '" + value + "' in metadata field '" + metadata.getKey()
+                                + "' of record field " + entry.getKey());
+                    }
+                }
+            }
+
+            ObjectNode metadataToDeleteNode = null;
+            for (Map.Entry<QName, Metadata> entry : metadatas.entrySet()) {
+                Set<String> fieldsToDelete = entry.getValue().getFieldsToDelete();
+                if (!fieldsToDelete.isEmpty()) {
+                    if (metadataToDeleteNode == null) {
+                        metadataToDeleteNode = recordNode.putObject("metadataToDelete");
+                    }
+
+                    String fieldName = QNameConverter.toJson(entry.getKey(), namespaces);
+                    ArrayNode array = metadataToDeleteNode.putArray(fieldName);
+                    for (String name : fieldsToDelete) {
+                        array.add(name);
+                    }
+                }
+            }
         }
 
         return recordNode;
