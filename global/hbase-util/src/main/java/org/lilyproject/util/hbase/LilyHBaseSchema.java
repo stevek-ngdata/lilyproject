@@ -68,16 +68,27 @@ public class LilyHBaseSchema {
     }
 
     public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName) throws IOException, InterruptedException {
-        return tableFactory.getTable(createRecordTableDescriptor(tableName));
+        HTableInterface recordTable = tableFactory.getTable(createRecordTableDescriptor(tableName));
+        verifyIsRecordTable(recordTable.getTableDescriptor());
+        return recordTable;
     }
     
     public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName, byte[][] splitKeys) throws IOException, InterruptedException {
-        return tableFactory.getTable(createRecordTableDescriptor(tableName), splitKeys);
+        HTableInterface recordTable = tableFactory.getTable(createRecordTableDescriptor(tableName), splitKeys);
+        verifyIsRecordTable(recordTable.getTableDescriptor());
+        return recordTable;
     }
 
     public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName, boolean clientMode) throws IOException, InterruptedException {
-        
-        return tableFactory.getTable(createRecordTableDescriptor(tableName), !clientMode);
+        HTableInterface recordTable = tableFactory.getTable(createRecordTableDescriptor(tableName), !clientMode);
+        verifyIsRecordTable(recordTable.getTableDescriptor());
+        return recordTable;
+    }
+    
+    private static void verifyIsRecordTable(HTableDescriptor htableDescriptor) {
+        if (!isRecordTableDescriptor(htableDescriptor)) {
+            throw new IllegalArgumentException(htableDescriptor.getNameAsString() + " is not a valid record table");
+        }
     }
 
     public static HTableInterface getTypeTable(HBaseTableFactory tableFactory) throws IOException, InterruptedException {

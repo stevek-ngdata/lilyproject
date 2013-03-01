@@ -39,7 +39,7 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
     
     @Override
     protected Repository createRepository(String tableName) throws IOException, InterruptedException {
-        return new HBaseRepository(this, LilyHBaseSchema.getRecordTable(hbaseTableFactory, tableName), blobManager);
+        return new HBaseRepository(this, LilyHBaseSchema.getRecordTable(hbaseTableFactory, tableName, true), blobManager);
     }
 
 }
