@@ -8,7 +8,6 @@ import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.VersionNotFoundException;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.VersionTag;
 
 public class MasterFollow implements Follow {

@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import org.lilyproject.repository.api.RepositoryManager;
-
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Link;
@@ -14,8 +12,8 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.VersionNotFoundException;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.VersionTag;
 
 public class LinkFieldFollow implements Follow {

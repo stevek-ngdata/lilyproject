@@ -3,8 +3,6 @@ package org.lilyproject.indexer.model.indexerconf;
 import java.io.IOException;
 import java.util.Set;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
 import com.google.common.collect.Sets;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Record;

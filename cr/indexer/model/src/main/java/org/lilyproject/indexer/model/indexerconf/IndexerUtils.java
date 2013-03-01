@@ -19,7 +19,6 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.repository.api.filter.RecordVariantFilter;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.VersionTag;
 
 public class IndexerUtils {
