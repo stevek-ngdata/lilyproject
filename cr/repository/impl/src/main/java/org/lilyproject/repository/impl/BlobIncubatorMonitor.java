@@ -18,8 +18,6 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,6 +39,8 @@ import org.lilyproject.repository.api.BlobException;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryTable;
+import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeException;
 import org.lilyproject.repository.api.TypeManager;
@@ -68,12 +68,13 @@ public class BlobIncubatorMonitor {
     private final BlobManager blobManager;
     private final TypeManager typeManager;
     private MonitorThread monitorThread;
-    private HTableInterface recordTable;
     private HTableInterface blobIncubatorTable;
+    private HBaseTableFactory tableFactory;
+    private RepositoryTableManager repositoryTableManager;
     private final long runDelay;
 
-    public BlobIncubatorMonitor(ZooKeeperItf zk, HBaseTableFactory tableFactory, BlobManager blobManager,
-            TypeManager typeManager, long minimalAge, long monitorDelay, long runDelay) throws IOException, InterruptedException {
+    public BlobIncubatorMonitor(ZooKeeperItf zk, HBaseTableFactory tableFactory, RepositoryTableManager repositoryTableManager,
+            BlobManager blobManager, TypeManager typeManager, long minimalAge, long monitorDelay, long runDelay) throws IOException, InterruptedException {
         this.zk = zk;
         this.blobManager = blobManager;
         this.typeManager = typeManager;
@@ -83,8 +84,8 @@ public class BlobIncubatorMonitor {
 
         this.blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(tableFactory, false);
         
-        // TODO repository - this shouldn't be linked to a single repository
-        this.recordTable = LilyHBaseSchema.getRecordTable(tableFactory, Table.RECORD.name);
+        this.tableFactory = tableFactory;
+        this.repositoryTableManager = repositoryTableManager;
     }
 
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
@@ -284,7 +285,15 @@ public class BlobIncubatorMonitor {
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
             Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL, valueComparator);
             get.setFilter(filter);
-            return recordTable.get(get);
+            
+            for (RepositoryTable repoTable : repositoryTableManager.getTables()) {
+                HTableInterface recordTable = LilyHBaseSchema.getRecordTable(tableFactory, repoTable.getName());
+                Result result = recordTable.get(get);
+                if (result != null && !result.isEmpty()) {
+                    return result;
+                }
+            }
+            return null;
         }
     }
 

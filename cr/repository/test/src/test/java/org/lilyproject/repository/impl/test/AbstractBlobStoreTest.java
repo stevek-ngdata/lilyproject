@@ -840,7 +840,7 @@ public abstract class AbstractBlobStoreTest {
         Thread.sleep(60);
 
         BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(repoSetup.getZk(), repoSetup.getHbaseTableFactory(),
-                blobManager, typeManager, 50, 0, 0);
+                repoSetup.getTableManager(), blobManager, typeManager, 50, 0, 0);
         monitor.runMonitorOnce();
 
         assertBlobDelete(true, blob);
@@ -873,7 +873,7 @@ public abstract class AbstractBlobStoreTest {
         Thread.sleep(60);
 
         BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(repoSetup.getZk(), repoSetup.getHbaseTableFactory(),
-                blobManager, typeManager, 50, 0, 0);
+                                            repoSetup.getTableManager(), blobManager, typeManager, 50, 0, 0);
         monitor.runMonitorOnce();
 
         assertBlobDelete(true, blob);
@@ -917,7 +917,7 @@ public abstract class AbstractBlobStoreTest {
         Thread.sleep(60);
 
         BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(repoSetup.getZk(), repoSetup.getHbaseTableFactory(),
-                blobManager, typeManager, 50, 0, 0);
+                                            repoSetup.getTableManager(), blobManager, typeManager, 50, 0, 0);
         monitor.runMonitorOnce();
 
         assertBlobDelete(false, blob);
@@ -1012,7 +1012,7 @@ public abstract class AbstractBlobStoreTest {
 
     private Blob writeBlob(byte[] bytes, String mediaType, String name) throws RepositoryException, InterruptedException,
  IOException {
-        return writeBlob(bytes, mediaType, name, (int)bytes.length);
+        return writeBlob(bytes, mediaType, name, bytes.length);
     }
 
     /**

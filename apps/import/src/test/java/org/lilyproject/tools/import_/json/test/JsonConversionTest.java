@@ -438,7 +438,7 @@ public class JsonConversionTest {
                         .value("stringfield", "another_string")
                         .build());
 
-        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repository);
+        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repositoryManager);
 
         // go through ser/deser
         String recordJson = JsonFormat.serializeAsString(recordNode);
@@ -481,7 +481,7 @@ public class JsonConversionTest {
         assertEquals("another_string", metadataNode.get(prefix + "$field2").get("stringfield").getTextValue());
 
         // Now parse json again to API objects
-        record = RecordReader.INSTANCE.fromJson(recordNode, repository);
+        record = RecordReader.INSTANCE.fromJson(recordNode, repositoryManager);
         assertEquals(2, record.getMetadataMap().size());
 
         Metadata metadata = record.getMetadata(new QName("ns", "field1"));
@@ -515,7 +515,7 @@ public class JsonConversionTest {
 
         WriteOptions options = new WriteOptions();
         options.setUseNamespacePrefixes(false);
-        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, options, repository);
+        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, options, repositoryManager);
 
         // Go through ser/deser
         String recordJson = JsonFormat.serializeAsString(recordNode);
@@ -528,7 +528,7 @@ public class JsonConversionTest {
         assertEquals(1, recordNode.get("metadataToDelete").get("{ns}field2").size());
 
         // Now parse json again to API objects
-        record = RecordReader.INSTANCE.fromJson(recordNode, repository);
+        record = RecordReader.INSTANCE.fromJson(recordNode, repositoryManager);
         assertEquals(2, record.getMetadataMap().size());
 
         Metadata metadata = record.getMetadata(new QName("ns", "field1"));
