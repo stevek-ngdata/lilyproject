@@ -1,0 +1,5 @@
+Drop an existing record repository table.
+
+For example:
+  
+   lily-drop-table oldrepotable

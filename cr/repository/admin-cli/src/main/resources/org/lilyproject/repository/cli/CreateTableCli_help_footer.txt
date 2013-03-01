@@ -1,0 +1,5 @@
+Add a new record repository table to Lily.
+
+For example:
+  
+  lily-create-table mynewtable

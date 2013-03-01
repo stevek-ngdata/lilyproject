@@ -146,7 +146,7 @@ public class RepositorySetup {
             return;
 
         setupTypeManager();
-
+        
         blobStoreAccessFactory = createBlobAccess();
         blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
@@ -165,6 +165,9 @@ public class RepositorySetup {
         eventPublisherManager = new LilyEventPublisherManager(hbaseTableFactory);
 
         tableManager = new RepositoryTableManagerImpl(hadoopConf, hbaseTableFactory);
+        if (!tableManager.tableExists(Table.RECORD.name)) {
+            tableManager.createTable(Table.RECORD.name);
+        }
         
         repositoryManagerSetup = true;
     }

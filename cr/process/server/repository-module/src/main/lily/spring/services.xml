@@ -152,6 +152,12 @@
     </constructor-arg>
   </bean>
 
+  <!-- Ensure the creation of the record table -->
+  <bean id="recordTableSetup"
+        class="org.lilyproject.server.modules.repository.RecordTableSetup">
+    <constructor-arg ref="hbaseTableFactory"/>
+  </bean>
+
 
   <bean id="repositoryManager"
         class="org.lilyproject.server.modules.repository.DecoratingRepositoryManager">

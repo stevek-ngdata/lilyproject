@@ -1,0 +1,1 @@
+Drop an existing repository table.

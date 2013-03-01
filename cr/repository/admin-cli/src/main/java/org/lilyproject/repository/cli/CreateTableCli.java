@@ -31,7 +31,6 @@ import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
  */
 public class CreateTableCli extends BaseTableCliTool {
 
-    private Option tableNameOpt;
     private Option regionCountOpt;
     private Option splitKeyPrefixOpt;
     private Option splitKeysOpt;
@@ -40,9 +39,6 @@ public class CreateTableCli extends BaseTableCliTool {
 
     @SuppressWarnings("static-access")
     public CreateTableCli() {
-        tableNameOpt = OptionBuilder.withArgName("table").hasArg().withDescription("Name of the table to be created").withLongOpt(
-                "table").create("t");
-
         regionCountOpt = OptionBuilder.withArgName("regions").hasArg().withDescription(
                 "Number of initial regions to create").withLongOpt("regions").create("c");
 
@@ -64,7 +60,6 @@ public class CreateTableCli extends BaseTableCliTool {
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
-        options.add(tableNameOpt);
         options.add(regionCountOpt);
         options.add(splitKeyPrefixOpt);
         options.add(splitKeysOpt);
@@ -79,12 +74,11 @@ public class CreateTableCli extends BaseTableCliTool {
             return result;
         }
 
-        if (!cmd.hasOption(tableNameOpt.getOpt())) {
-            System.err.println("Table name is a mandatory parameter");
+        if (cmd.getArgList().size() < 1) {
+            System.err.println("Table name is mandatory");
             return 1;
         }
-
-        String tableName = cmd.getOptionValue(tableNameOpt.getOpt());
+        String tableName = (String)cmd.getArgList().get(0);
 
         int regionCount = -1;
         if (cmd.hasOption(regionCountOpt.getOpt())) {

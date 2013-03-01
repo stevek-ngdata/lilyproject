@@ -24,26 +24,7 @@ import org.lilyproject.repository.api.RepositoryTableManager;
 
 public class DropTableCli extends BaseTableCliTool {
     
-    private Option tableNameOpt;
-    
     private String tableName;
-    
-    @SuppressWarnings("static-access")
-    public DropTableCli() {
-        tableNameOpt = OptionBuilder
-                            .withArgName("table")
-                            .hasArg()
-                            .withDescription("Name of the table to delete")
-                            .withLongOpt("table")
-                            .create("t");
-    }
-    
-    @Override
-    public List<Option> getOptions() {
-        List<Option> options = super.getOptions();
-        options.add(tableNameOpt);
-        return options;
-    }
 
     @Override
     protected String getCmdName() {
@@ -53,16 +34,17 @@ public class DropTableCli extends BaseTableCliTool {
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int status = super.processOptions(cmd);
+        
         if (status != 0) {
             return status;
         }
-        if (cmd.hasOption(tableNameOpt.getOpt())) {
-            tableName = cmd.getOptionValue(tableNameOpt.getOpt());
-            return 0;
-        } else {
+        
+        if (cmd.getArgList().size() < 1) {
             System.err.println("Table name is mandatory");
             return 1;
         }
+        tableName = (String)cmd.getArgList().get(0);
+        return 0;
     }
     
     @Override
