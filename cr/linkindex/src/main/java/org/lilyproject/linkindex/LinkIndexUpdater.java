@@ -69,6 +69,12 @@ public class LinkIndexUpdater implements EventListener {
 
     @Override
     public void processEvent(SepEvent event) {
+        
+        if (event.getPayload() == null) {
+            log.warn("Empty payload on " + event);
+            return;
+        }
+        
         RecordId recordId = repositoryManager.getIdGenerator().fromBytes(event.getRow());
         RecordEvent recordEvent;
         try {
