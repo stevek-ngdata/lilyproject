@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Outerthought bvba
+ * Copyright 2013 NGDATA nv
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,10 @@
  */
 package org.lilyproject.rest;
 
-import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
-@Path("record/{id}/field/{fieldName}/data")
-public class BlobByFieldResource extends RepositoryEnabled {
-
-    @GET
-    @Produces("*/*")
-    public Response get(@PathParam("id") String id, @PathParam("fieldName") String fieldName, @Context UriInfo uriInfo) {
-        return BlobByVersionAndFieldResource.getBlob(id, null, fieldName, uriInfo, getRepository(uriInfo));
-    }
+@TableEnabled
+@Path("table/{tableName}/scan/{id}")
+public class TableBasedRecordScanResource extends RecordScanResource {
 
 }

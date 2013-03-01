@@ -40,7 +40,7 @@ public class RecordVariantCollectionResource extends RepositoryEnabled {
     @GET
     @Produces("application/json")
     public EntityList<Record> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
-        Repository repository = getRepository();
+        Repository repository = getRepository(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
         try {
             Set<RecordId> recordIds = repository.getVariants(recordId);

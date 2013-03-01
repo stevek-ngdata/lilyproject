@@ -53,7 +53,7 @@ public class RecordResource extends RepositoryEnabled {
     @GET
     @Produces("application/json")
     public Entity<Record> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
-        Repository repository = getRepository();
+        Repository repository = getRepository(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
         try {
@@ -69,7 +69,7 @@ public class RecordResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response put(@PathParam("id") String id, Record record, @Context UriInfo uriInfo) {
-        Repository repository = getRepository();
+        Repository repository = getRepository(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
 
         if (record.getId() != null && !record.getId().equals(recordId)) {
@@ -112,7 +112,7 @@ public class RecordResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response post(@PathParam("id") String id, PostAction<Record> postAction, @Context UriInfo uriInfo) {
-        Repository repository = getRepository();
+        Repository repository = getRepository(uriInfo);
         if (postAction.getAction().equals("update")) {
             RecordId recordId = repository.getIdGenerator().fromString(id);
             Record record = postAction.getEntity();
@@ -171,8 +171,8 @@ public class RecordResource extends RepositoryEnabled {
     }
 
     @DELETE
-    public Response delete(@PathParam("id") String id) {
-        Repository repository = getRepository();
+    public Response delete(@PathParam("id") String id, @Context UriInfo uriInfo) {
+        Repository repository = getRepository(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
         try {
             repository.delete(recordId);

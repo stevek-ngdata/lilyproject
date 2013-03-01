@@ -42,7 +42,7 @@ public class RecordByVersionResource extends RepositoryEnabled {
     public Entity<Record> get(@PathParam("id") String id, @PathParam("version") Long version,
             @Context UriInfo uriInfo) {
         
-        Repository repository = getRepository();
+        Repository repository = getRepository(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
         
         try {
@@ -62,7 +62,7 @@ public class RecordByVersionResource extends RepositoryEnabled {
     public Response put(@PathParam("id") String id, @PathParam("version") Long version, Record record,
             @Context UriInfo uriInfo) {
 
-        RecordId recordId = getRepository().getIdGenerator().fromString(id);
+        RecordId recordId = getRepository(uriInfo).getIdGenerator().fromString(id);
 
         if (record.getId() != null && !record.getId().equals(recordId)) {
             throw new ResourceException("Record id in submitted record does not match record id in URI.",
@@ -79,7 +79,7 @@ public class RecordByVersionResource extends RepositoryEnabled {
 
         try {
             boolean useLatestRecordType = record.getRecordTypeName() == null || record.getRecordTypeVersion() == null;
-            record = getRepository().update(record, true, useLatestRecordType);
+            record = getRepository(uriInfo).update(record, true, useLatestRecordType);
         } catch (RecordNotFoundException e) {
             throw new ResourceException("Record not found: " + recordId, NOT_FOUND.getStatusCode());
         } catch (VersionNotFoundException e) {

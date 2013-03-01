@@ -45,7 +45,7 @@ public class RecordVersionCollectionResource extends RepositoryEnabled {
             @DefaultValue("10") @QueryParam("max-results") Long maxResults,
             @Context UriInfo uriInfo) {
 
-        Repository repository = getRepository();
+        Repository repository = getRepository(uriInfo);
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
 
         RecordId recordId = repository.getIdGenerator().fromString(id);

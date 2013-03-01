@@ -43,7 +43,7 @@ public class RecordByVtagResource extends RepositoryEnabled {
     public Entity<Record> get(@PathParam("id") String id, @PathParam("vtag") String vtag, @Context UriInfo uriInfo) {
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
 
-        Repository repository = getRepository();
+        Repository repository = getRepository(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
         Record record;
         try {

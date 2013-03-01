@@ -44,7 +44,7 @@ public class RecordScanCollectionResource extends RepositoryEnabled {
     public Response post(RecordScan scan, @Context UriInfo uriInfo) {
         String scanId = String.valueOf(rand.nextLong());
         try {
-            recordScannerMap.put(scanId, getRepository().getScanner(scan));
+            recordScannerMap.put(scanId, getRepository(uriInfo).getScanner(scan));
         } catch (RepositoryException e) {
            throw new ResourceException(e, Status.BAD_REQUEST.getStatusCode());
         } catch (InterruptedException e) {

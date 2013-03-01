@@ -125,9 +125,8 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             return null;
         }
 
-        Repository repository = getRepository();
         List<MutationCondition> result = new ArrayList<MutationCondition>();
-        SystemFields systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
+        SystemFields systemFields = SystemFields.getInstance(repositoryMgr.getTypeManager(), repositoryMgr.getIdGenerator());
 
         for (int i = 0; i < conditions.size(); i++) {
             JsonNode conditionNode = conditions.get(i);
@@ -141,7 +140,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             Object value = null;
             if (!valueNode.isNull()) {
                 FieldType fieldType = systemFields.isSystemField(fieldName) ? systemFields.get(fieldName) :
-                        repository.getTypeManager().getFieldTypeByName(fieldName);
+                        repositoryMgr.getTypeManager().getFieldTypeByName(fieldName);
                 value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces, repositoryMgr, linkTransformer);
             }
 
