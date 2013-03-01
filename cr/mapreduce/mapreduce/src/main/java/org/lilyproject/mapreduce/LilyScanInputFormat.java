@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.hbase.mapreduce.TableSplit;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -54,7 +55,7 @@ public class LilyScanInputFormat extends AbstractLilyScanInputFormat<RecordIdWri
 
         RecordScanner scanner = null;
         try {
-            scanner = lilyClient.getRepository().getScanner(scan);
+            scanner = lilyClient.getRepository(Bytes.toString(split.getTableName())).getScanner(scan);
         } catch (RepositoryException e) {
             Closer.close(lilyClient);
             throw new IOException("Error setting up RecordScanner", e);

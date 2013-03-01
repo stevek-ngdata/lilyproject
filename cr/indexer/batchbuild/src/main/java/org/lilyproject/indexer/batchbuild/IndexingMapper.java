@@ -23,18 +23,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
-import org.apache.hadoop.hbase.mapreduce.TableSplit;
-
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
 import net.iharder.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapreduce.TableSplit;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -60,7 +56,7 @@ import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.mapreduce.RecordIdWritable;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -72,7 +68,6 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
     private IndexLocker indexLocker;
     private ZooKeeperItf zk;
     private LilyClient lilyClient;
-    private Repository repository;
     private ThreadPoolExecutor executor;
     private final Log log = LogFactory.getLog(getClass());
 
@@ -84,7 +79,6 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             Configuration jobConf = context.getConfiguration();
             log.info("Starting lily client");
             lilyClient = LilyMapReduceUtil.getLilyClient(jobConf);
-            repository = lilyClient.getRepository();
 
             String zkConnectString = jobConf.get("org.lilyproject.indexer.batchbuild.zooKeeperConnectString");
             int zkSessionTimeout =
@@ -92,7 +86,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             zk = ZkUtil.connect(zkConnectString, zkSessionTimeout);
 
             byte[] indexerConfBytes = Base64.decode(jobConf.get("org.lilyproject.indexer.batchbuild.indexerconf"));
-            IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes), repository.getRepositoryManager());
+            IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes), lilyClient);
 
             String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
             
@@ -107,8 +101,8 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
             final DerefMap derefMap = indexerConf.containsDerefExpressions() ?
                     DerefMapHbaseImpl.create(indexName, LilyClient.getHBaseConfiguration(zk), null,
-                            repository.getIdGenerator()) : null;
-            indexer = new Indexer(indexName, indexerConf, repository.getRepositoryManager(), solrShardMgr, indexLocker,
+                            lilyClient.getIdGenerator()) : null;
+            indexer = new Indexer(indexName, indexerConf, lilyClient, solrShardMgr, indexLocker,
                     new IndexerMetrics(indexName), derefMap);
 
             int workers = getIntProp("org.lilyproject.indexer.batchbuild.threads", 5, jobConf);
@@ -188,7 +182,6 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
         }
 
         Closer.close(connectionManager);
-        Closer.close(repository);
         log.info("Shutdown lily client");
         Closer.close(lilyClient);
         super.cleanup(context);
