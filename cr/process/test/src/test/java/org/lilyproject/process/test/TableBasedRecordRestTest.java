@@ -15,7 +15,6 @@
  */
 package org.lilyproject.process.test;
 
-import org.apache.http.HttpStatus;
 import org.junit.Before;
 
 public class TableBasedRecordRestTest extends RecordRestTest {
@@ -33,7 +32,7 @@ public class TableBasedRecordRestTest extends RecordRestTest {
 
     @Override
     protected String buildUri(String path) {
-        if (path.startsWith("/record") || path.startsWith("/scan")) {
+        if (path.startsWith("/record") || path.startsWith("/scan") || path.startsWith("/blob")) {
             path = "/table/" + REPOSITORY_TABLE_NAME + path;
         }
         return super.buildUri(path);

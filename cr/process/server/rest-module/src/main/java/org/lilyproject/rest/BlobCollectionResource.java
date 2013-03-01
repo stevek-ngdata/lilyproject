@@ -27,6 +27,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -38,7 +40,7 @@ public class BlobCollectionResource extends RepositoryEnabled {
     @POST
     @Consumes("*/*")
     @Produces("application/json")
-    public Response post(@Context HttpHeaders headers, InputStream is) {
+    public Response post(@Context HttpHeaders headers, @Context UriInfo uriInfo, InputStream is) {
         String lengthHeader = headers.getRequestHeaders().getFirst(HttpHeaders.CONTENT_LENGTH);
         if (lengthHeader == null) {
             throw new ResourceException("Content-Length header is required for uploading blobs.", BAD_REQUEST.getStatusCode());
@@ -57,7 +59,7 @@ public class BlobCollectionResource extends RepositoryEnabled {
 
         OutputStream os = null;
         try {
-            os = getRepository().getOutputStream(blob);
+            os = getRepository(uriInfo).getOutputStream(blob);
             IOUtils.copyLarge(is, os);
         } catch (Exception e) {
             throw new ResourceException("Error writing blob.", e, INTERNAL_SERVER_ERROR.getStatusCode());
