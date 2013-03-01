@@ -17,6 +17,8 @@ package org.lilyproject.util.hbase;
 
 import java.io.IOException;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -55,7 +57,13 @@ public class LilyHBaseSchema {
         blobIncubatorDescriptor.addFamily(new HColumnDescriptor(BlobIncubatorCf.REF.bytes));
     }
     
-    private static HTableDescriptor createRecordTableDescriptor(String tableName) {
+    @VisibleForTesting
+    static HTableDescriptor createRecordTableDescriptor(String tableName) {
+        
+        if (tableName.contains(".") || tableName.contains(":")) {
+            throw new IllegalArgumentException("Repository table name cannot contain periods or colons");
+        }
+        
         HTableDescriptor recordTableDescriptor = new HTableDescriptor(tableName);
         recordTableDescriptor.addFamily(DATA_CF);
         recordTableDescriptor.setValue(IS_RECORD_TABLE_PROPERTY, IS_RECORD_TABLE_VALUE);

@@ -15,6 +15,7 @@
  */
 package org.lilyproject.util.hbase;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -103,6 +104,29 @@ public class LilyHBaseSchemaTest  {
     public void testGetRecordTable_ClientMode_NotRecordTable() throws IOException, InterruptedException {
         when(tableFactory.getTable(any(HTableDescriptor.class), anyBoolean())).thenReturn(nonRecordTable);
         LilyHBaseSchema.getRecordTable(tableFactory, NON_RECORD_TABLE_NAME, true);
+    }
+    
+    @Test
+    public void testCreateRecordTableDescriptor() {
+        HTableDescriptor descriptor = LilyHBaseSchema.createRecordTableDescriptor("myrecordtable");
+        assertEquals(1, descriptor.getColumnFamilies().length);
+        assertEquals("myrecordtable", descriptor.getNameAsString());
+        assertTrue(LilyHBaseSchema.isRecordTableDescriptor(descriptor));
+        
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void testCreateRecordTableDescriptor_WithDotInName() {
+        // A dot isn't allowed in a repository table name because it can get in the
+        // way of parsing absolute link fields that include a table name
+        LilyHBaseSchema.createRecordTableDescriptor("my.recordtable");
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void testCreateRecordTableDescriptor_WithColonInName() {
+        // A colon isn't allowed in a repository table name because it can get in the
+        // way of parsing absolute link fields that include a table name
+        LilyHBaseSchema.createRecordTableDescriptor("my:recordtable");
     }
 
 }
