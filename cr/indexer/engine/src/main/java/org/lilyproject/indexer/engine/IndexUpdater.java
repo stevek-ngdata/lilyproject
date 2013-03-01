@@ -150,7 +150,13 @@ public class IndexUpdater implements EventListener {
         try {
             Thread.currentThread().setContextClassLoader(myContextClassLoader);
             
-            recordEvent = new RecordEvent(event.getPayload(), idGenerator);
+            byte[] payload = event.getPayload();
+            if (payload == null) {
+                log.warn("Ignoring SepEvent with empty payload: " + event);
+                return;
+            }
+            
+            recordEvent = new RecordEvent(payload, idGenerator);
             recordId = idGenerator.fromBytes(event.getRow());
 
             if (log.isDebugEnabled()) {

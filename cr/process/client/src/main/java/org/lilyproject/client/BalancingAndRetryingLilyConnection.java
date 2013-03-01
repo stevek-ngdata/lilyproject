@@ -21,6 +21,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import org.lilyproject.repository.impl.RecordFactoryImpl;
+
 import org.lilyproject.repository.api.RecordFactory;
 
 import org.apache.commons.logging.Log;
@@ -52,7 +54,7 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
 
     private final Indexer indexer;
 
-    private BalancingAndRetryingLilyConnection(RepositoryManager repositoryManager, TypeManager typeManager, Indexer indexer) {
+    private BalancingAndRetryingLilyConnection(RepositoryManager repositoryManager, Indexer indexer) {
         this.repositoryManager = repositoryManager;
         this.indexer = indexer;
     }
@@ -112,18 +114,21 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
         Indexer indexer = (Indexer) Proxy.newProxyInstance(Indexer.class.getClassLoader(),
                 new Class[]{Indexer.class}, indexerHandler);
         
-        RepositoryManager repositoryManager = new AbstractRepositoryManager(null, null, null) {
+        final IdGenerator idGenerator = new IdGeneratorImpl();
+        RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
+        
+        RepositoryManager repositoryManager = new AbstractRepositoryManager(typeManager, idGenerator, recordFactory) {
             
             @Override
             protected Repository createRepository(String tableName) throws IOException, InterruptedException {
-                InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, tableName, typeManager);
+                InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, tableName, typeManager, idGenerator);
                 Repository repository = (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),
                         new Class[]{Repository.class}, repositoryHandler);
                 return repository;
             }
         };
 
-        return new BalancingAndRetryingLilyConnection(repositoryManager, typeManager, indexer);
+        return new BalancingAndRetryingLilyConnection(repositoryManager, indexer);
     }
 
     private static final class TypeManagerInvocationHandler extends RetryBase implements InvocationHandler {
@@ -165,13 +170,14 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
         private final LilyClient lilyClient;
         private final String tableName;
         private final TypeManager typeManager;
-        private final IdGenerator idGenerator = new IdGeneratorImpl();
+        private final IdGenerator idGenerator;
 
-        private RepositoryInvocationHandler(LilyClient lilyClient, String tableName, TypeManager typeManager) {
+        private RepositoryInvocationHandler(LilyClient lilyClient, String tableName, TypeManager typeManager, IdGenerator idGenerator) {
             super(lilyClient.getRetryConf());
             this.lilyClient = lilyClient;
             this.tableName = tableName;
             this.typeManager = typeManager;
+            this.idGenerator = idGenerator;
         }
 
         @Override

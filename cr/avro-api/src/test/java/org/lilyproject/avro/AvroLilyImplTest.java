@@ -58,56 +58,54 @@ public class AvroLilyImplTest {
         avroLilyImpl.setAvroConverter(avroConverter);
     }
     
-// TODO repository re-enable
-//
-//    @Test
-//    public void testDelete_WithAttributes() throws Exception {
-//        ByteBuffer recordIdBytes = mock(ByteBuffer.class);
-//        Map<String, String> attributes = Maps.newHashMap();
-//        attributes.put("atrKey", "atrValue");
-//
-//        RecordId recordId = mock(RecordId.class);
-//        when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
-//
-//        Record toDelete = mock(Record.class);
-//        when(repository.newRecord(recordId)).thenReturn(toDelete);
-//
-//        avroLilyImpl.delete(recordIdBytes, ByteBuffer.wrap(Table.RECORD.bytes), null, attributes);
-//
-//        verify(toDelete).setAttributes(attributes);
-//        verify(repository).delete(toDelete);
-//    }
-//
-//    @Test
-//    public void testDelete_NoAttributes() throws Exception {
-//        ByteBuffer recordIdBytes = mock(ByteBuffer.class);
-//        List<AvroMutationCondition> avroMutationConditions = Lists.newArrayList(mock(AvroMutationCondition.class));
-//
-//        RecordId recordId = mock(RecordId.class);
-//        List<MutationCondition> mutationConditions = Lists.newArrayList(mock(MutationCondition.class));
-//
-//        when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
-//        when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
-//
-//        avroLilyImpl.delete(recordIdBytes, ByteBuffer.wrap(Table.RECORD.bytes), avroMutationConditions, null);
-//
-//        verify(repository).delete(recordId, mutationConditions);
-//    }
-//
-//    @Test(expected = IllegalStateException.class)
-//    public void testDelete_MutationConditionsAndAttributesSupplied() throws Exception {
-//        ByteBuffer recordIdBytes = mock(ByteBuffer.class);
-//        List<AvroMutationCondition> avroMutationConditions = Lists.newArrayList(mock(AvroMutationCondition.class));
-//        Map<String, String> attributes = Maps.newHashMap();
-//        attributes.put("atrKey", "atrValue");
-//
-//        RecordId recordId = mock(RecordId.class);
-//        List<MutationCondition> mutationConditions = Lists.newArrayList(mock(MutationCondition.class));
-//
-//        when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
-//        when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
-//
-//        avroLilyImpl.delete(recordIdBytes, ByteBuffer.wrap(Table.RECORD.bytes), avroMutationConditions, attributes);
-//    }
+    @Test
+    public void testDelete_WithAttributes() throws Exception {
+        ByteBuffer recordIdBytes = mock(ByteBuffer.class);
+        Map<String, String> attributes = Maps.newHashMap();
+        attributes.put("atrKey", "atrValue");
+
+        RecordId recordId = mock(RecordId.class);
+        when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
+
+        Record toDelete = mock(Record.class);
+        when(repository.newRecord(recordId)).thenReturn(toDelete);
+
+        avroLilyImpl.delete(recordIdBytes, Table.RECORD.name, null, attributes);
+
+        verify(toDelete).setAttributes(attributes);
+        verify(repository).delete(toDelete);
+    }
+
+    @Test
+    public void testDelete_NoAttributes() throws Exception {
+        ByteBuffer recordIdBytes = mock(ByteBuffer.class);
+        List<AvroMutationCondition> avroMutationConditions = Lists.newArrayList(mock(AvroMutationCondition.class));
+
+        RecordId recordId = mock(RecordId.class);
+        List<MutationCondition> mutationConditions = Lists.newArrayList(mock(MutationCondition.class));
+
+        when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
+        when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
+
+        avroLilyImpl.delete(recordIdBytes, Table.RECORD.name, avroMutationConditions, null);
+
+        verify(repository).delete(recordId, mutationConditions);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDelete_MutationConditionsAndAttributesSupplied() throws Exception {
+        ByteBuffer recordIdBytes = mock(ByteBuffer.class);
+        List<AvroMutationCondition> avroMutationConditions = Lists.newArrayList(mock(AvroMutationCondition.class));
+        Map<String, String> attributes = Maps.newHashMap();
+        attributes.put("atrKey", "atrValue");
+
+        RecordId recordId = mock(RecordId.class);
+        List<MutationCondition> mutationConditions = Lists.newArrayList(mock(MutationCondition.class));
+
+        when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
+        when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
+
+        avroLilyImpl.delete(recordIdBytes, Table.RECORD.name, avroMutationConditions, attributes);
+    }
 
 }
