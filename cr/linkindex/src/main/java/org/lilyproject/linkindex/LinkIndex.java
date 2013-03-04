@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.hbaseindex.Index;
 import org.lilyproject.hbaseindex.IndexDefinition;
@@ -31,11 +32,13 @@ import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.hbaseindex.Query;
 import org.lilyproject.hbaseindex.QueryResult;
 import org.lilyproject.linkindex.LinkIndexMetrics.Action;
+import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.Pair;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 
 /**
@@ -94,11 +97,15 @@ public class LinkIndex {
             backwardIndex = indexManager.getIndex(indexDef);
         }
     }
+    
+    public void deleteLinks(RecordId sourceRecord) throws LinkIndexException {
+        deleteLinks(getAbsoluteId(sourceRecord));
+    }
 
     /**
      * Deletes all links of a record, irrespective of the vtag.
      */
-    public void deleteLinks(RecordId sourceRecord) throws LinkIndexException {
+    public void deleteLinks(AbsoluteRecordId sourceRecord) throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             byte[] sourceAsBytes = sourceRecord.toBytes();
@@ -109,7 +116,7 @@ public class LinkIndex {
             // Delete existing entries from the backwards table
             List<IndexEntry> entries = new ArrayList<IndexEntry>(oldLinks.size());
             for (Pair<FieldedLink, SchemaId> link : oldLinks) {
-                IndexEntry entry = createBackwardIndexEntry(link.getV2(), link.getV1().getRecordId(),
+                IndexEntry entry = createBackwardIndexEntry(link.getV2(), link.getV1().getAbsoluteRecordId(),
                         link.getV1().getFieldTypeId());
                 entry.setIdentifier(sourceAsBytes);
                 entries.add(entry);
@@ -120,7 +127,7 @@ public class LinkIndex {
             entries.clear();
             for (Pair<FieldedLink, SchemaId> link : oldLinks) {
                 IndexEntry entry = createForwardIndexEntry(link.getV2(), sourceRecord, link.getV1().getFieldTypeId());
-                entry.setIdentifier(link.getV1().getRecordId().toBytes());
+                entry.setIdentifier(link.getV1().getAbsoluteRecordId().toBytes());
                 entries.add(entry);
             }
             forwardIndex.removeEntries(entries);
@@ -132,8 +139,12 @@ public class LinkIndex {
             metrics.report(Action.DELETE_LINKS, System.currentTimeMillis() - before);
         }
     }
-
+    
     public void deleteLinks(RecordId sourceRecord, SchemaId vtag) throws LinkIndexException {
+        deleteLinks(getAbsoluteId(sourceRecord), vtag);
+    }
+
+    public void deleteLinks(AbsoluteRecordId sourceRecord, SchemaId vtag) throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             byte[] sourceAsBytes = sourceRecord.toBytes();
@@ -144,7 +155,7 @@ public class LinkIndex {
             // Delete existing entries from the backwards table
             List<IndexEntry> entries = new ArrayList<IndexEntry>(oldLinks.size());
             for (FieldedLink link : oldLinks) {
-                IndexEntry entry = createBackwardIndexEntry(vtag, link.getRecordId(), link.getFieldTypeId());
+                IndexEntry entry = createBackwardIndexEntry(vtag, link.getAbsoluteRecordId(), link.getFieldTypeId());
                 entry.setIdentifier(sourceAsBytes);
                 entries.add(entry);
             }
@@ -154,7 +165,7 @@ public class LinkIndex {
             entries.clear();
             for (FieldedLink link : oldLinks) {
                 IndexEntry entry = createForwardIndexEntry(vtag, sourceRecord, link.getFieldTypeId());
-                entry.setIdentifier(link.getRecordId().toBytes());
+                entry.setIdentifier(link.getAbsoluteRecordId().toBytes());
                 entries.add(entry);
             }
             forwardIndex.removeEntries(entries);
@@ -172,6 +183,10 @@ public class LinkIndex {
     public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws LinkIndexException {
         updateLinks(sourceRecord, vtag, links, false);
     }
+    
+    public void updateLinks(AbsoluteRecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws LinkIndexException {
+        updateLinks(sourceRecord, vtag, links, false);
+    }
 
     /**
      * @param links       if this set is empty, then calling this method is equivalent to calling deleteLinks
@@ -179,6 +194,12 @@ public class LinkIndex {
      *                    time.
      */
     public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links, boolean isNewRecord)
+            throws LinkIndexException {
+        updateLinks(getAbsoluteId(sourceRecord), vtag, links, isNewRecord);
+    }
+    
+    
+    public void updateLinks(AbsoluteRecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links, boolean isNewRecord)
             throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
@@ -210,10 +231,10 @@ public class LinkIndex {
                 bkwdEntries = new ArrayList<IndexEntry>(fwdEntries.size());
                 for (FieldedLink link : addedLinks) {
                     IndexEntry fwdEntry = createForwardIndexEntry(vtag, sourceRecord, link.getFieldTypeId());
-                    fwdEntry.setIdentifier(link.getRecordId().toBytes());
+                    fwdEntry.setIdentifier(link.getAbsoluteRecordId().toBytes());
                     fwdEntries.add(fwdEntry);
 
-                    IndexEntry bkwdEntry = createBackwardIndexEntry(vtag, link.getRecordId(), link.getFieldTypeId());
+                    IndexEntry bkwdEntry = createBackwardIndexEntry(vtag, link.getAbsoluteRecordId(), link.getFieldTypeId());
                     bkwdEntry.setIdentifier(sourceAsBytes);
                     bkwdEntries.add(bkwdEntry);
                 }
@@ -232,12 +253,12 @@ public class LinkIndex {
                 }
 
                 for (FieldedLink link : removedLinks) {
-                    IndexEntry bkwdEntry = createBackwardIndexEntry(vtag, link.getRecordId(), link.getFieldTypeId());
+                    IndexEntry bkwdEntry = createBackwardIndexEntry(vtag, link.getAbsoluteRecordId(), link.getFieldTypeId());
                     bkwdEntry.setIdentifier(sourceAsBytes);
                     bkwdEntries.add(bkwdEntry);
 
                     IndexEntry fwdEntry = createForwardIndexEntry(vtag, sourceRecord, link.getFieldTypeId());
-                    fwdEntry.setIdentifier(link.getRecordId().toBytes());
+                    fwdEntry.setIdentifier(link.getAbsoluteRecordId().toBytes());
                     fwdEntries.add(fwdEntry);
                 }
                 backwardIndex.removeEntries(bkwdEntries);
@@ -251,7 +272,7 @@ public class LinkIndex {
         }
     }
 
-    private IndexEntry createBackwardIndexEntry(SchemaId vtag, RecordId target, SchemaId sourceField) {
+    private IndexEntry createBackwardIndexEntry(SchemaId vtag, AbsoluteRecordId target, SchemaId sourceField) {
         IndexEntry entry = new IndexEntry(backwardIndex.getDefinition());
 
         entry.addField("vtag", vtag.getBytes());
@@ -263,7 +284,7 @@ public class LinkIndex {
         return entry;
     }
 
-    private IndexEntry createForwardIndexEntry(SchemaId vtag, RecordId source, SchemaId sourceField) {
+    private IndexEntry createForwardIndexEntry(SchemaId vtag, AbsoluteRecordId source, SchemaId sourceField) {
         IndexEntry entry = new IndexEntry(forwardIndex.getDefinition());
 
         entry.addField("vtag", vtag.getBytes());
@@ -275,12 +296,31 @@ public class LinkIndex {
 
         return entry;
     }
-
+    
     public Set<RecordId> getReferrers(RecordId record, SchemaId vtag) throws LinkIndexException {
         return getReferrers(record, vtag, null);
     }
+    
+    public Set<AbsoluteRecordId> getAbsoluteReferrers(AbsoluteRecordId record, SchemaId vtag) throws LinkIndexException {
+        return getAbsoluteReferrers(record, vtag, null);
+    }
 
     public Set<RecordId> getReferrers(RecordId record, SchemaId vtag, SchemaId sourceField) throws LinkIndexException {
+        return getReferrers(getAbsoluteId(record), vtag, sourceField);
+    }
+    
+    public Set<RecordId> getReferrers(AbsoluteRecordId record, SchemaId vtag, SchemaId sourceField)
+            throws LinkIndexException {
+        Set<AbsoluteRecordId> absoluteReferrers = getAbsoluteReferrers(record, vtag, sourceField);
+        Set<RecordId> referrers = Sets.newHashSetWithExpectedSize(absoluteReferrers.size());
+        for (AbsoluteRecordId absoluteReferrer : absoluteReferrers) {
+            referrers.add(absoluteReferrer.getRecordId());
+        }
+        return referrers;
+    }
+    
+    public Set<AbsoluteRecordId> getAbsoluteReferrers(AbsoluteRecordId record, SchemaId vtag, SchemaId sourceField)
+            throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -292,12 +332,12 @@ public class LinkIndex {
                 query.addEqualsCondition("sourcefield", sourceField.getBytes());
             }
 
-            Set<RecordId> result = new HashSet<RecordId>();
+            Set<AbsoluteRecordId> result = Sets.newHashSet();
 
             QueryResult qr = backwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                result.add(getIdGenerator().fromBytes(id));
+                result.add(getIdGenerator().absoluteFromBytes(id));
             }
             Closer.close(
                     qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -326,7 +366,7 @@ public class LinkIndex {
             byte[] id;
             while ((id = qr.next()) != null) {
                 SchemaId sourceField = getIdGenerator().getSchemaId(qr.getData(SOURCE_FIELD_KEY));
-                result.add(new FieldedLink(getIdGenerator().fromBytes(id), sourceField));
+                result.add(new FieldedLink(getIdGenerator().absoluteFromBytes(id), sourceField));
             }
             Closer.close(
                     qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -338,8 +378,12 @@ public class LinkIndex {
             metrics.report(Action.GET_FIELDED_REFERRERS, System.currentTimeMillis() - before);
         }
     }
-
+    
     public Set<Pair<FieldedLink, SchemaId>> getAllForwardLinks(RecordId record) throws LinkIndexException {
+        return this.getAllForwardLinks(getAbsoluteId(record));
+    }
+
+    public Set<Pair<FieldedLink, SchemaId>> getAllForwardLinks(AbsoluteRecordId record) throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -353,7 +397,7 @@ public class LinkIndex {
                 SchemaId sourceField = getIdGenerator().getSchemaId(qr.getData(SOURCE_FIELD_KEY));
                 SchemaId vtag = getIdGenerator().getSchemaId(qr.getData(VTAG_KEY));
                 result.add(
-                        new Pair<FieldedLink, SchemaId>(new FieldedLink(getIdGenerator().fromBytes(id), sourceField), vtag));
+                        new Pair<FieldedLink, SchemaId>(new FieldedLink(getIdGenerator().absoluteFromBytes(id), sourceField), vtag));
             }
             Closer.close(
                     qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -371,7 +415,18 @@ public class LinkIndex {
         return getForwardLinks(record, vtag, null);
     }
 
+    
     public Set<RecordId> getForwardLinks(RecordId record, SchemaId vtag, SchemaId sourceField)
+            throws LinkIndexException {
+        Set<AbsoluteRecordId> absoluteLinks = getForwardLinks(getAbsoluteId(record), vtag, sourceField);
+        Set<RecordId> relativeLinks = Sets.newHashSetWithExpectedSize(absoluteLinks.size());
+        for (AbsoluteRecordId absoluteLink : absoluteLinks) {
+            relativeLinks.add(absoluteLink.getRecordId());
+        }
+        return relativeLinks;
+    }
+    
+    public Set<AbsoluteRecordId> getForwardLinks(AbsoluteRecordId record, SchemaId vtag, SchemaId sourceField)
             throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
@@ -384,12 +439,12 @@ public class LinkIndex {
                 query.addEqualsCondition("sourcefield", sourceField.getBytes());
             }
 
-            Set<RecordId> result = new HashSet<RecordId>();
+            Set<AbsoluteRecordId> result = new HashSet<AbsoluteRecordId>();
 
             QueryResult qr = forwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                result.add(getIdGenerator().fromBytes(id));
+                result.add(getIdGenerator().absoluteFromBytes(id));
             }
             Closer.close(
                     qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -402,8 +457,13 @@ public class LinkIndex {
             metrics.report(Action.GET_FW_LINKS, System.currentTimeMillis() - before);
         }
     }
-
+    
     public Set<FieldedLink> getFieldedForwardLinks(RecordId record, SchemaId vtag)
+            throws LinkIndexException {
+        return getFieldedForwardLinks(getAbsoluteId(record), vtag);
+    }
+
+    public Set<FieldedLink> getFieldedForwardLinks(AbsoluteRecordId record, SchemaId vtag)
             throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
@@ -419,7 +479,7 @@ public class LinkIndex {
             byte[] id;
             while ((id = qr.next()) != null) {
                 SchemaId sourceField = getIdGenerator().getSchemaId(qr.getData(SOURCE_FIELD_KEY));
-                result.add(new FieldedLink(getIdGenerator().fromBytes(id), sourceField));
+                result.add(new FieldedLink(getIdGenerator().absoluteFromBytes(id), sourceField));
             }
             Closer.close(
                     qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -441,6 +501,10 @@ public class LinkIndex {
         }
 
         return lazyIdGenerator;
+    }
+    
+    private AbsoluteRecordId getAbsoluteId(RecordId recordId) {
+        return getIdGenerator().newAbsoluteRecordId(Table.RECORD.name, recordId);
     }
 
 }

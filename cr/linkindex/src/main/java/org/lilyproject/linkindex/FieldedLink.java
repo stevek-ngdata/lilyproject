@@ -15,6 +15,9 @@
  */
 package org.lilyproject.linkindex;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
+import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
 
@@ -22,22 +25,26 @@ import org.lilyproject.repository.api.SchemaId;
  * A link to some record occurring in some field.
  */
 public class FieldedLink {
-    private final RecordId recordId;
+    private final AbsoluteRecordId absRecordId;
     private final SchemaId fieldTypeId;
     private final int hash;
-
-    public FieldedLink(RecordId recordId, SchemaId fieldTypeId){
-        this.recordId = recordId;
+    
+    public FieldedLink(AbsoluteRecordId absRecordId, SchemaId fieldTypeId) {
+        this.absRecordId = absRecordId;
         this.fieldTypeId = fieldTypeId;
-
         int hash = 17;
-        hash = 37 * hash + recordId.toString().hashCode();
+        hash = 37 * hash + absRecordId.toString().hashCode();
         hash = 37 * hash + fieldTypeId.hashCode();
         this.hash = hash;
     }
+    
+    
+    public AbsoluteRecordId getAbsoluteRecordId() {
+        return absRecordId;
+    }
 
     public RecordId getRecordId() {
-        return recordId;
+        return absRecordId.getRecordId();
     }
 
     public SchemaId getFieldTypeId() {
@@ -53,8 +60,13 @@ public class FieldedLink {
     public boolean equals(Object obj) {
         if (obj instanceof FieldedLink) {
             FieldedLink otherLink = (FieldedLink)obj;
-            return recordId.equals(otherLink.recordId) && fieldTypeId.equals(otherLink.fieldTypeId);
+            return absRecordId.equals(otherLink.absRecordId) && fieldTypeId.equals(otherLink.fieldTypeId);
         }
         return false;
+    }
+    
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
     }
 }

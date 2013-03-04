@@ -31,6 +31,7 @@ import com.ngdata.sep.SepEvent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.linkindex.LinkIndexUpdaterMetrics.Action;
+import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
@@ -83,10 +84,12 @@ public class LinkIndexUpdater implements EventListener {
             log.error("Error reading record event, processing of message cancelled", e);
             return;
         }
-        update(recordId, recordEvent);
+        AbsoluteRecordId absoluteRecordId =
+                repositoryManager.getIdGenerator().newAbsoluteRecordId(recordEvent.getTableName(), recordId);
+        update(absoluteRecordId, recordEvent);
     }
 
-    public void update(RecordId recordId, RecordEvent recordEvent) {
+    public void update(AbsoluteRecordId absRecordId, RecordEvent recordEvent) {
         // This is the algorithm for updating the LinkIndex when a record changes.
         //
         // The LinkIndex contains, for each vtag defined on the record, the links extracted from the record
@@ -103,9 +106,9 @@ public class LinkIndexUpdater implements EventListener {
         try {
             if (recordEvent.getType().equals(DELETE)) {
                 // Delete everything from the link index for this record, thus for all vtags
-                linkIndex.deleteLinks(recordId);
+                linkIndex.deleteLinks(absRecordId);
                 if (log.isDebugEnabled()) {
-                    log.debug("Record " + recordId + " : delete event : deleted extracted links.");
+                    log.debug("Record " + absRecordId + " : delete event : deleted extracted links.");
                 }
             } else if (recordEvent.getType().equals(CREATE) || recordEvent.getType().equals(UPDATE)) {
                 boolean isNewRecord = recordEvent.getType().equals(CREATE);
@@ -115,12 +118,12 @@ public class LinkIndexUpdater implements EventListener {
 
                 VTaggedRecord vtRecord;
                 try {
-                    vtRecord = new VTaggedRecord(recordId, eventHelper, repositoryManager.getRepository(recordEvent.getTableName()));
+                    vtRecord = new VTaggedRecord(absRecordId.getRecordId(), eventHelper, repositoryManager.getRepository(recordEvent.getTableName()));
                 } catch (RecordNotFoundException e) {
                     // record not found: delete all links for all vtags
-                    linkIndex.deleteLinks(recordId);
+                    linkIndex.deleteLinks(absRecordId);
                     if (log.isDebugEnabled()) {
-                        log.debug("Record " + recordId + " : does not exist : deleted extracted links.");
+                        log.debug("Record " + absRecordId + " : does not exist : deleted extracted links.");
                     }
                     return;
                 }
@@ -146,11 +149,11 @@ public class LinkIndexUpdater implements EventListener {
                     if (!vtags.containsKey(vtag)) {
                         // The vtag is not defined on the document: it is a deleted vtag, delete the
                         // links corresponding to it
-                        linkIndex.deleteLinks(recordId, vtag);
+                        linkIndex.deleteLinks(absRecordId, vtag);
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s, vtag %2$s : deleted extracted links " +
                                     "because vtag does not exist on document anymore",
-                                    recordId, safeLoadTagName(vtag)));
+                                    absRecordId, safeLoadTagName(vtag)));
                         }
                     } else {
                         // Since one version might have multiple vtags, we keep a little cache to avoid
@@ -163,10 +166,10 @@ public class LinkIndexUpdater implements EventListener {
                             links = extractLinks(vtRecord, version);
                             cache.put(version, links);
                         }
-                        linkIndex.updateLinks(recordId, vtag, links, isNewRecord);
+                        linkIndex.updateLinks(absRecordId, vtag, links, isNewRecord);
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s, vtag %2$s : extracted links count : %3$s",
-                                    recordId, safeLoadTagName(vtag), links.size()));
+                                    absRecordId, safeLoadTagName(vtag), links.size()));
                         }
                     }
                 }
@@ -194,7 +197,7 @@ public class LinkIndexUpdater implements EventListener {
             if (versionRecord == null) {
                 links = Collections.emptySet();
             } else {
-                LinkCollector collector = new LinkCollector();
+                LinkCollector collector = new LinkCollector(repositoryManager.getIdGenerator());
                 RecordLinkExtractor.extract(versionRecord, collector, repositoryManager);
                 links = collector.getLinks();
             }

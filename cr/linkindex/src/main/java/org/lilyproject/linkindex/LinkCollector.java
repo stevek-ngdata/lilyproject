@@ -15,16 +15,28 @@
  */
 package org.lilyproject.linkindex;
 
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.SchemaId;
-
 import java.util.HashSet;
 import java.util.Set;
 
+import org.lilyproject.repository.api.AbsoluteRecordId;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
 public class LinkCollector {
+    private IdGenerator idGenerator;
     private Set<FieldedLink> links = new HashSet<FieldedLink>();
+    
+    public LinkCollector(IdGenerator idGenerator) {
+        this.idGenerator = idGenerator;
+    }
 
     public void addLink(RecordId target, SchemaId fieldTypeId) {
+        addLink(idGenerator.newAbsoluteRecordId(Table.RECORD.name, target), fieldTypeId);
+    }
+    
+    public void addLink(AbsoluteRecordId target, SchemaId fieldTypeId) {
         links.add(new FieldedLink(target, fieldTypeId));
     }
 

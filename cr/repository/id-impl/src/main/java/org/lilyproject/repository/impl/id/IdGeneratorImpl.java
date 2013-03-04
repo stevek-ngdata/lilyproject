@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.lilyproject.repository.api.AbsoluteRecordId;
+
 import org.apache.commons.lang.StringEscapeUtils;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.impl.DataInputImpl;
@@ -90,10 +92,25 @@ public class IdGeneratorImpl implements IdGenerator {
     public RecordId newRecordId(String userProvidedId, Map<String, String> variantProperties) {
         return newRecordId(newRecordId(userProvidedId), variantProperties);
     }
+    
+    @Override
+    public AbsoluteRecordId newAbsoluteRecordId(String tableName, RecordId recordId) {
+        return new AbsoluteRecordIdImpl(tableName, recordId);
+    }
+    
+    @Override
+    public AbsoluteRecordId newAbsoluteRecordId(String tableName, String userProvided) {
+        return newAbsoluteRecordId(tableName, newRecordId(userProvided));
+    }
 
     @Override
     public RecordId fromBytes(byte[] bytes) {
         return fromBytes(new DataInputImpl(bytes));
+    }
+    
+    @Override
+    public AbsoluteRecordId absoluteFromBytes(byte[] bytes) {
+        return AbsoluteRecordIdImpl.fromBytes(bytes, this);
     }
 
     @Override

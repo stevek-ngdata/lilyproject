@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.collect.Sets;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,6 +33,7 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.linkindex.FieldedLink;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
+import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.IdGenerator;
@@ -50,6 +53,11 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
 
 public class LinkIndexTest {
+    
+    private static final String TABLE_A = "tableA";
+    private static final String TABLE_B = "tableB";
+    private static final String TABLE_C = "tableC";
+    
     private final static RepositorySetup repoSetup = new RepositorySetup();
 
     private static TypeManager typeManager;
@@ -75,6 +83,10 @@ public class LinkIndexTest {
         linkIndex = new LinkIndex(indexManager, repoSetup.getRepositoryManager());
 
         repoSetup.getSepModel().addSubscription("LinkIndexUpdater");
+        repoSetup.getTableManager().createTable(TABLE_A);
+        repoSetup.getTableManager().createTable(TABLE_B);
+        repoSetup.getTableManager().createTable(TABLE_C);
+        
         repoSetup.startSepEventSlave("LinkIndexUpdater", new LinkIndexUpdater(repoSetup.getRepositoryManager(), linkIndex));
     }
 
@@ -88,12 +100,12 @@ public class LinkIndexTest {
         SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
 
         Set<FieldedLink> links1 = new HashSet<FieldedLink>();
-        links1.add(new FieldedLink(ids.newRecordId("id1"), field1));
-        links1.add(new FieldedLink(ids.newRecordId("id2"), field1));
+        links1.add(new FieldedLink(createAbsoluteId("id1"), field1));
+        links1.add(new FieldedLink(createAbsoluteId("id2"), field1));
 
         Set<FieldedLink> links2 = new HashSet<FieldedLink>();
-        links2.add(new FieldedLink(ids.newRecordId("id3"), field1));
-        links2.add(new FieldedLink(ids.newRecordId("id4"), field1));
+        links2.add(new FieldedLink(createAbsoluteId("id3"), field1));
+        links2.add(new FieldedLink(createAbsoluteId("id4"), field1));
 
         linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
         linkIndex.updateLinks(ids.newRecordId("idB"), liveTag, links1);
@@ -101,8 +113,8 @@ public class LinkIndexTest {
 
         // Test forward link retrieval
         Set<FieldedLink> links = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
-        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id1"), field1)));
-        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2"), field1)));
+        assertTrue(links.contains(new FieldedLink(createAbsoluteId("id1"), field1)));
+        assertTrue(links.contains(new FieldedLink(createAbsoluteId("id2"), field1)));
         assertEquals(2, links.size());
 
         // Test backward link retrieval
@@ -112,13 +124,13 @@ public class LinkIndexTest {
         assertEquals(2, referrers.size());
 
         // Update the links for record idA and re-check
-        links1.add(new FieldedLink(ids.newRecordId("id2a"), field1));
+        links1.add(new FieldedLink(createAbsoluteId("id2a"), field1));
         linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
 
         links = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
-        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id1"), field1)));
-        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2"), field1)));
-        assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2a"), field1)));
+        assertTrue(links.contains(new FieldedLink(createAbsoluteId("id1"), field1)));
+        assertTrue(links.contains(new FieldedLink(createAbsoluteId("id2"), field1)));
+        assertTrue(links.contains(new FieldedLink(createAbsoluteId("id2a"), field1)));
         assertEquals(3, links.size());
 
         referrers = linkIndex.getReferrers(ids.newRecordId("id1"), liveTag);
@@ -131,6 +143,47 @@ public class LinkIndexTest {
         assertEquals(1, referrers.size());
     }
 
+    @Test
+    public void testLinkIndex_AcrossTables() throws Exception {
+        SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
+
+        Set<FieldedLink> links1 = new HashSet<FieldedLink>();
+        links1.add(new FieldedLink(ids.newAbsoluteRecordId(TABLE_A, "id1"), field1));
+        links1.add(new FieldedLink(ids.newAbsoluteRecordId(TABLE_A, "id2"), field1));
+
+        Set<FieldedLink> links2 = new HashSet<FieldedLink>();
+        links2.add(new FieldedLink(ids.newAbsoluteRecordId(TABLE_B, "id3"), field1));
+        links2.add(new FieldedLink(ids.newAbsoluteRecordId(TABLE_B, "id4"), field1));
+
+        linkIndex.updateLinks(ids.newAbsoluteRecordId(TABLE_A, "idA"), liveTag, links1);
+        linkIndex.updateLinks(ids.newAbsoluteRecordId(TABLE_B, "idB"), liveTag, links1);
+        linkIndex.updateLinks(ids.newAbsoluteRecordId(TABLE_C, "idC"), liveTag, links2);
+
+        // Test forward link retrieval
+        Set<FieldedLink> links = linkIndex.getFieldedForwardLinks(ids.newAbsoluteRecordId(TABLE_A, "idA"), liveTag);
+        assertEquals(2, links.size());
+        assertEquals(
+                Sets.newHashSet(
+                        new FieldedLink(ids.newAbsoluteRecordId(TABLE_A, "id1"), field1),
+                        new FieldedLink(ids.newAbsoluteRecordId(TABLE_A, "id2"), field1)),
+                links);
+        
+        // Test backward link retrieval - non-absolute ids
+        Set<AbsoluteRecordId> referrers = linkIndex.getAbsoluteReferrers(ids.newAbsoluteRecordId(TABLE_A, "id1"), liveTag);
+        assertEquals(2, referrers.size());
+        assertEquals(
+                Sets.newHashSet(
+                        ids.newAbsoluteRecordId(TABLE_A, "idA"),
+                        ids.newAbsoluteRecordId(TABLE_B, "idB")),
+                referrers);
+
+        // Test backward link retrieval - absolute ids
+        Set<AbsoluteRecordId> absoluteReferrers = linkIndex.getAbsoluteReferrers(ids.newAbsoluteRecordId(TABLE_A, "id1"), liveTag);
+        assertTrue(absoluteReferrers.contains(ids.newAbsoluteRecordId(TABLE_A, "idA")));
+        assertTrue(absoluteReferrers.contains(ids.newAbsoluteRecordId(TABLE_B, "idB")));
+        assertEquals(2, absoluteReferrers.size());
+    }
+    
     @Test
     public void testLinkIndexWithShortRecordIds() throws Exception {
         final RecordId id1 = ids.newRecordId("id1");
@@ -155,25 +208,25 @@ public class LinkIndexTest {
         SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
 
         Set<FieldedLink> links1 = new HashSet<FieldedLink>();
-        links1.add(new FieldedLink(id1, field1));
-        links1.add(new FieldedLink(id2, field1));
+        links1.add(new FieldedLink(createAbsoluteId(id1), field1));
+        links1.add(new FieldedLink(createAbsoluteId(id2), field1));
 
         Set<FieldedLink> links2 = new HashSet<FieldedLink>();
-        links2.add(new FieldedLink(id3, field1));
-        links2.add(new FieldedLink(id4, field1));
+        links2.add(new FieldedLink(createAbsoluteId(id3), field1));
+        links2.add(new FieldedLink(createAbsoluteId(id4), field1));
 
         linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
         linkIndex.updateLinks(ids.newRecordId("idB"), liveTag, links2);
 
         // Test forward link retrieval
         Set<FieldedLink> linksFromA = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
-        assertTrue(linksFromA.contains(new FieldedLink(id1, field1)));
-        assertTrue(linksFromA.contains(new FieldedLink(id2, field1)));
+        assertTrue(linksFromA.contains(new FieldedLink(createAbsoluteId(id1), field1)));
+        assertTrue(linksFromA.contains(new FieldedLink(createAbsoluteId(id2), field1)));
         assertEquals(2, linksFromA.size());
 
         Set<FieldedLink> linksFromB = linkIndex.getFieldedForwardLinks(ids.newRecordId("idB"), liveTag);
-        assertTrue(linksFromB.contains(new FieldedLink(id3, field1)));
-        assertTrue(linksFromB.contains(new FieldedLink(id4, field1)));
+        assertTrue(linksFromB.contains(new FieldedLink(createAbsoluteId(id3), field1)));
+        assertTrue(linksFromB.contains(new FieldedLink(createAbsoluteId(id4), field1)));
         assertEquals(2, linksFromB.size());
 
         // Test backward link retrieval
@@ -327,5 +380,13 @@ public class LinkIndexTest {
             assertTrue(forwardLinks.contains(ids.newRecordId("cl1")));
             assertTrue(forwardLinks.contains(ids.newRecordId("cl2")));
         }
+    }
+    
+    private AbsoluteRecordId createAbsoluteId(String recordIdString) {
+        return createAbsoluteId(ids.newRecordId(recordIdString));
+    }
+    
+    private AbsoluteRecordId createAbsoluteId(RecordId recordId) {
+        return ids.newAbsoluteRecordId(Table.RECORD.name, recordId);
     }
 }

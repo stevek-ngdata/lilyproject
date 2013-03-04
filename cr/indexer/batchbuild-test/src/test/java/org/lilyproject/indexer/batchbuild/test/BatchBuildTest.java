@@ -399,6 +399,6 @@ public class BatchBuildTest {
     }
     
     private static AbsoluteRecordId absId(RecordId recordId) {
-        return new AbsoluteRecordIdImpl(Table.RECORD.name, recordId);
+        return lilyClient.getIdGenerator().newAbsoluteRecordId(Table.RECORD.name, recordId);
     }
 }

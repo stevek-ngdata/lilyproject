@@ -59,6 +59,23 @@ public interface IdGenerator {
      * <p>This is a shortcut for IdGenerator.newRecordId(IdGenerator.newRecordId(userProvidedId), variantProperties).
      */
     RecordId newRecordId(String userProvidedId, Map<String, String> variantProperties);
+    
+    /**
+     * Creates an {@code AbsoluteRecordId} that points to a specific record in a specific repository table.
+     * 
+     * @param tableName name of the repository table
+     * @param recordId record id within the given repository table
+     */
+    AbsoluteRecordId newAbsoluteRecordId(String tableName, RecordId recordId);
+    
+    /**
+     * Creates an {@code AbsoluteRecordId} that points to a specific record ina  specific repositoryy table,
+     * using a user-provided record id string.
+     * 
+     * @param tableName name of the repository table
+     * @param userProvided user-provided record id string
+     */
+    AbsoluteRecordId newAbsoluteRecordId(String tableName, String userProvided);
 
     /**
      * Creates a RecordId based on the provided byte array.
@@ -67,6 +84,14 @@ public interface IdGenerator {
      *              calling {@link RecordId#toBytes()}
      */
     RecordId fromBytes(byte[] bytes);
+    
+    /**
+     * Creates an {@code AbsoluteRecordId} based on the provided byte array.
+     * 
+     * @param bytes well-formed byte representation of the {@link AbsoluteRecordId}.
+     */
+    AbsoluteRecordId absoluteFromBytes(byte[] bytes);
+    
 
     /**
      * Creates a RecordId based on the provided DataInput.
@@ -103,7 +128,7 @@ public interface IdGenerator {
      * Creates a SchemaId based on the provided UUID representation of the id.
      * 
      * <p>Important : Should only be used in test cases.
-     *  
+     * 
      * @return a SchemaId
      */
     SchemaId getSchemaId(UUID id);
