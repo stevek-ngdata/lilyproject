@@ -56,7 +56,10 @@ public class TableSplitTest {
     private static LilyProxy lilyProxy;
     private static File tmpDir;
 
-    private static List<String> TABLE_NAMES = Lists.newArrayList("record", "links-forward", "links-backward");
+    // TODO Re-enable links-forward and links-backward tables for this test, if possible.
+    // This is dependent on either the table pre-split mechanism or the AbsoluteRecord serialization
+    // working in a different way.
+    private static List<String> TABLE_NAMES = Lists.newArrayList("record");//, "links-forward", "links-backward");
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
