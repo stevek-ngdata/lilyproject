@@ -1,4 +1,5 @@
 /*
+ * Copyright 2013 NGDATA nv
  * Copyright 2007 Outerthought bvba and Schaubroeck nv
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
