@@ -169,7 +169,7 @@ public class Tester extends BaseRepositoryTestTool {
     }
 
     private void loadConfig(InputStream is)
-            throws JsonParseException, IOException, JsonFormatException, RepositoryException, ImportConflictException,
+            throws IOException, JsonFormatException, RepositoryException, ImportConflictException,
             ImportException, InterruptedException, SecurityException, IllegalArgumentException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException {
 
@@ -377,7 +377,7 @@ public class Tester extends BaseRepositoryTestTool {
         }
     }
 
-    private void openStreams(String failuresFileName) throws IOException, FileNotFoundException {
+    private void openStreams(String failuresFileName) throws IOException {
         errorStream = new PrintStream(Util.getOutputFileRollOldOne(failuresFileName));
         errorStream.println(new DateTime() + " Opening file");
     }
