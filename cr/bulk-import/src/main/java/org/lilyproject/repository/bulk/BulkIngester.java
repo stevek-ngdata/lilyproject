@@ -28,11 +28,15 @@ import org.lilyproject.repository.api.BlobReference;
 import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseRepository;
+import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
+import org.lilyproject.repository.impl.RecordFactoryImpl;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.util.exception.ExceptionUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -72,13 +76,14 @@ public class BulkIngester implements Closeable {
             HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(conf);
             IdGenerator idGenerator = new IdGeneratorImpl();
             TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
+            RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
+            RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory, null);
 
             // FIXME Blobs aren't really supported here (no BlobManager is created), but null is
             // just passed in as the BlobManager so we'll probably get some mystery NPEs if Blobs
             // are used. We should either support blobs, or at least forcefully disallow them
-            HBaseRepository hbaseRepository = new HBaseRepository(typeManager, idGenerator, hbaseTableFactory,
-                    null);
-            return new BulkIngester(hbaseRepository, LilyHBaseSchema.getRecordTable(hbaseTableFactory),
+            HBaseRepository hbaseRepository = (HBaseRepository)repositoryManager.getDefaultRepository();
+            return new BulkIngester(hbaseRepository, LilyHBaseSchema.getRecordTable(hbaseTableFactory, hbaseRepository.getTableName()),
                     typeManager.getFieldTypesSnapshot());
         } catch (Exception e) {
             ExceptionUtil.handleInterrupt(e);
@@ -99,7 +104,7 @@ public class BulkIngester implements Closeable {
      * @return A newly-created record
      */
     public Record newRecord() {
-        return hbaseRepo.newRecord();
+        return hbaseRepo.getRepositoryManager().getRecordFactory().newRecord();
     }
 
     /**
@@ -154,14 +159,14 @@ public class BulkIngester implements Closeable {
         if (record.getId() == null) {
             record.setId(getIdGenerator().newRecordId());
         }
-        return hbaseRepo.buildPut(record, 1L, recordEvent, fieldTypes, Sets.<BlobReference> newHashSet(),
+        return hbaseRepo.buildPut(record, 1L, fieldTypes, recordEvent, Sets.<BlobReference> newHashSet(),
                 Sets.<BlobReference> newHashSet());
     }
     
     @Override
     public void close() throws IOException {
         flush();
-        hbaseRepo.close();
+        hbaseRepo.getRepositoryManager().close();
     }
 
 }

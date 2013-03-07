@@ -27,7 +27,7 @@ public interface RecordFactory {
      * <p>
      * This is only a factory method, nothing is created in the repository.
      */
-    Record newRecord() throws RecordException;
+    Record newRecord();
 
     /**
      * Instantiates a new Record object with the RecordId already filled in.
@@ -35,6 +35,6 @@ public interface RecordFactory {
      * <p>
      * This is only a factory method, nothing is created in the repository.
      */
-    Record newRecord(RecordId recordId) throws RecordException;
+    Record newRecord(RecordId recordId);
 
 }

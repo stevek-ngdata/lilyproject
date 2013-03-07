@@ -63,7 +63,7 @@ public class BulkIngesterTest {
     private void configurePutCreation(Record record, Put put) throws InterruptedException, RepositoryException {
         RecordEvent expectedRecordEvent = new RecordEvent();
         expectedRecordEvent.setType(Type.CREATE);
-        when(hbaseRepository.buildPut(record, 1L, expectedRecordEvent, fieldTypes,
+        when(hbaseRepository.buildPut(record, 1L, fieldTypes, expectedRecordEvent,
                         Sets.<BlobReference> newHashSet(), Sets.<BlobReference> newHashSet())).thenReturn(put);
     }
 

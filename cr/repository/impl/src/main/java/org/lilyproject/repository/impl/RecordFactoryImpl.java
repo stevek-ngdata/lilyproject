@@ -17,7 +17,6 @@ package org.lilyproject.repository.impl;
 
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.TypeManager;
@@ -31,12 +30,12 @@ public class RecordFactoryImpl implements RecordFactory {
     }
 
     @Override
-    public Record newRecord() throws RecordException {
+    public Record newRecord() {
         return recordDecoder.newRecord();
     }
 
     @Override
-    public Record newRecord(RecordId recordId) throws RecordException {
+    public Record newRecord(RecordId recordId) {
         return recordDecoder.newRecord(recordId);
     }
 
