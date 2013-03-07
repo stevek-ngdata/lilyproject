@@ -111,9 +111,8 @@ public class ConfImpl implements Conf {
         }
 
         if (create) {
-            ConfImpl config =  new ConfImpl(name, new LocationImpl(null,
+            return new ConfImpl(name, new LocationImpl(null,
                     "<generated>" + location.getURI(), location.getLineNumber(), location.getColumnNumber()));
-            return config;
         } else {
             return null;
         }

@@ -36,7 +36,7 @@ public class Table {
     }
 
     public void addColumn(int width, String title, String type) {
-        addColumn(width, title, type, type.equals("s") ? true : false, type.equals("f") ? 2 : 0);
+        addColumn(width, title, type, type.equals("s"), type.equals("f") ? 2 : 0);
     }
 
     public void addColumn(int width, String title, String type, boolean alignLeft, int precision) {

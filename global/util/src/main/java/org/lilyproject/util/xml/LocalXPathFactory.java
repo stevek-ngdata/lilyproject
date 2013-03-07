@@ -25,8 +25,7 @@ public class LocalXPathFactory {
     private static ThreadLocal<XPathFactory> LOCAL = new ThreadLocal<XPathFactory>() {
         @Override
         protected XPathFactory initialValue() {
-            XPathFactory factory = XPathFactory.newInstance();
-            return factory;
+            return XPathFactory.newInstance();
         }
     };
 

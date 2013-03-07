@@ -417,14 +417,12 @@ public class RecordDecoder {
             return null; // No record type was found, we should never get here: if there is an id there should also be a version
         }
         recordTypeVersion = Bytes.toLong(versionCeilingEntry.getValue());
-        Pair<SchemaId, Long> recordType = new Pair<SchemaId, Long>(recordTypeId, recordTypeVersion);
-        return recordType;
+        return new Pair<SchemaId, Long>(recordTypeId, recordTypeVersion);
     }
 
     public Long getLatestVersion(Result result) {
         byte[] latestVersionBytes = getLatest(result, RecordCf.DATA.bytes, LilyHBaseSchema.RecordColumn.VERSION.bytes);
-        Long latestVersion = latestVersionBytes != null ? Bytes.toLong(latestVersionBytes) : null;
-        return latestVersion;
+        return latestVersionBytes != null ? Bytes.toLong(latestVersionBytes) : null;
     }
 
     public static void addSystemColumnsToGet(Get get) {

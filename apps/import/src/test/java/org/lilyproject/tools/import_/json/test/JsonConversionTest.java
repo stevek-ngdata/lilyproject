@@ -339,10 +339,9 @@ public class JsonConversionTest {
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof RecordFilterList);
-        RecordFilterList parsedFilterList = filterList;
-        assertTrue(parsedFilterList.getFilters().get(0) instanceof RecordIdPrefixFilter);
-        assertTrue(parsedFilterList.getFilters().get(1) instanceof RecordTypeFilter);
-        assertEquals(RecordFilterList.Operator.MUST_PASS_ONE, parsedFilterList.getOperator());
+        assertTrue(filterList.getFilters().get(0) instanceof RecordIdPrefixFilter);
+        assertTrue(filterList.getFilters().get(1) instanceof RecordTypeFilter);
+        assertEquals(RecordFilterList.Operator.MUST_PASS_ONE, filterList.getOperator());
 
         // Check json
         JsonNode node = new ObjectMapper().readTree(data);

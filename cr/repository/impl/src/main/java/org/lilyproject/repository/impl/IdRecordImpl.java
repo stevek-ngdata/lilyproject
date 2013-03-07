@@ -194,9 +194,8 @@ public class IdRecordImpl implements IdRecord, Cloneable {
     @Override
     public IdRecord clone() {
         Record recordClone = this.record.clone();
-        IdRecordImpl clone = new IdRecordImpl(recordClone, new HashMap<SchemaId, QName>(mapping),
+        return new IdRecordImpl(recordClone, new HashMap<SchemaId, QName>(mapping),
                 new EnumMap<Scope, SchemaId>(recordTypeIds));
-        return clone;
     }
 
     @Override
@@ -207,9 +206,8 @@ public class IdRecordImpl implements IdRecord, Cloneable {
     @Override
     public IdRecord cloneRecord(IdentityRecordStack parentRecords) throws RecordException {
         Record recordClone = this.record.cloneRecord(parentRecords);
-        IdRecordImpl clone = new IdRecordImpl(recordClone, new HashMap<SchemaId, QName>(mapping),
+        return new IdRecordImpl(recordClone, new HashMap<SchemaId, QName>(mapping),
                 new EnumMap<Scope, SchemaId>(recordTypeIds));
-        return clone;
     }
 
     @Override

@@ -47,7 +47,6 @@ public class HBaseTableFactoryTest {
         ExecutorService svc = Executors.newFixedThreadPool(10);
         List<Future<HTableInterface>> futures = Lists.newArrayList();
         for (int i = 0; i < 10; i++) {
-            final int j = i;
             futures.add(svc.submit(new Callable<HTableInterface>() {
                 @Override
                 public HTableInterface call() throws IOException, InterruptedException {

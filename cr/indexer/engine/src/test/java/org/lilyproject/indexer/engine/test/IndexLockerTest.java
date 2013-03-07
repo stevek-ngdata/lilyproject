@@ -135,8 +135,7 @@ public class IndexLockerTest {
 
         for (int i = 0; i < 7; i++) {
             Info info = new Info();
-            Thread thread = new Thread(new Locker(i + 1, info, indexLocker, recordId));
-            info.thread = thread;
+            info.thread = new Thread(new Locker(i + 1, info, indexLocker, recordId));
             infos.add(info);
         }
 

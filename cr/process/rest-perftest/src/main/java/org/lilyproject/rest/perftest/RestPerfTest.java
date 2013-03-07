@@ -172,7 +172,6 @@ public class RestPerfTest extends BaseTestTool {
         //
         startExecutor();
         for (int i = 0; i < iterations; i++) {
-            final int seqnr = i;
             executor.submit(new Runnable() {
                 @Override
                 public void run() {

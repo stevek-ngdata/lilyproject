@@ -75,8 +75,7 @@ public class JerseySpringServletManager {
                     mvcContext.setParent(existingLilyRuntimeSpringContext);
                     mvcContext.refresh();
 
-                    JerseySpringServlet springServlet = new JerseySpringServlet(mvcContext);
-                    return springServlet;
+                    return new JerseySpringServlet(mvcContext);
                 } finally {
                     Thread.currentThread().setContextClassLoader(orig);
                 }

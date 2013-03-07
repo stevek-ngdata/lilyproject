@@ -260,7 +260,6 @@ public class BlobIncubatorMonitor {
                         put.add(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.FIELD.bytes, fieldId.getBytes());
                     }
                     blobIncubatorTable.put(put);
-                    return;
                 }
             }
         }

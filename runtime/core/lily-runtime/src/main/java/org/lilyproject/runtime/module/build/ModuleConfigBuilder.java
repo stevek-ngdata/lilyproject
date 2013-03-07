@@ -73,9 +73,7 @@ public class ModuleConfigBuilder {
                 classLoadingConfig = new ClassLoadingConfigImpl(Collections.singletonList(selfEntry), runtime.getArtifactRepository());
             }
 
-            ModuleConfigImpl moduleConfig = new ModuleConfigImpl(moduleDefinition, classLoadingConfig, moduleSource);
-
-            return moduleConfig;
+            return new ModuleConfigImpl(moduleDefinition, classLoadingConfig, moduleSource);
 
         } catch (Throwable e) {
             if (moduleSource != null) {

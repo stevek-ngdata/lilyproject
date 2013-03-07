@@ -91,8 +91,6 @@ public class RecordByVersionResource extends RepositoryEnabled {
         }
 
         // TODO record we respond with should be full record or be limited to user-specified field list
-        Response response = Response.ok(Entity.create(record, uriInfo)).build();
-
-        return response;
+        return Response.ok(Entity.create(record, uriInfo)).build();
     }
 }

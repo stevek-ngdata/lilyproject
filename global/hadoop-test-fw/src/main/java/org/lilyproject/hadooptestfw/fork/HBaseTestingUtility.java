@@ -589,7 +589,7 @@ public class HBaseTestingUtility {
         HTable t = new HTable(c, HConstants.META_TABLE_NAME);
         ResultScanner s = t.getScanner(new Scan());
         while (s.next() != null) {
-            continue;
+            //continue;
         }
         s.close();
         t.close();

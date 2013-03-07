@@ -332,8 +332,7 @@ public class Indexer {
         if (match.namespaceMatch != null) {
             nameContext.put("namespaceMatch", match.namespaceMatch);
         }
-        String fieldName = dynField.getNameTemplate().format(new DynamicFieldNameTemplateResolver(nameContext));
-        return fieldName;
+        return dynField.getNameTemplate().format(new DynamicFieldNameTemplateResolver(nameContext));
     }
 
     private String formatValueTypeName(ValueType valueType) {

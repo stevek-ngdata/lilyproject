@@ -148,8 +148,7 @@ public class IndexManager {
 
         IndexDefinition indexDef = deserialize(name, jsonData);
 
-        Index index = new Index(table, indexDef);
-        return index;
+        return new Index(table, indexDef);
     }
 
     /**

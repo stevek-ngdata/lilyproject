@@ -39,7 +39,7 @@ public class ForwardVariantFollow implements Follow {
 
         if (currentDimensions.containsAll(dimensions.keySet())) {
             // the record already contains all of the new dimensions -> stop here
-            return;
+            //return;
         } else {
             IdGenerator idGenerator = indexUpdateBuilder.getRepositoryManager().getIdGenerator();
             Dep newDep = ctx.dep.plus(idGenerator, dimensions);

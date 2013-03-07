@@ -122,9 +122,8 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
             @Override
             protected Repository createRepository(String tableName) throws IOException, InterruptedException {
                 InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, tableName, typeManager, idGenerator);
-                Repository repository = (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),
+                return (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),
                         new Class[]{Repository.class}, repositoryHandler);
-                return repository;
             }
         };
 
@@ -365,8 +364,7 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
         private int getSleepTime(int attempt) throws InterruptedException {
             int pos =
                     attempt < retryConf.getRetryIntervals().length ? attempt : retryConf.getRetryIntervals().length - 1;
-            int waitTime = retryConf.getRetryIntervals()[pos];
-            return waitTime;
+            return retryConf.getRetryIntervals()[pos];
         }
 
         private String getOpString(Method method) {

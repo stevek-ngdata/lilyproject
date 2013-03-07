@@ -51,8 +51,7 @@ public class XmlProducer {
     private static ThreadLocal LOCAL = new ThreadLocal() {
         @Override
         protected Object initialValue() {
-            SAXTransformerFactory transformerFactory = (SAXTransformerFactory)SAXTransformerFactory.newInstance();
-            return transformerFactory;
+            return SAXTransformerFactory.newInstance();
         }
     };
     private static char[] LINE_SEP = new char[] {'\n'};

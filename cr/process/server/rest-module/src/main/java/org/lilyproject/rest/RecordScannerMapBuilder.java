@@ -30,10 +30,8 @@ public class RecordScannerMapBuilder {
     }
 
     public static Cache<String,RecordScanner> createRecordScannerMap (int delay, TimeUnit unit) {
-        Cache<String,RecordScanner> cache = CacheBuilder.newBuilder()
+        return CacheBuilder.newBuilder()
                 .expireAfterAccess(delay,  unit)
                 .build();
-
-        return cache;
     }
 }

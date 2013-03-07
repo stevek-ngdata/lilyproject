@@ -144,14 +144,12 @@ public class JarModuleSource implements ModuleSource {
 
     public Resource getResource(String path) {
         String[] pathParts = parsePath(path);
-        JarResource resource = findEntry(resourcesRoot, pathParts);
-        return resource;
+        return findEntry(resourcesRoot, pathParts);
     }
 
     public Resource getClasspathResource(String path) {
         String[] pathParts = parsePath(path);
-        JarResource resource = findEntry(classpathRoot, pathParts);
-        return resource;
+        return findEntry(classpathRoot, pathParts);
     }
 
     public InputStream getClassLoaderConfig() throws IOException {

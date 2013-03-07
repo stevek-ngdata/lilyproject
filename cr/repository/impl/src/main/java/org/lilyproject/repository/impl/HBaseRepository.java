@@ -164,8 +164,7 @@ public class HBaseRepository extends BaseRepository {
             if ((deleted == null) || (Bytes.toBoolean(deleted))) {
                 // do the create
                 try {
-                    Record createdRecord = create(record);
-                    return createdRecord;
+                    return create(record);
                 } catch (RecordExistsException e) {
                     // someone created the record since we checked, we will try again
                 }

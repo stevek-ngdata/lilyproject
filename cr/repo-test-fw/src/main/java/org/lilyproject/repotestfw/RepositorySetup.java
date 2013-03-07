@@ -192,9 +192,7 @@ public class RepositorySetup {
 
         List<BlobStoreAccess> blobStoreAccesses =
                 Arrays.asList(dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess);
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory =
-                new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
-        return blobStoreAccessFactory;
+        return new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
     }
 
     /**

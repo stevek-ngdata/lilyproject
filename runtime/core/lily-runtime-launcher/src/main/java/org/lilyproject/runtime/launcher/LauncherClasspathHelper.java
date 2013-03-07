@@ -109,8 +109,7 @@ public class LauncherClasspathHelper {
     public static Document parse(InputStream is) throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
-        Document document = factory.newDocumentBuilder().parse(is);
-        return document;
+        return factory.newDocumentBuilder().parse(is);
     }
 
     private static String getProjectVersion() {

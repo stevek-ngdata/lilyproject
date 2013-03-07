@@ -258,10 +258,8 @@ public class IndexerConfBuilder {
             }
         }
 
-        RecordMatcher matcher = new RecordMatcher(rtNamespacePattern, rtNamePattern, instanceOfType, fieldType,
+        return new RecordMatcher(rtNamespacePattern, rtNamePattern, instanceOfType, fieldType,
                 comparator, fieldValue, varPropsPattern, tableNames, typeManager);
-
-        return matcher;
     }
 
     private void buildFormatters() throws Exception {

@@ -107,7 +107,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
             }
         }
         Record originalRecord = null;
-        if (readRecord == true) {
+        if (readRecord) {
             before = System.nanoTime();
             try {
                 originalRecord = testActionContext.repository.read(record.getId());

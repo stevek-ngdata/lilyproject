@@ -3147,8 +3147,7 @@ public class IndexerTest {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.set("q", query);
         solrQuery.set("rows", 5000);
-        QueryResponse response = solrShardManager.query(solrQuery);
-        return response;
+        return solrShardManager.query(solrQuery);
     }
 
     private void verifyResultCount(String query, int count) throws SolrClientException, InterruptedException {

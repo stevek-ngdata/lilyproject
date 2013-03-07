@@ -190,8 +190,7 @@ public abstract class AbstractRuntimeTest extends TestCase {
             basedir = System.getProperty("user.dir");
         }
 
-        File resourceDir = new File(basedir + "/src/test/confs/" + confName);
-        return resourceDir;
+        return new File(basedir + "/src/test/confs/" + confName);
     }
 
     protected LilyRuntimeModel getRuntimeModel() throws Exception {
