@@ -257,18 +257,18 @@ public class RecordAsBytesConverter {
         return new IdRecordImpl(record, idToQNameMapping, recordTypeIds);
     }
 
-    private static final void writeQName(QName name, DataOutput output) {
+    private static void writeQName(QName name, DataOutput output) {
         output.writeUTF(name.getNamespace());
         output.writeUTF(name.getName());
     }
 
-    private static final QName readQName(DataInput input) {
+    private static QName readQName(DataInput input) {
         String namespace = input.readUTF();
         String name = input.readUTF();
         return new QName(namespace, name);
     }
 
-    private static final void writeNullOrQName(QName name, DataOutput output) {
+    private static void writeNullOrQName(QName name, DataOutput output) {
         if (name == null) {
             output.writeByte(NULL_MARKER);
         } else {
@@ -277,7 +277,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final QName readNullOrQName(DataInput input) {
+    private static QName readNullOrQName(DataInput input) {
         byte nullMarker = input.readByte();
         if (nullMarker == NULL_MARKER) {
             return null;
@@ -286,17 +286,17 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final void writeBytes(byte[] bytes, DataOutput output) {
+    private static void writeBytes(byte[] bytes, DataOutput output) {
         output.writeVInt(bytes.length);
         output.writeBytes(bytes);
     }
 
-    private static final byte[] readBytes(DataInput input) {
+    private static byte[] readBytes(DataInput input) {
         int length = input.readVInt();
         return input.readBytes(length);
     }
 
-    private static final void writeNullOrBytes(byte[] bytes, DataOutput output) {
+    private static void writeNullOrBytes(byte[] bytes, DataOutput output) {
         if (bytes == null) {
             output.writeByte(NULL_MARKER);
         } else {
@@ -305,7 +305,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final byte[] readNullOrBytes(DataInput input) {
+    private static byte[] readNullOrBytes(DataInput input) {
         byte nullMarker = input.readByte();
         if (nullMarker == NULL_MARKER) {
             return null;
@@ -314,7 +314,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final void writeNullOrVLong(Long value, DataOutput output) {
+    private static void writeNullOrVLong(Long value, DataOutput output) {
         if (value == null) {
             output.writeByte(NULL_MARKER);
         } else {
@@ -323,7 +323,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final Long readNullOrVLong(DataInput input) {
+    private static Long readNullOrVLong(DataInput input) {
         byte nullMarker = input.readByte();
         if (nullMarker == NULL_MARKER) {
             return null;
@@ -332,7 +332,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final void writeNullOrVInt(Integer value, DataOutput output) {
+    private static void writeNullOrVInt(Integer value, DataOutput output) {
         if (value == null) {
             output.writeByte(NULL_MARKER);
         } else {
@@ -341,7 +341,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final Integer readNullOrVInt(DataInput input) {
+    private static Integer readNullOrVInt(DataInput input) {
         byte nullMarker = input.readByte();
         if (nullMarker == NULL_MARKER) {
             return null;
@@ -350,7 +350,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    private static final void writeNullOrString(String value, DataOutput output) {
+    private static void writeNullOrString(String value, DataOutput output) {
         if (value == null) {
             output.writeByte(NULL_MARKER);
         } else {
