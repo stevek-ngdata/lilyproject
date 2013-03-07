@@ -389,7 +389,7 @@ public class ValueTypeTest {
         private final int x;
         private final int y;
 
-        public XYCoordinates(int x, int y) {
+        XYCoordinates(int x, int y) {
             this.x = x;
             this.y = y;
         }

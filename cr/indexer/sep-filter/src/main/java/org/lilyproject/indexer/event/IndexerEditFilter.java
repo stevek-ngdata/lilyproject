@@ -52,7 +52,7 @@ class IndexerEditFilter implements WALEditFilter {
      *
      * @param subscriptionName Name of the SEP subscription for which {@code KeyValue}s are not to be removed
      */
-    public IndexerEditFilter(String subscriptionName) {
+    IndexerEditFilter(String subscriptionName) {
         this.subscriptionName = subscriptionName;
     }
 

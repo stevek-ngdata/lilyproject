@@ -400,7 +400,7 @@ public class SystemFields {
         private boolean multiValue;
         private FieldType fieldType;
 
-        public SystemField(String name, String type, boolean multiValue) {
+        SystemField(String name, String type, boolean multiValue) {
             this.name = name;
             this.type = type;
             this.multiValue = multiValue;

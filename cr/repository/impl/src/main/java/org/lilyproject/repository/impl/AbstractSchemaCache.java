@@ -646,7 +646,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     private class CacheWatcher implements Watcher {
         private final String bucket;
 
-        public CacheWatcher(String bucket) {
+        CacheWatcher(String bucket) {
             this.bucket = bucket;
         }
 

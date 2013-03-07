@@ -129,7 +129,7 @@ public class TypePattern {
         String name;
         ParsedType arg;
 
-        public ParsedType(String name, ParsedType arg) {
+        ParsedType(String name, ParsedType arg) {
             this.name = name;
             this.arg = arg;
         }
@@ -139,7 +139,7 @@ public class TypePattern {
         TypeNameMatch nameMatch;
         TypeArgMatch argMatch;
 
-        public SubTypePattern(TypeNameMatch nameMatch, TypeArgMatch argMatch) {
+        SubTypePattern(TypeNameMatch nameMatch, TypeArgMatch argMatch) {
             this.nameMatch = nameMatch;
             this.argMatch = argMatch;
         }
@@ -152,7 +152,7 @@ public class TypePattern {
     private static class TypeNameMatch {
         private WildcardPattern pattern;
 
-        public TypeNameMatch(String name) {
+        TypeNameMatch(String name) {
             this.pattern = new WildcardPattern(name);
         }
 
@@ -206,7 +206,7 @@ public class TypePattern {
     private static class NestedArgMatch implements TypeArgMatch {
         private SubTypePattern pattern;
 
-        public NestedArgMatch(SubTypePattern pattern) {
+        NestedArgMatch(SubTypePattern pattern) {
             this.pattern = pattern;
         }
 

@@ -213,7 +213,7 @@ public class XmlProducer {
         private Map<String, String> attrs;
         private Map.Entry<String, String>[] attrList;
 
-        public MapAttributes(Map<String, String> attrs) {
+        MapAttributes(Map<String, String> attrs) {
             this.attrs = attrs;
             this.attrList = attrs.entrySet().toArray(new Map.Entry[0]);
         }

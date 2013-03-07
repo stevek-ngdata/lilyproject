@@ -128,7 +128,7 @@ public class BlobIncubatorMonitor {
     private class MyLeaderElectionCallback implements LeaderElectionCallback {
         private final BlobIncubatorMonitor blobIncubatorMonitor;
 
-        public MyLeaderElectionCallback(BlobIncubatorMonitor blobIncubatorMonitor) {
+        MyLeaderElectionCallback(BlobIncubatorMonitor blobIncubatorMonitor) {
             this.blobIncubatorMonitor = blobIncubatorMonitor;
         }
 
@@ -146,7 +146,7 @@ public class BlobIncubatorMonitor {
     private class MonitorThread extends Thread {
         private boolean stopRequested = false;
 
-        public MonitorThread() {
+        MonitorThread() {
         }
 
         @Override

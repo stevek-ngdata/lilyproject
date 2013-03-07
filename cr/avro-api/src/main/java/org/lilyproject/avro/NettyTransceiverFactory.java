@@ -35,11 +35,11 @@ public class NettyTransceiverFactory {
     private static class DaemonThreadFactory implements ThreadFactory {
         private ThreadFactory delegate;
 
-        public DaemonThreadFactory() {
+        DaemonThreadFactory() {
             this.delegate = Executors.defaultThreadFactory();
         }
 
-        public DaemonThreadFactory(ThreadFactory delegate) {
+        DaemonThreadFactory(ThreadFactory delegate) {
             this.delegate = delegate;
         }
 

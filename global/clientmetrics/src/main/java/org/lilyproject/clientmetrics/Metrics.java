@@ -358,7 +358,7 @@ public class Metrics {
         int allTimeCount;
         double allTimeValue;
 
-        public Metric() {
+        Metric() {
             rollInterval();
         }
 

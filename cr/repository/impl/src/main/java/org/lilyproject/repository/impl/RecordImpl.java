@@ -423,7 +423,7 @@ public class RecordImpl implements Record, Cloneable {
         final QName name;
         final Long version;
 
-        public RecordTypeRef(QName name, Long version) {
+        RecordTypeRef(QName name, Long version) {
             this.name = name;
             this.version = version;
         }

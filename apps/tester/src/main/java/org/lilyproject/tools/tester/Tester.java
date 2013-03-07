@@ -403,7 +403,7 @@ public class Tester extends BaseRepositoryTestTool {
     private class WorkerThread extends Thread {
         private final List<TestAction> testActions;
 
-        public WorkerThread(List<TestAction> testActions) {
+        WorkerThread(List<TestAction> testActions) {
             this.testActions = testActions;
         }
 

@@ -446,7 +446,7 @@ public class RestPerfTest extends BaseTestTool {
         HttpResponse response;
         byte[] data;
 
-        public Result(HttpResponse response, byte[] data) {
+        Result(HttpResponse response, byte[] data) {
             this.response = response;
             this.data = data;
         }

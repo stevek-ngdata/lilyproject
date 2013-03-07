@@ -108,7 +108,7 @@ public class PluginRegistryImpl implements PluginRegistry {
         private final Log log = LogFactory.getLog(getClass());
         private final ObjectName mbeanName;
 
-        public PluginManager(Class<T> pluginType) {
+        PluginManager(Class<T> pluginType) {
             this.type = pluginType;
 
             String pluginTypeName = pluginType.getName();
@@ -256,7 +256,7 @@ public class PluginRegistryImpl implements PluginRegistry {
         private final String name;
         private final T plugin;
 
-        public PluginEntry(String name, T plugin) {
+        PluginEntry(String name, T plugin) {
             this.name = name;
             this.plugin = plugin;
         }

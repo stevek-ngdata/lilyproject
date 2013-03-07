@@ -44,7 +44,7 @@ final class DerefMapSerializationUtil {
 
     private final IdGenerator idGenerator;
 
-    public DerefMapSerializationUtil(IdGenerator idGenerator) {
+    DerefMapSerializationUtil(IdGenerator idGenerator) {
         this.idGenerator = idGenerator;
     }
 

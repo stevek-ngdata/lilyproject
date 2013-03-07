@@ -408,7 +408,7 @@ public class LilyClient implements Closeable, RepositoryManager {
         private RepositoryManager repoMgr;
         private Indexer indexer;
 
-        public ServerNode(String lilyAddressAndPort) {
+        ServerNode(String lilyAddressAndPort) {
             this.lilyAddressAndPort = lilyAddressAndPort;
         }
 

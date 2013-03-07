@@ -131,7 +131,7 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
     private static final class TypeManagerInvocationHandler extends RetryBase implements InvocationHandler {
         private final LilyClient lilyClient;
 
-        public TypeManagerInvocationHandler(LilyClient lilyClient) {
+        TypeManagerInvocationHandler(LilyClient lilyClient) {
             super(lilyClient.getRetryConf());
             this.lilyClient = lilyClient;
         }

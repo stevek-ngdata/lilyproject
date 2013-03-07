@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 class ScannerQueryResult extends BaseQueryResult {
     private ResultScanner scanner;
 
-    public ScannerQueryResult(ResultScanner scanner, IndexDefinition definition) {
+    ScannerQueryResult(ResultScanner scanner, IndexDefinition definition) {
         super(definition);
         this.scanner = scanner;
     }

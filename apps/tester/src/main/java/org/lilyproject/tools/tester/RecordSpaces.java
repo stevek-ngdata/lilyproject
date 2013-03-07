@@ -66,7 +66,7 @@ public class RecordSpaces {
         private int limit;
         private ListOrderedSet records;
 
-        public RecordSpace(int limit) {
+        RecordSpace(int limit) {
             this.limit = limit;
             records = new ListOrderedSet();
         }

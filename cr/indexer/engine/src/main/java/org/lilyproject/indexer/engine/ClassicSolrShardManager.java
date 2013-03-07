@@ -150,7 +150,7 @@ public class ClassicSolrShardManager implements SolrShardManager {
         SolrClient solrClient;
         SolrClientMetrics solrClientMetrics;
 
-        public SolrClientHandle(SolrClient solrClient, SolrClientMetrics metrics) {
+        SolrClientHandle(SolrClient solrClient, SolrClientMetrics metrics) {
             this.solrClient = solrClient;
             this.solrClientMetrics = metrics;
         }

@@ -126,7 +126,7 @@ public class ShardingKey {
     private static class VariantPropertyShardingKeyValue implements ShardingKeyValue {
         private String propertyName;
 
-        public VariantPropertyShardingKeyValue(String propertyName) {
+        VariantPropertyShardingKeyValue(String propertyName) {
             this.propertyName = propertyName;
         }
 

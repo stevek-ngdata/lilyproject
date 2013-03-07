@@ -177,7 +177,7 @@ public class IndexLockerTest {
         private IndexLocker indexLocker;
         private RecordId recordId;
 
-        public Locker(int number, Info info, IndexLocker indexLocker, RecordId recordId) {
+        Locker(int number, Info info, IndexLocker indexLocker, RecordId recordId) {
             this.number = number;
             this.info = info;
             this.indexLocker = indexLocker;

@@ -267,7 +267,7 @@ public class ZkLock {
         private final Object condition;
         private volatile boolean gotNotified;
 
-        public MyWatcher(String path, Object condition) {
+        MyWatcher(String path, Object condition) {
             this.path = path;
             this.condition = condition;
         }

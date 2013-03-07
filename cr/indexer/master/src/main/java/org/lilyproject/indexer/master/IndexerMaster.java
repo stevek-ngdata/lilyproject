@@ -597,7 +597,7 @@ public class IndexerMaster {
 
         private Thread thread;
 
-        public JobStatusWatcher() {
+        JobStatusWatcher() {
         }
 
         public synchronized void shutdown(boolean interrupt) throws InterruptedException {

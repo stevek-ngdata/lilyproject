@@ -493,7 +493,7 @@ public class MetricsReportTool extends BaseCliTool {
         String fileName;
         private Collator collator = Collator.getInstance(Locale.US);
 
-        public GroupName(String name) {
+        GroupName(String name) {
             this.name = name;
             this.title = groupNameToTitle(name);
             this.fileName = groupNameToFileName(name);

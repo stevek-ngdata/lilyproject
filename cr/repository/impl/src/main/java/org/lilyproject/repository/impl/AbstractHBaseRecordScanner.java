@@ -26,7 +26,7 @@ import org.lilyproject.repository.api.RepositoryException;
 abstract class AbstractHBaseRecordScanner<T extends Record> {
     private final ResultScanner hbaseScanner;
 
-    public AbstractHBaseRecordScanner(ResultScanner hbaseScanner) {
+    AbstractHBaseRecordScanner(ResultScanner hbaseScanner) {
         this.hbaseScanner = hbaseScanner;
     }
 

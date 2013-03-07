@@ -73,7 +73,7 @@ public class ErrorSwallowingSolrClient {
         private SolrClientMetrics clientMetrics;
         private final Log log = LogFactory.getLog(getClass());
 
-        public ErrorSwallowingSolrClientInvocationHandler(SolrClient solrClient, SolrClientMetrics clientMetrics) {
+        ErrorSwallowingSolrClientInvocationHandler(SolrClient solrClient, SolrClientMetrics clientMetrics) {
             this.baseSolrClient = solrClient;
             this.clientMetrics = clientMetrics;
         }

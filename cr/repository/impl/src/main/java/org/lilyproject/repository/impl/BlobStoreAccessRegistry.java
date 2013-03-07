@@ -119,7 +119,7 @@ public class BlobStoreAccessRegistry {
         private final boolean incubate;
         private long size = 0;
 
-        public BlobOutputStream(OutputStream outputStream, String blobStoreAccessId, Blob blob, BlobManager blobManager, boolean incubate) {
+        BlobOutputStream(OutputStream outputStream, String blobStoreAccessId, Blob blob, BlobManager blobManager, boolean incubate) {
             super(outputStream);
             this.blobStoreAccessId = blobStoreAccessId;
             this.blob = blob;

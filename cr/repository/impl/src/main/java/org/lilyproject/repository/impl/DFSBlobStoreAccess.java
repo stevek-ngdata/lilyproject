@@ -109,7 +109,7 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
 
         private final byte[] blobKey;
         private final Blob blob;
-        public DFSBlobOutputStream(OutputStream outputStream, byte[] blobKey, Blob blob) {
+        DFSBlobOutputStream(OutputStream outputStream, byte[] blobKey, Blob blob) {
             super(outputStream);
             this.blobKey = blobKey;
             this.blob = blob;

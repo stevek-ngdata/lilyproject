@@ -280,7 +280,7 @@ public class RecordDecoder {
         Object value;
         Metadata metadata;
 
-        public ExtractedField(FieldType type, Object value, Metadata metadata) {
+        ExtractedField(FieldType type, Object value, Metadata metadata) {
             this.type = type;
             this.value = value;
             this.metadata = metadata;

@@ -165,7 +165,7 @@ public class HbaseIndexPerfTest extends BaseTestTool {
     private class BulkInserter implements Runnable {
         private int amount;
 
-        public BulkInserter(int amount) {
+        BulkInserter(int amount) {
             this.amount = amount;
         }
 

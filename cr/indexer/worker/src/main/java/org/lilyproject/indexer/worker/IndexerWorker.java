@@ -334,7 +334,7 @@ public class IndexerWorker {
         private final IndexerMetrics indexerMetrics;
         private final IndexUpdaterMetrics updaterMetrics;
 
-        public IndexUpdaterHandle(IndexDefinition indexDef, SepConsumer sepEventSlave,
+        IndexUpdaterHandle(IndexDefinition indexDef, SepConsumer sepEventSlave,
                                   SolrShardManager solrShardMgr, IndexerMetrics indexerMetrics,
                                   IndexUpdaterMetrics updaterMetrics) {
             this.indexDef = indexDef;

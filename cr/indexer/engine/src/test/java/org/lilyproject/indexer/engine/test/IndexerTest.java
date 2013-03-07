@@ -3323,7 +3323,7 @@ public class IndexerTest {
     private static class CompositeEventListener implements EventListener {
         private List<EventListener> eventListeners;
 
-        public CompositeEventListener(EventListener...eventListeners) {
+        CompositeEventListener(EventListener...eventListeners) {
             this.eventListeners = Lists.newArrayList(eventListeners);
         }
 
@@ -3342,7 +3342,7 @@ public class IndexerTest {
         private RepositoryManager delegate;
         private Map<String,TrackingRepository> repositoryCache = Maps.newHashMap();
 
-        public TrackingRepositoryManager(RepositoryManager delegate) {
+        TrackingRepositoryManager(RepositoryManager delegate) {
             this.delegate = delegate;
         }
 

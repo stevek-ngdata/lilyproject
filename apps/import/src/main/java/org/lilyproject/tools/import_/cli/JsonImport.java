@@ -381,7 +381,7 @@ public class JsonImport {
     private class RecordTypeImportTask implements Runnable {
         private JsonNode json;
 
-        public RecordTypeImportTask(JsonNode json) {
+        RecordTypeImportTask(JsonNode json) {
             this.json = json;
         }
 
@@ -398,7 +398,7 @@ public class JsonImport {
     private class RecordImportTask implements Runnable {
         private JsonNode json;
 
-        public RecordImportTask(JsonNode json) {
+        RecordImportTask(JsonNode json) {
             this.json = json;
         }
 

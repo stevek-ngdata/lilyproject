@@ -379,7 +379,7 @@ public class RepositorySetup {
 
         private TypeManager typeManager;
 
-        public RemoteTestSchemaCache(ZooKeeperItf zooKeeper) {
+        RemoteTestSchemaCache(ZooKeeperItf zooKeeper) {
             super(zooKeeper);
         }
 

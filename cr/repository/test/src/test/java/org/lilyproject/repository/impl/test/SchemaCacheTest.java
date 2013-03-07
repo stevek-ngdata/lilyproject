@@ -339,7 +339,7 @@ public class SchemaCacheTest {
         private final HTableInterface table;
         private final String name;
 
-        public ScanThread(String name, int count, HTableInterface table) {
+        ScanThread(String name, int count, HTableInterface table) {
             this.name = name;
             this.count = count;
             this.table = table;

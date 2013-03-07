@@ -48,7 +48,7 @@ public class RangeShardSelector extends BaseShardSelector {
         Comparable maxValue;
         String shardName;
 
-        public ShardMappingEntry(String shardName, Comparable maxValue) {
+        ShardMappingEntry(String shardName, Comparable maxValue) {
             this.shardName = shardName;
             this.maxValue = maxValue;
         }

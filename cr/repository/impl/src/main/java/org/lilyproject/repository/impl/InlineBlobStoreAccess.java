@@ -61,7 +61,7 @@ public class InlineBlobStoreAccess implements BlobStoreAccess {
     private class InlineBlobOutputStream extends ByteArrayOutputStream {
 
         private final Blob blob;
-        public InlineBlobOutputStream(Blob blob) {
+        InlineBlobOutputStream(Blob blob) {
             super();
             this.blob = blob;
         }
