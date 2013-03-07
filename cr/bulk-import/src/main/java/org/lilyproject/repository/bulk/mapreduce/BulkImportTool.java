@@ -17,16 +17,10 @@ package org.lilyproject.repository.bulk.mapreduce;
 
 import java.io.File;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
-
-import org.lilyproject.repository.bulk.AbstractBulkImportCliTool;
 
 import com.google.common.base.Charsets;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -41,8 +35,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.lilyproject.cli.BaseZkCliTool;
-import org.lilyproject.util.Version;
+import org.lilyproject.repository.bulk.AbstractBulkImportCliTool;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.python.google.common.io.Files;
@@ -90,6 +83,7 @@ public class BulkImportTool extends AbstractBulkImportCliTool implements Tool {
         conf.set(LilyJythonMapper.LILY_ZK_STRING, zkConnectionString);
         conf.set(LilyJythonMapper.MAPPER_CODE, Files.toString(new File(pythonMapperPath), Charsets.UTF_8));
         conf.set(LilyJythonMapper.MAPPER_SYMBOL_NAME, pythonSymbol);
+        conf.set(LilyJythonMapper.TABLE_NAME, outputTable);
 
         Job job = new Job(conf);
 

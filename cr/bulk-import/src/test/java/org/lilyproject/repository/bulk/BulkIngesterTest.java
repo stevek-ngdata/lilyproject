@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 
 import com.google.common.collect.Lists;
-
 import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
@@ -37,6 +36,7 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.Type;
@@ -44,6 +44,7 @@ import org.lilyproject.util.repo.RecordEvent.Type;
 public class BulkIngesterTest {
 
     private HBaseRepository hbaseRepository;
+    private RepositoryManager repositoryManager;
     private HTableInterface recordTable;
     private FieldTypes fieldTypes;
 
@@ -52,6 +53,8 @@ public class BulkIngesterTest {
     @Before
     public void setUp() {
         hbaseRepository = mock(HBaseRepository.class);
+        repositoryManager = mock(RepositoryManager.class);
+        when(hbaseRepository.getRepositoryManager()).thenReturn(repositoryManager);
         recordTable = mock(HTableInterface.class);
         fieldTypes = mock(FieldTypes.class);
         bulkIngester = spy(new BulkIngester(hbaseRepository, recordTable, fieldTypes));

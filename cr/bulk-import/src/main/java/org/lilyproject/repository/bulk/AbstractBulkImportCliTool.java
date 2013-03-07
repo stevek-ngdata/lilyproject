@@ -31,6 +31,7 @@ public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
     private Option inputPathArg;
     private Option pythonMapperPathArg;
     private Option pythonSymbolArg;
+    private Option outputTableArg;
 
     /** Path to the Python mapping script. */
     protected String pythonMapperPath;
@@ -40,6 +41,9 @@ public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
     
     /** Input path for the bulk import process. */
     protected String inputPath;
+    
+    /** Repository table where output is to be written. */
+    protected String outputTable;
     
     public AbstractBulkImportCliTool() {
         
@@ -60,6 +64,12 @@ public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
                 .withLongOpt("symbol")
                 .hasArg()
                 .create('s');
+        
+        outputTableArg = OptionBuilder
+                .withDescription("Repository table name (defaults to record)")
+                .withLongOpt("table")
+                .hasArg()
+                .create('t');
 
     }
     
@@ -76,35 +86,43 @@ public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
         options.add(inputPathArg);
         options.add(pythonMapperPathArg);
         options.add(pythonSymbolArg);
+        options.add(outputTableArg);
         return options;
     }
     
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int status = super.processOptions(cmd);
-        if (status == 0) {
-            if (!cmd.hasOption(inputPathArg.getOpt())) {
-                System.err.println("No input path supplied");
-                return 1;
-            } else {
-                inputPath = cmd.getOptionValue(inputPathArg.getOpt());
-            }
-
-            if (!cmd.hasOption(pythonMapperPathArg.getOpt())) {
-                System.err.println("No python mapper file supplied");
-                return 1;
-            } else {
-                pythonMapperPath = cmd.getOptionValue(pythonMapperPathArg.getOpt());
-            }
-
-            if (!cmd.hasOption(pythonSymbolArg.getOpt())) {
-                System.err.println("No mapper symbol supplied");
-                return 1;
-            } else {
-                pythonSymbol = cmd.getOptionValue(pythonSymbolArg.getOpt());
-            }
+        if (status != 0) {
+            return status;
         }
-        return status;
+        
+        if (!cmd.hasOption(inputPathArg.getOpt())) {
+            System.err.println("No input path supplied");
+            return 1;
+        } else {
+            inputPath = cmd.getOptionValue(inputPathArg.getOpt());
+        }
+
+        if (!cmd.hasOption(pythonMapperPathArg.getOpt())) {
+            System.err.println("No python mapper file supplied");
+            return 1;
+        } else {
+            pythonMapperPath = cmd.getOptionValue(pythonMapperPathArg.getOpt());
+        }
+
+        if (!cmd.hasOption(pythonSymbolArg.getOpt())) {
+            System.err.println("No mapper symbol supplied");
+            return 1;
+        } else {
+            pythonSymbol = cmd.getOptionValue(pythonSymbolArg.getOpt());
+        }
+        
+        if (cmd.hasOption(outputTableArg.getOpt())) {
+            outputTable = cmd.getOptionValue(outputTableArg.getOpt());
+        }
+        
+        return 0;
     }
     
 }

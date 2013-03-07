@@ -41,7 +41,10 @@ public class LilyJythonMapper extends Mapper<LongWritable, Text, ImmutableBytesW
 
     /** Config key for Lily ZooKeeper connection string. */
     public static final String LILY_ZK_STRING = "lilyproject.zookeeper.connection";
-
+    
+    /** Config key for the name of the repository table to write to. */
+    public static final String TABLE_NAME = "lilyproject.tablename";
+    
     private LineMapper lineMapper;
     private BulkIngester bulkIngester;
     private LineMappingContext lineMappingContext;
@@ -51,7 +54,7 @@ public class LilyJythonMapper extends Mapper<LongWritable, Text, ImmutableBytesW
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
         lineMapper = new JythonLineMapper(conf.get(MAPPER_CODE), conf.get(MAPPER_SYMBOL_NAME));
-        bulkIngester = BulkIngester.newBulkIngester(conf.get(LILY_ZK_STRING), 30000);
+        bulkIngester = BulkIngester.newBulkIngester(conf.get(LILY_ZK_STRING), 30000, conf.get(TABLE_NAME));
         recordWriter = new MapReduceRecordWriter(bulkIngester);
         lineMappingContext = new LineMappingContext(bulkIngester, recordWriter);
     }

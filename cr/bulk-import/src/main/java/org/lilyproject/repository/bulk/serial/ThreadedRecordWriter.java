@@ -40,6 +40,7 @@ public class ThreadedRecordWriter implements RecordWriter {
     private Log log = LogFactory.getLog(getClass());
     
     private String lilyZk;
+    private String repositoryTableName;
     private ThreadPoolExecutor executor;
     private AtomicLong recordsWritten = new AtomicLong();
     private AtomicLong writeFailures = new AtomicLong();
@@ -47,8 +48,9 @@ public class ThreadedRecordWriter implements RecordWriter {
     private List<BulkIngester> bulkIngesters;
     
     
-    public ThreadedRecordWriter(String lilyZk, int numThreads) {
+    public ThreadedRecordWriter(String lilyZk, int numThreads, String repositoryTableName) {
         this.lilyZk = lilyZk;
+        this.repositoryTableName = repositoryTableName;
         executor = new ThreadPoolExecutor(numThreads, numThreads, 10, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<Runnable>(5));
         executor.setRejectedExecutionHandler(new WaitPolicy());
@@ -64,7 +66,7 @@ public class ThreadedRecordWriter implements RecordWriter {
             public void run() {
                 
                 if (threadLocalBulkIngesters.get() == null) {
-                    BulkIngester bulkIngester = BulkIngester.newBulkIngester(lilyZk, 30000);
+                    BulkIngester bulkIngester = BulkIngester.newBulkIngester(lilyZk, 30000, repositoryTableName);
                     bulkIngesters.add(bulkIngester);
                     threadLocalBulkIngesters.set(bulkIngester);
                 }

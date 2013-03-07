@@ -52,13 +52,13 @@ public class BulkImportTool extends AbstractBulkImportCliTool {
     
     @Override
     public int run(CommandLine cmd) throws Exception {
-        BulkIngester bulkIngester = BulkIngester.newBulkIngester(zkConnectionString, 30000);
+        BulkIngester bulkIngester = BulkIngester.newBulkIngester(zkConnectionString, 30000, outputTable);
 
         BufferedReader bufferedReader = new BufferedReader(new FileReader(inputPath));
         
         LineMapper lineMapper = new JythonLineMapper(Files.toString(new File(pythonMapperPath), Charsets.UTF_8),
                 pythonSymbol);
-        ThreadedRecordWriter recordWriter = new ThreadedRecordWriter(zkConnectionString, 10);
+        ThreadedRecordWriter recordWriter = new ThreadedRecordWriter(zkConnectionString, 10, outputTable);
         LineMappingContext mappingContext = new LineMappingContext(bulkIngester, recordWriter);
         
         long start = System.currentTimeMillis();

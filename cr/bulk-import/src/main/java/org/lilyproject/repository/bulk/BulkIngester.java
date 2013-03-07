@@ -57,18 +57,31 @@ public class BulkIngester implements Closeable {
     public static final int PUT_BUFFER_SIZE = 1000;
 
     private HBaseRepository hbaseRepo;
+    private RepositoryManager repositoryManager;
+    private RecordFactory recordFactory;
     private HTableInterface recordTable;
     private FieldTypes fieldTypes;
     private List<Put> putBuffer = Lists.newArrayListWithCapacity(PUT_BUFFER_SIZE);
 
     /**
-     * Factory method for creation of a {@code BulkIngester}.
+     * Factory method for creation of a {@code BulkIngester} that operates on the default repository table.
      * 
      * @param zkConnString Connection string for ZooKeeper
      * @param timeout ZooKeeper session timeout
      * @return a new BulkIngester
      */
     public static BulkIngester newBulkIngester(String zkConnString, int timeout) {
+        return newBulkIngester(zkConnString, timeout, null);
+    }
+    
+    /**
+     * Factory method for creation of a {@code BulkIngester that operates on a non-default repository table.
+     * 
+     * @param zkConnString connection string for ZooKeeper
+     * @param timeout ZooKeeper session timeout
+     * @param tableName name of the repository table to write to
+     */
+    public static BulkIngester newBulkIngester(String zkConnString, int timeout, String tableName) {
         try {
             ZooKeeperItf zk = ZkUtil.connect(zkConnString, timeout);
             Configuration conf = HBaseConfiguration.create();
@@ -77,12 +90,19 @@ public class BulkIngester implements Closeable {
             IdGenerator idGenerator = new IdGeneratorImpl();
             TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
             RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
+            
+            @SuppressWarnings("resource") // RepositoryManager gets closed in BulkIngester.close
             RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory, null);
 
             // FIXME Blobs aren't really supported here (no BlobManager is created), but null is
             // just passed in as the BlobManager so we'll probably get some mystery NPEs if Blobs
             // are used. We should either support blobs, or at least forcefully disallow them
-            HBaseRepository hbaseRepository = (HBaseRepository)repositoryManager.getDefaultRepository();
+            HBaseRepository hbaseRepository;
+            if (tableName != null) {
+                hbaseRepository = (HBaseRepository)repositoryManager.getRepository(tableName);
+            } else {
+                hbaseRepository = (HBaseRepository)repositoryManager.getDefaultRepository();
+            }
             return new BulkIngester(hbaseRepository, LilyHBaseSchema.getRecordTable(hbaseTableFactory, hbaseRepository.getTableName()),
                     typeManager.getFieldTypesSnapshot());
         } catch (Exception e) {
@@ -93,6 +113,8 @@ public class BulkIngester implements Closeable {
 
     BulkIngester(HBaseRepository hbaseRepo, HTableInterface recordTable, FieldTypes fieldTypes) {
         this.hbaseRepo = hbaseRepo;
+        this.repositoryManager = hbaseRepo.getRepositoryManager();
+        this.recordFactory = repositoryManager.getRecordFactory();
         this.recordTable = recordTable;
         this.fieldTypes = fieldTypes;
     }
@@ -104,7 +126,7 @@ public class BulkIngester implements Closeable {
      * @return A newly-created record
      */
     public Record newRecord() {
-        return hbaseRepo.getRepositoryManager().getRecordFactory().newRecord();
+        return recordFactory.newRecord();
     }
 
     /**
@@ -166,7 +188,7 @@ public class BulkIngester implements Closeable {
     @Override
     public void close() throws IOException {
         flush();
-        hbaseRepo.getRepositoryManager().close();
+        repositoryManager.close();
     }
 
 }
