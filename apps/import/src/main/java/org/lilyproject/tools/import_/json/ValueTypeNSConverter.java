@@ -20,7 +20,7 @@ public class ValueTypeNSConverter {
         int dollarPos = valueType.indexOf('$');
         if (dollarPos == -1)
             return valueType;
-        
+
         int ltPos = valueType.lastIndexOf('<');
         String prefix = valueType.substring(0, ltPos + 1);
         String nsPrefix = valueType.substring(ltPos + 1, dollarPos);
@@ -36,7 +36,7 @@ public class ValueTypeNSConverter {
         int leftBracketPos = valueType.indexOf('{');
         if (leftBracketPos == -1)
             return valueType;
-        
+
         int rightBracketPos = valueType.indexOf('}');
         String prefix = valueType.substring(0, leftBracketPos);
         String uri = valueType.substring(leftBracketPos + 1, rightBracketPos);

@@ -72,7 +72,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
             }
         }
     }
-    
+
     private void readBlobs(Record readRecord, QName fieldName, Object value, ValueType valueType, int... indexes)
             throws RepositoryException, InterruptedException, IOException {
         if (valueType.getBaseName().equals("LIST")) {
@@ -102,7 +102,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
         byte[] readBytes = new byte[blob.getSize().intValue()];
         int offset = 0;
         int len = blob.getSize().intValue();
-        
+
         while (true) {
             int amountRead = inputStream.read(readBytes, offset, len);
             if (amountRead == -1) {
@@ -113,7 +113,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
         }
 //        System.out.println("Blob read len="+offset+", expected="+blob.getSize());
     }
-    
+
     @Override
     public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) {
         throw new UnsupportedOperationException();

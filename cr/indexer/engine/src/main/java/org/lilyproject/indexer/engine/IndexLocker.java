@@ -71,7 +71,7 @@ public class IndexLocker {
 
     private Log log = LogFactory.getLog(getClass());
 
-    private static final String LOCK_PATH = "/lily/indexer/recordlock";        
+    private static final String LOCK_PATH = "/lily/indexer/recordlock";
 
     public IndexLocker(ZooKeeperItf zk, boolean enabled) throws InterruptedException, KeeperException {
         this.zk = zk;

@@ -45,12 +45,12 @@ public interface FieldType {
 
     /**
      * Sets the id.
-     * 
+     *
      * <p>
      * Even though IDs are system-generated, you might need to set them on the
      * field type e.g. to construct a field type to pass to the
      * {@link TypeManager#updateFieldType(FieldType)}.
-     * 
+     *
      * @throws OperationNotSupportedException
      */
     void setId(SchemaId id);

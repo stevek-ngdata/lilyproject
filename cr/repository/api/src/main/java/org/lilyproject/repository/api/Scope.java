@@ -22,5 +22,5 @@ package org.lilyproject.repository.api;
  * refer to the Lily repository model documentation.
  */
 public enum Scope {
-    NON_VERSIONED, VERSIONED, VERSIONED_MUTABLE 
+    NON_VERSIONED, VERSIONED, VERSIONED_MUTABLE
 }

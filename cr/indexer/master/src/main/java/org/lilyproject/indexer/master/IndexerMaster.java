@@ -362,7 +362,7 @@ public class IndexerMaster {
             return this.fullTableScanConf;
         }
     }
-    
+
     private List<String> getBatchTables(IndexDefinition index) {
         if (index.getBatchTables() != null) {
             return index.getBatchTables();

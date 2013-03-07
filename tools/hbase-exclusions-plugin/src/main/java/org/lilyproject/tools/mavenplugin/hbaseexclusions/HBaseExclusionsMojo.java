@@ -132,7 +132,7 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
         ALLOWED_ARTIFACTS.add("org.codehaus.jackson:jackson-core-asl");
         ALLOWED_ARTIFACTS.add("org.codehaus.jackson:jackson-mapper-asl");
     }
-    
+
     private boolean isAllowed(String groupId, String artifactId) {
         return ALLOWED_ARTIFACTS.contains(groupId + ":" + artifactId);
     }

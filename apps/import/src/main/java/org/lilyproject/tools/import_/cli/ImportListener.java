@@ -29,5 +29,5 @@ public interface ImportListener {
 
     void updated(EntityType entityType, String entityName, String entityId, long version);
 
-    void created(EntityType entityType, String entityName, String entityId);    
+    void created(EntityType entityType, String entityName, String entityId);
 }

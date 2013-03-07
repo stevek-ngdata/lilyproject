@@ -98,7 +98,7 @@ public class LilyRuntimeModuleImpl implements LilyRuntimeModule {
     public ConfRegistry getConfRegistry() {
         return runtime.getConfManager().getConfRegistry(module.getDefinition().getId());
     }
-    
+
     public String moduleInfo() {
         return module.getDefinition().moduleInfo();
     }

@@ -32,7 +32,7 @@ public class RecordExistsException extends RecordException {
         state.put("recordId", recordId);
         return state;
     }
-    
+
     public RecordExistsException(RecordId recordId) {
         this.recordId = recordId != null ? recordId.toString() : null;
     }

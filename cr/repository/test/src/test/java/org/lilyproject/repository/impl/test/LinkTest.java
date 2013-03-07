@@ -80,42 +80,42 @@ public class LinkTest {
 
         String fullStr = "USER.AB\\.CD.foo\\.com=bar\\.com";
         Link fullLink = Link.fromString(fullStr, idGenerator);
-        
+
 
     }
-    
+
     @Test
     public void testFromString_WithTable() {
         String idString = "mytable:USER.1234";
         Link link = Link.fromString(idString, idGenerator);
-        
+
         assertEquals("mytable", link.getTable());
         assertEquals("USER.1234", link.getMasterRecordId().toString());
     }
-    
+
     @Test
     public void testFromString_NoTable() {
         String idString = "USER.1234";
         Link link = Link.fromString(idString, idGenerator);
-        
+
         assertNull(link.getTable());
         assertEquals("USER.1234", link.getMasterRecordId().toString());
     }
-    
+
     @Test
     public void testFromString_WithTable_WithColonsInId() {
         String idString = "mytable:USER.12:34";
         Link link = Link.fromString(idString, idGenerator);
-        
+
         assertEquals("mytable", link.getTable());
         assertEquals("USER.12:34", link.getMasterRecordId().toString());
     }
-    
+
     @Test
     public void testFromString_NoTable_WithColonsInId() {
         String idString = "USER.12:34";
         Link link = Link.fromString(idString, idGenerator);
-        
+
         assertNull(link.getTable());
         assertEquals("USER.12:34", link.getMasterRecordId().toString());
     }
@@ -282,7 +282,7 @@ public class LinkTest {
             // ok
         }
     }
-    
+
     @Test
     public void testEquals() {
         RecordId recordId1 = idGenerator.newRecordId("123");
@@ -292,7 +292,7 @@ public class LinkTest {
 
         Assert.assertEquals(link1, link1);
         Assert.assertFalse(link1.equals(link2));
-        
+
         Map<String, String> varProps1 = new HashMap<String, String>();
         varProps1.put("lang", "en");
         varProps1.put("branch", "dev");
@@ -309,7 +309,7 @@ public class LinkTest {
         Assert.assertEquals(link3, link3);
         Assert.assertFalse(link3.equals(link4));
     }
-    
+
     @Test
     public void testLinkBuilder_WithTable() {
         RecordId recordId = idGenerator.newRecordId("42");
@@ -317,18 +317,18 @@ public class LinkTest {
                         .recordId(recordId)
                         .table("mytable")
                         .create();
-        
+
         assertEquals(recordId, link.getMasterRecordId());
         assertEquals("mytable", link.getTable());
     }
-    
+
     @Test
     public void testLinkBuilder_WithoutTable() {
         RecordId recordId = idGenerator.newRecordId("42");
         Link link = Link.newBuilder()
                          .recordId(recordId)
                          .create();
-        
+
         assertEquals(recordId, link.getMasterRecordId());
         assertEquals(null, link.getTable());
     }

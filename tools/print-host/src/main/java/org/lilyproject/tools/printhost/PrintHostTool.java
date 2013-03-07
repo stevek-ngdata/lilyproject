@@ -95,7 +95,7 @@ public class PrintHostTool extends BaseCliTool {
         for (InetAddress addr : addrs) {
             System.out.println("  " + addr.getHostAddress());
         }
-        
+
         return 0;
     }
 }

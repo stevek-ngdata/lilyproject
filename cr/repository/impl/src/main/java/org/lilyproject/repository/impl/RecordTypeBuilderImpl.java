@@ -23,7 +23,7 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
     private RecordType recordType;
     private String defaultNamespace;
     private Scope defaultScope = Scope.NON_VERSIONED;
-    
+
     public RecordTypeBuilderImpl(TypeManager typeManager) throws TypeException {
         this.typeManager = typeManager;
         recordType = typeManager.newRecordType(null);
@@ -64,7 +64,7 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
         recordType.setId(id);
         return this;
     }
-    
+
     @Override
     public RecordTypeBuilder field(SchemaId id, boolean mandatory) {
         recordType.addFieldTypeEntry(id, mandatory);

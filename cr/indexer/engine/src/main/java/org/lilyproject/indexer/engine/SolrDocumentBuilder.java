@@ -249,7 +249,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     public SystemFields getSystemFields() {
         return systemFields;
     }
-    
+
     @Override
     public String getTable() {
         return table;

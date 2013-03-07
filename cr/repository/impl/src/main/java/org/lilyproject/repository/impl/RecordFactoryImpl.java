@@ -23,9 +23,9 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.TypeManager;
 
 public class RecordFactoryImpl implements RecordFactory {
-    
+
     private RecordDecoder recordDecoder;
-    
+
     public RecordFactoryImpl(TypeManager typeManager, IdGenerator idGenerator) {
         recordDecoder = new RecordDecoder(typeManager, idGenerator);
     }

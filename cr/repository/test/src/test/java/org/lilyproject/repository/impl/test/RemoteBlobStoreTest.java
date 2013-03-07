@@ -39,7 +39,7 @@ public class RemoteBlobStoreTest extends AbstractBlobStoreTest {
         // Create a blobStoreAccessRegistry for testing purposes
         testBlobStoreAccessRegistry = new BlobStoreAccessRegistry(repoSetup.getRemoteBlobManager());
         testBlobStoreAccessRegistry.setBlobStoreAccessFactory(repoSetup.getRemoteBlobStoreAccessFactory());
-        
+
         blobManager = repoSetup.getRemoteBlobManager();
     }
 

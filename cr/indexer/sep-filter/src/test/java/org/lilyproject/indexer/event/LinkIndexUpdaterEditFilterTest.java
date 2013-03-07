@@ -26,9 +26,9 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public class LinkIndexUpdaterEditFilterTest {
-    
+
     private LinkIndexUpdaterEditFilter editFilter;
-    
+
     @Before
     public void setUp() {
         editFilter = new LinkIndexUpdaterEditFilter();
@@ -38,20 +38,20 @@ public class LinkIndexUpdaterEditFilterTest {
     public void testApply_NoPayload() {
         WALEdit walEdit = new WALEdit();
         walEdit.add(new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.OCC.bytes, Bytes.toBytes(123)));
-        
+
         editFilter.apply(walEdit);
-        
+
         assertEquals(0, walEdit.getKeyValues().size());
     }
-    
+
     @Test
     public void testApply_WithPayload() {
 
         WALEdit walEdit = new WALEdit();
         walEdit.add(new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, Bytes.toBytes("payload")));
-        
+
         editFilter.apply(walEdit);
-        
+
         assertEquals(1, walEdit.getKeyValues().size());
     }
 

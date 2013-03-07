@@ -32,9 +32,9 @@ import java.util.Map;
 public class MavenUtil {
     public static File findLocalMavenRepository() throws IOException {
         String localRepositoryProperty = System.getProperty("localRepository");
-        if (localRepositoryProperty != null) 
+        if (localRepositoryProperty != null)
             return new File(localRepositoryProperty);
-        
+
         String homeDir = System.getProperty("user.home");
         File mavenSettingsFile = new File(homeDir + "/.m2/settings.xml");
         if (mavenSettingsFile.exists()) {

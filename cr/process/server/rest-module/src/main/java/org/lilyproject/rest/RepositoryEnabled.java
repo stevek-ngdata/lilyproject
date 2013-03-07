@@ -32,7 +32,7 @@ public class RepositoryEnabled {
     public void setRepositoryManager(RepositoryManager repositoryManager) {
         this.repositoryMgr = repositoryManager;
     }
-    
+
     /**
      * @deprecated Use getRepository(String) instead
      */
@@ -45,7 +45,7 @@ public class RepositoryEnabled {
             throw new ResourceException("Error retrieving repository", e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
     }
-    
+
     /**
      * Returns a repository based on the tableName path parameter.
      * <p>
@@ -61,7 +61,7 @@ public class RepositoryEnabled {
             return getRepository(Table.RECORD.name);
         }
     }
-    
+
     public Repository getRepository(String tableName) {
         try {
             return repositoryMgr.getRepository(tableName);

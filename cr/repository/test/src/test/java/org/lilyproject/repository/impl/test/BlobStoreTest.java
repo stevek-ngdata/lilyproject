@@ -54,5 +54,5 @@ public class BlobStoreTest extends AbstractBlobStoreTest {
     public void tearDown() throws Exception {
     }
 
-    
+
 }

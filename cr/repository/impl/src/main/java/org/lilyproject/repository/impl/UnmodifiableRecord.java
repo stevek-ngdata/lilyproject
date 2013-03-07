@@ -166,12 +166,12 @@ public class UnmodifiableRecord implements Record, Cloneable {
     public boolean softEquals(Object obj) {
         return delegate.softEquals(obj);
     }
-    
+
     @Override
     public void setDefaultNamespace(String namespace) {
         throw new RuntimeException(MSG);
     }
-    
+
     @Override
     public void setRecordType(String recordTypeName) {
         throw new RuntimeException(MSG);
@@ -186,7 +186,7 @@ public class UnmodifiableRecord implements Record, Cloneable {
     public void setRecordType(Scope scope, String recordTypeName, Long version) {
         throw new RuntimeException(MSG);
     }
-    
+
     @Override
     public void setField(String fieldName, Object value) {
         throw new RuntimeException(MSG);
@@ -197,12 +197,12 @@ public class UnmodifiableRecord implements Record, Cloneable {
         // The cast to (T) is only needed for a bug in JDK's < 1.6u24
         return (T)delegate.getField(fieldName);
     }
-    
+
     @Override
     public void delete(String fieldName, boolean addToFieldsToDelete) {
         throw new RuntimeException(MSG);
     }
-    
+
     @Override
     public boolean hasField(String fieldName) throws RecordException {
         return delegate.hasField(fieldName);

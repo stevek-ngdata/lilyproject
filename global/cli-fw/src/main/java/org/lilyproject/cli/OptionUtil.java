@@ -16,7 +16,7 @@ public class OptionUtil {
         }
         return defaultValue;
     }
-    
+
     public static String getStringOption(CommandLine cmd, Option option, String defaultValue) {
         if (cmd.hasOption(option.getOpt())) {
             return cmd.getOptionValue(option.getOpt());

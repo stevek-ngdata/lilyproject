@@ -36,7 +36,7 @@ public class IdentityRecordStack {
     public IdentityRecordStack(Record firstEntry) {
         this.first = firstEntry;
     }
-    
+
     public void push(Record record) {
         if (first == null) {
             first = record;
@@ -47,7 +47,7 @@ public class IdentityRecordStack {
             stack.add(record);
         }
     }
-    
+
     public Record pop() {
         if (stack != null && !stack.isEmpty()) {
             return stack.remove(stack.size() - 1);
@@ -64,7 +64,7 @@ public class IdentityRecordStack {
         if (first == record) {
             return true;
         }
-        
+
         if (stack != null) {
             for (Record entry : stack) {
                 if (entry == record) {
@@ -72,7 +72,7 @@ public class IdentityRecordStack {
                 }
             }
         }
-        
+
         return false;
     }
 }

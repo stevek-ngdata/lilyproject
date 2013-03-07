@@ -16,7 +16,7 @@ import org.lilyproject.repository.api.SchemaId;
  * <li>parent record: a record that has other records depending on it</li>
  * <li>dependency: a record that depends on a parent record
  * </ul>
- * 
+ *
  * There is typically a one-to-many relationship between parent records and dependencies
  */
 public interface DerefMap {

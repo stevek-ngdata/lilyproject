@@ -28,7 +28,7 @@ public class FieldedLink {
     private final AbsoluteRecordId absRecordId;
     private final SchemaId fieldTypeId;
     private final int hash;
-    
+
     public FieldedLink(AbsoluteRecordId absRecordId, SchemaId fieldTypeId) {
         this.absRecordId = absRecordId;
         this.fieldTypeId = fieldTypeId;
@@ -37,8 +37,8 @@ public class FieldedLink {
         hash = 37 * hash + fieldTypeId.hashCode();
         this.hash = hash;
     }
-    
-    
+
+
     public AbsoluteRecordId getAbsoluteRecordId() {
         return absRecordId;
     }
@@ -64,7 +64,7 @@ public class FieldedLink {
         }
         return false;
     }
-    
+
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);

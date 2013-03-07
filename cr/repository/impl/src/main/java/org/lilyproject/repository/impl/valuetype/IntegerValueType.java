@@ -90,10 +90,10 @@ public class IntegerValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new IntegerValueTypeFactory();
     }
-    
+
     public static class IntegerValueTypeFactory implements ValueTypeFactory {
         private static IntegerValueType instance = new IntegerValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

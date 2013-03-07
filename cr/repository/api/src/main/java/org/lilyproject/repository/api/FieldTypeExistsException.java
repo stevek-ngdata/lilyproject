@@ -27,14 +27,14 @@ public class FieldTypeExistsException extends TypeException {
     public FieldTypeExistsException(String message, Map<String, String> state) {
         this.fieldType = state.get("fieldType");
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
         state.put("fieldType", fieldType);
         return state;
     }
-    
+
     public FieldTypeExistsException(FieldType fieldType) {
         if (fieldType != null)
             this.fieldType = fieldType.getName().toString();

@@ -32,7 +32,7 @@ public class Fields {
         }
 
         FieldType fieldType = typeMgr.getFieldTypeById(fieldId);
-        
+
         fields.add(fieldType);
         return fieldType;
     }

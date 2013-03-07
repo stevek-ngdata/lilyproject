@@ -39,14 +39,14 @@ public class IndexerModelImplTest {
 
     private ZooKeeperItf zk;
     private IndexerModelImpl indexerModel;
-    
+
     @Before
     public void setUp() throws Exception {
         zk = mock(ZooKeeperItf.class);
         when(zk.retryOperation(any(ZooKeeperOperation.class))).thenReturn(true);
         indexerModel = new IndexerModelImpl(zk);
     }
-    
+
     /** Creates a Mockito-spyed basic IndexDefinition. */
     private IndexDefinition createSpyIndexDefinition() {
         IndexDefinition indexDefinition = spy(new IndexDefinitionImpl("test_index"));
@@ -56,7 +56,7 @@ public class IndexerModelImplTest {
         indexDefinition.setSolrShards(solrShardMap);
         return indexDefinition;
     }
-    
+
     // Check that the current timestamp is set on an index definition when it is added
     @Test
     public void testAddIndex() throws Exception {
@@ -68,32 +68,32 @@ public class IndexerModelImplTest {
         verify(indexDefinition).setSubscriptionTimestamp(timestampCaptor.capture());
         assertTrue(Math.abs(timestampCaptor.getValue() - System.currentTimeMillis()) < 1000);
     }
-    
+
     // Check that the current timestamp is not set on an index definition when it is added
     // if the update state is set to DO_NOT_SUBSCRIBE
     @Test
     public void testAddIndex_UpdateStateDoNotSubscribe() throws Exception {
         IndexDefinition indexDefinition = createSpyIndexDefinition();
         indexDefinition.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
-        
+
         indexerModel.addIndex(indexDefinition);
         verify(indexDefinition, never()).setSubscriptionTimestamp(anyLong());
     }
-    
+
     @Test
     public void testValidateIndexName_Valid() {
         // Nothing should happen
         IndexerModelImpl.validateIndexName("valid-index-name");
     }
-    
+
     @Test(expected=IllegalArgumentException.class)
     public void testValidateIndexName_Invalid_EmptyString() {
         IndexerModelImpl.validateIndexName("");
     }
-    
+
     @Test(expected=IllegalArgumentException.class)
     public void testValidateIndexName_Invalid_NonPrintableCharacters() {
         IndexerModelImpl.validateIndexName("not\u0001valid");
     }
-    
+
 }

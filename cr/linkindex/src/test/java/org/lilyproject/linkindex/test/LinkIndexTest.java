@@ -53,11 +53,11 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
 
 public class LinkIndexTest {
-    
+
     private static final String TABLE_A = "tableA";
     private static final String TABLE_B = "tableB";
     private static final String TABLE_C = "tableC";
-    
+
     private final static RepositorySetup repoSetup = new RepositorySetup();
 
     private static TypeManager typeManager;
@@ -86,7 +86,7 @@ public class LinkIndexTest {
         repoSetup.getTableManager().createTable(TABLE_A);
         repoSetup.getTableManager().createTable(TABLE_B);
         repoSetup.getTableManager().createTable(TABLE_C);
-        
+
         repoSetup.startSepEventSlave("LinkIndexUpdater", new LinkIndexUpdater(repoSetup.getRepositoryManager(), linkIndex));
     }
 
@@ -167,7 +167,7 @@ public class LinkIndexTest {
                         new FieldedLink(ids.newAbsoluteRecordId(TABLE_A, "id1"), field1),
                         new FieldedLink(ids.newAbsoluteRecordId(TABLE_A, "id2"), field1)),
                 links);
-        
+
         // Test backward link retrieval - non-absolute ids
         Set<AbsoluteRecordId> referrers = linkIndex.getAbsoluteReferrers(ids.newAbsoluteRecordId(TABLE_A, "id1"), liveTag);
         assertEquals(2, referrers.size());
@@ -183,7 +183,7 @@ public class LinkIndexTest {
         assertTrue(absoluteReferrers.contains(ids.newAbsoluteRecordId(TABLE_B, "idB")));
         assertEquals(2, absoluteReferrers.size());
     }
-    
+
     @Test
     public void testLinkIndexWithShortRecordIds() throws Exception {
         final RecordId id1 = ids.newRecordId("id1");
@@ -381,11 +381,11 @@ public class LinkIndexTest {
             assertTrue(forwardLinks.contains(ids.newRecordId("cl2")));
         }
     }
-    
+
     private AbsoluteRecordId createAbsoluteId(String recordIdString) {
         return createAbsoluteId(ids.newRecordId(recordIdString));
     }
-    
+
     private AbsoluteRecordId createAbsoluteId(RecordId recordId) {
         return ids.newAbsoluteRecordId(Table.RECORD.name, recordId);
     }

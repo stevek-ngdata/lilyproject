@@ -30,13 +30,13 @@ public class RecordImpl implements Record, Cloneable {
     private Map<Scope, RecordTypeRef> recordTypes = new EnumMap<Scope, RecordTypeRef>(Scope.class);
     private Long version;
     private ResponseStatus responseStatus;
-    
+
     private Map<String,String> attributes;
-    
+
     private String defaultNamespace = null;
 
     private Map<QName, Metadata> metadatas;
-    
+
     /**
      * This constructor should not be called directly.
      * @use {@link Repository#newRecord} instead
@@ -56,17 +56,17 @@ public class RecordImpl implements Record, Cloneable {
     public void setId(RecordId id) {
         this.id = id;
     }
-    
+
     @Override
     public RecordId getId() {
         return id;
     }
-    
+
     @Override
     public void setVersion(Long version) {
         this.version = version;
     }
-    
+
     @Override
     public Long getVersion() {
         return version;
@@ -76,12 +76,12 @@ public class RecordImpl implements Record, Cloneable {
     public void setRecordType(QName name, Long version) {
         setRecordType(Scope.NON_VERSIONED, name, version);
     }
-    
+
     @Override
     public void setRecordType(QName name) {
         setRecordType(name, null);
     }
-    
+
     @Override
     public QName getRecordTypeName() {
         return getRecordTypeName(Scope.NON_VERSIONED);
@@ -91,7 +91,7 @@ public class RecordImpl implements Record, Cloneable {
     public Long getRecordTypeVersion() {
         return getRecordTypeVersion(Scope.NON_VERSIONED);
     }
-    
+
     @Override
     public void setRecordType(Scope scope, QName name, Long version) {
         if (name == null && version == null) {
@@ -100,25 +100,25 @@ public class RecordImpl implements Record, Cloneable {
             recordTypes.put(scope, new RecordTypeRef(name, version));
         }
     }
-    
+
     @Override
     public QName getRecordTypeName(Scope scope) {
         RecordTypeRef ref = recordTypes.get(scope);
         return ref != null ? ref.name : null;
     }
-    
+
     @Override
     public Long getRecordTypeVersion(Scope scope) {
         RecordTypeRef ref = recordTypes.get(scope);
         return ref != null ? ref.version : null;
     }
-    
+
     @Override
     public void setField(QName name, Object value) {
         fields.put(name, value);
         fieldsToDelete.remove(name);
     }
-    
+
     @Override
     public <T> T getField(QName name) throws FieldNotFoundException {
         Object field = fields.get(name);
@@ -182,7 +182,7 @@ public class RecordImpl implements Record, Cloneable {
             throw new RuntimeException(e);
         }
     }
-    
+
     @Override
     public Record cloneRecord() throws RecordException {
         return cloneRecord(new IdentityRecordStack());
@@ -211,7 +211,7 @@ public class RecordImpl implements Record, Cloneable {
                 record.setMetadata(metadata.getKey(), metadata.getValue());
             }
         }
-        
+
         // the ResponseStatus is not cloned, on purpose
         return record;
     }
@@ -423,7 +423,7 @@ public class RecordImpl implements Record, Cloneable {
             return ObjectUtils.safeEquals(name, other.name) && ObjectUtils.safeEquals(version, other.version);
         }
     }
-    
+
     @Override
     public void setDefaultNamespace(String namespace) {
         this.defaultNamespace = namespace;
@@ -440,38 +440,38 @@ public class RecordImpl implements Record, Cloneable {
         throw new RecordException("Namespace could not be resolved for name '" + name +
             "' since no default namespace was given and no record type is set.");
     }
-    
+
     @Override
     public void setRecordType(String recordTypeName) throws RecordException {
         setRecordType(resolveNamespace(recordTypeName));
     }
-    
+
     @Override
     public void setRecordType(String recordTypeName, Long version) throws RecordException {
         setRecordType(resolveNamespace(recordTypeName), version);
     }
-    
+
     @Override
     public void setRecordType(Scope scope, String recordTypeName, Long version) throws RecordException {
         setRecordType(scope, resolveNamespace(recordTypeName), version);
     }
-    
+
     @Override
     public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
         // The cast to (T) is only needed for a bug in JDK's < 1.6u24
         return (T)getField(resolveNamespace(fieldName));
     }
-    
+
     @Override
     public void setField(String fieldName, Object value) throws RecordException {
         setField(resolveNamespace(fieldName), value);
     }
-    
+
     @Override
     public void delete(String fieldName, boolean addFieldsToDelete) throws RecordException {
         delete(resolveNamespace(fieldName), addFieldsToDelete);
     }
-    
+
     @Override
     public boolean hasField(String fieldName) throws RecordException {
         return hasField(resolveNamespace(fieldName));

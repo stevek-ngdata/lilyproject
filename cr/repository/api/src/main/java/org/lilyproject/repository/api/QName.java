@@ -35,11 +35,11 @@ public class QName {
         this.namespace = namespace;
         this.name = name;
     }
-    
+
     public String getNamespace() {
         return namespace;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -76,7 +76,7 @@ public class QName {
     public String toString() {
         return "{" + namespace + "}" + name;
     }
-    
+
     /**
      * Creates a qname based on a string.
      *

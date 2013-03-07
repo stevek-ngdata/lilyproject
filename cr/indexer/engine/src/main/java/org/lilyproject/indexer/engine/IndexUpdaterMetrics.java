@@ -38,7 +38,7 @@ public class IndexUpdaterMetrics implements Updater {
     private final IndexerMetricsMBean mbean;
 
     public MetricsTimeVaryingRate updates = new MetricsTimeVaryingRate("updates", registry);
-    public MetricsLongValue lastReindexRequestedTimestamp = 
+    public MetricsLongValue lastReindexRequestedTimestamp =
                     new MetricsLongValue("lastReindexRequestTimestamp", registry);
 
     /**

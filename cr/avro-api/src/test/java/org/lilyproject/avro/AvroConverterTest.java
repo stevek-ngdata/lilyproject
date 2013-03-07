@@ -82,7 +82,7 @@ public class AvroConverterTest {
     public void setUp() throws Exception {
         repositoryManager.getTypeManager();
         expectLastCall().andReturn(typeManager).anyTimes();
-        
+
         repositoryManager.getRecordFactory();
         expectLastCall().andReturn(recordFactory).anyTimes();
     }

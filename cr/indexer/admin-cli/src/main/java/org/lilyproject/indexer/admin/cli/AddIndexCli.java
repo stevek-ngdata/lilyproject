@@ -103,7 +103,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
 
         if (defaultBatchIndexConfiguration != null)
             index.setDefaultBatchIndexConfiguration(defaultBatchIndexConfiguration);
-        
+
         if (defaultBatchIndexTables != null)
             index.setDefaultBatchTables(defaultBatchIndexTables);
 

@@ -54,7 +54,7 @@ public class ClassLoadingLilyLauncher {
         this.repositoryLocation = repositoryLocation;
     }
 
-    
+
     public void run(String[] args) throws Throwable {
 
         ClassLoader classLoader = LauncherClasspathHelper.getClassLoader("org/lilyproject/lilyservertestfwloader/classloader.xml", repositoryLocation);

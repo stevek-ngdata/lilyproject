@@ -37,7 +37,7 @@ public class FieldTypeEntryImpl implements FieldTypeEntry, Cloneable {
     public SchemaId getFieldTypeId() {
         return fieldTypeId;
     }
-    
+
     @Override
     public boolean isMandatory() {
         return mandatory;
@@ -47,12 +47,12 @@ public class FieldTypeEntryImpl implements FieldTypeEntry, Cloneable {
     public void setFieldTypeId(SchemaId id) {
         this.fieldTypeId = id;
     }
-    
+
     @Override
     public void setMandatory(boolean mandatory) {
         this.mandatory = mandatory;
     }
-    
+
     @Override
     public FieldTypeEntry clone() {
         return new FieldTypeEntryImpl(fieldTypeId, mandatory);

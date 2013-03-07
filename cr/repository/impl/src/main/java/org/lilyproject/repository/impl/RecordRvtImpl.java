@@ -27,7 +27,7 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
     private IdRecord delegate;
     private byte[] bytes;
     private RecordValueType recordValueType;
-    
+
     public RecordRvtImpl(byte[] bytes, RecordValueType recordValueType) {
         this.bytes = bytes;
         this.recordValueType = recordValueType;
@@ -52,11 +52,11 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
         if (clearBytes)
             bytes = null;
     }
-    
+
     public byte[] getBytes() {
         return bytes;
     }
-    
+
     @Override
     public void addFieldsToDelete(List<QName> fieldNames) {
         decode(true);
@@ -251,7 +251,7 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
         decode(false);
         return delegate.softEquals(obj);
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         decode(false);
@@ -321,7 +321,7 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
     @Override
     public void setAttributes(Map<String, String> attributes) {
         decode(true);
-        delegate.setAttributes(attributes);        
+        delegate.setAttributes(attributes);
     }
 
     @Override

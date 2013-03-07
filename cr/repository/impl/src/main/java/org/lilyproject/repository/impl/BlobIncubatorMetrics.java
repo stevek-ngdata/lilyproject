@@ -37,7 +37,7 @@ public class BlobIncubatorMetrics implements Updater {
 
     public MetricsTimeVaryingInt blobDeleteCount = new MetricsTimeVaryingInt("blob_delete_cnt", registry);
     public MetricsTimeVaryingInt refDeleteCount = new MetricsTimeVaryingInt("ref_delete_cnt", registry);
-    
+
     public BlobIncubatorMetrics() {
         context = MetricsUtil.getContext("blobIncubator");
         metricsRecord = MetricsUtil.createRecord(context, "blobIncubator");

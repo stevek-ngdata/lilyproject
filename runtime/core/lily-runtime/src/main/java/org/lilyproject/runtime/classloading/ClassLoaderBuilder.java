@@ -39,10 +39,10 @@ public class ClassLoaderBuilder {
             classLoaderCache = new HashMap<String, ClassLoader>();
         }
     }
-    
+
     public static synchronized ClassLoader build(List<ClasspathEntry> classpathEntries, ClassLoader parentClassLoader,
             ArtifactRepository repository) throws ArtifactNotFoundException, MalformedURLException {
-        
+
         if (classLoaderCacheEnabled) {
             //
             // About the ClassLoader cache:
@@ -60,16 +60,16 @@ public class ClassLoaderBuilder {
             for (ClasspathEntry entry : classpathEntries) {
                 cacheKeyBuilder.append(entry.getArtifactRef()).append("\u2603" /* unicode snowman as separator */);
             }
-            
+
             // Add some identification of the parent class loader
             if (parentClassLoader instanceof URLClassLoader) {
                 for (URL url : ((URLClassLoader)parentClassLoader).getURLs()) {
                     cacheKeyBuilder.append(url.toString());
                 }
             }
-            
+
             String cacheKey = cacheKeyBuilder.toString();
-            
+
             ClassLoader classLoader = classLoaderCache.get(cacheKey);
             if (classLoader == null) {
                 Log log = LogFactory.getLog(ClassLoaderBuilder.class);
@@ -81,13 +81,13 @@ public class ClassLoaderBuilder {
                 log.error("Lily Runtime ClassLoader cache: parentClassLoader of cache ClassLoader is different" +
                         " from the specified one. Returning the cached one anyway.");
             }
-            
-            return classLoader;            
-        } else {        
+
+            return classLoader;
+        } else {
             return create(classpathEntries, parentClassLoader, repository);
         }
     }
-    
+
     private static ClassLoader create(List<ClasspathEntry> classpathEntries, ClassLoader parentClassLoader,
             ArtifactRepository repository) throws ArtifactNotFoundException, MalformedURLException {
         List<URL> classpath = new ArrayList<URL>();
@@ -97,6 +97,6 @@ public class ClassLoaderBuilder {
             classpath.add(resolvedFile.toURL());
         }
 
-        return new URLClassLoader(classpath.toArray(new URL[classpath.size()]), parentClassLoader);        
+        return new URLClassLoader(classpath.toArray(new URL[classpath.size()]), parentClassLoader);
     }
 }

@@ -19,7 +19,7 @@ package org.lilyproject.repository.api;
  * Represents a single storage table for storing Lily {@link Record} objects.
  */
 public interface RepositoryTable {
-    
+
     /**
      * Returns the name of this table.
      */

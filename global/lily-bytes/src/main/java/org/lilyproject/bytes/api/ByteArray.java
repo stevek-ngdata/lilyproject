@@ -21,7 +21,7 @@ import java.util.Arrays;
  * A utility class providing read only access to a byte[].
  * <p>
  * Upon construction, the byte[] to be wrapped needs to be given.</br>
- * 
+ *
  * This byte[] is copied by the constructor {@link ByteArray#ByteArray(byte[])}
  * to avoid external changes to the byte[] from having an impact.
  * <p>
@@ -53,7 +53,7 @@ public class ByteArray {
      * <p>
      * Warning! This method should only be used when the user is absolutely
      * certain that the provided byte[] will not be modified anymore.
-     * 
+     *
      * @param bytes
      *            the byte[] to wrap
      * @return a ByteArray
@@ -83,7 +83,7 @@ public class ByteArray {
 
     /**
      * Returns the byte at index of the wrapped byte[].
-     * 
+     *
      * @param index
      *            of the byte to return
      * @return a byte
@@ -104,7 +104,7 @@ public class ByteArray {
 
     /**
      * Returns a copy of the specified range of the wrapped byte[]
-     * 
+     *
      * @param from
      *            the initial index of the range to be copied, inclusive
      * @param to
@@ -118,7 +118,7 @@ public class ByteArray {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#hashCode()
      */
     @Override
@@ -131,7 +131,7 @@ public class ByteArray {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override

@@ -29,14 +29,14 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
     protected String getVersion() {
         return Version.readVersion("org.lilyproject", "lily-repository-admin-cli");
     }
-    
+
     @Override
     public int run(CommandLine cmd) throws Exception {
         int status = super.run(cmd);
         if (status != 0) {
             return status;
         }
-        
+
         LilyClient lilyClient = new LilyClient(zkConnectionString, 30000);
         RepositoryTableManager tableManager = lilyClient.getTableManager();
         try {
@@ -46,12 +46,12 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
         }
         return status;
     }
-    
+
     /**
      * Perform table management tasks.
      * @param tableManager manager for accessing repository tables
      * @return the exit status of the command
      */
     protected abstract int execute(RepositoryTableManager tableManager) throws Exception;
-    
+
 }

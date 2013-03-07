@@ -19,7 +19,7 @@ public class MasterFollow implements Follow {
             // We're already on a master record, stop here
             return;
         }
-        
+
         Repository repository = indexUpdateBuilder.getRepositoryManager().getRepository(indexUpdateBuilder.getTable());
 
         Dep masterDep = new Dep(ctx.dep.id.getMaster(), Collections.<String>emptySet());

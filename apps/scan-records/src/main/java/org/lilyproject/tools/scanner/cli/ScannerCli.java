@@ -107,7 +107,7 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Repository table to scan (defaults to record)")
                 .withLongOpt("table")
                 .create("t");
-        
+
 
         options.add(printOption);
         options.add(limitOption);
@@ -131,7 +131,7 @@ public class ScannerCli extends BaseZkCliTool {
             printHelp();
             return 0;
         }
-        
+
         String startId = cmd.hasOption(startOption.getLongOpt()) ? cmd.getOptionValue(startOption.getLongOpt()) : null;
         String stopId = cmd.hasOption(stopOption.getLongOpt()) ? cmd.getOptionValue(stopOption.getLongOpt()) : null;
         String recordTypeFilter = cmd.hasOption(recordTypeOption.getOpt()) ? cmd.getOptionValue(recordTypeOption.getOpt()) : null;

@@ -20,7 +20,7 @@ import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescript
 import org.lilyproject.util.hbase.TableConfig;
 
 public class TableCreateDescriptorImpl implements TableCreateDescriptor{
-    
+
     private String name;
     private byte[][] splitKeys;
 
@@ -28,7 +28,7 @@ public class TableCreateDescriptorImpl implements TableCreateDescriptor{
         this.name = name;
         this.splitKeys = splitKeys;
     }
-        
+
     @Override
     public String getName() {
         return name;
@@ -42,7 +42,7 @@ public class TableCreateDescriptorImpl implements TableCreateDescriptor{
     public static TableCreateDescriptor createInstance(String name) {
         return new TableCreateDescriptorImpl(name, null);
     }
-    
+
     public static TableCreateDescriptor createInstanceWithSplitKeys(String name, String keyPrefix, String splitKeys) {
         TableConfig tableConfig = new TableConfig(-1, splitKeys, keyPrefix == null ? null : Bytes.toBytesBinary(keyPrefix));
         return new TableCreateDescriptorImpl(name, tableConfig.getSplitKeys());

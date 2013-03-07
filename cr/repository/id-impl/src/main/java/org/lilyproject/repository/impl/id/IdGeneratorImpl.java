@@ -92,12 +92,12 @@ public class IdGeneratorImpl implements IdGenerator {
     public RecordId newRecordId(String userProvidedId, Map<String, String> variantProperties) {
         return newRecordId(newRecordId(userProvidedId), variantProperties);
     }
-    
+
     @Override
     public AbsoluteRecordId newAbsoluteRecordId(String tableName, RecordId recordId) {
         return new AbsoluteRecordIdImpl(tableName, recordId);
     }
-    
+
     @Override
     public AbsoluteRecordId newAbsoluteRecordId(String tableName, String userProvided) {
         return newAbsoluteRecordId(tableName, newRecordId(userProvided));
@@ -107,7 +107,7 @@ public class IdGeneratorImpl implements IdGenerator {
     public RecordId fromBytes(byte[] bytes) {
         return fromBytes(new DataInputImpl(bytes));
     }
-    
+
     @Override
     public AbsoluteRecordId absoluteFromBytes(byte[] bytes) {
         return AbsoluteRecordIdImpl.fromBytes(bytes, this);

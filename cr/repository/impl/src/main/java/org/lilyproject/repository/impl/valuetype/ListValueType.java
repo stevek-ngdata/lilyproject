@@ -23,43 +23,43 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 
 public class ListValueType extends AbstractValueType implements ValueType {
-    
+
     public final static String NAME = "LIST";
-    
+
     private ValueType valueType;
 
     private final String fullName;
-    
+
     public ListValueType(TypeManager typeManager, String typeParams) throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(typeParams, "typeParams");
         this.fullName = NAME+"<"+typeParams+">";
         this.valueType = typeManager.getValueType(typeParams);
     }
-    
+
     public ListValueType(TypeManager typeManager, DataInput typeParamsDataInput) throws RepositoryException, InterruptedException {
         this(typeManager, typeParamsDataInput.readUTF());
     }
-    
+
     @Override
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public String getName() {
         return fullName;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return valueType.getDeepestValueType();
     }
-    
+
     @Override
     public ValueType getNestedValueType() {
         return valueType;
     }
-    
+
     @Override
     public int getNestingLevel() {
         return 1 + valueType.getNestingLevel();
@@ -101,15 +101,15 @@ public class ListValueType extends AbstractValueType implements ValueType {
         Set<Object> result = new HashSet<Object>();
         for (Object element : ((List<Object>) value)) {
             result.addAll(valueType.getValues(element));
-        } 
+        }
         return result;
     }
-    
+
     @Override
     public boolean isMultiValue() {
         return true;
     }
-    
+
     @Override
     public boolean isHierarchical() {
         return valueType.isHierarchical();
@@ -140,15 +140,15 @@ public class ListValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory(TypeManager typeManager) {
         return new ListValueTypeFactory(typeManager);
     }
-    
+
     public static class ListValueTypeFactory implements ValueTypeFactory {
-        
+
         private TypeManager typeManager;
 
         public ListValueTypeFactory(TypeManager typeManager) {
             this.typeManager = typeManager;
         }
-        
+
         @Override
         public ValueType getValueType(String typeParams) throws RepositoryException, InterruptedException {
             return new ListValueType(typeManager, typeParams);

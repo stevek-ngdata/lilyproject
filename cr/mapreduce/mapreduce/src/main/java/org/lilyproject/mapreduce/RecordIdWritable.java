@@ -36,10 +36,10 @@ import java.io.IOException;
 public class RecordIdWritable extends BinaryComparable implements WritableComparable<BinaryComparable> {
     private RecordId recordId;
     private static final IdGenerator ID_GENERATOR = new IdGeneratorImpl();
-    
-    public RecordIdWritable() {        
+
+    public RecordIdWritable() {
     }
-    
+
     public RecordIdWritable(RecordId recordId) {
         this.recordId = recordId;
     }

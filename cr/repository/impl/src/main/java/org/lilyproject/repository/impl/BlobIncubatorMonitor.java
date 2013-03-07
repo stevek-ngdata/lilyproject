@@ -83,7 +83,7 @@ public class BlobIncubatorMonitor {
         this.runDelay = runDelay;
 
         this.blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(tableFactory, false);
-        
+
         this.tableFactory = tableFactory;
         this.repositoryTableManager = repositoryTableManager;
     }
@@ -285,7 +285,7 @@ public class BlobIncubatorMonitor {
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
             Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL, valueComparator);
             get.setFilter(filter);
-            
+
             for (RepositoryTable repoTable : repositoryTableManager.getTables()) {
                 HTableInterface recordTable = LilyHBaseSchema.getRecordTable(tableFactory, repoTable.getName());
                 Result result = recordTable.get(get);

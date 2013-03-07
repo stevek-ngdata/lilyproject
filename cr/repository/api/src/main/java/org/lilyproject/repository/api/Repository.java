@@ -555,13 +555,13 @@ public interface Repository extends Closeable {
      * repository.
      */
     RecordBuilder recordBuilder() throws RecordException, InterruptedException;
-    
+
     /**
      * Returns the RepositoryManager that is responsible for this Repository.
      * @return owning RepositoryManager
      */
     RepositoryManager getRepositoryManager();
-    
+
     /**
      * Returns the name of the underlying storage table that this repository uses.
      * @return HBase table name

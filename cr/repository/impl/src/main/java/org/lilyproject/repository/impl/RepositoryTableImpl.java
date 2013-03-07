@@ -18,9 +18,9 @@ package org.lilyproject.repository.impl;
 import org.lilyproject.repository.api.RepositoryTable;
 
 public class RepositoryTableImpl implements RepositoryTable {
-    
+
     private String name;
-    
+
     public RepositoryTableImpl(String name) {
         this.name = name;
     }

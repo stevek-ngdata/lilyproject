@@ -47,12 +47,12 @@ public class AvroLilyImpl implements AvroLily {
         this.typeManager = typeManager;
         this.converter = new AvroConverter(repositoryManager);
     }
-    
+
     @VisibleForTesting
     public void setAvroConverter(AvroConverter converter) {
         this.converter = converter;
     }
-    
+
     private Repository getRepository(String table) throws InterruptedException, RepositoryException {
         try {
             return repositoryManager.getRepository(table);

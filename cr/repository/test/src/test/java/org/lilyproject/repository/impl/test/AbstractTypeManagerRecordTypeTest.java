@@ -67,18 +67,18 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         RecordType createdRecordType = typeManager.createRecordType(recordType);
         assertEquals(Long.valueOf(1), createdRecordType.getVersion());
-        
+
         recordType.setVersion(Long.valueOf(1));
         recordType.setId(createdRecordType.getId());
         assertEquals(recordType, typeManager.getRecordTypeById(createdRecordType.getId(), null));
     }
-    
+
     @Test
     public void testCreateSameNameFails() throws Exception {
         QName name = new QName(namespace1, "testCreateSameNameFails");
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);
-        
+
         recordType = typeManager.newRecordType(name);
         try {
             System.out.println("Expecting RecordTypeExistsException");
@@ -96,25 +96,25 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(Long.valueOf(1), recordType.getVersion());
         RecordType recordTypeV1 = typeManager.getRecordTypeByName(name, null);
         assertEquals(Long.valueOf(1), typeManager.updateRecordType(recordTypeV1).getVersion());
-        
+
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), true));
         RecordType recordTypeV2 = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(2), recordTypeV2.getVersion());
         assertEquals(Long.valueOf(2), typeManager.updateRecordType(recordTypeV2).getVersion());
-        
+
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), true));
         RecordType recordTypeV3 = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(3), recordTypeV3.getVersion());
         assertEquals(Long.valueOf(3), typeManager.updateRecordType(recordType).getVersion());
-    
+
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), true));
         RecordType recordTypeV4 = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(4), recordTypeV4.getVersion());
         assertEquals(Long.valueOf(4), typeManager.updateRecordType(recordType).getVersion());
-        
+
         recordType.setVersion(Long.valueOf(4));
         assertEquals(recordType, typeManager.getRecordTypeByName(name, null));
-        
+
         // Read old versions
         assertEquals(recordTypeV1, typeManager.getRecordTypeByName(name,Long.valueOf(1)));
         assertEquals(recordTypeV2, typeManager.getRecordTypeByName(name,Long.valueOf(2)));
@@ -131,7 +131,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
             fail();
         } catch (RecordTypeNotFoundException expected) {
         }
-        
+
         typeManager.createRecordType(typeManager.newRecordType(name));
         try {
             System.out.println("Expecting RecordTypeNotFoundException");
@@ -178,7 +178,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         QName name = new QName("testNS", "testFieldGroupExistsOnUpdate");
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);
-        
+
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(new SchemaIdImpl(UUID.randomUUID()), false));
         try {
             System.out.println("Expecting FieldTypeNotFoundException");
@@ -196,12 +196,12 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         recordType = typeManager.createRecordType(recordType);
-        
+
         recordType.removeFieldTypeEntry(fieldType1.getId());
         recordType.removeFieldTypeEntry(fieldType2.getId());
         recordType.removeFieldTypeEntry(fieldType3.getId());
         typeManager.updateRecordType(recordType);
-        
+
         RecordType readRecordType = typeManager.getRecordTypeByName(name, null);
         assertTrue(readRecordType.getFieldTypeEntries().isEmpty());
     }
@@ -214,12 +214,12 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         recordType = typeManager.createRecordType(recordType);
-        
+
         recordType.removeFieldTypeEntry(fieldType1.getId());
         recordType.removeFieldTypeEntry(fieldType2.getId());
         recordType.removeFieldTypeEntry(fieldType3.getId());
         typeManager.updateRecordType(recordType);
-        
+
         RecordType readRecordType = typeManager.getRecordTypeByName(name, Long.valueOf(1));
         assertEquals(3, readRecordType.getFieldTypeEntries().size());
     }
@@ -240,7 +240,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(Long.valueOf(1), recordType.getVersion());
         assertEquals(recordType, typeManager.getRecordTypeById(recordType.getId(), null));
     }
-    
+
     @Test
     public void testSupertypeLatestVersion() throws Exception {
         QName supertypeName = new QName("supertypeNS", "testSupertypeLatestVersion");
@@ -257,7 +257,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         recordType.addSupertype(supertypeType.getId());
         recordType = typeManager.createRecordType(recordType);
         assertEquals(Long.valueOf(1), recordType.getVersion());
-        
+
         recordType.addSupertype(supertypeType.getId(), 2L); // Assert latest version of the supertype RecordType got filled in
         assertEquals(recordType, typeManager.getRecordTypeById(recordType.getId(), null));
     }
@@ -277,12 +277,12 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         supertypeRt2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         supertypeRt2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         supertypeRt2 = typeManager.createRecordType(supertypeRt2);
-        
+
         QName recordName = new QName("recordNS", "testSupertypeUpdate");
         RecordType recordType = typeManager.newRecordType(recordName);
         recordType.addSupertype(supertypeRt1.getId(), supertypeRt1.getVersion());
         recordType = typeManager.createRecordType(recordType);
-        
+
         recordType.addSupertype(supertypeRt2.getId(), supertypeRt2.getVersion());
         recordType = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(2), recordType.getVersion());
@@ -304,12 +304,12 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         supertypeRt2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         supertypeRt2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         supertypeRt2 = typeManager.createRecordType(supertypeRt2);
-        
+
         QName recordTypeName = new QName("recordNS", "testSupertypeRemove");
         RecordType recordType = typeManager.newRecordType(recordTypeName);
         recordType.addSupertype(supertypeRt1.getId(), supertypeRt1.getVersion());
         recordType = typeManager.createRecordType(recordType);
-        
+
         recordType.addSupertype(supertypeRt2.getId(), supertypeRt2.getVersion());
         recordType.removeSupertype(supertypeRt1.getId());
         recordType = typeManager.updateRecordType(recordType);
@@ -319,28 +319,28 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(1, supertypes.size());
         assertEquals(Long.valueOf(1), supertypes.get(supertypeRt2.getId()));
     }
-    
+
     @Test
     public void testGetRecordTypes() throws Exception {
         RecordType recordType = typeManager.createRecordType(typeManager.newRecordType(new QName("NS", "getRecordTypes")));
         Collection<RecordType> recordTypes = typeManager.getRecordTypes();
         assertTrue(recordTypes.contains(recordType));
     }
-    
+
     @Test
     public void testGetFieldTypes() throws Exception {
         FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("NS", "getFieldTypes"), Scope.NON_VERSIONED));
         Collection<FieldType> fieldTypes = typeManager.getFieldTypes();
         assertTrue(fieldTypes.contains(fieldType));
     }
-    
+
     @Test
     public void testUpdateName() throws Exception {
         QName name = new QName(namespace1, "testUpdateName");
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);
         assertEquals(name, recordType.getName());
-        
+
         QName name2 = new QName(namespace1, "testUpdateName2");
         recordType.setName(name2);
         recordType = typeManager.updateRecordType(recordType);
@@ -362,13 +362,13 @@ public abstract class AbstractTypeManagerRecordTypeTest {
 
         recordType.setName(name2);
         try {
-            System.out.println("Expecting TypeException"); 
+            System.out.println("Expecting TypeException");
             recordType = typeManager.updateRecordType(recordType);
             fail();
         } catch (TypeException expected){
         }
     }
-    
+
     @Test
     public void testCreateOrUpdate() throws Exception {
         String NS = "testCreateOrUpdateRecordType";
@@ -409,12 +409,12 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         builder.field(fieldType1.getId(), false);
         builder.field(fieldType2.getId(), true);
         RecordType recordType = builder.create();
-        
+
         RecordType readRecordType = typeManager.getRecordTypeByName(rtName, null);
         assertEquals(recordType, readRecordType);
         assertFalse(readRecordType.getFieldTypeEntry(fieldType1.getId()).isMandatory());
         assertTrue(readRecordType.getFieldTypeEntry(fieldType2.getId()).isMandatory());
-        
+
         builder.reset();
         builder.id(recordType.getId());
         recordType = builder.update();

@@ -25,18 +25,18 @@ public class RecordNotFoundException extends RecordException {
     public RecordNotFoundException(String message, Map<String, String> state) {
         this.recordId = state.get("recordId");
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
         state.put("recordId", recordId);
         return state;
     }
-    
+
     public RecordNotFoundException(RecordId recordId) {
         this.recordId = recordId != null ? recordId.toString() : null;
     }
-    
+
     @Override
     public String getMessage() {
         return "Record '" + recordId + "' not found.";

@@ -29,9 +29,9 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.util.json.JsonUtil;
 
 public class RecordValueTypeBenchmark {
-    
+
     private MappingJsonFactory mappingJsonFactory = new MappingJsonFactory();
-    
+
     private Repository repository;
     private TypeManager typeManager;
 
@@ -42,7 +42,7 @@ public class RecordValueTypeBenchmark {
     private int nrOfTimes = 10;
     private enum Type {MIXED, SEQ, RVT, JSON};
     private Type type = Type.MIXED;
-    
+
     // durations
     long rvtBuild = 0;
     long rvtCreate = 0;
@@ -64,9 +64,9 @@ public class RecordValueTypeBenchmark {
     public static void main(String[] args) throws Exception {
         RecordValueTypeBenchmark benchmark = new RecordValueTypeBenchmark();
         benchmark.initialize(args);
-        
+
         benchmark.testRecordValueTypePerformance();
-        
+
         benchmark.stop();
     }
 
@@ -102,7 +102,7 @@ public class RecordValueTypeBenchmark {
         typeManager = repository.getTypeManager();
         resetDurations();
     }
-    
+
     private void resetDurations() {
     	// durations
         rvtBuild = 0;
@@ -119,14 +119,14 @@ public class RecordValueTypeBenchmark {
     private void stop() throws Exception {
         lilyProxy.stop();
     }
-    
+
     private void testRecordValueTypePerformance() throws Exception {
         System.out.println("===> Starting benchmark with settings: fields=" + nrOfFields + ", records=" + nrOfRecords
                 + ", times=" + nrOfTimes + ", type=" + type.toString());
-        
+
         ns = "testRecordValueTypePerformance";
         QName rvtRTName = new QName(ns, "rvtRT");
-        
+
         // Create field types and record types for the records containing complex types
         RecordTypeBuilder rtBuilder = typeManager.recordTypeBuilder().name(rvtRTName);
         for (int i = 0; i < nrOfFields; i++) {
@@ -135,13 +135,13 @@ public class RecordValueTypeBenchmark {
             rtBuilder.field(fieldType.getId(), false);
         }
         rtBuilder.create();
-        
+
         ValueType rvt = typeManager.getValueType("RECORD<"+rvtRTName.toString()+">");
-        
+
         FieldType rvtFT = typeManager.createFieldType(typeManager.newFieldType(rvt, new QName(ns, "rvtField"),
                 Scope.NON_VERSIONED));
         typeManager.recordTypeBuilder().name(new QName(ns, "rvtFieldRT")).field(rvtFT.getId(), false).create();
-        
+
         // Create field types and record types for the records containing serialized json
         FieldType jsonFT = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),
                 new QName(ns, "jsonField"), Scope.NON_VERSIONED));
@@ -149,7 +149,7 @@ public class RecordValueTypeBenchmark {
 
         rvtRecordIds = new ArrayList<RecordId>();
         jsonRecordIds = new ArrayList<RecordId>();
-        
+
         switch (type) {
 		case MIXED:
 			for (int i = 0; i < nrOfTimes; i++) {
@@ -181,7 +181,7 @@ public class RecordValueTypeBenchmark {
 		}
         System.out.println("===> End benchmark");
     }
-    
+
     private void runMixed() throws Exception {
     	// Build and create the records
         for (int i = 0; i < nrOfRecords; i++) {
@@ -196,18 +196,18 @@ public class RecordValueTypeBenchmark {
             long rvtCreateBefore = System.currentTimeMillis();
             rvtRecordIds.add(repository.create(rvtRecord).getId());
             rvtCreate += (System.currentTimeMillis() - rvtCreateBefore);
-            
+
             long jsonCreateBefore = System.currentTimeMillis();
             jsonRecordIds.add(repository.create(jsonRecord).getId());
             jsonCreate += (System.currentTimeMillis() - jsonCreateBefore);
         }
-        
+
         // Read the records and their values
         for (int i = 0; i < nrOfRecords; i++) {
             long rvtReadBefore = System.currentTimeMillis();
             Record rvtRecord = repository.read(rvtRecordIds.get(i));
             rvtRead += (System.currentTimeMillis() - rvtReadBefore);
-            
+
             long jsonReadBefore = System.currentTimeMillis();
             Record jsonRecord = repository.read(jsonRecordIds.get(i));
             jsonRead += (System.currentTimeMillis() - jsonReadBefore);
@@ -215,7 +215,7 @@ public class RecordValueTypeBenchmark {
             long rvtReadValuesBefore = System.currentTimeMillis();
             readRvtValues(rvtRecord, ns, nrOfFields);
             rvtReadValues += (System.currentTimeMillis() - rvtReadValuesBefore);
-            
+
             long jsonReadValuesBefore = System.currentTimeMillis();
             readJsonValues(jsonRecord, ns, nrOfFields);
             jsonReadValues += (System.currentTimeMillis() - jsonReadValuesBefore);
@@ -224,12 +224,12 @@ public class RecordValueTypeBenchmark {
         long rvtAvg = rvtTotal / nrOfRecords;
         long jsonTotal = jsonBuild + jsonCreate + jsonRead + jsonReadValues;
         long jsonAvg = jsonTotal / nrOfRecords;
-        
+
         System.out.println("===> RVT: total: " + rvtTotal + " avg: " + rvtAvg + " build: " + rvtBuild + " create: "
                 + rvtCreate + " read: " + rvtRead + " readValues: " + rvtReadValues);
         System.out.println("===> JSON: total: " + jsonTotal + " avg: " + jsonAvg + " build: " + jsonBuild + " create: "
                 + jsonCreate + " read: " + jsonRead + " readValues: " + jsonReadValues);
-        
+
 //      assertTrue("Complex types encoding is more than 10% slower than json encoding", rvtTotal < (jsonTotal + (jsonTotal / 10)));
 
     }
@@ -244,23 +244,23 @@ public class RecordValueTypeBenchmark {
             long rvtCreateBefore = System.currentTimeMillis();
             rvtRecordIds.add(repository.create(rvtRecord).getId());
             rvtCreate += (System.currentTimeMillis() - rvtCreateBefore);
-            
+
         }
-        
+
         // Read the records and their values
         for (int i = 0; i < nrOfRecords; i++) {
             long rvtReadBefore = System.currentTimeMillis();
             Record rvtRecord = repository.read(rvtRecordIds.get(i));
             rvtRead += (System.currentTimeMillis() - rvtReadBefore);
-            
+
             long rvtReadValuesBefore = System.currentTimeMillis();
             readRvtValues(rvtRecord, ns, nrOfFields);
             rvtReadValues += (System.currentTimeMillis() - rvtReadValuesBefore);
-            
+
         }
         long rvtTotal = rvtBuild + rvtCreate + rvtRead + rvtReadValues;
         long rvtAvg = rvtTotal / nrOfRecords;
-        
+
         System.out.println("RVT: total: " + rvtTotal + " avg: " + rvtAvg + " build: " + rvtBuild + " create: " + rvtCreate + " read: " + rvtRead + " readValues: " + rvtReadValues);
     }
 
@@ -275,7 +275,7 @@ public class RecordValueTypeBenchmark {
             jsonRecordIds.add(repository.create(jsonRecord).getId());
             jsonCreate += (System.currentTimeMillis() - jsonCreateBefore);
         }
-        
+
         // Read the records and their values
         for (int i = 0; i < nrOfRecords; i++) {
             long jsonReadBefore = System.currentTimeMillis();
@@ -288,15 +288,15 @@ public class RecordValueTypeBenchmark {
         }
         long jsonTotal = jsonBuild + jsonCreate + jsonRead + jsonReadValues;
         long jsonAvg = jsonTotal / nrOfRecords;
-        
+
         System.out.println("JSON: total: " + jsonTotal + " avg: " + jsonAvg + " build: " + jsonBuild + " create: " + jsonCreate + " read: " + jsonRead + " readValues: " + jsonReadValues);
     }
-    
+
     private void runSequential() throws Exception {
     	runJson();
     	runRvt();
     }
-    
+
     private Record buildRvtRecord(String ns, int nrOfFields) throws Exception {
         RecordBuilder rvtRecordBuilder = repository.recordBuilder().defaultNamespace(ns);
         for (int i = 0; i < nrOfFields; i++) {
@@ -304,7 +304,7 @@ public class RecordValueTypeBenchmark {
         }
         return repository.recordBuilder().defaultNamespace(ns).recordType("rvtFieldRT").field("rvtField", rvtRecordBuilder.build()).build();
     }
-    
+
     private Record buildJsonRecord(String ns, int nrOfFields) throws Exception {
         ObjectNode node = JsonNodeFactory.instance.objectNode();
         for (int i = 0; i < nrOfFields; i++) {
@@ -312,14 +312,14 @@ public class RecordValueTypeBenchmark {
         }
         return repository.recordBuilder().defaultNamespace(ns).recordType("jsonFieldRT").field("jsonField", node.toString()).build();
     }
-    
+
     private void readRvtValues(Record record, String ns, int nrOfFields) {
         Record rvtRecord = record.getField(new QName(ns, "rvtField"));
         for (int i = 0; i < nrOfFields; i++) {
             rvtRecord.getField(new QName(ns, "stringField"+i));
         }
     }
-    
+
     private void readJsonValues(Record record, String ns, int nrOfFields) throws Exception {
         String jsonString = record.getField(new QName(ns, "jsonField"));
         JsonNode jsonNode = mappingJsonFactory.createJsonParser(jsonString).readValueAsTree();

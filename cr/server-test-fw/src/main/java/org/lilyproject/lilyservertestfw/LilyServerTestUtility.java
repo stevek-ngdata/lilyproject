@@ -40,7 +40,7 @@ public class LilyServerTestUtility {
 
     /**
      * LilyServerTestUtility is used to start Lily using the LilyRuntime.
-     * 
+     *
      * @param defaultConfDir path to the directory containing the default configuration files to startup lily
      * @param customConfDir path to a directory containing custom configuration files which should be used on top
      *                      of the default configuration files
@@ -52,7 +52,7 @@ public class LilyServerTestUtility {
         // test-specific-conf are changes to the default configuration to optimize for test cases
         testSpecificConfDir = new File(testHome, "test-specific-conf");
     }
-    
+
     public void start() throws Exception {
         // This disable the HBaseConnectionDisposer in Lily which deletes HBase connections on shutdown
         System.setProperty("lily.hbase.deleteConnections", "false");
@@ -65,11 +65,11 @@ public class LilyServerTestUtility {
         runtime.setMode(Mode.getDefault());
         runtime.start();
     }
-    
+
     public void stop() {
         Closer.close(runtime);
     }
-    
+
     private ConfManager getConfManager() {
         List<File> confDirs = new ArrayList<File>();
         confDirs.add(testSpecificConfDir);

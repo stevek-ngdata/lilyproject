@@ -19,21 +19,21 @@ package org.lilyproject.repository.api;
  * Represents the information to absolutely resolve a record -- both its storage table and its table-unique record id.
  */
 public interface AbsoluteRecordId {
-    
+
     /**
      * Returns the table-unique record id.
      */
     RecordId getRecordId();
-    
+
     /**
      * Returns the name of the repository table used for storage.
      */
     String getTable();
-    
+
     /**
      * Returns the byte representation of this identifier.
      */
     byte[] toBytes();
 
-    
+
 }

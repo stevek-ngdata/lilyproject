@@ -23,7 +23,7 @@ import org.apache.hadoop.metrics.util.MetricsRegistry;
 
 /**
  * Metric for a value which is counted during a reporting interval.
- * Note that in monitoring tools, the total value  
+ * Note that in monitoring tools, the total value
  */
 public class MetricsIntervalLongValue extends MetricsBase {
 

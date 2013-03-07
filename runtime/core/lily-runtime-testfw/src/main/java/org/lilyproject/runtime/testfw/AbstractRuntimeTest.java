@@ -59,13 +59,13 @@ public abstract class AbstractRuntimeTest extends TestCase {
 
     protected static int HTTP_TEST_PORT = 40821;
     protected ArtifactRepository localRepository;
-    
+
     // This localRepository property is set by Maven (or its test plugin)
     {
         String localRepositoryPath = System.getProperty("localRepository");
         if (localRepositoryPath == null)
             localRepositoryPath = System.getProperty("user.home") + "/.m2/repository";
-        
+
         localRepository = new Maven2StyleArtifactRepository(new File(localRepositoryPath)) {
                 public ResolvedArtifact tryResolve(String groupId, String artifactId, String classifier, String version) throws ArtifactNotFoundException {
                     // If the artifact is the one of the project in which this test is running
@@ -81,7 +81,7 @@ public abstract class AbstractRuntimeTest extends TestCase {
                 }
             };
     }
-    
+
     protected String projectVersion = System.getProperty("project.version"); // This property should be explictly set via test plugin configuration
 
     protected LilyRuntime runtime;
@@ -115,7 +115,7 @@ public abstract class AbstractRuntimeTest extends TestCase {
         copyChildren(commonClassesDir, commonClassesDestDir);
 
         System.out.println("Temporary module created at " + moduleDir.getAbsolutePath());
-        
+
         return moduleDir;
     }
 
@@ -211,7 +211,7 @@ public abstract class AbstractRuntimeTest extends TestCase {
         java.util.logging.LogManager.getLogManager().reset();
         java.util.logging.LogManager.getLogManager().getLogger("").addHandler(new SLF4JBridgeHandler());
         java.util.logging.LogManager.getLogManager().getLogger("").setLevel(java.util.logging.Level.ALL);
-        
+
         // By passing these system properties, you can easily enable a certain level
         // of debugging for a certain log category
         String consoleLoggingLevel = System.getProperty("console-logging");
@@ -270,7 +270,7 @@ public abstract class AbstractRuntimeTest extends TestCase {
 
             runtime = new LilyRuntime(settings);
             runtime.setMode(getMode());
-            
+
             if (startRuntime())
                 runtime.start();
         }
@@ -299,5 +299,5 @@ public abstract class AbstractRuntimeTest extends TestCase {
         }
         file.delete();
     }
-    
+
 }

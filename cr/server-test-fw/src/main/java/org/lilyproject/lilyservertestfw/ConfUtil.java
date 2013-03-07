@@ -28,7 +28,7 @@ import org.apache.commons.lang.StringUtils;
 
 public class ConfUtil {
     public static final String CONF_RESOURCE_PATH = "org/lilyproject/lilyservertestfw/conf/";
-    
+
     public static void copyConfResources(URL confUrl, String confResourcePath, File confDir) throws IOException, URISyntaxException {
         URLConnection urlConnection = confUrl.openConnection();
         if (urlConnection instanceof JarURLConnection) {

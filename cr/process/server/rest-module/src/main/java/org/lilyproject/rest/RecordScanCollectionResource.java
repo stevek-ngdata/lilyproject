@@ -36,9 +36,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class RecordScanCollectionResource extends RepositoryEnabled {
     @Autowired
     private Cache<String, RecordScanner> recordScannerMap;
-    
+
     private static Random rand = new Random();
-    
+
     @POST
     @Consumes("application/json")
     public Response post(RecordScan scan, @Context UriInfo uriInfo) {

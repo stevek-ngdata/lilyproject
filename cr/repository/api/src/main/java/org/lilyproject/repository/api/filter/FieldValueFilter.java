@@ -105,9 +105,9 @@ public class FieldValueFilter implements RecordFilter {
 
     /**
      * Set whether the record should be filtered if the record does not have the field.
-     * 
+     *
      * <p>If true, the record will be skipped if the field is not found. This is the default.
-     * 
+     *
      * <p>If false, the record will pass if the field is not found.
      */
     public void setFilterIfMissing(boolean filterIfMissing) {
@@ -116,7 +116,7 @@ public class FieldValueFilter implements RecordFilter {
 
     /**
      * Get whether the record should be filtered if the record does not have the field.
-     * 
+     *
      * @return true if record should be skipped if field not found, false if record
      *         should be let through anyways
      */

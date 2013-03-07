@@ -58,7 +58,7 @@ public class ModuleDefinition {
     public void setLocation(Location location) {
         this.location = location;
     }
-    
+
     public String getVersion() {
         return version;
     }
@@ -66,14 +66,14 @@ public class ModuleDefinition {
     public void setVersion(String version) {
         this.version = version;
     }
-    
+
     public String moduleInfo() {
         if (Boolean.getBoolean("lilyruntime.info.verbose"))
             return String.format("%s (version: %s) - running from [%s] (in mode: %s)", id, version, file.getAbsolutePath(), sourceType.name());
         //else
         return String.format("%s (version: %s)", id, version);
     }
-    
+
     /**
      * Use {@link #getSourceType()} to find out which kind of module source type this
      * file points to.

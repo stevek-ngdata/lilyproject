@@ -23,9 +23,9 @@ import org.lilyproject.util.zookeeper.ZooKeeperOperation;
  * Adapts an HBase SEP ZooKeeperOperation to allow it to be used within the context of a Lily ZooKeeperItf.
  */
 public class ZooKeeperOperationAdapter<T> implements ZooKeeperOperation<T> {
-    
+
     private com.ngdata.sep.util.zookeeper.ZooKeeperOperation<T> wrapped;
-    
+
     /**
      * Construct around a Lily ZooKeeperOperation.
      * @param op operation to be adapted to the SEP

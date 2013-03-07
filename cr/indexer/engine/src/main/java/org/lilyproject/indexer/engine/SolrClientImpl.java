@@ -109,7 +109,7 @@ public class SolrClientImpl implements SolrClient {
 
     @Override
     public UpdateResponse deleteByQuery(String query) throws SolrClientException {
-        
+
         UpdateRequest request = new UpdateRequest();
         request.deleteByQuery(query);
         if (collection != null) {

@@ -44,7 +44,7 @@ public interface IdRecord extends Record {
      * Returns the underlying "normal" record.
      */
     Record getRecord();
-    
+
     /**
      * To be used by AvroConverter only
      */

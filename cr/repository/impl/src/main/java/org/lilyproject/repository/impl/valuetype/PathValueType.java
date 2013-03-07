@@ -23,43 +23,43 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 
 public class PathValueType extends AbstractValueType implements ValueType {
-    
+
     public final static String NAME = "PATH";
-    
+
     private ValueType valueType;
 
     private final String fullName;
-    
+
     public PathValueType(TypeManager typeManager, String typeParams) throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(typeParams, "typeParams");
         this.fullName = NAME+"<"+typeParams+">";
         this.valueType = typeManager.getValueType(typeParams);
     }
-    
+
     public PathValueType(TypeManager typeManager, DataInput typeParamsDataInput) throws RepositoryException, InterruptedException {
         this(typeManager, typeParamsDataInput.readUTF());
     }
-    
+
     @Override
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public String getName() {
         return fullName;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return valueType.getDeepestValueType();
     }
-    
+
     @Override
     public ValueType getNestedValueType() {
         return valueType;
     }
-    
+
     @Override
     public int getNestingLevel() {
         return 1 + valueType.getNestingLevel();
@@ -101,10 +101,10 @@ public class PathValueType extends AbstractValueType implements ValueType {
         Set<Object> result = new HashSet<Object>();
         for (Object element : ((HierarchyPath) value).getElements()) {
             result.addAll(valueType.getValues(element));
-        } 
+        }
         return result;
     }
-    
+
     @Override
     public boolean isHierarchical() {
         return true;
@@ -135,15 +135,15 @@ public class PathValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory(TypeManager typeManager) {
         return new PathValueTypeFactory(typeManager);
     }
-    
+
     public static class PathValueTypeFactory implements ValueTypeFactory {
-        
+
         private TypeManager typeManager;
 
         public PathValueTypeFactory(TypeManager typeManager) {
             this.typeManager = typeManager;
         }
-        
+
         @Override
         public ValueType getValueType(String typeParams) throws RepositoryException, InterruptedException {
             return new PathValueType(typeManager, typeParams);

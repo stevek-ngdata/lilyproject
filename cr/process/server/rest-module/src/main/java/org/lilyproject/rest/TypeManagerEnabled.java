@@ -23,12 +23,12 @@ public class TypeManagerEnabled {
 
     protected TypeManager typeManager;
     protected IdGenerator idGenerator;
-    
+
     @Autowired
     public void setTypeManager(TypeManager typeManager) {
         this.typeManager = typeManager;
     }
-    
+
     @Autowired
     public void setIdGenerator(IdGenerator idGenerator) {
         this.idGenerator = idGenerator;

@@ -89,7 +89,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes), lilyClient);
 
             String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
-            
+
             table = Bytes.toString(((TableSplit)context.getInputSplit()).getTableName());
 
             SolrShardManager solrShardMgr = getShardManager(jobConf);

@@ -81,7 +81,7 @@ public class ErrorSwallowingSolrClientTest {
         when(baseSolrClient.add(document)).thenThrow(new SolrException(ErrorCode.BAD_REQUEST, "Bad request"));
 
         UpdateResponse updateResponse = wrappingSolrClient.add(document);
-        
+
         verify(solrClientMetrics.swallowedExceptions, times(1)).inc();
         assertEquals(ErrorSwallowingSolrClient.ERROR_UPDATE_RESPONSE, updateResponse);
     }

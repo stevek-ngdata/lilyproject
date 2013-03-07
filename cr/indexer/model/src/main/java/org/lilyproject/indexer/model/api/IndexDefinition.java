@@ -20,7 +20,7 @@ import java.util.Map;
 
 public interface IndexDefinition {
     String getName();
-    
+
     IndexGeneralState getGeneralState();
 
     void setGeneralState(IndexGeneralState state);
@@ -82,41 +82,41 @@ public interface IndexDefinition {
 
     byte[] getDefaultBatchIndexConfiguration();
     void setDefaultBatchIndexConfiguration(byte[] defaultBatchIndexConfiguration);
-    
+
     /**
      * Get the default list of repository tables that a batch index rebuild will run on.
      * <p>
      * This method can return an empty list, in which case a batch index rebuild will run on
      * all repository tables.
-     * 
+     *
      * @return default list of tables
      */
     List<String> getDefaultBatchTables();
-    
+
     /**
      * Set the default list of repository tables that a batch index rebuild will run on.
      * <p>
      * If the value is null or an empty list, all tables will be used for batch rebuilds.
-     * 
+     *
      * @param tables default list of tables
      */
     void setDefaultBatchTables(List<String> tables);
-    
+
     /**
      * Get the list of repository tables that the next batch index rebuild will run on.
      * <p>
      * This method can return an empty list, in which case a batch index rebuild will run on
      * all repository tables.
-     * 
+     *
      * @return list of tables
      */
     List<String> getBatchTables();
-    
+
     /**
      * Set the list of repository tables that the next batch index rebuild will run on.
      * <p>
      * If the value is null or an empty list, all tables will be used for batch rebuilds.
-     * 
+     *
      * @param tables list of tables
      */
     void setBatchTables(List<String> tables);
@@ -140,18 +140,18 @@ public interface IndexDefinition {
     boolean isEnableDerefMap();
 
     void setEnableDerefMap(boolean enableDerefMap);
-    
+
     /**
      * Set the timestamp of when this index's update subscription started. Only record updates that have
      * occurred after this timestamp will be consumed by this index.
-     * 
+     *
      * @param timestamp Number of milliseconds since the epoch
      */
     void setSubscriptionTimestamp(long timestamp);
 
     /**
      * Get the timestamp of when this index's update subscription started.
-     * 
+     *
      * @return Number of milliseconds since the epoch
      */
     long getSubscriptionTimestamp();

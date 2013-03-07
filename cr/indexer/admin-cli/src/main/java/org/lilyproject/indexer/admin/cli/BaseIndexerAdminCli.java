@@ -152,14 +152,14 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 		" to BUILD_REQUESTED.")
                 .withLongOpt("batch-config")
                 .create("bi");
-        
+
         batchIndexTablesOption = OptionBuilder
                 .withArgName("batch-tables")
                 .hasArg()
                 .withDescription("Comma-separated list of tables to be included in the next batch index rebuild")
                 .withLongOpt("batch-tables")
                 .create("t");
-        
+
         defaultBatchIndexTablesOption = OptionBuilder
                 .withArgName("default-batch-tables")
                 .hasArg()
@@ -353,7 +353,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
             String optionValue = cmd.getOptionValue(shardingConfigurationOption.getOpt());
             if (optionValue != null) {
                 File configurationFile = new File(optionValue);
-    
+
                 if (!configurationFile.exists()) {
                     System.out.println("Specified sharding configuration file not found:");
                     System.out.println(configurationFile.getAbsolutePath());
@@ -478,11 +478,11 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
             batchIndexConfiguration = FileUtils.readFileToByteArray(configurationFile);
         }
-        
+
         if (cmd.hasOption(batchIndexTablesOption.getOpt())) {
             batchIndexTables = Lists.newArrayList(cmd.getOptionValue(batchIndexTablesOption.getOpt()).split(","));
         }
-        
+
         if (cmd.hasOption(defaultBatchIndexTablesOption.getOpt())) {
             defaultBatchIndexTables = Lists.newArrayList(
                     cmd.getOptionValue(defaultBatchIndexTablesOption.getOpt()).split(","));

@@ -203,22 +203,22 @@ public class IndexDefinitionImpl implements IndexDefinition {
     public void setBatchIndexConfiguration(byte[] batchIndexConfiguration) {
         this.batchIndexConfiguration = batchIndexConfiguration;
     }
-    
+
     @Override
     public void setDefaultBatchTables(List<String> tables) {
         this.defaultBatchTables = (tables == null || tables.isEmpty()) ? null : tables;
     }
-    
+
     @Override
     public List<String> getDefaultBatchTables() {
         return this.defaultBatchTables;
     }
-    
+
     @Override
     public void setBatchTables(List<String> tables) {
         this.batchTables = (tables == null || tables.isEmpty()) ? null : tables;
     }
-    
+
     @Override
     public List<String> getBatchTables() {
         return this.batchTables;
@@ -253,17 +253,17 @@ public class IndexDefinitionImpl implements IndexDefinition {
     public void setEnableDerefMap(boolean enableDerefMap) {
         this.enableDerefMap = enableDerefMap;
     }
-    
+
     @Override
     public void setSubscriptionTimestamp(long timestamp) {
         this.subscriptionTimestamp = timestamp;
     }
-    
+
     @Override
     public long getSubscriptionTimestamp() {
         return subscriptionTimestamp;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);

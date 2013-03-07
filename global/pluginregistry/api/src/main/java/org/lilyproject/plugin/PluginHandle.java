@@ -20,6 +20,6 @@ package org.lilyproject.plugin;
  */
 public interface PluginHandle<T> {
     T getPlugin();
-    
+
     String getName();
 }

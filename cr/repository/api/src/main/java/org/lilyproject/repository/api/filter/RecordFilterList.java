@@ -33,15 +33,15 @@ public class RecordFilterList implements RecordFilter {
 
     private Operator operator = Operator.MUST_PASS_ALL;
     private List<RecordFilter> filters = new ArrayList<RecordFilter>();
-    
+
     public RecordFilterList() {
-        
+
     }
-    
+
     public RecordFilterList(Operator operator) {
         this.operator = operator;
     }
-    
+
     public void addFilter(RecordFilter filter) {
         this.filters.add(filter);
     }

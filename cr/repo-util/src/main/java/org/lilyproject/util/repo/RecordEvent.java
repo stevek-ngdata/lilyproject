@@ -57,7 +57,7 @@ public class RecordEvent {
     private IndexRecordFilterData indexRecordFilterData;
     /** A copy of the attributes supplied via {@link Record#setAttributes(Map)}. */
     private Map<String, String> attributes;
-    
+
     public enum Type {
         CREATE("repo:record-created"),
         UPDATE("repo:record-updated"),
@@ -163,11 +163,11 @@ public class RecordEvent {
     public void setVersionUpdated(long versionUpdated) {
         this.versionUpdated = versionUpdated;
     }
-    
+
     public void setTableName(String tableName) {
         this.tableName = tableName;
     }
-    
+
     public String getTableName() {
         return tableName;
     }
@@ -187,7 +187,7 @@ public class RecordEvent {
     public Type getType() {
         return type;
     }
-    
+
     public void setType(Type type) {
         this.type = type;
     }
@@ -218,7 +218,7 @@ public class RecordEvent {
         }
         vtagsToIndex.add(vtag);
     }
-    
+
     /**
      * Transient attributes passed on from the Record during create/update operations,
      * see also {@link Record#setAttributes(Map)}.
@@ -235,7 +235,7 @@ public class RecordEvent {
     public boolean hasAttributes() {
         return attributes != null && attributes.size() > 0;
     }
-    
+
     /**
      * Transient attributes passed on from the Record during create/update operations,
      * see also {@link Record#setAttributes(Map)}.
@@ -255,13 +255,13 @@ public class RecordEvent {
     }
 
     public void toJson(JsonGenerator gen) throws IOException {
-        
+
         gen.writeStartObject();
 
         if (type != null) {
             gen.writeStringField("type", type.getName());
         }
-        
+
         if (tableName != null) {
             gen.writeStringField("tableName", tableName);
         }
@@ -293,7 +293,7 @@ public class RecordEvent {
             }
             gen.writeEndArray();
         }
-        
+
         if (attributes != null && attributes.size() > 0) {
             gen.writeObjectFieldStart("attributes");
             for(String key : attributes.keySet()) {
@@ -306,7 +306,7 @@ public class RecordEvent {
             gen.writeFieldName("indexFilterData");
             indexRecordFilterData.toJson(gen);
         }
-        
+
         gen.writeEndObject();
         gen.flush();
     }
@@ -362,10 +362,10 @@ public class RecordEvent {
 
         if (!ObjectUtils.safeEquals(other.vtagsToIndex, this.vtagsToIndex))
             return false;
-        
+
         if(!ObjectUtils.safeEquals(other.attributes, this.attributes))
             return false;
-        
+
         if (!ObjectUtils.safeEquals(other.tableName, tableName))
             return false;
 
@@ -403,21 +403,21 @@ public class RecordEvent {
      * more powerful selections in the future.</p>
      */
     public static class IndexRecordFilterData {
-        
+
         /**
          *  A subscription id set that represents as "all the index subscriptions".
          */
         public static final Set<String> ALL_INDEX_SUBSCRIPTIONS = ImmutableSet.of("/");
-        
+
         private boolean newRecordExists;
         private boolean oldRecordExists;
         private SchemaId newRecordType;
         private SchemaId oldRecordType;
         private List<FieldChange> fieldChanges;
-        
+
         // All index subscriptions to be either included or excluded when indexing (see also includeSubcriptions)
         private Set<String> indexSubscriptionIds;
-        
+
         // Flag to determine if the indexSubscriptions set is for inclusion (true) or exclusion (false)
         private boolean includeSubscriptions = true;
 
@@ -514,7 +514,7 @@ public class RecordEvent {
             gen.writeBooleanField("old", oldRecordExists);
             gen.writeBooleanField("new", newRecordExists);
             gen.writeBooleanField("includeSubscriptions", includeSubscriptions);
-            
+
             if (newRecordType != null) {
                 gen.writeBinaryField("newRecordType", newRecordType.getBytes());
             }
@@ -532,7 +532,7 @@ public class RecordEvent {
 
                 gen.writeEndArray();
             }
-            
+
             if (indexSubscriptionIds != null) {
                 gen.writeArrayFieldStart("subscriptions");
                 for (String subscriptionId : indexSubscriptionIds) {
@@ -543,13 +543,13 @@ public class RecordEvent {
 
             gen.writeEndObject();
         }
-        
-        
+
+
 
         /**
          * Set the index subscription ids to be included when distributing the containing record
          * event to indexers. This cannot be combined with exclusions.
-         * 
+         *
          * @param indexSubscriptionIds Ids of the index subscriptions for which the containing
          *        RecordEvent applies
          */
@@ -565,7 +565,7 @@ public class RecordEvent {
         /**
          * Set the index subscription ids to be excluded when distributing the containing record
          * event to indexers. This cannot be combined with inclusions.
-         * 
+         *
          * @param indexSubscriptionIds Ids of the index subscriptions for which the containing
          *        RecordEvent does not apply
          */
@@ -580,7 +580,7 @@ public class RecordEvent {
 
         /**
          * Check if the containing RecordEvent is applicable to an index subscription.
-         * 
+         *
          * @param indexSubscriptionId Id of the index subscription to be checked
          * @return true if the RecordEvent is applicable for the index subscription
          */
@@ -593,12 +593,12 @@ public class RecordEvent {
                         && !indexSubscriptionIds.contains(indexSubscriptionId);
             }
         }
-        
+
         @Override
         public boolean equals(Object obj) {
             return EqualsBuilder.reflectionEquals(this, obj);
         }
-        
+
         @Override
         public int hashCode() {
             return HashCodeBuilder.reflectionHashCode(this);
@@ -663,12 +663,12 @@ public class RecordEvent {
 
             gen.writeEndObject();
         }
-        
+
         @Override
         public boolean equals(Object obj) {
             return EqualsBuilder.reflectionEquals(this, obj);
         }
-        
+
         @Override
         public int hashCode() {
             return HashCodeBuilder.reflectionHashCode(this);

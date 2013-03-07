@@ -11,7 +11,7 @@ import org.lilyproject.repository.api.AbsoluteRecordId;
  *
  */
 public interface DependantRecordIdsIterator extends Closeable {
-    
+
     boolean hasNext() throws IOException;
 
     AbsoluteRecordId next() throws IOException;

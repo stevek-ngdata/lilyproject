@@ -98,7 +98,7 @@ public class TableResource {
             if (descriptorJson.has("splitKeys")) {
                 descriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys(tableName, keyPrefix, descriptorJson.get("splitKeys").asText());
             } else
-            
+
             if (descriptorJson.has("numRegions")) {
                descriptor = TableCreateDescriptorImpl.createInstance(tableName, keyPrefix, descriptorJson.get("numRegions").asInt());
             } else {

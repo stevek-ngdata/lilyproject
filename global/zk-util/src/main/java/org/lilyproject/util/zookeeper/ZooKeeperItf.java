@@ -26,7 +26,7 @@ import java.util.List;
  * An interface for ZooKeeper.
  */
 public interface ZooKeeperItf extends Closeable {
-    
+
     void waitForConnection() throws InterruptedException;
 
     /**
@@ -67,7 +67,7 @@ public interface ZooKeeperItf extends Closeable {
 
     /**
      * Returns true if we know for sure the current thread is the ZooKeeper event thread.
-     * 
+     *
      * <p><b>This is a Lily-specific method.</b>
      */
     boolean isCurrentThreadEventThread();

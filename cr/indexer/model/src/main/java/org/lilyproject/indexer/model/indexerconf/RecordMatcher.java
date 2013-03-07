@@ -82,7 +82,7 @@ public class RecordMatcher {
                 (recordTypeName == null || !this.recordTypeNamespace.lightMatch(recordTypeName.getNamespace()))) {
             return false;
         }
-        
+
         if (!tableNames.isEmpty() && !tableNames.contains(table)) {
             return false;
         }

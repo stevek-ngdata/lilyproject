@@ -49,7 +49,7 @@ class IndexerEditFilter implements WALEditFilter {
     /**
      * Instantiate with the name of the IndexUpdater SEP subscription for which KeyValues are to be allowed. All
      * {@code KeyValue}s in incoming {@code WALEdit}s that are not for the given index will be removed.
-     * 
+     *
      * @param subscriptionName Name of the SEP subscription for which {@code KeyValue}s are not to be removed
      */
     public IndexerEditFilter(String subscriptionName) {

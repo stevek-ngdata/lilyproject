@@ -27,14 +27,14 @@ public class ConcurrentUpdateTypeException extends TypeException {
     public ConcurrentUpdateTypeException(String message, Map<String, String> state) {
         this.type = state.get("type");
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
         state.put("type", type);
         return state;
     }
-    
+
     public ConcurrentUpdateTypeException(String typeName) {
         this.type = typeName;
     }

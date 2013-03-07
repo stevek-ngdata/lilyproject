@@ -54,19 +54,19 @@ public class TestFieldType {
     public FieldType getFieldType() {
         return fieldType;
     }
-    
+
     public String getLinkedRecordTypeName(){
         return linkedRecordTypeName;
     }
-    
+
     public String getLinkedRecordSource() {
         return linkedRecordSource;
     }
-    
+
     public ActionResult generateValue(TestAction testAction) {
         return generateValue(testAction, fieldType.getValueType());
     }
-    
+
     private ActionResult generateList(TestAction testAction, ValueType valueType) {
         int size = (int)Math.ceil(Math.random() * 2);
         List<Object> values = new ArrayList<Object>();
@@ -74,7 +74,7 @@ public class TestFieldType {
         for (int i = 0; i < size; i++) {
             ActionResult result = generateValue(testAction, valueType);
             duration += result.duration;
-            if (result.success) 
+            if (result.success)
                 values.add(result.object);
             else return new ActionResult(false, null, duration);
         }
@@ -94,7 +94,7 @@ public class TestFieldType {
             }
             return new ActionResult(true, new HierarchyPath(elements), duration);
     }
-    
+
     private ActionResult generateValue(TestAction testAction, ValueType valueType) {
         String name = valueType.getBaseName();
 
@@ -136,7 +136,7 @@ public class TestFieldType {
     private String generateString() {
         String value = null;
         // Default
-        if (properties == null) { 
+        if (properties == null) {
             value = Words.get(Words.WordList.BIG_LIST, (int)Math.floor(Math.random() * 100));
         } else {
             int wordCount = JsonUtil.getInt(properties, "wordCount", 1);
@@ -157,7 +157,7 @@ public class TestFieldType {
         }
         return value;
     }
-    
+
     private ByteArray generateByteArray() {
         ByteArray value = null;
         // Default
@@ -193,7 +193,7 @@ public class TestFieldType {
         }
         return value;
     }
-    
+
     private long generateLong() {
         // Default
         long value = 0;
@@ -213,7 +213,7 @@ public class TestFieldType {
         }
         return value;
     }
-    
+
     private double generateDouble() {
         // Default
         double value = 0;
@@ -245,7 +245,7 @@ public class TestFieldType {
         for (TestFieldType testFieldType : testFieldTypes) {
             ActionResult actionResult = testFieldType.generateValue(testAction);
             record.setField(testFieldType.getFieldType().getName(), actionResult.object);
-            
+
         }
         return record;
     }
@@ -253,14 +253,14 @@ public class TestFieldType {
     private boolean generateBoolean() {
         return random.nextBoolean();
     }
-    
+
     private LocalDate generateLocalDate() {
         int year = 1950 + (int)(Math.random() * 100);
         int month = (int)Math.ceil(Math.random() * 12);
         int day = (int)Math.ceil(Math.random() * 25);
         return new LocalDate(year, month, day);
     }
-    
+
     private DateTime generateDateTime() {
         int fail = 0;
         while (true) {
@@ -285,15 +285,15 @@ public class TestFieldType {
             }
         }
     }
-    
+
     private Blob generateBlob() {
         // Generate a blob that should be cleaned up by BlobIncubator
         actualGenerateBlob();
         return actualGenerateBlob();
     }
-    
+
     private Blob actualGenerateBlob() {
-        
+
         //4K, 150K, 200MB
         int[] sizes = new int[]{
                 4000, 150000, 200000000
@@ -314,13 +314,13 @@ public class TestFieldType {
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate blob", e);
         }
-        
+
     }
-    
+
     public Link generateLink() {
         return new Link(repository.getIdGenerator().newRecordId());
     }
-    
+
     public ActionResult updateValue(TestAction testAction, Record record) {
         if (linkedRecordTypeName == null && linkedRecordSource == null)  {
             return generateValue(null); // The value will not be a link field, so we can give null here
@@ -329,7 +329,7 @@ public class TestFieldType {
             return updateLinkValue(testAction, value, fieldType.getValueType());
         }
     }
-    
+
     private ActionResult updateLinkValue(TestAction testAction, Object value, ValueType valueType) {
         if (valueType.getBaseName().equals("LIST")) {
             List<Object> values = (List<Object>) value;
@@ -355,7 +355,7 @@ public class TestFieldType {
             return updateLink(testAction, (Link) value);
         }
     }
-    
+
     private ActionResult updateLink(TestAction testAction, Link link) {
         return testAction.linkFieldAction(this, link.getMasterRecordId());
     }

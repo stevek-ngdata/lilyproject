@@ -41,7 +41,7 @@ import java.util.Set;
  * needing to read the complete record.
  */
 public class IndexRecordFilterHook implements RecordUpdateHook {
-    
+
     private PluginRegistry pluginRegistry;
     private final IndexesInfo indexesInfo;
 
@@ -199,7 +199,7 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
      * @param indexFilterData To be updated with index subscription inclusion/exclusion information
      */
     void calculateIndexInclusion(String table, Record oldRecord, Record newRecord, IndexRecordFilterData indexFilterData) {
-        
+
         Set<String> applicableIndexes = Sets.newHashSet();
         Set<String> nonApplicableIndexes = Sets.newHashSet();
         for (IndexInfo indexInfo : indexesInfo.getIndexInfos()) {

@@ -62,7 +62,7 @@ public class RemoteRepository extends BaseRepository {
         lilyProxy = lilyTransceiver.getLilyProxy();
         this.tableName = tableName;
     }
-    
+
 
     @Override
     public void close() throws IOException {

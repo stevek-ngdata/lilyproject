@@ -58,7 +58,7 @@ public interface RecordType {
      * The id is unique, immutable and system-generated.
      */
     SchemaId getId();
-    
+
     void setName(QName name);
 
     /**
@@ -67,7 +67,7 @@ public interface RecordType {
     QName getName();
 
     void setVersion(Long version);
-    
+
     Long getVersion();
 
     /**
@@ -85,9 +85,9 @@ public interface RecordType {
      * @return null if there is not field type entry for this field type
      */
     FieldTypeEntry getFieldTypeEntry(SchemaId fieldTypeId);
-    
+
     void removeFieldTypeEntry(SchemaId fieldTypeId);
-    
+
     Collection<FieldTypeEntry> getFieldTypeEntries();
 
     /**
@@ -126,22 +126,22 @@ public interface RecordType {
      * @deprecated mixins are renamed to supertypes in 2.2, use {@link #addSupertype(SchemaId)} instead
      */
     void addMixin(SchemaId recordTypeId);
-    
+
     /**
      * Removes a mixin from the recordType.
      *
      * @deprecated mixins are renamed to supertypes in 2.2, use {@link #removeSupertype(SchemaId)} instead.
      */
     void removeMixin(SchemaId recordTypeId);
-    
+
     /**
      * Returns a map of the recordTypeIds and versions of the mixins of the RecordType.
      *
      * @deprecated mixins are renamed to supertypes in 2.2, use {@link #getSupertypes()} instead.
      */
     Map<SchemaId, Long> getMixins();
-    
+
     RecordType clone();
-    
+
     boolean equals(Object obj);
 }

@@ -90,7 +90,7 @@ public class RepositorySetup {
     private RepositoryManager repositoryManager;
     private RemoteRepositoryManager remoteRepositoryManager;
     private RepositoryTableManager tableManager;
-    
+
     private Server lilyServer;
 
     private BlobStoreAccessFactory blobStoreAccessFactory;
@@ -98,7 +98,7 @@ public class RepositorySetup {
 
     private BlobManager blobManager;
     private BlobManager remoteBlobManager;
-    
+
     private SepModel sepModel;
     private SepConsumer sepConsumer;
     private LilyEventPublisherManager eventPublisherManager;
@@ -106,7 +106,7 @@ public class RepositorySetup {
     private boolean coreSetup;
     private boolean typeManagerSetup;
     private boolean repositoryManagerSetup;
-    
+
     private long hbaseBlobLimit = -1;
     private long inlineBlobLimit = -1;
 
@@ -146,7 +146,7 @@ public class RepositorySetup {
             return;
 
         setupTypeManager();
-        
+
         blobStoreAccessFactory = createBlobAccess();
         blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
@@ -159,8 +159,8 @@ public class RepositorySetup {
                 return repository;
             }
         };
-        
-        
+
+
         sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
         eventPublisherManager = new LilyEventPublisherManager(hbaseTableFactory);
 
@@ -168,7 +168,7 @@ public class RepositorySetup {
         if (!tableManager.tableExists(Table.RECORD.name)) {
             tableManager.createTable(Table.RECORD.name);
         }
-        
+
         repositoryManagerSetup = true;
     }
 
@@ -208,7 +208,7 @@ public class RepositorySetup {
                 new LilySpecificResponder(AvroLily.class, new AvroLilyImpl(repositoryManager, typeManager, null)
                         ), new InetSocketAddress(0));
         lilyServer.start();
-        
+
         final AvroConverter avroConverter = new AvroConverter();
         final InetSocketAddress remoteAddr = new InetSocketAddress(lilyServer.getPort());
 
@@ -216,9 +216,9 @@ public class RepositorySetup {
         remoteTypeManager = new RemoteTypeManager(remoteAddr, avroConverter, idGenerator, zk, remoteSchemaCache);
         remoteSchemaCache.setTypeManager(remoteTypeManager);
         RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
-        
-        
-        
+
+
+
         remoteRepositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
                 new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory);
         avroConverter.setRepositoryManager(remoteRepositoryManager);
@@ -237,7 +237,7 @@ public class RepositorySetup {
     public void waitForSepProcessing() throws Exception {
         waitForSepProcessing(Table.RECORD.name);
     }
-    
+
     /**
      * Wait until all currently queued SEP events are processed on a specific table.
      *
@@ -284,7 +284,7 @@ public class RepositorySetup {
     public RepositoryManager getRepositoryManager() {
         return repositoryManager;
     }
-    
+
     public RepositoryTableManager getTableManager() {
         return tableManager;
     }
@@ -292,16 +292,16 @@ public class RepositorySetup {
     public RemoteRepositoryManager getRemoteRepositoryManager() {
         return remoteRepositoryManager;
     }
-    
-    
+
+
     public SepModel getSepModel() {
         return sepModel;
     }
-    
+
     public LilyEventPublisherManager getEventPublisherManager() {
         return eventPublisherManager;
     }
-    
+
     public void stopSepEventSlave() {
         if (sepConsumer == null || !sepConsumer.isRunning()) {
             throw new IllegalStateException("No SepEventSlave to stop");
@@ -309,11 +309,11 @@ public class RepositorySetup {
         sepConsumer.stop();
         sepConsumer = null;
     }
-    
+
     /**
      * Start a SEP event processor. Only a single SEP event processor is supported within the
      * context of this class.
-     * 
+     *
      * @param subscriptionId The id of the subscription for which the slave will process events
      * @param eventListener The listener to handle incoming events
      */

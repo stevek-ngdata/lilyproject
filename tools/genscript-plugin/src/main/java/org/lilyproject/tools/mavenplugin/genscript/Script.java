@@ -15,7 +15,7 @@
  */
 package org.lilyproject.tools.mavenplugin.genscript;
 
-public class Script {    
+public class Script {
     private String basename;
     private String mainClass;
 

@@ -61,7 +61,7 @@ public interface RecordTypeBuilder {
      * Sets the name of the record type.
      */
     RecordTypeBuilder name(QName name);
-    
+
     /**
      * Sets the id of the record type. This is only relevant when you want
      * to update an existing record type, and even then the ID is only
@@ -69,7 +69,7 @@ public interface RecordTypeBuilder {
      * you prefer to rely on the unchangeable ID to identify the record type.
      */
     RecordTypeBuilder id(SchemaId id);
-    
+
     /**
      * Adds a field type to the record type.
      *
@@ -130,7 +130,7 @@ public interface RecordTypeBuilder {
      * @return the created or updated record type
      */
     RecordType createOrUpdate() throws RepositoryException, InterruptedException;
-    
+
     /**
      * Performs a createOrUpdateRecordType operation on {@link TypeManager}.
      *
@@ -150,7 +150,7 @@ public interface RecordTypeBuilder {
      * @return the updated record type
      */
     RecordType update() throws RepositoryException, InterruptedException;
-    
+
     /**
      * Updates a record type on the repository to bring it in line with the state of the builder.
      *

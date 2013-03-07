@@ -74,12 +74,12 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
                 if (!create) {
                     throw e;
                 }
-    
+
                 try {
                     // Make a deep copy, we don't want to touch the original
                     tableDescriptor = new HTableDescriptor(tableDescriptor);
                     configure(tableDescriptor);
-    
+
                     int regionCount = splitKeys == null ? 1 : splitKeys.length + 1;
                     log.info("Creating '" + tableDescriptor.getNameAsString() + "' table using "
                             + regionCount + " initial region" + (regionCount > 1 ? "s." : "."));
@@ -87,10 +87,10 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
                 } catch (TableExistsException e2) {
                     // Table is meanwhile created by another process
                     log.info("Table already existed: '" + tableDescriptor.getNameAsString() + "'.");
-    
+
                 }
             }
-      
+
             //In all cases we need to wait until the table is available
             // https://issues.apache.org/jira/browse/HBASE-6576
             long startWait = System.currentTimeMillis();

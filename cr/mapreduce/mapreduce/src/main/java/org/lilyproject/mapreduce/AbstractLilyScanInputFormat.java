@@ -52,11 +52,11 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
  * A MapReduce InputFormat for Lily based on Lily scanners.
  */
 public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputFormat<KEYIN, VALUEIN> implements Configurable {
-    
+
     public static final String SCAN = "lily.mapreduce.scan";
 
     final Log log = LogFactory.getLog(AbstractLilyScanInputFormat.class);
-    
+
     private Configuration conf;
     protected String zkConnectString;
 
@@ -102,7 +102,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
             } else {
                 startRow = new byte[0];
             }
-            
+
             byte[] stopRow;
             if (scan.getRawStopRecordId() != null) {
                 stopRow = scan.getRawStopRecordId();
@@ -114,7 +114,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
 
             //
             hbaseConf = LilyClient.getHBaseConfiguration(zk);
-            
+
             for (String tableName : getRepositoryTables(lilyClient.getTableManager(), jobContext.getConfiguration())) {
                 HTable table = new HTable(hbaseConf, tableName);
                 try {
@@ -134,7 +134,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
             Closer.close(lilyClient);
         }
     }
-    
+
     /**
      * Returns the list of repository tables to be included in this job.
      * @throws IOException
@@ -145,7 +145,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
         for (RepositoryTable repoTable : tableManager.getTables()) {
             allRepoTables.add(repoTable.getName());
         }
-        
+
         List<String> tablesToInclude = Lists.newArrayList();
         String tableListStr = conf.get(LilyMapReduceUtil.REPOSITORY_TABLES);
         if (tableListStr == null) {
@@ -212,7 +212,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
     }
 
 
-    
+
     protected RecordScan getScan(RepositoryManager repositoryManager) {
         RecordScan scan;
         String scanData = conf.get(SCAN);

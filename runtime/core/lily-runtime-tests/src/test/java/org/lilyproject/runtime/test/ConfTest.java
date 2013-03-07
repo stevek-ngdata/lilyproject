@@ -77,7 +77,7 @@ public class ConfTest extends AbstractRuntimeTest {
 
         ConfDependentBean confTestBean2 = (ConfDependentBean)appContext.getBean("confTestBean2");
         Assert.assertNotNull(confTestBean2.getConf());
-        assertEquals("foobar@hotmail.com", confTestBean2.getConf().getChild("email").getValue());        
+        assertEquals("foobar@hotmail.com", confTestBean2.getConf().getChild("email").getValue());
 
         String confTestBean3 = (String)appContext.getBean("confTestBean3");
         Assert.assertEquals("foobar@hotmail.com", confTestBean3);

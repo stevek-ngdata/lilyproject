@@ -31,7 +31,7 @@ public class HBaseConnectionDisposer {
 
     @PreDestroy
     public void stop() {
-        
+
         try {
          // LocalHTable keeps HTablePools in static vars: make sure that is cleaned out
             // (to avoid leaks when using resetLilyState)

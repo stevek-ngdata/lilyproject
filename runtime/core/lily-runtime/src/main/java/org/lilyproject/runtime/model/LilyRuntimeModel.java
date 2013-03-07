@@ -60,7 +60,7 @@ public class LilyRuntimeModel {
             idSet.add(entry.getId());
         }
     }
-   
+
     public String moduleInfo(String id){
         if (id == null || id.length() == 0 ){
             String result = "";
@@ -70,7 +70,7 @@ public class LilyRuntimeModel {
             }
             return result;
         }
-        
+
         final ModuleDefinition module = getModuleById(id);
         if (module == null)
              return "No module with id: " + id;

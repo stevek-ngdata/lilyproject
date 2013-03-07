@@ -29,7 +29,7 @@ public class BlobValueType extends AbstractValueType implements ValueType {
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
@@ -64,7 +64,7 @@ public class BlobValueType extends AbstractValueType implements ValueType {
      * - Blob Media Type : UTF (which starts with an int of 4 bytes indicating its length)
      * - Blob size : long of 8 bytes
      * - Blob name : UTF (which starts with an int of 4 bytes indicating its length)
-     * 
+     *
      * <p> IMPORTANT: Any changes on this format has an impact on the {@link ContainsValueComparator}
      */
     @Override
@@ -122,10 +122,10 @@ public class BlobValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new BlobValueTypeFactory();
     }
-    
+
     public static class BlobValueTypeFactory implements ValueTypeFactory {
         private static BlobValueType instance = new BlobValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

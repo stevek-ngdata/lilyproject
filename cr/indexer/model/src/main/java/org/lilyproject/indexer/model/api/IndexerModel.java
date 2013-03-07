@@ -17,7 +17,7 @@ package org.lilyproject.indexer.model.api;
 
 import java.util.Collection;
 
-public interface IndexerModel {    
+public interface IndexerModel {
     Collection<IndexDefinition> getIndexes();
 
     /**

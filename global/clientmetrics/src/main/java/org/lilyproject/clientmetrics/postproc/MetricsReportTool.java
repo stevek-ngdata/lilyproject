@@ -128,7 +128,7 @@ public class MetricsReportTool extends BaseCliTool {
             System.out.println("Specify metrics file name with -" + metricsFileOption.getOpt());
             return 1;
         }
-        
+
         File metricFile = new File(metricFileName);
         if (!metricFile.exists()) {
             System.err.println("Specified metrics file does not exist: " + metricFile.getAbsolutePath());

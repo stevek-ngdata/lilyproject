@@ -34,17 +34,17 @@ public class HBaseFieldValueFilter implements HBaseRecordFilterFactory {
     @Override
     public Filter createHBaseFilter(RecordFilter uncastFilter, RepositoryManager repositoryManager, HBaseRecordFilterFactory factory)
             throws RepositoryException, InterruptedException {
-        
+
         if (!(uncastFilter instanceof FieldValueFilter)) {
             return null;
         }
-        
+
         FieldValueFilter filter = (FieldValueFilter)uncastFilter;
-        
+
         if (filter.getField() == null) {
             throw new IllegalArgumentException("Field name should be specified in FieldValueFilter");
         }
-        
+
         if (filter.getFieldValue() == null) {
             throw new IllegalArgumentException("Field value should be specified in FieldValueFilter");
         }

@@ -44,7 +44,7 @@ public class ListTablesCli extends BaseTableCliTool {
         }
         return 0;
     }
-    
+
     public static void main(String[] args) {
         new ListTablesCli().start(args);
     }

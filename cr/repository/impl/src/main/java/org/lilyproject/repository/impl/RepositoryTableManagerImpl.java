@@ -43,7 +43,7 @@ public class RepositoryTableManagerImpl implements RepositoryTableManager {
     public RepositoryTable createTable(String tableName) throws InterruptedException, IOException {
         return createTable(TableCreateDescriptorImpl.createInstance(tableName));
     }
-    
+
     @Override
     public RepositoryTable createTable(TableCreateDescriptor descriptor) throws InterruptedException, IOException {
         if (tableExists(descriptor.getName())) {
@@ -55,13 +55,13 @@ public class RepositoryTableManagerImpl implements RepositoryTableManager {
 
     @Override
     public void dropTable(String tableName) throws InterruptedException, IOException {
-        
+
         if (Table.RECORD.name.equals(tableName)) {
             throw new IllegalArgumentException("Can't delete the default record table");
         }
-        
+
         HBaseAdmin hbaseAdmin = new HBaseAdmin(configuration);
-        
+
         try {
             if (hbaseAdmin.tableExists(tableName)
                     && LilyHBaseSchema.isRecordTableDescriptor(hbaseAdmin.getTableDescriptor(Bytes.toBytes(tableName)))) {

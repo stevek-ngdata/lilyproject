@@ -54,7 +54,7 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
     /**
      * Sets the cache refresh flag on Zookeeper. This triggers the caches to
      * refresh their data.
-     * 
+     *
      * @param force
      *            if true, it is ignored if cache refreshing is enabled or not.
      */

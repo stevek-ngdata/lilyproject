@@ -61,10 +61,10 @@ public class ClassLoaderConfigurer {
     private ClassLoaderConfigurer(List<ModuleConfig> moduleConfigs, boolean enableSharing, Conf classLoadingConf) {
         this.moduleConfigs = moduleConfigs;
         this.enableSharing = enableSharing;
-        
+
         Conf requiredConf = classLoadingConf.getChild("required", false);
         Conf allowedConf = classLoadingConf.getChild("allowed", false);
-        
+
         if (requiredConf != null) {
             String requiredSharingStr = requiredConf.getAttribute("on-conflict", requiredSharingConflictResolution.getName());
             requiredSharingConflictResolution = SharingConflictResolution.fromString(requiredSharingStr);
@@ -72,7 +72,7 @@ public class ClassLoaderConfigurer {
                 throw new LilyRTException("Illegal value for required sharing conflict resolution (@on-conflict: " + requiredSharingStr, requiredConf.getLocation());
             }
         }
-        
+
         if (allowedConf != null) {
             String allowedSharingStr = allowedConf.getAttribute("on-conflict", allowedSharingConflictResolution.getName());
             allowedSharingConflictResolution = SharingConflictResolution.fromString(allowedSharingStr);
@@ -102,7 +102,7 @@ public class ClassLoaderConfigurer {
         //    - put the artifact in the shared classloader and remove it from the individual module
         if (!handleRequired(holder)) {
             if (!handleProhibited(holder)){
-                return handleAllowed(holder); 
+                return handleAllowed(holder);
             }
         }
         return true;
@@ -122,7 +122,7 @@ public class ClassLoaderConfigurer {
         }
 
         final boolean versionConflict = versions.size() > 1;
-        
+
         if (!enableSharing) {
             classLoadingLog.info("Sharing of allowed artefacts is not enabled. Artifact " + holder + " will not be shared. It is used by " + holder.allowed.size() + " module(s).");
         } else if (!versionConflict) {
@@ -167,12 +167,12 @@ public class ClassLoaderConfigurer {
 
         if (holder.allowed.size() > 1) {
             for (ArtifactUser user : holder.allowed) versions.add(user.version);
-            
+
             classLoadingLog.info("Artifact sharing is allowed by some, but prohibited by:");
             for (ArtifactUser user : holder.prohibited)
                 classLoadingLog.info("  " + user.module.getId());
         }
-        
+
         if (versions.size() == 1) {
             // log info:
             classLoadingLog.info("Artifact sharing of " + holder + " is prohibited by some modules, but all use the same version. It might make sense to allow sharing the dependency.");
@@ -184,10 +184,10 @@ public class ClassLoaderConfigurer {
 
     private boolean handleRequired(ArtifactHolder holder) {
         if (holder.required.size() == 0) {
-            // nothing to do 
+            // nothing to do
             return false;
         }
-        
+
         Set<String> versions = new HashSet<String>();
         for (ArtifactUser user : holder.required) {
             versions.add(user.version);
@@ -203,7 +203,7 @@ public class ClassLoaderConfigurer {
 
         final boolean versionConflict = versions.size() > 1;
         final boolean handlingConflict = holder.prohibited.size() > 0;
-        
+
         if (handlingConflict)
             classLoadingLog.warn("Sharing for artifact " + holder + " is both required and prohibited. Ignoring 'prohibited'.");
         if (versionConflict)

@@ -57,7 +57,7 @@ public class IndexDefinitionConverter {
 
         String queueSubscriptionId = JsonUtil.getString(node, "queueSubscriptionId", null);
         long subscriptionTimestamp = JsonUtil.getLong(node, "subscriptionTimestamp", 0L);
-        
+
         List<String> defaultBatchTables = JsonUtil.getStrings(node, "defaultBatchTables", null);
         List<String> batchTables = JsonUtil.getStrings(node, "batchTables", null);
 
@@ -176,7 +176,7 @@ public class IndexDefinitionConverter {
 
         if (index.getQueueSubscriptionId() != null)
             node.put("queueSubscriptionId", index.getQueueSubscriptionId());
-        
+
         node.put("subscriptionTimestamp", index.getSubscriptionTimestamp());
 
         String configurationAsString;
@@ -247,7 +247,7 @@ public class IndexDefinitionConverter {
         }
 
         node.put("maintainDerefMap", index.isEnableDerefMap());
-        
+
         List<String> defaultBatchTables = index.getDefaultBatchTables();
         if (defaultBatchTables != null) {
             ArrayNode defaultBatchTableNode = node.putArray("defaultBatchTables");
@@ -255,7 +255,7 @@ public class IndexDefinitionConverter {
                 defaultBatchTableNode.add(defaultBatchTable);
             }
         }
-        
+
         List<String> batchTables = index.getBatchTables();
         if (batchTables != null) {
             ArrayNode batchTableNode = node.putArray("batchTables");

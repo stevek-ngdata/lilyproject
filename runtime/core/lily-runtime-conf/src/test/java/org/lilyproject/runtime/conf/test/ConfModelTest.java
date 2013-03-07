@@ -58,7 +58,7 @@ public class ConfModelTest extends TestCase {
             fail("expected exception");
         } catch (ConfException e) { /* ignore */ }
 
-        assertEquals("zit", config.getChild("nonexistingchild").getValue("zit"));        
+        assertEquals("zit", config.getChild("nonexistingchild").getValue("zit"));
     }
 
     /**

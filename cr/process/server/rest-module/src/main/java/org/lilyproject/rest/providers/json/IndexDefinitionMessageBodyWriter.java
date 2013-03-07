@@ -31,7 +31,7 @@ import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.impl.IndexDefinitionConverter;
 
 /**
- * MessageBodyWriter for writing IndexDefinition instances 
+ * MessageBodyWriter for writing IndexDefinition instances
  */
 @Provider
 public class IndexDefinitionMessageBodyWriter implements MessageBodyWriter<IndexDefinition> {
@@ -56,10 +56,10 @@ public class IndexDefinitionMessageBodyWriter implements MessageBodyWriter<Index
 			Type genericType, Annotation[] annotations, MediaType mediaType,
 			MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
 			throws IOException, WebApplicationException {
-	    
+
 	    byte[] jsonBytes = IndexDefinitionConverter.INSTANCE.toJsonBytes(indexDefinition);
 	    IOUtils.write(jsonBytes, outputStream);
 	}
-	
+
 
 }

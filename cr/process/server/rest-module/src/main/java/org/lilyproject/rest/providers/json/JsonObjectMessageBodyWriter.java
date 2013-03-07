@@ -30,7 +30,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 /**
- * MessageBodyWriter for writing json output (ObjectNode) instances 
+ * MessageBodyWriter for writing json output (ObjectNode) instances
  */
 @Provider
 public class JsonObjectMessageBodyWriter implements MessageBodyWriter<ObjectNode> {
@@ -57,6 +57,6 @@ public class JsonObjectMessageBodyWriter implements MessageBodyWriter<ObjectNode
 			throws IOException, WebApplicationException {
 		new ObjectMapper().writeValue(outputStream, objectNode);
 	}
-	
+
 
 }

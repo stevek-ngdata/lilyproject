@@ -397,7 +397,7 @@ public class BatchBuildTest {
             model.unlockIndex(lock);
         }
     }
-    
+
     private static AbsoluteRecordId absId(RecordId recordId) {
         return lilyClient.getIdGenerator().newAbsoluteRecordId(Table.RECORD.name, recordId);
     }

@@ -71,28 +71,28 @@ public class IndexerConfBuilderTest {
 
         return IndexerConfBuilder.build(new ByteArrayInputStream(result.toString().getBytes()), repositoryManager);
     }
-    
+
     @Test
     public void testExtractTableNames_SingleTable() {
         assertEquals(Lists.newArrayList("mytable"), IndexerConfBuilder.extractTableNames("mytable"));
     }
-    
+
     @Test
     public void testExtractTableNames_MultipleTables() {
         assertEquals(
                 Lists.newArrayList("table1", "table2", "table3"),
                 IndexerConfBuilder.extractTableNames(" table1 , table2, table3"));
-                
+
     }
-    
+
     @Test
     public void testExtractTableNames_Null() {
         assertNull(IndexerConfBuilder.extractTableNames(null));
     }
-    
+
     @Test
     public void testExtractTableNames_NoneGiven() {
         assertNull(IndexerConfBuilder.extractTableNames("  "));
     }
-    
+
 }

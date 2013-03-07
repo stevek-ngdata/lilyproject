@@ -107,7 +107,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     private HBaseConnections hbaseConnections = new HBaseConnections();
 
     private boolean isClosed = true;
-    
+
     /**
      * @throws NoServersException if the znode under which the repositories are published does not exist
      */
@@ -181,7 +181,7 @@ public class LilyClient implements Closeable, RepositoryManager {
             KeeperException, RepositoryException {
         return getPlainRepository(Table.RECORD.name);
     }
-    
+
     /**
      * Returns a Repository that uses one of the available Lily servers (randomly selected).
      * This repository instance will not automatically retry operations and to balance requests
@@ -195,7 +195,7 @@ public class LilyClient implements Closeable, RepositoryManager {
 
         return getServerNode().repoMgr.getRepository(tableName);
     }
-    
+
     /**
      * Get a {@link RepositoryTableManager} for handling the lifecycle of repository tables.
      */
@@ -232,7 +232,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     public Repository getRepository() {
         return getRepository(Table.RECORD.name);
     }
-    
+
     /**
      * Returns a repository instance that is bound to a non-default storage table. The returned
      * repository will automatically balance requests over the available Lily servers, and will
@@ -246,28 +246,28 @@ public class LilyClient implements Closeable, RepositoryManager {
         }
         return balancingAndRetryingLilyConnection.getRepository(tableName);
     }
-    
-    
+
+
     @Override
     public Repository getDefaultRepository() throws IOException, InterruptedException {
         return balancingAndRetryingLilyConnection.getDefaultRepository();
     }
-    
+
     @Override
     public RecordFactory getRecordFactory() {
         return balancingAndRetryingLilyConnection.getRecordFactory();
     }
-    
+
     @Override
     public TypeManager getTypeManager() {
         return balancingAndRetryingLilyConnection.getTypeManager();
     }
-    
+
     @Override
     public IdGenerator getIdGenerator() {
         return balancingAndRetryingLilyConnection.getIdGenerator();
     }
-    
+
 
     /**
      * Returns an Indexer that uses one of the available Lily servers (randomly selected).
@@ -307,7 +307,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     private RepositoryManager constructRepositoryManager(ServerNode server) throws IOException, InterruptedException {
-        
+
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
         Configuration hbaseConf = getNewOrExistingConfiguration(zk);
         BlobManager blobManager = getBlobManager(zk, hbaseConf);

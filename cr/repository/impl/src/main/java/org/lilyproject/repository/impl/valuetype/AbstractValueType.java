@@ -29,22 +29,22 @@ public abstract class AbstractValueType implements ValueType {
     public <T> T read(byte[] data) throws RepositoryException, InterruptedException {
         return read(new DataInputImpl(data));
     }
-    
+
     @Override
     public abstract void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException;
 
     @Override
     public abstract String getBaseName();
-    
+
     @Override
     public abstract ValueType getDeepestValueType();
-    
+
     @Override
     public ValueType getNestedValueType() {
         return null;
     }
-    
+
     @Override
     public byte[] toBytes(Object value, IdentityRecordStack parentRecords) throws RepositoryException,
             InterruptedException {
@@ -52,17 +52,17 @@ public abstract class AbstractValueType implements ValueType {
         write(value, dataOutput, parentRecords);
         return dataOutput.toByteArray();
     }
-    
+
     @Override
     public String getName() {
         return getBaseName();
     }
-    
+
     @Override
     public int getNestingLevel() {
         return 0;
     }
-    
+
     @Override
     public Set<Object> getValues(Object value) {
         Set<Object> result = new HashSet<Object>();
@@ -74,10 +74,9 @@ public abstract class AbstractValueType implements ValueType {
     public boolean isMultiValue() {
         return false;
     }
-    
+
     @Override
     public boolean isHierarchical() {
         return false;
     }
 }
- 

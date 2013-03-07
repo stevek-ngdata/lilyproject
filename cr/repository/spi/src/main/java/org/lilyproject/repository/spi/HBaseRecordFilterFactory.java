@@ -23,7 +23,7 @@ import org.lilyproject.repository.api.filter.RecordFilter;
 /**
  * Implements the translation from a {@link RecordFilter} definition to an actual HBase filter
  * object.
- * 
+ *
  * <p>Implementations are found through Java's {@link java.util.ServiceLoader}, thus by listing
  * their fully qualified class name in META-INF/services/org.lilyproject.repository.spi.HBaseRecordFilterFactory.</p>
  *

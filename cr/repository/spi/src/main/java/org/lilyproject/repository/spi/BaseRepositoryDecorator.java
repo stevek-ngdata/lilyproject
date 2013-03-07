@@ -176,7 +176,7 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
             throws RepositoryException, InterruptedException {
         return delegate.delete(recordId, conditions);
     }
-    
+
     @Override
     public void delete(Record record) throws RepositoryException, InterruptedException {
         delegate.delete(record);
@@ -273,12 +273,12 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     public RecordBuilder recordBuilder() throws RecordException, InterruptedException {
         return delegate.recordBuilder();
     }
-    
+
     @Override
     public RepositoryManager getRepositoryManager() {
         return delegate.getRepositoryManager();
     }
-    
+
     @Override
     public String getTableName() {
         return delegate.getTableName();

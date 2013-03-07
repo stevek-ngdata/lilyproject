@@ -35,7 +35,7 @@ import org.joda.time.LocalDate;
 import org.junit.Test;
 
 public class SchemaRestTest extends AbstractRestTest {
-  
+
 
     @Test
     public void testGeneralErrors() throws Exception {
@@ -279,7 +279,7 @@ public class SchemaRestTest extends AbstractRestTest {
         assertEquals(3, json.get("version").getIntValue());
     }
 
-   
+
 
     /**
      * Tests reading and writing each type of field value.
@@ -476,38 +476,38 @@ public class SchemaRestTest extends AbstractRestTest {
         assertEquals(1, results.get(2).get("fields").size());
     }
 
-    
-    
+
+
     @Test
     public void testTables() throws Exception {
         ResponseAndContent getResponse = get("/table");
         assertStatus(HttpStatus.SC_OK, getResponse);
-        
+
         List<String> tableNames = getTableNameList(readJson(getResponse));
         assertEquals(Lists.newArrayList("record"), tableNames);
-        
+
         ResponseAndContent postResponse = post("/table", "{\"name\": \"resttesttable\"}");
         assertStatus(HttpStatus.SC_OK, postResponse);
-        
+
         getResponse = get("/table");
         tableNames = getTableNameList(readJson(getResponse));
         Collections.sort(tableNames);
-        
+
         assertEquals(Lists.newArrayList("record", "resttesttable"), tableNames);
-        
+
         ResponseAndContent deleteResponse = delete("/table/resttesttable");
         assertStatus(HttpStatus.SC_OK, deleteResponse);
-        
+
         getResponse = get("/table");
         tableNames = getTableNameList(readJson(getResponse));
-        
+
         assertEquals(Lists.newArrayList("record"), tableNames);
-        
+
         deleteResponse = delete("/table/resttesttable");
         assertStatus(HttpStatus.SC_NOT_FOUND, deleteResponse);
-        
+
     }
-    
+
     private List<String> getTableNameList(JsonNode json) {
         if (!json.isArray()) {
             throw new RuntimeException("Supplied JSON is not an array: " +  json.toString());

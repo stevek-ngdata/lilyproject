@@ -99,7 +99,7 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
                     // clear solr cloud settings
                     index.setZkConnectionString(null);
                     index.setSolrCollection(null);
-                    
+
                     // shards will be set later
                 } else {
                     // clear solr classic settings
@@ -163,7 +163,7 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
 
                 changes = true;
             }
-            
+
             if (batchIndexConfiguration != null) {
                 index.setBatchIndexConfiguration(batchIndexConfiguration);
                 changes = true;
@@ -173,7 +173,7 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
                 index.setBatchTables(batchIndexTables);
                 changes = true;
             }
-            
+
             if (defaultBatchIndexTables != null && !defaultBatchIndexTables.equals(index.getDefaultBatchTables())) {
                 index.setDefaultBatchTables(defaultBatchIndexTables);
                 changes = true;

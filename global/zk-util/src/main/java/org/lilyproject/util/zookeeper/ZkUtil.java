@@ -32,7 +32,7 @@ import org.apache.zookeeper.data.Stat;
  * Various ZooKeeper utility methods.
  */
 public class ZkUtil {
-    
+
     public static ZooKeeperItf connect(String connectString, int sessionTimeout) throws ZkConnectException {
         ZooKeeperImpl zooKeeper;
         try {
@@ -126,7 +126,7 @@ public class ZkUtil {
 
     /**
      * Updates data on a zookeeper node.
-     * 
+     *
      * <p>
      * The supplied data is used for the last node in the path. The path must
      * already exist. It is not checked if the data is changed or not. This will
@@ -144,7 +144,7 @@ public class ZkUtil {
             }
         });
     }
-    
+
     /**
      * Deletes a path (non-recursively) in ZooKeeper, if it exists.
      * <p>
@@ -152,7 +152,7 @@ public class ZkUtil {
      * until it fails with a non-recoverable error.
      * <p>
      * If the path has children, the operation will fail with the underlying {@link NotEmptyException}.
-     * 
+     *
      * @param zk Handle to the ZooKeeper where the delete will occur
      * @param path The path to be deleted
      */

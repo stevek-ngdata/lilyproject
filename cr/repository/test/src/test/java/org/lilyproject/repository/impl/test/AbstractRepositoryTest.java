@@ -928,7 +928,7 @@ public abstract class AbstractRepositoryTest {
         } catch (RecordNotFoundException expected) {
         }
     }
-    
+
 
     @Test
     public void testDeleteRecord() throws Exception {
@@ -1518,7 +1518,7 @@ public abstract class AbstractRepositoryTest {
         repository.update(record, false, false); // record version 2
 
         // Mutable field update of record version 1 with field3 mandatory
-        // Field3 already exists, but in record version 2 not version 1 
+        // Field3 already exists, but in record version 2 not version 1
         record = repository.newRecord(record.getId());
         record.setRecordType(recordType3.getName(), 4L);
         record.setField(fieldType6.getName(), "zzz");
@@ -2781,7 +2781,7 @@ public abstract class AbstractRepositoryTest {
         //      will work always, it sometimes will work? Needs more investigation.
         //assertNull(repository.getScanner(scan).next());
     }
-    
+
     /**
      * Tests if record type is set when different settings of returnFields is used.
      * @throws Exception

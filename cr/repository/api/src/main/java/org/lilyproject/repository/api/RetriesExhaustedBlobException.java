@@ -33,7 +33,7 @@ public class RetriesExhaustedBlobException extends BlobException {
         String duration = state.get("duration");
         this.duration = (duration != null) ? Long.valueOf(duration) : null;
     }
-    
+
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
@@ -54,5 +54,5 @@ public class RetriesExhaustedBlobException extends BlobException {
     public String getMessage() {
         return "Attempted " + operation + " operation " + attempts + " times during " + duration + " ms without success.";
     }
-    
+
 }

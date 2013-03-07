@@ -788,7 +788,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
      * An index name can be any string of printable unicode characters that has a length greater than 0. Printable
      * characters in this context are considered to be anything that is not an ISO control character as defined by
      * {@link Character#isISOControl(int)}.
-     * 
+     *
      * @param indexName The name to validate
      */
     public static void validateIndexName(String indexName) {

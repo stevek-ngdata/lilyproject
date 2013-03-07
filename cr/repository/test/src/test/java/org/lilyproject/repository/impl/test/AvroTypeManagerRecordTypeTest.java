@@ -46,7 +46,7 @@ public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordType
     public static void tearDownAfterClass() throws Exception {
         repoSetup.stop();
     }
- 
+
 
     @Before
     public void setUp() throws Exception {

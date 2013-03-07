@@ -39,12 +39,12 @@ public class StringValueType extends AbstractValueType implements ValueType {
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
     public String read(DataInput dataInput) {
@@ -52,7 +52,7 @@ public class StringValueType extends AbstractValueType implements ValueType {
         dataInput.readByte();
         return dataInput.readUTF();
     }
-    
+
     @Override
     public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
@@ -94,10 +94,10 @@ public class StringValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new StringValueTypeFactory();
     }
-    
+
     public static class StringValueTypeFactory implements ValueTypeFactory {
         private static StringValueType instance = new StringValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

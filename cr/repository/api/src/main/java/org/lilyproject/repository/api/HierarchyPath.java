@@ -31,11 +31,11 @@ public class HierarchyPath implements List<Object>, Cloneable {
         this.elements = new ArrayList<Object>(elements.length);
         Collections.addAll(this.elements, elements);
     }
-    
+
     public Object[] getElements() {
         return toArray();
     }
-    
+
     public int length() {
         return size();
     }

@@ -47,7 +47,7 @@ public class ByteArrayValueType extends AbstractValueType implements ValueType {
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
@@ -109,10 +109,10 @@ public class ByteArrayValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new ByteArrayValueTypeFactory();
     }
-    
+
     public static class ByteArrayValueTypeFactory implements ValueTypeFactory {
         private static ByteArrayValueType instance = new ByteArrayValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

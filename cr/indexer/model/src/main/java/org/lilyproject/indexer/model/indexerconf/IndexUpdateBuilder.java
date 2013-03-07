@@ -34,7 +34,7 @@ public interface IndexUpdateBuilder {
     public SchemaId getVTag();
 
     public String evalIndexFieldName(NameTemplate nameTemplate);
-    
+
     /**
      * Returns the name of the repository table where the indexed record resides.
      */

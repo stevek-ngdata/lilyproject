@@ -103,7 +103,7 @@ public class LilyRuntimeNamespaceHandler implements NamespaceHandler {
 
                 String moduleId = springBuildContext.getModule().getDefinition().getId();
                 ConfRegistry confRegistry = springBuildContext.getRuntime().getConfManager().getConfRegistry(moduleId);
-                
+
                 ConstructorArgumentValues args = new ConstructorArgumentValues();
                 args.addIndexedArgumentValue(0, ConfRegistry.class);
                 args.addIndexedArgumentValue(1, confRegistry);
@@ -221,7 +221,7 @@ public class LilyRuntimeNamespaceHandler implements NamespaceHandler {
                 ConstructorArgumentValues args = new ConstructorArgumentValues();
                 args.addIndexedArgumentValue(0, value instanceof Conf ? Conf.class : String.class);
                 args.addIndexedArgumentValue(1, value);
-    
+
                 def.setConstructorArgumentValues(args);
                 def.setLazyInit(false);
 

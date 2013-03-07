@@ -60,7 +60,7 @@ public class ZkLockTest {
     public static void tearDownAfterClass() throws Exception {
         Closer.close(ZK);
         if (ZK_CLUSTER != null) {
-            ZK_CLUSTER.shutdown();            
+            ZK_CLUSTER.shutdown();
         }
     }
 

@@ -76,10 +76,10 @@ public class BlobIncubatorMonitorSetup {
             blobIncubatorMonitor.start();
         }
     }
-    
+
     @PreDestroy
     public void stop() {
         blobIncubatorMonitor.stop();
     }
-    
+
 }

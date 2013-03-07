@@ -61,7 +61,7 @@ public class DerefMapBasicTest {
     public static void tearDownAfterClass() throws Exception {
         Closer.close(repoSetup);
     }
-    
+
     private static AbsoluteRecordId absId(RecordId recordId) {
         return new AbsoluteRecordIdImpl(Table.RECORD.name, recordId);
     }

@@ -22,11 +22,11 @@ import java.util.Map;
  * deleting field types or record types.
  */
 public class TypeException extends RepositoryException {
-    
+
     public TypeException(String message, Map<String, String> state) {
         super(message, state);
     }
-    
+
     public TypeException() {
         super();
     }

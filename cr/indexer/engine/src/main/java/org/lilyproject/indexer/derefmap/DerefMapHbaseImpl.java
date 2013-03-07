@@ -115,7 +115,7 @@ public class DerefMapHbaseImpl implements DerefMap {
     public void updateDependants(AbsoluteRecordId parentRecordId, SchemaId parentVtagId,
                                    Map<DependencyEntry, Set<SchemaId>> newDependantEntries)
             throws IOException {
-        
+
         final Set<DependencyEntry> existingEntries = findDependencies(parentRecordId, parentVtagId);
 
         // Figure out what changed
@@ -254,7 +254,7 @@ public class DerefMapHbaseImpl implements DerefMap {
     @Override
     public DependantRecordIdsIterator findDependantsOf(AbsoluteRecordId parentRecordId, Set<SchemaId> fields,
                                                        SchemaId vtag) throws IOException {
-        
+
         final RecordId master = parentRecordId.getRecordId().getMaster();
 
         final Query query = new Query();

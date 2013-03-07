@@ -22,7 +22,7 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 
 public class RecordTypeImpl implements RecordType, Cloneable {
-    
+
     private SchemaId id;
     private QName name;
     private Long version;
@@ -47,22 +47,22 @@ public class RecordTypeImpl implements RecordType, Cloneable {
         // each time they are requested.
         fieldTypeEntries = new TreeMap<SchemaId, FieldTypeEntry>(comparator);
     }
-    
+
     @Override
     public void setId(SchemaId id) {
         this.id = id;
     }
-    
+
     @Override
     public SchemaId getId() {
         return id;
     }
-    
+
     @Override
     public void setName(QName name) {
         this.name = name;
     }
-    
+
     @Override
     public QName getName() {
         return name;
@@ -72,27 +72,27 @@ public class RecordTypeImpl implements RecordType, Cloneable {
     public Long getVersion() {
         return version;
     }
-    
+
     @Override
     public void setVersion(Long version){
         this.version = version;
     }
-    
+
     @Override
     public Collection<FieldTypeEntry> getFieldTypeEntries() {
         return fieldTypeEntries.values();
     }
-    
+
     @Override
     public FieldTypeEntry getFieldTypeEntry(SchemaId fieldTypeId) {
         return fieldTypeEntries.get(fieldTypeId);
     }
-    
+
     @Override
     public void removeFieldTypeEntry(SchemaId fieldTypeId) {
         fieldTypeEntries.remove(fieldTypeId);
     }
-    
+
     @Override
     public void addFieldTypeEntry(FieldTypeEntry fieldTypeEntry) {
         fieldTypeEntries.put(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry);
@@ -131,19 +131,19 @@ public class RecordTypeImpl implements RecordType, Cloneable {
     public void addMixin(SchemaId recordTypeId, Long recordTypeVersion) {
         addSupertype(recordTypeId, recordTypeVersion);
     }
-    
+
     @Override
     @Deprecated
     public void addMixin(SchemaId recordTypeId) {
         addSupertype(recordTypeId, null);
     }
-    
+
     @Override
     @Deprecated
     public void removeMixin(SchemaId recordTypeId) {
         removeSupertype(recordTypeId);
     }
-    
+
     @Override
     @Deprecated
     public Map<SchemaId, Long> getMixins() {

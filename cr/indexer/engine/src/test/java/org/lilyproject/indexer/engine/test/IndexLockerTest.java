@@ -166,7 +166,7 @@ public class IndexLockerTest {
         // Check that no 2 threads had the lock at the same time
         for (int i = 1; i < infos.size(); i++) {
             assertTrue(infos.get(i).lockObtainTime >= infos.get(i - 1).lockReleaseTime);
-        }        
+        }
     }
 
     private static class Locker implements Runnable {

@@ -23,7 +23,7 @@ public interface RecordFactory {
 
     /**
      * Instantiates a new Record object.
-     * 
+     *
      * <p>
      * This is only a factory method, nothing is created in the repository.
      */
@@ -31,7 +31,7 @@ public interface RecordFactory {
 
     /**
      * Instantiates a new Record object with the RecordId already filled in.
-     * 
+     *
      * <p>
      * This is only a factory method, nothing is created in the repository.
      */

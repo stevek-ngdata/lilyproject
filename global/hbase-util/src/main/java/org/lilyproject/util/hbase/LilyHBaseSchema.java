@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 public class LilyHBaseSchema {
     private static HColumnDescriptor DATA_CF;
-    
+
     static final byte[] IS_RECORD_TABLE_PROPERTY = Bytes.toBytes("isLilyRecordTable");
     static final byte[] IS_RECORD_TABLE_VALUE = Bytes.toBytes(true);
 
@@ -56,14 +56,14 @@ public class LilyHBaseSchema {
         blobIncubatorDescriptor = new HTableDescriptor(Table.BLOBINCUBATOR.bytes);
         blobIncubatorDescriptor.addFamily(new HColumnDescriptor(BlobIncubatorCf.REF.bytes));
     }
-    
+
     @VisibleForTesting
     static HTableDescriptor createRecordTableDescriptor(String tableName) {
-        
+
         if (tableName.contains(".") || tableName.contains(":")) {
             throw new IllegalArgumentException("Repository table name cannot contain periods or colons");
         }
-        
+
         HTableDescriptor recordTableDescriptor = new HTableDescriptor(tableName);
         recordTableDescriptor.addFamily(DATA_CF);
         recordTableDescriptor.setValue(IS_RECORD_TABLE_PROPERTY, IS_RECORD_TABLE_VALUE);
@@ -80,7 +80,7 @@ public class LilyHBaseSchema {
         verifyIsRecordTable(recordTable.getTableDescriptor());
         return recordTable;
     }
-    
+
     public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName, byte[][] splitKeys) throws IOException, InterruptedException {
         HTableInterface recordTable = tableFactory.getTable(createRecordTableDescriptor(tableName), splitKeys);
         verifyIsRecordTable(recordTable.getTableDescriptor());
@@ -92,7 +92,7 @@ public class LilyHBaseSchema {
         verifyIsRecordTable(recordTable.getTableDescriptor());
         return recordTable;
     }
-    
+
     private static void verifyIsRecordTable(HTableDescriptor htableDescriptor) {
         if (!isRecordTableDescriptor(htableDescriptor)) {
             throw new IllegalArgumentException(htableDescriptor.getNameAsString() + " is not a valid record table");

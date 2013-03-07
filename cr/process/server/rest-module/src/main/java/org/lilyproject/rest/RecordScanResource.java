@@ -45,16 +45,16 @@ import static javax.ws.rs.core.Response.Status.*;
 public class RecordScanResource extends RepositoryEnabled {
     @Autowired
     private Cache<String, RecordScanner> recordScannerMap;
-    
+
     @GET
     @Produces("application/json")
     public EntityList<Record> get(@PathParam("id") String scanId, @DefaultValue("1") @QueryParam("batch") Long batch, @Context UriInfo uriInfo) {
         RecordScanner scanner = recordScannerMap.getIfPresent(scanId);
-        if (scanner != null) {           
+        if (scanner != null) {
             List<Record> records = new ArrayList<Record>();
-            
-            try {                
-                Record record;            
+
+            try {
+                Record record;
                 while(records.size() < batch && (record = scanner.next()) != null) {
                     records.add(record);
                 }
@@ -63,22 +63,22 @@ public class RecordScanResource extends RepositoryEnabled {
             } catch (InterruptedException e) {
                 throw new ResourceException(e, INTERNAL_SERVER_ERROR.getStatusCode());
             }
-            
+
             if (records.size() < 1) {
                 throw new WebApplicationException(Response.status(NO_CONTENT).build());
             }
-            
+
             return EntityList.create(records, uriInfo);
         } else {
             throw new ResourceException("No scan with ID " + scanId + " found", NOT_FOUND.getStatusCode());
         }
     }
-    
+
     @DELETE
     public Response delete(@PathParam("id") String scanId) {
         RecordScanner scanner = this.recordScannerMap.getIfPresent(scanId);
-        if (scanner != null) {            
-            scanner.close();  
+        if (scanner != null) {
+            scanner.close();
             this.recordScannerMap.invalidate(scanId);
             return Response.ok().build();
         } else {

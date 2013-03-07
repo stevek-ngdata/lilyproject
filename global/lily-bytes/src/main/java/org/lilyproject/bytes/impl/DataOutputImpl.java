@@ -22,30 +22,30 @@ import org.lilyproject.bytes.api.DataOutput;
 /**
  * Implementation of {@link DataOutput} which writes and encodes primitve values to a byte[].
  * This byte[] can then be used in the constructor of {@link DataInputImpl}.
- * 
+ *
  * <p>The position within the underlying byte[] is maintained so that each write
  *    call will append the next encoded value in the byte[].
- *    
+ *
  * <p>The underlying byte[] is resized when it is not large enough to contain the next value to be written.
- * 
+ *
  * <p>This implementation (especially #writeUTF()) is based on (and some pieces are copied from) the work
- *    done by Lucene in the methods <code>UTF16toUTF8</code> and <code>UTF8toUTF16</code> 
+ *    done by Lucene in the methods <code>UTF16toUTF8</code> and <code>UTF8toUTF16</code>
  *    in <code>org.apache.lucene.util.UnicodeUtil.java</code> (revision 1030754),
- *    and combined with the work done by ElasticSearch in 
+ *    and combined with the work done by ElasticSearch in
  *    <code>org.elasticsearch.common.io.stream.BytesStreamInput.java</code>,
  *    <code>org.elasticsearch.common.io.stream.BytesStreamOutput.java</code>,
  *    <code>org.elasticsearch.common.io.stream.StreamInput.java</code>,
  *    <code>org.elasticsearch.common.io.stream.StreamOutput.java</code>.
- *    
+ *
  */
 
 public class DataOutputImpl implements DataOutput {
     public static final int UNI_SUR_HIGH_START = 0xD800;
     public static final int UNI_SUR_LOW_START = 0xDC00;
-    
+
     private static final long HALF_SHIFT = 10;
-    
-    private static final int SURROGATE_OFFSET = 
+
+    private static final int SURROGATE_OFFSET =
         Character.MIN_SUPPLEMENTARY_CODE_POINT - (UNI_SUR_HIGH_START << HALF_SHIFT) - UNI_SUR_LOW_START;
 
     private byte[] buffer;
@@ -54,13 +54,13 @@ public class DataOutputImpl implements DataOutput {
 
     /**
      * Default constructor.
-     * When it is possible to give a good estimate of the number of bytes 
+     * When it is possible to give a good estimate of the number of bytes
      * that will be written, it is better to use {@link DataOutputImpl(int)}.
      */
     public DataOutputImpl() {
         this(256);
     }
-    
+
     /**
      * Constructor for <code>DataOutputImpl</code>
      * @param sizeEstimate estimated size for the underlying byte[],
@@ -69,12 +69,12 @@ public class DataOutputImpl implements DataOutput {
     public DataOutputImpl(int sizeEstimate) {
         buffer = new byte[sizeEstimate];
     }
-    
+
     @Override
     public byte[] toByteArray() {
         return Arrays.copyOfRange(buffer, 0, pos);
     }
-    
+
     /**
      * Checks if the buffer has enough space to put <code>len</code> bytes.
      * If not the buffer is resized to at least twice its current size.
@@ -85,7 +85,7 @@ public class DataOutputImpl implements DataOutput {
             buffer = Arrays.copyOf(buffer, Math.max(buffer.length << 1, newcount));
         }
     }
-    
+
     @Override
     public void writeByte(byte b) {
         assureSize(1);
@@ -99,7 +99,7 @@ public class DataOutputImpl implements DataOutput {
     private void writeByteUnsafe(byte b) {
         buffer[pos++] = b;
     }
-    
+
     @Override
     public void writeBytes(byte[] bytes) {
         int length = bytes.length;
@@ -107,8 +107,8 @@ public class DataOutputImpl implements DataOutput {
         System.arraycopy(bytes, 0, buffer, pos, length);
         pos += length;
     }
-    
-    /** 
+
+    /**
      * Encodes a string to (unmodified) UTF-8 bytes and puts it in the buffer.
      */
     @Override
@@ -224,7 +224,7 @@ public class DataOutputImpl implements DataOutput {
         assureSize(4); // Make sure the buffer has enough space
         writeIntUnsafe(integer);
     }
-    
+
     /**
      *  Writes the int without checking if there is enough space for it
      */
@@ -238,7 +238,7 @@ public class DataOutputImpl implements DataOutput {
 
     private static byte ZERO = 0;
     private static byte ONE = 1;
-    
+
     @Override
     public void writeBoolean(boolean b) {
         assureSize(1);
@@ -263,12 +263,12 @@ public class DataOutputImpl implements DataOutput {
         writeByteUnsafe((byte) (value >> 8));
         writeByteUnsafe((byte) value);
     }
-    
+
     @Override
     public void writeFloat(float v) {
         writeInt(Float.floatToIntBits(v));
     }
-    
+
     /**
     * Writes an int in a variable-length format. Writes between one and
     * five bytes. Smaller values take fewer bytes. Negative numbers are not
@@ -279,7 +279,7 @@ public class DataOutputImpl implements DataOutput {
         assureSize(5);
         writeVIntUnsafe(i);
     }
-    
+
     /**
      * Same as writeVInt(), but without checking that there is enough space for it.
      */
@@ -290,7 +290,7 @@ public class DataOutputImpl implements DataOutput {
         }
         writeByteUnsafe((byte) i);
     }
-    
+
     /**
     * Writes a long in a variable-length format. Writes between one and five
     * bytes. Smaller values take fewer bytes. Negative numbers are not
@@ -301,7 +301,7 @@ public class DataOutputImpl implements DataOutput {
         assureSize(5);
         writeVLongUnsafe(i);
     }
-    
+
     /**
      * Same as writeVLong(), but without checking that there is enough space for it.
      */
@@ -312,7 +312,7 @@ public class DataOutputImpl implements DataOutput {
         }
         writeByteUnsafe((byte) i);
     }
-    
+
     @Override
     public int getSize() {
         return pos;

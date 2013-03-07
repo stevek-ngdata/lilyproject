@@ -405,7 +405,7 @@ public class HBaseProxy {
 
         // Roll the hlog
         rollHLog();
-        
+
         // Force creation of a new HLog
         delete = new Delete(Bytes.toBytes("i-am-quite-sure-this-row-does-not-exist-ha-ha-ha-2"));
         table.delete(delete);

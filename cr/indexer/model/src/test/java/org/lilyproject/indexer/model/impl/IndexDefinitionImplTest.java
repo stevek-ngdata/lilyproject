@@ -23,9 +23,9 @@ import org.junit.Test;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
 
 public class IndexDefinitionImplTest {
-    
+
     private IndexDefinitionImpl indexDefinition;
-    
+
     @Before
     public void setUp() {
         indexDefinition = new IndexDefinitionImpl("test_index");
@@ -36,34 +36,34 @@ public class IndexDefinitionImplTest {
     @Test
     public void testSetUpdateState_ChangeFromDoNotSubscribe() {
         indexDefinition.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
-        
+
         // Sanity check
         assertEquals(0, indexDefinition.getSubscriptionTimestamp());
 
         long now = System.currentTimeMillis();
         indexDefinition.setUpdateState(IndexUpdateState.SUBSCRIBE_AND_LISTEN);
-        
+
         assertTrue(Math.abs(indexDefinition.getSubscriptionTimestamp() - now) < 10);
     }
-    
-    // Check that changing the update state from DO_NOT_SUBSCRIBE to 
+
+    // Check that changing the update state from DO_NOT_SUBSCRIBE to
     // DO_NOT_SUBSCRIBE doesn't affect the subscription timestamp
     @Test
     public void testSetUpdateState_NoChangeFromDoNotSubscribe() {
         indexDefinition.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
         indexDefinition.setSubscriptionTimestamp(42);
-        
+
         indexDefinition.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
         assertEquals(42, indexDefinition.getSubscriptionTimestamp());
     }
-    
+
     // Check that changing the update state from something other than
     // DO_NOT_SUBSCRIBE doesn't affect the subscription timestamp
     @Test
     public void testSetUpdateState_ChangeFromSubscribeAndListen() {
         indexDefinition.setUpdateState(IndexUpdateState.SUBSCRIBE_DO_NOT_LISTEN);
         indexDefinition.setSubscriptionTimestamp(42);
-        
+
         indexDefinition.setUpdateState(IndexUpdateState.SUBSCRIBE_AND_LISTEN);
         assertEquals(42, indexDefinition.getSubscriptionTimestamp());
     }

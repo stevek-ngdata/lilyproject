@@ -40,7 +40,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
     public ObjectNode toJson(RecordFilter filter, Namespaces namespaces, RepositoryManager repositoryManager,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
-        
+
         String className = filter.getClass().getName();
 
         for (RecordFilterJsonConverter json : filterLoader) {
@@ -60,13 +60,13 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         String className = JsonUtil.getString(node, "@class");
-        
+
         for (RecordFilterJsonConverter json : filterLoader) {
             if (json.supports(className)) {
                 return json.fromJson(node, namespaces, repositoryManager, converter);
             }
         }
-        
+
         throw new RepositoryException("No json converter available for filter type " + className);
     }
 }

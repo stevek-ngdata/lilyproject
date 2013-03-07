@@ -34,7 +34,7 @@ public class RecordEventTest {
     private static TypeManager typeManager;
     private static RecordType rt1;
     private static FieldType field1;
-    
+
     private CountingMessageVerifier messageVerifier;
 
     @BeforeClass
@@ -48,7 +48,7 @@ public class RecordEventTest {
 
         setupSchema();
     }
-    
+
     @Before
     public void setUp() throws Exception {
         messageVerifier = new CountingMessageVerifier();
@@ -56,7 +56,7 @@ public class RecordEventTest {
         repoSetup.startSepEventSlave(subscriptionId, messageVerifier);
         repoSetup.getHBaseProxy().waitOnReplicationPeerReady(subscriptionId);
     }
-    
+
     @After
     public void tearDown() throws Exception {
         repoSetup.stopSepEventSlave();
@@ -77,9 +77,9 @@ public class RecordEventTest {
         record.setField(field1.getName(), "something");
         record.setAttributes(attr);
         record = repository.create(record);
-        
+
         repoSetup.waitForSepProcessing();
-        
+
         Assert.assertTrue(record.getAttributes().isEmpty());
         Assert.assertEquals(1, messageVerifier.getMessageCount());
 
@@ -89,9 +89,9 @@ public class RecordEventTest {
         record.setField(field1.getName(), "something else");
         record.setAttributes(attr);
         repository.update(record);
-        
+
         repoSetup.waitForSepProcessing();
-        
+
         Assert.assertEquals(2, messageVerifier.getMessageCount());
 
         // test read : attr empty
@@ -104,9 +104,9 @@ public class RecordEventTest {
         record.setField(field1.getName(), "something else");
         record.setAttributes(attr);
         repository.delete(record);
-        
+
         repoSetup.waitForSepProcessing();
-        
+
         Assert.assertEquals(3, messageVerifier.getMessageCount());
     }
 

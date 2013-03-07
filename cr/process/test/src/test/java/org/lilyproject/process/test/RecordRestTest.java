@@ -32,7 +32,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.junit.Test;
 
 public class RecordRestTest extends AbstractRestTest {
-    
+
 
     @Test
     public void testRecordBasics() throws Exception {
@@ -46,12 +46,12 @@ public class RecordRestTest extends AbstractRestTest {
         // Read the record
         response = get("/record/USER.faster_fishing");
         assertStatus(HttpStatus.SC_OK, response);
-        
+
         // Verify content
         JsonNode json = readJson(response);
         assertEquals(1L, json.get("fields").size());
         assertNull(json.get("schema")); // schema info should not be included by default
-        
+
         // Read the record with schema info
         response = get("/record/USER.faster_fishing?schema=true");
         assertStatus(HttpStatus.SC_OK, response);
@@ -153,7 +153,7 @@ public class RecordRestTest extends AbstractRestTest {
         assertStatus(HttpStatus.SC_OK, response);
     }
 
-  
+
     /**
      * Test versioning of record types and the creation of a record that uses the non-latest version of a record type.
      */
@@ -227,7 +227,7 @@ public class RecordRestTest extends AbstractRestTest {
         assertEquals(2L, json.get("type").get("version").getLongValue());
     }
 
-   
+
 
     @Test
     public void testBlobs() throws Exception {
@@ -770,7 +770,7 @@ public class RecordRestTest extends AbstractRestTest {
         response = deleteUri(location + "not_here");
         assertStatus(HttpStatus.SC_NOT_FOUND, response);
     }
-    
-  
+
+
 
 }

@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.net.URL;                 
+import java.net.URL;
 
 /**
  * Source of a module, i.e. where the system gets the content of the module

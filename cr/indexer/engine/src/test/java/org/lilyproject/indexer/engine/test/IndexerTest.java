@@ -121,9 +121,9 @@ import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
 public class IndexerTest {
-    
+
     public static final String ALTERNATE_TABLE = "alternate";
-    
+
     private final static RepositorySetup repoSetup = new RepositorySetup();
     private static IndexerConf INDEXER_CONF;
     private static SolrTestingUtility SOLR_TEST_UTIL;
@@ -207,12 +207,12 @@ public class IndexerTest {
         prematureRepositoryManager.setRepositoryManager(repoSetup.getRepositoryManager());
         repositoryManager = repoSetup.getRepositoryManager();
         repoSetup.getTableManager().createTable(ALTERNATE_TABLE);
-        
+
         defaultRepository = repositoryManager.getRepository(Table.RECORD.name);
         alternateRepository = repositoryManager.getRepository(ALTERNATE_TABLE);
         indexUpdaterRepositoryMgr = new TrackingRepositoryManager(repoSetup.getRepositoryManager());
 
-        
+
         typeManager = repoSetup.getTypeManager();
         idGenerator = defaultRepository.getIdGenerator();
 
@@ -235,7 +235,7 @@ public class IndexerTest {
 
     // augmented each time we change the indexerconf, to give the indexes unique names
     private static int idxChangeCnt = 0;
-    
+
     public static void changeIndexUpdater(String confName) throws Exception {
         String prevIndexName = "test" + idxChangeCnt;
         idxChangeCnt++;
@@ -280,7 +280,7 @@ public class IndexerTest {
         repoSetup.getSepModel().addSubscription(indexDef.getQueueSubscriptionId());
 
         repoSetup.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + indexName);
-        
+
         IndexUpdater indexUpdater = new IndexUpdater(indexer, indexUpdaterRepositoryMgr, indexLocker,
                 new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisherManager(), "IndexUpdater_" + indexName);
         repoSetup.startSepEventSlave("IndexUpdater_" + indexName,
@@ -810,7 +810,7 @@ public class IndexerTest {
         changeIndexUpdater("indexerconf1.xml");
         changeIndexUpdater("indexerconf1.xml");
     }
-    
+
     // Test the behaviour of using the "lily.mq" attribute when indexing
     @Test
     public void testIndexer_AddAndUpdate_DisabledIndexing() throws Exception {
@@ -829,7 +829,7 @@ public class IndexerTest {
        recordToNotIndex.setRecordType(nvRecordType1.getName());
        recordToNotIndex.setField(nvfield1.getName(), "mango");
        recordToNotIndex.setField(nvTag.getName(), 0L);
-       
+
        // Mark this record to not be indexed
        recordToNotIndex.getAttributes().put("lily.mq", "false");
        recordToNotIndex = defaultRepository.create(recordToNotIndex);
@@ -838,21 +838,21 @@ public class IndexerTest {
        verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 1);
        verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 0);
        verifyResultCount("nv_field1:mango", 1);
-       
+
        // Now we'll update the recordToIndex, first without indexing, and then with it
-       
+
        recordToIndex.setField(nvfield1.getName(), "orange");
        recordToIndex.getAttributes().put("lily.mq", "false");
-       
+
        recordToIndex = defaultRepository.update(recordToIndex);
        commitIndex();
-       
+
        verifyResultCount("nv_field1:orange", 0);
        verifyResultCount("nv_field1:mango", 1);
-       
+
 
     }
-    
+
     // Test the behaviour of using the "lily.mq" attribute when indexing
     @Test
     public void testIndexer_Delete_DisabledIndexing() throws Exception {
@@ -874,26 +874,26 @@ public class IndexerTest {
        recordToNotIndex = defaultRepository.create(recordToNotIndex);
 
        commitIndex();
-       
+
        // Sanity check
        verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 1);
        verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 1);
        verifyResultCount("nv_field1:papaya", 2);
-       
-       
+
+
        // Now delete both records, but disable indexing on one of them
        recordToNotIndex.getAttributes().put("lily.mq", "false");
-       
+
        defaultRepository.delete(recordToIndex);
        defaultRepository.delete(recordToNotIndex);
        commitIndex();
-       
+
        // And check that the index has only been updated for the record that should be indexed
        verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 0);
        verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 1);
        verifyResultCount("nv_field1:papaya", 1);
     }
-    
+
     @Test
     public void testDereferencing_SingleTable() throws Exception {
         changeIndexUpdater("indexerconf1.xml");
@@ -917,19 +917,19 @@ public class IndexerTest {
 
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglepear", 1);
-        
+
         record1.setField(nvfield1.getName(), "derefsingleapple");
         expectEvent(UPDATE, Table.RECORD.name, record1.getId(), nvfield1.getId());
         defaultRepository.update(record1);
-        
+
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglepear", 0);
         verifyResultCount("nv_deref1:derefsingleapple", 1);
-        
+
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
-    
+
     }
-    
+
     @Test
     public void testDereferencing_SingleNonstandardTable() throws Exception {
         changeIndexUpdater("indexerconf1.xml");
@@ -954,20 +954,20 @@ public class IndexerTest {
         commitIndex(ALTERNATE_TABLE);
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglenonstandardpear", 1);
-        
+
         record1.setField(nvfield1.getName(),  "derefsinglenonstandardapple");
         expectEvent(UPDATE, ALTERNATE_TABLE, record1.getId(), nvfield1.getId());
         alternateRepository.update(record1);
-        
+
         commitIndex(ALTERNATE_TABLE);
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglenonstandardpear", 0);
         verifyResultCount("nv_deref1:derefsinglenonstandardapple", 1);
-        
+
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
-    
+
     }
-    
+
     @Test
     public void testDereferencing_SingleNonstandardTable_LinkWithoutTable() throws Exception {
         changeIndexUpdater("indexerconf1.xml");
@@ -992,20 +992,20 @@ public class IndexerTest {
         commitIndex(ALTERNATE_TABLE);
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglenonstandardnolinkpear", 1);
-        
+
         record1.setField(nvfield1.getName(),  "derefsinglenonstandardnolinkapple");
         expectEvent(UPDATE, ALTERNATE_TABLE, record1.getId(), nvfield1.getId());
         alternateRepository.update(record1);
-        
+
         commitIndex(ALTERNATE_TABLE);
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglenonstandardnolinkpear", 0);
         verifyResultCount("nv_deref1:derefsinglenonstandardnolinkapple", 1);
-        
+
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
-    
+
     }
-    
+
     @Test
     public void testDereferencing_MultipleTables() throws Exception {
         changeIndexUpdater("indexerconf1.xml");
@@ -1030,19 +1030,19 @@ public class IndexerTest {
         commitIndex(Table.RECORD.name);
         commitIndex(ALTERNATE_TABLE);
         verifyResultCount("nv_deref1:derefmultipear", 1);
-        
+
         record1.setField(nvfield1.getName(),  "derefmulti_apple");
         expectEvent(UPDATE, ALTERNATE_TABLE, record1.getId(), nvfield1.getId());
         alternateRepository.update(record1);
-        
+
         commitIndex(ALTERNATE_TABLE);
         commitIndex();
         verifyResultCount("nv_deref1:derefmultipear", 0);
         verifyResultCount("nv_deref1:derefmultiapple", 1);
-        
+
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
     }
-       
+
 
     @Test
     public void testIndexerNonVersioned() throws Exception {
@@ -2914,7 +2914,7 @@ public class IndexerTest {
 
         // reset current read count
         indexUpdaterRepositoryMgr.reset();
-        
+
         TrackingRepository indexUpdaterRepository = (TrackingRepository)indexUpdaterRepositoryMgr.getRepository(Table.RECORD.name);
 
         Record record = defaultRepository.newRecord();
@@ -3130,7 +3130,7 @@ public class IndexerTest {
     private void commitIndex() throws Exception {
         commitIndex(Table.RECORD.name);
     }
-    
+
     private void commitIndex(String tableName) throws Exception {
         // wait for all events that exist at this point in time to be processed
         repoSetup.waitForSepProcessing(tableName);
@@ -3241,27 +3241,27 @@ public class IndexerTest {
 
             // In case of failures we print out "load" messages, the main junit thread is expected to
             // test that the failures variable is 0.
-            
+
             RecordId recordId = defaultRepository.getIdGenerator().fromBytes(event.getRow());
-            
+
             try {
                 RecordEvent recordEvent = new RecordEvent(event.getPayload(), idGenerator);
-                
+
                 if (recordEvent.getType().equals(RecordEvent.Type.INDEX)) {
                     log.debug("Ignoring incoming re-index event for message verification");
                     return;
                 }
-                
+
                 if (expectedEvents.isEmpty()) {
                     System.err.println("No events are expected, but we just got event " + recordEvent.toJson() + " on " + recordId);
                     failures++;
                     return;
                 }
-                
+
                 Pair<RecordId, RecordEvent> expectedPair = expectedEvents.remove(0);
                 RecordId expectedId = expectedPair.getV1();
                 RecordEvent expectedEvent = expectedPair.getV2();
-                
+
                 if (expectedEvent == null) {
                     failures++;
                     printSomethingLoad();
@@ -3316,10 +3316,10 @@ public class IndexerTest {
             msgCount = 0;
         }
     }
-    
+
     private static class CompositeEventListener implements EventListener {
         private List<EventListener> eventListeners;
-        
+
         public CompositeEventListener(EventListener...eventListeners) {
             this.eventListeners = Lists.newArrayList(eventListeners);
         }
@@ -3330,15 +3330,15 @@ public class IndexerTest {
                 eventListener.processEvent(event);
             }
         }
-        
-        
+
+
     }
-    
+
     private static class TrackingRepositoryManager implements RepositoryManager {
-        
+
         private RepositoryManager delegate;
         private Map<String,TrackingRepository> repositoryCache = Maps.newHashMap();
-        
+
         public TrackingRepositoryManager(RepositoryManager delegate) {
             this.delegate = delegate;
         }
@@ -3378,7 +3378,7 @@ public class IndexerTest {
             }
             return repositoryCache.get(tableName);
         }
-        
+
         public void reset() {
             for (TrackingRepository repo : repositoryCache.values()) {
                 repo.reads();

@@ -65,7 +65,7 @@ import org.xml.sax.helpers.AttributesImpl;
 
 /**
  * Writes a listing of dependencies in a specific format to a predefined file.
- * 
+ *
  * @goal generate
  * @requiresDependencyResolution runtime
  * @description Genenerate a Lily Runtime classloader file for a module.
@@ -82,7 +82,7 @@ public class ClassloaderMojo extends AbstractMojo {
     /**
      * Helper class to assist in attaching artifacts to the project instance. project-helper instance, used to
      * make addition of resources simpler.
-     * 
+     *
      * @component
      */
     private MavenProjectHelper projectHelper;
@@ -99,14 +99,14 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * Where should the file end up?
-     * 
+     *
      * @parameter expression="${project.build.directory}/classes/LILY-INF"
      */
     private String targetDirectory;
 
     /**
      * Filename to use.
-     * 
+     *
      * @parameter expression="classloader.xml"
      */
     private String targetFileName;
@@ -121,7 +121,7 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * If we should exclude transitive dependencies
-     * 
+     *
      * @since 2.0
      * @optional
      * @parameter expression="${excludeTransitive}" default-value="false"
@@ -130,7 +130,7 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * Comma Separated list of Types to include. Empty String indicates include everything (default).
-     * 
+     *
      * @since 2.0
      * @parameter expression="${includeTypes}" default-value=""
      * @optional
@@ -140,7 +140,7 @@ public class ClassloaderMojo extends AbstractMojo {
     /**
      * Comma Separated list of Types to exclude. Empty String indicates don't exclude anything (default).
      * Ignored if includeTypes is used.
-     * 
+     *
      * @since 2.0
      * @parameter expression="${excludeTypes}" default-value=""
      * @optional
@@ -149,7 +149,7 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * Scope to include. An Empty string indicates all scopes (default).
-     * 
+     *
      * @since 2.0
      * @parameter expression="${includeScope}" default-value="runtime"
      * @optional
@@ -158,7 +158,7 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * Scope to exclude. An Empty string indicates no scopes (default). Ignored if includeScope is used.
-     * 
+     *
      * @since 2.0
      * @parameter expression="${excludeScope}" default-value="provided"
      * @optional
@@ -167,7 +167,7 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * Comma Separated list of Classifiers to include. Empty String indicates include everything (default).
-     * 
+     *
      * @since 2.0
      * @parameter expression="${includeClassifiers}" default-value=""
      * @optional
@@ -177,7 +177,7 @@ public class ClassloaderMojo extends AbstractMojo {
     /**
      * Comma Separated list of Classifiers to exclude. Empty String indicates don't exclude anything
      * (default). Ignored if includeClassifiers is used.
-     * 
+     *
      * @since 2.0
      * @parameter expression="${excludeClassifiers}" default-value=""
      * @optional
@@ -186,7 +186,7 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * Comma Seperated list of Artifact names too exclude. Ignored if includeArtifacts is used.
-     * 
+     *
      * @since 2.0
      * @optional
      * @parameter expression="${excludeArtifactIds}" default-value=""
@@ -195,7 +195,7 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * Comma Seperated list of Artifact names to include.
-     * 
+     *
      * @since 2.0
      * @optional
      * @parameter expression="${includeArtifactIds}" default-value=""
@@ -204,7 +204,7 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * Comma Seperated list of GroupId Names to exclude. Ignored if includeGroupsIds is used.
-     * 
+     *
      * @since 2.0
      * @optional
      * @parameter expression="${excludeGroupIds}" default-value=""
@@ -213,7 +213,7 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * Comma Seperated list of GroupIds to include.
-     * 
+     *
      * @since 2.0
      * @optional
      * @parameter expression="${includeGroupIds}" default-value=""
@@ -273,7 +273,7 @@ public class ClassloaderMojo extends AbstractMojo {
     /**
      * This method uses a Filtering technique as showed by the maven-dependency-plugin. It allows for
      * including/excluding artifacts in a number of ways.
-     * 
+     *
      * @throws MojoExecutionException
      */
     @SuppressWarnings("unchecked")
@@ -299,7 +299,7 @@ public class ClassloaderMojo extends AbstractMojo {
 
     /**
      * Create a project file containing the dependencies.
-     * 
+     *
      * @throws IOException
      * @throws SAXException
      */
@@ -423,7 +423,7 @@ public class ClassloaderMojo extends AbstractMojo {
                 entryMap.put(entry, domArtifact);
             }
         }
-        
+
     }
 
     private String extractAttVal(NamedNodeMap map, String name) {

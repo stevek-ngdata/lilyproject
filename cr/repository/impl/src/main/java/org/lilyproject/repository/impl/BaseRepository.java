@@ -98,11 +98,11 @@ public abstract class BaseRepository implements Repository {
 
     protected BaseRepository(RepositoryManager repositoryManager, BlobManager blobManager,
                              HTableInterface recordTable, RepositoryMetrics metrics) {
-        
+
         Preconditions.checkNotNull(repositoryManager, "repositoryManager cannot be null");
         Preconditions.checkNotNull(blobManager, "blobManager cannot be null");
         Preconditions.checkNotNull(recordTable, "recordTable cannot be null");
-        
+
         this.repositoryManager = repositoryManager;
         this.typeManager = repositoryManager.getTypeManager();
         this.blobManager = blobManager;
@@ -597,12 +597,12 @@ public abstract class BaseRepository implements Repository {
         }
         return recdec.decodeRecords(recordId, validVersions, result, fieldTypes);
     }
-    
+
     @Override
     public Record newRecord() throws RecordException {
         return repositoryManager.getRecordFactory().newRecord();
     }
-    
+
     @Override
     public Record newRecord(RecordId recordId) throws RecordException {
         return repositoryManager.getRecordFactory().newRecord(recordId);
@@ -612,10 +612,10 @@ public abstract class BaseRepository implements Repository {
     public RepositoryManager getRepositoryManager() {
         return repositoryManager;
     }
-    
+
     @Override
     public String getTableName() {
         return tableName;
     }
-    
+
 }

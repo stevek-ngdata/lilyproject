@@ -17,7 +17,7 @@ package org.lilyproject.repository.api.filter;
 
 /**
  * A RecordFilter filters records when performing scan operations.
- * 
+ *
  * <p>To use filters, find an implementation of this interface and supply an instance of it to
  * {@link org.lilyproject.repository.api.RecordScan#setRecordFilter(RecordFilter)}</p>
  *

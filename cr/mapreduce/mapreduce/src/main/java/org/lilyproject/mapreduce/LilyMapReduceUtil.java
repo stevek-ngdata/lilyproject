@@ -34,7 +34,7 @@ import org.lilyproject.util.json.JsonFormat;
 
 public class LilyMapReduceUtil {
     public static final String ZK_CONNECT_STRING = "lily.mapreduce.zookeeper";
-    
+
     /**
      * Config key for storing the list of repository tables to be run through the mapper.
      */
@@ -46,21 +46,21 @@ public class LilyMapReduceUtil {
     public static void initMapperJob(RecordScan scan, String zooKeeperConnectString, RepositoryManager repositoryManager, Job job) {
         initMapperJob(scan, false, zooKeeperConnectString, repositoryManager, job, null);
     }
-    
+
     /**
      * Initialize a mapper job to run on a specific set of repository tables.
      */
     public static void initMapperJob(RecordScan scan, String zooKeeperConnectString, RepositoryManager repositoryManager,
                                         Job job, List<String> repositoryTables) {
         initMapperJob(scan, false, zooKeeperConnectString, repositoryManager, job, repositoryTables);
-        
+
     }
-    
+
     public static void initMapperJob(RecordScan scan, boolean returnIdRecords, String zooKeeperConnectString,
             RepositoryManager repositoryManager, Job job) {
         initMapperJob(scan, returnIdRecords, zooKeeperConnectString, repositoryManager, job, null);
     }
-    
+
     /**
      * Set the necessary parameters inside the job configuration for using Lily as input.
      */
@@ -70,9 +70,9 @@ public class LilyMapReduceUtil {
             job.setInputFormatClass(LilyIdScanInputFormat.class);
         else
             job.setInputFormatClass(LilyScanInputFormat.class);
-        
+
         job.getConfiguration().set(ZK_CONNECT_STRING, zooKeeperConnectString);
-        
+
         if (repositoryTables != null && !repositoryTables.isEmpty()) {
             job.getConfiguration().set(REPOSITORY_TABLES, Joiner.on(',').join(repositoryTables));
         }

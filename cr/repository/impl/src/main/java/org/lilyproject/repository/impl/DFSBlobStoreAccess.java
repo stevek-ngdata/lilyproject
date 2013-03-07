@@ -33,7 +33,7 @@ import org.lilyproject.repository.api.BlobStoreAccess;
 public class DFSBlobStoreAccess implements BlobStoreAccess {
 
     private static final String ID = "HDFS";
-    
+
     private final FileSystem fileSystem;
     private final Path rootDir;
 
@@ -45,12 +45,12 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
             fileSystem.mkdirs(rootDir);
         }
     }
-    
+
     @Override
     public String getId() {
         return ID;
     }
-        
+
     @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         UUID uuid = UUID.randomUUID();
@@ -104,9 +104,9 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
     private UUID decode(byte[] blobKey) {
         return new UUID(Bytes.toLong(blobKey), Bytes.toLong(blobKey, Bytes.SIZEOF_LONG));
     }
-    
+
     private class DFSBlobOutputStream extends FilterOutputStream {
-        
+
         private final byte[] blobKey;
         private final Blob blob;
         public DFSBlobOutputStream(OutputStream outputStream, byte[] blobKey, Blob blob) {
@@ -120,5 +120,5 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
             blob.setValue(blobKey);
         }
     }
-    
+
 }

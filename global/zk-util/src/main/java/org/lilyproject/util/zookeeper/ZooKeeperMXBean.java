@@ -52,7 +52,7 @@ public class ZooKeeperMXBean {
         // The below is the standard way to invalidate a session from the client.
         // See also http://github.com/phunt/zkexamples/blob/master/src/test_session_expiration/TestSessionExpiration.java
         // where it is mentioned that this could also lead to a session moved exception.
-        
+
         Watcher watcher = new Watcher() {
             public void process(WatchedEvent event) {
             }

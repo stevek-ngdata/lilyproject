@@ -58,27 +58,27 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
         this.repositoryManager = repositoryManager;
         this.indexer = indexer;
     }
-    
+
     @Override
     public IdGenerator getIdGenerator() {
         return repositoryManager.getIdGenerator();
     }
-    
+
     @Override
     public void close() throws IOException {
         // Do nothing
     }
-    
+
     @Override
     public TypeManager getTypeManager() {
         return repositoryManager.getTypeManager();
     }
-    
+
     @Override
     public RecordFactory getRecordFactory() {
         return repositoryManager.getRecordFactory();
     }
-    
+
     @Override
     public Repository getDefaultRepository() throws IOException, InterruptedException {
         return repositoryManager.getDefaultRepository();
@@ -108,17 +108,17 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
         final TypeManager typeManager = (TypeManager) Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
                 new Class[]{TypeManager.class}, typeManagerHandler);
 
-        
+
 
         InvocationHandler indexerHandler = new IndexerInvocationHandler(lilyClient);
         Indexer indexer = (Indexer) Proxy.newProxyInstance(Indexer.class.getClassLoader(),
                 new Class[]{Indexer.class}, indexerHandler);
-        
+
         final IdGenerator idGenerator = new IdGeneratorImpl();
         RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
-        
+
         RepositoryManager repositoryManager = new AbstractRepositoryManager(typeManager, idGenerator, recordFactory) {
-            
+
             @Override
             protected Repository createRepository(String tableName) throws IOException, InterruptedException {
                 InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, tableName, typeManager, idGenerator);

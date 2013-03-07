@@ -41,10 +41,10 @@ public class RecordByVersionResource extends RepositoryEnabled {
     @Produces("application/json")
     public Entity<Record> get(@PathParam("id") String id, @PathParam("version") Long version,
             @Context UriInfo uriInfo) {
-        
+
         Repository repository = getRepository(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
-        
+
         try {
             return Entity.create(repository.read(recordId, version), uriInfo);
         } catch (RecordNotFoundException e) {

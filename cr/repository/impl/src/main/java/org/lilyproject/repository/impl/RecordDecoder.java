@@ -139,9 +139,9 @@ public class RecordDecoder {
                 }
             }
         }
-        
+
         for (Scope scope : Scope.values()) {
-            Pair<SchemaId, Long> recordTypePair =  requestedVersion == null ? extractLatestRecordType(scope, result) : 
+            Pair<SchemaId, Long> recordTypePair =  requestedVersion == null ? extractLatestRecordType(scope, result) :
                 extractVersionRecordType(scope, result, requestedVersion);
             if (recordTypePair != null) {
                 RecordType recordType =
@@ -151,7 +151,7 @@ public class RecordDecoder {
                     readContext.setRecordTypeId(scope, recordType);
             }
         }
-           
+
         return record;
     }
 
@@ -248,9 +248,9 @@ public class RecordDecoder {
 
             // We're only adding the record types if any fields were read.
             if (!scopesForVersion.isEmpty()) {
-                // Get the record type for each scope 
+                // Get the record type for each scope
 
-                // At least the non-versioned record type should be read since that is also the record type of the whole record 
+                // At least the non-versioned record type should be read since that is also the record type of the whole record
                 scopesForVersion.add(Scope.NON_VERSIONED);
                 for (Scope scope : scopesForVersion) {
                     Pair<SchemaId, Long> recordTypePair = extractVersionRecordType(scope, result, recordEntry.getKey());

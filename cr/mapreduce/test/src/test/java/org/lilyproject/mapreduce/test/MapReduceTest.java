@@ -51,11 +51,11 @@ public class MapReduceTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         lilyProxy = new LilyProxy();
-        
+
         //
         // Make multiple record table splits, so that our MR job will have multiple map tasks
         //
-        
+
         if (lilyProxy.getMode() == LilyProxy.Mode.CONNECT || lilyProxy.getMode() == LilyProxy.Mode.HADOOP_CONNECT) {
             // The record table will likely already exist and not be recreated, hence we won't be able to change
             // the number of regions. Therefore, drop the table.
@@ -142,15 +142,15 @@ public class MapReduceTest {
         Repository repository = client.getRepository();
         TypeManager typeManager = repository.getTypeManager();
         IdGenerator idGenerator = repository.getIdGenerator();
-        
+
         FieldType ft1 = typeManager.createFieldType("STRING", new QName("test", "field1"), Scope.NON_VERSIONED);
-        
+
         RecordType rt1 = typeManager.recordTypeBuilder()
                 .defaultNamespace("test")
                 .name("rt1")
                 .fieldEntry().use(ft1).add()
                 .create();
-        
+
         for (int i = 0; i < 100; i++) {
             repository.recordBuilder()
                     .id(String.format("%1$03d", i))
@@ -188,8 +188,8 @@ public class MapReduceTest {
             assertEquals("Number of launched map tasks", 5L, getTotalLaunchedMaps(job));
             assertEquals("Number of input records", 100L, getTotalInputRecords(job));
         }
-        
-        
+
+
         //
         // Launch a job with a custom scan
         //
@@ -233,11 +233,11 @@ public class MapReduceTest {
         }
 
     }
-    
+
     private long getTotalLaunchedMaps(Job job) throws IOException {
         return job.getCounters().findCounter("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_MAPS").getValue();
     }
-    
+
     private long getTotalInputRecords(Job job) throws IOException {
         return job.getCounters().findCounter("org.apache.hadoop.mapreduce.TaskCounter", "MAP_INPUT_RECORDS").getValue();
     }

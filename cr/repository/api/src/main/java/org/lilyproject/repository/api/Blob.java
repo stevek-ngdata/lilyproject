@@ -68,11 +68,11 @@ public class Blob implements Cloneable {
         this.size = size;
         this.name = name;
     }
-    
+
     /**
      * Create a clone of the Blob object.
      * <p>
-     * Note that this does NOT create a copy of the actual blob-data (e.g. on HDFS). 
+     * Note that this does NOT create a copy of the actual blob-data (e.g. on HDFS).
      */
     @Override
     public Blob clone() throws CloneNotSupportedException {
@@ -83,35 +83,35 @@ public class Blob implements Cloneable {
         clone.name = name;
         return clone;
     }
-    
+
     public byte[] getValue() {
         return value;
     }
-    
+
     public void setValue(byte[] value) {
         this.value = value;
     }
-    
+
     public String getMediaType() {
         return mediaType;
     }
-    
+
     public void setMediaType(String mediaType) {
         this.mediaType = mediaType;
     }
-    
+
     public Long getSize() {
         return size;
     }
-    
+
     public void setSize(Long size) {
         this.size = size;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public void setName(String name) {
         this.name = name;
     }

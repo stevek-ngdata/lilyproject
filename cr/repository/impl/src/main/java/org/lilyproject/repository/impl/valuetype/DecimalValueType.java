@@ -92,10 +92,10 @@ public class DecimalValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new DecimalValueTypeFactory();
     }
-    
+
     public static class DecimalValueTypeFactory implements ValueTypeFactory {
         private static DecimalValueType instance = new DecimalValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

@@ -38,7 +38,7 @@ public class LongValueType extends AbstractValueType  implements ValueType {
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
@@ -90,10 +90,10 @@ public class LongValueType extends AbstractValueType  implements ValueType {
     public static ValueTypeFactory factory() {
         return new LongValueTypeFactory();
     }
-    
+
     public static class LongValueTypeFactory implements ValueTypeFactory {
         private static LongValueType instance = new LongValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

@@ -97,7 +97,7 @@ public class LinkIndex {
             backwardIndex = indexManager.getIndex(indexDef);
         }
     }
-    
+
     public void deleteLinks(RecordId sourceRecord) throws LinkIndexException {
         deleteLinks(getAbsoluteId(sourceRecord));
     }
@@ -139,7 +139,7 @@ public class LinkIndex {
             metrics.report(Action.DELETE_LINKS, System.currentTimeMillis() - before);
         }
     }
-    
+
     public void deleteLinks(RecordId sourceRecord, SchemaId vtag) throws LinkIndexException {
         deleteLinks(getAbsoluteId(sourceRecord), vtag);
     }
@@ -183,7 +183,7 @@ public class LinkIndex {
     public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws LinkIndexException {
         updateLinks(sourceRecord, vtag, links, false);
     }
-    
+
     public void updateLinks(AbsoluteRecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws LinkIndexException {
         updateLinks(sourceRecord, vtag, links, false);
     }
@@ -197,8 +197,8 @@ public class LinkIndex {
             throws LinkIndexException {
         updateLinks(getAbsoluteId(sourceRecord), vtag, links, isNewRecord);
     }
-    
-    
+
+
     public void updateLinks(AbsoluteRecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links, boolean isNewRecord)
             throws LinkIndexException {
         long before = System.currentTimeMillis();
@@ -296,11 +296,11 @@ public class LinkIndex {
 
         return entry;
     }
-    
+
     public Set<RecordId> getReferrers(RecordId record, SchemaId vtag) throws LinkIndexException {
         return getReferrers(record, vtag, null);
     }
-    
+
     public Set<AbsoluteRecordId> getAbsoluteReferrers(AbsoluteRecordId record, SchemaId vtag) throws LinkIndexException {
         return getAbsoluteReferrers(record, vtag, null);
     }
@@ -308,7 +308,7 @@ public class LinkIndex {
     public Set<RecordId> getReferrers(RecordId record, SchemaId vtag, SchemaId sourceField) throws LinkIndexException {
         return getReferrers(getAbsoluteId(record), vtag, sourceField);
     }
-    
+
     public Set<RecordId> getReferrers(AbsoluteRecordId record, SchemaId vtag, SchemaId sourceField)
             throws LinkIndexException {
         Set<AbsoluteRecordId> absoluteReferrers = getAbsoluteReferrers(record, vtag, sourceField);
@@ -318,7 +318,7 @@ public class LinkIndex {
         }
         return referrers;
     }
-    
+
     public Set<AbsoluteRecordId> getAbsoluteReferrers(AbsoluteRecordId record, SchemaId vtag, SchemaId sourceField)
             throws LinkIndexException {
         long before = System.currentTimeMillis();
@@ -378,7 +378,7 @@ public class LinkIndex {
             metrics.report(Action.GET_FIELDED_REFERRERS, System.currentTimeMillis() - before);
         }
     }
-    
+
     public Set<Pair<FieldedLink, SchemaId>> getAllForwardLinks(RecordId record) throws LinkIndexException {
         return this.getAllForwardLinks(getAbsoluteId(record));
     }
@@ -415,7 +415,7 @@ public class LinkIndex {
         return getForwardLinks(record, vtag, null);
     }
 
-    
+
     public Set<RecordId> getForwardLinks(RecordId record, SchemaId vtag, SchemaId sourceField)
             throws LinkIndexException {
         Set<AbsoluteRecordId> absoluteLinks = getForwardLinks(getAbsoluteId(record), vtag, sourceField);
@@ -425,7 +425,7 @@ public class LinkIndex {
         }
         return relativeLinks;
     }
-    
+
     public Set<AbsoluteRecordId> getForwardLinks(AbsoluteRecordId record, SchemaId vtag, SchemaId sourceField)
             throws LinkIndexException {
         long before = System.currentTimeMillis();
@@ -457,7 +457,7 @@ public class LinkIndex {
             metrics.report(Action.GET_FW_LINKS, System.currentTimeMillis() - before);
         }
     }
-    
+
     public Set<FieldedLink> getFieldedForwardLinks(RecordId record, SchemaId vtag)
             throws LinkIndexException {
         return getFieldedForwardLinks(getAbsoluteId(record), vtag);
@@ -502,7 +502,7 @@ public class LinkIndex {
 
         return lazyIdGenerator;
     }
-    
+
     private AbsoluteRecordId getAbsoluteId(RecordId recordId) {
         return getIdGenerator().newAbsoluteRecordId(Table.RECORD.name, recordId);
     }

@@ -25,7 +25,7 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.compat.Lily11RecordIdDecoder;
 
 public class LinkValueType extends AbstractValueType implements ValueType {
-    
+
     public final static String NAME = "LINK";
     private String fullName;
 
@@ -39,7 +39,7 @@ public class LinkValueType extends AbstractValueType implements ValueType {
      * Changes to the recordId encoding (not the link encoding itself).
      */
     private static final byte VERSION_TWO = 2;
-    
+
     /**
      * Addition of optional table name to Link fields.
      */
@@ -53,22 +53,22 @@ public class LinkValueType extends AbstractValueType implements ValueType {
             fullName = NAME;
         }
     }
-    
+
     @Override
     public String getBaseName() {
         return NAME;
     }
-    
+
     @Override
     public String getName() {
         return fullName;
     }
-    
+
     @Override
     public ValueType getDeepestValueType() {
         return this;
     }
-    
+
     @Override
     public Link read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
@@ -133,7 +133,7 @@ public class LinkValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory(IdGenerator idGenerator, TypeManager typeManager) {
         return new LinkValueTypeFactory(idGenerator, typeManager);
     }
-    
+
     public static class LinkValueTypeFactory implements ValueTypeFactory {
         private final TypeManager typeManager;
         private final IdGenerator idGenerator;
@@ -142,7 +142,7 @@ public class LinkValueType extends AbstractValueType implements ValueType {
             this.idGenerator = idGenerator;
             this.typeManager = typeManager;
         }
-        
+
         @Override
         public ValueType getValueType(String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
             return new LinkValueType(idGenerator, typeManager, recordTypeName);

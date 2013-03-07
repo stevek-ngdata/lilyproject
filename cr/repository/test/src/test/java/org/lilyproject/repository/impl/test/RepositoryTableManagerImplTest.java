@@ -28,18 +28,18 @@ import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 public class RepositoryTableManagerImplTest {
-    
+
     private Configuration configuration;
     private HBaseTableFactory tableFactory;
     private RepositoryTableManager tableManager;
-    
+
     @Before
     public void setUp() {
         configuration = new Configuration();
         tableFactory = mock(HBaseTableFactory.class);
         tableManager = new RepositoryTableManagerImpl(configuration, tableFactory);
     }
-    
+
     @Test(expected=IllegalArgumentException.class)
     public void testDeleteTable_RecordTable() throws InterruptedException, IOException {
         tableManager.dropTable(Table.RECORD.name);

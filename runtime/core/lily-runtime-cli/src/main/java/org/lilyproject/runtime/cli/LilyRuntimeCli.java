@@ -165,13 +165,13 @@ public class LilyRuntimeCli {
                 .withLongOpt("runtime-mode")
                 .create("p");
         cliOptions.addOption(modeOption);
-        
+
         Option versionOption = OptionBuilder
             .withDescription("Don't start the service, only dump the version info string for the module defined with -Dlilyruntime.info.module")
             .withLongOpt("version")
             .create("V");
-        cliOptions.addOption(versionOption);      
-        
+        cliOptions.addOption(versionOption);
+
         Option helpOption = new Option("h", "help", false, "Shows help");
         cliOptions.addOption(helpOption);
 
@@ -200,7 +200,7 @@ public class LilyRuntimeCli {
         }
 
         infolog.info("Starting the Lily Runtime.");
-        
+
         List<File> confDirs = new ArrayList<File>();
 
         if (!cmd.hasOption(confDirsOption.getOpt())) {
@@ -278,7 +278,7 @@ public class LilyRuntimeCli {
             Mode mode = Mode.byName(optionValue);
             runtime.setMode(mode);
         }
-        
+
         if (cmd.hasOption(versionOption.getOpt())) {
             System.out.println(runtime.buildModel().moduleInfo(System.getProperty("lilyruntime.info.module")));
             System.exit(0);

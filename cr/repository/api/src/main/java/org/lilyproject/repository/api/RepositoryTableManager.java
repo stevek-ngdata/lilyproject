@@ -22,55 +22,55 @@ import java.util.List;
  * Handles the life-cycle of Lily repository tables.
  */
 public interface RepositoryTableManager {
-    
+
     /**
      * Describes properties with which a repository table is to be created.
      */
     static interface TableCreateDescriptor {
-       
+
         /**
          * Returns the name of the repository table.
          */
         String getName();
-        
+
         /**
          * Return the region split keys of the table.
          */
         byte[][] getSplitKeys();
-        
+
     }
 
     /**
      * Create a new record table. An exception will be thrown if the table already exists.
-     * 
+     *
      * @param tableName name of the table to create
      */
     RepositoryTable createTable(String tableName) throws InterruptedException, IOException;
 
     /**
      * Create a new record table with predefined properties. An exception will be thrown if the table already exists.
-     * 
+     *
      * @param descriptor describes the properties of the table to be created
      */
     RepositoryTable createTable(TableCreateDescriptor descriptor) throws InterruptedException, IOException;
 
     /**
      * Delete an existing record table. An exception will be thrown if the table doesn't exist.
-     * 
+     *
      * @param tableName name of the table to be deleted
      */
     void dropTable(String tableName) throws InterruptedException, IOException;
 
     /**
      * Get all currently-existing tables.
-     * 
+     *
      * @return All existing tables
      */
     List<RepositoryTable> getTables() throws InterruptedException, IOException;
 
     /**
      * Check if a {@link RepositoryTable} exists.
-     * 
+     *
      * @param tableName name of the table to check for
      * @return true if the table exists, otherwise false
      */

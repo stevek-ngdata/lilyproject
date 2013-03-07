@@ -114,7 +114,7 @@ public class LilyRuntime {
         confManager.initRuntimeConfig();
 
         ConfRegistry confRegistry = confManager.getRuntimeConfRegistry();
-        
+
         return buildModel(confRegistry);
     }
 
@@ -159,7 +159,7 @@ public class LilyRuntime {
         ConfRegistry confRegistry = confManager.getRuntimeConfRegistry();
 
         this.model = buildModel(confRegistry);
-        
+
         // Validate the config
         List<ConfigError> configErrors = new ArrayList<ConfigError>();
         model.validate(configErrors);
@@ -209,7 +209,7 @@ public class LilyRuntime {
 
         // Create the modules
         infolog.info("Starting the modules.");
-        
+
         modules = new ArrayList<Module>(model.getModules().size());
         for (int i = 0; i < moduleConfigs.size(); i++) {
             ModuleConfig moduleConfig = moduleConfigs.get(i);
@@ -240,7 +240,7 @@ public class LilyRuntime {
     public JavaServiceManager getJavaServiceManager() {
         return javaServiceManager;
     }
-    
+
     public ModuleSourceManager getModuleSourceManager() {
         return moduleSourceManager;
     }

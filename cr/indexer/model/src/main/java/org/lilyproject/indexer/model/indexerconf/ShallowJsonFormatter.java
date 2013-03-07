@@ -31,7 +31,7 @@ import org.lilyproject.util.json.JsonFormat;
  * A formatter which renders a record as json.
  *
  * <p>This is useful when you want to retrieve records directly from SOLR</p>.
- * 
+ *
  * <p>Limitation: Only shallow serialization is done: If a record has LIST or PATH members,
  *   the values will be serialized according to the nested valuetype, joined by " " or "/" respectively.</p>
  */

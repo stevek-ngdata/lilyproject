@@ -108,20 +108,20 @@ public class RecordEventTest {
         assertNull(fieldChanges.get(3).getOldValue());
         assertArrayEquals(Bytes.toBytes("foo4"), fieldChanges.get(3).getNewValue());
     }
-    
+
     @Test
     public void testRecordEvent_JsonRoundtrip_TableName() throws IOException {
         final String tableName = "_table_name_";
         RecordEvent recordEvent = new RecordEvent();
         recordEvent.setTableName(tableName);
-        
+
         byte[] jsonBytes = recordEvent.toJsonBytes();
-        
+
         RecordEvent deserialized = new RecordEvent(jsonBytes, idGenerator);
-        
+
         assertEquals(tableName, deserialized.getTableName());
     }
-    
+
     @Test
     public void testIndexRecordFilterData_JsonRoundtrip() {
         IndexRecordFilterData recordFilterData = new IndexRecordFilterData();

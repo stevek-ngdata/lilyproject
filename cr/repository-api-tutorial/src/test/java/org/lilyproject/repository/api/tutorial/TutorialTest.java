@@ -102,19 +102,19 @@ public class TutorialTest {
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
 
         typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
-        
+
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         List<BlobStoreAccess> blobStoreAccesses = Collections.<BlobStoreAccess>singletonList(dfsBlobStoreAccess);
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, new RecordFactoryImpl(typeManager, idGenerator), hbaseTableFactory, blobManager);
-        
+
         RepositoryTableManager repoTableManager = new RepositoryTableManagerImpl(configuration, hbaseTableFactory);
         if (!repoTableManager.tableExists(Table.RECORD.name)) {
             repoTableManager.createTable(Table.RECORD.name);
         }
-        
+
         repository = repositoryManager.getRepository(Table.RECORD.name);
     }
 
@@ -367,12 +367,12 @@ public class TutorialTest {
         // (1)
         FieldType name = typeManager.createFieldType("STRING", new QName(ANS, "name"), Scope.NON_VERSIONED);
         FieldType email = typeManager.createFieldType("STRING", new QName(ANS, "email"), Scope.NON_VERSIONED);
-        
+
         RecordType authorType = typeManager.newRecordType(new QName(ANS, "author"));
         authorType.addFieldTypeEntry(name.getId(), true);
         authorType.addFieldTypeEntry(email.getId(), true);
         authorType = typeManager.createRecordType(authorType);
-        
+
         // (2)
         FieldType title = typeManager.createFieldType("STRING", new QName(ANS, "title"), Scope.NON_VERSIONED);
         FieldType authors = typeManager.createFieldType("LIST<RECORD<{article}author>>",
@@ -384,7 +384,7 @@ public class TutorialTest {
         articleType.addFieldTypeEntry(authors.getId(), true);
         articleType.addFieldTypeEntry(body.getId(), true);
         articleType = typeManager.createRecordType(articleType);
-        
+
         // (3)
         Record author1 = repository.newRecord();
         author1.setRecordType(authorType.getName());
@@ -395,7 +395,7 @@ public class TutorialTest {
         author2.setRecordType(new QName(ANS, "author"));
         author2.setField(name.getName(), "Author Y");
         author2.setField(name.getName(), "author_y@authors.com");
-        
+
         // (4)
         Record article = repository.newRecord();
         article.setRecordType(articleType.getName());
@@ -403,7 +403,7 @@ public class TutorialTest {
         article.setField(new QName(ANS, "authors"), Lists.newArrayList(author1, author2));
         article.setField(new QName(ANS, "body"), "Body text of the article");
         article = repository.create(article);
-        
+
         PrintUtil.print(article, repository);
     }
 

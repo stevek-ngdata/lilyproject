@@ -31,46 +31,46 @@ import org.lilyproject.util.io.Closer;
  * Handles thread-safe creation and caching of Repository objects.
  */
 public abstract class AbstractRepositoryManager implements RepositoryManager {
-    
+
     private final Map<String,Repository> repositoryCache = Maps.newHashMap();
     private final TypeManager typeManager;
     private final IdGenerator idGenerator;
     private final RecordFactory recordFactory;
-    
-    
+
+
     public AbstractRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory) {
         this.typeManager = typeManager;
         this.idGenerator = idGenerator;
         this.recordFactory = recordFactory;
     }
-    
+
     @Override
     public TypeManager getTypeManager() {
         return typeManager;
     }
-    
+
     @Override
     public IdGenerator getIdGenerator() {
         return idGenerator;
     }
-    
+
     @Override
     public RecordFactory getRecordFactory() {
         return recordFactory;
     }
-    
+
     /**
      * Create a new Repository object for the repository cache.
      * @param tableName Name of the backing HTable for the repository
      * @return newly-created repository
      */
     protected abstract Repository createRepository(String tableName) throws IOException, InterruptedException;
-    
+
     @Override
     public Repository getDefaultRepository() throws IOException, InterruptedException {
         return getRepository(Table.RECORD.name);
     }
-    
+
     @Override
     public Repository getRepository(String tableName) throws IOException, InterruptedException {
         if (!repositoryCache.containsKey(tableName)) {
@@ -82,7 +82,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
         }
         return repositoryCache.get(tableName);
     }
-    
+
     @Override
     public synchronized void close() throws IOException {
         for (Repository repository : repositoryCache.values()) {

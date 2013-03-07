@@ -44,7 +44,7 @@ public class ZkConnectionTest {
 
     @Test
     public void testZkConnectionsGoneAfterLilyClientStop() throws Exception {
-        
+
         // At this point, there should be no running ZK threads
         checkNoZkThread();
 
@@ -55,7 +55,7 @@ public class ZkConnectionTest {
 
         //System.out.println("Before close:");
         //printAllZkThreads();
-        
+
         Closer.close(lilyClient);
         // We can't rely on threads being closed immediately
         int patience = 10;
@@ -63,7 +63,7 @@ public class ZkConnectionTest {
             Thread.sleep(1000);
             patience--;
         }
-        
+
         //System.out.println("After close:");
         //printAllZkThreads();
 
@@ -84,7 +84,7 @@ public class ZkConnectionTest {
         //  [not applicable anymore since CDH3u4] 1 for HBaseAdmin
         int threadCnt = countZkThreads();
         assertEquals(2, threadCnt);
-        
+
         Closer.close(lilyClient);
     }
 
@@ -107,9 +107,9 @@ public class ZkConnectionTest {
         long[] threadIds = threadBean.getAllThreadIds();
         for (long tid: threadIds) {
             ThreadInfo info = threadBean.getThreadInfo(tid);
-            
+
             String name = info.getThreadName();
-            
+
             if (name.contains(ZK_THREAD_MARKER)) {
                 return name;
             }

@@ -27,7 +27,7 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 public class LinkCollector {
     private IdGenerator idGenerator;
     private Set<FieldedLink> links = new HashSet<FieldedLink>();
-    
+
     public LinkCollector(IdGenerator idGenerator) {
         this.idGenerator = idGenerator;
     }
@@ -35,7 +35,7 @@ public class LinkCollector {
     public void addLink(RecordId target, SchemaId fieldTypeId) {
         addLink(idGenerator.newAbsoluteRecordId(Table.RECORD.name, target), fieldTypeId);
     }
-    
+
     public void addLink(AbsoluteRecordId target, SchemaId fieldTypeId) {
         links.add(new FieldedLink(target, fieldTypeId));
     }

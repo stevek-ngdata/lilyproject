@@ -84,10 +84,10 @@ public class UriValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new UriValueTypeFactory();
     }
-    
+
     public static class UriValueTypeFactory implements ValueTypeFactory {
         private static UriValueType instance = new UriValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

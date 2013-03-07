@@ -20,7 +20,7 @@ import java.util.*;
 public class Formatters {
     private Map<String, Formatter> formattersByName = new HashMap<String, Formatter>();
     private Formatter defaultFormatter = new DefaultFormatter();
-    
+
     public Formatter getFormatter(String name) {
         if (name == null) {
             return getDefaultFormatter();

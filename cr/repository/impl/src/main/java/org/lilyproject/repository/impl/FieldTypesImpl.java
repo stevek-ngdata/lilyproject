@@ -25,7 +25,7 @@ import org.lilyproject.util.ArgumentValidator;
 
 public class FieldTypesImpl implements FieldTypes {
     private Log log = LogFactory.getLog(getClass());
-    
+
     // Always use getNameCache() instead of this variable directly, to make sure
     // this is the up-to-date nameCache (in case of FieldTypesCache).
     protected Map<QName, FieldType> nameCache;
@@ -48,12 +48,12 @@ public class FieldTypesImpl implements FieldTypes {
         }
         return fieldTypes;
     }
-    
+
     @Override
     public FieldType getFieldType(SchemaId id) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(id, "id");
         String bucket = AbstractSchemaCache.encodeHex(id.getBytes());
-        
+
         Map<SchemaId, FieldType> fieldTypeIdCacheBucket = buckets.get(bucket);
         if (fieldTypeIdCacheBucket == null) {
             throw new FieldTypeNotFoundException(id);

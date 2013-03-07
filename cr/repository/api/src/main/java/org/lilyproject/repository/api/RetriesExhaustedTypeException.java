@@ -37,7 +37,7 @@ public class RetriesExhaustedTypeException extends TypeException {
         String duration = state.get("duration");
         this.duration = (duration != null) ? Long.valueOf(duration) : null;
     }
-    
+
     /**
      * See {@link RepositoryException}
      */
@@ -49,7 +49,7 @@ public class RetriesExhaustedTypeException extends TypeException {
         state.put("duration", Long.toString(duration));
         return state;
     }
-    
+
     public RetriesExhaustedTypeException(String operation, int attempts, long duration, Throwable cause) {
         super(cause);
         this.operation = operation;

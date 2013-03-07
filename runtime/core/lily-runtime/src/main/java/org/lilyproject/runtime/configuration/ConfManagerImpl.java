@@ -92,7 +92,7 @@ public class ConfManagerImpl implements ConfManager {
             throw new RuntimeException("Unexpected situation: executor is not null. Are you reusing the same "
                     + getClass().getName() + " instance concurrently or sequentially without proper shutdown?");
         }
-        
+
         executor = Executors.newScheduledThreadPool(1);
 
         Conf conf = getConfRegistry(RUNTIME_CONF_NAME).getConfiguration("configuration", true);

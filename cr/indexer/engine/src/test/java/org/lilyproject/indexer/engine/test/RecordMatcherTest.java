@@ -580,22 +580,22 @@ public class RecordMatcherTest {
 
         assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record1));
     }
-    
+
     @Test
     public void testInclude_WithTableMatch() throws IndexerConfException, RecordException, InterruptedException {
         String conf = makeIndexerConf(
                         "xmlns:ns1='ns1' xmlns:ns='ns'",
                         Lists.newArrayList("vtags='last' tables='myrecordtable'"),
                         Lists.<String>newArrayList());
-        
-        
+
+
         IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
-        
+
         Record record = repository.recordBuilder().id("record").field(new QName("ns", "int"), new Integer(42)).build();
-        
+
         assertNotNull(idxConf.getRecordFilter().getIndexCase("myrecordtable", record));
     }
-    
+
     @Test
     public void testInclude_NoTableMatch() throws IndexerConfException, RecordException, InterruptedException {
         String conf = makeIndexerConf("xmlns:ns1='ns1' xmlns:ns='ns'",
@@ -608,7 +608,7 @@ public class RecordMatcherTest {
 
         assertNull(idxConf.getRecordFilter().getIndexCase("notmyrecordtable", record));
     }
-    
+
     @Test
     public void testExclude_WithTableMatch() throws IndexerConfException, RecordException, InterruptedException {
         String conf = makeIndexerConf("xmlns:ns1='ns1' xmlns:ns='ns'",
@@ -621,7 +621,7 @@ public class RecordMatcherTest {
 
         assertNull(idxConf.getRecordFilter().getIndexCase("myrecordtable", record));
     }
-    
+
     @Test
     public void testExclude_NoTableMatch() throws RecordException, InterruptedException, IndexerConfException {
         String conf = makeIndexerConf("xmlns:ns1='ns1' xmlns:ns='ns'",

@@ -40,7 +40,7 @@ public class RepositoryMetrics implements Updater {
     private final MetricsRecord metricsRecord;
     private final MetricsContext context;
     private final EnumMap<Action, MetricsTimeVaryingRate> rates = new EnumMap<Action, MetricsTimeVaryingRate>(Action.class);
-    private final EnumMap<HBaseAction, MetricsTimeVaryingRate> hbaseRates = 
+    private final EnumMap<HBaseAction, MetricsTimeVaryingRate> hbaseRates =
                 new EnumMap<HBaseAction, MetricsTimeVaryingRate>(HBaseAction.class);
     private final MetricsLongValue lastMutationEventTimestamp;
     private final RepositoryMetricsMXBean mbean;

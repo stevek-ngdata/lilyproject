@@ -339,7 +339,7 @@ public class Metrics {
         private List<Double> values = new ArrayList<Double>(1000);
 
         String type;
-        
+
         int intervalCount;
         double intervalValue;
         double intervalMin;

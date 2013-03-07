@@ -29,12 +29,12 @@ public class SizeBasedBlobStoreAccessFactory implements BlobStoreAccessFactory {
 
     private final Map<String, BlobStoreAccess> blobStoreAccesses = new HashMap<String, BlobStoreAccess>();
     private final SortedMap<Long, BlobStoreAccess> usedBlobStoreAccesses = new TreeMap<Long, BlobStoreAccess>();
-    
+
     public SizeBasedBlobStoreAccessFactory(List<BlobStoreAccess> availableBlobStoreAccesses, BlobStoreAccessConfig blobStoreAccessConfig) {
         for (BlobStoreAccess blobStoreAccess : availableBlobStoreAccesses) {
             blobStoreAccesses.put(blobStoreAccess.getId(), blobStoreAccess);
         }
-        
+
         BlobStoreAccess defaultBlobStoreAccess = blobStoreAccesses.get(blobStoreAccessConfig.getDefault());
         usedBlobStoreAccesses.put(Long.MAX_VALUE, defaultBlobStoreAccess);
         log.info("Setting default blobstore " + defaultBlobStoreAccess.getId());
@@ -48,7 +48,7 @@ public class SizeBasedBlobStoreAccessFactory implements BlobStoreAccessFactory {
         usedBlobStoreAccesses.put(upperLimit, blobStoreAccess);
         log.info("Setting limit "+ upperLimit+ " for blobstore " +blobStoreAccess.getId());
     }
-    
+
     @Override
     public BlobStoreAccess get(Blob blob) {
         Long size = blob.getSize();
@@ -59,7 +59,7 @@ public class SizeBasedBlobStoreAccessFactory implements BlobStoreAccessFactory {
         }
         return usedBlobStoreAccesses.get(Long.MAX_VALUE);
     }
-    
+
     @Override
     public Collection<BlobStoreAccess> getAll() {
         return usedBlobStoreAccesses.values();

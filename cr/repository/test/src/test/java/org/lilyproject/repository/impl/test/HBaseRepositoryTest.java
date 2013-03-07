@@ -46,7 +46,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
     public static void tearDownAfterClass() throws Exception {
         repoSetup.stop();
     }
-    
+
     @Test
     public void testFieldTypeCacheInitialization() throws Exception {
         TypeManager newTypeManager = new HBaseTypeManager(repoSetup.getIdGenerator(), repoSetup.getHadoopConf(),

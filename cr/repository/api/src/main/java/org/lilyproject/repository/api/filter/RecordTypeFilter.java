@@ -37,7 +37,7 @@ public class RecordTypeFilter implements RecordFilter {
 
     public RecordTypeFilter() {
     }
-    
+
     public RecordTypeFilter(QName recordType) {
         this.recordType = recordType;
     }

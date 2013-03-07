@@ -192,7 +192,7 @@ public class LilyClientTest {
         Set<String> hosts = client.getLilyHostnames();
         assertEquals(1, hosts.size());
     }
-    
+
     @Test
     public void testLilyClientAsRepositoryManager() throws IOException, InterruptedException, KeeperException, ZkConnectException, NoServersException, RepositoryException {
         RepositoryManager repositoryManager = lilyProxy.getLilyServerProxy().getClient();

@@ -132,7 +132,7 @@ public class PluginRegistryImpl implements PluginRegistry {
             if (!type.isAssignableFrom(plugin.getClass())) {
                 throw new PluginException("Plugin does not implement its plugin type. Plugin \"" + name + "\" of type " + type.getName());
             }
-            
+
             PluginEntry<T> newEntry = new PluginEntry<T>(name, plugin);
 
             for (PluginEntry entry : plugins) {

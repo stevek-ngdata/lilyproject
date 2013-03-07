@@ -24,7 +24,7 @@ public class IORecordException extends RecordException {
     public IORecordException(String message, Map<String, String> state) {
         super(message, state);
     }
-    
+
     public IORecordException(Throwable cause) {
         super(cause);
     }

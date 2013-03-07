@@ -38,17 +38,17 @@ public interface RepositoryManager extends Closeable {
      * @return the TypeManager service
      */
     TypeManager getTypeManager();
-    
+
     /**
      * Get the default {@code Repository}.
-     * 
+     *
      * @return the default repository
      */
     Repository getDefaultRepository() throws IOException, InterruptedException;
 
     /**
      * Get the {@code Repository} for a specific HBase table.
-     * 
+     *
      * @param tableName Name of the table for which the repository is to be fetched
      * @return Either a new Repository or a cached instance
      */

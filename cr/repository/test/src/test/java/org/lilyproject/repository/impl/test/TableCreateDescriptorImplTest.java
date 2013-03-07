@@ -31,28 +31,28 @@ public class TableCreateDescriptorImplTest {
         assertEquals("mytable", descriptor.getName());
         assertNull(descriptor.getSplitKeys());
     }
-    
+
 
     @Test
     public void testCreateInstanceWithSplits_NoPrefix() {
         TableCreateDescriptor descriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys("mytable", null, "04,08");
         assertEquals(2, descriptor.getSplitKeys().length);
     }
-    
+
     @Test
     public void testCreateInstanceWithSplits_WithPrefix() {
         TableCreateDescriptor descriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys("mytable", "\\x01", "04,08,12");
         byte[][] splitKeys = descriptor.getSplitKeys();
         assertEquals(3, splitKeys.length);
-        
+
     }
-    
+
     @Test
     public void testCreateInstance_NoPrefix() {
         TableCreateDescriptor descriptor = TableCreateDescriptorImpl.createInstance("mytable", null, 3);
         assertEquals(2, descriptor.getSplitKeys().length);
     }
-    
+
     @Test
     public void testCreateInstance_WithPrefix() {
         TableCreateDescriptor descriptor = TableCreateDescriptorImpl.createInstance("mytable", "\\x01", 3);

@@ -56,15 +56,15 @@ public class AvroConverter {
     protected Log log = LogFactory.getLog(getClass());
 
     private RepositoryManager repositoryManager;
-    
+
     public AvroConverter() {
-        
+
     }
-    
+
     public AvroConverter (RepositoryManager repositoryManager) {
         this.repositoryManager = repositoryManager;
     }
-    
+
     public void setRepositoryManager(RepositoryManager repositoryManager) {
         this.repositoryManager = repositoryManager;
     }
@@ -552,7 +552,7 @@ public class AvroConverter {
 
 
 
- 
+
 
     public SchemaId convert(AvroSchemaId avroSchemaId) {
         if (avroSchemaId == null)
@@ -583,7 +583,7 @@ public class AvroConverter {
         }
         return names;
     }
-    
+
 
 
 
@@ -595,11 +595,11 @@ public class AvroConverter {
         }
         return avroRecordIds;
     }
-    
+
     public CompareOp convert(AvroCompareOp op) {
         return op == null ? null : CompareOp.values()[op.ordinal()];
     }
-    
+
 
 
     public List<MutationCondition> convertFromAvro(List<AvroMutationCondition> avroConditions)
@@ -630,18 +630,18 @@ public class AvroConverter {
         return conditions;
     }
 
- 
+
 
     public AvroCompareOp convert(CompareOp op) {
         return op == null ? null : AvroCompareOp.values()[op.ordinal()];
     }
-    
+
     public RecordId convertAvroRecordId(ByteBuffer recordId) {
         byte[] bytes = new byte[recordId.remaining()];
         recordId.get(bytes);
         return repositoryManager.getIdGenerator().fromBytes(bytes);
     }
-    
+
     public Set<RecordId> convertAvroRecordIds(List<String> avroRecordIds) {
         Set<RecordId> recordIds = new HashSet<RecordId>();
         for (String avroRecordId : avroRecordIds) {

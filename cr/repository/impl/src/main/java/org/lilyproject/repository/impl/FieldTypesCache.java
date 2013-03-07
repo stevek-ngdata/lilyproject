@@ -43,7 +43,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
     // count is higher than 0, the nameCache can not be updated since this could
     // lead to an inconsistent state (two types could get the same name).
     private volatile int count = 0;
-    
+
     private ConcurrentHashMap<String, Set<SchemaId>> localUpdateBuckets = new ConcurrentHashMap<String, Set<SchemaId>>();
 
     private Log log = LogFactory.getLog(getClass());
@@ -106,7 +106,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
 
     /**
      * Return the monitor of a bucket and create it if it does not exist yet.
-     * 
+     *
      * @param bucketId
      * @return
      */
@@ -132,7 +132,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
     /**
      * Take a snapshot of the cache and return it. This snapshot cannot be
      * updated.
-     * 
+     *
      * @return the FieldTypes snapshot
      * @throws InterruptedException
      */
@@ -156,7 +156,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
 
     /**
      * Refreshes the whole cache to contain the given list of field types.
-     * 
+     *
      * @param fieldTypes
      * @throws InterruptedException
      */
@@ -191,7 +191,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
 
     /**
      * Refresh one bucket with the field types contained in the TypeBucket
-     * 
+     *
      * @param typeBucket
      */
     public void refreshFieldTypeBucket(TypeBucket typeBucket) {
@@ -224,7 +224,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
 
     /**
      * Update the cache to contain the new fieldType
-     * 
+     *
      * @param fieldType
      */
     public void update(FieldType fieldType) {
@@ -276,7 +276,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
         }
         return localUpdateBucket.remove(id);
     }
-    
+
     public void clear() {
         nameCache.clear();
 

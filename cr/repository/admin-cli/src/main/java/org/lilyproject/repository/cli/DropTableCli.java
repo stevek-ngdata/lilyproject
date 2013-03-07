@@ -23,7 +23,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.repository.api.RepositoryTableManager;
 
 public class DropTableCli extends BaseTableCliTool {
-    
+
     private String tableName;
 
     @Override
@@ -34,11 +34,11 @@ public class DropTableCli extends BaseTableCliTool {
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int status = super.processOptions(cmd);
-        
+
         if (status != 0) {
             return status;
         }
-        
+
         if (cmd.getArgList().size() < 1) {
             System.err.println("Table name is mandatory");
             return 1;
@@ -46,7 +46,7 @@ public class DropTableCli extends BaseTableCliTool {
         tableName = (String)cmd.getArgList().get(0);
         return 0;
     }
-    
+
     @Override
     protected int execute(RepositoryTableManager tableManager) throws Exception {
         System.out.printf("Dropping table '%s'...\n", tableName);
@@ -54,7 +54,7 @@ public class DropTableCli extends BaseTableCliTool {
         System.out.printf("Table '%s' dropped\n", tableName);
         return 0;
     }
-    
+
     public static void main(String[] args) {
         new DropTableCli().start(args);
     }

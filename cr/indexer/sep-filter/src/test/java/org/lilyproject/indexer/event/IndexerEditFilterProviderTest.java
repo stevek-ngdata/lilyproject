@@ -38,7 +38,7 @@ public class IndexerEditFilterProviderTest {
         IndexerEditFilter editFilter = (IndexerEditFilter)filterProvider.getWALEditFilter(subscriptionName);
         assertEquals(subscriptionName, editFilter.getSubscriptionName());
     }
-    
+
     @Test
     public void testGetWALEditFilter_LinkIndexUpdater() {
         String subscriptionName = "LinkIndexUpdater";

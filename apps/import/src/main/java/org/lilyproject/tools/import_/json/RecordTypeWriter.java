@@ -70,7 +70,7 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
             entryNode.put("id", supertype.getKey().toString());
             entryNode.put("version", supertype.getValue());
         }
-        
+
         return rtNode;
     }
 

@@ -140,13 +140,13 @@ public class LocalHTable implements HTableInterface {
         }
         return pool;
     }
-    
+
     public static void closePool(Configuration configuration) throws IOException{
         synchronized (HTABLE_POOLS) {
             HTABLE_POOLS.remove(configuration).close();
         }
     }
-    
+
     public static void closeAllPools() throws IOException{
         synchronized (HTABLE_POOLS) {
             Iterator<Map.Entry<Configuration, HTablePool>> it = HTABLE_POOLS.entrySet().iterator();
@@ -157,7 +157,7 @@ public class LocalHTable implements HTableInterface {
             }
         }
     }
-    
+
     public class HTableFactory implements HTableInterfaceFactory {
         @Override
         public HTableInterface createHTableInterface(Configuration config, byte[] tableName) {
@@ -472,7 +472,7 @@ public class LocalHTable implements HTableInterface {
             table.close();
         }
     }
-    
+
     @Override
     public void mutateRow(final RowMutations rm) throws IOException {
         runNoIE(new TableRunnable<Object>() {
@@ -513,7 +513,7 @@ public class LocalHTable implements HTableInterface {
     public void setWriteBufferSize(long writeBufferSize) throws IOException {
         throw new UnsupportedOperationException("setWriteBufferSize is not supported on LocalHTables");
     }
-    
+
     private <T> T run(TableRunnable<T> runnable) throws IOException, InterruptedException {
         // passing tableNameString, since otherwise pool.getTable converts it to string anyway
         HTableInterface table = pool.getTable(tableNameString);

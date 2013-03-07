@@ -41,7 +41,7 @@ public class FieldTypeImport {
                 FieldType oldFieldType = null;
                 try {
                     if (idMode == IdentificationMode.ID) {
-                        oldFieldType = typeManager.getFieldTypeById(newFieldType.getId());                        
+                        oldFieldType = typeManager.getFieldTypeById(newFieldType.getId());
                     } else {
                         oldFieldType = typeManager.getFieldTypeByName(identifyingName);
                     }
@@ -60,7 +60,7 @@ public class FieldTypeImport {
                     if (!oldValueType.equals(newValueType)) {
                         return ImportResult.conflict("value type", oldValueType, newValueType);
                     }
-                    
+
                     Scope oldScope = oldFieldType.getScope();
                     Scope newScope = newFieldType.getScope();
                     if (!oldScope.equals(newScope)) {

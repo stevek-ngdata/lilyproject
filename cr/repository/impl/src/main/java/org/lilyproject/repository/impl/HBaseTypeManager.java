@@ -62,7 +62,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         this.typeTable = LilyHBaseSchema.getTypeTable(hbaseTableFactory);
         registerDefaultValueTypes();
         schemaCache.start();
-        
+
         // The 'last' vtag should always exist in the system (at least, for everything index-related). Therefore we
         // create it here.
         try {
@@ -80,7 +80,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     public void close() throws IOException {
         schemaCache.close();
     }
-    
+
     @Override
     public RecordType createRecordType(RecordType recordType) throws TypeException {
         ArgumentValidator.notNull(recordType, "recordType");
@@ -93,7 +93,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             byte[] rowId = id.getBytes();
             // Take a counter on a row with the name as key
             byte[] nameBytes = encodeName(recordType.getName());
-            
+
             // Prepare put
             Put put = new Put(rowId);
             put.add(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes, Bytes.toBytes(recordTypeVersion));
@@ -126,10 +126,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             // Put the record type on the table
             getTypeTable().put(put);
-            
+
             // Refresh the caches
             updateRecordTypeCache(newRecordType);
-            
+
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
         } catch (IOException e) {
@@ -179,11 +179,11 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
         try {
 
-            // Do an exists check first 
+            // Do an exists check first
             if (!getTypeTable().exists(new Get(rowId))) {
                 throw new RecordTypeNotFoundException(recordType.getId(), null);
             }
-            
+
             // Only do the concurrency check when a name was given
             QName name = recordType.getName();
             if (name != null) {
@@ -193,7 +193,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 now = System.currentTimeMillis();
                 checkConcurrency(recordType.getName(), nameBytes, now);
             }
-            
+
             // Prepare the update
             RecordType latestRecordType = getRecordTypeByIdWithoutCache(id, null);
             // If no name was given, continue to use the name that was already on the record type
@@ -221,7 +221,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             // Refresh the caches
             updateRecordTypeCache(newRecordType);
-            
+
         } catch (IOException e) {
             throw new TypeException("Exception occurred while updating recordType '" + newRecordType.getId()
                     + "' on HBase", e);
@@ -546,12 +546,12 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_SCOPE.bytes, Bytes
                     .toBytes(fieldType.getScope().name()));
             put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes, nameBytes);
-            
+
             // Prepare newFieldType
             newFieldType = fieldType.clone();
             newFieldType.setId(id);
 
-            // Check if there is already a fieldType with this name 
+            // Check if there is already a fieldType with this name
             if (schemaCache.fieldTypeExists(fieldType.getName()))
                 throw new FieldTypeExistsException(fieldType);
 
@@ -566,7 +566,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             // Refresh the caches
             updateFieldTypeCache(newFieldType);
-            
+
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
         } catch (IOException e) {
@@ -598,7 +598,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         Long now = null;
 
         try {
-            // Do an exists check first 
+            // Do an exists check first
             if (!getTypeTable().exists(new Get(rowId))) {
                 throw new FieldTypeNotFoundException(fieldType.getId());
             }
@@ -630,7 +630,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
                 getTypeTable().put(put);
             }
-            
+
             // Update the caches
             updateFieldTypeCache(newFieldType.clone());
         } catch (IOException e) {
@@ -736,10 +736,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     /**
      * Checks if a name for a field type or record type is not being used by some other create or update operation 'at the same time'.
      * This is to avoid that concurrent updates would result in the same name being used for two different types.
-     * 
+     *
      *  <p>A timestamp 'now' is put in a row with nameBytes as key. As long as this timestamp is present and the timeout (concurrentTimeout)
      *  has not expired, no other create or update operation can happen with the same name for the type.
-     *  
+     *
      *  <p>When the create or update operation has finished {@link #clearConcurrency(byte[], long)} should be called to clear the timestamp
      *  and to allow new updates.
      */
@@ -761,7 +761,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             if ((originalTimestamp + CONCURRENT_TIMEOUT) >= now) {
                 throw new ConcurrentUpdateTypeException(name.toString());
             }
-            
+
         }
         // Try to put our own timestamp with a check and put to make sure we're the only one doing this
         Put put = new Put(nameBytes);
@@ -770,13 +770,13 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             throw new ConcurrentUpdateTypeException(name.toString());
         }
     }
-    
+
     /**
      * Clears the timestamp from the row with nameBytes as key.
-     * 
+     *
      * <p>This method should be called when a create or update operation has finished to allow new updates to happen before the concurrent timeout would expire.
-     * 
-     * @param now the timestamp that was used when calling {@link #checkConcurrency(QName, byte[], long)} 
+     *
+     * @param now the timestamp that was used when calling {@link #checkConcurrency(QName, byte[], long)}
      */
     private void clearConcurrency(byte[] nameBytes, long now) {
         Put put = new Put(nameBytes);
@@ -789,7 +789,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
     }
 
-    
+
     private FieldType getFieldTypeByIdWithoutCache(SchemaId id) throws FieldTypeNotFoundException, TypeException, RepositoryException, InterruptedException  {
         ArgumentValidator.notNull(id, "id");
         Result result;
@@ -966,7 +966,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     public static byte[] encodeName(QName qname) {
         String name = qname.getName();
         String namespace = qname.getNamespace();
-        
+
         int sizeEstimate = (((name == null) ? 1 : (name.length() * 2)) + ((namespace == null) ? 1 : (namespace.length() * 2)));
         DataOutput dataOutput = new DataOutputImpl(sizeEstimate);
 

@@ -23,7 +23,7 @@ import java.net.UnknownHostException;
 public class NetworkInterfaceInfoImpl implements NetworkInterfaceInfo {
     private String interface_;
     private String nameserver;
-    
+
     private String hostName;
     private String hostAddress;
 

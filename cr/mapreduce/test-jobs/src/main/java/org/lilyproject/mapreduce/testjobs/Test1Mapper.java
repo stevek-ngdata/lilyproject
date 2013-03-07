@@ -34,7 +34,7 @@ public class Test1Mapper extends RecordMapper<Text, Text> {
         // TODO do something useful
         keyOut.set("foo");
         valueOut.set("bar");
-        
+
         context.write(keyOut, valueOut);
     }
 

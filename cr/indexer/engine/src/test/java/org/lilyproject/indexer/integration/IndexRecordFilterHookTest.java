@@ -43,7 +43,7 @@ import org.lilyproject.util.repo.RecordEvent.Type;
 import org.mockito.Mockito;
 
 public class IndexRecordFilterHookTest {
-    
+
     private Record oldRecord;
     private Record newRecord;
     private Repository repository;
@@ -81,7 +81,7 @@ public class IndexRecordFilterHookTest {
         assertTrue(idxFilterData.getNewRecordExists());
         verify(indexFilterHook).calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, idxFilterData);
     }
-    
+
     @Test
     public void testBeforeCreate() throws RepositoryException, InterruptedException {
         IndexInfo inclusion = createMockIndexInfo("include", true);
@@ -177,7 +177,7 @@ public class IndexRecordFilterHookTest {
 
         verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
     }
-    
+
     private IndexInfo createMockIndexInfo(String queueSubscriptionId, boolean include) {
         IndexInfo indexInfo = mock(IndexInfo.class, Mockito.RETURNS_DEEP_STUBS);
         IndexRecordFilter indexRecordFilter = mock(IndexRecordFilter.class);

@@ -98,10 +98,10 @@ public class DateTimeValueType extends AbstractValueType implements ValueType {
     public static ValueTypeFactory factory() {
         return new DateTimeValueTypeFactory();
     }
-    
+
     public static class DateTimeValueTypeFactory implements ValueTypeFactory {
         private static DateTimeValueType instance = new DateTimeValueType();
-        
+
         @Override
         public ValueType getValueType(String typeParams) {
             return instance;

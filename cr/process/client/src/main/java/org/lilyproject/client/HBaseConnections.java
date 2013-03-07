@@ -30,7 +30,7 @@ import org.apache.hadoop.hbase.client.HConnectionManager;
 
 public class HBaseConnections {
     private List<Configuration> configurations = new ArrayList<Configuration>();
-    
+
     /**
      * If there is an existing configuration which has all the same properties as this configuration
      * (except for HConstants.HBASE_CLIENT_INSTANCE_ID), return it.
@@ -52,7 +52,7 @@ public class HBaseConnections {
                 return current;
             }
         }
-        
+
         // It's a new configuration, add it to the list
         configurations.add(conf);
 

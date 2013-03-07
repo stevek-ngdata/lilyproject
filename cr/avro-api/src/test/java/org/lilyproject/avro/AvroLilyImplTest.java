@@ -57,7 +57,7 @@ public class AvroLilyImplTest {
         avroLilyImpl = new AvroLilyImpl(repositoryManager, typeManager, indexer);
         avroLilyImpl.setAvroConverter(avroConverter);
     }
-    
+
     @Test
     public void testDelete_WithAttributes() throws Exception {
         ByteBuffer recordIdBytes = mock(ByteBuffer.class);

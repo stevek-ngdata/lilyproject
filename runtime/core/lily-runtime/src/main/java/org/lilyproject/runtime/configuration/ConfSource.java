@@ -130,7 +130,7 @@ public abstract class ConfSource {
     enum ConfigState { OK, ERROR }
 
     protected abstract List<ConfigPath> getConfigFiles();
-        
+
     protected static boolean acceptFileName(boolean isDirectory, String name) {
         if (isDirectory) {
             return !name.startsWith(".") && !name.equals("CVS");

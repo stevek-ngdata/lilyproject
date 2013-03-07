@@ -22,7 +22,7 @@ import org.lilyproject.repository.api.Link.LinkBuilder;
 import org.lilyproject.repository.api.RecordId;
 
 public class Lily20LinkDecoder {
-    
+
     /**
      * Decodes links from Lily 2.0 and earlier (before table name was added to Link serialization).
      */
@@ -36,7 +36,7 @@ public class Lily20LinkDecoder {
             recordIdBytes = dataInput.readBytes(recordIdLength);
         }
         String args = dataInput.readUTF();
-        
+
         if (recordIdLength == 0 && args == null) {
             return new Link();
         }
@@ -53,7 +53,7 @@ public class Lily20LinkDecoder {
 
         return builder.create();
     }
-    
+
     private static void argsFromString(String args, LinkBuilder builder, String link) {
         String[] variantStringParts = args.split(",");
         for (String part : variantStringParts) {

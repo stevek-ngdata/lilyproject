@@ -50,13 +50,13 @@ public class LilyHBaseEventPublisherTest {
     public void testProcessMessage_RowInRepository() throws IOException {
         byte[] messageRow = Bytes.toBytes("row-id");
         byte[] messagePayload = Bytes.toBytes("payload");
-        
+
         Put expectedPut = new Put(messageRow);
         expectedPut.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, messagePayload);
-        
- 
+
+
         eventPublisher.publishEvent(messageRow, messagePayload);
-        
+
         verify(recordTable).checkAndPut(aryEq(messageRow), aryEq(RecordCf.DATA.bytes), aryEq(RecordColumn.DELETED.bytes),
                 aryEq(Bytes.toBytes(false)), any(Put.class));
     }

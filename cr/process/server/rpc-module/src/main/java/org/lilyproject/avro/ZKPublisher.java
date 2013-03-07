@@ -65,7 +65,7 @@ public class ZKPublisher {
         });
 
         // Publish HBase configuration for LilyClient use
-        // Translate HBase conf into json 
+        // Translate HBase conf into json
         ObjectNode propertiesNode = JsonNodeFactory.instance.objectNode();
         for (Map.Entry<String, String> propertyEntry : hbaseConf) {
             if (!propertyEntry.getKey().equals(HConstants.HBASE_CLIENT_INSTANCE_ID)) {

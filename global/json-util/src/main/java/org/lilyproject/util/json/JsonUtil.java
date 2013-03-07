@@ -183,7 +183,7 @@ public class JsonUtil {
             throw new JsonFormatException("Error reading binary data in property " + prop, e);
         }
     }
-    
+
     public static List<String> getStrings(JsonNode node, String prop, List<String> defaultValue) throws JsonFormatException {
         ArrayNode arrayNode = getArray(node, prop, null);
         if (arrayNode == null) {

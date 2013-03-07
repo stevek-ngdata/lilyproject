@@ -53,7 +53,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
             testActionContext.records.addRecord(destination, new TestRecord(((Record) result.object).getId(),
                     recordTypeToUpdate));
     }
-    
+
     private ActionResult updateRecord(TestRecordType recordTypeToUpdate, RecordId recordId) {
         double duration = 0;
         long before = 0;
@@ -85,7 +85,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
         // Update all fields
         else
             fieldsToUpdate.addAll(recordTypeToUpdate.getFieldTypes());
-        
+
         Record record = null;
         try {
             record = testActionContext.repository.newRecord(recordId);
@@ -93,7 +93,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
             reportError("Error preparing update record.", e);
             return new ActionResult(false, null, 0);
         }
-        
+
         // If there is a Link-field that links to specified record type we need to read the field
         // in order to update the record that is linked to
         boolean readRecord = false;
@@ -110,7 +110,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
                 originalRecord = testActionContext.repository.read(record.getId());
                 long readDuration = System.nanoTime() - before;
                 report(true, readDuration, "repoRead");
-                duration += readDuration; 
+                duration += readDuration;
             } catch (Throwable t) {
                 long readDuration = System.nanoTime() - before;
                 report(false, readDuration, "readLinkFields");
@@ -119,7 +119,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
                 return new ActionResult(false, null, duration);
             }
         }
-        
+
         // Prepare the record with updated field values
         for (TestFieldType testFieldType : fieldsToUpdate) {
             ActionResult result = testFieldType.updateValue(this, originalRecord);
@@ -127,7 +127,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
             if (!result.success)
                 return new ActionResult(false, null, duration);
             // In case of a link field to a specific recordType we only update that record, but not the link itself
-            if (result.object != null) 
+            if (result.object != null)
                 record.setField(testFieldType.fieldType.getName(), result.object);
         }
 
@@ -147,7 +147,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
         report(success, updateDuration, "repoUpdate."+recordTypeToUpdate.getRecordType().getName().getName());
         return new ActionResult(success, record, duration);
     }
-    
+
     @Override
     public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) {
         double duration = 0;
@@ -169,7 +169,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
                 return new ActionResult(false, null, duration);
             // We updated the record that was linked to but not the linkfield itself. So we return null in the ActionResult.
             return new ActionResult(true, null, duration);
-        } 
+        }
         // Pick a link from the RecordSpace source
         if (linkedRecordSource != null) {
             TestRecord record = testActionContext.records.getRecord(linkedRecordSource);

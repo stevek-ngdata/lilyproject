@@ -24,7 +24,7 @@ import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.Namespaces;
 
 public interface RecordFilterJsonConverter<T extends RecordFilter> {
-    
+
     boolean supports(String typeName);
 
     ObjectNode toJson(T filter, Namespaces namespaces, RepositoryManager repositoryManager,

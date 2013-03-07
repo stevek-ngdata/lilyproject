@@ -215,7 +215,7 @@ public class IndexerConfBuilder {
         if (instanceOfAttr != null) {
             instanceOfType = ConfUtil.parseQName(instanceOfAttr, element, false);
         }
-        
+
         List<String> tableNames = extractTableNames(DocumentHelper.getAttribute(element, "tables", false));
 
         //
@@ -792,7 +792,7 @@ public class IndexerConfBuilder {
             throw new IndexerConfException("Error validating indexer configuration against XML Schema.", e);
         }
     }
-    
+
     static List<String> extractTableNames(String tableNameAttr) {
         if (tableNameAttr == null) {
             return null;

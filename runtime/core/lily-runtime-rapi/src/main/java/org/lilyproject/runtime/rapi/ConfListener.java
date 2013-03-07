@@ -53,7 +53,7 @@ public interface ConfListener {
 
     /**
      * Notifies a configuration change.
-     * 
+     *
      * <p>Implementations should return reasonably quickly from this, as to
      * not block other ConfListener's of receiving notifications.
      *

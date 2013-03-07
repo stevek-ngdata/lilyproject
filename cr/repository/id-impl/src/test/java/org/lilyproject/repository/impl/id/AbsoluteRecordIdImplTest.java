@@ -25,26 +25,26 @@ import org.lilyproject.repository.api.IdGenerator;
 public class AbsoluteRecordIdImplTest {
 
     private final IdGenerator idGenerator = new IdGeneratorImpl();
-    
+
     @Test
     public void testSerializationRoundTrip() {
         AbsoluteRecordId id = new AbsoluteRecordIdImpl("mytable", idGenerator.fromString("USER.myId"));
         byte[] bytes = id.toBytes();
         AbsoluteRecordId deserialized = AbsoluteRecordIdImpl.fromBytes(bytes, idGenerator);
-        
+
         assertEquals(id, deserialized);
     }
-    
+
     @Test
     public void testEquals() {
         AbsoluteRecordId idA1 = new AbsoluteRecordIdImpl("mytable", idGenerator.fromString("USER.myId"));
         AbsoluteRecordId idA2 = new AbsoluteRecordIdImpl("mytable", idGenerator.fromString("USER.myId"));
         AbsoluteRecordId idB = new AbsoluteRecordIdImpl("othertable", idGenerator.fromString("USER.myId"));
         AbsoluteRecordId idC = new AbsoluteRecordIdImpl("mytable", idGenerator.fromString("USER.otherId"));
-        
+
         assertEquals(idA1, idA2);
         assertFalse(idA1.equals(idB));
         assertFalse(idA1.equals(idC));
     }
-    
+
 }

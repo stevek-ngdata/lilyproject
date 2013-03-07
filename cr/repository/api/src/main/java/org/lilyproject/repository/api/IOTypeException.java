@@ -24,7 +24,7 @@ public class IOTypeException extends TypeException {
     public IOTypeException(String message, Map<String, String> state) {
         super(message, state);
     }
-    
+
     public IOTypeException(Throwable cause) {
         super(cause);
     }

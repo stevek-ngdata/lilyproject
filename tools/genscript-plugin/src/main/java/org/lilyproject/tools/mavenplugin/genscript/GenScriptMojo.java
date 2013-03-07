@@ -151,7 +151,7 @@ public class GenScriptMojo extends AbstractMojo {
         private String envSuffix;
         private String extension;
     }
-    
+
     enum Mode {
         DEV("-dev"),
         DIST("");

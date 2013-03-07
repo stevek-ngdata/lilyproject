@@ -28,7 +28,7 @@ public class PrintUtil {
     public static void print(Record record, Repository repository) {
         print(record, repository, System.out);
     }
-    
+
     public static void print(Record record, Repository repository, PrintStream out) {
         TypeManager typeManager = repository.getTypeManager();
 
@@ -96,7 +96,7 @@ public class PrintUtil {
             }
         }
     }
-    
+
     private static void printField(PrintStream out, int indent, QName fieldName, Object fieldValue) {
         print(out, indent, fieldName + " = ");
         printFieldValue(out, indent, fieldValue);
@@ -129,7 +129,7 @@ public class PrintUtil {
 
     private static void printRecordValue(PrintStream out, int indent, Record record) {
         println(out, indent, "Record of type " + record.getRecordTypeName() + ", version " + record.getRecordTypeVersion());
-        for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {        
+        for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
             printField(out, indent, field.getKey(), field.getValue());
         }
     }

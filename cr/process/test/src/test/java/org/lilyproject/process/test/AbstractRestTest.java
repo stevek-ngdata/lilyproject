@@ -64,7 +64,7 @@ public abstract class AbstractRestTest {
         }
     }
 
-  
+
 
     protected void makeBookSchema() throws Exception {
         // Create field type
@@ -91,8 +91,8 @@ public abstract class AbstractRestTest {
         return (code >= 200 && code < 210);
     }
 
-    
-    
+
+
     protected JsonNode getFieldValue(JsonNode recordJson, String fieldName) {
         String prefix = recordJson.get("namespaces").get("org.lilyproject.resttest").getTextValue();
         JsonNode fieldsNode = recordJson.get("fields");
@@ -129,7 +129,7 @@ public abstract class AbstractRestTest {
             System.err.println("response has no content)");
         }
     }
-    
+
     protected String buildUri(String path) {
         return BASE_URI + path;
     }
@@ -145,11 +145,11 @@ public abstract class AbstractRestTest {
         post.setEntity(new StringEntity(body, "text/plain", "UTF-8"));
         return processResponseAndContent(post);
     }
-    
+
     protected ResponseAndContent put(String path, String body) throws Exception {
         return putUri(buildUri(path), body);
     }
-    
+
     protected ResponseAndContent putUri(String uri, String body) throws Exception {
         HttpPut put = new HttpPut(uri);
         put.setEntity(new StringEntity(body, "application/json", "UTF-8"));
@@ -159,7 +159,7 @@ public abstract class AbstractRestTest {
     protected ResponseAndContent get(String path) throws Exception {
        return getUri(buildUri(path));
     }
-    
+
     protected ResponseAndContent getUri(String uri) throws Exception {
         return processResponseAndContent(new HttpGet(uri));
     }
@@ -167,7 +167,7 @@ public abstract class AbstractRestTest {
     protected ResponseAndContent delete(String path) throws Exception {
         return deleteUri(buildUri(path));
     }
-    
+
     protected ResponseAndContent deleteUri(String uri) throws Exception {
         return processResponseAndContent(new HttpDelete(uri));
     }
@@ -179,7 +179,7 @@ public abstract class AbstractRestTest {
     protected String json(String input) {
         return input.replaceAll("'", "\"");
     }
-    
+
 
     protected ResponseAndContent processResponseAndContent(HttpUriRequest request) throws Exception {
         HttpResponse response = null;

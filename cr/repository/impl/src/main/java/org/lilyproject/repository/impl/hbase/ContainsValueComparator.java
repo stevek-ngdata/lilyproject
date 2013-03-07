@@ -32,10 +32,10 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
     public ContainsValueComparator() {
         super();
     }
-    
+
     /**
      * Constructor.
-     * 
+     *
      */
     public ContainsValueComparator(byte[] nestingLevelAndValue) {
         this.nestingLevelAndValue = nestingLevelAndValue;
@@ -60,9 +60,9 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
     /**
      * Checks if a blob key (ourStoreKey) is contained in the blob field (theirValue).
      * The blob field can be a multivalue and / or hierarchical field.
-     * 
+     *
      * <p>IMPORTANT: This implementation depends on the byte encodings from ValueTypeImpl, BlobValueType and DataOutputImpl.
-     *               Any changes there have an impact on this implementation. 
+     *               Any changes there have an impact on this implementation.
      */
     public int compareTo(byte[] theirValue, int fromOffset, int length) {
         byte[] ourStoreKey = Bytes.tail(nestingLevelAndValue, nestingLevelAndValue.length-Bytes.SIZEOF_INT);
@@ -78,10 +78,10 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
 
         int nestingLevel = Bytes.toInt(nestingLevelAndValue);
         offset = fromOffset + 1;
-        
+
         return compareBlob(nestingLevel, ourStoreKey, theirValue);
     }
-    
+
     private int compareBlob(int nestingLevel, byte[] ourStoreKey, byte[] theirValue) {
         int compareTo = -1;
         if (0 == nestingLevel) {
@@ -99,7 +99,7 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
         }
         return compareTo;
     }
-    
+
     /**
      * Compares the value of the blob with ourStoreKey
      */
@@ -110,7 +110,7 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
         offset += blobValueLength;
         return compareTo;
     }
-    
+
     /**
      * Skips the rest of the blob (media type, blob size, name) and puts the offset to the next value to be read
      */
@@ -121,12 +121,12 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
         int nameLength = readInt(theirValue); // Length of the blob name (offset = offset + blobvaluelength_size + blobvalue_size + mediaTypeLength_size + mediaType_size + blobsize_long)
         offset += nameLength;
     }
-    
+
     private int readInt(byte[] bytes) {
         return ((bytes[offset++] & 0xFF) << 24) | ((bytes[offset++] & 0xFF) << 16)
         | ((bytes[offset++] & 0xFF) << 8) | (bytes[offset++] & 0xFF);
     }
-    
+
     /**
      * Reads an int stored in variable-length format. Reads between one and
      * five bytes. Smaller values take fewer bytes. Negative numbers are not

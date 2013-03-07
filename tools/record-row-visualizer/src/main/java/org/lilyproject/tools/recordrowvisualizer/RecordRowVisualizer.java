@@ -90,7 +90,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
                 .withLongOpt("record-id")
                 .create("r");
         options.add(recordIdOption);
-        
+
         tableOption = OptionBuilder
                 .withArgName("table")
                 .hasArg()
@@ -130,7 +130,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
         recordRow = new RecordRow();
         recordRow.recordId = recordId;
-        
+
 
 
         // HBase record table

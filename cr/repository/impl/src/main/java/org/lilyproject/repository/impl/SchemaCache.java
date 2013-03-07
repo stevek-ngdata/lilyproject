@@ -35,7 +35,7 @@ public interface SchemaCache {
 
     /**
      * Stops the schema cache.
-     * 
+     *
      */
     void close() throws IOException;
 
@@ -57,14 +57,14 @@ public interface SchemaCache {
 
     /**
      * Returns a {@link FieldTypes} snapshot object of the field types cache.
-     * 
+     *
      * @throws InterruptedException
      */
     FieldTypes getFieldTypesSnapshot() throws InterruptedException;
 
     /**
      * Returns a list of field types currently in the cache.
-     * 
+     *
      * @throws InterruptedException
      * @throws TypeException
      */
@@ -72,14 +72,14 @@ public interface SchemaCache {
 
     /**
      * Returns a collection of record types currently in the cache.
-     * 
+     *
      * @throws InterruptedException
      */
     Collection<RecordType> getRecordTypes() throws InterruptedException;
 
     /**
      * Returns the record type with the given name from the cache.
-     * 
+     *
      * @return the RecordType or null if not found
      * @throws InterruptedException
      */
@@ -87,14 +87,14 @@ public interface SchemaCache {
 
     /**
      * Returns the record type with the given id from the cache.
-     * 
+     *
      * @return the RecordType or null if not found
      */
     RecordType getRecordType(SchemaId id);
 
     /**
      * Returns the field type with the given name from the cache.
-     * 
+     *
      * @return the FieldType
      * @throws FieldTypeNotFoundException
      *             when the field type is not known in the cache.
@@ -118,7 +118,7 @@ public interface SchemaCache {
 
     /**
      * Returns the field type with the given id from the cache.
-     * 
+     *
      * @return the FieldType
      * @throws FieldTypeNotFoundException
      *             when the field type is not known in the cache.

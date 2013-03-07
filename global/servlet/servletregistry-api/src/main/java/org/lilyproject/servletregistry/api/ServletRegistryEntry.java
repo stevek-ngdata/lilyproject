@@ -21,7 +21,7 @@ import java.util.EventListener;
 import java.util.List;
 
 public interface ServletRegistryEntry {
-  
+
   List<String> getUrlPatterns();
 
   Servlet getServletInstance(ServletContext context);

@@ -29,19 +29,19 @@ public class LilyEventPublisherManager {
 
     private HBaseTableFactory tableFactory;
     private Map<String,EventPublisher> eventPublishers;
-    
+
     public LilyEventPublisherManager(HBaseTableFactory tableFactory) {
         this.tableFactory = tableFactory;
         eventPublishers = Maps.newHashMap();
     }
-    
+
     public synchronized EventPublisher getEventPublisher(String tableName) throws IOException, InterruptedException {
         if (!eventPublishers.containsKey(tableName)) {
             eventPublishers.put(tableName, createEventPublisher(tableName));
         }
         return eventPublishers.get(tableName);
     }
-    
+
     private EventPublisher createEventPublisher(String tableName) throws IOException, InterruptedException {
         HTableInterface recordTable = LilyHBaseSchema.getRecordTable(tableFactory, tableName);
         return new LilyHBaseEventPublisher(recordTable);

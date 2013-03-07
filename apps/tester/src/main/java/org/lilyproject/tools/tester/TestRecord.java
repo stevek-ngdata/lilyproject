@@ -26,15 +26,15 @@ public class TestRecord {
         this.recordId = recordId;
         this.recordType = recordType;
     }
-    
+
     public boolean isDeleted() {
         return deleted;
     }
-    
+
     public RecordId getRecordId() {
         return recordId;
     }
-    
+
     public TestRecordType getRecordType() {
         return recordType;
     }

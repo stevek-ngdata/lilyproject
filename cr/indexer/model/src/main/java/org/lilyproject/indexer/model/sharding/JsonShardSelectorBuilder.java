@@ -131,7 +131,7 @@ public class JsonShardSelectorBuilder {
         ShardSelector selector;
         if (mappingTypeName.equals("range")) {
             selector = new RangeShardSelector(shardingKey);
-        } else if (mappingTypeName.equals("list")) {            
+        } else if (mappingTypeName.equals("list")) {
             selector = new ListShardSelector(shardingKey);
         } else {
             throw new ShardingConfigException("Unsupported mappingType: " + mappingTypeName);

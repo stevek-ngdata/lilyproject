@@ -597,9 +597,9 @@ public class HBaseTestingUtility {
         Configuration masterConf = hbaseCluster.getMaster().getConfiguration();
         FileSystem fs = FileSystem.get(masterConf);
         fs.setConf(masterConf);
-        
+
         LOG.info("Minicluster is up");
-        
+
         return this.hbaseCluster;
     }
 

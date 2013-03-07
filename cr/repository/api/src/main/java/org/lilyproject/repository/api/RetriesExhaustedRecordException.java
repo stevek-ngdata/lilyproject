@@ -35,9 +35,9 @@ public class RetriesExhaustedRecordException extends RecordException {
         String attempts = state.get("attempts");
         this.attempts = (attempts != null) ? Integer.valueOf(attempts) : null;
         String duration = state.get("duration");
-        this.duration = (duration != null) ? Long.valueOf(duration) : null; 
+        this.duration = (duration != null) ? Long.valueOf(duration) : null;
     }
-    
+
     /**
      * See {@link RepositoryException}
      */
@@ -49,7 +49,7 @@ public class RetriesExhaustedRecordException extends RecordException {
         state.put("duration", Long.toString(duration));
         return state;
     }
-    
+
     public RetriesExhaustedRecordException(String operation, int attempts, long duration, Throwable cause) {
         super(cause);
         this.operation = operation;

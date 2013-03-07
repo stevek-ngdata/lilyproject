@@ -44,7 +44,7 @@ public class RecordBuilderImpl implements RecordBuilder {
         this.mode = Mode.ROOT_RECORD;
         this.record = repository.newRecord();
     }
-    
+
     public RecordBuilderImpl(RecordBuilderImpl parent, QName parentField, Mode mode) throws RecordException {
         this.repository = parent.repository;
         this.mode = mode;
@@ -125,7 +125,7 @@ public class RecordBuilderImpl implements RecordBuilder {
     public RecordBuilder recordType(QName name) {
         return recordType(name, null);
     }
-    
+
     @Override
     public RecordBuilder recordType(QName name, Long version) {
         record.setRecordType(name, version);
@@ -136,13 +136,13 @@ public class RecordBuilderImpl implements RecordBuilder {
     public RecordBuilder recordType(String name) throws RecordException {
         return recordType(name, null);
     }
-    
+
     @Override
     public RecordBuilder recordType(String name, Long version) throws RecordException {
-        record.setRecordType(name, version);    
+        record.setRecordType(name, version);
         return this;
     }
-    
+
     @Override
     public RecordBuilder updateVersion(boolean updateVersion) {
         this.updateVersion = updateVersion;
@@ -216,7 +216,7 @@ public class RecordBuilderImpl implements RecordBuilder {
             throw new IllegalStateException("update should only be called for root records, current mode is " + mode);
         }
     }
-    
+
     @Override
     public Record createOrUpdate() throws RepositoryException, InterruptedException {
         if (mode == Mode.ROOT_RECORD) {

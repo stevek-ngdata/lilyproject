@@ -39,11 +39,11 @@ public class RecordTypeFilterJson implements RecordFilterJsonConverter<RecordTyp
             throws RepositoryException, InterruptedException {
 
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();
-        
+
         if (filter.getRecordType() != null) {
             node.put("recordType", QNameConverter.toJson(filter.getRecordType(), namespaces));
         }
-        
+
         if (filter.getVersion() != null) {
             node.put("version", filter.getVersion());
         }
@@ -51,7 +51,7 @@ public class RecordTypeFilterJson implements RecordFilterJsonConverter<RecordTyp
         if (filter.getOperator() != null) {
             node.put("operator", filter.getOperator().toString());
         }
-        
+
         return node;
     }
 
@@ -59,14 +59,14 @@ public class RecordTypeFilterJson implements RecordFilterJsonConverter<RecordTyp
     public RecordTypeFilter fromJson(JsonNode node, Namespaces namespaces, RepositoryManager repositoryManager,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
-        
+
         RecordTypeFilter filter = new RecordTypeFilter();
 
         String recordType = JsonUtil.getString(node, "recordType", null);
         if (recordType != null) {
             filter.setRecordType(QNameConverter.fromJson(recordType, namespaces));
         }
-        
+
         Long version = JsonUtil.getLong(node, "version", null);
         if (version != null) {
             filter.setVersion(version);

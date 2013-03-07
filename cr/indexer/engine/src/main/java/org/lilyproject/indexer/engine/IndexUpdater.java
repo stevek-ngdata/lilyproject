@@ -136,7 +136,7 @@ public class IndexUpdater implements EventListener {
 
     @Override
     public void processEvent(SepEvent event) {
-        
+
         long before = System.currentTimeMillis();
 
         // During the processing of this message, we switch the context class loader to the one
@@ -149,13 +149,13 @@ public class IndexUpdater implements EventListener {
         ClassLoader currentCL = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(myContextClassLoader);
-            
+
             byte[] payload = event.getPayload();
             if (payload == null) {
                 log.warn("Ignoring SepEvent with empty payload: " + event);
                 return;
             }
-            
+
             recordEvent = new RecordEvent(payload, idGenerator);
             recordId = idGenerator.fromBytes(event.getRow());
 

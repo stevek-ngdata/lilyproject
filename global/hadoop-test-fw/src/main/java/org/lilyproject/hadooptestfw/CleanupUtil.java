@@ -255,7 +255,7 @@ public class CleanupUtil {
             HTable htable = null;
             try {
                 htable = new HTable(conf, tableName);
-                
+
                 byte[] CF = timestampReusingTables.get(tableName);
                 byte[] tmpRowKey = waitForCompact(tableName, CF);
 
@@ -289,7 +289,7 @@ public class CleanupUtil {
                     // If the value is null, it is because the delete marker has not yet been flushed/compacted away
                     Thread.sleep(500);
                 }
-                
+
                 long totalWait = System.currentTimeMillis() - waitStart;
                 if (totalWait > 5000) {
                     HBaseAdmin admin = new HBaseAdmin(conf);

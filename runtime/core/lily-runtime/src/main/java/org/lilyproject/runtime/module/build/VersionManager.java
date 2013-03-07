@@ -20,13 +20,13 @@ import org.lilyproject.runtime.LilyRuntime;
 import org.lilyproject.runtime.conf.Conf;
 
 public class VersionManager {
-    
+
     private LilyRuntime runtime;
-    
+
     public VersionManager(LilyRuntime runtime) {
         this.runtime = runtime;
     }
-    
+
     public String getPreferredVersion(String groupId, String artifactId) {
         Conf versionsConf = runtime.getConfManager().getRuntimeConfRegistry().getConfiguration("versions", false, true);
         String preferred = null;
@@ -35,20 +35,20 @@ public class VersionManager {
             for (Conf conf: versionsConf.getChildren("version")) {
                 String vGroupId = conf.getAttribute("groupId", null);
                 String vArtifactId = conf.getAttribute("artifactId", null);
-                
+
                 if ((vGroupId == null || vGroupId.equals(groupId)) &&
                         (vArtifactId == null || vArtifactId.equals(artifactId))) {
                     preferred = conf.getAttribute("version", null);
                 }
             }
         }
-        
+
         /** To avoid having to create a versions.xml configuration for existing applications, always
-         * return a preferred version for org.lilyproject:* items */ 
+         * return a preferred version for org.lilyproject:* items */
         if (preferred == null && groupId.equals("org.lilyproject")) {
             preferred = LilyRuntime.getVersion();
         }
-        
+
         return preferred;
     }
 }

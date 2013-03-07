@@ -113,7 +113,7 @@ public class Link {
     public Link(RecordId recordId) {
         this((String)null, recordId);
     }
-    
+
     /**
      * An absolute link to the specified recordId. Nothing will be copied from the context
      * when resolving this link, also with a repository table name supplied.
@@ -132,7 +132,7 @@ public class Link {
     public Link(RecordId recordId, boolean copyAll) {
         this((String)null, recordId, copyAll);
     }
-    
+
     /**
      * A relative link to the specified recordId. All variant properties will be copied
      * from the context when resolving this link, except those that would be explicitly
@@ -153,7 +153,7 @@ public class Link {
     private static SortedMap<String, PropertyValue> createVariantProps(RecordId recordId) {
         if (recordId == null)
             return null;
-        
+
         SortedMap<String, PropertyValue> variantProps = null;
         if (!recordId.isMaster()) {
             variantProps = new TreeMap<String, PropertyValue>();
@@ -213,7 +213,7 @@ public class Link {
             return new Link();
         }
 
-        
+
         String table = null;
         RecordId recordId;
         String variantString;
@@ -224,12 +224,12 @@ public class Link {
         } else {
             int firstDotPos = link.indexOf('.');
             int firstColonPos = link.indexOf(':');
-            
+
 
             if (firstDotPos == -1) {
                 throw new IllegalArgumentException("Invalid link, contains no dot: " + link);
             }
-            
+
             if (firstColonPos != -1 && firstColonPos < firstDotPos) {
                 String[] tableSplitParts = escapedSplit(link, ':', 1);
                 table = tableSplitParts[0];
@@ -287,10 +287,10 @@ public class Link {
             }
         }
     }
-    
+
     /**
      * Returns the (optional) repository table name for resolving this link.
-     * 
+     *
      * @return the repository table name, or null if no repository table name has been supplied
      */
     public String getTable() {
@@ -345,7 +345,7 @@ public class Link {
         }
 
         StringBuilder builder = new StringBuilder();
-        
+
         if (table != null) {
             builder.append(table + ":");
         }
@@ -402,13 +402,13 @@ public class Link {
         if (tableBytes.length > 0) {
             dataOutput.writeBytes(tableBytes);
         }
-        
+
         byte[] recordIdBytes = masterRecordId == null ? new byte[0] : masterRecordId.toBytes();
         dataOutput.writeInt(recordIdBytes.length);
         if (recordIdBytes.length > 0) {
             dataOutput.writeBytes(recordIdBytes);
         }
-        
+
         StringBuilder argsBuilder = new StringBuilder();
         argstoString(argsBuilder);
         dataOutput.writeUTF(argsBuilder.toString());
@@ -419,24 +419,24 @@ public class Link {
 
         int tableLength = dataInput.readInt();
         byte[] tableBytes = dataInput.readBytes(tableLength);
-        
+
         int recordIdLength = dataInput.readInt();
         byte[] recordIdBytes = null;
         if (recordIdLength > 0) {
             recordIdBytes = dataInput.readBytes(recordIdLength);
         }
         String args = dataInput.readUTF();
-        
+
         if (recordIdLength == 0 && args == null) {
             return new Link();
         }
 
         LinkBuilder builder = Link.newBuilder();
-        
+
         if (tableLength > 0) {
             builder.table(new String(tableBytes));
         }
-        
+
         if (recordIdLength > 0) {
             RecordId id = idGenerator.fromBytes(recordIdBytes);
             builder.recordId(id);
@@ -583,7 +583,7 @@ public class Link {
         Link other = (Link)obj;
         if (!ObjectUtils.safeEquals(masterRecordId, other.masterRecordId))
             return false;
-        
+
         if (copyAll != other.copyAll)
             return false;
 
@@ -645,7 +645,7 @@ public class Link {
             }
             return this;
         }
-        
+
         public LinkBuilder table(String table) {
             this.table = table;
             return this;

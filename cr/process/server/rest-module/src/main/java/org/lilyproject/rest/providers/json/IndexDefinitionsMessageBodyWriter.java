@@ -69,11 +69,11 @@ public class IndexDefinitionsMessageBodyWriter implements MessageBodyWriter<Coll
 			throws IOException, WebApplicationException {
 	    ArrayNode array = JsonNodeFactory.instance.arrayNode();
 	    IndexDefinitionConverter converter = IndexDefinitionConverter.INSTANCE;
-	    
+
 	    for (IndexDefinition index : indices) {
 	        array.add(converter.toJson(index));
 	    }
-	    
+
 	    IOUtils.write(JsonFormat.serializeAsBytes(array), outputStream);
 	}
 }

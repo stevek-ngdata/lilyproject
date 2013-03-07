@@ -41,7 +41,7 @@ public class ZooKeeperItfAdapter implements com.ngdata.sep.util.zookeeper.ZooKee
 
     /**
      * Construct an adapter around a Lily ZooKeeperItf.
-     * 
+     *
      * @param zk to be adapted to the HBase SEP
      */
     public ZooKeeperItfAdapter(ZooKeeperItf zk) {

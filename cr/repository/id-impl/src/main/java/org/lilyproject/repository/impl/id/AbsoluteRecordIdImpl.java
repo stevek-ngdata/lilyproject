@@ -71,14 +71,14 @@ public class AbsoluteRecordIdImpl implements AbsoluteRecordId {
         }
         return byteArrayOutputStream.toByteArray();
     }
-    
+
     public static AbsoluteRecordId fromBytes(byte[] bytes, IdGenerator idGenerator) {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
         DataInput dataInput = new DataInputStream(byteArrayInputStream);
-        
+
         byte[] tableBytes;
         byte[] recordIdBytes;
-        
+
         try {
             tableBytes = new byte[dataInput.readInt()];
             dataInput.readFully(tableBytes, 0, tableBytes.length);
@@ -87,26 +87,26 @@ public class AbsoluteRecordIdImpl implements AbsoluteRecordId {
         } catch (IOException ioe) {
             throw new RuntimeException("Error while deserializing AbsoluteRecordId", ioe);
         }
-        
+
         return new AbsoluteRecordIdImpl(new String(tableBytes), idGenerator.fromBytes(recordIdBytes));
-        
+
     }
-    
+
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
-    
+
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
     }
-    
-    
+
+
 
 }

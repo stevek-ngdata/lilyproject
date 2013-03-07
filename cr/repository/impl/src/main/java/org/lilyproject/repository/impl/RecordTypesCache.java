@@ -143,7 +143,7 @@ public class RecordTypesCache {
 
     /**
      * Return the monitor of a bucket and create it if it does not exist yet.
-     * 
+     *
      * @param bucketId
      * @return
      */
@@ -169,7 +169,7 @@ public class RecordTypesCache {
     /**
      * Return all record types in the cache. To avoid inconsistencies between
      * buckets, we get the nameCache first.
-     * 
+     *
      * @return
      * @throws InterruptedException
      */
@@ -183,7 +183,7 @@ public class RecordTypesCache {
 
     /**
      * Return the record type based on its name
-     * 
+     *
      * @param name
      * @return
      * @throws InterruptedException
@@ -199,7 +199,7 @@ public class RecordTypesCache {
 
     /**
      * Get the record type based on its id
-     * 
+     *
      * @param id
      * @return
      */
@@ -213,7 +213,7 @@ public class RecordTypesCache {
 
     /**
      * Refreshes the whole cache to contain the given list of record types.
-     * 
+     *
      * @param recordTypes
      * @throws InterruptedException
      */
@@ -249,7 +249,7 @@ public class RecordTypesCache {
 
     /**
      * Refresh one bucket with the record types contained in the TypeBucket
-     * 
+     *
      * @param typeBucket
      */
     public void refreshRecordTypeBucket(TypeBucket typeBucket) {
@@ -282,7 +282,7 @@ public class RecordTypesCache {
 
     /**
      * Update the cache to contain the new recordType
-     * 
+     *
      * @param recordType
      */
     public void update(RecordType recordType) {
@@ -309,7 +309,7 @@ public class RecordTypesCache {
         // Decrement the number of buckets that are being updated again.
         decCount();
     }
-    
+
     // Add the id of a record type that has been updated locally
     // in a bucket. This record type will be skipped in a next
     // cache refresh sequence.
@@ -341,7 +341,7 @@ public class RecordTypesCache {
 
     public void clear() {
         nameCache.clear();
-        
+
         for (Map bucket : buckets.values()) {
             bucket.clear();
         }

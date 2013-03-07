@@ -43,7 +43,7 @@ public class InheritanceTest extends TestCase {
         {
             ConfImpl child = loadConf("inherit1_child2.xml");
             child.inherit(parent);
-            
+
             JXPathContext context = JXPathContext.newContext(child);
             assertEquals(1, context.getValue("count(properties)", Integer.class));
             assertEquals(4, context.getValue("count(properties/property)", Integer.class));

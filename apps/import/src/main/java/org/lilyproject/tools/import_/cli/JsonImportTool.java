@@ -72,7 +72,7 @@ public class JsonImportTool extends BaseZkCliTool {
                 .withLongOpt("quiet")
                 .create("q");
         options.add(quietOption);
-        
+
         tableOption = OptionBuilder
                 .withArgName("table")
                 .hasArg()
@@ -91,7 +91,7 @@ public class JsonImportTool extends BaseZkCliTool {
             return result;
 
         int workers = OptionUtil.getIntOption(cmd, workersOption, 1);
-        
+
         String table = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
 
         if (cmd.getArgList().size() < 1) {

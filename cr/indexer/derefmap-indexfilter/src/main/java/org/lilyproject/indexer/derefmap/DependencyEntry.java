@@ -23,7 +23,7 @@ public final class DependencyEntry {
      * have to be stripped of the record id, and have to be added to the set of more dimensioned variants.
      */
     private final AbsoluteRecordId dependency;
-    
+
     /**
      * A set of variant properties that specify the variant properties that have to be added to the record id (with
      * any value) in order to come to the actual record ids on which we have a dependency.
@@ -41,7 +41,7 @@ public final class DependencyEntry {
         this.dependency = dependency;
         this.moreDimensionedVariants = Collections.unmodifiableSet(moreDimensionedVariants);
     }
-    
+
     public AbsoluteRecordId getDependency() {
         return dependency;
     }
@@ -56,7 +56,7 @@ public final class DependencyEntry {
         if (o == null || getClass() != o.getClass()) return false;
 
         DependencyEntry entry = (DependencyEntry) o;
-        
+
         if (dependency != null ? !dependency.equals(entry.dependency) : entry.dependency != null)
             return false;
         if (moreDimensionedVariants != null ? !moreDimensionedVariants.equals(entry.moreDimensionedVariants) :
@@ -71,7 +71,7 @@ public final class DependencyEntry {
         result = 31 * result + (moreDimensionedVariants != null ? moreDimensionedVariants.hashCode() : 0);
         return result;
     }
-    
+
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);

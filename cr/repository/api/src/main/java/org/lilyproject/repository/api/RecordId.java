@@ -23,14 +23,14 @@ import org.lilyproject.bytes.api.DataOutput;
  * The id of a {@link Record}. This uniquely identifies a record.
  *
  * <p>A record ID consists of two parts: a mater record ID, and optionally variant properties.
- * 
+ *
  * <p>A string or byte[] representation can be requested of the Id.
  */
 public interface RecordId {
 
     /**
      * Returns a string representation of this record id.
-     * 
+     *
      * <p>The format for a master record id is as follows:
      *
      * <pre>{record id type}.{master record id}</pre>
@@ -61,7 +61,7 @@ public interface RecordId {
      * (Of course, this only applies to user-specified IDs, not to UUID's).
      *
      * <p>The format for a master record id is as follows:
-     * 
+     *
      * <pre>{identifier byte}{basic byte representation}</pre>
      *
      * <p>Where the identifier byte is (byte)0 for a USER record id, and (byte)1 for a UUID record id.
@@ -93,7 +93,7 @@ public interface RecordId {
      *
      */
     byte[] toBytes();
-    
+
     /**
      * Writes the bytes to the DataOutput with the same format as for {@link #toBytes()}
      */

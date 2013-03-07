@@ -79,7 +79,7 @@ public class RecordTest {
     @After
     public void tearDown() throws Exception {
     }
-    
+
   @Test
   public void testCloneRecord() throws Exception {
       String namespace = "testCloneRecord";
@@ -99,7 +99,7 @@ public class RecordTest {
       QName recordFieldName = new QName(namespace, "recordField");
       QName recordFieldName2 = new QName(namespace, "recordField2");
 
-      
+
       String stringValue = "abc";
       Integer integerValue = 123;
       Long longValue = 123L;
@@ -115,7 +115,7 @@ public class RecordTest {
       listValue.add("abc");
       HierarchyPath pathValue = new HierarchyPath("abc");
       Record recordValue = repository.recordBuilder().field(stringFieldName, "foo").build();
-      
+
       Record record = repository.recordBuilder()
           .field(stringFieldName, stringValue)
           .field(integerFieldName, integerValue)
@@ -132,30 +132,30 @@ public class RecordTest {
           .field(pathFieldName, pathValue)
           .field(recordFieldName, recordValue)
           .build();
-      
+
       // Clone record
         record = record.cloneRecord();
-      
+
       // Change mutable values
       listValue.add("def");
       pathValue.getElements()[0] = "def";
       blobValue.setSize(0L);
       recordValue.setField(integerFieldName, 777);
-               
+
       // Validate cloned record does not contain mutations
       List<String> list = record.getField(listFieldName);
       assertTrue(list.size() == 1);
       assertEquals("abc", list.get(0));
-      
+
       HierarchyPath path = record.getField(pathFieldName);
       assertEquals("abc", path.getElements()[0]);
-      
+
       Blob blob = record.getField(blobFieldName);
       assertTrue(Long.MIN_VALUE == blob.getSize());
-      
+
       Record recordField = record.getField(recordFieldName);
       assertFalse(recordField.hasField(integerFieldName));
-      
+
       // Put a record in itself
       // This should normally not be done, but we need to test that the clone method does not choke on this.
 
@@ -166,5 +166,5 @@ public class RecordTest {
         } catch (RecordException expected) {
         }
   }
-    
+
 }

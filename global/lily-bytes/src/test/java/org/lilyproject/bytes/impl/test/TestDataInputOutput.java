@@ -27,9 +27,9 @@ import junit.framework.TestCase;
 
 /**
  * Test the encodings used in DataInputImpl and DataOutputImpl
- * 
+ *
  * <p>The code to generate the randomUnicodeString has been based on code from Lucene class :
- * <code>org.apache.lucene.util._TestUtil.java</code> 
+ * <code>org.apache.lucene.util._TestUtil.java</code>
  */
 public class TestDataInputOutput extends TestCase {
     private Random random = new Random(System.currentTimeMillis());
@@ -84,7 +84,7 @@ public class TestDataInputOutput extends TestCase {
         }
       }
     }
-    
+
     public void testRandomString() {
         for (int i = 0; i < 1000; i++) {
             String string = randomUnicodeString();
@@ -143,7 +143,7 @@ public class TestDataInputOutput extends TestCase {
         String readUTF = dataInputImpl.readUTF();
         Assert.assertEquals(string, readUTF);
     }
-    
+
     public void testRussian() {
         DataOutputImpl dataOutputImpl = new DataOutputImpl();
         String string = "ТЕСТ"; // Note, these are russian characters
@@ -153,7 +153,7 @@ public class TestDataInputOutput extends TestCase {
         String readUTF = dataInputImpl.readUTF();
         Assert.assertEquals(string, readUTF);
     }
-    
+
     public void testAllTypes() {
         DataOutput dataOutput = new DataOutputImpl();
         boolean b = random.nextBoolean();
@@ -176,7 +176,7 @@ public class TestDataInputOutput extends TestCase {
         dataOutput.writeUTF(string);
         dataOutput.writeVInt(Math.abs(i));
         dataOutput.writeVLong(Math.abs(l));
-        
+
         byte[] data = dataOutput.toByteArray();
         DataInput dataInput = new DataInputImpl(data);
         Assert.assertEquals(b, dataInput.readBoolean());

@@ -31,13 +31,13 @@ import com.google.common.cache.Cache;
 
 public class RecordScannerMapTest {
     private Cache<String,RecordScanner> cache;
-    
+
     @Before
     public void setup () {
         cache = RecordScannerMapBuilder.createRecordScannerMap(10, TimeUnit.MILLISECONDS);
     }
-    
-    
+
+
     @Test
     public void testRecordScannerMapExpiration() throws Exception{
         RecordScanner scanner = new DummyRecordScanner();
@@ -46,9 +46,9 @@ public class RecordScannerMapTest {
         Thread.currentThread().sleep(11);
         RecordScanner returnScanner = cache.getIfPresent(id);
         Assert.assertNull(returnScanner);
-        
+
     }
-    
+
     @Test
     public void testRecordScannerMapAccessExpiration() throws Exception{
         RecordScanner scanner = new DummyRecordScanner();
@@ -62,9 +62,9 @@ public class RecordScannerMapTest {
         Thread.currentThread().sleep(11);
         Assert.assertNull(cache.getIfPresent(id));
     }
-    
+
     private class DummyRecordScanner implements RecordScanner {
-        // This is a dummy, it does not need to do anything; 
+        // This is a dummy, it does not need to do anything;
 
         @Override
         public Iterator<Record> iterator() {
@@ -81,9 +81,9 @@ public class RecordScannerMapTest {
         @Override
         public void close() {
             // TODO Auto-generated method stub
-            
+
         }
-        
+
     }
 
 }

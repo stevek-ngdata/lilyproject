@@ -53,5 +53,5 @@ public class ConfPlaceholderConfigurer extends PropertyPlaceholderConfigurer {
             throw new RuntimeException("Error fetching configuration value for placeholder \"" + placeholder + "\".", e);
         }
     }
- 
+
 }

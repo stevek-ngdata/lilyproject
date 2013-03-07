@@ -19,7 +19,7 @@ package org.lilyproject.repository.api;
 
 public class BlobReference {
 
-    
+
     private Blob blob;
     private RecordId recordId;
     private FieldType fieldType;

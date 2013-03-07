@@ -65,7 +65,7 @@ public class IndexerEditFilterTest {
 
         assertEquals(0, walEdit.size());
     }
-    
+
     @Test
     public void testApply_Payload_ApplicableIndex() {
         RecordEvent recordEvent = new RecordEvent();
@@ -81,7 +81,7 @@ public class IndexerEditFilterTest {
 
         assertEquals(1, walEdit.size());
     }
-    
+
     @Test
     public void testApply_Payload_ApplicableIndexButNoIndexFlagIsSet() {
         RecordEvent recordEvent = new RecordEvent();

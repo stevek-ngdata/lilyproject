@@ -21,7 +21,7 @@ import java.io.OutputStream;
 /**
  * The BlobStoreAccess provides access to a specific underlying blob store. This blob store must be able to store
  * a stream of bytes and be able to read or delete them again based on a key provided by the blob store itself.
- * 
+ *
  * <p>For each blob store (e.g. based on HDFS, HBase, ...) an implementation of this interface needs to be
  * registered on the repository with {@link Repository#registerBlobStoreAccess(BlobStoreAccess)}.
  */
@@ -52,7 +52,7 @@ public interface BlobStoreAccess {
      * Get an {@link InputStream} based to read a stream of bytes from the blobstore for the given key.
      *
      * @param key a unique key identifying the written bytes on the blobstore, see {@link #getOutputStream(Blob)}
-     * 
+     *
      * @return an InputStream from which a stream of bytes can be read
      * @throws BlobException when an unexpected exception occurred (e.g. an IOException of the underlying blobstore)
      */
@@ -66,6 +66,6 @@ public interface BlobStoreAccess {
      * @throws BlobException when an unexpected exception occurred (e.g. an IOException of the underlying blobstore)
      */
     void delete(byte[] key) throws BlobException;
-    
+
     boolean incubate();
 }

@@ -34,7 +34,7 @@ public class ClasspathEntry {
         this.sharingMode = sharingMode;
         this.moduleSource = moduleSource;
     }
-    
+
     public ArtifactRef getArtifactRef() {
         return artifactRef;
     }

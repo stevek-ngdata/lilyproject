@@ -24,7 +24,7 @@ import java.util.List;
 public interface LauncherService {
 
     void addOptions(List<Option> options);
-    
+
     /**
      * Here service should read out & validate arguments. The setup method will be called for all services before
      * actually starting them, so that we can be reasonably sure starting will be successful.

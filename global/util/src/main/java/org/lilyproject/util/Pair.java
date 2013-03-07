@@ -18,7 +18,7 @@ package org.lilyproject.util;
 public class Pair<T1, T2> {
     private T1 v1;
     private T2 v2;
-    
+
     public static <T1,T2> Pair<T1,T2>create(T1 v1, T2 v2) {
         return new Pair<T1,T2>(v1, v2);
     }

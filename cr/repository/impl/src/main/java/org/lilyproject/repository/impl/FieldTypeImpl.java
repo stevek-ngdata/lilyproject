@@ -39,7 +39,7 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     }
 
     private FieldTypeImpl(){}
-    
+
     @Override
     public QName getName() {
         return name;
@@ -49,7 +49,7 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     public SchemaId getId() {
         return id;
     }
-    
+
     public byte[] getQualifier() {
         if (idQualifier == null) {
             this.idQualifier = Bytes.add(new byte[]{RecordColumn.DATA_PREFIX}, id.getBytes());
@@ -71,7 +71,7 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     public void setId(SchemaId id) {
         this.id = id;
     }
-    
+
     @Override
     public void setName(QName name) {
         this.name = name;
@@ -86,7 +86,7 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     public void setScope(Scope scope) {
         this.scope = scope;
     }
-    
+
     @Override
     public FieldType clone() {
         FieldTypeImpl newFieldType = new FieldTypeImpl();

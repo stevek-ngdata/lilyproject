@@ -213,12 +213,12 @@ public class SchemaCacheTest {
         }
         System.out.println("Creating 5 extra record types and 5 extra field types took: "
                 + (System.currentTimeMillis() - before));
-        
+
         for (TypeManager tm : typeManagersToClose) {
             waitForRecordType(10000, new QName(namespace, "recordType" + ((iterations * nrOfTypes) - 1)), tm);
         }
     }
-    
+
     @Test
     public void testRenameFieldType() throws Exception {
         TypeManager typeManager = repoSetup.getTypeManager();
@@ -232,7 +232,7 @@ public class SchemaCacheTest {
             ftName = newFtName;
         }
     }
-    
+
     @Test
     public void testRenameRecordType() throws Exception {
         TypeManager typeManager = repoSetup.getTypeManager();
@@ -254,9 +254,9 @@ public class SchemaCacheTest {
         RecordType recordType = typeManager.recordTypeBuilder().name(rtName).create();
         Assert.assertNull(typeManager.getRecordTypeByName(rtName, null).getFieldTypeEntry(fieldType.getId()));
         recordType.addFieldTypeEntry(fieldType.getId(), true);
-        Assert.assertNull(typeManager.getRecordTypeByName(rtName, null).getFieldTypeEntry(fieldType.getId()));        
+        Assert.assertNull(typeManager.getRecordTypeByName(rtName, null).getFieldTypeEntry(fieldType.getId()));
     }
-   
+
     private RecordType waitForRecordType(long timeout, QName name, TypeManager typeManager2)
             throws RepositoryException, InterruptedException {
         long before = System.currentTimeMillis();

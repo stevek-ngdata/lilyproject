@@ -67,6 +67,6 @@ public interface LilyRuntimeModule {
     Mode getRuntimeMode();
 
     ConfRegistry getConfRegistry();
-    
+
     String moduleInfo();
 }

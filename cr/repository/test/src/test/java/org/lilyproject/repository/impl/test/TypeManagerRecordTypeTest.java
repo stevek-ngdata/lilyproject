@@ -39,7 +39,7 @@ public class TypeManagerRecordTypeTest extends AbstractTypeManagerRecordTypeTest
         typeManager = repoSetup.getTypeManager();
         setupFieldTypes();
     }
-    
+
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         repoSetup.stop();

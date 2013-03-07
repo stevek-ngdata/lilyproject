@@ -30,13 +30,13 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
 
     private HBaseTableFactory hbaseTableFactory;
     private BlobManager blobManager;
-    
+
     public HBaseRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory, HBaseTableFactory hbaseTableFactory, BlobManager blobManager) {
         super(typeManager, idGenerator, recordFactory);
         this.hbaseTableFactory = hbaseTableFactory;
         this.blobManager = blobManager;
     }
-    
+
     @Override
     protected Repository createRepository(String tableName) throws IOException, InterruptedException {
         return new HBaseRepository(this, LilyHBaseSchema.getRecordTable(hbaseTableFactory, tableName, true), blobManager);
