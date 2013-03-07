@@ -13,8 +13,9 @@ public class RoundRobinPrefixGenerator {
     private int value;
 
     public RoundRobinPrefixGenerator(int nbrOfChars) {
-        if (nbrOfChars < 0)
+        if (nbrOfChars < 0) {
             throw new IllegalArgumentException("nbrOfChars should be positive");
+        }
 
         this.nbrOfChars = nbrOfChars;
         this.value = 0;

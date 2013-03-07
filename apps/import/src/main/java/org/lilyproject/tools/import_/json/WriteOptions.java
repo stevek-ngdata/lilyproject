@@ -38,8 +38,9 @@ public class WriteOptions {
     }
 
     public void setIncludeSchema(boolean includeSchema) {
-        if (immutable)
+        if (immutable) {
             throw new RuntimeException("This WriteOptions instance is immutable.");
+        }
 
         this.includeSchema = includeSchema;
     }

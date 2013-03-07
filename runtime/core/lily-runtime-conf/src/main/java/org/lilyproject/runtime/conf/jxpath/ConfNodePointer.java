@@ -103,10 +103,12 @@ public class ConfNodePointer extends NodePointer {
 
         List<Conf> children = conf.getChildren();
         for (Conf child : children) {
-            if (child == value1)
+            if (child == value1) {
                 return -1;
-            if (child == value2)
+            }
+            if (child == value2) {
                 return 1;
+            }
         }
 
         return 0;

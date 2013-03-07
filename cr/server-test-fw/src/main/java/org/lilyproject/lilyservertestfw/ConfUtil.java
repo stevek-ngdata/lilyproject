@@ -54,8 +54,9 @@ public class ConfUtil {
                         entryInputStream = jarFile.getInputStream(entry);
                         FileUtils.copyInputStreamToFile(entryInputStream, new File(confDir, fileName));
                     } finally {
-                        if (entryInputStream != null)
+                        if (entryInputStream != null) {
                             entryInputStream.close();
+                        }
                   }
                 }
             }

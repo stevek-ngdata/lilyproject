@@ -126,8 +126,9 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
     }
 
     private void endProcess(String message) {
-        if (stopping)
+        if (stopping) {
             return;
+        }
 
         if (endProcessHook != null) {
             endProcessHook.run();

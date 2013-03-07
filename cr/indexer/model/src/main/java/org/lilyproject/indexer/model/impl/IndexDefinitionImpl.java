@@ -173,15 +173,18 @@ public class IndexDefinitionImpl implements IndexDefinition {
 
     public void makeImmutable() {
         this.immutable = true;
-        if (lastBatchBuildInfo != null)
+        if (lastBatchBuildInfo != null) {
             lastBatchBuildInfo.makeImmutable();
-        if (activeBatchBuildInfo != null)
+        }
+        if (activeBatchBuildInfo != null) {
             activeBatchBuildInfo.makeImmutable();
+        }
     }
 
     private void checkIfMutable() {
-        if (immutable)
+        if (immutable) {
             throw new RuntimeException("This IndexDefinition is immutable");
+        }
     }
 
     @Override

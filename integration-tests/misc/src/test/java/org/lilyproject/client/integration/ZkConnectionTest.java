@@ -123,7 +123,9 @@ public class ZkConnectionTest {
         int count = 0;
         for (long tid: threadIds) {
             ThreadInfo info = threadBean.getThreadInfo(tid);
-            if (info == null) continue;
+            if (info == null) {
+                continue;
+            }
             String name = info.getThreadName();
 
             if (name.contains(ZK_THREAD_MARKER)) {

@@ -109,8 +109,9 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result =  super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         String recordIdString = cmd.getOptionValue(recordIdOption.getOpt());
         if (recordIdString == null) {
@@ -176,8 +177,9 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
     private boolean isInArray(byte[] key, byte[][] data) {
         for (byte[] item : data) {
-            if (Arrays.equals(item, key))
+            if (Arrays.equals(item, key)) {
                 return true;
+            }
         }
         return false;
     }
@@ -270,8 +272,9 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     public static class Base64ValueDecoder implements ValueDecoder<String> {
         @Override
         public String decode(byte[] bytes) {
-            if (bytes == null)
+            if (bytes == null) {
                 return null;
+            }
 
             char[] result = new char[bytes.length * 2];
 

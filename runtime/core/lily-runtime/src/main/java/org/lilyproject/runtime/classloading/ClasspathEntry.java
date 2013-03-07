@@ -48,8 +48,9 @@ public class ClasspathEntry {
     }
 
     public boolean equals(Object obj) {
-        if (!(obj instanceof ClasspathEntry))
+        if (!(obj instanceof ClasspathEntry)) {
             return false;
+        }
 
         ClasspathEntry other = (ClasspathEntry)obj;
 

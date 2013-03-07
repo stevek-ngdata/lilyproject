@@ -97,8 +97,9 @@ public class BlobManagerImpl implements BlobManager {
         Set<BlobReference> failedBlobs = new HashSet<BlobReference>();
         for (BlobReference referencedBlob : blobs) {
             try {
-                if (!reserveBlob(referencedBlob))
+                if (!reserveBlob(referencedBlob)) {
                     failedBlobs.add(referencedBlob);
+                }
             } catch (BlobNotFoundException bnfe) {
                 failedBlobs.add(referencedBlob);
             } catch (BlobException be) {

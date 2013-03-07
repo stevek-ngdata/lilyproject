@@ -71,8 +71,9 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                 // Re-initialize the nameCache
                     Map<QName, FieldType> newNameCache = new HashMap<QName, FieldType>();
                     for (Map<SchemaId, FieldType> bucket : buckets.values()) {
-                        for (FieldType fieldType : bucket.values())
+                        for (FieldType fieldType : bucket.values()) {
                             newNameCache.put(fieldType.getName(), fieldType);
+                        }
                     }
                     nameCache = newNameCache;
                     nameCacheOutOfDate = false;

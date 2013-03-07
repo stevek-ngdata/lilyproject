@@ -207,33 +207,39 @@ public class RecordReader implements EntityReader<Record> {
         } else if (name.equals("PATH")) {
             return readPath(node, valueType.getNestedValueType(), prop, namespaces, repositoryManager, linkTransformer);
         } else if (name.equals("STRING")) {
-            if (!node.isTextual())
+            if (!node.isTextual()) {
                 throw new JsonFormatException("Expected text value for property '" + prop + "'");
+            }
 
             return node.getTextValue();
         } else if (name.equals("INTEGER")) {
-            if (!node.isIntegralNumber())
+            if (!node.isIntegralNumber()) {
                 throw new JsonFormatException("Expected int value for property '" + prop + "'");
+            }
 
             return node.getIntValue();
         } else if (name.equals("LONG")) {
-            if (!node.isIntegralNumber())
+            if (!node.isIntegralNumber()) {
                 throw new JsonFormatException("Expected long value for property '" + prop + "'");
+            }
 
             return node.getLongValue();
         } else if (name.equals("DOUBLE")) {
-            if (!node.isNumber())
+            if (!node.isNumber()) {
                 throw new JsonFormatException("Expected double value for property '" + prop + "'");
+            }
 
             return node.getDoubleValue();
         } else if (name.equals("DECIMAL")) {
-            if (!node.isNumber())
+            if (!node.isNumber()) {
                 throw new JsonFormatException("Expected decimal value for property '" + prop + "'");
+            }
 
             return node.getDecimalValue();
         } else if (name.equals("URI")) {
-            if (!node.isTextual())
+            if (!node.isTextual()) {
                 throw new JsonFormatException("Expected URI (string) value for property '" + prop + "'");
+            }
 
             try {
                 return new URI(node.getTextValue());
@@ -241,28 +247,33 @@ public class RecordReader implements EntityReader<Record> {
                 throw new JsonFormatException("Invalid URI in property '" + prop + "': " + node.getTextValue());
             }
         } else if (name.equals("BOOLEAN")) {
-            if (!node.isBoolean())
+            if (!node.isBoolean()) {
                 throw new JsonFormatException("Expected boolean value for property '" + prop + "'");
+            }
 
             return node.getBooleanValue();
         } else if (name.equals("LINK")) {
-            if (!node.isTextual())
+            if (!node.isTextual()) {
                 throw new JsonFormatException("Expected text value for property '" + prop + "'");
+            }
 
             return linkTransformer.transform(node.getTextValue(), repositoryManager);
         } else if (name.equals("DATE")) {
-            if (!node.isTextual())
+            if (!node.isTextual()) {
                 throw new JsonFormatException("Expected text value for property '" + prop + "'");
+            }
 
             return new LocalDate(node.getTextValue());
         } else if (name.equals("DATETIME")) {
-            if (!node.isTextual())
+            if (!node.isTextual()) {
                 throw new JsonFormatException("Expected text value for property '" + prop + "'");
+            }
 
             return new DateTime(node.getTextValue());
         } else if (name.equals("BLOB")) {
-            if (!node.isObject())
+            if (!node.isObject()) {
                 throw new JsonFormatException("Expected object value for property '" + prop + "'");
+            }
 
             ObjectNode blobNode = (ObjectNode)node;
             return BlobConverter.fromJson(blobNode);
@@ -270,8 +281,9 @@ public class RecordReader implements EntityReader<Record> {
             return fromJson(node, namespaces, repositoryManager);
 
         } else if (name.equals("BYTEARRAY")) {
-            if (!node.isTextual())
+            if (!node.isTextual()) {
                 throw new JsonFormatException("Expected base64 encoded value for property '" + prop + "'");
+            }
             try {
                 return new ByteArray(node.getBinaryValue());
             } catch (IOException e) {

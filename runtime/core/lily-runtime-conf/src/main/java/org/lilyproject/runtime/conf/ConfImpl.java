@@ -43,28 +43,34 @@ public class ConfImpl implements Conf {
     }
 
     public ConfImpl(String name, Location location) {
-        if (name == null)
+        if (name == null) {
             throw new IllegalArgumentException("Null argument: name");
-        if (location == null)
+        }
+        if (location == null) {
             throw new IllegalArgumentException("Null argument: location");
+        }
 
         this.name = name;
         this.location = location;
     }
 
     public void addChild(ConfImpl config) {
-        if (config == null)
+        if (config == null) {
             throw new IllegalArgumentException("Null argument: config");
+        }
         this.children.add(config);
     }
 
     public void setValue(String value) {
-        if (value == null)
+        if (value == null) {
             throw new IllegalArgumentException("Null argument: config");
-        if (value.length() != value.trim().length())
+        }
+        if (value.length() != value.trim().length()) {
             throw new IllegalArgumentException("Configuration values should be trimmed.");
-        if (value.length() == 0)
+        }
+        if (value.length() == 0) {
             throw new IllegalArgumentException("Configuration values should have a length > 0.");
+        }
 
         this.value = value;
     }
@@ -156,38 +162,44 @@ public class ConfImpl implements Conf {
     }
 
     public String getValue(String defaultValue) {
-        if (value == null)
+        if (value == null) {
             return defaultValue;
+        }
         return getValue();
     }
 
     public Boolean getValueAsBoolean(Boolean defaultValue) {
-        if (value == null)
+        if (value == null) {
             return defaultValue;
+        }
         return getValueAsBoolean();
     }
 
     public Integer getValueAsInteger(Integer defaultValue) {
-        if (value == null)
+        if (value == null) {
             return defaultValue;
+        }
         return getValueAsInteger();
     }
 
     public Long getValueAsLong(Long defaultValue) {
-        if (value == null)
+        if (value == null) {
             return defaultValue;
+        }
         return getValueAsLong();
     }
 
     public Float getValueAsFloat(Float defaultValue) {
-        if (value == null)
+        if (value == null) {
             return defaultValue;
+        }
         return getValueAsFloat();
     }
 
     public Double getValueAsDouble(Double defaultValue) {
-        if (value == null)
+        if (value == null) {
             return defaultValue;
+        }
         return getValueAsDouble();
     }
 
@@ -221,51 +233,59 @@ public class ConfImpl implements Conf {
     }
 
     public String getAttribute(String name, String defaultValue) {
-        if (!attributes.containsKey(name))
+        if (!attributes.containsKey(name)) {
             return defaultValue;
+        }
         return getAttribute(name);
     }
 
     public Boolean getAttributeAsBoolean(String name, Boolean defaultValue) {
-        if (!attributes.containsKey(name))
+        if (!attributes.containsKey(name)) {
             return defaultValue;
+        }
         return getAttributeAsBoolean(name);
     }
 
     public Integer getAttributeAsInteger(String name, Integer defaultValue) {
-        if (!attributes.containsKey(name))
+        if (!attributes.containsKey(name)) {
             return defaultValue;
+        }
         return getAttributeAsInteger(name);
     }
 
     public Long getAttributeAsLong(String name, Long defaultValue) {
-        if (!attributes.containsKey(name))
+        if (!attributes.containsKey(name)) {
             return defaultValue;
+        }
         return getAttributeAsLong(name);
     }
 
     public Float getAttributeAsFloat(String name, Float defaultValue) {
-        if (!attributes.containsKey(name))
+        if (!attributes.containsKey(name)) {
             return defaultValue;
+        }
         return getAttributeAsFloat(name);
     }
 
     public Double getAttributeAsDouble(String name, Double defaultValue) {
-        if (!attributes.containsKey(name))
+        if (!attributes.containsKey(name)) {
             return defaultValue;
+        }
         return getAttributeAsDouble(name);
     }
 
     private void checkValuePresent() {
-        if (value == null)
+        if (value == null) {
             throw new ConfException("No value is associated with the configuration element " + getName()
                     + " at " + getLocation());
+        }
     }
 
     private void checkAttributePresent(String attributeName) {
-        if (!attributes.containsKey(attributeName))
+        if (!attributes.containsKey(attributeName)) {
             throw new ConfException("No attribute \"" + attributeName + "\" on the configuration element "
                     + getName() + " at " + getLocation());
+        }
     }
 
     private boolean convertToBoolean(String value, String attributeName) {
@@ -399,8 +419,9 @@ public class ConfImpl implements Conf {
                 presentKeys = new HashSet<String>();
                 for (Conf conf : children) {
                     String value = evalInheritanceConstraint(conf, inheritConstraint);
-                    if (value != null)
+                    if (value != null) {
                         presentKeys.add(value);
+                    }
                 }
             }
 

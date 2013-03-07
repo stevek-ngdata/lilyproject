@@ -120,8 +120,9 @@ public class MetricsReportTool extends BaseCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         String metricFileName = cmd.getOptionValue(metricsFileOption.getOpt());
         if (metricFileName == null) {
@@ -146,8 +147,9 @@ public class MetricsReportTool extends BaseCliTool {
             if (!cmd.hasOption(forceOption.getOpt())) {
                 System.err.println("Specified output directory already exists: " + outputDir.getAbsolutePath());
                 boolean proceed = ConsoleUtil.promptYesNo("Continue anyway? [y/N]", false);
-                if (!proceed)
+                if (!proceed) {
                     return 1;
+                }
             }
         }
 
@@ -371,8 +373,9 @@ public class MetricsReportTool extends BaseCliTool {
             int colorStart = i * numberOfValues;
 
             for (int c = firstPlotValue; c <= lastPlotValue; c++) {
-                if (i > 0 || c > firstPlotValue)
+                if (i > 0 || c > firstPlotValue) {
                     plot.append(", ");
+                }
 
                 int dataCol = (COLS_PER_METRIC * i) + HEADER_COLUMNS + c;
                 int color = colorStart + c - firstPlotValue;
@@ -489,8 +492,9 @@ public class MetricsReportTool extends BaseCliTool {
         private String groupNameToFileName(String groupName) {
             groupName = groupName.replaceAll(Pattern.quote("/"), Matcher.quoteReplacement("_"));
             groupName = groupName.replaceAll(Pattern.quote(" "), Matcher.quoteReplacement("_"));
-            if (groupName.startsWith("-"))
+            if (groupName.startsWith("-")) {
                 groupName = groupName.substring(1);
+            }
             return groupName;
         }
 
@@ -509,12 +513,15 @@ public class MetricsReportTool extends BaseCliTool {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             GroupName other = (GroupName) obj;
             return name.equals(other.name);
         }

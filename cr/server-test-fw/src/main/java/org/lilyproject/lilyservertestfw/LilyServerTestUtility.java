@@ -73,10 +73,12 @@ public class LilyServerTestUtility {
     private ConfManager getConfManager() {
         List<File> confDirs = new ArrayList<File>();
         confDirs.add(testSpecificConfDir);
-        if (customConfDir != null)
+        if (customConfDir != null) {
             confDirs.add(new File(customConfDir));
-        if (defaultConfDir != null)
+        }
+        if (defaultConfDir != null) {
             confDirs.add(new File(defaultConfDir));
+        }
         return new ConfManagerImpl(confDirs);
     }
 

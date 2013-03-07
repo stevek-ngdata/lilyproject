@@ -419,19 +419,25 @@ public class ValueTypeTest {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             XYCoordinates other = (XYCoordinates) obj;
-            if (!getOuterType().equals(other.getOuterType()))
+            if (!getOuterType().equals(other.getOuterType())) {
                 return false;
-            if (x != other.x)
+            }
+            if (x != other.x) {
                 return false;
-            if (y != other.y)
+            }
+            if (y != other.y) {
                 return false;
+            }
             return true;
         }
 

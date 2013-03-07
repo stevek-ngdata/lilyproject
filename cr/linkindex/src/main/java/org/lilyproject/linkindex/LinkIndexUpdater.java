@@ -217,8 +217,9 @@ public class LinkIndexUpdater implements EventListener {
      * Lookup name of field type, for use in debug logs. Beware, this might be slow.
      */
     private String safeLoadTagName(SchemaId fieldTypeId) {
-        if (fieldTypeId == null)
+        if (fieldTypeId == null) {
             return "null";
+        }
 
         try {
             return repositoryManager.getTypeManager().getFieldTypeById(fieldTypeId).getName().getName();

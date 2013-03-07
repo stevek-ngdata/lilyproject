@@ -39,10 +39,12 @@ public class Pair<T1, T2> {
     @Override
     public int hashCode() {
         int result = 17;
-        if (v1 != null)
+        if (v1 != null) {
             result = 37 * result + v1.hashCode();
-        if (v2 != null)
+        }
+        if (v2 != null) {
             result = 37 * result + v2.hashCode();
+        }
         return result;
     }
 

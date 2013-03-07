@@ -39,10 +39,11 @@ public class ShallowJsonFormatter extends DefaultFormatter {
 
     @Override
     protected ValueFormatter getFormatter(ValueType valueType) {
-        if ("RECORD".equals(valueType.getBaseName()))
+        if ("RECORD".equals(valueType.getBaseName())) {
             return RECORD_KEY_VALUE_FORMATTER;
-        else
+        } else {
             return super.getFormatter(valueType);
+        }
 
     }
 

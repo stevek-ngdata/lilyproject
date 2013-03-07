@@ -87,8 +87,9 @@ public class LilyRuntimeProjectClasspath {
 
                 return result;
             } finally {
-                if (fis != null)
+                if (fis != null) {
                     fis.close();
+                }
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Error reading lily runtime XML configuration from " + configFile, e);
@@ -173,10 +174,16 @@ public class LilyRuntimeProjectClasspath {
         } catch (Exception e) {
             throw new MojoExecutionException("Error reading " + entryPath + " from " + moduleArtifact, e);
         } finally {
-            if (is != null)
-                try { is.close(); } catch (Exception e) { /* ignore */ }
-            if (zipFile != null)
-                try { zipFile.close(); } catch (Exception e) { /* ignore */ }
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (Exception e) { /* ignore */ }
+            }
+            if (zipFile != null) {
+                try {
+                    zipFile.close();
+                } catch (Exception e) { /* ignore */ }
+            }
         }
 
         return getArtifacts(classLoaderDocument,
@@ -198,10 +205,12 @@ public class LilyRuntimeProjectClasspath {
             String artifactId = el.getAttribute("artifactId");
             String version = el.getAttribute("version");
             String classifier = el.getAttribute("classifier");
-            if (version.equals("") && groupId.startsWith("org.lilyproject"))
+            if (version.equals("") && groupId.startsWith("org.lilyproject")) {
                 version = lilyVersion;
-            if (classifier.equals(""))
+            }
+            if (classifier.equals("")) {
                 classifier = null;
+            }
 
             Artifact artifact = artifactFactory.createArtifactWithClassifier(groupId, artifactId, version, "jar", classifier);
 

@@ -66,12 +66,15 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
      */
     public int compareTo(byte[] theirValue, int fromOffset, int length) {
         byte[] ourStoreKey = Bytes.tail(nestingLevelAndValue, nestingLevelAndValue.length-Bytes.SIZEOF_INT);
-        if (theirValue == null && ourStoreKey == null)
+        if (theirValue == null && ourStoreKey == null) {
             return 0;
-        if (length == 0 && ourStoreKey.length == 0)
+        }
+        if (length == 0 && ourStoreKey.length == 0) {
             return 0;
-        if (length < ourStoreKey.length)
+        }
+        if (length < ourStoreKey.length) {
             return -1;
+        }
         if (theirValue[fromOffset] == (byte)(1)) { // First byte indicates if it was deleted or not
             return -1;
         }
@@ -86,15 +89,17 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
         int compareTo = -1;
         if (0 == nestingLevel) {
             compareTo = compareBlob(ourStoreKey, theirValue);
-            if (0 == compareTo)
+            if (0 == compareTo) {
                 return 0;
+            }
             skipRestOfBlob(theirValue);
         } else {
             int count = readInt(theirValue); // Number of elements in the list or path
             for (int i = 0; i < count; i++) {
                 compareTo = compareBlob(nestingLevel-1, ourStoreKey, theirValue);
-                if (0 == compareTo)
+                if (0 == compareTo) {
                     return 0;
+                }
             }
         }
         return compareTo;

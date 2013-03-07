@@ -47,8 +47,9 @@ public class LilyRecordVariantFilter extends FilterBase {
     public boolean filterRowKey(byte[] buffer, int offset, int length) {
         // note: return value true means it is NOT a result of the scanner, false otherwise
 
-        if (buffer == null)
+        if (buffer == null) {
             return true;
+        }
 
         final RecordId recordId = idGenerator.fromBytes(new DataInputImpl(buffer, offset, length));
 
@@ -60,7 +61,9 @@ public class LilyRecordVariantFilter extends FilterBase {
 
             // check if the record doesn't have other variant properties
             return variantProperties.size() != recordVariantProperties.size();
-        } else return true;
+        } else {
+            return true;
+        }
     }
 
     private boolean containsAllExpectedDimensions(Map<String, String> recordVariantProperties) {

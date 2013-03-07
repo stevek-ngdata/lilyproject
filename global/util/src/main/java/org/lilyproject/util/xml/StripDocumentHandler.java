@@ -110,19 +110,22 @@ public class StripDocumentHandler implements ContentHandler, LexicalHandler {
 
     @Override
     public void startCDATA() throws SAXException {
-        if (lh != null)
+        if (lh != null) {
             lh.startCDATA();
+        }
     }
 
     @Override
     public void endCDATA() throws SAXException {
-        if (lh != null)
+        if (lh != null) {
             lh.endCDATA();
+        }
     }
 
     @Override
     public void comment(char ch[], int start, int length) throws SAXException {
-        if (lh != null)
+        if (lh != null) {
             lh.comment(ch, start, length);
+        }
     }
 }

@@ -35,8 +35,9 @@ public class ConfAttr {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof ConfAttr))
+        if (!(obj instanceof ConfAttr)) {
             return false;
+        }
 
         ConfAttr attr = (ConfAttr)obj;
         return attr.name.equals(name) && attr.value.equals(value);

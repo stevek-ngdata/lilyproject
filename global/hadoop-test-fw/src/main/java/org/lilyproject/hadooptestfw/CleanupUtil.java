@@ -177,8 +177,9 @@ public class CleanupUtil {
 
             for (HTableDescriptor table : tables) {
                 if (RETAIN_TABLES.contains(table.getNameAsString())) {
-                    if (retainReport.length() > 0)
+                    if (retainReport.length() > 0) {
                         retainReport.append(", ");
+                    }
                     retainReport.append(table.getNameAsString());
                     continue;
                 }
@@ -193,8 +194,9 @@ public class CleanupUtil {
 
                 int totalCount = clearTable(htable);
 
-                if (truncateReport.length() > 0)
+                if (truncateReport.length() > 0) {
                     truncateReport.append(", ");
+                }
                 truncateReport.append(table.getNameAsString()).append(" (").append(totalCount).append(")");
 
                 htable.close();
@@ -262,7 +264,9 @@ public class CleanupUtil {
                 // Delete our dummy row again
                 htable.delete(new Delete(tmpRowKey));
             } finally {
-                if (htable != null) htable.close();
+                if (htable != null) {
+                    htable.close();
+                }
             }
 
         }
@@ -307,7 +311,9 @@ public class CleanupUtil {
             }
             return tmpRowKey;
         } finally {
-            if (htable != null) htable.close();
+            if (htable != null) {
+                htable.close();
+            }
         }
     }
 

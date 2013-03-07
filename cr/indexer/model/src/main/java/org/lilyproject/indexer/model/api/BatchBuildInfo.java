@@ -90,37 +90,47 @@ public class BatchBuildInfo {
     }
 
     private void checkIfMutable() {
-        if (immutable)
+        if (immutable) {
             throw new RuntimeException("This IndexDefinition is immutable");
+        }
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         BatchBuildInfo other = (BatchBuildInfo)obj;
 
-        if (!ObjectUtils.safeEquals(jobId, other.jobId))
+        if (!ObjectUtils.safeEquals(jobId, other.jobId)) {
             return false;
+        }
 
-        if (submitTime != other.submitTime)
+        if (submitTime != other.submitTime) {
             return false;
+        }
 
-        if (success != other.success)
+        if (success != other.success) {
             return false;
+        }
 
-        if (!ObjectUtils.safeEquals(jobState, other.jobState))
+        if (!ObjectUtils.safeEquals(jobState, other.jobState)) {
             return false;
+        }
 
-        if (!ObjectUtils.safeEquals(trackingUrl, other.trackingUrl))
+        if (!ObjectUtils.safeEquals(trackingUrl, other.trackingUrl)) {
             return false;
+        }
 
-        if (!ObjectUtils.safeEquals(counters, other.counters))
+        if (!ObjectUtils.safeEquals(counters, other.counters)) {
             return false;
+        }
 
         return true;
     }

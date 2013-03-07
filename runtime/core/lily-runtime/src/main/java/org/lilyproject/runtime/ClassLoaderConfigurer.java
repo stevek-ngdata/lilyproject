@@ -114,8 +114,9 @@ public class ClassLoaderConfigurer {
             return false;
         }
         Set<String> versions = new HashSet<String>();
-        for (ArtifactUser user : holder.allowed)
+        for (ArtifactUser user : holder.allowed) {
             versions.add(user.version);
+        }
         for (ArtifactUser user : holder.prohibited) {
             classLoadingLog.warn("Allowed-for-sharing artifact " + holder + " is also a prohibited-from-sharing dependency of " + user.module.getId());
             versions.add(user.version);
@@ -163,21 +164,27 @@ public class ClassLoaderConfigurer {
             return false;
         }
         Set<String> versions = new HashSet<String>();
-        for (ArtifactUser user : holder.prohibited) versions.add(user.version);
+        for (ArtifactUser user : holder.prohibited) {
+            versions.add(user.version);
+        }
 
         if (holder.allowed.size() > 1) {
-            for (ArtifactUser user : holder.allowed) versions.add(user.version);
+            for (ArtifactUser user : holder.allowed) {
+                versions.add(user.version);
+            }
 
             classLoadingLog.info("Artifact sharing is allowed by some, but prohibited by:");
-            for (ArtifactUser user : holder.prohibited)
+            for (ArtifactUser user : holder.prohibited) {
                 classLoadingLog.info("  " + user.module.getId());
+            }
         }
 
         if (versions.size() == 1) {
             // log info:
             classLoadingLog.info("Artifact sharing of " + holder + " is prohibited by some modules, but all use the same version. It might make sense to allow sharing the dependency.");
-            for (ArtifactUser user : holder.prohibited)
+            for (ArtifactUser user : holder.prohibited) {
                 classLoadingLog.info("  " + user.module.getId());
+            }
         }
         return true;
     }
@@ -204,10 +211,12 @@ public class ClassLoaderConfigurer {
         final boolean versionConflict = versions.size() > 1;
         final boolean handlingConflict = holder.prohibited.size() > 0;
 
-        if (handlingConflict)
+        if (handlingConflict) {
             classLoadingLog.warn("Sharing for artifact " + holder + " is both required and prohibited. Ignoring 'prohibited'.");
-        if (versionConflict)
+        }
+        if (versionConflict) {
             classLoadingLog.warn("There are multiple versions for required-for sharing artifact " + holder + ". Using conflict resolution.");
+        }
 
         if (versionConflict && requiredSharingConflictResolution.equals(SharingConflictResolution.HIGHEST)) {
             try {
@@ -246,19 +255,23 @@ public class ClassLoaderConfigurer {
         ArtifactRef ref = holder.getArtifactRef(version);
         sharedArtifacts.add(new ClasspathEntry(ref, null, holder.getModuleSource()));
 
-        for (ArtifactUser user : holder.required)
+        for (ArtifactUser user : holder.required) {
             user.module.getClassLoadingConfig().enableSharing(ref);
-        for (ArtifactUser user : holder.allowed)
+        }
+        for (ArtifactUser user : holder.allowed) {
             user.module.getClassLoadingConfig().enableSharing(ref);
-        for (ArtifactUser user : holder.prohibited)
+        }
+        for (ArtifactUser user : holder.prohibited) {
             user.module.getClassLoadingConfig().enableSharing(ref);
+        }
     }
 
     private String versionsToString(Set<String> versions) {
         StringBuilder builder = new StringBuilder();
         for (String version : versions) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append(", ");
+            }
             builder.append(version);
         }
         return builder.toString();
@@ -289,8 +302,9 @@ public class ClassLoaderConfigurer {
     }
 
     private void logReport() {
-        if (!reportLog.isInfoEnabled())
+        if (!reportLog.isInfoEnabled()) {
             return;
+        }
 
         reportLog.info("Common classpath:");
         for (ClasspathEntry cpEntry : sharedArtifacts) {
@@ -337,11 +351,13 @@ public class ClassLoaderConfigurer {
                     break;
             }
 
-            if (this.moduleSource != null && this.moduleSource != moduleSource)
+            if (this.moduleSource != null && this.moduleSource != moduleSource) {
                 throw new RuntimeException("Unexpected situation: two classpath entries based on same file location are both module-source based.");
+            }
 
-            if (moduleSource != null)
+            if (moduleSource != null) {
                 this.moduleSource = moduleSource;
+            }
         }
 
         public ArtifactRef getArtifactRef(String version) {
@@ -390,18 +406,22 @@ public class ClassLoaderConfigurer {
         Matcher m1 = pattern.matcher(version1);
         Matcher m2 = pattern.matcher(version2);
 
-        if (!m1.matches())
+        if (!m1.matches()) {
             throw new UncomparableVersionException(version1);
-        if (!m2.matches())
+        }
+        if (!m2.matches()) {
             throw new UncomparableVersionException(version2);
+        }
 
         int[] v1 = new int[3];
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; i++) {
             v1[i] = m1.group(i + 1) == null ? 0 : Integer.parseInt(m1.group(i + 1));
+        }
 
         int[] v2 = new int[3];
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; i++) {
             v2[i] = m2.group(i + 1) == null ? 0 : Integer.parseInt(m2.group(i + 1));
+        }
 
         for (int i = 0; i < 3; i++) {
             if (v1[i] > v2[i]) {
@@ -437,10 +457,12 @@ public class ClassLoaderConfigurer {
         Matcher rm1 = revisionNumberPattern.matcher(suffix1);
         Matcher rm2 = revisionNumberPattern.matcher(suffix2);
 
-        if (!rm1.matches())
+        if (!rm1.matches()) {
             throw new UncomparableVersionException(version1);
-        if (!rm2.matches())
+        }
+        if (!rm2.matches()) {
             throw new UncomparableVersionException(version2);
+        }
 
         Integer r1 = Integer.parseInt(rm1.group(1));
         Integer r2 = Integer.parseInt(rm2.group(1));

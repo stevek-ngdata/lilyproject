@@ -61,9 +61,10 @@ public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordType
         long tryUntil = System.currentTimeMillis() + 20000;
         long currentVersion;
         while ((currentVersion = typeManager.getRecordTypeById(recordTypeId, null).getVersion()) != version) {
-            if (System.currentTimeMillis() > tryUntil)
+            if (System.currentTimeMillis() > tryUntil) {
                 throw new RuntimeException("RecordType was not updated to expected version within time, " +
                         "expected version: " + version + ", current version = " + currentVersion);
+            }
             Thread.sleep(20);
         }
     }

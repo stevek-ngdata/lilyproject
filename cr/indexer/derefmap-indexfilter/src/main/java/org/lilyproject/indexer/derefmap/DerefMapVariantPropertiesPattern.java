@@ -61,8 +61,12 @@ final class DerefMapVariantPropertiesPattern {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         DerefMapVariantPropertiesPattern that = (DerefMapVariantPropertiesPattern) o;
 
@@ -84,8 +88,9 @@ final class DerefMapVariantPropertiesPattern {
     public Map<String, String> getConcreteProperties() {
         final HashMap<String, String> result = new HashMap<String, String>();
         for (Map.Entry<String, String> patternEntry : pattern.entrySet()) {
-            if (patternEntry.getValue() != null)
+            if (patternEntry.getValue() != null) {
                 result.put(patternEntry.getKey(), patternEntry.getValue());
+            }
         }
         return result;
     }
@@ -93,8 +98,9 @@ final class DerefMapVariantPropertiesPattern {
     public Set<String> getPatternProperties() {
         final Set<String> result = new HashSet<String>();
         for (Map.Entry<String, String> patternEntry : pattern.entrySet()) {
-            if (patternEntry.getValue() == null)
+            if (patternEntry.getValue() == null) {
                 result.add(patternEntry.getKey());
+            }
         }
         return result;
     }

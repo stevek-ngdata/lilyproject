@@ -53,18 +53,23 @@ public class TestRecord {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         TestRecord other = (TestRecord) obj;
         if (recordId == null) {
-            if (other.recordId != null)
+            if (other.recordId != null) {
                 return false;
-        } else if (!recordId.equals(other.recordId))
+            }
+        } else if (!recordId.equals(other.recordId)) {
             return false;
+        }
         return true;
     }
 }

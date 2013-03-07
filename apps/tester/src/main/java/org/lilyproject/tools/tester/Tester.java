@@ -124,8 +124,9 @@ public class Tester extends BaseRepositoryTestTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (cmd.hasOption(dumpSampleConfigOption.getOpt())) {
             return dumpSampleConfig();
@@ -414,7 +415,9 @@ public class Tester extends BaseRepositoryTestTool {
                 for (TestAction testAction : testActions) {
                     incFailureCount(testAction.run());
                 }
-                if (checkStopConditions()) return;
+                if (checkStopConditions()) {
+                    return;
+                }
             }
         }
 

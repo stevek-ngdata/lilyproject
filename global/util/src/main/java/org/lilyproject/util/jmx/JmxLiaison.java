@@ -29,8 +29,9 @@ public class JmxLiaison {
     }
 
     public void disconnect() throws Exception {
-        if (connector != null)
+        if (connector != null) {
             connector.close();
+        }
     }
 
     public Object getAttribute(ObjectName objectName, String attrName) throws Exception {

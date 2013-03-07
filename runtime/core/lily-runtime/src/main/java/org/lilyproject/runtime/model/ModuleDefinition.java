@@ -68,8 +68,9 @@ public class ModuleDefinition {
     }
 
     public String moduleInfo() {
-        if (Boolean.getBoolean("lilyruntime.info.verbose"))
+        if (Boolean.getBoolean("lilyruntime.info.verbose")) {
             return String.format("%s (version: %s) - running from [%s] (in mode: %s)", id, version, file.getAbsolutePath(), sourceType.name());
+        }
         //else
         return String.format("%s (version: %s)", id, version);
     }
@@ -87,8 +88,9 @@ public class ModuleDefinition {
     }
 
     public void addInject(JavaServiceInjectByNameDefinition injectDefinition) {
-        if (javaServiceInjects.containsKey(injectDefinition.getDependencyName()))
+        if (javaServiceInjects.containsKey(injectDefinition.getDependencyName())) {
             throw new LilyRTException("Duplicate inject for Java service " + injectDefinition.getDependencyName() + " on module " + id);
+        }
         javaServiceInjects.put(injectDefinition.getDependencyName(), injectDefinition);
     }
 
@@ -97,8 +99,9 @@ public class ModuleDefinition {
     }
 
     public void addInject(JavaServiceInjectByServiceDefinition injectDefinition) {
-        if (javaServiceInjectsByService.containsKey(injectDefinition.getServiceType()))
+        if (javaServiceInjectsByService.containsKey(injectDefinition.getServiceType())) {
             throw new LilyRTException("Duplicate inject for Java service " + injectDefinition.getServiceType() + " on module " + id);
+        }
         javaServiceInjectsByService.put(injectDefinition.getServiceType(), injectDefinition);
     }
 

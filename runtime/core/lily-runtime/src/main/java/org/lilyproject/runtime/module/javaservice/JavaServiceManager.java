@@ -34,11 +34,13 @@ public class JavaServiceManager {
         ArgumentValidator.notNull(moduleId, "moduleId");
         ArgumentValidator.notNull(name, "name");
         ArgumentValidator.notNull(service, "service");
-        if (!type.isInterface())
+        if (!type.isInterface()) {
             throw new ServiceConfigurationException("The provided service type should be an interface.");
+        }
 
-        if (!type.isAssignableFrom(service.getClass()))
+        if (!type.isAssignableFrom(service.getClass())) {
             throw new ServiceConfigurationException("The provided service object does not implement the interface " + type.getName());
+        }
 
         // By current design/usage, updates and reads will never be concurrent
         List<ServiceData> serviceDatas = serviceRegistry.get(type);
@@ -47,8 +49,9 @@ public class JavaServiceManager {
             serviceRegistry.put(type, serviceDatas);
         }
 
-        if (findServiceData(serviceDatas, moduleId, name) != null)
+        if (findServiceData(serviceDatas, moduleId, name) != null) {
             throw new ServiceConfigurationException("Duplicate name " + name + ". There is already another exported service using this name.");
+        }
 
         serviceDatas.add(new ServiceData(moduleId, name, service));
     }
@@ -56,8 +59,9 @@ public class JavaServiceManager {
     public Object getService(Class type) {
         List<ServiceData> serviceDatas = getServiceDatas(type);
 
-        if (serviceDatas.size() != 1)
+        if (serviceDatas.size() != 1) {
             throw new AmbiguousServiceIdentificationException(type.getName());
+        }
 
         return serviceDatas.get(0).service;
     }
@@ -66,10 +70,12 @@ public class JavaServiceManager {
         List<ServiceData> serviceDatas = getServiceDatas(type);
 
         serviceDatas = findServiceDatas(serviceDatas, moduleId);
-        if (serviceDatas.size() == 0)
+        if (serviceDatas.size() == 0) {
             throw new NoSuchServiceException(type.getName(), moduleId);
-        if (serviceDatas.size() > 1)
+        }
+        if (serviceDatas.size() > 1) {
             throw new AmbiguousServiceIdentificationException(type.getName(), moduleId);
+        }
 
         return serviceDatas.get(0).service;
     }
@@ -78,32 +84,36 @@ public class JavaServiceManager {
         List<ServiceData> serviceDatas = getServiceDatas(type);
 
         ServiceData serviceData = findServiceData(serviceDatas, moduleId, name);
-        if (serviceData == null)
+        if (serviceData == null) {
             throw new NoSuchServiceException(type.getName(), moduleId);
+        }
 
         return serviceData.service;
     }
 
     private List<ServiceData> getServiceDatas(Class type) {
         List<ServiceData> serviceDatas = serviceRegistry.get(type);
-        if (serviceDatas == null || serviceDatas.isEmpty())
+        if (serviceDatas == null || serviceDatas.isEmpty()) {
             throw new NoSuchServiceException(type.getName());
+        }
         return serviceDatas;
     }
 
     private List<ServiceData> findServiceDatas(List<ServiceData> serviceDatas, String moduleId) {
         List<ServiceData> result = new ArrayList<ServiceData>();
         for (ServiceData serviceData : serviceDatas) {
-            if (serviceData.moduleId.equals(moduleId))
+            if (serviceData.moduleId.equals(moduleId)) {
                 result.add(serviceData);
+            }
         }
         return result;
     }
 
     private ServiceData findServiceData(List<ServiceData> serviceDatas, String moduleId, String name) {
         for (ServiceData serviceData : serviceDatas) {
-            if (serviceData.moduleId.equals(moduleId) && serviceData.name.equals(name))
+            if (serviceData.moduleId.equals(moduleId) && serviceData.name.equals(name)) {
                 return serviceData;
+            }
         }
         return null;
     }

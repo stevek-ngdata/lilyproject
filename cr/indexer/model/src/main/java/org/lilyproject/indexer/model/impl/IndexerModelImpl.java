@@ -185,25 +185,31 @@ public class IndexerModelImpl implements WriteableIndexerModel {
     }
 
     private void assertValid(IndexDefinition index) throws IndexValidityException {
-        if (index.getName() == null || index.getName().length() == 0)
+        if (index.getName() == null || index.getName().length() == 0) {
             throw new IndexValidityException("Name should not be null or zero-length");
+        }
 
-        if (index.getConfiguration() == null)
+        if (index.getConfiguration() == null) {
             throw new IndexValidityException("Configuration should not be null.");
+        }
 
-        if (index.getGeneralState() == null)
+        if (index.getGeneralState() == null) {
             throw new IndexValidityException("General state should not be null.");
+        }
 
-        if (index.getBatchBuildState() == null)
+        if (index.getBatchBuildState() == null) {
             throw new IndexValidityException("Build state should not be null.");
+        }
 
-        if (index.getUpdateState() == null)
+        if (index.getUpdateState() == null) {
             throw new IndexValidityException("Update state should not be null.");
+        }
 
         if (index.getActiveBatchBuildInfo() != null) {
             ActiveBatchBuildInfo info = index.getActiveBatchBuildInfo();
-            if (info.getJobId() == null)
+            if (info.getJobId() == null) {
                 throw new IndexValidityException("Job id of active batch build cannot be null.");
+            }
         }
 
        boolean hasShards = index.getSolrShards() != null && !index.getSolrShards().isEmpty();
@@ -227,10 +233,12 @@ public class IndexerModelImpl implements WriteableIndexerModel {
 
         if (index.getLastBatchBuildInfo() != null) {
             BatchBuildInfo info = index.getLastBatchBuildInfo();
-            if (info.getJobId() == null)
+            if (info.getJobId() == null) {
                 throw new IndexValidityException("Job id of last batch build cannot be null.");
-            if (info.getJobState() == null)
+            }
+            if (info.getJobState() == null) {
                 throw new IndexValidityException("Job state of last batch build cannot be null.");
+            }
         }
 
         for (String shard : index.getSolrShards().values()) {
@@ -413,8 +421,9 @@ public class IndexerModelImpl implements WriteableIndexerModel {
                     }
                 });
 
-                if (success)
+                if (success) {
                     break;
+                }
 
                 tryCount++;
                 if (tryCount > 10) {
@@ -422,8 +431,9 @@ public class IndexerModelImpl implements WriteableIndexerModel {
                 }
             }
         } catch (Throwable t) {
-            if (t instanceof InterruptedException)
+            if (t instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
+            }
             throw new IndexModelException("Failed to delete index " + indexName, t);
         }
     }

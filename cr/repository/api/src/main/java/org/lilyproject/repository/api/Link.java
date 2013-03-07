@@ -151,8 +151,9 @@ public class Link {
     }
 
     private static SortedMap<String, PropertyValue> createVariantProps(RecordId recordId) {
-        if (recordId == null)
+        if (recordId == null) {
             return null;
+        }
 
         SortedMap<String, PropertyValue> variantProps = null;
         if (!recordId.isMaster()) {
@@ -564,8 +565,9 @@ public class Link {
                     break;
                 case COPY:
                     String value = contextProps.get(entry.getKey());
-                    if (value != null)
+                    if (value != null) {
                         resolvedProps.put(entry.getKey(), value);
+                    }
                     break;
             }
         }
@@ -573,38 +575,49 @@ public class Link {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
 
         Link other = (Link)obj;
-        if (!ObjectUtils.safeEquals(masterRecordId, other.masterRecordId))
+        if (!ObjectUtils.safeEquals(masterRecordId, other.masterRecordId)) {
             return false;
+        }
 
-        if (copyAll != other.copyAll)
+        if (copyAll != other.copyAll) {
             return false;
+        }
 
-        if (variantProps == null && other.variantProps == null)
+        if (variantProps == null && other.variantProps == null) {
             return true;
+        }
 
-        if ((variantProps == null && other.variantProps != null) || (variantProps != null && other.variantProps == null))
+        if ((variantProps == null && other.variantProps != null) || (variantProps != null && other.variantProps == null)) {
             return false;
+        }
 
-        if (variantProps.size() != other.variantProps.size())
+        if (variantProps.size() != other.variantProps.size()) {
             return false;
+        }
 
         for (Map.Entry<String, PropertyValue> entry : variantProps.entrySet()) {
             PropertyValue otherVal = other.variantProps.get(entry.getKey());
-            if (otherVal == null)
+            if (otherVal == null) {
                 return false;
+            }
             PropertyValue val = entry.getValue();
-            if (val.mode != otherVal.mode)
-                    return false;
-            if (!ObjectUtils.safeEquals(val.value, otherVal.value))
+            if (val.mode != otherVal.mode) {
                 return false;
+            }
+            if (!ObjectUtils.safeEquals(val.value, otherVal.value)) {
+                return false;
+            }
         }
 
         return true;
@@ -687,8 +700,9 @@ public class Link {
         }
 
         private void initVarProps() {
-            if (variantProps == null)
+            if (variantProps == null) {
                 variantProps = new HashMap<String, PropertyValue>();
+            }
         }
     }
 }

@@ -115,8 +115,9 @@ public abstract class BaseTestTool extends BaseZkCliTool {
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int result = super.processOptions(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         workers = OptionUtil.getIntOption(cmd, workersOption, getDefaultWorkers());
 

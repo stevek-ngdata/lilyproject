@@ -43,8 +43,9 @@ public class TouchIndexCli extends BaseIndexerAdminCli {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (indexName == null) {
             System.out.println("Specify index name with -" + nameOption.getOpt());

@@ -43,8 +43,9 @@ public abstract class ConfSource {
         // Only return paths of valid configurations
         Set<String> paths = new HashSet<String>();
         for (Map.Entry<String, CachedConfig> entry : confs.entrySet()) {
-            if (entry.getValue().state == ConfigState.OK)
+            if (entry.getValue().state == ConfigState.OK) {
                 paths.add(entry.getKey());
+            }
         }
         return paths;
     }
@@ -73,8 +74,9 @@ public abstract class ConfSource {
             }
             if (!found) {
                 currentEntriesIt.remove();
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug("Configuration: detected removed config " + path + " in " + location);
+                }
             }
         }
 
@@ -82,8 +84,9 @@ public abstract class ConfSource {
         for (ConfigPath configPath : configPaths) {
             CachedConfig cachedConfig = confs.get(configPath.path);
             if (cachedConfig == null || cachedConfig.lastModified != configPath.file.lastModified()) {
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug("Configuration: detected updated or added config " + configPath.path + " in " + location);
+                }
                 long lastModified = configPath.file.lastModified();
                 ConfImpl conf = parseConfiguration(configPath.file);
                 cachedConfig = new CachedConfig();

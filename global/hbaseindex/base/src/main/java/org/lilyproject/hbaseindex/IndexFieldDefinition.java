@@ -81,20 +81,25 @@ public abstract class IndexFieldDefinition implements Writable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
 
         IndexFieldDefinition other = (IndexFieldDefinition) obj;
 
-        if (!name.equals(other.name))
+        if (!name.equals(other.name)) {
             return false;
+        }
 
-        if (order != other.order)
+        if (order != other.order) {
             return false;
+        }
 
         return true;
     }

@@ -37,8 +37,9 @@ public class ConfPlaceholderConfigurer extends PropertyPlaceholderConfigurer {
     @Override
     protected String resolvePlaceholder(String placeholder, Properties props, int systemPropertiesMode) {
         int colonPos = placeholder.indexOf(':');
-        if (colonPos == -1)
+        if (colonPos == -1) {
             return null;
+        }
 
         try {
             String confPath = placeholder.substring(0, colonPos);

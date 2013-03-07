@@ -262,12 +262,14 @@ public class ClassloaderMojo extends AbstractMojo {
 
     private void createDestinationFile() throws IOException {
         File targetDirectoryFile = new File(targetDirectory);
-        if (!targetDirectoryFile.exists())
+        if (!targetDirectoryFile.exists()) {
             targetDirectoryFile.mkdirs();
+        }
 
         projectDescriptorFile = new File(targetDirectoryFile, targetFileName);
-        if (!projectDescriptorFile.exists())
+        if (!projectDescriptorFile.exists()) {
             projectDescriptorFile.createNewFile();
+        }
     }
 
     /**
@@ -290,8 +292,9 @@ public class ClassloaderMojo extends AbstractMojo {
         // start with all artifacts.
         Set<Artifact> artifacts = project.getArtifacts();
 
-        if (includeSelf)
+        if (includeSelf) {
             artifacts.add(project.getArtifact());
+        }
 
         // perform filtering
         dependenciesToList = filter.filter(artifacts);
@@ -340,10 +343,12 @@ public class ClassloaderMojo extends AbstractMojo {
                 for (Artifact artifact : sortedArtifacts) {
                     atts.addAttribute("", "groupId", "groupId", "CDATA", artifact.getGroupId());
                     atts.addAttribute("", "artifactId", "artifactId", "CDATA", artifact.getArtifactId());
-                    if (artifact.getClassifier() != null)
+                    if (artifact.getClassifier() != null) {
                         atts.addAttribute("", "classifier", "classifier", "CDATA", artifact.getClassifier());
-                    if (!artifact.getGroupId().equals("org.lilyproject"))
+                    }
+                    if (!artifact.getGroupId().equals("org.lilyproject")) {
                         atts.addAttribute("", "version", "version", "CDATA", artifact.getBaseVersion());
+                    }
                     entry = new Entry(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier());
                     if (hasEntries && entryMap.containsKey(entry)) {
                         entryVersion = extractAttVal(entryMap.get(entry).getAttributes(), "version");
@@ -373,8 +378,9 @@ public class ClassloaderMojo extends AbstractMojo {
                 ex.printStackTrace();
                 throw new SAXException("Unable to get a TransformerHandler.");
             }
-        } else
+        } else {
             throw new RuntimeException("Could not load SAXTransformerFactory.");
+        }
     }
 
     private void parseClassloaderTemplate(File file) {

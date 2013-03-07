@@ -229,8 +229,9 @@ public class HBaseProxy {
     private void writeConfiguration(File testHome, Configuration conf) throws IOException {
         final File confDir = new File(testHome, "conf");
         final boolean confDirCreated = confDir.mkdir();
-        if (!confDirCreated)
+        if (!confDirCreated) {
             throw new IOException("failed to create " + confDir);
+        }
 
         // dumping everything into multiple xxx-site.xml files.. so that the expected files are definitely there
         for (String filename : Arrays.asList("core-site.xml", "mapred-site.xml")) {

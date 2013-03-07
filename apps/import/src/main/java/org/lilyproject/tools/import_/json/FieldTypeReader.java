@@ -71,17 +71,20 @@ public class FieldTypeReader implements EntityReader<FieldType> {
 
         String idString = getString(node, "id", null);
         SchemaId id = null;
-        if (idString != null)
+        if (idString != null) {
             id = new SchemaIdImpl(idString);
+        }
         fieldType.setId(id);
 
         // Some sanity checks for version tag fields
         if (fieldType.getName().getNamespace().equals(VersionTag.NAMESPACE)) {
-            if (fieldType.getScope() != Scope.NON_VERSIONED)
+            if (fieldType.getScope() != Scope.NON_VERSIONED) {
                 throw new JsonFormatException("vtag fields should be in the non-versioned scope");
+            }
 
-            if (!fieldType.getValueType().getBaseName().equals("LONG"))
+            if (!fieldType.getValueType().getBaseName().equals("LONG")) {
                 throw new JsonFormatException("vtag fields should be of type LONG");
+            }
         }
 
         return fieldType;

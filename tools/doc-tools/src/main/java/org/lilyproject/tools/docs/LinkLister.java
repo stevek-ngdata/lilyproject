@@ -83,15 +83,18 @@ public class LinkLister extends BaseCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         String collection = cmd.getOptionValue(collectionOption.getOpt());
-        if (collection == null)
+        if (collection == null) {
             collection = DEFFAULT_COLLECTION;
+        }
         String branch = cmd.getOptionValue(branchOption.getOpt());
-        if (branch == null)
+        if (branch == null) {
             branch = DEFFAULT_BRANCH;
+        }
 
         RepositoryManager repositoryManager = new RemoteRepositoryManager(
             "http://lilyproject.org:9263", new Credentials("guest", "guest"));

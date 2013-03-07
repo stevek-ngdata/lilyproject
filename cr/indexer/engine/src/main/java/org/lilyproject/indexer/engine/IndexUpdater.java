@@ -187,8 +187,9 @@ public class IndexUpdater implements EventListener {
                 }
 
                 // After this we can go to update denormalized data
-                if (derefMap != null)
+                if (derefMap != null) {
                     updateDenormalizedData(recordEvent.getTableName(), recordId, null, null);
+                }
             } else { // CREATE or UPDATE
                 VTaggedRecord vtRecord;
 

@@ -76,11 +76,13 @@ public class ZkUtil {
     public static void createPath(final ZooKeeperItf zk, final String path, final byte[] data)
             throws InterruptedException, KeeperException {
 
-        if (!path.startsWith("/"))
+        if (!path.startsWith("/")) {
             throw new IllegalArgumentException("Path should start with a slash.");
+        }
 
-        if (path.endsWith("/"))
+        if (path.endsWith("/")) {
             throw new IllegalArgumentException("Path should not end on a slash.");
+        }
 
         String[] parts = path.substring(1).split("/");
 

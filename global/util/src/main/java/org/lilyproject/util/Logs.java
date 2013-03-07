@@ -21,8 +21,9 @@ import org.apache.commons.logging.LogFactory;
 public class Logs {
     public static void logThreadJoin(Thread thread) {
         Log log = LogFactory.getLog("org.lilyproject.threads.join");
-        if (!log.isInfoEnabled())
+        if (!log.isInfoEnabled()) {
             return;
+        }
 
         String context = "";
         Exception e = new Exception();

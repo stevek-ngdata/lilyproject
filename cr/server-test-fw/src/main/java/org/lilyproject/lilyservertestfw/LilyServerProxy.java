@@ -319,8 +319,9 @@ public class LilyServerProxy {
         if (waitForIndexerModel) {
             // Wait for subscriptionId to be known by indexerModel
             String subscriptionId = waitOnIndexSubscriptionId(indexName, tryUntil, timeout);
-            if (subscriptionId == null)
+            if (subscriptionId == null) {
                 throw new Exception("Timed out waiting for index subscription ID to be assigned.");
+            }
 
             if (waitForSep) {
                 hbaseProxy.waitOnReplicationPeerReady(subscriptionId);

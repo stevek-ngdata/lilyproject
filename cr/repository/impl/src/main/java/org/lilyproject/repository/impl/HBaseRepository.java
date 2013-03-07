@@ -264,8 +264,9 @@ public class HBaseRepository extends BaseRepository {
                 // created record
                 recordEvent.setRecordTypeChanged(false);
                 Long newVersion = newRecord.getVersion();
-                if (newVersion != null)
+                if (newVersion != null) {
                     recordEvent.setVersionCreated(newVersion);
+                }
 
                 // Reserve blobs so no other records can use them
                 reserveBlobs(null, referencedBlobs);
@@ -768,8 +769,9 @@ public class HBaseRepository extends BaseRepository {
      * Determines if the new metadata has changed compared to the old metadata.
      */
     private boolean isChanged(Metadata newMetadata, Metadata oldMetadata) {
-        if (oldMetadata == null)
+        if (oldMetadata == null) {
             return true;
+        }
 
         // Metadata has not changed if:
         //   - all KV's in the new metadata are also in the old metadata
@@ -828,8 +830,9 @@ public class HBaseRepository extends BaseRepository {
 
     private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue, Metadata metadata)
             throws RepositoryException, InterruptedException {
-        if (isDeleteMarker(fieldValue))
+        if (isDeleteMarker(fieldValue)) {
             return FieldFlags.getDeleteMarker();
+        }
         ValueType valueType = fieldType.getValueType();
 
         DataOutput dataOutput = new DataOutputImpl();
@@ -1176,8 +1179,9 @@ public class HBaseRepository extends BaseRepository {
                                     if (fieldType.getScope() == Scope.NON_VERSIONED) {
                                         // Read the blob value from the original record,
                                         // since the delete marker has already been put in the field by the delete call
-                                        if (originalRecord != null)
+                                        if (originalRecord != null) {
                                             blobValue = originalRecord.getField(fieldType.getName());
+                                        }
                                     } else {
                                         byte[] value = cell.getValue();
                                         if (!isDeleteMarker(value)) {
@@ -1185,9 +1189,10 @@ public class HBaseRepository extends BaseRepository {
                                         }
                                     }
                                     try {
-                                        if (blobValue != null)
+                                        if (blobValue != null) {
                                             blobsToDelete
-                                                    .addAll(getReferencedBlobs((FieldTypeImpl) fieldType, blobValue));
+                                                    .addAll(getReferencedBlobs((FieldTypeImpl)fieldType, blobValue));
+                                        }
                                     } catch (BlobException e) {
                                         log.warn("Failure occurred while clearing blob data", e);
                                         // We do a best effort here
@@ -1263,8 +1268,9 @@ public class HBaseRepository extends BaseRepository {
     // Checks the set of blobs and returns a subset of those blobs which are not referenced anymore
     private Set<BlobReference> filterReferencedBlobs(RecordId recordId, Set<BlobReference> blobs, Long ignoreVersion)
             throws IOException {
-        if (recordId == null)
+        if (recordId == null) {
             return blobs;
+        }
         Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
         for (BlobReference blobReference : blobs) {
             FieldTypeImpl fieldType = (FieldTypeImpl) blobReference.getFieldType();

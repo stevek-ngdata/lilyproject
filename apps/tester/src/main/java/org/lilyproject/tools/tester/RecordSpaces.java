@@ -41,21 +41,25 @@ public class RecordSpaces {
 
     public void addRecord(String space, TestRecord record) {
         RecordSpace recordSpace = recordSpaces.get(space);
-        if (recordSpace != null)
+        if (recordSpace != null) {
             recordSpace.addRecord(record);
+        }
     }
 
     public void removeRecord(String space, TestRecord record) {
         RecordSpace recordSpace = recordSpaces.get(space);
-        if (recordSpace != null)
+        if (recordSpace != null) {
             recordSpace.removeRecord(record);
+        }
     }
 
     public TestRecord getRecord(String space) {
         RecordSpace recordSpace = recordSpaces.get(space);
-        if (recordSpace != null)
+        if (recordSpace != null) {
             return recordSpace.getRecord();
-        else return null;
+        } else {
+            return null;
+        }
     }
 
     private class RecordSpace {
@@ -72,8 +76,9 @@ public class RecordSpaces {
                 records.add(record);
             } else {
                 int index = (int) Math.floor(Math.random() * records.size());
-                if (records.remove(index) != null)
+                if (records.remove(index) != null) {
                     records.add(record);
+                }
             }
         }
 

@@ -245,14 +245,16 @@ public class GenScriptMojo extends AbstractMojo {
         String basePath = isDevelopment ? settings.getLocalRepository() : platform.envPrefix.concat("LILY_HOME").concat(platform.envSuffix).concat(platform.fileSeparator).concat("lib");
 
         for (Artifact artifact: getClassPath()) {
-            if (result.length() > 0)
+            if (result.length() > 0) {
                 result.append(platform.pathSeparator);
+            }
             result.append(basePath).append(platform.fileSeparator).append(artifactPath(artifact, platform));
         }
 
         if (includeProjectInClasspath) {
-            if (result.length() > 0)
+            if (result.length() > 0) {
                 result.append(platform.pathSeparator);
+            }
 
             // Disabled the isDevelopment treatment: otherwise in development, META-INF does not exist which
             // is used by Lily's CLI tools to read their version. Not sure if there is a good reason for this
@@ -299,8 +301,9 @@ public class GenScriptMojo extends AbstractMojo {
     }
 
     private String getParameter(List<Parameter> parameters, Platform platform, Mode mode, String defaultValue) {
-        if (parameters == null)
+        if (parameters == null) {
             return defaultValue;
+        }
 
         for (Parameter parameter : parameters) {
             if (parameter.platform.toUpperCase().equals(platform.name()) && parameter.mode.toUpperCase().equals(mode.name())) {

@@ -36,8 +36,9 @@ public class HBaseMetricsPlugin implements MetricsPlugin {
 
     @Override
     public void beforeReport(Metrics metrics) {
-        if (!useJmx)
+        if (!useJmx) {
             return;
+        }
 
         try {
             hbaseMetrics.reportMetrics(metrics);

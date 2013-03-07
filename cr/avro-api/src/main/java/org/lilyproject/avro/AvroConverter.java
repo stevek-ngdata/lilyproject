@@ -291,8 +291,9 @@ public class AvroConverter {
     }
 
     public AvroValueType convert(ValueType valueType) {
-        if (valueType == null)
+        if (valueType == null) {
             return null;
+        }
 
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.setValueType(valueType.getName());
@@ -300,14 +301,16 @@ public class AvroConverter {
     }
 
     public QName convert(AvroQName name) {
-        if (name == null)
+        if (name == null) {
             return null;
+        }
         return new QName(name.getNamespace(), name.getName());
     }
 
     public AvroQName convert(QName name) {
-        if (name == null)
+        if (name == null) {
             return null;
+        }
 
         AvroQName avroQName = new AvroQName();
         avroQName.setNamespace(name.getNamespace());
@@ -430,19 +433,23 @@ public class AvroConverter {
 
 
     public ByteBuffer convert(RecordId recordId) {
-        if (recordId == null) return null;
+        if (recordId == null) {
+            return null;
+        }
         return ByteBuffer.wrap(recordId.toBytes());
     }
 
     public Long convertAvroVersion(long avroVersion) {
-        if (avroVersion == -1)
+        if (avroVersion == -1) {
             return null;
+        }
         return avroVersion;
     }
 
     public long convertVersion(Long version) {
-        if (version == null)
+        if (version == null) {
             return -1;
+        }
         return version;
     }
 
@@ -555,20 +562,24 @@ public class AvroConverter {
 
 
     public SchemaId convert(AvroSchemaId avroSchemaId) {
-        if (avroSchemaId == null)
+        if (avroSchemaId == null) {
             return null;
+        }
         byte[] idBytes = null;
-        if (avroSchemaId.getIdBytes() != null)
+        if (avroSchemaId.getIdBytes() != null) {
             idBytes = avroSchemaId.getIdBytes().array();
+        }
         return new SchemaIdImpl(idBytes);
     }
 
     public AvroSchemaId convert(SchemaId schemaId) {
-        if (schemaId == null)
+        if (schemaId == null) {
             return null;
+        }
         AvroSchemaId avroSchemaId = new AvroSchemaId();
-        if (schemaId.getBytes() != null)
+        if (schemaId.getBytes() != null) {
             avroSchemaId.setIdBytes(ByteBuffer.wrap(schemaId.getBytes()));
+        }
         return avroSchemaId;
     }
 

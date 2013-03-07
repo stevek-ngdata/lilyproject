@@ -337,37 +337,48 @@ public class RecordEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         RecordEvent other = (RecordEvent)obj;
 
-        if (other.type != this.type)
+        if (other.type != this.type) {
             return false;
+        }
 
-        if (other.recordTypeChanged != this.recordTypeChanged)
+        if (other.recordTypeChanged != this.recordTypeChanged) {
             return false;
+        }
 
-        if (other.versionCreated != this.versionCreated)
+        if (other.versionCreated != this.versionCreated) {
             return false;
+        }
 
-        if (other.versionUpdated != this.versionUpdated)
+        if (other.versionUpdated != this.versionUpdated) {
             return false;
+        }
 
-        if (!ObjectUtils.safeEquals(other.updatedFields, this.updatedFields))
+        if (!ObjectUtils.safeEquals(other.updatedFields, this.updatedFields)) {
             return false;
+        }
 
-        if (!ObjectUtils.safeEquals(other.vtagsToIndex, this.vtagsToIndex))
+        if (!ObjectUtils.safeEquals(other.vtagsToIndex, this.vtagsToIndex)) {
             return false;
+        }
 
-        if(!ObjectUtils.safeEquals(other.attributes, this.attributes))
+        if(!ObjectUtils.safeEquals(other.attributes, this.attributes)) {
             return false;
+        }
 
-        if (!ObjectUtils.safeEquals(other.tableName, tableName))
+        if (!ObjectUtils.safeEquals(other.tableName, tableName)) {
             return false;
+        }
 
         // TODO implement equals for IndexRecordFilterData
 

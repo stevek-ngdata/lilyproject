@@ -89,8 +89,9 @@ public class LauncherClasspathHelper {
                 if (node instanceof Element && node.getLocalName().equals("artifact")) {
                     Element artifactEl = (Element)node;
                     URL artifactURL = getArtifactURL(artifactEl, repositoryLocation, lilyVersion);
-                    if (artifactURL != null)
+                    if (artifactURL != null) {
                         artifactURLs.add(artifactURL);
+                    }
                 }
             }
             return artifactURLs.toArray(new URL[0]);
@@ -101,8 +102,9 @@ public class LauncherClasspathHelper {
         String groupId = artifactEl.getAttribute("groupId");
         String artifactId = artifactEl.getAttribute("artifactId");
         String version = artifactEl.getAttribute("version");
-        if (version.equals(""))
+        if (version.equals("")) {
             version = lilyVersion;
+        }
         String classifier = artifactEl.getAttribute("classifier");
 
         String sep = System.getProperty("file.separator");

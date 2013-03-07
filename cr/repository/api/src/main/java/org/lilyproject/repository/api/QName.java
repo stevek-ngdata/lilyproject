@@ -55,20 +55,26 @@ public class QName {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         QName other = (QName) obj;
-        if (!name.equals(other.name))
+        if (!name.equals(other.name)) {
             return false;
+        }
         if (namespace == null) {
-            if (other.namespace != null)
+            if (other.namespace != null) {
                 return false;
-        } else if (!namespace.equals(other.namespace))
+            }
+        } else if (!namespace.equals(other.namespace)) {
             return false;
+        }
         return true;
     }
 
@@ -85,8 +91,9 @@ public class QName {
      */
     public static QName fromString(String qname) throws IllegalArgumentException {
         int indexBracket = qname.indexOf('}');
-        if (indexBracket < 1 || !qname.startsWith("{"))
+        if (indexBracket < 1 || !qname.startsWith("{")) {
             throw new IllegalArgumentException("QName string should be of the format {namespace}name");
+        }
         return new QName(qname.substring(1,indexBracket), qname.substring(indexBracket + 1));
     }
 }

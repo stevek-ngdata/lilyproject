@@ -87,20 +87,22 @@ public class ModuleSourceManager {
     }
 
     private ModuleSourceType getType(ModuleSource  moduleSource) {
-        if (moduleSource instanceof JarModuleSource)
+        if (moduleSource instanceof JarModuleSource) {
             return ModuleSourceType.JAR;
-        else if (moduleSource instanceof ExpandedJarModuleSource)
+        } else if (moduleSource instanceof ExpandedJarModuleSource) {
             return ModuleSourceType.EXPANDED_JAR;
-        else if (moduleSource instanceof MavenSourceDirectoryModuleSource)
+        } else if (moduleSource instanceof MavenSourceDirectoryModuleSource) {
             return ModuleSourceType.SOURCE_DIRECTORY;
-        else
+        } else {
             throw new LilyRTException("Unrecognized module source implementation: " + moduleSource.getClass().getName());
+        }
     }
 
     protected synchronized void dispose(SharedModuleSource moduleSource) throws Exception {
         // Remove from list of managed module sources
-        if (moduleSources.remove(moduleSource.getKey()) == null)
+        if (moduleSources.remove(moduleSource.getKey()) == null) {
             throw new LilyRTException("Unexpected situation: disposed module source not found.");
+        }
 
         // perform disposal of actual module source
         moduleSource.getDelegate().dispose();

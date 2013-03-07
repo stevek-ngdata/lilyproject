@@ -94,8 +94,9 @@ public class MboxImport extends BaseRepositoryTestTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (!cmd.hasOption(schemaOption.getOpt()) && !cmd.hasOption(fileOption.getOpt())) {
             printHelp();
@@ -291,23 +292,30 @@ public class MboxImport extends BaseRepositoryTestTool {
         // we can save additional indexer work (update of dereferenced data) by first creating the messages
         // and then the parts.
         List<RecordId> partRecordIds = new ArrayList<RecordId>(message.parts.size());
-        for (Part part : message.parts)
+        for (Part part : message.parts) {
             partRecordIds.add(idGenerator.newRecordId());
+        }
 
         Record messageRecord = repository.newRecord(idGenerator.newRecordId());
         messageRecord.setRecordType(new QName(NS, "Message"));
-        if (message.subject != null)
+        if (message.subject != null) {
             messageRecord.setField(new QName(NS, "subject"), message.subject);
-        if (message.to != null)
+        }
+        if (message.to != null) {
             messageRecord.setField(new QName(NS, "to"), message.getToAddressesAsStringList());
-        if (message.cc != null)
+        }
+        if (message.cc != null) {
             messageRecord.setField(new QName(NS, "cc"), message.getCcAddressesAsStringList());
-        if (message.from != null)
+        }
+        if (message.from != null) {
             messageRecord.setField(new QName(NS, "from"), message.getFromAddressesAsStringList());
-        if (message.sender != null)
+        }
+        if (message.sender != null) {
             messageRecord.setField(new QName(NS, "sender"), message.getSenderAddressAsString());
-        if (message.listId != null)
+        }
+        if (message.listId != null) {
             messageRecord.setField(new QName(NS, "listId"), message.listId);
+        }
 
         if (messageRecord.getFields().size() == 0 || message.parts.size() == 0) {
             // Message has no useful headers, do not create it.

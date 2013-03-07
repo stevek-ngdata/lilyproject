@@ -87,8 +87,9 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int result = super.processOptions(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         useSolrCloud = cmd.hasOption(solrCloudOption.getOpt());
         if (!cmd.hasOption(solrOption.getOpt())) {

@@ -209,8 +209,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     @Override
     public FieldTypes getFieldTypesSnapshot() throws InterruptedException {
-        if (!updatedFieldTypes)
+        if (!updatedFieldTypes) {
             return fieldTypesSnapshot;
+        }
         synchronized (this) {
             if (updatedFieldTypes) {
                 fieldTypesSnapshot = fieldTypesCache.getSnapshot();
@@ -291,8 +292,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             }
         } catch (KeeperException e) {
             if (Thread.currentThread().isInterrupted()) {
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug("Failed to put parent watcher on " + CACHE_INVALIDATION_PATH + " : thread interrupted");
+                }
             } else {
                 log.warn("Failed to put parent watcher on " + CACHE_INVALIDATION_PATH, e);
                 // Failed to put our watcher.
@@ -304,8 +306,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         if (bucketVersions.isEmpty()) {
             // All buckets need to be refreshed
 
-            if (log.isDebugEnabled())
+            if (log.isDebugEnabled()) {
                 log.debug("Refreshing all types in the schema cache, no bucket versions known yet");
+            }
             // Set a watch again on all buckets
             final ExecutorService sixteenThreads = Executors.newFixedThreadPool(50);
             for (final CacheWatcher watcher : cacheWatchers) {
@@ -320,9 +323,10 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                             bucketVersions.put(bucketId, stat.getVersion());
                         } catch (KeeperException e) {
                             if (Thread.currentThread().isInterrupted()) {
-                                if (log.isDebugEnabled())
+                                if (log.isDebugEnabled()) {
                                     log.debug(
                                             "Failed to put watcher on bucket " + bucketPath + " : thread interrupted");
+                                }
                             } else {
                                 log.warn("Failed to put watcher on bucket " + bucketPath
                                         + " - Relying on connection watcher to reinitialize cache", e);
@@ -360,12 +364,14 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                 try {
                     ZkUtil.getData(zooKeeper, bucketPath, watcher, stat);
                     Integer oldVersion = bucketVersions.get(bucketId);
-                    if (oldVersion == null || (oldVersion != stat.getVersion()))
+                    if (oldVersion == null || (oldVersion != stat.getVersion())) {
                         newBucketVersions.put(bucketId, stat.getVersion());
+                    }
                 } catch (KeeperException e) {
                     if (Thread.currentThread().isInterrupted()) {
-                        if (log.isDebugEnabled())
+                        if (log.isDebugEnabled()) {
                             log.debug("Failed to put watcher on bucket " + bucketPath + " : thread is interrupted");
+                        }
                     } else {
                         log.warn("Failed to put watcher on bucket " + bucketPath
                                 + " - Relying on connection watcher to reinitialize cache", e);
@@ -375,8 +381,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                     }
                 }
             }
-            if (log.isDebugEnabled())
+            if (log.isDebugEnabled()) {
                 log.debug("Refreshing all types in the schema cache, limiting to buckets" + newBucketVersions.keySet());
+            }
             for (Entry<String, Integer> entry : newBucketVersions.entrySet()) {
                 bucketVersions.put(entry.getKey(), entry.getValue());
                 TypeBucket typeBucket = getTypeManager().getTypeBucketWithoutCache(entry.getKey());
@@ -410,12 +417,14 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             Stat stat = new Stat();
             try {
                 ZkUtil.getData(zooKeeper, bucketPath, watcher, stat);
-                if (stat.getVersion() == bucketVersions.get(bucketId))
+                if (stat.getVersion() == bucketVersions.get(bucketId)) {
                     continue; // The bucket is up to date
+                }
             } catch (KeeperException e) {
                 if (Thread.currentThread().isInterrupted()) {
-                    if (log.isDebugEnabled())
+                    if (log.isDebugEnabled()) {
                         log.debug("Failed to put watcher on bucket " + bucketPath + " : thread is interrupted");
+                    }
                 } else {
                     log.warn("Failed to put watcher on bucket " + bucketPath
                             + " - Relying on connection watcher to reinitialize cache", e);
@@ -424,8 +433,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                     // initialize the caches.
                 }
             }
-            if (log.isDebugEnabled())
+            if (log.isDebugEnabled()) {
                 log.debug("Refreshing schema cache bucket: " + bucketId);
+            }
 
             // Avoid updating the cache while refreshing the buckets
             bucketVersions.put(bucketId, stat.getVersion());
@@ -442,8 +452,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                 zooKeeper.exists(path, true);
             } catch (KeeperException e) {
                 if (Thread.currentThread().isInterrupted()) {
-                    if (log.isDebugEnabled())
+                    if (log.isDebugEnabled()) {
                         log.debug("Failed to put existence watcher on " + path + " : thread is interrupted");
+                    }
                 } else {
                     log.warn("Failed to put existence watcher on " + path, e);
                 }
@@ -530,8 +541,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                 lilyNodes = zooKeeper.getChildren(LILY_NODES_PATH, watcher);
                 lilyNodesWatcher = watcher;
             } catch (KeeperException e) {
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug("Failed getting lilyNodes from Zookeeper", e);
+                }
                 // The path does not exist yet.
                 // Set the lilyNodesWatcher to null so that we retry
                 // setting the watcher in the next iteration.
@@ -566,10 +578,11 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                                         // But because such a trigger could have
                                         // been missed is why we are here.
                                         parentVersion = null;
-                                        if (log.isDebugEnabled())
+                                        if (log.isDebugEnabled()) {
                                             log.debug("One or more LilyNodes stopped. "
                                                     +
                                                     "Refreshing cache to cover possibly missed refresh triggers");
+                                        }
                                     }
                                     knownLilyNodes.clear();
                                     knownLilyNodes.addAll(lilyNodes);

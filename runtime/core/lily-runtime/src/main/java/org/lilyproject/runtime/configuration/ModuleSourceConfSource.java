@@ -39,8 +39,9 @@ public class ModuleSourceConfSource extends ConfSource {
         List<ConfigPath> configPaths = new ArrayList<ConfigPath>();
 
         Resource resource = moduleSource.getResource("conf");
-        if (resource == null)
+        if (resource == null) {
             return configPaths;
+        }
 
         collectConfigFiles(configPaths, resource, "");
 

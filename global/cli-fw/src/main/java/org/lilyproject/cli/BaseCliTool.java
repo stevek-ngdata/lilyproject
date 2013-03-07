@@ -73,8 +73,9 @@ public abstract class BaseCliTool {
         }
         System.out.println();
 
-        if (result != 0)
+        if (result != 0) {
             System.exit(result);
+        }
     }
 
     protected void reportThrowable(Throwable throwable) {
@@ -217,8 +218,9 @@ public abstract class BaseCliTool {
         // Process options
         //
         int result = processOptions(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
 
         //

@@ -62,8 +62,9 @@ public class TracingRepository {
                     Object[] values = (Object[]) args[i];
                     builder.append("[");
                     for (int j = 0; j < values.length; j++) {
-                        if (j > 0)
+                        if (j > 0) {
                             builder.append(", ");
+                        }
                         builder.append(values[i]);
                     }
                     builder.append("]");

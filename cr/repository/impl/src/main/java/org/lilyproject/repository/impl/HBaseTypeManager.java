@@ -197,8 +197,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             // Prepare the update
             RecordType latestRecordType = getRecordTypeByIdWithoutCache(id, null);
             // If no name was given, continue to use the name that was already on the record type
-            if (name == null)
+            if (name == null) {
                 newRecordType.setName(latestRecordType.getName());
+            }
             Long latestRecordTypeVersion = latestRecordType.getVersion();
             Long newRecordTypeVersion = latestRecordTypeVersion + 1;
 
@@ -247,8 +248,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         // First update the record type
         RecordType updatedRecordType = updateRecordType(recordType);
 
-        if (!refreshSubtypes)
+        if (!refreshSubtypes) {
             return updatedRecordType;
+        }
 
         parents.push(updatedRecordType.getId());
 
@@ -552,8 +554,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             newFieldType.setId(id);
 
             // Check if there is already a fieldType with this name
-            if (schemaCache.fieldTypeExists(fieldType.getName()))
+            if (schemaCache.fieldTypeExists(fieldType.getName())) {
                 throw new FieldTypeExistsException(fieldType);
+            }
 
             // FIXME: the flow here is different than for record types, were first the name reservation is taken
             // and then the existence is checked.
@@ -752,8 +755,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         Result result = getTypeTable().get(get);
         if (result != null && !result.isEmpty()) {
             originalTimestampBytes = result.getValue(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes);
-            if (originalTimestampBytes != null && originalTimestampBytes.length != 0)
+            if (originalTimestampBytes != null && originalTimestampBytes.length != 0) {
                 originalTimestamp = Bytes.toLong(originalTimestampBytes);
+            }
         }
         // Check if the timestamp is older than the concurrent timeout
         // The concurrent timeout should be large enough to allow fieldType caches to be refreshed
@@ -895,8 +899,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         List<Result> results = new ArrayList<Result>();
         for (Result scanResult : scanner) {
             // Skip empty results from the scanner
-            if (scanResult != null && !scanResult.isEmpty())
+            if (scanResult != null && !scanResult.isEmpty()) {
                 results.add(scanResult);
+            }
         }
         Closer.close(scanner);
 
@@ -935,7 +940,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             scan.setStartRow(new byte[] { rowPrefix[0] });
             if (!bucketId.equals("ff")) // In case of ff, just scan until
                 // the end
-                scan.setStopRow(new byte[] { rowPrefix[1] });
+            {
+                scan.setStopRow(new byte[]{ rowPrefix[1] });
+            }
         try {
             scanner = getTypeTable().getScanner(scan);
         } catch (IOException e) {
@@ -947,8 +954,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         List<Result> results = new ArrayList<Result>();
         for (Result scanResult : scanner) {
             // Skip empty results from the scanner
-            if (scanResult != null && !scanResult.isEmpty())
+            if (scanResult != null && !scanResult.isEmpty()) {
                 results.add(scanResult);
+            }
         }
         Closer.close(scanner);
 
@@ -989,8 +997,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
         byte[] rowId = id.getBytes();
         // The chance it would already exist is small
-        if (typeTable.exists(new Get(rowId)))
+        if (typeTable.exists(new Get(rowId))) {
             return getValidId();
+        }
         // The chance a same uuid is generated after doing the exists check is
         // even smaller
         // If it would still happen, the incrementColumnValue would return a

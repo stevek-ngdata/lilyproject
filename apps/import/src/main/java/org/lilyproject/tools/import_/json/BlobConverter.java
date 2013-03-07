@@ -28,8 +28,9 @@ public class BlobConverter {
         ObjectNode jsonBlob = JsonNodeFactory.instance.objectNode();
         jsonBlob.put("value", valueToString(blob.getValue()));
         jsonBlob.put("mediaType", blob.getMediaType());
-        if (blob.getName() != null)
+        if (blob.getName() != null) {
             jsonBlob.put("name", blob.getName());
+        }
         jsonBlob.put("size", blob.getSize());
         return jsonBlob;
     }

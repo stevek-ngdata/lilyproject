@@ -99,8 +99,9 @@ public class HbaseIndexPerfTest extends BaseTestTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         Configuration hbaseConf = getHBaseConf();
 
@@ -220,8 +221,9 @@ public class HbaseIndexPerfTest extends BaseTestTool {
         public void run() {
             try {
                 String word = "";
-                while (word.length() < 3)
+                while (word.length() < 3) {
                     word = Words.get();
+                }
 
                 String prefix = word.substring(0, 3);
 

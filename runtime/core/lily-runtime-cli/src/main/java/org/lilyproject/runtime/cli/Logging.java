@@ -82,20 +82,21 @@ public class Logging {
 
         if (consoleLoggingLevel != null) {
             Level level = null;
-            if (consoleLoggingLevel.equalsIgnoreCase("trace"))
+            if (consoleLoggingLevel.equalsIgnoreCase("trace")) {
                 level = Level.TRACE;
-            else if (consoleLoggingLevel.equalsIgnoreCase("debug"))
+            } else if (consoleLoggingLevel.equalsIgnoreCase("debug")) {
                 level = Level.DEBUG;
-            else if (consoleLoggingLevel.equalsIgnoreCase("info"))
+            } else if (consoleLoggingLevel.equalsIgnoreCase("info")) {
                 level = Level.INFO;
-            else if (consoleLoggingLevel.equalsIgnoreCase("warn"))
+            } else if (consoleLoggingLevel.equalsIgnoreCase("warn")) {
                 level = Level.WARN;
-            else if (consoleLoggingLevel.equalsIgnoreCase("error"))
+            } else if (consoleLoggingLevel.equalsIgnoreCase("error")) {
                 level = Level.ERROR;
-            else if (consoleLoggingLevel.equalsIgnoreCase("fatal"))
+            } else if (consoleLoggingLevel.equalsIgnoreCase("fatal")) {
                 level = Level.FATAL;
-            else
+            } else {
                 System.err.println("Unrecognized log level: " + consoleLoggingLevel);
+            }
 
             if (level != null) {
                 System.out.println("Setting console output for log level " + level.toString() + " on category " + consoleLogCategory);
@@ -125,25 +126,29 @@ public class Logging {
 
         Logger logger = Logger.getLogger(LilyRuntime.INFO_LOG_CATEGORY);
         logger.setLevel(Level.INFO);
-        if (!hasConsoleAppender)
+        if (!hasConsoleAppender) {
             logger.addAppender(consoleAppender);
+        }
 
         if (classLoadingLog) {
             logger = Logger.getLogger(LilyRuntime.CLASSLOADING_LOG_CATEGORY);
             logger.setLevel(Level.INFO);
-            if (!hasConsoleAppender)
+            if (!hasConsoleAppender) {
                 logger.addAppender(consoleAppender);
+            }
 
             logger = Logger.getLogger(LilyRuntime.CLASSLOADING_REPORT_CATEGORY);
             logger.setLevel(Level.INFO);
-            if (!hasConsoleAppender)
+            if (!hasConsoleAppender) {
                 logger.addAppender(consoleAppender);
+            }
         } else {
             // Always print classloader warnings
             logger = Logger.getLogger(LilyRuntime.CLASSLOADING_LOG_CATEGORY);
             logger.setLevel(Level.WARN);
-            if (!hasConsoleAppender)
+            if (!hasConsoleAppender) {
                 logger.addAppender(consoleAppender);
+            }
         }
     }
 

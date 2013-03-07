@@ -89,8 +89,9 @@ public class VTaggedRecord {
         this.typeManager = repository.getTypeManager();
         this.record = idRecord;
         this.recordEventHelper = eventHelper;
-        if (eventHelper != null)
+        if (eventHelper != null) {
             this.recordEvent = eventHelper.getEvent();
+        }
     }
 
     public RecordId getId() {

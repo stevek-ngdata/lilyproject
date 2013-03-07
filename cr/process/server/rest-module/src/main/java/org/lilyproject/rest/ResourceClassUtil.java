@@ -56,8 +56,9 @@ public class ResourceClassUtil {
             String[] fieldParts = fields.split(",");
             for (String field : fieldParts) {
                 field = field.trim();
-                if (field.length() == 0)
+                if (field.length() == 0) {
                     continue;
+                }
 
                 fieldQNames.add(ResourceClassUtil.parseQName(field, uriInfo.getQueryParameters()));
             }

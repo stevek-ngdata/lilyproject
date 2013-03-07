@@ -146,8 +146,9 @@ public class MiniZooKeeperCluster {
      */
     public int startup(File baseDir, int numZooKeeperServers) throws IOException,
             InterruptedException {
-        if (numZooKeeperServers <= 0)
+        if (numZooKeeperServers <= 0) {
             return -1;
+        }
 
         setupTestEnv();
         shutdown();

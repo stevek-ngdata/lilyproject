@@ -75,11 +75,14 @@ public class LicenseCheck {
             int count = 0;
             while ((line = reader.readLine()) != null) {
                 if (line.indexOf("Licensed under the Apache License") != -1
-                    || line.indexOf("Do not apply Lily license") != -1)
+                    || line.indexOf("Do not apply Lily license") != -1) {
                     return true;
+                }
                 count++;
                 if (count > 15)  // read max 15 lines in file
+                {
                     break;
+                }
             }
 
             return false;

@@ -74,9 +74,11 @@ public class TestFieldType {
         for (int i = 0; i < size; i++) {
             ActionResult result = generateValue(testAction, valueType);
             duration += result.duration;
-            if (result.success)
+            if (result.success) {
                 values.add(result.object);
-            else return new ActionResult(false, null, duration);
+            } else {
+                return new ActionResult(false, null, duration);
+            }
         }
         return new ActionResult(true, values, duration);
     }
@@ -88,9 +90,11 @@ public class TestFieldType {
             for (int i = 0; i < size; i++) {
                 ActionResult result = generateValue(testAction, valueType);
                 duration += result.duration;
-                if (result.success)
+                if (result.success) {
                     elements[i] = result.object;
-                else return new ActionResult(false, null, duration);
+                } else {
+                    return new ActionResult(false, null, duration);
+                }
             }
             return new ActionResult(true, new HierarchyPath(elements), duration);
     }
@@ -145,8 +149,9 @@ public class TestFieldType {
                 String[] words = wordString.split(",");
                 StringBuilder stringBuilder = new StringBuilder(20 * wordCount);
                 for (int i = 0; i < wordCount; i++) {
-                    if (i > 0)
+                    if (i > 0) {
                         stringBuilder.append(' ');
+                    }
                     int index = (int) (Math.random() * words.length);
                     stringBuilder.append(words[index]);
                 }
@@ -197,9 +202,9 @@ public class TestFieldType {
     private long generateLong() {
         // Default
         long value = 0;
-        if (properties == null)
+        if (properties == null) {
             value = random.nextLong();
-        else {
+        } else {
             String numberString = JsonUtil.getString(properties, "enum", null);
             if (numberString != null) {
                 String[] numbers = numberString.split(",");
@@ -217,9 +222,9 @@ public class TestFieldType {
     private double generateDouble() {
         // Default
         double value = 0;
-        if (properties == null)
+        if (properties == null) {
             value = random.nextDouble();
-        else {
+        } else {
             String numberString = JsonUtil.getString(properties, "enum", null);
             if (numberString != null) {
                 String[] numbers = numberString.split(",");

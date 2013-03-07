@@ -147,8 +147,9 @@ public class RecordDecoder {
                 RecordType recordType =
                         typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
                 record.setRecordType(scope, recordType.getName(), recordType.getVersion());
-                if (readContext != null)
+                if (readContext != null) {
                     readContext.setRecordTypeId(scope, recordType);
+                }
             }
         }
 
@@ -294,8 +295,9 @@ public class RecordDecoder {
             return null;
         }
         FieldType fieldType = fieldTypes.getFieldType(new SchemaIdImpl(Bytes.tail(key, key.length - 1)));
-        if (context != null)
+        if (context != null) {
             context.addFieldType(fieldType);
+        }
         ValueType valueType = fieldType.getValueType();
 
         Metadata metadata = null;
@@ -324,8 +326,9 @@ public class RecordDecoder {
     private Pair<SchemaId, Long> extractLatestRecordType(Scope scope, Result result) {
         byte[] idBytes = getLatest(result, RecordCf.DATA.bytes, RECORD_TYPE_ID_QUALIFIERS.get(scope));
         byte[] versionBytes = getLatest(result, RecordCf.DATA.bytes, RECORD_TYPE_VERSION_QUALIFIERS.get(scope));
-        if ((idBytes == null || idBytes.length == 0) || (versionBytes == null || versionBytes.length == 0))
+        if ((idBytes == null || idBytes.length == 0) || (versionBytes == null || versionBytes.length == 0)) {
             return null; // No record type was found
+        }
         return new Pair<SchemaId, Long>(new SchemaIdImpl(idBytes), Bytes.toLong(versionBytes));
     }
 
@@ -337,16 +340,19 @@ public class RecordDecoder {
      */
     public byte[] getLatest(Result result, byte[] family, byte[] qualifier) {
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> map = result.getMap();
-        if (map == null)
+        if (map == null) {
             return null;
+        }
 
         NavigableMap<byte[], NavigableMap<Long, byte[]>> qualifiers = map.get(family);
-        if (qualifiers == null)
+        if (qualifiers == null) {
             return null;
+        }
 
         NavigableMap<Long, byte[]> timestamps = qualifiers.get(qualifier);
-        if (timestamps == null)
+        if (timestamps == null) {
             return null;
+        }
 
         Map.Entry<Long, byte[]> entry = timestamps.lastEntry();
         return entry == null ? null : entry.getValue();
@@ -395,8 +401,9 @@ public class RecordDecoder {
             idCeilingEntry = recordTypeIdMap.ceilingEntry(version);
         }
         SchemaId recordTypeId;
-        if (idCeilingEntry == null)
+        if (idCeilingEntry == null) {
             return null; // No record type was found
+        }
         recordTypeId = new SchemaIdImpl(idCeilingEntry.getValue());
 
         // Get recordTypeVersion
@@ -406,8 +413,9 @@ public class RecordDecoder {
         if (recordTypeVersionMap != null) {
             versionCeilingEntry = recordTypeVersionMap.ceilingEntry(version);
         }
-        if (versionCeilingEntry == null)
+        if (versionCeilingEntry == null) {
             return null; // No record type was found, we should never get here: if there is an id there should also be a version
+        }
         recordTypeVersion = Bytes.toLong(versionCeilingEntry.getValue());
         Pair<SchemaId, Long> recordType = new Pair<SchemaId, Long>(recordTypeId, recordTypeVersion);
         return recordType;

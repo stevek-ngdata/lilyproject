@@ -52,8 +52,9 @@ public class ConfManagerImpl implements ConfManager {
     }
 
     public void initRuntimeConfig() {
-        if (state.ordinal() >= State.RUNTIME_CONF_AVAILABLE.ordinal())
+        if (state.ordinal() >= State.RUNTIME_CONF_AVAILABLE.ordinal()) {
             throw new IllegalStateException("ConfManager: runtime config already initialized.");
+        }
 
         List<ConfSource> sources = new ArrayList<ConfSource>();
         for (File location : configLocations) {
@@ -68,8 +69,9 @@ public class ConfManagerImpl implements ConfManager {
     }
 
     public void initModulesConfig(List<ModuleConfig> moduleConfigs) {
-        if (state.ordinal() >= State.MODULES_CONF_AVAILABLE.ordinal())
+        if (state.ordinal() >= State.MODULES_CONF_AVAILABLE.ordinal()) {
             throw new IllegalStateException("ConfManager: modules config already initialized.");
+        }
 
         for (ModuleConfig moduleConfig : moduleConfigs) {
             List<ConfSource> sources = new ArrayList<ConfSource>();
@@ -114,8 +116,9 @@ public class ConfManagerImpl implements ConfManager {
 
         for (ConfRegistryImpl registry : registries.values()) {
             Runnable runnable = registry.refresh();
-            if (runnable != null)
+            if (runnable != null) {
                 notifyTasks.add(runnable);
+            }
         }
 
         if (notifyListeners) {
@@ -126,14 +129,16 @@ public class ConfManagerImpl implements ConfManager {
     }
 
     public ConfRegistry getConfRegistry(String moduleId) {
-        if (state.ordinal() < State.MODULES_CONF_AVAILABLE.ordinal())
+        if (state.ordinal() < State.MODULES_CONF_AVAILABLE.ordinal()) {
             throw new IllegalStateException("ConfManager: modules configuration not yet available.");
+        }
         return registries.get(moduleId);
     }
 
     public ConfRegistry getRuntimeConfRegistry() {
-        if (state.ordinal() < State.RUNTIME_CONF_AVAILABLE.ordinal())
+        if (state.ordinal() < State.RUNTIME_CONF_AVAILABLE.ordinal()) {
             throw new IllegalStateException("ConfManager: runtime configuration not yet available.");
+        }
         return registries.get(RUNTIME_CONF_NAME);
     }
 }

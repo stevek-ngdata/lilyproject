@@ -25,8 +25,9 @@ public class ReplicationPeerUtil implements ReplicationPeerUtilMBean {
             }
         }
 
-        if (waited)
+        if (waited) {
             System.out.println("done");
+        }
     }
 
     @Override
@@ -47,8 +48,9 @@ public class ReplicationPeerUtil implements ReplicationPeerUtilMBean {
             }
         }
 
-        if (waited)
+        if (waited) {
             System.out.println("done");
+        }
 
         try {
             MBeanServerConnection connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();

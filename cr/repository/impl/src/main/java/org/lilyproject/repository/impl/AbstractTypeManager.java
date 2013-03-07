@@ -199,8 +199,9 @@ public abstract class AbstractTypeManager implements TypeManager {
 
         StringBuilder msg = new StringBuilder();
         for (int i = pos; i < parentsList.size(); i++) {
-            if (msg.length() > 0)
+            if (msg.length() > 0) {
                 msg.append(" <- ");
+            }
             msg.append(getNameSafe(parentsList.get(i)));
         }
         msg.append(" <- ");
@@ -294,8 +295,9 @@ public abstract class AbstractTypeManager implements TypeManager {
         int indexOfParams = valueTypeSpec.indexOf("<");
         if (indexOfParams == -1) {
             ValueTypeFactory valueTypeFactory = valueTypeFactories.get(valueTypeSpec);
-            if (valueTypeFactory == null)
+            if (valueTypeFactory == null) {
                 throw new TypeException("Unkown value type: " + valueTypeSpec);
+            }
             valueType = valueTypeFactory.getValueType(null);
         } else {
             if (!valueTypeSpec.endsWith(">")) {
@@ -311,8 +313,9 @@ public abstract class AbstractTypeManager implements TypeManager {
             }
 
             ValueTypeFactory valueTypeFactory = valueTypeFactories.get(valueTypeSpec.substring(0, indexOfParams));
-            if (valueTypeFactory == null)
+            if (valueTypeFactory == null) {
                 throw new TypeException("Unkown value type: " + valueTypeSpec);
+            }
             valueType = valueTypeFactory.getValueType(arg);
         }
 

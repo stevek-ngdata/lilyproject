@@ -257,9 +257,10 @@ public class Indexer {
                 solrShardMgr.getSolrClient(record.getId()).deleteById(getIndexId(table, record.getId(), vtag));
                 metrics.deletesById.inc();
 
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug(String.format("Record %1$s, vtag %2$s: no index fields produced output, " +
                             "removed from index if present", record.getId(), safeLoadTagName(vtag)));
+                }
 
                 processDependencies(table, record, vtag, solrDocumentBuilder);
             } else {
@@ -286,8 +287,9 @@ public class Indexer {
             logDependencies(record.getId(), solrDocumentBuilder.getDependencies());
         }
 
-        if (derefMap != null)
+        if (derefMap != null) {
             derefMap.updateDependants(new AbsoluteRecordIdImpl(table, record.getId()), vtag, solrDocumentBuilder.getDependencies());
+        }
     }
 
     private void logDependencies(RecordId recordId, Map<DependencyEntry, Set<SchemaId>> dependencies) {
@@ -338,8 +340,9 @@ public class Indexer {
         StringBuilder builder = new StringBuilder();
 
         while (valueType != null) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append("_");
+            }
             builder.append(valueType.getBaseName().toLowerCase());
             valueType = valueType.getNestedValueType();
         }
@@ -412,8 +415,9 @@ public class Indexer {
      * Lookup name of field type, for use in debug logs. Beware, this might be slow.
      */
     protected String safeLoadTagName(SchemaId fieldTypeId) {
-        if (fieldTypeId == null)
+        if (fieldTypeId == null) {
             return "null";
+        }
 
         try {
             return typeManager.getFieldTypeById(fieldTypeId).getName().getName();
@@ -425,8 +429,9 @@ public class Indexer {
     protected String vtagSetToNameString(Set<SchemaId> vtags) {
         StringBuilder builder = new StringBuilder();
         for (SchemaId vtag : vtags) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append(", ");
+            }
             builder.append(safeLoadTagName(vtag));
         }
         return builder.toString();
@@ -444,8 +449,12 @@ public class Indexer {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         Indexer indexer = (Indexer) o;
 

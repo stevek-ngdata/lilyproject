@@ -71,8 +71,9 @@ abstract class BaseQueryResult implements QueryResult {
 
         int fieldPosition = definition.getFieldPosition(fieldName);
 
-        if (fieldPosition == -1)
+        if (fieldPosition == -1) {
             throw new MalformedQueryException("field [" + fieldName + "] is not part of the index");
+        }
 
         // skip all fields up to fieldPosition
         for (int i = 0; i < fieldPosition; i++) {

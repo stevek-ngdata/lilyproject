@@ -125,8 +125,9 @@ public class XmlProducer {
             attributes = new MapAttributes(attrs);
         }
 
-        if (uri == null)
+        if (uri == null) {
             uri = "";
+        }
         String prefix = getPrefixWithColon(uri);
 
         result.startElement(uri, name, prefix + name, attributes);
@@ -136,10 +137,11 @@ public class XmlProducer {
     private String getPrefixWithColon(String uri) {
         if (uri.length() > 0) {
             String prefix = namespaceSupport.getPrefix(uri);
-            if (prefix == null)
+            if (prefix == null) {
                 return "";
-            else
+            } else {
                 return prefix + ":";
+            }
         }
         return "";
     }
@@ -178,8 +180,9 @@ public class XmlProducer {
     public void closeElement(String uri, String name) throws SAXException {
         namespaceSupport.popContext();
 
-        if (uri == null)
+        if (uri == null) {
             uri = "";
+        }
         String prefix = getPrefixWithColon(uri);
         result.endElement(uri, name, prefix + name);
     }
@@ -244,8 +247,9 @@ public class XmlProducer {
 
         @Override
         public int getIndex(String uri, String localName) {
-            if (uri.length() != 0)
+            if (uri.length() != 0) {
                 return -1;
+            }
 
             for (int i = 0; i < attrList.length; i++) {
                 if (attrList[i].getKey().equals(localName)) {
@@ -272,8 +276,9 @@ public class XmlProducer {
 
         @Override
         public String getValue(String uri, String localName) {
-            if (uri.length() != 0)
+            if (uri.length() != 0) {
                 return null;
+            }
 
             return attrs.get(localName);
         }
@@ -295,8 +300,9 @@ public class XmlProducer {
             return "        ";
         } else {
             StringBuilder spaces = new StringBuilder(count);
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++) {
                 spaces.append(' ');
+            }
             return spaces.toString();
         }
     }

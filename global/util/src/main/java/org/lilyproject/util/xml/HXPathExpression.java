@@ -38,22 +38,25 @@ public class HXPathExpression {
 
     public String evalAsString(Node node) throws XPathExpressionException {
         String result = expr.evaluate(node);
-        if (result.length() == 0)
+        if (result.length() == 0) {
             return null;
+        }
         return result;
     }
 
     public Boolean evalAsBoolean(Node node) throws XPathExpressionException {
         String value = expr.evaluate(node);
-        if (value.length() == 0)
+        if (value.length() == 0) {
             return null;
+        }
         return Boolean.valueOf(value);
     }
 
     public Integer evalAsInteger(Node node) throws XPathExpressionException {
         String value = expr.evaluate(node);
-        if (value.length() == 0)
+        if (value.length() == 0) {
             return null;
+        }
         return Integer.valueOf(value);
     }
 

@@ -68,12 +68,14 @@ public abstract class AbstractDirectoryModuleSource implements ModuleSource {
         List<File> springFiles = new ArrayList<File>();
 
         File[] commonFiles = springDir.listFiles(SPRING_FILE_FILTER);
-        if (commonFiles != null)
+        if (commonFiles != null) {
             springFiles.addAll(Arrays.asList(commonFiles));
+        }
 
         File[] modeSpecificFiles = new File(springDir, mode.getName()).listFiles(SPRING_FILE_FILTER);
-        if (modeSpecificFiles != null)
+        if (modeSpecificFiles != null) {
             springFiles.addAll(Arrays.asList(modeSpecificFiles));
+        }
 
         List<SpringConfigEntry> result = new ArrayList<SpringConfigEntry>();
 
@@ -97,8 +99,9 @@ public abstract class AbstractDirectoryModuleSource implements ModuleSource {
         path = LEADING_SLASHES_PATTERN.matcher(path).replaceFirst("");
         File file = new File(resourceDir, path);
 
-        if (!file.exists())
+        if (!file.exists()) {
             return null;
+        }
 
         FileResource fileResource = new FileResource(file);
 
@@ -115,15 +118,17 @@ public abstract class AbstractDirectoryModuleSource implements ModuleSource {
 
     public Resource getClasspathResource(String path) {
         File file = new File(classPathEntry, path);
-        if (!file.exists())
+        if (!file.exists()) {
             return null;
-        else
+        } else {
             return new FileResource(file);
+        }
     }
 
     public InputStream getClassLoaderConfig() throws IOException {
-        if (!classLoaderConfig.exists())
+        if (!classLoaderConfig.exists()) {
             return null;
+        }
         return new FileInputStream(classLoaderConfig);
     }
 

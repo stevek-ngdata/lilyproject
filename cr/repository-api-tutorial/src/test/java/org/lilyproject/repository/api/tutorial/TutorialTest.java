@@ -303,7 +303,9 @@ public class TutorialTest {
             }
             System.out.println();
         } finally {
-            if (is != null) is.close();
+            if (is != null) {
+                is.close();
+            }
         }
     }
 

@@ -36,8 +36,9 @@ public abstract class BaseArtifactRef implements ArtifactRef {
     }
 
     public boolean equals(Object obj) {
-        if (!(obj instanceof ArtifactRef))
+        if (!(obj instanceof ArtifactRef)) {
             return false;
+        }
 
         ArtifactRef other = (ArtifactRef)obj;
         return other.getId().equals(getId()) && other.getVersion().equals(version);

@@ -385,12 +385,15 @@ public class BatchBuildTest {
 
         try {
             IndexDefinition index = model.getMutableIndex(INDEX_NAME);
-            if (defaultConf != null)
+            if (defaultConf != null) {
                 index.setDefaultBatchIndexConfiguration(defaultConf);
-            if (customConf != null)
+            }
+            if (customConf != null) {
                 index.setBatchIndexConfiguration(customConf);
-            if (buildNow)
+            }
+            if (buildNow) {
                 index.setBatchBuildState(IndexBatchBuildState.BUILD_REQUESTED);
+            }
 
             model.updateIndex(index, lock);
         } finally {

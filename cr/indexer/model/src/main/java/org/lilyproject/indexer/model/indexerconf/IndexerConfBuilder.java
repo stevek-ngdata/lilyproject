@@ -168,8 +168,9 @@ public class IndexerConfBuilder {
                 // happens to be an existing namespace prefix, than substitute the prefix for the full URI.
                 if (!WildcardPattern.isWildcardExpression(matchNamespaceAttr)) {
                     String uri = caseEl.lookupNamespaceURI(matchNamespaceAttr);
-                    if (uri != null)
+                    if (uri != null) {
                         matchNamespaceAttr = uri;
+                    }
                 }
                 matchNamespace = new WildcardPattern(matchNamespaceAttr);
             }
@@ -309,8 +310,9 @@ public class IndexerConfBuilder {
     private Map<String, String> parseVariantPropertiesPattern(Element caseEl, String attrName) throws Exception {
         String variant = DocumentHelper.getAttribute(caseEl, attrName, false);
 
-        if (variant == null)
+        if (variant == null) {
             return null;
+        }
 
         Map<String, String> varPropsPattern = new HashMap<String, String>();
 
@@ -336,8 +338,9 @@ public class IndexerConfBuilder {
     private Set<SchemaId> parseVersionTags(String vtagsSpec) throws IndexerConfException, InterruptedException {
         Set<SchemaId> vtags = new HashSet<SchemaId>();
 
-        if (vtagsSpec == null)
+        if (vtagsSpec == null) {
             return vtags;
+        }
 
         for (String tag : COMMA_SPLITTER.split(vtagsSpec)) {
             try {
@@ -458,8 +461,9 @@ public class IndexerConfBuilder {
                 // happens to be an existing namespace prefix, than substitute the prefix for the full URI.
                 if (!WildcardPattern.isWildcardExpression(matchNamespaceAttr)) {
                     String uri = fieldEl.lookupNamespaceURI(matchNamespaceAttr);
-                    if (uri != null)
+                    if (uri != null) {
                         matchNamespaceAttr = uri;
+                    }
                 }
                 matchNamespace = new WildcardPattern(matchNamespaceAttr);
             }
@@ -502,10 +506,12 @@ public class IndexerConfBuilder {
             variables.add("nestedType");
             variables.add("nestedBaseType");
             variables.add("deepestNestedBaseType");
-            if (matchName != null && matchName.hasWildcard())
+            if (matchName != null && matchName.hasWildcard()) {
                 variables.add("nameMatch");
-            if (matchNamespace != null && matchNamespace.hasWildcard())
+            }
+            if (matchNamespace != null && matchNamespace.hasWildcard()) {
                 variables.add("namespaceMatch");
+            }
 
             NameTemplate name;
             try {
@@ -733,8 +739,9 @@ public class IndexerConfBuilder {
                 break;
             }
         }
-        if (dimensions.size() == 0)
+        if (dimensions.size() == 0) {
             validConfig = false;
+        }
 
         if (!validConfig) {
             throw new IndexerConfException("Invalid specification of variants to follow: '" + derefPart);
@@ -770,8 +777,9 @@ public class IndexerConfBuilder {
                 break;
             }
         }
-        if (dimensions.size() == 0)
+        if (dimensions.size() == 0) {
             validConfig = false;
+        }
 
         if (!validConfig) {
             throw new IndexerConfException("Invalid specification of variants to follow: '" + derefPart);
@@ -857,8 +865,9 @@ public class IndexerConfBuilder {
         }
 
         private void addException(SAXParseException exception) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append("\n");
+            }
 
             builder.append("[").append(exception.getLineNumber()).append(":").append(exception.getColumnNumber());
             builder.append("] ").append(exception.getMessage());

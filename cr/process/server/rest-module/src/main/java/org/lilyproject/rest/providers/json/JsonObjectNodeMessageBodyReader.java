@@ -34,8 +34,9 @@ public class JsonObjectNodeMessageBodyReader implements MessageBodyReader<Object
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         if (mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-            if (type.isAssignableFrom(ObjectNode.class))
-                    return true;
+            if (type.isAssignableFrom(ObjectNode.class)) {
+                return true;
+            }
         }
         return false;
     }

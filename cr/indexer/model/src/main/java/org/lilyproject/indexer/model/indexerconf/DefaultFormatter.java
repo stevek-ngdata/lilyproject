@@ -130,8 +130,9 @@ public class DefaultFormatter implements Formatter {
                 String formatted = formatCtx.format(value, valueType.getNestedValueType(), formatCtx);
 
                 // separate the values by a space
-                if (builder.length() > 0)
+                if (builder.length() > 0) {
                     builder.append(" ");
+                }
                 builder.append(formatted);
             }
 
@@ -171,8 +172,9 @@ public class DefaultFormatter implements Formatter {
 
                 String result = formatCtx.format(field.getValue(), fieldValueType, formatCtx);
                 if (result != null) {
-                    if (builder.length() > 0)
+                    if (builder.length() > 0) {
                         builder.append(" ");
+                    }
                     builder.append(result);
                 }
             }

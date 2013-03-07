@@ -39,8 +39,9 @@ public class ConsoleUtil {
         } catch (IOException e) {
             throw new RuntimeException("Error reading input from console.", e);
         }
-        if (input == null || input.trim().equals(""))
+        if (input == null || input.trim().equals("")) {
             input = defaultInput;
+        }
         return input;
     }
 }

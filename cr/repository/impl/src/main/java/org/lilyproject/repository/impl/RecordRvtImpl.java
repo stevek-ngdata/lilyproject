@@ -49,8 +49,9 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
                 Thread.currentThread().interrupt();
             }
         }
-        if (clearBytes)
+        if (clearBytes) {
             bytes = null;
+        }
     }
 
     public byte[] getBytes() {

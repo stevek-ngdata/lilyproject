@@ -27,8 +27,9 @@ public class Fields {
 
     public FieldType registerFieldType(SchemaId fieldId, TypeManager typeMgr) throws Exception {
         for (FieldType entry : fields) {
-            if (entry.getId().equals(fieldId))
+            if (entry.getId().equals(fieldId)) {
                 return entry;
+            }
         }
 
         FieldType fieldType = typeMgr.getFieldTypeById(fieldId);
@@ -43,8 +44,9 @@ public class Fields {
 
     public Object getValue(long version, SchemaId fieldId) {
         Map<SchemaId, Object> valuesByColumn = values.get(version);
-        if (valuesByColumn == null)
+        if (valuesByColumn == null) {
             return null;
+        }
         return valuesByColumn.get(fieldId);
     }
 

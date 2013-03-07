@@ -168,8 +168,9 @@ public class IndexerMaster {
     @PreDestroy
     public void stop() {
         try {
-            if (leaderElection != null)
+            if (leaderElection != null) {
                 leaderElection.stop();
+            }
         } catch (InterruptedException e) {
             log.info("Interrupted while shutting down leader election.");
         }
@@ -487,8 +488,9 @@ public class IndexerMaster {
                 return;
             }
 
-            if (interrupt)
+            if (interrupt) {
                 thread.interrupt();
+            }
             Logs.logThreadJoin(thread);
             thread.join();
             thread = null;
@@ -607,8 +609,9 @@ public class IndexerMaster {
                 return;
             }
 
-            if (interrupt)
+            if (interrupt) {
                 thread.interrupt();
+            }
             Logs.logThreadJoin(thread);
             thread.join();
             thread = null;

@@ -43,8 +43,9 @@ public abstract class MetricsDynamicMBeanBase implements DynamicMBean {
   }
 
   private void updateMbeanInfoIfMetricsListChanged()  {
-    if (numEntriesInRegistry != metricsRegistry.size())
-      createMBeanInfo();
+    if (numEntriesInRegistry != metricsRegistry.size()) {
+        createMBeanInfo();
+    }
   }
 
   private void createMBeanInfo() {
@@ -105,8 +106,9 @@ public abstract class MetricsDynamicMBeanBase implements DynamicMBean {
   @Override
   public Object getAttribute(String attributeName) throws AttributeNotFoundException,
       MBeanException, ReflectionException {
-    if (attributeName == null || attributeName.equals(""))
-      throw new IllegalArgumentException();
+    if (attributeName == null || attributeName.equals("")) {
+        throw new IllegalArgumentException();
+    }
 
     updateMbeanInfoIfMetricsListChanged();
 
@@ -114,28 +116,29 @@ public abstract class MetricsDynamicMBeanBase implements DynamicMBean {
     if (o == null) {
       o = metricsRegistry.get(attributeName);
     }
-    if (o == null)
-      throw new AttributeNotFoundException();
+    if (o == null) {
+        throw new AttributeNotFoundException();
+    }
 
-    if (o instanceof MetricsIntValue)
-      return ((MetricsIntValue) o).get();
-    else if (o instanceof MetricsLongValue)
-      return ((MetricsLongValue) o).get();
-    else if (o instanceof MetricsTimeVaryingInt)
-      return ((MetricsTimeVaryingInt) o).getPreviousIntervalValue();
-    else if (o instanceof MetricsTimeVaryingLong)
-      return ((MetricsTimeVaryingLong) o).getPreviousIntervalValue();
-    else if (o instanceof MetricsTimeVaryingRate) {
+    if (o instanceof MetricsIntValue) {
+        return ((MetricsIntValue)o).get();
+    } else if (o instanceof MetricsLongValue) {
+        return ((MetricsLongValue)o).get();
+    } else if (o instanceof MetricsTimeVaryingInt) {
+        return ((MetricsTimeVaryingInt)o).getPreviousIntervalValue();
+    } else if (o instanceof MetricsTimeVaryingLong) {
+        return ((MetricsTimeVaryingLong)o).getPreviousIntervalValue();
+    } else if (o instanceof MetricsTimeVaryingRate) {
       MetricsTimeVaryingRate or = (MetricsTimeVaryingRate) o;
-      if (attributeName.endsWith(NUM_OPS))
-        return or.getPreviousIntervalNumOps();
-      else if (attributeName.endsWith(AVG_TIME))
-        return or.getPreviousIntervalAverageTime();
-      else if (attributeName.endsWith(MIN_TIME))
-        return or.getMinTime();
-      else if (attributeName.endsWith(MAX_TIME))
-        return or.getMaxTime();
-      else {
+      if (attributeName.endsWith(NUM_OPS)) {
+          return or.getPreviousIntervalNumOps();
+      } else if (attributeName.endsWith(AVG_TIME)) {
+          return or.getPreviousIntervalAverageTime();
+      } else if (attributeName.endsWith(MIN_TIME)) {
+          return or.getMinTime();
+      } else if (attributeName.endsWith(MAX_TIME)) {
+          return or.getMaxTime();
+      } else {
         MetricsUtil.LOG.error("Unexpected attrubute suffix");
         throw new AttributeNotFoundException();
       }
@@ -153,8 +156,9 @@ public abstract class MetricsDynamicMBeanBase implements DynamicMBean {
 
   @Override
   public AttributeList getAttributes(String[] attributeNames) {
-    if (attributeNames == null || attributeNames.length == 0)
-      throw new IllegalArgumentException();
+    if (attributeNames == null || attributeNames.length == 0) {
+        throw new IllegalArgumentException();
+    }
 
     updateMbeanInfoIfMetricsListChanged();
 
@@ -179,8 +183,9 @@ public abstract class MetricsDynamicMBeanBase implements DynamicMBean {
   public Object invoke(String actionName, Object[] parms, String[] signature)
       throws MBeanException, ReflectionException {
 
-    if (actionName == null || actionName.equals(""))
-      throw new IllegalArgumentException();
+    if (actionName == null || actionName.equals("")) {
+        throw new IllegalArgumentException();
+    }
 
 
     // Right now we support only one fixed operation (if it applies)

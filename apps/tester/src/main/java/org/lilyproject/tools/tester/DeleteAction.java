@@ -27,8 +27,9 @@ public class DeleteAction extends AbstractTestAction implements TestAction {
     protected void runAction() {
         TestRecord testRecord = testActionContext.records.getRecord(source);
 
-        if (testRecord == null)
+        if (testRecord == null) {
             return;
+        }
 
         long before = System.nanoTime();
         try {

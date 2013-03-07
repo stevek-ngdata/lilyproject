@@ -139,8 +139,9 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         // Forward JDK logging to SLF4J
         LogManager.getLogManager().reset();
@@ -177,12 +178,15 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             enableLily = true;
         }
 
-        if (enableHadoop)
+        if (enableHadoop) {
             enabledServices.add(hadoopService);
-        if (enableSolr)
+        }
+        if (enableSolr) {
             enabledServices.add(solrService);
-        if (enableLily)
+        }
+        if (enableLily) {
             enabledServices.add(lilyService);
+        }
 
         //
         // Determine directory below which all services will store their data
@@ -216,13 +220,15 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         List<String> postStartupInfo = new ArrayList<String>();
 
         for (LauncherService service : enabledServices) {
-            if ((result = service.setup(cmd, testHome, clearData)) != 0)
+            if ((result = service.setup(cmd, testHome, clearData)) != 0) {
                 return result;
+            }
         }
 
         for (LauncherService service : enabledServices) {
-            if ((result = service.start(postStartupInfo)) != 0)
+            if ((result = service.start(postStartupInfo)) != 0) {
                 return result;
+            }
         }
 
         if (prepareMode) {

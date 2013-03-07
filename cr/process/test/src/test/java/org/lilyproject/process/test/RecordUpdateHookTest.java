@@ -67,8 +67,9 @@ public class RecordUpdateHookTest {
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         try {
-           if (lilyProxy != null)
+           if (lilyProxy != null) {
                lilyProxy.stop();
+           }
         } catch (Throwable t) {
             t.printStackTrace();
         }

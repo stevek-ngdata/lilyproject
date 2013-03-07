@@ -112,8 +112,9 @@ public class TableSplitTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        if (lilyProxy != null)
+        if (lilyProxy != null) {
             lilyProxy.stop();
+        }
         TestHomeUtil.cleanupTestHome(tmpDir);
 
         if (lilyProxy.getMode() == LilyProxy.Mode.CONNECT || lilyProxy.getMode() == LilyProxy.Mode.HADOOP_CONNECT) {

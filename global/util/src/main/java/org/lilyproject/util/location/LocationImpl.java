@@ -166,8 +166,12 @@ public class LocationImpl implements Location, Serializable {
 
     public int hashCode() {
         int hash = line ^ column;
-        if (uri != null) hash ^= uri.hashCode();
-        if (description != null) hash ^= description.hashCode();
+        if (uri != null) {
+            hash ^= uri.hashCode();
+        }
+        if (description != null) {
+            hash ^= description.hashCode();
+        }
 
         return hash;
     }

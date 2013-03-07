@@ -30,10 +30,11 @@ final class DependantRecordIdsIteratorImpl implements DependantRecordIdsIterator
         // the identifier is the record id of the record that depends on the queried record
 
         final byte[] nextIdentifier = queryResult.next();
-        if (nextIdentifier == null)
+        if (nextIdentifier == null) {
             return null;
-        else
+        } else {
             return serializationUtil.deserializeDependantRecordId(nextIdentifier);
+        }
     }
 
     @Override

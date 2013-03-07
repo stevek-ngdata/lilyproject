@@ -83,8 +83,9 @@ public class RestPerfTest extends BaseTestTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         iterations = OptionUtil.getIntOption(cmd, iterationsOption, 10000);
 
@@ -435,8 +436,9 @@ public class RestPerfTest extends BaseTestTool {
     private String toString(int[] numbers) {
         StringBuilder builder = new StringBuilder();
         for (int number : numbers) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append(", ");
+            }
             builder.append(number);
         }
         return builder.toString();

@@ -124,12 +124,14 @@ public class RecordTypeBuilderImpl implements RecordTypeBuilder {
     }
 
     private QName resolveNamespace(String name) {
-        if (defaultNamespace != null)
+        if (defaultNamespace != null) {
             return new QName(defaultNamespace, name);
+        }
 
         QName recordTypeName = recordType.getName();
-        if (recordTypeName != null)
+        if (recordTypeName != null) {
             return new QName(recordTypeName.getNamespace(), name);
+        }
 
         throw new IllegalStateException("Namespace could not be resolved for name '" + name +
                 "' since no default namespace was given and no record type name is set.");

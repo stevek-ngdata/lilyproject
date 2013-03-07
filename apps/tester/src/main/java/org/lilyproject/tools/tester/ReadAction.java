@@ -38,8 +38,9 @@ public class ReadAction extends AbstractTestAction implements TestAction {
     protected void runAction() {
         TestRecord testRecord = testActionContext.records.getRecord(source);
 
-        if (testRecord == null)
+        if (testRecord == null) {
             return;
+        }
 
         long before = System.nanoTime();
         try {
@@ -48,8 +49,9 @@ public class ReadAction extends AbstractTestAction implements TestAction {
             report(true, (int) (after - before), "R", null);
 
             // Read blobs
-            if (readBlobs)
+            if (readBlobs) {
                 readBlobs(readRecord);
+            }
 
             // if (!readRecord.equals(testRecord.record)) {
             // System.out.println("Read record does not match written record!");

@@ -127,22 +127,25 @@ public class LilyRuntimeNamespaceHandler implements NamespaceHandler {
             String id = element.getAttribute("id");
 
             String dependencyName = element.getAttribute("name");
-            if (dependencyName.equals(""))
+            if (dependencyName.equals("")) {
                 dependencyName = id;
+            }
 
             Object component;
             try {
                 JavaServiceInjectDefinition injectDef = springBuildContext.getModule().getDefinition().getJavaServiceInject(dependencyName);
-                if (injectDef == null)
+                if (injectDef == null) {
                     injectDef = springBuildContext.getModule().getDefinition().getJavaServiceInjectByService(serviceClass.getName());
+                }
 
                 if (injectDef != null) {
                     String moduleId = injectDef.getSourceModuleId();
                     String name = injectDef.getSourceJavaServiceName();
-                    if (moduleId != null && name != null)
+                    if (moduleId != null && name != null) {
                         component = javaServiceManager.getService(serviceClass, moduleId, name);
-                    else
+                    } else {
                         component = javaServiceManager.getService(serviceClass, moduleId);
+                    }
                 } else {
                     component = javaServiceManager.getService(serviceClass);
                 }
@@ -173,8 +176,9 @@ public class LilyRuntimeNamespaceHandler implements NamespaceHandler {
 
             String beanName = element.getAttribute("ref");
             String name = element.getAttribute("name");
-            if (name.equals(""))
+            if (name.equals("")) {
                 name = beanName;
+            }
 
             springBuildContext.exportJavaService(name, serviceClass, beanName);
 

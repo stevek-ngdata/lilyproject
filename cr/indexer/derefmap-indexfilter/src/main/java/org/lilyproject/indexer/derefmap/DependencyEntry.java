@@ -52,15 +52,22 @@ public final class DependencyEntry {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         DependencyEntry entry = (DependencyEntry) o;
 
-        if (dependency != null ? !dependency.equals(entry.dependency) : entry.dependency != null)
+        if (dependency != null ? !dependency.equals(entry.dependency) : entry.dependency != null) {
             return false;
+        }
         if (moreDimensionedVariants != null ? !moreDimensionedVariants.equals(entry.moreDimensionedVariants) :
-                entry.moreDimensionedVariants != null) return false;
+                entry.moreDimensionedVariants != null) {
+            return false;
+        }
 
         return true;
     }

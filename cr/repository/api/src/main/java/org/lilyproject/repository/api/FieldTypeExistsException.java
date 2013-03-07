@@ -36,8 +36,9 @@ public class FieldTypeExistsException extends TypeException {
     }
 
     public FieldTypeExistsException(FieldType fieldType) {
-        if (fieldType != null)
+        if (fieldType != null) {
             this.fieldType = fieldType.getName().toString();
+        }
     }
 
     @Override

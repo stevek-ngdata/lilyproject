@@ -45,8 +45,9 @@ public class TestHelper {
         // Maven sets a property basedir, but if the testcases are run outside Maven (e.g. by an IDE),
         // then fall back to the working directory
         String targetDir = System.getProperty("basedir");
-        if (targetDir == null)
+        if (targetDir == null) {
             targetDir = System.getProperty("user.dir");
+        }
         String logFileName = targetDir + "/target/log.txt";
 
         System.out.println("Log output will go to " + logFileName);

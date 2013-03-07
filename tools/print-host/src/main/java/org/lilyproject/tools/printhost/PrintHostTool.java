@@ -61,8 +61,9 @@ public class PrintHostTool extends BaseCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         System.out.println("Below we print the detected host name and address.");
         System.out.println("These are used by Lily and Hadoop. For example, this is what is");

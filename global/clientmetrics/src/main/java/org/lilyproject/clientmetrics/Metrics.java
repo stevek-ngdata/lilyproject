@@ -256,8 +256,9 @@ public class Metrics {
         if (statByType.size() > 0) {
             int i = 0;
             for (Map.Entry<String, CountAndValue> entry : statByType.entrySet()) {
-                if (entry.getValue().count == 0)
+                if (entry.getValue().count == 0) {
                     continue;
+                }
 
                 i++;
 
@@ -282,8 +283,9 @@ public class Metrics {
     }
 
     private void printGlobalOpsPerSec() {
-        if (startedAt == null)
+        if (startedAt == null) {
             return;
+        }
 
         double testDuration = System.currentTimeMillis() - startedAt.getMillis();
 
@@ -308,8 +310,9 @@ public class Metrics {
             reportStream.println();
             reportStream.println("Global ops/sec of the test:");
             for (Map.Entry<String, CountAndValue> entry : statByType.entrySet()) {
-                if (entry.getValue().count == 0)
+                if (entry.getValue().count == 0) {
                     continue;
+                }
 
                 double opsPerSec = (((double)entry.getValue().count) / (entry.getValue().value)) * 1000d;
                 double opsPerSecInt = (((double)entry.getValue().count) / (testDuration)) * 1000d;
@@ -357,8 +360,9 @@ public class Metrics {
          * @param value will most often be a duration in ms, but could be other kinds of values as well.
          */
         public void add(int operations, double value) {
-            if (operations == 0)
+            if (operations == 0) {
                 return;
+            }
 
             intervalCount += operations;
             intervalValue += value;
@@ -367,11 +371,13 @@ public class Metrics {
 
             double valuePerOp = value / (double)operations;
 
-            if (valuePerOp < intervalMin)
+            if (valuePerOp < intervalMin) {
                 intervalMin = valuePerOp;
+            }
 
-            if (valuePerOp > intervalMax)
+            if (valuePerOp > intervalMax) {
                 intervalMax = valuePerOp;
+            }
 
             values.add(valuePerOp);
         }
@@ -417,8 +423,9 @@ public class Metrics {
         }
 
         public double getIntervalMedian() {
-            if (values.size() == 0)
+            if (values.size() == 0) {
                 return 0;
+            }
 
             Collections.sort(values);
             int middle = values.size() / 2;

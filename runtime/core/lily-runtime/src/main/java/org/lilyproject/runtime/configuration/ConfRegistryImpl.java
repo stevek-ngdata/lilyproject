@@ -133,8 +133,9 @@ public class ConfRegistryImpl implements ConfRegistry {
 
         for (String part : parts) {
             part = part.trim();
-            if (part.length() > 0)
+            if (part.length() > 0) {
                 result.add(part);
+            }
         }
 
         return result.toArray(new String[result.size()]);
@@ -143,8 +144,9 @@ public class ConfRegistryImpl implements ConfRegistry {
     private String formatPath(String[] parts, int upTo) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i <= upTo; i++) {
-            if (i > 0)
+            if (i > 0) {
                 builder.append("/");
+            }
             builder.append(parts[i]);
         }
         return builder.toString();
@@ -261,8 +263,9 @@ public class ConfRegistryImpl implements ConfRegistry {
                 }
 
                 if (child.children.size() == 0 && child.conf == null) {
-                    if (oldConfChildCount > 0)
+                    if (oldConfChildCount > 0) {
                         changes.get(ChangeType.PATH_CHANGE).add(childPath);
+                    }
                     childrenIt.remove();
                 } else if (child.getConfChildren().size() != oldConfChildCount) {
                     changes.get(ChangeType.PATH_CHANGE).add(childPath);
@@ -336,8 +339,9 @@ public class ConfRegistryImpl implements ConfRegistry {
             }
         }
 
-        if (!anyChanges)
+        if (!anyChanges) {
             return null;
+        }
 
         return new Runnable() {
             public void run() {
@@ -347,8 +351,9 @@ public class ConfRegistryImpl implements ConfRegistry {
     }
 
     private void notifyListeners(Map<ChangeType, Set<String>> changes) {
-        if (log.isDebugEnabled())
+        if (log.isDebugEnabled()) {
             log.debug("There are configuration changes in " + name + ", will notify " + listeners.size() + " listeners.");
+        }
 
         for (ListenerHandle listener : listeners) {
             if (listener.path == null) {

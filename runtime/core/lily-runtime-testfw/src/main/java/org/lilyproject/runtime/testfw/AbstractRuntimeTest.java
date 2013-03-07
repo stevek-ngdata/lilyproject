@@ -63,8 +63,9 @@ public abstract class AbstractRuntimeTest extends TestCase {
     // This localRepository property is set by Maven (or its test plugin)
     {
         String localRepositoryPath = System.getProperty("localRepository");
-        if (localRepositoryPath == null)
+        if (localRepositoryPath == null) {
             localRepositoryPath = System.getProperty("user.home") + "/.m2/repository";
+        }
 
         localRepository = new Maven2StyleArtifactRepository(new File(localRepositoryPath)) {
                 public ResolvedArtifact tryResolve(String groupId, String artifactId, String classifier, String version) throws ArtifactNotFoundException {
@@ -74,8 +75,9 @@ public abstract class AbstractRuntimeTest extends TestCase {
                     // artifacts)
                     String basedir = System.getProperty("basedir");
                     File file = new File(basedir + "/target/" + artifactId + "-" + version + ".jar");
-                    if (file.exists())
+                    if (file.exists()) {
                         return new ResolvedArtifact(file, Collections.singletonList(file.getAbsolutePath()), true);
+                    }
                     //else
                     return super.tryResolve(groupId, artifactId, classifier, version);
                 }
@@ -146,10 +148,12 @@ public abstract class AbstractRuntimeTest extends TestCase {
     }
 
     private void copyChildren(File srcDir, File destDir) throws IOException {
-        if (!srcDir.exists())
+        if (!srcDir.exists()) {
             return;
-        if (!destDir.exists())
+        }
+        if (!destDir.exists()) {
             destDir.mkdirs();
+        }
 
         File[] files = srcDir.listFiles();
         for (File file : files) {
@@ -228,28 +232,30 @@ public abstract class AbstractRuntimeTest extends TestCase {
 
             if (consoleLoggingLevel != null) {
                 Level level = null;
-                if (consoleLoggingLevel.equalsIgnoreCase("trace"))
+                if (consoleLoggingLevel.equalsIgnoreCase("trace")) {
                     level = Level.TRACE;
-                else if (consoleLoggingLevel.equalsIgnoreCase("debug"))
+                } else if (consoleLoggingLevel.equalsIgnoreCase("debug")) {
                     level = Level.DEBUG;
-                else if (consoleLoggingLevel.equalsIgnoreCase("info"))
+                } else if (consoleLoggingLevel.equalsIgnoreCase("info")) {
                     level = Level.INFO;
-                else if (consoleLoggingLevel.equalsIgnoreCase("warn"))
+                } else if (consoleLoggingLevel.equalsIgnoreCase("warn")) {
                     level = Level.WARN;
-                else if (consoleLoggingLevel.equalsIgnoreCase("error"))
+                } else if (consoleLoggingLevel.equalsIgnoreCase("error")) {
                     level = Level.ERROR;
-                else if (consoleLoggingLevel.equalsIgnoreCase("fatal"))
+                } else if (consoleLoggingLevel.equalsIgnoreCase("fatal")) {
                     level = Level.FATAL;
-                else
+                } else {
                     System.err.println("Unrecognized log level: " + consoleLoggingLevel);
+                }
 
                 if (level != null) {
                     System.out.println("Setting console output for log level " + level.toString() + " on category " + consoleLogCategory);
                     Logger logger = consoleLogCategory == null ? Logger.getRootLogger() : Logger.getLogger(consoleLogCategory);
                     logger.setLevel(level);
 
-                    if (consoleLogCategory != null)
+                    if (consoleLogCategory != null) {
                         rootLogger.setLevel(Level.WARN);
+                    }
                 }
             } else {
                 rootLogger.setLevel(Level.WARN);
@@ -271,14 +277,16 @@ public abstract class AbstractRuntimeTest extends TestCase {
             runtime = new LilyRuntime(settings);
             runtime.setMode(getMode());
 
-            if (startRuntime())
+            if (startRuntime()) {
                 runtime.start();
+            }
         }
     }
 
     protected void tearDown() throws Exception {
-        if (runtime != null)
+        if (runtime != null) {
             runtime.stop();
+        }
         deleteTempModuleDirs();
     }
 

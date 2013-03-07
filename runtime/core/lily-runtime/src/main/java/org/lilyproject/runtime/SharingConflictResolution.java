@@ -33,12 +33,15 @@ public enum SharingConflictResolution {
     }
 
     public static SharingConflictResolution fromString(String name) {
-        if (HIGHEST.name.equals(name))
+        if (HIGHEST.name.equals(name)) {
             return HIGHEST;
-        if (ERROR.name.equals(name))
+        }
+        if (ERROR.name.equals(name)) {
             return ERROR;
-        if (DONTSHARE.name.equals(name))
+        }
+        if (DONTSHARE.name.equals(name)) {
             return DONTSHARE;
+        }
 
         return null;
     }

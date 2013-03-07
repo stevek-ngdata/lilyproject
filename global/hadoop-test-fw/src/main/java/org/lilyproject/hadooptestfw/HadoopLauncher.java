@@ -51,8 +51,9 @@ public class HadoopLauncher extends BaseCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         System.out.println("Starting...");
 

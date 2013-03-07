@@ -58,8 +58,9 @@ public class XmlClassLoaderBuilder {
         // First add module self
         ArtifactSharingMode selfSharingMode = ArtifactSharingMode.PROHIBITED;
         String selfShareModeName = element.getAttribute("share-self");
-        if (selfShareModeName.length() > 0)
+        if (selfShareModeName.length() > 0) {
             selfSharingMode = ArtifactSharingMode.fromString(selfShareModeName);
+        }
 
         ClasspathEntry selfEntry = new ClasspathEntry(new FileArtifactRef(moduleSource.getClassPathEntry()), selfSharingMode, moduleSource);
         classpath.add(selfEntry);
@@ -96,10 +97,11 @@ public class XmlClassLoaderBuilder {
                     // Creating SharingMode
                     String sharingModeParam = classPathEl.getAttribute("share");
                     ArtifactSharingMode sharingMode;
-                    if (sharingModeParam == null || sharingModeParam.equals(""))
+                    if (sharingModeParam == null || sharingModeParam.equals("")) {
                         sharingMode = ArtifactSharingMode.ALLOWED;
-                    else
+                    } else {
                         sharingMode = ArtifactSharingMode.fromString(sharingModeParam);
+                    }
 
                     classpath.add(new ClasspathEntry(artifactRef, sharingMode, null));
                 }

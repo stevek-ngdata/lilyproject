@@ -75,8 +75,9 @@ public class SharedModuleSource implements ModuleSource {
 
     public synchronized void dispose() throws Exception {
         refCount--;
-        if (refCount == 0)
+        if (refCount == 0) {
             manager.dispose(this);
+        }
     }
 
     protected synchronized void increaseRefCount() {

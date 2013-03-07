@@ -139,9 +139,9 @@ public class DataOutputImpl implements DataOutput {
         int i = 0;
         while(i < strlen) {
             final int code = string.charAt(i++);
-            if (code < 0x80)
+            if (code < 0x80) {
                 utflen++;
-            else if (code < 0x800) {
+            } else if (code < 0x800) {
                 utflen += 2;
             } else if (code < 0xD800 || code > 0xDFFF) {
                 utflen += 3;
@@ -178,16 +178,18 @@ public class DataOutputImpl implements DataOutput {
         // Optimized for loop as long as the characters can be encoded as one byte
         for (i = 0; i < strlen; i++) {
             ch = string.charAt(i);
-            if (!(ch < 0x80)) break; // Once we encounter a character that should be encoded with >1 byte we jump out of this optimized loop
+            if (!(ch < 0x80)) {
+                break; // Once we encounter a character that should be encoded with >1 byte we jump out of this optimized loop
+            }
             buffer[pos++] = (byte) ch;
         }
 
         while(i < strlen) {
             ch = (int) string.charAt(i++);
 
-            if (ch< 0x80)
-                buffer[pos++] = (byte) ch;
-            else if (ch < 0x800) {
+            if (ch< 0x80) {
+                buffer[pos++] = (byte)ch;
+            } else if (ch < 0x800) {
                 buffer[pos++] = (byte) (0xC0 | (ch >> 6));
                 buffer[pos++] = (byte)(0x80 | (ch & 0x3F));
             } else if (ch < 0xD800 || ch > 0xDFFF) {

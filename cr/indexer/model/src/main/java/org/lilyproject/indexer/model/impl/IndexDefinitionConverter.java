@@ -88,8 +88,12 @@ public class IndexDefinitionConverter {
             solrShards.put(shardName, address);
         }
 
-        if (node.has("zkConnectionString")) index.setZkConnectionString(node.get("zkConnectionString").getTextValue());
-        if (node.has("solrCollection")) index.setSolrCollection(node.get("solrCollection").getTextValue());
+        if (node.has("zkConnectionString")) {
+            index.setZkConnectionString(node.get("zkConnectionString").getTextValue());
+        }
+        if (node.has("solrCollection")) {
+            index.setSolrCollection(node.get("solrCollection").getTextValue());
+        }
 
         ActiveBatchBuildInfo activeBatchBuild = null;
         if (node.get("activeBatchBuild") != null) {
@@ -138,7 +142,9 @@ public class IndexDefinitionConverter {
             defaultBatchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "defaultBatchIndexConfiguration"));
         }
 
-        if (node.has("maintainDerefMap") && !node.get("maintainDerefMap").isNull()) index.setEnableDerefMap(node.get("maintainDerefMap").asBoolean());
+        if (node.has("maintainDerefMap") && !node.get("maintainDerefMap").isNull()) {
+            index.setEnableDerefMap(node.get("maintainDerefMap").asBoolean());
+        }
 
         index.setGeneralState(state);
         index.setUpdateState(updateState);
@@ -174,8 +180,9 @@ public class IndexDefinitionConverter {
 
         node.put("zkDataVersion", index.getZkDataVersion());
 
-        if (index.getQueueSubscriptionId() != null)
+        if (index.getQueueSubscriptionId() != null) {
             node.put("queueSubscriptionId", index.getQueueSubscriptionId());
+        }
 
         node.put("subscriptionTimestamp", index.getSubscriptionTimestamp());
 
@@ -229,8 +236,9 @@ public class IndexDefinitionConverter {
             buildNode.put("submitTime", buildInfo.getSubmitTime());
             buildNode.put("success", buildInfo.getSuccess());
             buildNode.put("jobState", buildInfo.getJobState());
-            if (buildInfo.getTrackingUrl() != null)
+            if (buildInfo.getTrackingUrl() != null) {
                 buildNode.put("trackingUrl", buildInfo.getTrackingUrl());
+            }
             ObjectNode countersNode = buildNode.putObject("counters");
             for (Map.Entry<String, Long> counter : buildInfo.getCounters().entrySet()) {
                 countersNode.put(counter.getKey(), counter.getValue());

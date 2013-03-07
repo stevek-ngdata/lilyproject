@@ -209,8 +209,9 @@ public class DerefMapHbaseImpl implements DerefMap {
         bwdEntry.setIdentifier(dependantRecordId.toBytes());
 
         // the fields which the dependant uses of the dependency (null if used for deleting the entry)
-        if (fields != null)
+        if (fields != null) {
             bwdEntry.addData(FIELDS_KEY, this.serializationUtil.serializeFields(fields));
+        }
 
         return bwdEntry;
     }
@@ -259,8 +260,9 @@ public class DerefMapHbaseImpl implements DerefMap {
 
         final Query query = new Query();
         query.addEqualsCondition("dependency_masterrecordid", master.toBytes());
-        if (vtag != null)
+        if (vtag != null) {
             query.addEqualsCondition("dependant_vtag", vtag.getBytes());
+        }
 
         query.setIndexFilter(new DerefMapIndexFilter(parentRecordId.getRecordId().getVariantProperties(), fields));
 

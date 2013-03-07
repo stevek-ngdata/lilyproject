@@ -125,10 +125,12 @@ public class DataInputImpl implements DataInput {
 
     @Override
     public String readUTF(int utflen) {
-        if (utflen == -1)
+        if (utflen == -1) {
             return null;
-        if (utflen == 0)
+        }
+        if (utflen == 0) {
             return new String();
+        }
         int count = pos;
         int endPos = pos + utflen;
         // Resize the chararr if it is not large enough.
@@ -144,8 +146,9 @@ public class DataInputImpl implements DataInput {
         // This will be most likely the case for most strings.
         while (count < endPos) {
             b = source[count] & 0xff;
-            if (!(b < 0xc0))
+            if (!(b < 0xc0)) {
                 break; // Once a character is encountered which is encoded with multiple bytes, jump to the next loop
+            }
             count++;
             assert b < 0x80;
             ch = b;

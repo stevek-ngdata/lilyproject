@@ -87,8 +87,9 @@ public class LauncherClasspathHelper {
         String groupId = artifactEl.getAttribute("groupId");
         String artifactId = artifactEl.getAttribute("artifactId");
         String version = artifactEl.getAttribute("version");
-        if (version.equals(""))
+        if (version.equals("")) {
             version = defaultVersion;
+        }
 
         String sep = System.getProperty("file.separator");
         String groupPath = groupId.replaceAll("\\.", Matcher.quoteReplacement(sep));

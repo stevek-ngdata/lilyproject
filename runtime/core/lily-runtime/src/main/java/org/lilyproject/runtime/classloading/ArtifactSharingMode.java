@@ -53,13 +53,14 @@ public enum ArtifactSharingMode {
     }
 
     public static ArtifactSharingMode fromString(String name) {
-        if (PROHIBITED.name.equals(name))
+        if (PROHIBITED.name.equals(name)) {
             return PROHIBITED;
-        else if (REQUIRED.name.equals(name))
+        } else if (REQUIRED.name.equals(name)) {
             return REQUIRED;
-        else if (ALLOWED.name.equals(name))
+        } else if (ALLOWED.name.equals(name)) {
             return ALLOWED;
-        else
+        } else {
             throw new RuntimeException("Invalid artifact sharing mode: " + name);
+        }
     }
 }

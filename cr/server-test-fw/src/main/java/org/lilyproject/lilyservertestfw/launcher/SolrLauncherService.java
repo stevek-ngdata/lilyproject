@@ -90,15 +90,17 @@ public class SolrLauncherService implements LauncherService {
         schema = cmd.getOptionValue(schemaOption.getOpt());
         if (schema != null) {
             int result = checkSolrSchema(schema);
-            if (result != 0)
+            if (result != 0) {
                 return result;
+            }
         }
 
         solrConfig = cmd.getOptionValue(solrConfigOption.getOpt());
         if (solrConfig != null) {
             int result = checkSolrConfig(solrConfig);
-            if (result != 0)
+            if (result != 0) {
                 return result;
+            }
         }
 
         autoCommitSetting = "";

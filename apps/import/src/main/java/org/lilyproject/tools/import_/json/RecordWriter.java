@@ -237,8 +237,9 @@ public class RecordWriter implements EntityWriter<Record> {
         ObjectNode jsonType = factory.objectNode();
 
         jsonType.put("name", QNameConverter.toJson(name, namespaces));
-        if (version != null)
+        if (version != null) {
             jsonType.put("version", version);
+        }
 
         return jsonType;
     }

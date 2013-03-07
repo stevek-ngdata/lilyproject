@@ -25,8 +25,9 @@ public abstract class BaseArtifactRepository implements ArtifactRepository {
 
     public File resolve(String groupId, String artifactId, String classifier, String version) throws ArtifactNotFoundException {
         ResolvedArtifact resolvedArtifact = tryResolve(groupId, artifactId, classifier, version);
-        if (!resolvedArtifact.exists())
+        if (!resolvedArtifact.exists()) {
             throw new ArtifactNotFoundException(groupId, artifactId, classifier, version, resolvedArtifact.getSearchedLocations());
+        }
 
         return resolvedArtifact.getFile();
     }

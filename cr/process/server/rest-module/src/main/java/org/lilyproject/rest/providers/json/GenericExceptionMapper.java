@@ -81,10 +81,11 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
 
         Response.Status statusObject = Response.Status.fromStatusCode(status);
         String description;
-        if (providedDescription == null)
+        if (providedDescription == null) {
             description = (statusObject != null ? statusObject.toString() : null);
-        else
+        } else {
             description = providedDescription;
+        }
 
         if (description != null) {
             msgNode.put("description", description);

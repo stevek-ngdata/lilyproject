@@ -229,8 +229,9 @@ public class IndexerTest {
 
         repoSetup.stop();
 
-        if (SOLR_TEST_UTIL != null)
+        if (SOLR_TEST_UTIL != null) {
             SOLR_TEST_UTIL.stop();
+        }
     }
 
     // augmented each time we change the indexerconf, to give the indexes unique names
@@ -3199,14 +3200,17 @@ public class IndexerTest {
             event.addUpdatedField(updatedField);
         }
 
-        if (versionCreated != null)
+        if (versionCreated != null) {
             event.setVersionCreated(versionCreated);
+        }
 
-        if (versionUpdated != null)
+        if (versionUpdated != null) {
             event.setVersionUpdated(versionUpdated);
+        }
 
-        if (recordTypeChanged)
+        if (recordTypeChanged) {
             event.setRecordTypeChanged(recordTypeChanged);
+        }
 
         messageVerifier.addExpectedEvent(recordId, event);
     }
@@ -3236,8 +3240,9 @@ public class IndexerTest {
 
         @Override
         public void processEvent(SepEvent event) {
-            if (!enabled)
+            if (!enabled) {
                 return;
+            }
 
             // In case of failures we print out "load" messages, the main junit thread is expected to
             // test that the failures variable is 0.

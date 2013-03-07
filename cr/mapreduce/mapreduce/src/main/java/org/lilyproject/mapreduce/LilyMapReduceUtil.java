@@ -66,10 +66,11 @@ public class LilyMapReduceUtil {
      */
     public static void initMapperJob(RecordScan scan, boolean returnIdRecords, String zooKeeperConnectString,
                         RepositoryManager repositoryManager, Job job, List<String> repositoryTables) {
-        if (returnIdRecords)
+        if (returnIdRecords) {
             job.setInputFormatClass(LilyIdScanInputFormat.class);
-        else
+        } else {
             job.setInputFormatClass(LilyScanInputFormat.class);
+        }
 
         job.getConfiguration().set(ZK_CONNECT_STRING, zooKeeperConnectString);
 

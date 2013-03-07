@@ -33,8 +33,9 @@ public class StackTracePrinter {
 
         List<StackTraceElement> trace = getStackTrace(throwable);
 
-        for (StackTraceElement aTrace : trace)
+        for (StackTraceElement aTrace : trace) {
             ps.println("\tat " + aTrace);
+        }
 
         printNestedStackTrace(throwable, ps);
 
@@ -42,8 +43,9 @@ public class StackTracePrinter {
 
     private static void printNestedStackTrace(Throwable throwable, PrintStream ps) {
         Throwable cause = throwable.getCause();
-        if (cause == null)
+        if (cause == null) {
             return;
+        }
 
         ps.println(getClassName(cause) + ": " + getMessage(cause));
         printRemoteWarning(cause, ps);

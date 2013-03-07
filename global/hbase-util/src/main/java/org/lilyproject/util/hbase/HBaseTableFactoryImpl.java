@@ -115,13 +115,15 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
 
         // max file size
         Long maxFileSize = tableConfig.getMaxFileSize();
-        if (maxFileSize != null)
+        if (maxFileSize != null) {
             tableDescriptor.setMaxFileSize(maxFileSize);
+        }
 
         // memstore flush size
         Long memStoreFlushSize = tableConfig.getMemStoreFlushSize();
-        if (memStoreFlushSize != null)
+        if (memStoreFlushSize != null) {
             tableDescriptor.setMemStoreFlushSize(memStoreFlushSize);
+        }
 
         for (HColumnDescriptor column : tableDescriptor.getColumnFamilies()) {
             ColumnFamilyConfig cfConf = tableConfig.getColumnFamilyConfig(column.getNameAsString());

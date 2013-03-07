@@ -217,8 +217,9 @@ public class LilyRuntimeCli {
             String[] confPaths = confPathArg.split(File.pathSeparator);
             for (String confPath : confPaths) {
                 confPath = confPath.trim();
-                if (confPath.length() == 0)
+                if (confPath.length() == 0) {
                     continue;
+                }
                 File confDir = new File(confPath);
                 if (!confDir.exists()) {
                     System.out.println("Specified configuration directory does not exist: " + confDir.getAbsolutePath());
@@ -312,16 +313,18 @@ public class LilyRuntimeCli {
     }
 
     private Set<String> getDisabledModuleIds(String spec) {
-        if (spec == null)
+        if (spec == null) {
             return Collections.emptySet();
+        }
 
         Set<String> ids = new HashSet<String>();
 
         String[] items = spec.split(",");
         for (String item : items) {
             item = item.trim();
-            if (item.length() > 0)
+            if (item.length() > 0) {
                 ids.add(item);
+            }
         }
 
         return ids;

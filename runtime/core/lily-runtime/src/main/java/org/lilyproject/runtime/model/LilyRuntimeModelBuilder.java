@@ -61,12 +61,14 @@ public class LilyRuntimeModelBuilder {
         Iterator<ModuleDefinition> it = modules.iterator();
         while (it.hasNext()) {
             ModuleDefinition entry = it.next();
-            if (disabledModuleIds.contains(entry.getId()))
+            if (disabledModuleIds.contains(entry.getId())) {
                 it.remove();
+            }
         }
 
-        for (ModuleDefinition md : modules)
+        for (ModuleDefinition md : modules) {
             model.addModule(md);
+        }
 
         return model;
     }
@@ -105,9 +107,10 @@ public class LilyRuntimeModelBuilder {
                 File sourceLocation = artifactSourceLocations.getSourceLocation(groupId, artifactId);
                 if (sourceLocation != null) {
                     fileToImport = sourceLocation.getCanonicalFile();
-                    if (!fileToImport.exists())
+                    if (!fileToImport.exists()) {
                         throw new LilyRTException("Specified artifact source directory does not exist: "
                                 + fileToImport.getAbsolutePath(), importConf.getLocation());
+                    }
                     sourceType = ModuleSourceType.SOURCE_DIRECTORY;
                 } else {
                     fileToImport = repository.resolve(groupId, artifactId, classifier, version);
@@ -208,8 +211,9 @@ public class LilyRuntimeModelBuilder {
             if (child.getName().equals("inject-javaservice")) {
                 String name = child.getAttribute("name", null);
                 String service = child.getAttribute("service", null);
-                if (name == null && service == null)
+                if (name == null && service == null) {
                     throw new LilyRTException("Either name or service attribute should be specified on inject-javaservice", child.getLocation());
+                }
                 String ref = child.getAttribute("ref");
 
                 String sourceModule;

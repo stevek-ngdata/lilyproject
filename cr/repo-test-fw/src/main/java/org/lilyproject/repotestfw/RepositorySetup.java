@@ -119,8 +119,9 @@ public class RepositorySetup {
     }
 
     public void setupCore() throws Exception {
-        if (coreSetup)
+        if (coreSetup) {
             return;
+        }
         hbaseProxy = new HBaseProxy();
         hbaseProxy.start();
         hadoopConf = hbaseProxy.getConf();
@@ -132,8 +133,9 @@ public class RepositorySetup {
     }
 
     public void setupTypeManager() throws Exception {
-        if (typeManagerSetup)
+        if (typeManagerSetup) {
             return;
+        }
 
         idGenerator = new IdGeneratorImpl();
         typeManager = new HBaseTypeManager(idGenerator, hadoopConf, zk, hbaseTableFactory);
@@ -142,8 +144,9 @@ public class RepositorySetup {
     }
 
     public void setupRepository() throws Exception {
-        if (repositoryManagerSetup)
+        if (repositoryManagerSetup) {
             return;
+        }
 
         setupTypeManager();
 

@@ -86,8 +86,9 @@ public class ModuleBuilder {
             // Handle the service exports
             for (SpringBuildContext.JavaServiceExport entry : springBuildContext.getExportedJavaServices()) {
                 Class serviceType = entry.serviceType;
-                if (!serviceType.isInterface())
+                if (!serviceType.isInterface()) {
                     throw new LilyRTException("Exported service is not an interface: " + serviceType.getName());
+                }
 
                 String beanName = entry.beanName;
                 Object component;
@@ -97,8 +98,9 @@ public class ModuleBuilder {
                     throw new LilyRTException("Bean not found for service to export, service type " + serviceType.getName() + ", bean name " + beanName, e);
                 }
 
-                if (!serviceType.isAssignableFrom(component.getClass()))
+                if (!serviceType.isAssignableFrom(component.getClass())) {
                     throw new LilyRTException("Exported service does not implemented specified type interface. Bean = " + beanName + ", interface = " + serviceType.getName());
+                }
 
                 infolog.debug(" exporting bean " + beanName + " for service " + serviceType.getName());
                 Object service = shieldJavaService(serviceType, component, module, classLoader);

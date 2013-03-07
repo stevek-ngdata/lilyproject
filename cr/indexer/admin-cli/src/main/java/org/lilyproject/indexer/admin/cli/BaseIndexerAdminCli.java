@@ -282,8 +282,9 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int result = super.processOptions(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (cmd.hasOption(nameOption.getOpt())) {
             indexName = cmd.getOptionValue(nameOption.getOpt());
@@ -521,8 +522,9 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
 
@@ -555,8 +557,9 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
             Collection<IndexDefinition> indexes = model.getIndexes();
             for (String uri : solrShards.values()) {
                 for (IndexDefinition index : indexes) {
-                    if (indexName != null && index.getName().equals(indexName))
+                    if (indexName != null && index.getName().equals(indexName)) {
                         continue;
+                    }
 
                     for (String uri2 : index.getSolrShards().values()) {
                         if (uri.equals(uri2)) {
@@ -591,8 +594,9 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     private String getStates(Enum[] values) {
         StringBuilder builder = new StringBuilder();
         for (Enum value : values) {
-            if (builder.length() > 0)
+            if (builder.length() > 0) {
                 builder.append(", ");
+            }
             builder.append(value);
         }
         return builder.toString();

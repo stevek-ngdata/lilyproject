@@ -60,8 +60,9 @@ public class RecordTypeReader implements EntityReader<RecordType> {
         RecordType recordType = typeManager.newRecordType(name);
 
         String id = getString(node, "id", null);
-        if (id != null)
+        if (id != null) {
             recordType.setId(new SchemaIdImpl(id));
+        }
 
         if (node.get("fields") != null) {
             ArrayNode fields = getArray(node, "fields");

@@ -54,8 +54,9 @@ public class ClassLoadingConfigImpl implements ClassLoadingConfig {
     public List<ClasspathEntry> getUsedClassPath() {
         List<ClasspathEntry> artifacts = new ArrayList<ClasspathEntry>();
         for (ClasspathEntry entry : entries) {
-            if (!sharedEntries.contains(entry))
+            if (!sharedEntries.contains(entry)) {
                 artifacts.add(entry);
+            }
         }
         return artifacts;
     }

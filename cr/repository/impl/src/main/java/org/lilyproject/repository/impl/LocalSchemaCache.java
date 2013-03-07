@@ -62,13 +62,15 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
         if (force || cacheRefreshingEnabled) {
             try {
                 if (rowKey == null) {
-                    if (log.isDebugEnabled())
+                    if (log.isDebugEnabled()) {
                         log.debug("Triggering schema cache refresh for all types.");
+                    }
                     ZkUtil.update(zooKeeper, CACHE_INVALIDATION_PATH, null, -1);
                 } else {
                     String bucketId = encodeHex(rowKey);
-                    if (log.isDebugEnabled())
+                    if (log.isDebugEnabled()) {
                         log.debug("Triggering schema cache refresh for bucket: " + bucketId);
+                    }
                     ZkUtil.update(zooKeeper, CACHE_INVALIDATION_PATH + "/" + bucketId, null, -1);
                 }
             } catch (KeeperException e) {

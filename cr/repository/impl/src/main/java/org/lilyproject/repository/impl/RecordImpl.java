@@ -190,8 +190,9 @@ public class RecordImpl implements Record, Cloneable {
 
     @Override
     public Record cloneRecord(IdentityRecordStack parentRecords) throws RecordException {
-        if (parentRecords.contains(this))
+        if (parentRecords.contains(this)) {
             throw new RecordException("A record may not be nested in itself: " + id);
+        }
 
         RecordImpl record = new RecordImpl();
         record.id = id;
@@ -226,8 +227,9 @@ public class RecordImpl implements Record, Cloneable {
 
     private boolean detectRecordRecursion(List<Record> parentRecords) {
         for (Entry<QName, Object> entry : fields.entrySet()) {
-            if (detectRecordRecursion(entry.getValue(), parentRecords))
+            if (detectRecordRecursion(entry.getValue(), parentRecords)) {
                 return true;
+            }
         }
         return false;
     }
@@ -236,26 +238,30 @@ public class RecordImpl implements Record, Cloneable {
         if (value instanceof HierarchyPath) {
             Object[] elements = ((HierarchyPath) value).getElements();
             for (Object object : elements) {
-                if (detectRecordRecursion(object, parentRecords))
+                if (detectRecordRecursion(object, parentRecords)) {
                     return true;
+                }
             }
         }
         if (value instanceof List) {
             List<Object> values = (List<Object>) value;
             for (Object object : values) {
-                if (detectRecordRecursion(object, parentRecords))
+                if (detectRecordRecursion(object, parentRecords)) {
                     return true;
+                }
             }
         }
         if (value instanceof Record) {
-            if (parentRecords.contains(value))
+            if (parentRecords.contains(value)) {
                 return true;
+            }
             Record record = (Record) value;
             parentRecords.add(record);
             Map<QName, Object> fields = record.getFields();
             for (Entry<QName, Object> entry : fields.entrySet()) {
-                if (detectRecordRecursion(entry.getValue(), parentRecords))
+                if (detectRecordRecursion(entry.getValue(), parentRecords)) {
                     return true;
+                }
             }
             parentRecords.remove(record);
         }
@@ -304,8 +310,9 @@ public class RecordImpl implements Record, Cloneable {
 
     @Override
     public boolean equals(Object obj) {
-        if (!softEquals(obj))
+        if (!softEquals(obj)) {
             return false;
+        }
 
         if (obj instanceof RecordRvtImpl) {
             return equals(((RecordRvtImpl)obj).getRecord());
@@ -317,15 +324,17 @@ public class RecordImpl implements Record, Cloneable {
         RecordImpl other = (RecordImpl) obj;
 
         if (recordTypes == null) {
-            if (other.recordTypes != null)
+            if (other.recordTypes != null) {
                 return false;
+            }
         } else if (!recordTypes.equals(other.recordTypes)) {
             return false;
         }
 
         if (version == null) {
-            if (other.version != null)
+            if (other.version != null) {
                 return false;
+            }
         } else if (!version.equals(other.version)) {
             return false;
         }
@@ -335,37 +344,43 @@ public class RecordImpl implements Record, Cloneable {
 
     @Override
     public boolean softEquals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
+        }
         if (obj instanceof RecordRvtImpl) {
             return softEquals(((RecordRvtImpl)obj).getRecord());
         }
         if (obj instanceof IdRecordImpl) {
             return softEquals(((IdRecordImpl)obj).getRecord());
         }
-        if (getClass() != obj.getClass())
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         RecordImpl other = (RecordImpl) obj;
 
         if (fields == null) {
-            if (other.fields != null)
+            if (other.fields != null) {
                 return false;
+            }
         } else if (!fields.equals(other.fields)) {
             return false;
         }
 
         if (fieldsToDelete == null) {
-            if (other.fieldsToDelete != null)
+            if (other.fieldsToDelete != null) {
                 return false;
+            }
         } else if (!fieldsToDelete.equals(other.fieldsToDelete)) {
             return false;
         }
 
         if (id == null) {
-            if (other.id != null)
+            if (other.id != null) {
                 return false;
+            }
         } else if (!id.equals(other.id)) {
             return false;
         }
@@ -413,12 +428,15 @@ public class RecordImpl implements Record, Cloneable {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             RecordTypeRef other = (RecordTypeRef) obj;
             return ObjectUtils.safeEquals(name, other.name) && ObjectUtils.safeEquals(version, other.version);
         }
@@ -430,12 +448,14 @@ public class RecordImpl implements Record, Cloneable {
     }
 
     private QName resolveNamespace(String name) throws RecordException {
-        if (defaultNamespace != null)
+        if (defaultNamespace != null) {
             return new QName(defaultNamespace, name);
+        }
 
         QName recordTypeName = getRecordTypeName();
-        if (recordTypeName != null)
+        if (recordTypeName != null) {
             return new QName(recordTypeName.getNamespace(), name);
+        }
 
         throw new RecordException("Namespace could not be resolved for name '" + name +
             "' since no default namespace was given and no record type is set.");

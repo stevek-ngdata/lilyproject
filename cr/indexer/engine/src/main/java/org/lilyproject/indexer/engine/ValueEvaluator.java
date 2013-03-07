@@ -76,8 +76,9 @@ public class ValueEvaluator {
 
         List<IndexValue> indexValues = evalValue(valueDef, indexUpdateBuilder);
 
-        if (indexValues == null || indexValues.size() == 0)
+        if (indexValues == null || indexValues.size() == 0) {
             return null;
+        }
 
         RepositoryManager repositoryManager = indexUpdateBuilder.getRepositoryManager();
         if (valueDef.extractContent()) {
@@ -131,8 +132,9 @@ public class ValueEvaluator {
         for (IndexValue indexValue : indexValues) {
             indexes.clear();
 
-            if (indexValue.listIndex != null)
+            if (indexValue.listIndex != null) {
                 indexes.addLast(indexValue.listIndex);
+            }
 
             extractContent(table, indexValue.value, indexes, indexValue.record, indexValue.fieldType, result, repositoryManager);
         }
@@ -170,8 +172,9 @@ public class ValueEvaluator {
 
             Metadata metadata = new Metadata();
             metadata.add(Metadata.CONTENT_TYPE, blob.getMediaType());
-            if (blob.getName() != null)
+            if (blob.getName() != null) {
                 metadata.add(Metadata.RESOURCE_NAME_KEY, blob.getName());
+            }
 
             ParseContext parseContext = new ParseContext();
 
@@ -194,8 +197,9 @@ public class ValueEvaluator {
         }
 
         String text = ch.toString();
-        if (text.length() > 0)
+        if (text.length() > 0) {
             result.add(text);
+        }
     }
 
     private List<IndexValue> evalValue(Value value, IndexUpdateBuilder indexUpdateBuilder)

@@ -69,8 +69,9 @@ public class LilyRuntimeModuleImpl implements LilyRuntimeModule {
 
     public LilyRuntimeModule getModuleById(String id) {
         Module module = runtime.getModuleById(id);
-        if (module == null)
+        if (module == null) {
             return null;
+        }
 
         return new LilyRuntimeModuleImpl(module, runtime);
     }

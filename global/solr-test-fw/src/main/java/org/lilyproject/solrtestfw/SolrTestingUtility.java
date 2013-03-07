@@ -153,8 +153,9 @@ public class SolrTestingUtility {
     }
 
     public void stop() throws Exception {
-        if (server != null)
+        if (server != null) {
             server.stop();
+        }
 
         if (clearData && solrHomeDir != null) {
             FileUtils.deleteDirectory(solrHomeDir);

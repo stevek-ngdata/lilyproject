@@ -106,8 +106,9 @@ public class JarModuleSource implements ModuleSource {
         // Drop empty parts
         List<String> result = new ArrayList<String>(parts.length);
         for (String part : parts) {
-            if (part.length() > 0)
+            if (part.length() > 0) {
                 result.add(part);
+            }
         }
 
         return result.toArray(new String[result.size()]);
@@ -130,11 +131,13 @@ public class JarModuleSource implements ModuleSource {
     private JarResource findEntry(JarResource root, String[] pathParts) {
         JarResource current = root;
         for (String part : pathParts) {
-            if (!current.isDirectory())
+            if (!current.isDirectory()) {
                 return null;
+            }
             current = current.getChild(part);
-            if (current == null)
+            if (current == null) {
                 return null;
+            }
         }
         return current;
     }
@@ -185,8 +188,9 @@ public class JarModuleSource implements ModuleSource {
 
         private JarResource(JarEntry jarEntry) {
             this.jarEntry = jarEntry;
-            if (jarEntry == null /* for the root */ || jarEntry.isDirectory())
+            if (jarEntry == null /* for the root */ || jarEntry.isDirectory()) {
                 children = new HashMap<String, JarResource>();
+            }
         }
 
         public InputStream getInputStream() throws IOException {
@@ -198,15 +202,17 @@ public class JarModuleSource implements ModuleSource {
         }
 
         private JarResource getChild(String name) {
-            if (children != null)
+            if (children != null) {
                 return children.get(name);
-            else
+            } else {
                 throw new RuntimeException("Cannot get the children of a non-directory entry.");
+            }
         }
 
         private void addChild(String name, JarResource entry) {
-            if (children.containsKey(name))
+            if (children.containsKey(name)) {
                 throw new RuntimeException("There is already a child with the name \"" + name + "\".");
+            }
             children.put(name, entry);
         }
 

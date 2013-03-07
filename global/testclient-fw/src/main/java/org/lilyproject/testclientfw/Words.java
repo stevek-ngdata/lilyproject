@@ -75,8 +75,9 @@ public class Words {
     public static String get(WordList list, int amount) {
         StringBuilder buffer = new StringBuilder(20 * amount);
         for (int i = 0; i < amount; i++) {
-            if (i > 0)
+            if (i > 0) {
                 buffer.append(' ');
+            }
             buffer.append(get(list));
         }
         return buffer.toString();

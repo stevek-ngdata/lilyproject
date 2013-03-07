@@ -129,8 +129,9 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             for (int i = 1; true; i++) {
                 String shardName = jobConf.get("org.lilyproject.indexer.batchbuild.solrshard.name." + i);
                 String shardAddress = jobConf.get("org.lilyproject.indexer.batchbuild.solrshard.address." + i);
-                if (shardName == null)
+                if (shardName == null) {
                     break;
+                }
                 solrShards.put(shardName, shardAddress);
             }
 
@@ -159,10 +160,11 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
     private int getIntProp(String name, Integer defaultValue, Configuration conf) {
         String value = conf.get(name);
         if (value == null) {
-            if (defaultValue != null)
+            if (defaultValue != null) {
                 return defaultValue;
-            else
+            } else {
                 throw new RuntimeException("Missing property in jobconf: " + name);
+            }
         }
 
         try {

@@ -24,21 +24,25 @@ public class LocaleHelper {
 
         String lang = null, country = null, variant = null;
 
-        if (localeParser.hasMoreTokens())
+        if (localeParser.hasMoreTokens()) {
             lang = localeParser.nextToken();
-        if (localeParser.hasMoreTokens())
+        }
+        if (localeParser.hasMoreTokens()) {
             country = localeParser.nextToken();
-        if (localeParser.hasMoreTokens())
+        }
+        if (localeParser.hasMoreTokens()) {
             variant = localeParser.nextToken();
+        }
 
-        if (lang != null && country != null && variant != null)
+        if (lang != null && country != null && variant != null) {
             return new Locale(lang, country, variant);
-        else if (lang != null && country != null)
+        } else if (lang != null && country != null) {
             return new Locale(lang, country);
-        else if (lang != null)
+        } else if (lang != null) {
             return new Locale(lang);
-        else
+        } else {
             return new Locale("");
+        }
     }
 
     public static String getString(Locale locale) {
@@ -50,13 +54,14 @@ public class LocaleHelper {
         boolean hasCountry = !locale.getCountry().equals("");
         boolean hasVariant = !locale.getVariant().equals("");
 
-        if (hasLanguage && hasCountry && hasVariant)
+        if (hasLanguage && hasCountry && hasVariant) {
             return locale.getLanguage() + separator + locale.getCountry() + separator + locale.getVariant();
-        else if (hasLanguage && hasCountry)
+        } else if (hasLanguage && hasCountry) {
             return locale.getLanguage() + separator + locale.getCountry();
-        else if (hasLanguage)
+        } else if (hasLanguage) {
             return locale.getLanguage();
-        else
+        } else {
             return "";
+        }
     }
 }

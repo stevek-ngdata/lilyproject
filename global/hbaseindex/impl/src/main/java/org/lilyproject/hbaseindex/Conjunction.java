@@ -56,8 +56,9 @@ public class Conjunction extends BaseQueryResult {
         byte[] key1 = result1.next();
         byte[] key2 = result2.next();
 
-        if (key1 == null || key2 == null)
+        if (key1 == null || key2 == null) {
             return null;
+        }
 
         int cmp = Bytes.compareTo(key1, key2);
 
@@ -65,15 +66,17 @@ public class Conjunction extends BaseQueryResult {
             if (cmp < 0) {
                 while (cmp < 0) {
                     key1 = result1.next();
-                    if (key1 == null)
+                    if (key1 == null) {
                         return null;
+                    }
                     cmp = Bytes.compareTo(key1, key2);
                 }
             } else if (cmp > 0) {
                 while (cmp > 0) {
                     key2 = result2.next();
-                    if (key2 == null)
+                    if (key2 == null) {
                         return null;
+                    }
                     cmp = Bytes.compareTo(key1, key2);
                 }
             }

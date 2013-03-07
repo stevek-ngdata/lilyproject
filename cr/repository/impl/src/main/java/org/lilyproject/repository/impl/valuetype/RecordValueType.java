@@ -127,8 +127,9 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     private void encodeData(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException {
         Record record = (Record)value;
-        if (parentRecords.contains(record))
+        if (parentRecords.contains(record)) {
             throw new RecordException("A record may not be nested in itself: " + record.getId());
+        }
 
 
         RecordType recordType;
@@ -136,9 +137,10 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         if (recordRecordTypeName != null) {
             if (valueTypeRecordTypeName != null) {
                 // Validate the same record type is being used
-                if (!valueTypeRecordTypeName.equals(recordRecordTypeName))
-                    throw new RecordException("The record's Record Type '"+ recordRecordTypeName +
+                if (!valueTypeRecordTypeName.equals(recordRecordTypeName)) {
+                    throw new RecordException("The record's Record Type '" + recordRecordTypeName +
                             "' does not match the record value type's record type '" + valueTypeRecordTypeName + "'");
+                }
             }
             recordType = typeManager.getRecordTypeByName(recordRecordTypeName, null);
         } else if (valueTypeRecordTypeName != null) {
@@ -174,9 +176,9 @@ public class RecordValueType extends AbstractValueType implements ValueType {
             QName name = fieldType.getName();
             expectedFields.add(name);
             Object fieldValue = recordFields.get(name);
-            if (fieldValue == null)
+            if (fieldValue == null) {
                 dataOutput.writeByte(UNDEFINED);
-            else {
+            } else {
                 dataOutput.writeByte(DEFINED);
                 parentRecords.push(record);
                 fieldType.getValueType().write(fieldValue, dataOutput, parentRecords);
@@ -234,12 +236,15 @@ public class RecordValueType extends AbstractValueType implements ValueType {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         return fullName.equals(((RecordValueType) obj).fullName);
     }
 

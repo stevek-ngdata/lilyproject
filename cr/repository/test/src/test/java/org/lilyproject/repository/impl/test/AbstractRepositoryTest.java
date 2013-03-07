@@ -180,8 +180,9 @@ public abstract class AbstractRepositoryTest {
         control.replay();
         Record record = repository.newRecord(idGenerator.newRecordId());
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting InvalidRecordException");
+            }
             record = repository.create(record);
             fail();
         } catch (InvalidRecordException expected) {
@@ -194,8 +195,9 @@ public abstract class AbstractRepositoryTest {
         Record record = repository.newRecord();
         record.setRecordType(recordType1.getName());
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting InvalidRecordException");
+            }
             record = repository.create(record);
             fail();
         } catch (InvalidRecordException expected) {
@@ -292,8 +294,9 @@ public abstract class AbstractRepositoryTest {
         record.setRecordType(new QName("foo", "bar"));
         record.setField(fieldType1.getName(), "value1");
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting RecordTypeNotFoundException");
+            }
             repository.create(record);
             fail();
         } catch (RecordTypeNotFoundException expected) {
@@ -396,15 +399,17 @@ public abstract class AbstractRepositoryTest {
         assertEquals(Long.valueOf(1), updatedRecord.getVersion());
         assertEquals("value2", updatedRecord.getField(fieldType1.getName()));
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             updatedRecord.getField(fieldType2.getName());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             updatedRecord.getField(fieldType3.getName());
             fail();
         } catch (FieldNotFoundException expected) {
@@ -426,22 +431,25 @@ public abstract class AbstractRepositoryTest {
 
         assertEquals(Long.valueOf(1), updatedRecord.getVersion());
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             updatedRecord.getField(fieldType1.getName());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             updatedRecord.getField(fieldType2.getName());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             updatedRecord.getField(fieldType3.getName());
             fail();
         } catch (FieldNotFoundException expected) {
@@ -509,8 +517,9 @@ public abstract class AbstractRepositoryTest {
         assertEquals(record, repository.read(record.getId(), 1L));
 
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting RecordNotFoundException");
+            }
             repository.read(record.getId(), 0L);
             fail();
         } catch (RecordNotFoundException expected) {
@@ -609,8 +618,9 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadNonExistingRecord() throws Exception {
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting RecordNotFoundException");
+            }
             repository.read(idGenerator.newRecordId());
             fail();
         } catch (RecordNotFoundException expected) {
@@ -621,8 +631,9 @@ public abstract class AbstractRepositoryTest {
     public void testReadTooRecentRecord() throws Exception {
         Record record = createDefaultRecord();
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting VersionNotFoundException");
+            }
             repository.read(record.getId(), Long.valueOf(2));
             fail();
         } catch (VersionNotFoundException expected) {
@@ -783,8 +794,9 @@ public abstract class AbstractRepositoryTest {
         assertEquals(Long.valueOf(2), readRecord.getVersion());
         assertEquals(5, readRecord.getFields().size());
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             readRecord.getField(fieldType1.getName());
             fail();
         } catch (FieldNotFoundException expected) {
@@ -842,8 +854,9 @@ public abstract class AbstractRepositoryTest {
         // Read version 2
         readRecord = repository.read(record.getId(), Long.valueOf(2));
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             readRecord.getField(fieldType2.getName());
             fail();
         } catch (FieldNotFoundException expected) {
@@ -866,8 +879,9 @@ public abstract class AbstractRepositoryTest {
         Record readRecord = repository.read(record.getId());
         assertEquals(999, readRecord.getField(fieldType2.getName()));
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             readRecord.getField(fieldType1.getName());
             fail();
         } catch (FieldNotFoundException expected) {
@@ -875,8 +889,9 @@ public abstract class AbstractRepositoryTest {
 
         readRecord = repository.read(record.getId(), Long.valueOf(1));
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             readRecord.getField(fieldType1.getName());
             fail();
         } catch (FieldNotFoundException expected) {
@@ -894,8 +909,9 @@ public abstract class AbstractRepositoryTest {
         repository.update(updateRecord);
 
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             repository.read(record.getId()).getField(fieldType2.getName());
             fail();
         } catch (FieldNotFoundException expected) {
@@ -907,22 +923,25 @@ public abstract class AbstractRepositoryTest {
         Record record = createDefaultRecord();
         repository.delete(record.getId());
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting RecordNotFoundException");
+            }
             repository.read(record.getId());
             fail();
         } catch (RecordNotFoundException expected) {
         }
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting RecordNotFoundException");
+            }
             repository.update(record);
             fail();
         } catch (RecordNotFoundException expected) {
         }
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting RecordNotFoundException");
+            }
             repository.delete(record.getId());
             fail();
         } catch (RecordNotFoundException expected) {
@@ -935,22 +954,25 @@ public abstract class AbstractRepositoryTest {
         Record record = createDefaultRecord();
         repository.delete(record);
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting RecordNotFoundException");
+            }
             repository.read(record.getId());
             fail();
         } catch (RecordNotFoundException expected) {
         }
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting RecordNotFoundException");
+            }
             repository.update(record);
             fail();
         } catch (RecordNotFoundException expected) {
         }
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting RecordNotFoundException");
+            }
             repository.delete(record.getId());
             fail();
         } catch (RecordNotFoundException expected) {
@@ -1201,15 +1223,17 @@ public abstract class AbstractRepositoryTest {
         // Only the mutable fields got updated
         assertEquals("value3", readRecord.getField(fieldType6.getName()));
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             readRecord.getField(fieldType4.getName());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             readRecord.getField(fieldType5.getName());
             fail();
         } catch (FieldNotFoundException expected) {
@@ -1290,8 +1314,9 @@ public abstract class AbstractRepositoryTest {
         assertEquals(123, readRecord.getField(fieldType2.getName()));
         try {
             // The mutable field got deleted
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             readRecord.getField(fieldType3.getName());
             fail();
         } catch (FieldNotFoundException expected) {
@@ -1325,8 +1350,9 @@ public abstract class AbstractRepositoryTest {
 
         readRecord = repository.read(record.getId(), Long.valueOf(1));
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting FieldNotFoundException");
+            }
             readRecord.getField(fieldType3.getName());
             fail();
         } catch (FieldNotFoundException expected) {
@@ -1432,8 +1458,9 @@ public abstract class AbstractRepositoryTest {
         assertEquals(2, record.getFields().size());
 
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting VersionNotFoundException");
+            }
             record = repository.read(record.getId(), 2L);
             fail("expected exception");
         } catch (VersionNotFoundException e) {
@@ -1452,8 +1479,9 @@ public abstract class AbstractRepositoryTest {
         record.setRecordType(recordType3.getName(), 2L);
         record.setField(fieldType2.getName(), 123);
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting InvalidRecordException");
+            }
             repository.create(record);
             fail();
         } catch (InvalidRecordException expected) {
@@ -1475,8 +1503,9 @@ public abstract class AbstractRepositoryTest {
         record.setRecordType(recordType3.getName(), 2L);
         record.setField(fieldType2.getName(), 567);
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting InvalidRecordException");
+            }
             repository.update(record, false, false);
             fail();
         } catch (InvalidRecordException expected) {
@@ -1504,8 +1533,9 @@ public abstract class AbstractRepositoryTest {
         record.setRecordType(recordType3.getName(), 3L);
         record.setField(fieldType1.getName(), "efg");
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting InvalidRecordException");
+            }
             repository.update(record, false, false);
             fail();
         } catch (InvalidRecordException expected) {
@@ -1524,8 +1554,9 @@ public abstract class AbstractRepositoryTest {
         record.setField(fieldType6.getName(), "zzz");
         record.setVersion(1L);
         try {
-            if (avro)
+            if (avro) {
                 System.out.println("Expecting InvalidRecordException");
+            }
             repository.update(record, true, false);
             fail();
         } catch (InvalidRecordException expected) {
@@ -1867,8 +1898,9 @@ public abstract class AbstractRepositoryTest {
                             record = repository.update(record, Lists.newArrayList(cond));
 
                             if (record.getResponseStatus() == ResponseStatus.CONFLICT) {
-                                if (iteration > 20)
+                                if (iteration > 20) {
                                     System.out.println("cas failed, will retry, iteration " + iteration);
+                                }
                                 Thread.sleep((int)(Math.random() * 50));
                             } else if (record.getResponseStatus() == ResponseStatus.UPDATED) {
                                 // success
@@ -1877,8 +1909,9 @@ public abstract class AbstractRepositoryTest {
                                 fail("unexpected response status = " + record.getResponseStatus());
                             }
                         } catch (ConcurrentRecordUpdateException e) {
-                            if (iteration > 20)
+                            if (iteration > 20) {
                                 System.out.println("concurrent update, will retry, iteration " + iteration);
+                            }
                             Thread.sleep((int)(Math.random() * 50));
                         }
                     }

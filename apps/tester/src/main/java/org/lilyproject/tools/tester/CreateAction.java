@@ -64,19 +64,21 @@ public class CreateAction extends AbstractTestAction implements TestAction {
     protected void runAction() {
         ActionResult result = createRecord(recordTypeToCreate);
         report(result.success, result.duration);
-        if (result.success)
-            testActionContext.records.addRecord(destination, new TestRecord(((Record) result.object).getId(),
+        if (result.success) {
+            testActionContext.records.addRecord(destination, new TestRecord(((Record)result.object).getId(),
                     recordTypeToCreate));
+        }
     }
 
     private ActionResult createRecord(TestRecordType recordTypeToCreate) {
         double duration = 0;
         Record record;
         try {
-            if (testActionContext.roundRobinPrefixGenerator == null)
+            if (testActionContext.roundRobinPrefixGenerator == null) {
                 record = testActionContext.repository.newRecord();
-            else
+            } else {
                 record = testActionContext.repository.newRecord(createPrefixedRecordId());
+            }
         } catch (RecordException e) {
             reportError("Error preparing create record.", e);
             return new ActionResult(false, null, 0);
@@ -130,8 +132,9 @@ public class CreateAction extends AbstractTestAction implements TestAction {
         // Pick a link from the RecordSpace source
         if (linkedRecordSource != null) {
             TestRecord record = testActionContext.records.getRecord(linkedRecordSource);
-            if (record == null)
+            if (record == null) {
                 return new ActionResult(false, null, 0);
+            }
             return new ActionResult(true, new Link(record.getRecordId()), 0);
         }
         // Create a record of the specified RecordType
@@ -147,8 +150,9 @@ public class CreateAction extends AbstractTestAction implements TestAction {
             ActionResult result = createRecord(linkedRecordType);
             report(result.success, result.duration,
                     "linkCreate." + linkedRecordType.getRecordType().getName().getName());
-            if (!result.success)
+            if (!result.success) {
                 return new ActionResult(false, null, 0);
+            }
             return new ActionResult(true, new Link(((Record) result.object).getId()), result.duration);
         }
         // Generate a link that possibly (most likely) points to a non-existing record

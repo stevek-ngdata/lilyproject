@@ -173,8 +173,9 @@ public class BlobIncubatorMonitor {
                         log.warn("Failed monitoring BlobIncubatorTable", e);
                         break;
                     }
-                    if (stopRequested)
+                    if (stopRequested) {
                         break;
+                    }
                     Thread.sleep(runDelay);
                 } catch (InterruptedException e) {
                     break;

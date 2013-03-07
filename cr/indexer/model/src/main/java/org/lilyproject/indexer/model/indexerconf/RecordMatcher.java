@@ -110,8 +110,9 @@ public class RecordMatcher {
             }
 
             for (Map.Entry<String, String> entry : variantPropsPattern.entrySet()) {
-                if (entry.getKey().equals("*"))
+                if (entry.getKey().equals("*")) {
                     continue;
+                }
 
                 String dimVal = varProps.get(entry.getKey());
                 if (dimVal == null) {

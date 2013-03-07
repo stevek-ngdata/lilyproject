@@ -129,30 +129,40 @@ public class Blob implements Cloneable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         Blob other = (Blob) obj;
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false;
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false;
-        if (!Arrays.equals(value, other.value))
+        }
+        if (!Arrays.equals(value, other.value)) {
             return false;
+        }
         if (mediaType == null) {
-            if (other.mediaType != null)
+            if (other.mediaType != null) {
                 return false;
-        } else if (!mediaType.equals(other.mediaType))
+            }
+        } else if (!mediaType.equals(other.mediaType)) {
             return false;
+        }
         if (size == null) {
-            if (other.size != null)
+            if (other.size != null) {
                 return false;
-        } else if (!size.equals(other.size))
+            }
+        } else if (!size.equals(other.size)) {
             return false;
+        }
         return true;
     }
 

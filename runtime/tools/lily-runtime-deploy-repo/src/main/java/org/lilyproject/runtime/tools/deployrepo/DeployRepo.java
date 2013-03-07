@@ -103,8 +103,9 @@ public class DeployRepo {
                 }
                 copy(file, destDir, fromPath);
             } else {
-                if (!file.getName().equals("archetype-catalog.xml") && !file.getName().startsWith("maven-metadata"))
-                copyFile(file, new File(toDir, file.getName()));
+                if (!file.getName().equals("archetype-catalog.xml") && !file.getName().startsWith("maven-metadata")) {
+                    copyFile(file, new File(toDir, file.getName()));
+                }
             }
         }
     }

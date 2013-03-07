@@ -315,7 +315,9 @@ public class HBaseTestingUtility {
      * @throws IOException If a cluster -- zk, dfs, or hbase -- already running.
      */
     public void isRunningCluster() throws IOException {
-        if (dfsCluster == null) return;
+        if (dfsCluster == null) {
+            return;
+        }
         throw new IOException("Cluster already running at " +
                 this.clusterTestDir);
     }
@@ -971,7 +973,9 @@ public class HBaseTestingUtility {
                     k[2] = b3;
                     Put put = new Put(k);
                     put.add(f, null, k);
-                    if (r.getLog() == null) put.setWriteToWAL(false);
+                    if (r.getLog() == null) {
+                        put.setWriteToWAL(false);
+                    }
                     r.put(put);
                     rowCount++;
                 }
@@ -1059,7 +1063,9 @@ public class HBaseTestingUtility {
     public int createMultiRegions(final Configuration c, final HTable table,
             final byte [] family, int numRegions)
             throws IOException {
-        if (numRegions < 3) throw new IOException("Must create at least 3 regions");
+        if (numRegions < 3) {
+            throw new IOException("Must create at least 3 regions");
+        }
         byte [] startKey = Bytes.toBytes("aaaaa");
         byte [] endKey = Bytes.toBytes("zzzzz");
         byte [][] splitKeys = Bytes.split(startKey, endKey, numRegions - 3);

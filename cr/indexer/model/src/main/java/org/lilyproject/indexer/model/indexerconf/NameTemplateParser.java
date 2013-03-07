@@ -76,8 +76,9 @@ public class NameTemplateParser {
         }
 
         final NameTemplate nameTemplate = new NameTemplate(template, parts);
-        if (validator != null)
+        if (validator != null) {
             validator.validate(nameTemplate);
+        }
         return nameTemplate;
     }
 

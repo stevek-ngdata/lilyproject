@@ -44,8 +44,9 @@ public class LilyRuntimeModel {
 
     public ModuleDefinition getModuleById(String id) {
         for (ModuleDefinition module : modules) {
-            if (module.getId().equals(id))
+            if (module.getId().equals(id)) {
                 return module;
+            }
         }
         return null;
     }
@@ -54,8 +55,9 @@ public class LilyRuntimeModel {
         // Check there are no modules with duplicate IDs
         Set<String> idSet = new HashSet<String>();
         for (ModuleDefinition entry : modules) {
-            if (idSet.contains(entry.getId()))
+            if (idSet.contains(entry.getId())) {
                 configErrors.add(new ConfigError("Duplicate module ID: " + entry.getId(), entry.getLocation()));
+            }
             entry.validate(configErrors, this);
             idSet.add(entry.getId());
         }
@@ -72,8 +74,9 @@ public class LilyRuntimeModel {
         }
 
         final ModuleDefinition module = getModuleById(id);
-        if (module == null)
-             return "No module with id: " + id;
+        if (module == null) {
+            return "No module with id: " + id;
+        }
         return module.moduleInfo();
     }
 

@@ -37,8 +37,9 @@ public class ArtifactNotFoundException extends Exception {
     public String getMessage() {
         StringBuilder locations = new StringBuilder();
         for (String searchLocation : searchLocations) {
-            if (locations.length() > 0)
+            if (locations.length() > 0) {
                 locations.append(", ");
+            }
             locations.append(searchLocation);
         }
 

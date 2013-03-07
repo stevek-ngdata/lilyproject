@@ -267,8 +267,9 @@ public class Index {
         Filter toFilter = new RowFilter(op, new BinaryPrefixComparator(toKey));
 
         FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL);
-        if (query.getIndexFilter() != null)
+        if (query.getIndexFilter() != null) {
             filters.addFilter(new IndexFilterHbaseImpl(query.getIndexFilter(), definition));
+        }
 
         if (rangeCondSet && !rangeCond.isLowerBoundInclusive()) {
             // TODO: optimize the performance hit caused by the extra filter

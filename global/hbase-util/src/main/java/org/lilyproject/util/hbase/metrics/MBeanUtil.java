@@ -40,8 +40,9 @@ public class MBeanUtil {
 
     static public void unregisterMBean(ObjectName mbeanName) {
         final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        if (mbeanName == null)
+        if (mbeanName == null) {
             return;
+        }
         try {
             mbs.unregisterMBean(mbeanName);
         } catch (InstanceNotFoundException e ) {

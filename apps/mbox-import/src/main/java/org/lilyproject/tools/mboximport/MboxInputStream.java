@@ -39,8 +39,9 @@ public class MboxInputStream extends InputStream {
     }
 
     public boolean nextMessage() throws IOException {
-        if (eof)
+        if (eof) {
             return false;
+        }
 
         if (!atFromLine) {
             while (!atFromLine && !eof) {
@@ -49,8 +50,9 @@ public class MboxInputStream extends InputStream {
             }
         }
 
-        if (eof)
+        if (eof) {
             return false;
+        }
 
         readLine();
 
@@ -59,8 +61,9 @@ public class MboxInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        if (atFromLine || eof)
+        if (atFromLine || eof) {
             return -1;
+        }
 
         currentLinePos++;
 
@@ -75,8 +78,9 @@ public class MboxInputStream extends InputStream {
 
     @Override
     public int read(byte b[], int off, int len) throws IOException {
-        if (atFromLine || eof)
+        if (atFromLine || eof) {
             return -1;
+        }
 
         currentLinePos++;
 

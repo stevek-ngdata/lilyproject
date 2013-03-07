@@ -84,11 +84,13 @@ public class LilyRuntime {
     public LilyRuntime(LilyRuntimeSettings settings) {
         ArgumentValidator.notNull(settings, "settings");
 
-        if (settings.getRepository() == null)
+        if (settings.getRepository() == null) {
             throw new LilyRTException("LilyRuntimeSettings should contain an artifact repository.");
+        }
 
-        if (settings.getConfManager() == null)
+        if (settings.getConfManager() == null) {
             throw new LilyRTException("LilyRuntimeSettings should contain a ConfManager.");
+        }
 
         this.settings = settings;
 
@@ -101,8 +103,9 @@ public class LilyRuntime {
     }
 
     public void setMode(Mode mode) {
-        if (state.ordinal() > LifeCycle.NOT_STARTED.ordinal())
+        if (state.ordinal() > LifeCycle.NOT_STARTED.ordinal()) {
             throw new IllegalStateException("Runtime mode canot be changed once started.");
+        }
 
         this.mode = mode;
     }
@@ -148,8 +151,9 @@ public class LilyRuntime {
      */
     public void start() throws LilyRTException, MalformedURLException, ArtifactNotFoundException {
         // a LilyRuntime object cannot be started twice, even if it has been stopped in between
-        if (state.ordinal() > LifeCycle.NOT_STARTED.ordinal())
+        if (state.ordinal() > LifeCycle.NOT_STARTED.ordinal()) {
             throw new LilyRTException("This Lily Runtime instance has already been started before.");
+        }
         state = LifeCycle.STARTED;
 
         // Init the configuration manager
@@ -168,8 +172,9 @@ public class LilyRuntime {
             String subject = configErrors.size() == 1 ? "error" : "errors";
             errorMsg.append("Encountered the following ").append(subject).append(" in the runtime configuration: ");
             for (int i = 0; i < configErrors.size(); i++) {
-                if (i > 0)
+                if (i > 0) {
                     errorMsg.append(", ");
+                }
                 errorMsg.append(configErrors.get(i).getMessage());
             }
             throw new LilyRTException(errorMsg.toString());
@@ -178,11 +183,13 @@ public class LilyRuntime {
         moduleConfigs = new ArrayList<ModuleConfig>();
 
         // First read the configuration of each module, and do some classpath checks
-        if (infolog.isInfoEnabled())
+        if (infolog.isInfoEnabled()) {
             infolog.info("Reading module configurations of " + model.getModules().size() + " modules.");
+        }
         for (ModuleDefinition entry : model.getModules()) {
-            if (infolog.isInfoEnabled())
+            if (infolog.isInfoEnabled()) {
                 infolog.debug("Reading module config " + entry.getId() + " - " + entry.getFile().getAbsolutePath());
+            }
             ModuleConfig moduleConf = ModuleConfigBuilder.build(entry, this);
             moduleConfigs.add(moduleConf);
         }
@@ -262,8 +269,9 @@ public class LilyRuntime {
     }
 
     public void stop() {
-        if (state != LifeCycle.STARTED)
+        if (state != LifeCycle.STARTED) {
             throw new LilyRTException("Cannot stop the runtime, it is in state " + state + " instead of " + LifeCycle.STARTED);
+        }
 
         // TODO temporarily disabled because FAM.stop() is slow
         // See JCI jira patch: https://issues.apache.org/jira/browse/JCI-57 (the newer one in commons-io has the same problem)

@@ -153,8 +153,9 @@ public class IndexLocker {
                 Thread.sleep(waitBetweenTries);
             }
         } catch (Throwable throwable) {
-            if (throwable instanceof IndexLockException)
+            if (throwable instanceof IndexLockException) {
                 throw (IndexLockException)throwable;
+            }
             throw new IndexLockException("Error taking index lock on record " + recordId, throwable);
         }
     }

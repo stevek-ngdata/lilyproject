@@ -85,12 +85,13 @@ public class LilyProxy {
             this.mode = mode;
         }
 
-        if (testHome != null)
+        if (testHome != null) {
             setTestHome(testHome);
-        else {
+        } else {
             String testHomeProp = System.getProperty(TESTHOME_PROP_NAME);
-            if (testHomeProp != null)
+            if (testHomeProp != null) {
                 setTestHome(new File(testHomeProp));
+            }
         }
 
         if (clearData != null) {
@@ -197,11 +198,13 @@ public class LilyProxy {
         }
 
         if (mode == Mode.EMBED || mode == Mode.HADOOP_CONNECT) {
-            if (testHome == null)
+            if (testHome == null) {
                 testHome = TestHomeUtil.createTestHome(TEMP_DIR_PREFIX);
+            }
 
-            if (mode == Mode.EMBED)
+            if (mode == Mode.EMBED) {
                 hbaseProxy.setTestHome(new File(testHome, TemplateDir.HADOOP_DIR));
+            }
             solrProxy.setTestHome(new File(testHome, TemplateDir.SOLR_DIR));
             lilyServerProxy.setTestHome(new File(testHome, TemplateDir.LILYSERVER_DIR));
         }

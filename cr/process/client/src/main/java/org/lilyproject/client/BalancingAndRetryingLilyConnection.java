@@ -280,8 +280,9 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
         protected void handleThrowable(Throwable throwable, Method method, long startedAt, int attempt,
                                        OperationType opType) throws Throwable {
 
-            if (throwable instanceof InvocationTargetException)
-                throwable = ((InvocationTargetException) throwable).getTargetException();
+            if (throwable instanceof InvocationTargetException) {
+                throwable = ((InvocationTargetException)throwable).getTargetException();
+            }
 
             if (throwable instanceof IORecordException || throwable instanceof IOBlobException ||
                     throwable instanceof IOTypeException || throwable instanceof ConcurrentRecordUpdateException) {

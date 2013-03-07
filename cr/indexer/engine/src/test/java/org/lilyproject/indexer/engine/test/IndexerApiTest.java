@@ -87,8 +87,9 @@ public class IndexerApiTest {
     public void tearDown() throws Exception {
         repoSetup.stop();
 
-        if (SOLR_TEST_UTIL != null)
+        if (SOLR_TEST_UTIL != null) {
             SOLR_TEST_UTIL.stop();
+        }
     }
 
     public void changeIndexUpdater(String confName) throws Exception {

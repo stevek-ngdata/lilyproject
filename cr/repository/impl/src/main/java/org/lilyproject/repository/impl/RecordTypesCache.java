@@ -71,8 +71,9 @@ public class RecordTypesCache {
                     // Re-initialize the nameCache
                     Map<QName, RecordType> newNameCache = new HashMap<QName, RecordType>();
                     for (Map<SchemaId, RecordType> bucket : buckets.values()) {
-                        for (RecordType recordType : bucket.values())
+                        for (RecordType recordType : bucket.values()) {
                             newNameCache.put(recordType.getName(), recordType);
+                        }
                     }
                     nameCache = newNameCache;
                     nameCacheOutOfDate = false;
@@ -206,8 +207,9 @@ public class RecordTypesCache {
     public RecordType getRecordType(SchemaId id) {
         String bucketId = AbstractSchemaCache.encodeHex(id.getBytes());
         Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
-        if (bucket == null)
+        if (bucket == null) {
             return null;
+        }
         return bucket.get(id);
     }
 

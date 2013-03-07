@@ -26,12 +26,15 @@ public class RepoArtifactRef extends BaseArtifactRef {
     public RepoArtifactRef(String groupId, String artifactId, String classifier, String version) {
         super("lilyruntime:repo:" + groupId + ":" + artifactId + (classifier == null || classifier.equals("") ? "" : ":" + classifier), version);
 
-        if (groupId == null)
+        if (groupId == null) {
             throw new IllegalArgumentException("Null argument: groupId");
-        if (artifactId == null)
+        }
+        if (artifactId == null) {
             throw new IllegalArgumentException("Null argument: artifactId");
-        if (version == null)
+        }
+        if (version == null) {
             throw new IllegalArgumentException("Null argument: version");
+        }
 
         this.groupId = groupId;
         this.artifactId = artifactId;

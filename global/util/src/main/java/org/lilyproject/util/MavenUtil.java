@@ -32,8 +32,9 @@ import java.util.Map;
 public class MavenUtil {
     public static File findLocalMavenRepository() throws IOException {
         String localRepositoryProperty = System.getProperty("localRepository");
-        if (localRepositoryProperty != null)
+        if (localRepositoryProperty != null) {
             return new File(localRepositoryProperty);
+        }
 
         String homeDir = System.getProperty("user.home");
         File mavenSettingsFile = new File(homeDir + "/.m2/settings.xml");
@@ -74,19 +75,22 @@ public class MavenUtil {
 
         @Override
         public String getNamespaceURI(String prefix) {
-            if (prefix == null)
+            if (prefix == null) {
                 throw new IllegalArgumentException("Null argument: prefix");
+            }
 
-            if (prefix.equals(XMLConstants.XML_NS_PREFIX))
+            if (prefix.equals(XMLConstants.XML_NS_PREFIX)) {
                 return XMLConstants.XML_NS_URI;
-            else if (prefix.equals(XMLConstants.XMLNS_ATTRIBUTE))
+            } else if (prefix.equals(XMLConstants.XMLNS_ATTRIBUTE)) {
                 return XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
+            }
 
             String uri = prefixToUri.get(prefix);
-            if (uri != null)
+            if (uri != null) {
                 return uri;
-            else
+            } else {
                 return XMLConstants.NULL_NS_URI;
+            }
         }
 
         @Override

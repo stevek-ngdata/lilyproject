@@ -68,10 +68,11 @@ public class IndexDefinition implements Writable {
     public IndexDefinition(String name, ObjectNode jsonObject) {
         this.name = name;
 
-        if (jsonObject.get("identifierOrder") != null)
+        if (jsonObject.get("identifierOrder") != null) {
             setIdentifierOrder(Order.valueOf(jsonObject.get("identifierOrder").getTextValue()));
-        else
+        } else {
             setIdentifierOrder(Order.ASCENDING);
+        }
 
         try {
             ObjectNode fields = (ObjectNode) jsonObject.get("fields");
@@ -254,23 +255,29 @@ public class IndexDefinition implements Writable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
 
         IndexDefinition other = (IndexDefinition) obj;
 
-        if (!name.equals(other.name))
+        if (!name.equals(other.name)) {
             return false;
+        }
 
-        if (identifierIndexFieldDefinition != other.identifierIndexFieldDefinition)
+        if (identifierIndexFieldDefinition != other.identifierIndexFieldDefinition) {
             return false;
+        }
 
-        if (!fields.equals(other.fields))
+        if (!fields.equals(other.fields)) {
             return false;
+        }
 
         return true;
     }

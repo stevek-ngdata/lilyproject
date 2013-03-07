@@ -97,10 +97,11 @@ public class IndexerMasterTest {
         for (int tries = 0; tries < MAX_TRIES; tries++) {
             boolean tablesExist = checkHTableExistence(DerefMapHbaseImpl.backwardIndexName(indexName), hBaseAdmin) &&
                     checkHTableExistence(DerefMapHbaseImpl.forwardIndexName(indexName), hBaseAdmin);
-            if (tablesExist == shouldExist)
+            if (tablesExist == shouldExist) {
                 return true; // tables existence as expected
-            else
+            } else {
                 Thread.sleep(SLEEP_BETWEEN_TRIES);
+            }
         }
 
         return false; // condition not met after trying long enough

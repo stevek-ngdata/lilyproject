@@ -86,18 +86,23 @@ public class UserRecordId implements RecordId {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         UserRecordId other = (UserRecordId) obj;
         if (basicRecordIdString == null) {
-            if (other.basicRecordIdString != null)
+            if (other.basicRecordIdString != null) {
                 return false;
-        } else if (!basicRecordIdString.equals(other.basicRecordIdString))
+            }
+        } else if (!basicRecordIdString.equals(other.basicRecordIdString)) {
             return false;
+        }
         return true;
     }
 

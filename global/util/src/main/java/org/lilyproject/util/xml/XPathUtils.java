@@ -41,8 +41,9 @@ public class XPathUtils {
     public static Element evalElement(String expression, Node node) {
         try {
             Node result = (Node)LocalXPathFactory.newXPath().evaluate(expression, node, XPathConstants.NODE);
-            if (!(result instanceof Element))
+            if (!(result instanceof Element)) {
                 throw new RuntimeException("Expected an element from the evaluation of the xpath expression " + expression + ", but got a " + result.getClass().getName());
+            }
             return (Element)result;
         } catch (XPathExpressionException e) {
             throw new RuntimeException(e);

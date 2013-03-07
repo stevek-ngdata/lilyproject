@@ -40,8 +40,9 @@ public class ConfNodeIterator implements NodeIterator {
 
         Conf conf = (Conf) parent.getNode();
         for (Conf child : conf.getChildren()) {
-            if (ConfNodePointer.testNode(child, nodeTest))
+            if (ConfNodePointer.testNode(child, nodeTest)) {
                 children.add(child);
+            }
         }
 
         if (startWith != null) {

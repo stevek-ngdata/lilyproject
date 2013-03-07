@@ -54,8 +54,9 @@ public abstract class BaseZkCliTool extends BaseCliTool {
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int result = super.processOptions(cmd);
-        if (result != 0)
+        if (result != 0) {
             return result;
+        }
 
         if (!cmd.hasOption(zkOption.getOpt())) {
             String message;

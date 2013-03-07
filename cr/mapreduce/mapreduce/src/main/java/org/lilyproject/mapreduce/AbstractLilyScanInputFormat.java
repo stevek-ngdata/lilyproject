@@ -200,8 +200,9 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
                 InputSplit split = new TableSplit(table.getTableName(),
                         splitStart, splitStop, regionLocation);
                 splits.add(split);
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug("getSplits: split -> " + (count++) + " -> " + split);
+                }
             }
         }
         return splits;

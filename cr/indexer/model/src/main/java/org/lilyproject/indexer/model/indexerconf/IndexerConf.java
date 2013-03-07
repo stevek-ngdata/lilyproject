@@ -128,8 +128,9 @@ public class IndexerConf {
 
         // Check <fields>
         boolean affects = indexFields.isIndexAffectedByUpdate(vtRecord, scope);
-        if (affects)
+        if (affects) {
             return true;
+        }
 
         // Check dynamic fields
         for (FieldType fieldType : changedFields) {
