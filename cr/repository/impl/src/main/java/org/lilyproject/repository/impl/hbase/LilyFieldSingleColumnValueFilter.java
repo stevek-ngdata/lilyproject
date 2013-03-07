@@ -220,25 +220,25 @@ public class LilyFieldSingleColumnValueFilter extends FilterBase {
       }
 
 
-    int compareResult = this.comparator.compareTo(data, lilyFieldValueOffset, lilyFieldValueLength);
-    // End Lily change
+      int compareResult = this.comparator.compareTo(data, lilyFieldValueOffset, lilyFieldValueLength);
+      // End Lily change
 
-    switch (this.compareOp) {
-    case LESS:
-      return compareResult <= 0;
-    case LESS_OR_EQUAL:
-      return compareResult < 0;
-    case EQUAL:
-      return compareResult != 0;
-    case NOT_EQUAL:
-      return compareResult == 0;
-    case GREATER_OR_EQUAL:
-      return compareResult > 0;
-    case GREATER:
-      return compareResult >= 0;
-    default:
-      throw new RuntimeException("Unknown Compare op " + compareOp.name());
-    }
+      switch (this.compareOp) {
+          case LESS:
+              return compareResult <= 0;
+          case LESS_OR_EQUAL:
+              return compareResult < 0;
+          case EQUAL:
+              return compareResult != 0;
+          case NOT_EQUAL:
+              return compareResult == 0;
+          case GREATER_OR_EQUAL:
+              return compareResult > 0;
+          case GREATER:
+              return compareResult >= 0;
+          default:
+              throw new RuntimeException("Unknown Compare op " + compareOp.name());
+      }
   }
 
   public boolean filterRow() {

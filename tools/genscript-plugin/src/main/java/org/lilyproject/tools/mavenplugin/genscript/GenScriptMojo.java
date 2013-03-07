@@ -261,7 +261,7 @@ public class GenScriptMojo extends AbstractMojo {
             //if (isDevelopment) {
             //    result.append(project.getBuild().getOutputDirectory());
             //} else {
-                result.append(basePath).append(platform.fileSeparator).append(artifactPath(project.getArtifact(), platform));
+            result.append(basePath).append(platform.fileSeparator).append(artifactPath(project.getArtifact(), platform));
             //}
         }
 
