@@ -86,9 +86,9 @@ public class DocumentHelper {
     public static Element[] getElementChildren(Element element, String name) {
         Element[] elements = getElementChildren(element);
         List<Element> taggedElements = new ArrayList<Element>();
-        for (int i = 0; i < elements.length; i++) {
-            if (elements[i].getLocalName().equals(name) && elements[i].getNamespaceURI() == null) {
-                taggedElements.add(elements[i]);
+        for (Element element1 : elements) {
+            if (element1.getLocalName().equals(name) && element1.getNamespaceURI() == null) {
+                taggedElements.add(element1);
             }
         }
         return taggedElements.toArray(new Element[0]);

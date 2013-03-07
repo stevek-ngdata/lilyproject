@@ -257,12 +257,12 @@ public class LocationUtils {
 
         List currentFinders = finders; // Keep the current list
         int size = currentFinders.size();
-        for (int i = 0; i < size; i++) {
-            WeakReference ref = (WeakReference)currentFinders.get(i);
+        for (Object currentFinder : currentFinders) {
+            WeakReference ref = (WeakReference)currentFinder;
             LocationFinder finder = (LocationFinder)ref.get();
             if (finder == null) {
                 // This finder was garbage collected: update finders
-                synchronized(LocationFinder.class) {
+                synchronized (LocationFinder.class) {
                     // Update a clone of the current list to avoid breaking current iterations
                     List newFinders = new ArrayList(finders);
                     newFinders.remove(ref);

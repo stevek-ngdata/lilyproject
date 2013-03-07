@@ -47,8 +47,7 @@ public class LicenseCheck {
 
     private void checkRecursive(File directory) throws Exception {
         File[] files = directory.listFiles();
-        for (int i = 0; i < files.length; i++) {
-            File file = files[i];
+        for (File file : files) {
             if (!exclusions.contains(file.getName())) {
                 if (file.isDirectory()) {
                     checkRecursive(file);

@@ -154,8 +154,8 @@ public class LocatedException extends Exception
 
         // Produce a Java-like stacktrace with locations
         StringBuffer buf = message == null ? new StringBuffer() : new StringBuffer(message);
-        for (int i = 0; i < locations.size(); i++) {
-            buf.append("\n\tat ").append(LocationUtils.toString((Location)locations.get(i)));
+        for (Object location : locations) {
+            buf.append("\n\tat ").append(LocationUtils.toString((Location)location));
         }
         return buf.toString();
     }

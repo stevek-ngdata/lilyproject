@@ -214,8 +214,7 @@ public class IdGeneratorImplTest {
     public void testReservedCharacterEscapingInUserId() {
         IdGenerator idGenerator = new IdGeneratorImpl();
         char[] chars = new char[] {'.', ',', '=' };
-        for (int i = 0; i < chars.length; i++) {
-            char c = chars[i];
+        for (char c : chars) {
             RecordId recordId = idGenerator.newRecordId("hello" + c + "world");
 
             String idString = recordId.toString();
@@ -236,8 +235,7 @@ public class IdGeneratorImplTest {
     @Test
     public void testReservedCharsInUserIdFromString() {
         char[] chars = new char[] {'.', ',', '=' };
-        for (int i = 0; i < chars.length; i++) {
-            char c = chars[i];
+        for (char c : chars) {
             testNotAllowedChar(c);
             testEscapedNotAllowedChar(c);
         }
