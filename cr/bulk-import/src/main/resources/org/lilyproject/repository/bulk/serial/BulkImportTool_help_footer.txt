@@ -15,7 +15,7 @@ content similar to the following:
 
 The tool can then be started as follows:
 
-    lily-bulk-import --pyfile /path/to/mapping.py /path/to/input/file.txt
+    lily-bulk-import --pyfile mapping.py --symbol map inputfile.txt
 
 
 For more information on the mappingContext argument in the Python mapper, see 
