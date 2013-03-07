@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<indexer>
+<indexer xmlns:ns="org.lilyproject.indexer.test">
 
   <records>
     <record matchNamespace="ns" matchName="ComplexConfiguration" matchVariant="*" vtags="last"/>
