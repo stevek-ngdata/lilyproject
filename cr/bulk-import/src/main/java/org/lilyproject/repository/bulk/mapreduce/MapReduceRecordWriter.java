@@ -54,4 +54,9 @@ public class MapReduceRecordWriter implements RecordWriter {
         context.write(rowKey, put);
     }
     
+    @Override
+    public void close() {
+        // No-op
+    }
+    
 }

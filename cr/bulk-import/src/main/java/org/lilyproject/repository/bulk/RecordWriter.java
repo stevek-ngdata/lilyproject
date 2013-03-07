@@ -30,5 +30,10 @@ public interface RecordWriter {
      */
     void write(Record record) throws IOException, InterruptedException;
     
+    /**
+     * Close the record writer.
+     */
+    void close();
+    
 
 }

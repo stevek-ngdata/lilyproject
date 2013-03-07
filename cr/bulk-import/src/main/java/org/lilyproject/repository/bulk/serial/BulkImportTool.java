@@ -19,17 +19,19 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-
-import org.apache.commons.cli.CommandLine;
-
-import org.lilyproject.repository.bulk.AbstractBulkImportCliTool;
+import java.util.List;
 
 import com.google.common.base.Charsets;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lilyproject.repository.bulk.AbstractBulkImportCliTool;
 import org.lilyproject.repository.bulk.BulkIngester;
 import org.lilyproject.repository.bulk.LineMapper;
 import org.lilyproject.repository.bulk.LineMappingContext;
+import org.lilyproject.repository.bulk.RecordWriter;
 import org.lilyproject.repository.bulk.jython.JythonLineMapper;
 import org.python.google.common.io.Files;
 
@@ -41,9 +43,34 @@ public class BulkImportTool extends AbstractBulkImportCliTool {
     
     private final Log log = LogFactory.getLog(BulkImportTool.class);
 
-    public static void main(String[] args) throws IOException {
-        new BulkImportTool().start(args);
+    private Option dryRunOption;
+    
+    private boolean dryRun;
+    
+    @Override
+    public List<Option> getOptions() {
+        dryRunOption = OptionBuilder
+                            .withDescription("Only print out the created records without writing them to Lily")
+                            .withLongOpt("dryrun")
+                            .create('d');
+        
+        List<Option> options = super.getOptions();
+        options.add(dryRunOption);
+        return options;
     }
+    
+    
+    @Override
+    protected int processOptions(CommandLine cmd) throws Exception {
+        int status = super.processOptions(cmd);
+        if (status != 0) {
+            return status;
+        }
+        
+        dryRun = cmd.hasOption(dryRunOption.getOpt());
+        return 0;
+    }
+   
 
     @Override
     protected String getCmdName() {
@@ -58,7 +85,12 @@ public class BulkImportTool extends AbstractBulkImportCliTool {
         
         LineMapper lineMapper = new JythonLineMapper(Files.toString(new File(pythonMapperPath), Charsets.UTF_8),
                 pythonSymbol);
-        ThreadedRecordWriter recordWriter = new ThreadedRecordWriter(zkConnectionString, 10, outputTable);
+        RecordWriter recordWriter;
+        if (dryRun) {
+            recordWriter = new DebugRecordWriter(System.out);
+        } else {
+            recordWriter = new ThreadedRecordWriter(zkConnectionString, 10, outputTable);
+        }
         LineMappingContext mappingContext = new LineMappingContext(bulkIngester, recordWriter);
         
         long start = System.currentTimeMillis();
@@ -77,4 +109,8 @@ public class BulkImportTool extends AbstractBulkImportCliTool {
         return 0;
     }
 
+    public static void main(String[] args) throws IOException {
+        new BulkImportTool().start(args);
+    }
+    
 }

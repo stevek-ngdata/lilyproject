@@ -85,6 +85,7 @@ public class ThreadedRecordWriter implements RecordWriter {
             }});
     }
     
+    @Override
     public void close() {
         this.executor.shutdown();
         boolean successfulFinish;
