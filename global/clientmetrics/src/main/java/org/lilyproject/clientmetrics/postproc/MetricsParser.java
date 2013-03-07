@@ -108,7 +108,6 @@ public class MetricsParser {
 
                 // read all heading section lines
                 while ((line = reader.readLine()) != null && line.startsWith("| ")) {
-                    ;
                 }
 
                 // read the title lines (we are already positioned at the first one)

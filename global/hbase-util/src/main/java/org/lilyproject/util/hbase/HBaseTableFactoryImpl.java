@@ -98,7 +98,7 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
             while (!admin.isTableAvailable(tableDescriptor.getName())) {
                 if (System.currentTimeMillis() - startWait > timeoutMillis) {
                     throw new IOException("Timed out waiting for table " + Bytes.toStringBinary(tableDescriptor.getName()));
-                };
+                }
                 Thread.sleep(200);
             }
 

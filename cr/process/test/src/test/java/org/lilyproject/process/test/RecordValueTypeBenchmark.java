@@ -40,7 +40,8 @@ public class RecordValueTypeBenchmark {
     private int nrOfFields = 20;
     private int nrOfRecords = 10000;
     private int nrOfTimes = 10;
-    private enum Type {MIXED, SEQ, RVT, JSON};
+    private enum Type {MIXED, SEQ, RVT, JSON}
+
     private Type type = Type.MIXED;
 
     // durations

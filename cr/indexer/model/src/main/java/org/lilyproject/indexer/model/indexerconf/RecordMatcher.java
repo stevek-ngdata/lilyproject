@@ -35,7 +35,7 @@ import org.lilyproject.util.repo.RecordUtil;
  * Matches records based on certain conditions, i.e. a predicate on record objects.
  */
 public class RecordMatcher {
-    public enum FieldComparator {EQUAL, NOT_EQUAL};
+    public enum FieldComparator {EQUAL, NOT_EQUAL}
 
     private WildcardPattern recordTypeNamespace;
     private WildcardPattern recordTypeName;

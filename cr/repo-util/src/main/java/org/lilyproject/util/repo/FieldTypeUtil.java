@@ -50,7 +50,7 @@ public class FieldTypeUtil {
                 schemaIds.add(t.getId());
             }
             result.put(scope, schemaIds);
-        };
+        }
 
         return result;
     }
@@ -65,7 +65,7 @@ public class FieldTypeUtil {
                 schemaIds.add(t.getName());
             }
             result.put(scope, schemaIds);
-        };
+        }
 
         return result;
     }

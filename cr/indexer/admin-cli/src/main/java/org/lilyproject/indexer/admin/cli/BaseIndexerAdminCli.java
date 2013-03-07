@@ -98,7 +98,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected Boolean enableDerefMap;
 
     protected enum SolrMode {
-        CLASSIC, CLOUD;
+        CLASSIC, CLOUD
     }
 
     public BaseIndexerAdminCli() {

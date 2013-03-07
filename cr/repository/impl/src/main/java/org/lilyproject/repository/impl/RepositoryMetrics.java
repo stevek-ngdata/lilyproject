@@ -34,8 +34,10 @@ import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 
 public class RepositoryMetrics implements Updater {
-    public enum Action{CREATE, READ, UPDATE, DELETE};
-    public enum HBaseAction{PUT, GET, LOCK, UNLOCK};
+    public enum Action{CREATE, READ, UPDATE, DELETE}
+
+    public enum HBaseAction{PUT, GET, LOCK, UNLOCK}
+
     private final MetricsRegistry registry = new MetricsRegistry();
     private final MetricsRecord metricsRecord;
     private final MetricsContext context;

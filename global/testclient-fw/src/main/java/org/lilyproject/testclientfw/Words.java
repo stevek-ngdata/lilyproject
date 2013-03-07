@@ -32,7 +32,7 @@ public class Words {
             this.file = file;
             this.estimatedSize = estimatedSize;
         }
-    };
+    }
 
     private static Map<WordList, List<String>> WORDS = new EnumMap<WordList, List<String>>(WordList.class);
 
