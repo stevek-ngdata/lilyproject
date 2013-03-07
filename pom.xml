@@ -78,6 +78,7 @@
   </scm>
 
   <modules>
+    <module>build-tools</module>
     <module>runtime</module>
 
     <module>cr/repository</module>
@@ -1092,6 +1093,35 @@
       </extension>
     </extensions>
 
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>2.9.1</version>
+        <configuration>
+          <configLocation>org/lilyproject/checkstyle.xml</configLocation>
+          <headerLocation>org/lilyproject/header.txt</headerLocation>
+          <suppressionsLocation>org/lilyproject/checkstyle-suppressions.xml</suppressionsLocation>
+          <aggregate>true</aggregate>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.lilyproject</groupId>
+            <artifactId>lily-build-tools</artifactId>
+            <version>${project.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>2.7.1</version>
+        <configuration>
+          <aggregate>true</aggregate>
+        </configuration>
+      </plugin>
+    </plugins>
+
     <pluginManagement>
       <plugins>
         <plugin>
@@ -1262,17 +1292,27 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <id>javadoc</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <reports>
+        <report>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.8</version>
+            <configuration>
+            </configuration>
+          </plugin>
+        </report>
+      </reports>
+    </profile>
   </profiles>
 
   <reporting>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.8</version>
-        <configuration>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-project-info-reports-plugin</artifactId>
@@ -1301,6 +1341,37 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jxr-plugin</artifactId>
         <version>2.3</version>
+      </plugin>
+       <plugin>
+         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>2.9.1</version>
+        <configuration>
+          <configLocation>org/lilyproject/checkstyle.xml</configLocation>
+          <headerLocation>org/lilyproject/header.txt</headerLocation>
+          <suppressionsLocation>org/lilyproject/checkstyle-suppressions.xml</suppressionsLocation>
+          <aggregate>true</aggregate>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <version>2.5.2</version>
+        <configuration>
+          <!--
+            <aggregate>true</aggregate> does nothing; Findbugs doesn't support aggregate reports, see http://mojo.codehaus.org/findbugs-maven-plugin/faq.html; just keeping it here in case it ever makes a difference
+          -->
+          <aggregate>true</aggregate>
+        </configuration>
+       </plugin>
+       <plugin>
+         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>2.7.1</version>
+        <configuration>
+          <aggregate>true</aggregate>
+          <targetJdk>1.6</targetJdk>
+        </configuration>
       </plugin>
     </plugins>
   </reporting>
