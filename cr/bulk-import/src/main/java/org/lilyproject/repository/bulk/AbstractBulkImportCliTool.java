@@ -28,7 +28,6 @@ import org.lilyproject.util.Version;
  */
 public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
     
-    private Option inputPathArg;
     private Option pythonMapperPathArg;
     private Option pythonSymbolArg;
     private Option outputTableArg;
@@ -45,13 +44,8 @@ public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
     /** Repository table where output is to be written. */
     protected String outputTable;
     
+    
     public AbstractBulkImportCliTool() {
-        
-        inputPathArg = OptionBuilder
-                .withDescription("Input path")
-                .withLongOpt("input")
-                .hasArg()
-                .create('i');
 
         pythonMapperPathArg = OptionBuilder
                 .withDescription("Path to Python mapper file")
@@ -83,7 +77,6 @@ public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
     @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
-        options.add(inputPathArg);
         options.add(pythonMapperPathArg);
         options.add(pythonSymbolArg);
         options.add(outputTableArg);
@@ -97,12 +90,12 @@ public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
             return status;
         }
         
-        if (!cmd.hasOption(inputPathArg.getOpt())) {
-            System.err.println("No input path supplied");
+        if (cmd.getArgs().length == 0) {
+            System.err.println("No input file given");
             return 1;
-        } else {
-            inputPath = cmd.getOptionValue(inputPathArg.getOpt());
         }
+        
+        inputPath = cmd.getArgs()[0];
 
         if (!cmd.hasOption(pythonMapperPathArg.getOpt())) {
             System.err.println("No python mapper file supplied");

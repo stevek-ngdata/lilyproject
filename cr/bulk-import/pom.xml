@@ -55,6 +55,27 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-genscript-plugin</artifactId>
+        <configuration>
+          <scripts>
+            <script>
+              <basename>lily-bulk-import</basename>
+              <mainClass>org.lilyproject.repository.bulk.serial.BulkImportTool</mainClass>
+            </script>
+          </scripts>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>genscript</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 

@@ -1,0 +1,22 @@
+In order to use this tool, a Python mapping file must be supplied for
+converting text input lines into Lily records.
+
+For example, for a text file containing first name and last name values 
+separated by a pipe character, a Python mapping file could be created with
+content similar to the following:
+
+    def map(inputLine, mappingContext):
+        rec = mappingContext.newRecord()
+        rec.setRecordType(ctx.qn("{org.lilyproject}Person"))
+        firstName, lastName = inputLine.split(",")
+        rec.setField("{org.lilyproject}FirstName", firstName)
+        rec.setField("{org.lilyproject}LastName", lastName)
+        mappingContext.writeRecord(rec)
+
+The tool can then be started as follows:
+
+    lily-bulk-import --pyfile /path/to/mapping.py /path/to/input/file.txt
+
+
+For more information on the mappingContext argument in the Python mapper, see 
+the Javadoc for the org.lilyproject.repository.bulk.LineMappingContext class.
