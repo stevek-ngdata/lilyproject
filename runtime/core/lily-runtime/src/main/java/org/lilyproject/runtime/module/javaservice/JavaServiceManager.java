@@ -16,12 +16,12 @@
  */
 package org.lilyproject.runtime.module.javaservice;
 
-import org.lilyproject.util.ArgumentValidator;
-
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Map;
+
+import org.lilyproject.util.ArgumentValidator;
 
 /**
  * Manages the registry of Java services.

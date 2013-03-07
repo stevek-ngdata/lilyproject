@@ -15,16 +15,16 @@
  */
 package org.lilyproject.lilyservertestfw.integration;
 
-import org.junit.Test;
-import org.lilyproject.client.LilyClient;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.tools.import_.cli.JsonImport;
-
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import java.io.InputStream;
+
+import org.junit.Test;
+import org.lilyproject.client.LilyClient;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.tools.import_.cli.JsonImport;
 
 import static org.junit.Assert.assertEquals;
 

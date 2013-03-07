@@ -15,13 +15,13 @@
  */
 package org.lilyproject.client.integration;
 
-import org.junit.Test;
-import org.lilyproject.client.LilyClient;
-import org.lilyproject.util.io.Closer;
-
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+
+import org.junit.Test;
+import org.lilyproject.client.LilyClient;
+import org.lilyproject.util.io.Closer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;

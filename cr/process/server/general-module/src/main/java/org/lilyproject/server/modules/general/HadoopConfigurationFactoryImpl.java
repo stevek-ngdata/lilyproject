@@ -15,6 +15,8 @@
  */
 package org.lilyproject.server.modules.general;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -27,8 +29,6 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.util.io.Closer;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactory {
     private Conf hadoopConf;

@@ -15,13 +15,13 @@
  */
 package org.lilyproject.repository.api;
 
-import org.lilyproject.bytes.api.ByteArray;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.lilyproject.bytes.api.ByteArray;
 
 /**
  * Builder for {@link Metadata} objects.

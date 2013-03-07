@@ -16,14 +16,14 @@
  */
 package org.lilyproject.runtime.source;
 
-import org.lilyproject.runtime.rapi.ModuleSource;
-import org.lilyproject.runtime.rapi.Mode;
-import org.apache.commons.jci.monitor.FilesystemAlterationListener;
-
-import java.io.InputStream;
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+
+import org.apache.commons.jci.monitor.FilesystemAlterationListener;
+import org.lilyproject.runtime.rapi.Mode;
+import org.lilyproject.runtime.rapi.ModuleSource;
 
 public class SharedModuleSource implements ModuleSource {
     private ModuleSource delegate;

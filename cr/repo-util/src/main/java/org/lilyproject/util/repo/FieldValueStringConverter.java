@@ -15,18 +15,18 @@
  */
 package org.lilyproject.util.repo;
 
+import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.ValueType;
-
-import java.math.BigDecimal;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Defines conversion from/to string for a subset of the Lily {@link ValueType}s.

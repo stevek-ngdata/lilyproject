@@ -9,17 +9,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
-
-import org.lilyproject.repository.api.AbsoluteRecordId;
-
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
+import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 
 /**
  * Helper for the {@link org.lilyproject.indexer.derefmap.DerefMapHbaseImpl} to serialize/deserialize various elements

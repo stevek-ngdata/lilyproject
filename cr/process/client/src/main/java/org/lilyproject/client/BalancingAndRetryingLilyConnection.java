@@ -21,10 +21,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-import org.lilyproject.repository.impl.RecordFactoryImpl;
-
-import org.lilyproject.repository.api.RecordFactory;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.Indexer;
@@ -34,6 +30,7 @@ import org.lilyproject.repository.api.IOBlobException;
 import org.lilyproject.repository.api.IORecordException;
 import org.lilyproject.repository.api.IOTypeException;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.RetriesExhaustedBlobException;
@@ -41,6 +38,7 @@ import org.lilyproject.repository.api.RetriesExhaustedRecordException;
 import org.lilyproject.repository.api.RetriesExhaustedTypeException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
+import org.lilyproject.repository.impl.RecordFactoryImpl;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 
 /**

@@ -16,11 +16,15 @@
  */
 package org.lilyproject.runtime.test;
 
-import org.junit.Assert;
-import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
-import org.lilyproject.runtime.model.*;
-
 import java.io.File;
+
+import org.junit.Assert;
+import org.lilyproject.runtime.model.JavaServiceInjectByNameDefinition;
+import org.lilyproject.runtime.model.JavaServiceInjectByServiceDefinition;
+import org.lilyproject.runtime.model.LilyRuntimeModel;
+import org.lilyproject.runtime.model.ModuleDefinition;
+import org.lilyproject.runtime.model.ModuleSourceType;
+import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
 
 /**
  * Tests explicit wiring of Java services.

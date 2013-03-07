@@ -15,14 +15,14 @@
  */
 package org.lilyproject.tools.mavenplugin.lilyruntimedepresolver;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Set;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.plugin.MojoExecutionException;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Set;
 
 public class RepositoryWriter {
 

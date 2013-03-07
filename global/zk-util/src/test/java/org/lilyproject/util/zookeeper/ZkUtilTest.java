@@ -15,9 +15,6 @@
  */
 package org.lilyproject.util.zookeeper;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
@@ -30,6 +27,9 @@ import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.net.NetUtils;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class ZkUtilTest {
 

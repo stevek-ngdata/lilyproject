@@ -15,8 +15,6 @@
  */
 package org.lilyproject.util;
 
-import org.w3c.dom.Document;
-
 import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
@@ -28,6 +26,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import org.w3c.dom.Document;
 
 public class MavenUtil {
     public static File findLocalMavenRepository() throws IOException {

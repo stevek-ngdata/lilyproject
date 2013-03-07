@@ -15,11 +15,49 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.valuetype.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeBuilder;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
+import org.lilyproject.repository.impl.valuetype.BlobValueType;
+import org.lilyproject.repository.impl.valuetype.BooleanValueType;
+import org.lilyproject.repository.impl.valuetype.ByteArrayValueType;
+import org.lilyproject.repository.impl.valuetype.DateTimeValueType;
+import org.lilyproject.repository.impl.valuetype.DateValueType;
+import org.lilyproject.repository.impl.valuetype.DecimalValueType;
+import org.lilyproject.repository.impl.valuetype.DoubleValueType;
+import org.lilyproject.repository.impl.valuetype.IntegerValueType;
+import org.lilyproject.repository.impl.valuetype.LinkValueType;
+import org.lilyproject.repository.impl.valuetype.ListValueType;
+import org.lilyproject.repository.impl.valuetype.LongValueType;
+import org.lilyproject.repository.impl.valuetype.PathValueType;
+import org.lilyproject.repository.impl.valuetype.RecordValueType;
+import org.lilyproject.repository.impl.valuetype.StringValueType;
+import org.lilyproject.repository.impl.valuetype.UriValueType;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 

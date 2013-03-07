@@ -15,12 +15,10 @@
  */
 package org.lilyproject.process.test;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.util.List;
 
-import org.junit.Assert;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -33,6 +31,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
@@ -47,7 +46,7 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.test.TestHomeUtil;
 
-import com.google.common.collect.Lists;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This test verifies that pre-splitted record tables work correctly (for UUID-based record id's).

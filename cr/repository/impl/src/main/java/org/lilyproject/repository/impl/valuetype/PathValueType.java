@@ -15,11 +15,20 @@
  */
 package org.lilyproject.repository.impl.valuetype;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 import org.lilyproject.util.ArgumentValidator;
 
 public class PathValueType extends AbstractValueType implements ValueType {

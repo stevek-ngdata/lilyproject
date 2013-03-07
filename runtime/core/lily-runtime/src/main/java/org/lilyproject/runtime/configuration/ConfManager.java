@@ -16,10 +16,10 @@
  */
 package org.lilyproject.runtime.configuration;
 
-import org.lilyproject.runtime.rapi.ConfRegistry;
-import org.lilyproject.runtime.module.ModuleConfig;
-
 import java.util.List;
+
+import org.lilyproject.runtime.module.ModuleConfig;
+import org.lilyproject.runtime.rapi.ConfRegistry;
 
 /**
  * Provides configuration data, both for the core Lily Runtime as well

@@ -16,10 +16,10 @@
  */
 package org.lilyproject.runtime.conf.jxpath;
 
-import org.apache.commons.jxpath.ri.model.NodePointer;
-import org.apache.commons.jxpath.ri.*;
+import org.apache.commons.jxpath.ri.QName;
 import org.apache.commons.jxpath.ri.compiler.NodeTest;
 import org.apache.commons.jxpath.ri.compiler.NodeTypeTest;
+import org.apache.commons.jxpath.ri.model.NodePointer;
 
 public class ConfAttributePointer extends NodePointer {
     private ConfAttr attr;

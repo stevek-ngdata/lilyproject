@@ -15,9 +15,15 @@
  */
 package org.lilyproject.tools.recordrowvisualizer;
 
-import org.lilyproject.repository.api.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import java.util.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 
 public class Fields {
     Map<Long, Map<SchemaId, Object>> values = new HashMap<Long, Map<SchemaId, Object>>();

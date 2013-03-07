@@ -1,12 +1,12 @@
 package org.lilyproject.solrtestfw.test;
 
-import org.junit.Test;
-import org.lilyproject.solrtestfw.SolrDefinition;
-import org.lilyproject.solrtestfw.SolrProxy;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import org.junit.Test;
+import org.lilyproject.solrtestfw.SolrDefinition;
+import org.lilyproject.solrtestfw.SolrProxy;
 
 import static org.junit.Assert.fail;
 

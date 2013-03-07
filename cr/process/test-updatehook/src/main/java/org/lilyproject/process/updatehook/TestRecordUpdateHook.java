@@ -15,12 +15,16 @@
  */
 package org.lilyproject.process.updatehook;
 
+import javax.annotation.PreDestroy;
+
 import org.lilyproject.plugin.PluginRegistry;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.util.repo.RecordEvent;
-
-import javax.annotation.PreDestroy;
 
 public class TestRecordUpdateHook implements RecordUpdateHook {
     private PluginRegistry pluginRegistry;

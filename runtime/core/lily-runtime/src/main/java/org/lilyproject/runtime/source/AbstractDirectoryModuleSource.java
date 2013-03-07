@@ -16,20 +16,24 @@
  */
 package org.lilyproject.runtime.source;
 
-import org.lilyproject.runtime.LilyRTException;
-import org.lilyproject.runtime.rapi.ModuleSource;
-import org.lilyproject.runtime.rapi.Mode;
-import org.apache.commons.jci.monitor.FilesystemAlterationMonitor;
-import org.apache.commons.jci.monitor.FilesystemAlterationListener;
-
-import java.io.*;
-import java.util.Collection;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.regex.Pattern;
-import java.net.URL;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import org.apache.commons.jci.monitor.FilesystemAlterationListener;
+import org.apache.commons.jci.monitor.FilesystemAlterationMonitor;
+import org.lilyproject.runtime.LilyRTException;
+import org.lilyproject.runtime.rapi.Mode;
+import org.lilyproject.runtime.rapi.ModuleSource;
 
 public abstract class AbstractDirectoryModuleSource implements ModuleSource {
     private File dir;

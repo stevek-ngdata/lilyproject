@@ -15,15 +15,6 @@
  */
 package org.lilyproject.rest;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-
-import java.net.URI;
-import java.util.List;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -35,6 +26,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.List;
 
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -46,6 +39,12 @@ import org.lilyproject.tools.import_.core.ImportMode;
 import org.lilyproject.tools.import_.core.ImportResult;
 import org.lilyproject.tools.import_.core.ImportResultType;
 import org.lilyproject.tools.import_.core.RecordImport;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 
 @Path("record/{id}")
 public class RecordResource extends RepositoryEnabled {

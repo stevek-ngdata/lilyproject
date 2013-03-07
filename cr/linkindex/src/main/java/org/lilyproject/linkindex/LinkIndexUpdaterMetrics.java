@@ -15,9 +15,8 @@
  */
 package org.lilyproject.linkindex;
 
-import java.util.EnumMap;
-
 import javax.management.ObjectName;
+import java.util.EnumMap;
 
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;

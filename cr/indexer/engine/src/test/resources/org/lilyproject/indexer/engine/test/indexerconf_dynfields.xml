@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<indexer xmlns:dyn1="org.lilyproject.indexer.test.dyn1" xmlns:dyn2="org.lilyproject.indexer.test.dyn2">
+<indexer xmlns:dyn2="org.lilyproject.indexer.test.dyn2">
 
   <records>
     <record matchNamespace="dyn1" matchName="RecordType" matchVariant="*" vtags="last"/>

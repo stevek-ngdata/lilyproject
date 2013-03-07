@@ -15,22 +15,28 @@
  */
 package org.lilyproject.tools.docs;
 
+import java.io.InputStream;
+import java.util.List;
+import java.util.Locale;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.util.xml.DocumentHelper;
 import org.lilyproject.util.xml.XPathUtils;
-import org.outerj.daisy.repository.*;
+import org.outerj.daisy.repository.Credentials;
 import org.outerj.daisy.repository.Document;
+import org.outerj.daisy.repository.Part;
+import org.outerj.daisy.repository.Repository;
+import org.outerj.daisy.repository.RepositoryManager;
+import org.outerj.daisy.repository.VariantKey;
+import org.outerj.daisy.repository.Version;
 import org.outerj.daisy.repository.clientimpl.RemoteRepositoryManager;
 import org.outerj.daisy.repository.query.QueryManager;
 import org.outerj.daisy.repository.schema.RepositorySchema;
-import org.w3c.dom.*;
-
-import java.io.InputStream;
-import java.util.List;
-import java.util.Locale;
+import org.w3c.dom.Attr;
+import org.w3c.dom.NodeList;
 
 /**
  * Simple tool to output all links that occur in the Lily documentation.

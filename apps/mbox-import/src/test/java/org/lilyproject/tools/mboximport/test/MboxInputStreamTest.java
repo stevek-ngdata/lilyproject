@@ -15,11 +15,11 @@
  */
 package org.lilyproject.tools.mboximport.test;
 
+import java.io.ByteArrayInputStream;
+
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import org.lilyproject.tools.mboximport.MboxInputStream;
-
-import java.io.ByteArrayInputStream;
 
 import static org.junit.Assert.assertEquals;
 

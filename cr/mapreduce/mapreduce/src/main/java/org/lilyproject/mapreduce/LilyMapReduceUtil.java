@@ -18,9 +18,6 @@ package org.lilyproject.mapreduce;
 import java.util.List;
 
 import com.google.common.base.Joiner;
-
-import com.google.common.collect.Sets;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.codehaus.jackson.JsonNode;

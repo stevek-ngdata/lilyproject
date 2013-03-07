@@ -15,11 +15,6 @@
  */
 package org.lilyproject.rest.providers;
 
-import org.apache.commons.io.IOUtils;
-import org.lilyproject.repository.api.BlobAccess;
-import org.lilyproject.repository.api.BlobException;
-import org.lilyproject.util.io.Closer;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -30,6 +25,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+
+import org.apache.commons.io.IOUtils;
+import org.lilyproject.repository.api.BlobAccess;
+import org.lilyproject.repository.api.BlobException;
+import org.lilyproject.util.io.Closer;
 
 @Provider
 public class BlobAccessBodyWriter implements MessageBodyWriter<BlobAccess> {

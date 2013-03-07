@@ -16,16 +16,16 @@
  */
 package org.lilyproject.runtime.tools.deployrepo;
 
-import org.w3c.dom.Document;
-
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPathFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
+
+import org.w3c.dom.Document;
 
 public class DeployRepo {
     public static void main(String[] args) throws Exception {

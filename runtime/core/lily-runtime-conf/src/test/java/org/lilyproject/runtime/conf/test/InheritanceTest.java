@@ -18,8 +18,8 @@ package org.lilyproject.runtime.conf.test;
 
 import junit.framework.TestCase;
 import org.apache.commons.jxpath.JXPathContext;
-import org.lilyproject.runtime.conf.XmlConfBuilder;
 import org.lilyproject.runtime.conf.ConfImpl;
+import org.lilyproject.runtime.conf.XmlConfBuilder;
 
 public class InheritanceTest extends TestCase {
     public void testInheritance1() throws Exception {

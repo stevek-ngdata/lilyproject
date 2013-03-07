@@ -15,6 +15,10 @@
  */
 package org.lilyproject.mapreduce;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import org.apache.hadoop.io.BinaryComparable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
@@ -22,10 +26,6 @@ import org.apache.hadoop.io.WritableUtils;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 
 /**
  * A Hadoop WritableComparable for Lily RecordId's.

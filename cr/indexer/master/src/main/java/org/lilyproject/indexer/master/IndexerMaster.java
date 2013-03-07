@@ -15,9 +15,8 @@
  */
 package org.lilyproject.indexer.master;
 
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
-
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -29,9 +28,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 import com.ngdata.sep.SepModel;
 import org.apache.commons.logging.Log;
@@ -70,6 +66,9 @@ import org.lilyproject.util.zookeeper.LeaderElection;
 import org.lilyproject.util.zookeeper.LeaderElectionCallback;
 import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
 
 
 /**

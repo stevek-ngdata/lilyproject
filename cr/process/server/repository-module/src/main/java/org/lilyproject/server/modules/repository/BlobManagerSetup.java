@@ -15,12 +15,11 @@
  */
 package org.lilyproject.server.modules.repository;
 
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.annotation.PreDestroy;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;

@@ -15,12 +15,11 @@
  */
 package org.lilyproject.repository.api;
 
-import org.lilyproject.util.ArgumentValidator;
-
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import org.lilyproject.util.ArgumentValidator;
 
 /**
  * Specifies what fields to return in a Record object.

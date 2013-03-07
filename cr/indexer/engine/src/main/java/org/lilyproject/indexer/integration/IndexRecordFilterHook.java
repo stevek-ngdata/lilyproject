@@ -15,24 +15,27 @@
  */
 package org.lilyproject.indexer.integration;
 
+import javax.annotation.PreDestroy;
+import java.util.Collection;
+import java.util.Set;
+
+import com.google.common.collect.Sets;
+import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
 import org.lilyproject.indexer.model.util.IndexInfo;
 import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.plugin.PluginRegistry;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.util.repo.RecordEvent;
-
-import javax.annotation.PreDestroy;
-
-import com.google.common.collect.Sets;
-
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
-
-import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
-import org.lilyproject.repository.api.Record;
-
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * A record update hook that adds information to the RecordEvent needed to evaluate the

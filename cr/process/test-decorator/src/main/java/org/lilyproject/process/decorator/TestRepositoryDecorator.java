@@ -15,14 +15,14 @@
  */
 package org.lilyproject.process.decorator;
 
+import javax.annotation.PreDestroy;
+
 import org.lilyproject.plugin.PluginRegistry;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
 import org.lilyproject.repository.spi.RepositoryDecorator;
-
-import javax.annotation.PreDestroy;
 
 public class TestRepositoryDecorator extends BaseRepositoryDecorator {
     private PluginRegistry pluginRegistry;

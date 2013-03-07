@@ -16,15 +16,21 @@
  */
 package org.lilyproject.runtime.configuration;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.runtime.conf.XmlConfBuilder;
 import org.lilyproject.runtime.conf.ConfImpl;
+import org.lilyproject.runtime.conf.XmlConfBuilder;
 import org.lilyproject.util.io.IOUtils;
-
-import java.io.InputStream;
-import java.io.IOException;
-import java.util.*;
 
 public abstract class ConfSource {
     private final String location;

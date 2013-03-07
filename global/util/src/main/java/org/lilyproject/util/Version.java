@@ -15,11 +15,11 @@
  */
 package org.lilyproject.util;
 
-import org.lilyproject.util.io.Closer;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+
+import org.lilyproject.util.io.Closer;
 
 public class Version {
     public static String readVersion(String groupId, String artifactId) {

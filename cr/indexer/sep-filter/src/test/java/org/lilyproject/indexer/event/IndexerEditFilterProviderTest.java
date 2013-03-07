@@ -15,13 +15,13 @@
  */
 package org.lilyproject.indexer.event;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.ngdata.sep.WALEditFilter;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class IndexerEditFilterProviderTest {
 

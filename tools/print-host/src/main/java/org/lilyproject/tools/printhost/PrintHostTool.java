@@ -15,15 +15,15 @@
  */
 package org.lilyproject.tools.printhost;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.util.Version;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.List;
 
 public class PrintHostTool extends BaseCliTool {
     protected Option nameserverOption;

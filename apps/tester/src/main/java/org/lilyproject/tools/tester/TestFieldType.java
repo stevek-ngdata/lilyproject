@@ -18,18 +18,22 @@ package org.lilyproject.tools.tester;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Random;
-
-import javax.naming.OperationNotSupportedException;
 
 import org.codehaus.jackson.JsonNode;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.lilyproject.bytes.api.ByteArray;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.testclientfw.Words;
-import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.util.json.JsonUtil;
 
 public class TestFieldType {

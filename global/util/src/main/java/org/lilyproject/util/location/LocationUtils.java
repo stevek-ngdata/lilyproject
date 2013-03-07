@@ -19,12 +19,11 @@
  */
 package org.lilyproject.util.location;
 
+import javax.xml.transform.SourceLocator;
+import javax.xml.transform.TransformerException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.xml.transform.SourceLocator;
-import javax.xml.transform.TransformerException;
 
 import org.xml.sax.Locator;
 import org.xml.sax.SAXParseException;

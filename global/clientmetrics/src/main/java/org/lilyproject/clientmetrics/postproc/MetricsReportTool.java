@@ -15,6 +15,24 @@
  */
 package org.lilyproject.clientmetrics.postproc;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.text.Collator;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -24,14 +42,6 @@ import org.joda.time.format.DateTimeFormatter;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.util.ConsoleUtil;
 import org.lilyproject.util.Version;
-
-import java.io.*;
-import java.text.Collator;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Makes a nice report with graphs based on a plain metrics output file.

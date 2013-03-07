@@ -16,15 +16,15 @@
  */
 package org.lilyproject.runtime.conf.test;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import junit.framework.TestCase;
 import org.apache.commons.jxpath.JXPathContext;
 import org.apache.commons.jxpath.Pointer;
 import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.runtime.conf.XmlConfBuilder;
-
-import java.util.Iterator;
-import java.util.ArrayList;
-import java.util.List;
 
 public class JXPathTest extends TestCase {
     public void testIt() throws Exception {

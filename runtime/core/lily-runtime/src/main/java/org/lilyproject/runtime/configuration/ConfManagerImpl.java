@@ -16,13 +16,19 @@
  */
 package org.lilyproject.runtime.configuration;
 
-import org.lilyproject.runtime.rapi.ConfRegistry;
-import org.lilyproject.runtime.module.ModuleConfig;
-import org.lilyproject.runtime.conf.Conf;
-
-import java.util.*;
-import java.util.concurrent.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.lilyproject.runtime.conf.Conf;
+import org.lilyproject.runtime.module.ModuleConfig;
+import org.lilyproject.runtime.rapi.ConfRegistry;
 
 public class ConfManagerImpl implements ConfManager {
     private List<File> configLocations;

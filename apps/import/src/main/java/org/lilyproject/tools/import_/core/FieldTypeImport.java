@@ -15,7 +15,14 @@
  */
 package org.lilyproject.tools.import_.core;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeExistsException;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 
 public class FieldTypeImport {
 

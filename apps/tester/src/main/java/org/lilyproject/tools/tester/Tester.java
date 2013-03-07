@@ -16,7 +16,6 @@
 package org.lilyproject.tools.tester;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -33,7 +32,6 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.zookeeper.KeeperException;
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.node.ObjectNode;

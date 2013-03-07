@@ -15,11 +15,18 @@
  */
 package org.lilyproject.clientmetrics;
 
-import org.joda.time.DateTime;
-
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
+
+import org.joda.time.DateTime;
 
 /**
  * Simple system for collecting metrics in client/test applications.

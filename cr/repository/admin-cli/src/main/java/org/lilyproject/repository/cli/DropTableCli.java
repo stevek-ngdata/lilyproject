@@ -15,11 +15,7 @@
  */
 package org.lilyproject.repository.cli;
 
-import java.util.List;
-
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.repository.api.RepositoryTableManager;
 
 public class DropTableCli extends BaseTableCliTool {

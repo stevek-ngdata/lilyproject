@@ -16,13 +16,15 @@
  */
 package org.lilyproject.runtime.test;
 
-import org.junit.Assert;
-import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
-import org.lilyproject.runtime.model.*;
-import org.lilyproject.runtime.rapi.Mode;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-
 import java.io.File;
+
+import org.junit.Assert;
+import org.lilyproject.runtime.model.LilyRuntimeModel;
+import org.lilyproject.runtime.model.ModuleDefinition;
+import org.lilyproject.runtime.model.ModuleSourceType;
+import org.lilyproject.runtime.rapi.Mode;
+import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 
 /**
  * Test case to check that different spring configurations can be used

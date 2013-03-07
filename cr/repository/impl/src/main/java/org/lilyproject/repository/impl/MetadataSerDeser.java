@@ -15,16 +15,16 @@
  */
 package org.lilyproject.repository.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.MetadataBuilder;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Serialize and deserialize a {@link Metadata} object. The various value types supported by Metadata use a

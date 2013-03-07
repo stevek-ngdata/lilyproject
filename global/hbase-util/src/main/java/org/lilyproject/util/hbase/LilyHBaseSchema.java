@@ -18,7 +18,6 @@ package org.lilyproject.util.hbase;
 import java.io.IOException;
 
 import com.google.common.annotations.VisibleForTesting;
-
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;

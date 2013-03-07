@@ -15,10 +15,6 @@
  */
 package org.lilyproject.linkindex;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,6 +41,10 @@ import org.lilyproject.util.repo.FieldFilter;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
+
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
 
 // TODO think more about error processing:
 //      Some kinds of errors might be temporary in nature and be solved by retrying after some time.

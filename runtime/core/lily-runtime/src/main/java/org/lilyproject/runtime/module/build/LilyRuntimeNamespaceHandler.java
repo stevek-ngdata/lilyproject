@@ -16,26 +16,26 @@
  */
 package org.lilyproject.runtime.module.build;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.jxpath.JXPathContext;
 import org.lilyproject.runtime.LilyRTException;
-import org.lilyproject.runtime.rapi.LilyRuntimeModule;
-import org.lilyproject.runtime.rapi_impl.LilyRuntimeModuleImpl;
-import org.springframework.beans.factory.xml.NamespaceHandler;
-import org.springframework.beans.factory.xml.ParserContext;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanDefinitionHolder;
-import org.springframework.beans.factory.config.ConstructorArgumentValues;
-import org.springframework.beans.factory.support.RootBeanDefinition;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
+import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.runtime.model.JavaServiceInjectDefinition;
 import org.lilyproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.runtime.rapi.ConfRegistry;
-import org.lilyproject.runtime.conf.Conf;
-import org.apache.commons.jxpath.JXPathContext;
-
-import java.util.Map;
-import java.util.HashMap;
+import org.lilyproject.runtime.rapi.LilyRuntimeModule;
+import org.lilyproject.runtime.rapi_impl.LilyRuntimeModuleImpl;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.config.ConstructorArgumentValues;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.beans.factory.xml.NamespaceHandler;
+import org.springframework.beans.factory.xml.ParserContext;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 public class LilyRuntimeNamespaceHandler implements NamespaceHandler {
 

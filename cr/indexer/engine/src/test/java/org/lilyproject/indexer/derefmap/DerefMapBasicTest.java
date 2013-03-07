@@ -1,9 +1,5 @@
 package org.lilyproject.indexer.derefmap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,6 +24,10 @@ import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This tests the functionality of the {@link DerefMapHbaseImpl}. Note there is also a DerefMapIndexTest which

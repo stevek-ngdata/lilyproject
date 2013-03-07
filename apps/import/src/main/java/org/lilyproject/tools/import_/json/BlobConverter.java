@@ -15,13 +15,13 @@
  */
 package org.lilyproject.tools.import_.json;
 
+import java.io.IOException;
+
 import net.iharder.Base64;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.util.json.JsonUtil;
-
-import java.io.IOException;
 
 public class BlobConverter {
     public static ObjectNode toJson(Blob blob) {

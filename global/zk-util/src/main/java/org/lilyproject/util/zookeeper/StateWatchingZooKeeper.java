@@ -15,18 +15,19 @@
  */
 package org.lilyproject.util.zookeeper;
 
+import javax.annotation.PreDestroy;
+import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import static org.apache.zookeeper.ZooKeeper.States.*;
 
-import javax.annotation.PreDestroy;
-
-import static org.apache.zookeeper.Watcher.Event.KeeperState.*;
-
-import java.io.IOException;
+import static org.apache.zookeeper.Watcher.Event.KeeperState.Disconnected;
+import static org.apache.zookeeper.Watcher.Event.KeeperState.Expired;
+import static org.apache.zookeeper.Watcher.Event.KeeperState.SyncConnected;
+import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
 
 /**
  * This implementation of {@link ZooKeeperItf} is meant for use as a global ZooKeeper handle

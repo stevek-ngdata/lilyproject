@@ -1,9 +1,5 @@
 package org.lilyproject.indexer.batchbuild.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -40,12 +36,15 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.VersionTag;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;

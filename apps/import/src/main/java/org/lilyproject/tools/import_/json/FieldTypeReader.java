@@ -15,8 +15,6 @@
  */
 package org.lilyproject.tools.import_.json;
 
-import static org.lilyproject.util.json.JsonUtil.getString;
-
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.FieldType;
@@ -29,6 +27,8 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.repo.VersionTag;
+
+import static org.lilyproject.util.json.JsonUtil.getString;
 
 public class FieldTypeReader implements EntityReader<FieldType> {
     public static EntityReader<FieldType> INSTANCE = new FieldTypeReader();

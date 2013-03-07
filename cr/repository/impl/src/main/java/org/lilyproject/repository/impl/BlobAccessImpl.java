@@ -15,12 +15,12 @@
  */
 package org.lilyproject.repository.impl;
 
+import java.io.InputStream;
+
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobAccess;
 import org.lilyproject.repository.api.BlobException;
 import org.lilyproject.repository.api.BlobStoreAccess;
-
-import java.io.InputStream;
 
 public class BlobAccessImpl implements BlobAccess {
     private Blob blob;

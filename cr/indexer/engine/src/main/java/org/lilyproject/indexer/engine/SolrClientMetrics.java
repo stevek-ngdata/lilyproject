@@ -15,6 +15,8 @@
  */
 package org.lilyproject.indexer.engine;
 
+import javax.management.ObjectName;
+
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
 import org.apache.hadoop.metrics.MetricsUtil;
@@ -24,8 +26,6 @@ import org.apache.hadoop.metrics.util.MetricsRegistry;
 import org.apache.hadoop.metrics.util.MetricsTimeVaryingLong;
 import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
-
-import javax.management.ObjectName;
 
 public class SolrClientMetrics implements Updater {
     private final String recordName;

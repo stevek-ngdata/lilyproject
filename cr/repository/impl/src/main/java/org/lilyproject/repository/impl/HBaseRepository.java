@@ -15,9 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_ID_QUALIFIERS;
-import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_VERSION_QUALIFIERS;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,7 +49,6 @@ import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
-import org.lilyproject.repository.impl.hbase.ContainsValueComparator;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobException;
 import org.lilyproject.repository.api.BlobManager;
@@ -85,6 +81,7 @@ import org.lilyproject.repository.api.TypeException;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
+import org.lilyproject.repository.impl.hbase.ContainsValueComparator;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.repository.spi.RecordUpdateHook;
@@ -96,6 +93,9 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.Type;
+
+import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_ID_QUALIFIERS;
+import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_VERSION_QUALIFIERS;
 
 /**
  * Repository implementation.

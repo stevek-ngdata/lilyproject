@@ -16,21 +16,27 @@
  */
 package org.lilyproject.runtime.source;
 
-import org.lilyproject.runtime.LilyRTException;
-import org.lilyproject.runtime.rapi.ModuleSource;
-import org.lilyproject.runtime.rapi.Mode;
-import org.apache.commons.jci.monitor.FilesystemAlterationListener;
-
-import java.io.InputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.jar.JarFile;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.net.URL;
-import java.net.MalformedURLException;
+
+import org.apache.commons.jci.monitor.FilesystemAlterationListener;
+import org.lilyproject.runtime.LilyRTException;
+import org.lilyproject.runtime.rapi.Mode;
+import org.lilyproject.runtime.rapi.ModuleSource;
 
 public class JarModuleSource implements ModuleSource {
     private File file;

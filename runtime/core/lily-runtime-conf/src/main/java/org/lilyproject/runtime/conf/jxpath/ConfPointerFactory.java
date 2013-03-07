@@ -16,13 +16,13 @@
  */
 package org.lilyproject.runtime.conf.jxpath;
 
+import java.util.Locale;
+
+import org.apache.commons.jxpath.ri.JXPathContextReferenceImpl;
+import org.apache.commons.jxpath.ri.QName;
 import org.apache.commons.jxpath.ri.model.NodePointer;
 import org.apache.commons.jxpath.ri.model.NodePointerFactory;
-import org.apache.commons.jxpath.ri.QName;
-import org.apache.commons.jxpath.ri.JXPathContextReferenceImpl;
 import org.lilyproject.runtime.conf.Conf;
-
-import java.util.Locale;
 
 public class ConfPointerFactory implements NodePointerFactory {
     private static boolean registered = false;

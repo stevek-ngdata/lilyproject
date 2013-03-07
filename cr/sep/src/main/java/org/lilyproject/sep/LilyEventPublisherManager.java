@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
-
 import com.ngdata.sep.EventPublisher;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.lilyproject.util.hbase.HBaseTableFactory;

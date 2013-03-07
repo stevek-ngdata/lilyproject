@@ -16,10 +16,10 @@
  */
 package org.lilyproject.runtime.conf;
 
-import org.lilyproject.util.location.Location;
-
 import java.util.List;
 import java.util.Map;
+
+import org.lilyproject.util.location.Location;
 
 /**
  * A Configuration node.

@@ -17,13 +17,12 @@ package org.lilyproject.bytes.impl.test;
 
 import java.util.Random;
 
+import junit.framework.TestCase;
 import org.junit.Assert;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
-
-import junit.framework.TestCase;
 
 /**
  * Test the encodings used in DataInputImpl and DataOutputImpl

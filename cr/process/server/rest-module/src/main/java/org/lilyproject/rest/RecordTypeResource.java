@@ -15,14 +15,6 @@
  */
 package org.lilyproject.rest;
 
-import org.apache.commons.lang.BooleanUtils;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.tools.import_.core.*;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-
-import java.net.URI;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -32,7 +24,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RecordTypeNotFoundException;
@@ -41,6 +35,9 @@ import org.lilyproject.tools.import_.core.ImportMode;
 import org.lilyproject.tools.import_.core.ImportResult;
 import org.lilyproject.tools.import_.core.ImportResultType;
 import org.lilyproject.tools.import_.core.RecordTypeImport;
+
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("schema/recordType/{name}")
 public class RecordTypeResource extends TypeManagerEnabled {

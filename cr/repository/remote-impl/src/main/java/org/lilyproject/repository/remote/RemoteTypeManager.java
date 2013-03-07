@@ -15,12 +15,11 @@
  */
 package org.lilyproject.repository.remote;
 
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
 import java.util.List;
-
-import javax.annotation.PreDestroy;
 
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;

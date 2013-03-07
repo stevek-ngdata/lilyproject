@@ -15,11 +15,11 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.util.Set;
+
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.Pair;
-
-import java.util.Set;
 
 public class DynamicIndexField {
     private WildcardPattern namespace;

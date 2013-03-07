@@ -15,17 +15,9 @@
  */
 package org.lilyproject.indexer.engine.test;
 
-import static junit.framework.Assert.assertNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.List;
-
-import org.lilyproject.repository.api.RecordException;
-
-import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -36,9 +28,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
+import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
@@ -46,6 +40,10 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
+import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class RecordMatcherTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();

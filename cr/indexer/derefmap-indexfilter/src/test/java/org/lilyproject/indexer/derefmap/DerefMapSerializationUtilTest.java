@@ -1,7 +1,5 @@
 package org.lilyproject.indexer.derefmap;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,6 +13,8 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *

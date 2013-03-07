@@ -15,6 +15,8 @@
  */
 package org.lilyproject.util.zookeeper.test;
 
+import java.io.File;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -27,9 +29,6 @@ import org.lilyproject.util.net.NetUtils;
 import org.lilyproject.util.zookeeper.ZkLock;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-
-import java.io.File;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;

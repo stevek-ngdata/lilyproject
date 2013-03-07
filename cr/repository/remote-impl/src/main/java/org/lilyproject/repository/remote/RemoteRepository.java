@@ -24,7 +24,6 @@ import java.util.Set;
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.avro.AvroGenericException;
 import org.lilyproject.avro.AvroLily;

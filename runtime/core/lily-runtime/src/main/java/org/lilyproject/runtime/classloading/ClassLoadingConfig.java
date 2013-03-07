@@ -16,11 +16,11 @@
  */
 package org.lilyproject.runtime.classloading;
 
+import java.net.MalformedURLException;
+import java.util.List;
+
 import org.lilyproject.runtime.repository.ArtifactNotFoundException;
 import org.lilyproject.runtime.repository.ArtifactRef;
-
-import java.util.List;
-import java.net.MalformedURLException;
 
 public interface ClassLoadingConfig {
     ClassLoader getClassLoader(ClassLoader parentClassLoader) throws MalformedURLException, ArtifactNotFoundException;

@@ -21,8 +21,6 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 
-import org.lilyproject.repository.api.RepositoryManager;
-
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobAccess;
 import org.lilyproject.repository.api.BlobStoreAccess;
@@ -39,6 +37,7 @@ import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 

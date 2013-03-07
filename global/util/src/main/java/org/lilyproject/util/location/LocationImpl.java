@@ -19,9 +19,9 @@
  */
 package org.lilyproject.util.location;
 
-import org.lilyproject.util.ObjectUtils;
-
 import java.io.Serializable;
+
+import org.lilyproject.util.ObjectUtils;
 
 
 /**

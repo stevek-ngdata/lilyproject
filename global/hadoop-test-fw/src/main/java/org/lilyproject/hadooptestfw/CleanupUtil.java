@@ -15,8 +15,6 @@
  */
 package org.lilyproject.hadooptestfw;
 
-import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -28,11 +26,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Maps;
-
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-
-import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest.CompactionState;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -46,12 +39,16 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest.CompactionState;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
+
+import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
 
 public class CleanupUtil {
     private Configuration conf;

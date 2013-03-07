@@ -15,11 +15,6 @@
  */
 package org.lilyproject.tools.import_.json;
 
-import static org.lilyproject.util.json.JsonUtil.getArray;
-import static org.lilyproject.util.json.JsonUtil.getBoolean;
-import static org.lilyproject.util.json.JsonUtil.getLong;
-import static org.lilyproject.util.json.JsonUtil.getString;
-
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
@@ -31,6 +26,11 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
+
+import static org.lilyproject.util.json.JsonUtil.getArray;
+import static org.lilyproject.util.json.JsonUtil.getBoolean;
+import static org.lilyproject.util.json.JsonUtil.getLong;
+import static org.lilyproject.util.json.JsonUtil.getString;
 
 public class RecordTypeReader implements EntityReader<RecordType> {
     public static EntityReader<RecordType> INSTANCE  = new RecordTypeReader();

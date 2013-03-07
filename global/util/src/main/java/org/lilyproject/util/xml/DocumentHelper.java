@@ -15,26 +15,30 @@
  */
 package org.lilyproject.util.xml;
 
-import org.w3c.dom.*;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.InputSource;
-import org.lilyproject.util.location.LocationAttributes;
-import org.lilyproject.util.location.LocatedException;
-import org.lilyproject.util.location.LocatedRuntimeException;
-import org.lilyproject.util.io.IOUtils;
-
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.TransformerConfigurationException;
-import java.io.InputStream;
-import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
+
+import org.lilyproject.util.io.IOUtils;
+import org.lilyproject.util.location.LocatedException;
+import org.lilyproject.util.location.LocatedRuntimeException;
+import org.lilyproject.util.location.LocationAttributes;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 
 /**
  * Utility methods for working with DOM documents.

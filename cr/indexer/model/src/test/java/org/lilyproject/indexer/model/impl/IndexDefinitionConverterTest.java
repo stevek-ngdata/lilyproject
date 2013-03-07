@@ -15,11 +15,11 @@
  */
 package org.lilyproject.indexer.model.impl;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.lilyproject.indexer.model.api.IndexDefinition;
+
+import static org.junit.Assert.assertEquals;
 
 public class IndexDefinitionConverterTest {
 

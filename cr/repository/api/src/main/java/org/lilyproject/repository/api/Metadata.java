@@ -15,11 +15,11 @@
  */
 package org.lilyproject.repository.api;
 
-import org.lilyproject.bytes.api.ByteArray;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+
+import org.lilyproject.bytes.api.ByteArray;
 
 /**
  * A set of free, typed key-value pairs.

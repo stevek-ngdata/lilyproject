@@ -15,11 +15,29 @@
  */
 package org.lilyproject.tools.mboximport;
 
-import org.apache.commons.cli.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.mime4j.codec.Base64InputStream;
 import org.apache.james.mime4j.codec.QuotedPrintableInputStream;
-import org.apache.james.mime4j.field.*;
+import org.apache.james.mime4j.field.AddressListField;
+import org.apache.james.mime4j.field.DefaultFieldParser;
+import org.apache.james.mime4j.field.FieldName;
+import org.apache.james.mime4j.field.MailboxField;
+import org.apache.james.mime4j.field.MailboxListField;
+import org.apache.james.mime4j.field.ParsedField;
 import org.apache.james.mime4j.field.address.Address;
 import org.apache.james.mime4j.field.address.AddressList;
 import org.apache.james.mime4j.field.address.Mailbox;
@@ -29,15 +47,15 @@ import org.apache.james.mime4j.parser.Field;
 import org.apache.james.mime4j.parser.MimeEntityConfig;
 import org.apache.james.mime4j.parser.MimeTokenStream;
 import org.apache.james.mime4j.util.MimeUtil;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.testclientfw.BaseRepositoryTestTool;
 import org.lilyproject.tools.import_.cli.JsonImport;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.io.Closer;
-
-import java.io.*;
-import java.util.*;
-import java.util.zip.GZIPInputStream;
 
 public class MboxImport extends BaseRepositoryTestTool {
 

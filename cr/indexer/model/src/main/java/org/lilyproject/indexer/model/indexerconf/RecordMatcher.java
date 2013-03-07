@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;

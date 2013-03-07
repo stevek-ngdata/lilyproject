@@ -15,8 +15,6 @@
  */
 package org.lilyproject.clientmetrics;
 
-import org.lilyproject.util.io.Closer;
-
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -25,6 +23,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.lilyproject.util.io.Closer;
 
 public class JmxConnections {
     private Map<String, JMXConnector> connections = new HashMap<String, JMXConnector>();

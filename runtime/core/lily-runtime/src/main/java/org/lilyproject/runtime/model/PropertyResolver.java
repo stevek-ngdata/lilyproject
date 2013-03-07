@@ -16,15 +16,15 @@
  */
 package org.lilyproject.runtime.model;
 
-import java.util.Properties;
-import java.util.Stack;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.net.URLEncoder;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.Properties;
+import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PropertyResolver  {
     public static String resolveProperties(String input) {

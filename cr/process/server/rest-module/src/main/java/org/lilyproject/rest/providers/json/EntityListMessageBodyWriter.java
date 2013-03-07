@@ -15,17 +15,6 @@
  */
 package org.lilyproject.rest.providers.json;
 
-import org.apache.commons.io.output.CloseShieldOutputStream;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.JsonNodeFactory;
-import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.rest.EntityList;
-import org.lilyproject.rest.RepositoryEnabled;
-import org.lilyproject.rest.ResourceException;
-import org.lilyproject.tools.import_.json.EntityWriter;
-import org.lilyproject.tools.import_.json.WriteOptions;
-import org.lilyproject.util.json.JsonFormat;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -37,6 +26,16 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+
+import org.apache.commons.io.output.CloseShieldOutputStream;
+import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.JsonNodeFactory;
+import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.rest.EntityList;
+import org.lilyproject.rest.RepositoryEnabled;
+import org.lilyproject.rest.ResourceException;
+import org.lilyproject.tools.import_.json.EntityWriter;
+import org.lilyproject.util.json.JsonFormat;
 
 @Provider
 public class EntityListMessageBodyWriter extends RepositoryEnabled implements MessageBodyWriter<EntityList> {

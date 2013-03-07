@@ -15,14 +15,13 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RecordTypeExistsException;
-import org.lilyproject.repository.api.TypeManager;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeExistsException;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;

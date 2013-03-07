@@ -21,7 +21,6 @@ import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
 import org.lilyproject.repository.impl.TableCreateDescriptorImpl;

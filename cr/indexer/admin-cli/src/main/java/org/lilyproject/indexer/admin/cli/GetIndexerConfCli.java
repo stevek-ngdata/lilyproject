@@ -15,13 +15,13 @@
  */
 package org.lilyproject.indexer.admin.cli;
 
+import java.io.OutputStream;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.io.IOUtils;
 import org.lilyproject.indexer.model.api.IndexDefinition;
-
-import java.io.OutputStream;
-import java.util.List;
 
 public class GetIndexerConfCli extends BaseIndexerAdminCli {
     @Override

@@ -18,16 +18,14 @@ package org.lilyproject.process.test;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.cache.Cache;
 import org.junit.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.rest.RecordScannerMapBuilder;
-
-import com.google.common.cache.Cache;
 
 public class RecordScannerMapTest {
     private Cache<String,RecordScanner> cache;

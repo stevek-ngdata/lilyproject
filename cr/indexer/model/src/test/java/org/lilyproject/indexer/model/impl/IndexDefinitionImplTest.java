@@ -15,12 +15,12 @@
  */
 package org.lilyproject.indexer.model.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class IndexDefinitionImplTest {
 

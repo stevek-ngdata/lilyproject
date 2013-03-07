@@ -16,19 +16,23 @@
  */
 package org.lilyproject.runtime.cli;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.text.DateFormat;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-
 import javax.management.JMException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -44,13 +48,13 @@ import org.lilyproject.runtime.LilyRTException;
 import org.lilyproject.runtime.LilyRuntime;
 import org.lilyproject.runtime.LilyRuntimeSettings;
 import org.lilyproject.runtime.configuration.ConfManagerImpl;
+import org.lilyproject.runtime.model.SourceLocations;
 import org.lilyproject.runtime.rapi.Mode;
-import org.lilyproject.runtime.model.*;
 import org.lilyproject.runtime.repository.ArtifactRepository;
 import org.lilyproject.runtime.repository.ChainedMaven2StyleArtifactRepository;
 import org.lilyproject.runtime.repository.Maven2StyleArtifactRepository;
-import org.lilyproject.util.xml.SimpleNamespaceContext;
 import org.lilyproject.util.io.IOUtils;
+import org.lilyproject.util.xml.SimpleNamespaceContext;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.w3c.dom.Document;
 

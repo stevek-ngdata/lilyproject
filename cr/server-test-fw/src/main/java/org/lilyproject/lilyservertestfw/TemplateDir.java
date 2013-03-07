@@ -15,12 +15,12 @@
  */
 package org.lilyproject.lilyservertestfw;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.commons.io.FileUtils;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
-
-import java.io.File;
-import java.io.IOException;
 
 public class TemplateDir {
     public static String HADOOP_DIR = "hadoop";

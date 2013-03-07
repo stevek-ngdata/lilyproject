@@ -16,9 +16,10 @@
  */
 package org.lilyproject.runtime.source;
 
-import org.apache.commons.jci.monitor.FilesystemAlterationMonitor;
+import java.io.File;
+import java.io.IOException;
 
-import java.io.*;
+import org.apache.commons.jci.monitor.FilesystemAlterationMonitor;
 
 public class MavenSourceDirectoryModuleSource extends AbstractDirectoryModuleSource {
     protected MavenSourceDirectoryModuleSource(File dir, FilesystemAlterationMonitor fam) throws IOException {

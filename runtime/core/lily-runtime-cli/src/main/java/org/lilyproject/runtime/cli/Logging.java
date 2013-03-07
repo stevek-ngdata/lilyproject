@@ -16,18 +16,24 @@
  */
 package org.lilyproject.runtime.cli;
 
-import org.apache.log4j.*;
-import org.apache.log4j.jmx.HierarchyDynamicMBean;
-import org.apache.log4j.spi.LoggerRepository;
-import org.apache.log4j.xml.DOMConfigurator;
-import org.lilyproject.runtime.LilyRuntime;
-
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Enumeration;
+
+import org.apache.log4j.Appender;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.jmx.HierarchyDynamicMBean;
+import org.apache.log4j.spi.LoggerRepository;
+import org.apache.log4j.xml.DOMConfigurator;
+import org.lilyproject.runtime.LilyRuntime;
 
 public class Logging {
 

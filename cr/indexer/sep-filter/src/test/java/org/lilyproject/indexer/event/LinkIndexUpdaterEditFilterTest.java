@@ -15,8 +15,6 @@
  */
 package org.lilyproject.indexer.event;
 
-import static org.junit.Assert.assertEquals;
-
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -24,6 +22,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+
+import static org.junit.Assert.assertEquals;
 
 public class LinkIndexUpdaterEditFilterTest {
 

@@ -15,13 +15,12 @@
  */
 package org.lilyproject.server.modules.repository;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.repository.api.BlobManager;

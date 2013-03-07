@@ -16,10 +16,13 @@
  */
 package org.lilyproject.runtime.test;
 
-import org.lilyproject.runtime.model.*;
-import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
-
 import java.io.File;
+
+import org.lilyproject.runtime.model.JavaServiceInjectByServiceDefinition;
+import org.lilyproject.runtime.model.LilyRuntimeModel;
+import org.lilyproject.runtime.model.ModuleDefinition;
+import org.lilyproject.runtime.model.ModuleSourceType;
+import org.lilyproject.runtime.testfw.AbstractRuntimeTest;
 
 /**
  * Tests having multiple instances of the same module.

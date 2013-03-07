@@ -16,20 +16,20 @@
  */
 package org.lilyproject.runtime.launcher;
 
-import org.w3c.dom.Document;
-
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.XMLConstants;
+import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.XMLConstants;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+
+import org.w3c.dom.Document;
 
 /**
  * This class is simply an indirect way to call the main method of the

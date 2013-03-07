@@ -16,9 +16,9 @@
  */
 package org.lilyproject.runtime.repository;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ChainedMaven2StyleArtifactRepository extends BaseArtifactRepository {
     List<ArtifactRepository> repositories = new ArrayList<ArtifactRepository>();

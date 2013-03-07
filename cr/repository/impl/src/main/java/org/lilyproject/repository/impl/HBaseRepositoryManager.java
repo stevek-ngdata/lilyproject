@@ -17,14 +17,13 @@ package org.lilyproject.repository.impl;
 
 import java.io.IOException;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 public class HBaseRepositoryManager extends AbstractRepositoryManager {
 

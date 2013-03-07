@@ -18,6 +18,7 @@ package org.lilyproject.indexer.model.indexerconf;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Map;
+
 import org.codehaus.jackson.JsonGenerator;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;

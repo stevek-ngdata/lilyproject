@@ -20,11 +20,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.lilyproject.repository.api.AbsoluteRecordId;
-
 import org.apache.commons.lang.StringEscapeUtils;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.impl.DataInputImpl;
+import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;

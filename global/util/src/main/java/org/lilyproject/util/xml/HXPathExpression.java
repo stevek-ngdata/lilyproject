@@ -15,15 +15,15 @@
  */
 package org.lilyproject.util.xml;
 
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathConstants;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * HXPath stands for "helpful" XPath, a small wrapper around

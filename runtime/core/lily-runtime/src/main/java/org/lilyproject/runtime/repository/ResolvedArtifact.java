@@ -16,8 +16,8 @@
  */
 package org.lilyproject.runtime.repository;
 
-import java.util.List;
 import java.io.File;
+import java.util.List;
 
 public class ResolvedArtifact {
     private File file;

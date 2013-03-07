@@ -15,11 +15,11 @@
  */
 package org.lilyproject.indexer.admin.cli;
 
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.lilyproject.indexer.model.api.IndexDefinition;
-
-import java.util.List;
 
 public class TouchIndexCli extends BaseIndexerAdminCli {
     @Override

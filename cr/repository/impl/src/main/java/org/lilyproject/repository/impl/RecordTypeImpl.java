@@ -15,10 +15,18 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.hadoop.hbase.util.Bytes.ByteArrayComparator;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.ArgumentValidator;
 
 public class RecordTypeImpl implements RecordType, Cloneable {

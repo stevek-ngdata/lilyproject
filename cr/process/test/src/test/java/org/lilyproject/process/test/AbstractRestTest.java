@@ -15,9 +15,6 @@
  */
 package org.lilyproject.process.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
@@ -36,6 +33,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.util.json.JsonFormat;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractRestTest {
     protected static String BASE_URI;

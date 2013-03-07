@@ -15,6 +15,14 @@
  */
 package org.lilyproject.tools.mavenplugin.lilyruntimedepresolver;
 
+import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -24,12 +32,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProjectBuilder;
 import org.lilyproject.runtime.model.SourceLocations;
-
-import javax.xml.xpath.XPathFactory;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  *

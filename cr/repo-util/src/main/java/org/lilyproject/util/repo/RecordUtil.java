@@ -1,13 +1,13 @@
 package org.lilyproject.util.repo;
 
+import java.util.Map;
+
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
-
-import java.util.Map;
 
 public class RecordUtil {
     /**

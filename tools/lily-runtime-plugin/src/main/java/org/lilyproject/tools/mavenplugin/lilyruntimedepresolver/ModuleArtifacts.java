@@ -15,10 +15,10 @@
  */
 package org.lilyproject.tools.mavenplugin.lilyruntimedepresolver;
 
-import org.apache.maven.artifact.Artifact;
-
 import java.util.List;
 import java.util.Set;
+
+import org.apache.maven.artifact.Artifact;
 
 public class ModuleArtifacts {
     public Set<Artifact> artifacts;

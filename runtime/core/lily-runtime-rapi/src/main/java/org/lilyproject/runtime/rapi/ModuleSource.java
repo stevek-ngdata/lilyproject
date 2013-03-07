@@ -16,14 +16,14 @@
  */
 package org.lilyproject.runtime.rapi;
 
-import org.apache.commons.jci.monitor.FilesystemAlterationListener;
-
-import java.io.InputStream;
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.Collection;
 import java.util.List;
-import java.net.URL;
+
+import org.apache.commons.jci.monitor.FilesystemAlterationListener;
 
 /**
  * Source of a module, i.e. where the system gets the content of the module

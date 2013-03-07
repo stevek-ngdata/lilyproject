@@ -15,6 +15,7 @@
  */
 package org.lilyproject.lilyservertestfw.launcher;
 
+import javax.management.ObjectName;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,8 +29,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-
-import javax.management.ObjectName;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;

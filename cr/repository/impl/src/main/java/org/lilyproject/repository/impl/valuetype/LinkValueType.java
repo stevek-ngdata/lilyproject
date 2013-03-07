@@ -17,12 +17,18 @@ package org.lilyproject.repository.impl.valuetype;
 
 import java.util.Comparator;
 
-import org.lilyproject.repository.impl.compat.Lily20LinkDecoder;
-
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 import org.lilyproject.repository.impl.compat.Lily11RecordIdDecoder;
+import org.lilyproject.repository.impl.compat.Lily20LinkDecoder;
 
 public class LinkValueType extends AbstractValueType implements ValueType {
 

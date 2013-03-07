@@ -15,13 +15,17 @@
  */
 package org.lilyproject.mapreduce.test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 import org.lilyproject.mapreduce.RecordIdWritable;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-
-import java.io.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

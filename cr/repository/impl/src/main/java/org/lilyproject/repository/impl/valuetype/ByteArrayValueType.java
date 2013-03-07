@@ -17,14 +17,13 @@ package org.lilyproject.repository.impl.valuetype;
 
 import java.util.Comparator;
 
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.IdentityRecordStack;
-import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
-import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * The ByteArrayValueType allows to use byte arrays (byte[]) as field values.

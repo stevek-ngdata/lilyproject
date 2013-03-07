@@ -16,8 +16,6 @@
 package org.lilyproject.repository.impl.test;
 
 
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.util.UUID;
 
@@ -29,18 +27,33 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeExistsException;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeExistsException;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.HBaseTypeManager;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
-import org.lilyproject.util.hbase.*;
+import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import static org.junit.Assert.fail;
 
 public class TypeManagerReliableCreateTest {
 

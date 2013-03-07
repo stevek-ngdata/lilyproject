@@ -16,14 +16,14 @@
  */
 package org.lilyproject.runtime.conf.jxpath;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.jxpath.ri.QName;
 import org.apache.commons.jxpath.ri.model.NodeIterator;
 import org.apache.commons.jxpath.ri.model.NodePointer;
-import org.apache.commons.jxpath.ri.QName;
 import org.lilyproject.runtime.conf.Conf;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
 
 public class ConfAttributeIterator implements NodeIterator {
     private NodePointer parent;

@@ -1,9 +1,8 @@
 package org.lilyproject.server.modules.general;
 
-import java.io.IOException;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.IOException;
 
 import com.ngdata.sep.SepModel;
 import com.ngdata.sep.impl.SepConsumer;
@@ -13,7 +12,6 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.sep.LilyPayloadExtractor;

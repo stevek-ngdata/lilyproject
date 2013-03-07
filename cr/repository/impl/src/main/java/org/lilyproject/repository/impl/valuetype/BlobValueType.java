@@ -19,8 +19,11 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 import org.lilyproject.repository.impl.hbase.ContainsValueComparator;
-import org.lilyproject.repository.api.*;
 
 public class BlobValueType extends AbstractValueType implements ValueType {
     public final static String NAME = "BLOB";

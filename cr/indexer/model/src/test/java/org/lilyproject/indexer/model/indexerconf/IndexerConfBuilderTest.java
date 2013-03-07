@@ -15,11 +15,6 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.io.ByteArrayInputStream;
 import java.util.List;
 
@@ -31,6 +26,11 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.mockito.Mockito;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class IndexerConfBuilderTest {
 

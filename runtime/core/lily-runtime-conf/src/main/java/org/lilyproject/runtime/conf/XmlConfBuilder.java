@@ -16,16 +16,25 @@
  */
 package org.lilyproject.runtime.conf;
 
-import org.xml.sax.*;
-import org.lilyproject.util.xml.LocalSAXParserFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.lilyproject.util.io.IOUtils;
 import org.lilyproject.util.location.Location;
 import org.lilyproject.util.location.LocationImpl;
-import org.lilyproject.util.io.IOUtils;
-
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
-import java.util.List;
-import java.util.ArrayList;
+import org.lilyproject.util.xml.LocalSAXParserFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 
 public class XmlConfBuilder {
     private static final String CONFIG_NAMESPACE = "http://lilyproject.org/configuration";

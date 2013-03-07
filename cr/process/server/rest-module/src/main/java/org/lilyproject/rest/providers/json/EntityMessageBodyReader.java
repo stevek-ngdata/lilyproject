@@ -15,19 +15,15 @@
  */
 package org.lilyproject.rest.providers.json;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
@@ -37,6 +33,9 @@ import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.LinkTransformer;
 import org.lilyproject.util.json.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @Provider
 public class EntityMessageBodyReader extends RepositoryEnabled implements MessageBodyReader<Object> {

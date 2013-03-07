@@ -16,13 +16,13 @@
  */
 package org.lilyproject.runtime.conf.test;
 
+import java.io.InputStream;
+
 import junit.framework.TestCase;
 import org.lilyproject.runtime.conf.Conf;
-import org.lilyproject.runtime.conf.XmlConfBuilder;
 import org.lilyproject.runtime.conf.ConfException;
+import org.lilyproject.runtime.conf.XmlConfBuilder;
 import org.xml.sax.SAXException;
-
-import java.io.InputStream;
 
 public class ConfModelTest extends TestCase {
     public void testConfig1() throws Exception {

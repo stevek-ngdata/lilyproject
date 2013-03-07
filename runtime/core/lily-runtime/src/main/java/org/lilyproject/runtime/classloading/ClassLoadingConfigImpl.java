@@ -16,14 +16,14 @@
  */
 package org.lilyproject.runtime.classloading;
 
-import org.lilyproject.runtime.repository.ArtifactRepository;
-import org.lilyproject.runtime.repository.ArtifactNotFoundException;
-import org.lilyproject.runtime.repository.ArtifactRef;
-
 import java.net.MalformedURLException;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+
+import org.lilyproject.runtime.repository.ArtifactNotFoundException;
+import org.lilyproject.runtime.repository.ArtifactRef;
+import org.lilyproject.runtime.repository.ArtifactRepository;
 
 public class ClassLoadingConfigImpl implements ClassLoadingConfig {
     private List<ClasspathEntry> entries;

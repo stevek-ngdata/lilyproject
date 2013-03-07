@@ -15,6 +15,8 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.util.Arrays;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -26,8 +28,6 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.lilyproject.util.zookeeper.ZooKeeperOperation;
-
-import java.util.Arrays;
 
 // About the IndexLocker:
 //

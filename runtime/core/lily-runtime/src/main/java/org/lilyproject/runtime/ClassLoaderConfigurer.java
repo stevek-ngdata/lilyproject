@@ -16,18 +16,25 @@
  */
 package org.lilyproject.runtime;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lilyproject.runtime.classloading.ArtifactSharingMode;
+import org.lilyproject.runtime.classloading.ClasspathEntry;
 import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.runtime.module.ModuleConfig;
 import org.lilyproject.runtime.rapi.ModuleSource;
-import org.lilyproject.runtime.classloading.ClasspathEntry;
-import org.lilyproject.runtime.classloading.ArtifactSharingMode;
 import org.lilyproject.runtime.repository.ArtifactRef;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  *

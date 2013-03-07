@@ -15,6 +15,7 @@
  */
 package org.lilyproject.lilyservertestfw;
 
+import javax.management.ObjectName;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -25,14 +26,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.management.ObjectName;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
-import org.lilyproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.hadooptestfw.HBaseProxy;
@@ -42,6 +40,7 @@ import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.jmx.JmxLiaison;

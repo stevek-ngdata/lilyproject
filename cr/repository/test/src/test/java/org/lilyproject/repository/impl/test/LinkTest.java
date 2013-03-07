@@ -15,7 +15,8 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import static org.junit.Assert.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,10 +29,10 @@ import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.lilyproject.repository.api.Link.LinkBuilder;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class LinkTest {
     private IdGenerator idGenerator;

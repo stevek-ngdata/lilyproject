@@ -15,14 +15,6 @@
  */
 package org.lilyproject.rest.index;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -34,6 +26,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.google.common.base.Splitter;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -51,6 +48,8 @@ import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.json.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 @Path("index")
 public class IndexResource extends TypeManagerEnabled {

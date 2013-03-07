@@ -15,6 +15,12 @@
  */
 package org.lilyproject.repository.impl.compat;
 
+import java.lang.reflect.Constructor;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.UUID;
+
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.IdGenerator;
@@ -24,12 +30,6 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.impl.id.UUIDRecordId;
 import org.lilyproject.repository.impl.id.UserRecordId;
 import org.lilyproject.repository.impl.id.VariantRecordId;
-
-import java.lang.reflect.Constructor;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.UUID;
 
 /**
  * This class contains code to parse Lily <= 1.1 style record id's encoded as bytes.

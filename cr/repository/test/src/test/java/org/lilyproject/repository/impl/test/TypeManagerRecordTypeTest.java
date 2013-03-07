@@ -21,9 +21,9 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.hadooptestfw.TestHelper;
 
 import static org.junit.Assert.assertEquals;
 

@@ -15,19 +15,15 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.EnumMap;
-
 import javax.management.ObjectName;
-
-import org.apache.commons.lang.StringUtils;
-
-import org.apache.hadoop.metrics.util.MetricsLongValue;
+import java.util.EnumMap;
 
 import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
 import org.apache.hadoop.metrics.MetricsUtil;
 import org.apache.hadoop.metrics.Updater;
 import org.apache.hadoop.metrics.util.MetricsBase;
+import org.apache.hadoop.metrics.util.MetricsLongValue;
 import org.apache.hadoop.metrics.util.MetricsRegistry;
 import org.apache.hadoop.metrics.util.MetricsTimeVaryingRate;
 import org.lilyproject.util.hbase.metrics.MBeanUtil;

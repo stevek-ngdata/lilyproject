@@ -15,9 +15,9 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import org.lilyproject.repository.api.SchemaId;
-
 import java.util.Set;
+
+import org.lilyproject.repository.api.SchemaId;
 
 public class IndexCase {
 

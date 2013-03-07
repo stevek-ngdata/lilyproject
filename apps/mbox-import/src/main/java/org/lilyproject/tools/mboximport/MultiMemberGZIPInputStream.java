@@ -1,9 +1,9 @@
 // Do not apply Lily license
 package org.lilyproject.tools.mboximport;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
-import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 
 /**

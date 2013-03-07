@@ -20,10 +20,10 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.hadooptestfw.TestHelper;
 
 /**
  *

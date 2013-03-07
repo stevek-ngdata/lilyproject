@@ -15,12 +15,15 @@
  */
 package org.lilyproject.tools.import_.json;
 
+import java.util.Map;
+
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.*;
-
-import java.util.Map;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.SchemaId;
 
 public class RecordTypeWriter implements EntityWriter<RecordType> {
     public static EntityWriter<RecordType> INSTANCE = new RecordTypeWriter();

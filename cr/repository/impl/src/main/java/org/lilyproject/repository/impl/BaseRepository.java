@@ -27,7 +27,6 @@ import java.util.Map.Entry;
 import java.util.ServiceLoader;
 
 import com.google.common.base.Preconditions;
-
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;

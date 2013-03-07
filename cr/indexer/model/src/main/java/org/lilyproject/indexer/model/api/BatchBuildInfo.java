@@ -15,11 +15,11 @@
  */
 package org.lilyproject.indexer.model.api;
 
-import org.lilyproject.util.ObjectUtils;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.lilyproject.util.ObjectUtils;
 
 public class BatchBuildInfo {
     private String jobId;

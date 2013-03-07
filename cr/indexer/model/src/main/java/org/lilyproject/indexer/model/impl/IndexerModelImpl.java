@@ -15,6 +15,7 @@
  */
 package org.lilyproject.indexer.model.impl;
 
+import javax.annotation.PreDestroy;
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,12 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.annotation.PreDestroy;
-
 import com.google.common.base.Preconditions;
-
-import org.lilyproject.indexer.model.api.IndexUpdateState;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.CreateMode;
@@ -53,6 +49,7 @@ import org.lilyproject.indexer.model.api.IndexGeneralState;
 import org.lilyproject.indexer.model.api.IndexModelException;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
 import org.lilyproject.indexer.model.api.IndexUpdateException;
+import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.indexer.model.api.IndexValidityException;
 import org.lilyproject.indexer.model.api.IndexerModelEvent;
 import org.lilyproject.indexer.model.api.IndexerModelEventType;

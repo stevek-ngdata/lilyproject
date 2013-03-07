@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema elementFormDefault="qualified" targetNamespace="http://lilyproject.org/runtime/1.0#springext" xmlns:s="http://lilyproject.org/runtime/1.0#springext" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema elementFormDefault="qualified" targetNamespace="http://lilyproject.org/runtime/1.0#springext"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:element name="import-service">
     <xs:complexType>
       <xs:attribute name="id" type="xs:string" use="required"/>

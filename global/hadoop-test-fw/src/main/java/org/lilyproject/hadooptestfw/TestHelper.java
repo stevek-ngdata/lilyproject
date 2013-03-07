@@ -15,11 +15,15 @@
  */
 package org.lilyproject.hadooptestfw;
 
-import org.apache.log4j.*;
+import java.io.IOException;
+
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.apache.log4j.spi.Filter;
 import org.apache.log4j.spi.LoggingEvent;
-
-import java.io.IOException;
 
 public class TestHelper {
     private static Logger ROOT_LOGGER;

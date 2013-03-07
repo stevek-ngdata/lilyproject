@@ -15,8 +15,6 @@
  */
 package org.lilyproject.indexer.engine.test;
 
-import org.junit.Test;
-
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -24,6 +22,8 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import java.io.InputStream;
 import java.net.URL;
+
+import org.junit.Test;
 
 /**
  * Tests the indexer conf XML Schema.

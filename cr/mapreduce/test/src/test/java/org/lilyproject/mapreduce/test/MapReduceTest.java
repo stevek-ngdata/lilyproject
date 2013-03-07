@@ -15,8 +15,6 @@
  */
 package org.lilyproject.mapreduce.test;
 
-import static org.junit.Assert.assertEquals;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -43,6 +41,8 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.test.TestHomeUtil;
+
+import static org.junit.Assert.assertEquals;
 
 public class MapReduceTest {
     private static LilyProxy lilyProxy;

@@ -1,11 +1,5 @@
 package org.lilyproject.indexer.engine.test;
 
-import static org.junit.Assert.assertEquals;
-
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
-import org.lilyproject.repository.api.RepositoryManager;
-
 import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -31,11 +25,15 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *

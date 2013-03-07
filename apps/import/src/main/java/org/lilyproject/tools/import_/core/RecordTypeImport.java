@@ -15,13 +15,22 @@
  */
 package org.lilyproject.tools.import_.core;
 
-import org.lilyproject.repository.api.*;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.lilyproject.tools.import_.core.ImportMode.*;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeExistsException;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
+
+import static org.lilyproject.tools.import_.core.ImportMode.CREATE;
+import static org.lilyproject.tools.import_.core.ImportMode.CREATE_OR_UPDATE;
+import static org.lilyproject.tools.import_.core.ImportMode.UPDATE;
 
 public class RecordTypeImport {
     public static ImportResult<RecordType> importRecordType(RecordType newRecordType, ImportMode impMode,

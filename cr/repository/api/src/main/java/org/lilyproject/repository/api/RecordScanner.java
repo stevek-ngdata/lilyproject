@@ -16,7 +16,6 @@
 package org.lilyproject.repository.api;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * A RecordScanner allows to sequentially run over all or part of the records

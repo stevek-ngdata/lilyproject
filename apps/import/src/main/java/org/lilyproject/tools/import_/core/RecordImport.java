@@ -15,9 +15,14 @@
  */
 package org.lilyproject.tools.import_.core;
 
-import org.lilyproject.repository.api.*;
-
 import java.util.List;
+
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordExistsException;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 
 //
 // This class stems from a time when the repository did not yet offer 'create or update' behavior, nor did it

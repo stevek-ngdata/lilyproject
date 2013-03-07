@@ -16,8 +16,6 @@
 package org.lilyproject.repository.impl.test;
 
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,6 +24,8 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
+
+import static org.junit.Assert.assertEquals;
 
 public class HBaseRepositoryTest extends AbstractRepositoryTest {
 

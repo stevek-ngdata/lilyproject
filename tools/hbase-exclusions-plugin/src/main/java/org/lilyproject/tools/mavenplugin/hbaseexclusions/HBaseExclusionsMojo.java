@@ -15,12 +15,18 @@
  */
 package org.lilyproject.tools.mavenplugin.hbaseexclusions;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-import java.util.*;
 
 /**
  * This is a temporary Maven plugin used in the lily-hbase-client project to check that there are no

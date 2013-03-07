@@ -15,8 +15,6 @@
  */
 package org.lilyproject.rest;
 
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-
 import javax.ws.rs.core.UriInfo;
 
 import org.lilyproject.repository.api.Repository;
@@ -24,6 +22,8 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.exception.ExceptionUtil;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 public class RepositoryEnabled {
     protected RepositoryManager repositoryMgr;

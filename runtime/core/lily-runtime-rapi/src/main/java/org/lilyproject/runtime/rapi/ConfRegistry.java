@@ -16,9 +16,9 @@
  */
 package org.lilyproject.runtime.rapi;
 
-import org.lilyproject.runtime.conf.Conf;
-
 import java.util.Collection;
+
+import org.lilyproject.runtime.conf.Conf;
 
 /**
  * Registry of {@link Conf Conf(iguration)} objects for some module.

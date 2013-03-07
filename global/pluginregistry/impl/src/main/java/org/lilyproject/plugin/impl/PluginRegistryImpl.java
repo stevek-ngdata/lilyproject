@@ -15,17 +15,21 @@
  */
 package org.lilyproject.plugin.impl;
 
-import org.lilyproject.plugin.PluginRegistry;
-import org.lilyproject.plugin.PluginUser;
-import org.lilyproject.plugin.PluginException;
-import org.lilyproject.plugin.PluginHandle;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import javax.annotation.PreDestroy;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lilyproject.plugin.PluginException;
+import org.lilyproject.plugin.PluginHandle;
+import org.lilyproject.plugin.PluginRegistry;
+import org.lilyproject.plugin.PluginUser;
 
 public class PluginRegistryImpl implements PluginRegistry {
     private Map<Class, PluginManager> pluginsByType = new HashMap<Class, PluginManager>();

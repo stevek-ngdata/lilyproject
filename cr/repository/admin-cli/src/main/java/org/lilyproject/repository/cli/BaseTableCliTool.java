@@ -16,11 +16,9 @@
 package org.lilyproject.repository.cli;
 
 import org.apache.commons.cli.CommandLine;
-
-import org.lilyproject.repository.api.RepositoryTableManager;
-
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.util.Version;
 
 public abstract class BaseTableCliTool extends BaseZkCliTool {

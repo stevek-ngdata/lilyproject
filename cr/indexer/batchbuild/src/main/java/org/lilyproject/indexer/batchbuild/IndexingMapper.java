@@ -56,7 +56,6 @@ import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.mapreduce.RecordIdWritable;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;

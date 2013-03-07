@@ -15,13 +15,13 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.SolrParams;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * This is an interface for SolrServer (which is an abstract class).

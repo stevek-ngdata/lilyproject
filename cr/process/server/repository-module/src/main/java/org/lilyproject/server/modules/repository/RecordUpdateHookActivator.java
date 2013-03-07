@@ -15,22 +15,22 @@
  */
 package org.lilyproject.server.modules.repository;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.lilyproject.runtime.conf.Conf;
-import org.lilyproject.plugin.PluginHandle;
-import org.lilyproject.plugin.PluginRegistry;
-import org.lilyproject.plugin.PluginUser;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.impl.HBaseRepository;
-import org.lilyproject.repository.spi.RecordUpdateHook;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lilyproject.plugin.PluginHandle;
+import org.lilyproject.plugin.PluginRegistry;
+import org.lilyproject.plugin.PluginUser;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.impl.HBaseRepository;
+import org.lilyproject.repository.spi.RecordUpdateHook;
+import org.lilyproject.runtime.conf.Conf;
 
 public class RecordUpdateHookActivator implements PluginUser<RecordUpdateHook> {
     private Map<String, RecordUpdateHook> hooks = new HashMap<String, RecordUpdateHook>();

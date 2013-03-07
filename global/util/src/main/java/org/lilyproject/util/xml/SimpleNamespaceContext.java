@@ -15,11 +15,11 @@
  */
 package org.lilyproject.util.xml;
 
-import javax.xml.namespace.NamespaceContext;
 import javax.xml.XMLConstants;
-import java.util.Map;
+import javax.xml.namespace.NamespaceContext;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class SimpleNamespaceContext implements NamespaceContext {
     private Map<String, String> prefixToUri = new HashMap<String, String>();

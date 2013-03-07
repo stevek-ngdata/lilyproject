@@ -3,14 +3,10 @@ package org.lilyproject.indexer.derefmap;
 import java.util.Collections;
 import java.util.Set;
 
-import org.apache.commons.lang.builder.ToStringStyle;
-
 import org.apache.commons.lang.builder.ToStringBuilder;
-
+import org.apache.commons.lang.builder.ToStringStyle;
 import org.lilyproject.repository.api.AbsoluteRecordId;
-import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.util.ArgumentValidator;
-import org.lilyproject.util.ObjectUtils;
 
 /**
  * An entry in the dereference map, used when updating information in the dereference map.

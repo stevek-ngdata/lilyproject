@@ -18,16 +18,14 @@ package org.lilyproject.tools.scanner.cli;
 import java.io.File;
 import java.util.List;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
-import org.lilyproject.cli.OptionUtil;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
+import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.util.Version;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 
 public class ScannerCli extends BaseZkCliTool {

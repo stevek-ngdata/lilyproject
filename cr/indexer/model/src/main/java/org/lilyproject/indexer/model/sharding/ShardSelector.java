@@ -15,9 +15,9 @@
  */
 package org.lilyproject.indexer.model.sharding;
 
-import org.lilyproject.repository.api.RecordId;
-
 import java.util.Set;
+
+import org.lilyproject.repository.api.RecordId;
 
 public interface ShardSelector {
     /**

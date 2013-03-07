@@ -15,11 +15,11 @@
  */
 package org.lilyproject.server.modules.general;
 
+import java.io.IOException;
+
 import org.apache.hadoop.metrics.ContextFactory;
 import org.apache.hadoop.metrics.jvm.JvmMetrics;
 import org.lilyproject.runtime.conf.Conf;
-
-import java.io.IOException;
 
 public class Metrics {
     public Metrics(Conf conf) throws IOException {

@@ -15,10 +15,6 @@
  */
 package org.lilyproject.indexer.engine;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -55,11 +51,14 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.util.Pair;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
+
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
 
 //
 // About the exception handling strategy

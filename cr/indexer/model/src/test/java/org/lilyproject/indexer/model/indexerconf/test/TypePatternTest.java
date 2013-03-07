@@ -18,7 +18,8 @@ package org.lilyproject.indexer.model.indexerconf.test;
 import org.junit.Test;
 import org.lilyproject.indexer.model.indexerconf.TypePattern;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class TypePatternTest {
     @Test

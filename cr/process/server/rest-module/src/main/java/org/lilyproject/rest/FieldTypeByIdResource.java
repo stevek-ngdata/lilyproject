@@ -15,15 +15,29 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.*;
-import org.lilyproject.tools.import_.core.*;
-
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import static javax.ws.rs.core.Response.Status.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.tools.import_.core.FieldTypeImport;
+import org.lilyproject.tools.import_.core.IdentificationMode;
+import org.lilyproject.tools.import_.core.ImportMode;
+import org.lilyproject.tools.import_.core.ImportResult;
+import org.lilyproject.tools.import_.core.ImportResultType;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("schema/fieldTypeById/{id}")
 public class FieldTypeByIdResource extends TypeManagerEnabled {

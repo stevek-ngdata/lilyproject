@@ -16,11 +16,6 @@
 package org.lilyproject.sep;
 
 
-import static org.mockito.AdditionalMatchers.aryEq;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
 import java.io.IOException;
 
 import com.ngdata.sep.impl.HBaseEventPublisher;
@@ -31,6 +26,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+
+import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * Adapter from the Lily ZooKeeperItf interface and the HBase SEP ZooKeepterItf interface.

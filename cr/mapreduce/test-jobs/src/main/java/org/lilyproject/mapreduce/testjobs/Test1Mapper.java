@@ -15,13 +15,12 @@
  */
 package org.lilyproject.mapreduce.testjobs;
 
+import java.io.IOException;
+
 import org.apache.hadoop.io.Text;
 import org.lilyproject.mapreduce.RecordIdWritable;
 import org.lilyproject.mapreduce.RecordMapper;
 import org.lilyproject.mapreduce.RecordWritable;
-
-import java.io.IOException;
-import java.util.Map;
 
 public class Test1Mapper extends RecordMapper<Text, Text> {
 

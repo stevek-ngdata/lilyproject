@@ -15,12 +15,12 @@
  */
 package org.lilyproject.mapreduce;
 
-import org.apache.hadoop.io.Writable;
-import org.lilyproject.repository.api.Record;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+
+import org.apache.hadoop.io.Writable;
+import org.lilyproject.repository.api.Record;
 
 public class RecordWritable implements Writable {
     private Record record;

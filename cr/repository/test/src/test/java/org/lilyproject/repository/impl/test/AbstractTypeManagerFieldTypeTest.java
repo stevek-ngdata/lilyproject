@@ -15,16 +15,24 @@
  */
 package org.lilyproject.repository.impl.test;
 
+import java.util.UUID;
+
+import org.junit.Test;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeExistsException;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.FieldTypeUpdateException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-
-import java.util.UUID;
-
-import org.junit.Test;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.id.SchemaIdImpl;
 
 public abstract class AbstractTypeManagerFieldTypeTest {
 

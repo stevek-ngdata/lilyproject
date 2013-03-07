@@ -1,5 +1,11 @@
 package org.lilyproject.util.repo;
 
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.QName;
@@ -7,12 +13,6 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
-
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 public class FieldTypeUtil {
     public static Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds, FieldFilter fieldFilter,

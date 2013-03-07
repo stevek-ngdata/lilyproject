@@ -15,10 +15,6 @@
  */
 package org.lilyproject.tools.import_.json;
 
-import static org.lilyproject.util.json.JsonUtil.getArray;
-import static org.lilyproject.util.json.JsonUtil.getObject;
-import static org.lilyproject.util.json.JsonUtil.getString;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,6 +39,10 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.util.json.JsonUtil;
+
+import static org.lilyproject.util.json.JsonUtil.getArray;
+import static org.lilyproject.util.json.JsonUtil.getObject;
+import static org.lilyproject.util.json.JsonUtil.getString;
 
 public class RecordReader implements EntityReader<Record> {
     public static RecordReader INSTANCE = new RecordReader();

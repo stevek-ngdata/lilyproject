@@ -19,7 +19,18 @@ import java.util.List;
 import java.util.Map;
 
 import org.lilyproject.bytes.impl.DataInputImpl;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldNotFoundException;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.Metadata;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.impl.valuetype.RecordValueType;
 
 public class RecordRvtImpl implements IdRecord, Cloneable {

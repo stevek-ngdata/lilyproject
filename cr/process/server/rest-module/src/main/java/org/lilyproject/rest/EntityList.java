@@ -15,10 +15,10 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.tools.import_.json.WriteOptions;
-
 import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
+
+import org.lilyproject.tools.import_.json.WriteOptions;
 
 public class EntityList<T> {
     private Collection<T> entities;

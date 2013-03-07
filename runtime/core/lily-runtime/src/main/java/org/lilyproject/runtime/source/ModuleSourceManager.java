@@ -16,15 +16,15 @@
  */
 package org.lilyproject.runtime.source;
 
-import org.lilyproject.runtime.LilyRTException;
-import org.lilyproject.runtime.rapi.ModuleSource;
-import org.lilyproject.runtime.model.ModuleSourceType;
-import org.apache.commons.jci.monitor.FilesystemAlterationMonitor;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.jci.monitor.FilesystemAlterationMonitor;
+import org.lilyproject.runtime.LilyRTException;
+import org.lilyproject.runtime.model.ModuleSourceType;
+import org.lilyproject.runtime.rapi.ModuleSource;
 
 /**
  * Manages ModuleSources. One of the main purposes is so that when multiple module instances

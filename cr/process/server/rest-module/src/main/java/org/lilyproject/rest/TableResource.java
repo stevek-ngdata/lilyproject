@@ -15,13 +15,6 @@
  */
 package org.lilyproject.rest;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-
-import java.io.IOException;
-import java.util.List;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -32,6 +25,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.util.List;
 
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.RepositoryTable;
@@ -39,6 +34,10 @@ import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
 import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("table")
 public class TableResource {

@@ -21,7 +21,9 @@ import java.util.Set;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.ValueType;
 
 public abstract class AbstractValueType implements ValueType {
 

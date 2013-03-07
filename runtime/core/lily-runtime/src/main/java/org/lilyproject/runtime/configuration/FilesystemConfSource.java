@@ -16,8 +16,14 @@
  */
 package org.lilyproject.runtime.configuration;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FilesystemConfSource extends ConfSource {
     private File baseDir;

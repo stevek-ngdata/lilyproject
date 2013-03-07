@@ -15,6 +15,7 @@
  */
 package org.lilyproject.indexer.model.util;
 
+import javax.annotation.PreDestroy;
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,8 +26,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PreDestroy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

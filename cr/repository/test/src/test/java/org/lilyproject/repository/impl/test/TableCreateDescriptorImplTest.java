@@ -15,13 +15,12 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import static org.junit.Assert.*;
-
+import org.junit.Test;
 import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
-
 import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class TableCreateDescriptorImplTest {
 

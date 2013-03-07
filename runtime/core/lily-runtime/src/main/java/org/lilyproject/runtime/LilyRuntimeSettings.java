@@ -18,9 +18,10 @@ package org.lilyproject.runtime;
 
 import java.util.Set;
 
-import org.lilyproject.runtime.repository.ArtifactRepository;
-import org.lilyproject.runtime.model.*;
 import org.lilyproject.runtime.configuration.ConfManager;
+import org.lilyproject.runtime.model.LilyRuntimeModel;
+import org.lilyproject.runtime.model.SourceLocations;
+import org.lilyproject.runtime.repository.ArtifactRepository;
 
 /**
  * Stuff needed to bootstrap a LilyRuntime instance.

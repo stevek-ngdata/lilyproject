@@ -29,10 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.lilyproject.repository.api.IdGenerator;
-
-import org.lilyproject.repository.api.TypeManager;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -51,11 +47,13 @@ import org.lilyproject.indexer.Indexer;
 import org.lilyproject.indexer.RemoteIndexer;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.BlobStoreAccessConfig;
 import org.lilyproject.repository.impl.DFSBlobStoreAccess;

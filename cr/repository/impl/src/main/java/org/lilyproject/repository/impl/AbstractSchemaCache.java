@@ -15,6 +15,7 @@
  */
 package org.lilyproject.repository.impl;
 
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,8 +33,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PreDestroy;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.codec.binary.Hex;

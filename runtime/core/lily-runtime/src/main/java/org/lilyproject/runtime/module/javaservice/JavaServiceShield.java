@@ -16,12 +16,12 @@
  */
 package org.lilyproject.runtime.module.javaservice;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 import org.lilyproject.runtime.LilyRTException;
 import org.lilyproject.runtime.module.Module;
-
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Dynamic proxy around services exported by modules (i.e. a wrapper around

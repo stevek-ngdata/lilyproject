@@ -17,10 +17,9 @@ package org.lilyproject.rest;
 
 import java.util.concurrent.TimeUnit;
 
-import org.lilyproject.repository.api.RecordScanner;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import org.lilyproject.repository.api.RecordScanner;
 
 // Convenience class for creating recordscanner caches. For use in the spring application context
 public class RecordScannerMapBuilder {

@@ -16,8 +16,8 @@
  */
 package org.lilyproject.runtime.classloading;
 
-import org.lilyproject.runtime.repository.ArtifactRef;
 import org.lilyproject.runtime.rapi.ModuleSource;
+import org.lilyproject.runtime.repository.ArtifactRef;
 
 public class ClasspathEntry {
     private final ArtifactRef artifactRef;

@@ -22,11 +22,11 @@ import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.io.FileUtils;
-import org.lilyproject.runtime.repository.ArtifactRepository;
-import org.lilyproject.runtime.repository.ChainedMaven2StyleArtifactRepository;
 import org.lilyproject.lilyservertestfw.ConfUtil;
 import org.lilyproject.lilyservertestfw.LilyServerTestUtility;
 import org.lilyproject.lilyservertestfw.TemplateDir;
+import org.lilyproject.runtime.repository.ArtifactRepository;
+import org.lilyproject.runtime.repository.ChainedMaven2StyleArtifactRepository;
 import org.lilyproject.util.MavenUtil;
 
 public class LilyLauncherService implements LauncherService {

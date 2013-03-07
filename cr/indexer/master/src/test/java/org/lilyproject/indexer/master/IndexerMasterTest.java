@@ -1,7 +1,5 @@
 package org.lilyproject.indexer.master;
 
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.util.Collections;
 
@@ -37,6 +35,8 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkLockException;
+
+import static org.junit.Assert.fail;
 
 public class IndexerMasterTest {
     private static final QName BOOK_RECORD_TYPE = new QName("org.lilyproject.test", "Book");

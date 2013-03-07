@@ -15,16 +15,23 @@
  */
 package org.lilyproject.repository.impl.filter;
 
-import org.apache.hadoop.hbase.filter.*;
+import java.util.Set;
+
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 
-import java.util.Set;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
 

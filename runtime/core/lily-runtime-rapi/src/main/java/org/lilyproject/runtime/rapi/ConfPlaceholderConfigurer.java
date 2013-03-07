@@ -16,11 +16,11 @@
  */
 package org.lilyproject.runtime.rapi;
 
-import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
-import org.lilyproject.runtime.conf.Conf;
-import org.apache.commons.jxpath.JXPathContext;
-
 import java.util.Properties;
+
+import org.apache.commons.jxpath.JXPathContext;
+import org.lilyproject.runtime.conf.Conf;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 
 /**
  * Resolves ${...} expressions in the Spring bean configuration using

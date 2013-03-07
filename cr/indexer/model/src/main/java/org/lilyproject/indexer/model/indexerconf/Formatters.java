@@ -15,7 +15,8 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Formatters {
     private Map<String, Formatter> formattersByName = new HashMap<String, Formatter>();

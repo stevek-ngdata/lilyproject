@@ -15,6 +15,9 @@
  */
 package org.lilyproject.tools.mavenplugin.lilyruntimedepresolver;
 
+import java.util.List;
+import java.util.Set;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -23,9 +26,6 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.lilyproject.util.Version;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  *

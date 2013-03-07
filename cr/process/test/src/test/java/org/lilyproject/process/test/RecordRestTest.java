@@ -15,14 +15,7 @@
  */
 package org.lilyproject.process.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import java.util.UUID;
-
-import org.junit.BeforeClass;
 
 import org.apache.http.HttpStatus;
 import org.codehaus.jackson.JsonNode;
@@ -30,6 +23,11 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class RecordRestTest extends AbstractRestTest {
 

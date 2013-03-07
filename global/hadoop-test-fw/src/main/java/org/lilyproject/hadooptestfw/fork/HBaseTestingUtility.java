@@ -35,11 +35,6 @@
  */
 package org.lilyproject.hadooptestfw.fork;
 
-import static org.junit.Assert.assertTrue;
-
-// Lily change: comment out import in order to use our own fork
-//import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -50,7 +45,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
-import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -59,7 +53,19 @@ import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.Abortable;
+import org.apache.hadoop.hbase.EmptyWatcher;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.MiniHBaseCluster;
+import org.apache.hadoop.hbase.Server;
+import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -90,9 +96,14 @@ import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.ZooKeeper;
 import org.lilyproject.hadooptestfw.HBaseTestingUtilityFactory;
+
+import static org.junit.Assert.assertTrue;
+
+// Lily change: comment out import in order to use our own fork
+//import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 
 /**
  * Facility for testing HBase. Replacement for

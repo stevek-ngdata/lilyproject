@@ -15,6 +15,12 @@
  */
 package org.lilyproject.rest.perftest;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -30,16 +36,9 @@ import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.testclientfw.BaseTestTool;
-import org.lilyproject.testclientfw.Util;
 import org.lilyproject.testclientfw.Words;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.json.JsonFormat;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class RestPerfTest extends BaseTestTool {
 

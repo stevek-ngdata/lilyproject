@@ -15,11 +15,11 @@
  */
 package org.lilyproject.util.hbase;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.hadoop.hbase.util.Bytes;
 
 public class TableConfig {
     private Integer regionCount;

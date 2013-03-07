@@ -15,22 +15,20 @@
  */
 package org.lilyproject.lilyservertestfw;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrProxy;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
 

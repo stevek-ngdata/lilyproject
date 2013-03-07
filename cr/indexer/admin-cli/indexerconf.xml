@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<indexer xmlns:foo="foo">
+<indexer>
     <!--
   <records>
     <record matchNamespace="foo" matchName="Book" matchVariant="*" vtags="live"/>

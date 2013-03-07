@@ -15,11 +15,11 @@
  */
 package org.lilyproject.util.zookeeper;
 
+import java.io.IOException;
+
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-
-import java.io.IOException;
 
 import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
 

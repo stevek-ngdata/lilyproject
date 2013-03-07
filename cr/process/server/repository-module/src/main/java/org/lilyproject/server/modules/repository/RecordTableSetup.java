@@ -17,11 +17,9 @@ package org.lilyproject.server.modules.repository;
 
 import java.io.IOException;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-
 import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 /**
  * Exists to ensure the creation of the record table at startup.

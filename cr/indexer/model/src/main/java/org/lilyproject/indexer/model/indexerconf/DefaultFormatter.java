@@ -15,12 +15,23 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.lilyproject.repository.api.*;
-
-import java.util.*;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 
 /**
  * A default implementation of a formatter than is able to treat any value.

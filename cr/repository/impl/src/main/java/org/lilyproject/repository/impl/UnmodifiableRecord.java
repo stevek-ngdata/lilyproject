@@ -15,9 +15,19 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldNotFoundException;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.Metadata;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.repository.api.Scope;
 
 /**
  * Wrapper around Record that disallows updates.

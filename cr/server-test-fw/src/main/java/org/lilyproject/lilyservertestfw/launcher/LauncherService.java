@@ -15,11 +15,11 @@
  */
 package org.lilyproject.lilyservertestfw.launcher;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-
 import java.io.File;
 import java.util.List;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 
 public interface LauncherService {
 

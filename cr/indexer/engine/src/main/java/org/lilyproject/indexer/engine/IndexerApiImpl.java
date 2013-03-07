@@ -3,8 +3,6 @@ package org.lilyproject.indexer.engine;
 import java.io.IOException;
 import java.util.Set;
 
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.IndexerException;

@@ -16,12 +16,18 @@
  */
 package org.lilyproject.runtime.conf;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.jxpath.JXPathContext;
+import org.lilyproject.runtime.conf.jxpath.ConfPointerFactory;
 import org.lilyproject.util.location.Location;
 import org.lilyproject.util.location.LocationImpl;
-import org.lilyproject.runtime.conf.jxpath.ConfPointerFactory;
-import org.apache.commons.jxpath.JXPathContext;
-
-import java.util.*;
 
 public class ConfImpl implements Conf {
     private List<ConfImpl> children = new ArrayList<ConfImpl>();

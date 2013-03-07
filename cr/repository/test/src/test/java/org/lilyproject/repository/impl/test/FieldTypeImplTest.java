@@ -16,9 +16,6 @@
 package org.lilyproject.repository.impl.test;
 
 
-import static org.easymock.classextension.EasyMock.createControl;
-import static org.junit.Assert.assertEquals;
-
 import java.util.UUID;
 
 import org.easymock.classextension.IMocksControl;
@@ -30,6 +27,9 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.FieldTypeImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
+
+import static org.easymock.classextension.EasyMock.createControl;
+import static org.junit.Assert.assertEquals;
 
 /**
  *

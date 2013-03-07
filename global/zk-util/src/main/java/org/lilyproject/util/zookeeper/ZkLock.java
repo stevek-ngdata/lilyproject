@@ -15,11 +15,18 @@
  */
 package org.lilyproject.util.zookeeper;
 
-import org.apache.commons.logging.LogFactory;
-import org.apache.zookeeper.*;
-import org.apache.zookeeper.data.Stat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-import java.util.*;
+import org.apache.commons.logging.LogFactory;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.Stat;
 
 /**
  * Implements a ZooKeeper-based lock following ZooKeeper's lock recipe.

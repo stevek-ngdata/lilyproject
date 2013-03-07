@@ -15,7 +15,8 @@
  */
 package org.lilyproject.tools.mboximport;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * An input stream that allows to read one mime message at a time from an mbox file.

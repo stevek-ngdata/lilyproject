@@ -23,7 +23,6 @@ import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.avro.AvroRemoteException;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.indexer.Indexer;
 import org.lilyproject.indexer.IndexerException;
 import org.lilyproject.repository.api.Record;

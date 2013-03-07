@@ -15,11 +15,11 @@
  */
 package org.lilyproject.indexer.model.sharding;
 
-import org.lilyproject.repository.api.RecordId;
-
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
+import org.lilyproject.repository.api.RecordId;
 
 public class ShardingKey {
     private ShardingKeyValue value;

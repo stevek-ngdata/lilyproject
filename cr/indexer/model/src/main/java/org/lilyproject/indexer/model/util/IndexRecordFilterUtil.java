@@ -1,7 +1,5 @@
 package org.lilyproject.indexer.model.util;
 
-import org.lilyproject.util.Pair;
-
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -9,6 +7,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.RecordEvent;
 
 public class IndexRecordFilterUtil {

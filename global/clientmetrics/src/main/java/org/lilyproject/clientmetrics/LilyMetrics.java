@@ -15,10 +15,6 @@
  */
 package org.lilyproject.clientmetrics;
 
-import org.joda.time.Period;
-import org.joda.time.format.PeriodFormat;
-import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeDataSupport;
@@ -27,6 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormat;
+import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 /**
  * Various utility methods to pull interesting data from Lily.

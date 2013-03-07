@@ -15,16 +15,15 @@
  */
 package org.lilyproject.rest;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
-
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.tools.import_.json.WriteOptions;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 public class ResourceClassUtil {
     public static QName parseQName(String name, MultivaluedMap<String, String> queryParams) {

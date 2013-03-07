@@ -15,8 +15,6 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import static org.mockito.Mockito.mock;
-
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
@@ -26,6 +24,8 @@ import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+
+import static org.mockito.Mockito.mock;
 
 public class RepositoryTableManagerImplTest {
 

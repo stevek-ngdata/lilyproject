@@ -15,8 +15,6 @@
  */
 package org.lilyproject.indexer.event;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
@@ -27,6 +25,8 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
+
+import static org.junit.Assert.assertEquals;
 
 public class IndexerEditFilterTest {
 

@@ -16,11 +16,11 @@
  */
 package org.lilyproject.runtime.model;
 
-import java.util.Properties;
-import java.util.Map;
-import java.io.InputStream;
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Mapping from artifact identifiers to the corresponding source tree location.
