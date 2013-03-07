@@ -294,7 +294,7 @@ public class Indexer {
 
     private void logDependencies(RecordId recordId, Map<DependencyEntry, Set<SchemaId>> dependencies) {
         for (DependencyEntry entry : dependencies.keySet()) {
-            StringBuffer line = new StringBuffer();
+            StringBuilder line = new StringBuilder();
             line.append(recordId).append(" | ")
                     .append(entry.getDependency())
                     .append("|").append(entry.getMoreDimensionedVariants())

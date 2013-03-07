@@ -59,7 +59,7 @@ public class CleanupUtil {
     static {
     }
 
-    private static Map<String, byte[]> DEFAULT_TIMESTAMP_REUSING_TABLES = new HashMap<String, byte[]>();
+    private static final Map<String, byte[]> DEFAULT_TIMESTAMP_REUSING_TABLES = new HashMap<String, byte[]>();
     static {
         DEFAULT_TIMESTAMP_REUSING_TABLES.put("record", Bytes.toBytes("data"));
         DEFAULT_TIMESTAMP_REUSING_TABLES.put("type", Bytes.toBytes("fieldtype-entry"));

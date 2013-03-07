@@ -45,7 +45,7 @@ import static org.lilyproject.util.json.JsonUtil.getObject;
 import static org.lilyproject.util.json.JsonUtil.getString;
 
 public class RecordReader implements EntityReader<Record> {
-    public static RecordReader INSTANCE = new RecordReader();
+    public static final RecordReader INSTANCE = new RecordReader();
     private final LinkTransformer defaultLinkTransformer = new DefaultLinkTransformer();
 
     @Override

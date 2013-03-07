@@ -26,7 +26,7 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 
 public class RecordTypeWriter implements EntityWriter<RecordType> {
-    public static EntityWriter<RecordType> INSTANCE = new RecordTypeWriter();
+    public static final EntityWriter<RecordType> INSTANCE = new RecordTypeWriter();
 
     @Override
     public ObjectNode toJson(RecordType recordType, WriteOptions options, RepositoryManager repositoryManager) {

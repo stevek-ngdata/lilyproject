@@ -35,9 +35,10 @@ public class CreateAction extends AbstractTestAction implements TestAction {
 
     private TestRecordType recordTypeToCreate;
 
-    private static byte[] macAddress;
+    private static final byte[] MAC_ADDRESS;
 
     static {
+        byte[] macAddress = null;
         try {
             for (Iterator<NetworkInterface> iterator =
                          Collections.list(NetworkInterface.getNetworkInterfaces()).iterator();
@@ -51,6 +52,7 @@ public class CreateAction extends AbstractTestAction implements TestAction {
         if (macAddress == null) {
             throw new IllegalStateException("failed to initialize localhost mac address");
         }
+        MAC_ADDRESS = macAddress;
     }
 
     public CreateAction(JsonNode actionNode, TestActionContext testActionContext) throws JsonFormatException,
@@ -119,7 +121,7 @@ public class CreateAction extends AbstractTestAction implements TestAction {
         final StringBuilder recordId = new StringBuilder();
         recordId.append(testActionContext.roundRobinPrefixGenerator.next());
         recordId.append(System.currentTimeMillis());
-        for (byte part : macAddress) {
+        for (byte part : MAC_ADDRESS) {
             recordId.append(String.format("%02X", part));
         }
 

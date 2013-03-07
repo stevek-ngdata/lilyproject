@@ -103,7 +103,7 @@ public class MetadataSerDeser {
         Object deserialize(DataInput dataInput);
     }
 
-    private static ValueSerDeser STRING_SERDESER = new StringValueSerDeser();
+    private static final ValueSerDeser STRING_SERDESER = new StringValueSerDeser();
 
     private static class StringValueSerDeser implements ValueSerDeser {
         @Override
@@ -127,7 +127,7 @@ public class MetadataSerDeser {
         }
     }
 
-    private static ValueSerDeser INT_SERDESER = new IntegerValueSerDeser();
+    private static final ValueSerDeser INT_SERDESER = new IntegerValueSerDeser();
 
     private static class IntegerValueSerDeser implements ValueSerDeser {
         @Override
@@ -151,7 +151,7 @@ public class MetadataSerDeser {
         }
     }
 
-    private static ValueSerDeser LONG_SERDESER = new LongValueSerDeser();
+    private static final ValueSerDeser LONG_SERDESER = new LongValueSerDeser();
 
     private static class LongValueSerDeser implements ValueSerDeser {
         @Override
@@ -175,7 +175,7 @@ public class MetadataSerDeser {
         }
     }
 
-    private static ValueSerDeser FLOAT_SERDESER = new FloatValueSerDeser();
+    private static final ValueSerDeser FLOAT_SERDESER = new FloatValueSerDeser();
 
     private static class FloatValueSerDeser implements ValueSerDeser {
         @Override
@@ -199,7 +199,7 @@ public class MetadataSerDeser {
         }
     }
 
-    private static ValueSerDeser DOUBLE_SERDESER = new DoubleValueSerDeser();
+    private static final ValueSerDeser DOUBLE_SERDESER = new DoubleValueSerDeser();
 
     private static class DoubleValueSerDeser implements ValueSerDeser {
         @Override
@@ -223,7 +223,7 @@ public class MetadataSerDeser {
         }
     }
 
-    private static ValueSerDeser BOOLEAN_SERDESER = new BooleanValueSerDeser();
+    private static final ValueSerDeser BOOLEAN_SERDESER = new BooleanValueSerDeser();
 
     private static class BooleanValueSerDeser implements ValueSerDeser {
         @Override
@@ -247,7 +247,7 @@ public class MetadataSerDeser {
         }
     }
 
-    private static ValueSerDeser BYTES_SERDESER = new BytesValueSerDeser();
+    private static final ValueSerDeser BYTES_SERDESER = new BytesValueSerDeser();
 
     private static class BytesValueSerDeser implements ValueSerDeser {
         @Override
@@ -273,10 +273,10 @@ public class MetadataSerDeser {
         }
     }
 
-    private static ValueSerDeser[] serdesers = new ValueSerDeser[] { STRING_SERDESER, INT_SERDESER, LONG_SERDESER,
+    private static final ValueSerDeser[] serdesers = new ValueSerDeser[] { STRING_SERDESER, INT_SERDESER, LONG_SERDESER,
             FLOAT_SERDESER, DOUBLE_SERDESER, BOOLEAN_SERDESER, BYTES_SERDESER };
 
-    private static Map<Class, ValueSerDeser> CLASS_TO_SERDESER = new HashMap<Class, ValueSerDeser>();
+    private static final Map<Class, ValueSerDeser> CLASS_TO_SERDESER = new HashMap<Class, ValueSerDeser>();
     static {
         for (ValueSerDeser serdeser : serdesers) {
             CLASS_TO_SERDESER.put(serdeser.getTypeClass(), serdeser);
@@ -288,7 +288,7 @@ public class MetadataSerDeser {
         }
     }
 
-    private static Map<Byte, ValueSerDeser> BYTE_TO_SERDESER = new HashMap<Byte, ValueSerDeser>();
+    private static final Map<Byte, ValueSerDeser> BYTE_TO_SERDESER = new HashMap<Byte, ValueSerDeser>();
     static {
         for (ValueSerDeser serdeser : serdesers) {
             BYTE_TO_SERDESER.put(serdeser.getTypeByte(), serdeser);

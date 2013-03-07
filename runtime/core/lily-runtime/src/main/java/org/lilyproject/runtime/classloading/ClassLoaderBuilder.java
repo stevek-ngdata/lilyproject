@@ -32,7 +32,7 @@ import org.lilyproject.runtime.repository.ArtifactRepository;
 
 public class ClassLoaderBuilder {
     private static Map<String, ClassLoader> classLoaderCache;
-    private static boolean classLoaderCacheEnabled = true;
+    private static final boolean classLoaderCacheEnabled;
     static {
         classLoaderCacheEnabled = System.getProperty("lilyruntime.cacheclassloaders") != null;
         if (classLoaderCacheEnabled) {

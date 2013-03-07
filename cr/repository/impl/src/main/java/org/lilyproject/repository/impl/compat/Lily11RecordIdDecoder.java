@@ -35,7 +35,7 @@ import org.lilyproject.repository.impl.id.VariantRecordId;
  * This class contains code to parse Lily <= 1.1 style record id's encoded as bytes.
  */
 public class Lily11RecordIdDecoder {
-    private static Constructor UUID_CONSTRUCTOR;
+    private static final Constructor UUID_CONSTRUCTOR;
     static {
         try {
             UUID_CONSTRUCTOR = UUIDRecordId.class.getDeclaredConstructor(UUID.class, IdGeneratorImpl.class);
@@ -45,7 +45,7 @@ public class Lily11RecordIdDecoder {
         }
     }
 
-    private static Constructor USER_CONSTRUCTOR;
+    private static final Constructor USER_CONSTRUCTOR;
     static {
         try {
             USER_CONSTRUCTOR = UserRecordId.class.getDeclaredConstructor(String.class, IdGeneratorImpl.class);
@@ -55,7 +55,7 @@ public class Lily11RecordIdDecoder {
         }
     }
 
-    private static Constructor VARIANT_CONSTRUCTOR;
+    private static final Constructor VARIANT_CONSTRUCTOR;
     static {
         try {
             VARIANT_CONSTRUCTOR = VariantRecordId.class.getDeclaredConstructor(RecordId.class, Map.class, IdGeneratorImpl.class);
@@ -65,10 +65,7 @@ public class Lily11RecordIdDecoder {
         }
     }
 
-    private IdGeneratorImpl idGenerator;
-
     public Lily11RecordIdDecoder(IdGeneratorImpl idGenerator) {
-        this.idGenerator = idGenerator;
     }
 
     private static enum IdIdentifier {USER((byte)0), UUID((byte)1), VARIANT((byte)2);
@@ -84,7 +81,7 @@ public class Lily11RecordIdDecoder {
         }
     }
 
-    private static IdIdentifier[] IDENTIFIERS;
+    private static final IdIdentifier[] IDENTIFIERS;
     static {
         IDENTIFIERS = new IdIdentifier[3];
         IDENTIFIERS[0] = IdIdentifier.USER;

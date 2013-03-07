@@ -120,7 +120,7 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
         return new String[] { groupId, artifactId };
     }
 
-    private static Set<String> ALLOWED_ARTIFACTS = new HashSet<String>();
+    private static final Set<String> ALLOWED_ARTIFACTS = new HashSet<String>();
     static {
         ALLOWED_ARTIFACTS.add("org.apache.hbase:hbase");
         ALLOWED_ARTIFACTS.add("org.apache.hadoop:zookeeper");

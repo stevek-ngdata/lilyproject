@@ -25,7 +25,7 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class LilyHBaseSchema {
-    private static HColumnDescriptor DATA_CF;
+    private static final HColumnDescriptor DATA_CF;
 
     static final byte[] IS_RECORD_TABLE_PROPERTY = Bytes.toBytes("isLilyRecordTable");
     static final byte[] IS_RECORD_TABLE_VALUE = Bytes.toBytes(true);

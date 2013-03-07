@@ -22,14 +22,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class LicenseCheck {
-    private static Set extensions = new HashSet();
+    private static final Set extensions = new HashSet();
     static {
         extensions.add("java");
         extensions.add("xsl");
         extensions.add("js");
         extensions.add("xml");
     }
-    private static Set exclusions = new HashSet();
+    private static final Set exclusions = new HashSet();
     static {
         exclusions.add("target");
         exclusions.add(".svn");

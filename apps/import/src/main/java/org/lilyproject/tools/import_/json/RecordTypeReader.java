@@ -33,7 +33,7 @@ import static org.lilyproject.util.json.JsonUtil.getLong;
 import static org.lilyproject.util.json.JsonUtil.getString;
 
 public class RecordTypeReader implements EntityReader<RecordType> {
-    public static EntityReader<RecordType> INSTANCE  = new RecordTypeReader();
+    public static final EntityReader<RecordType> INSTANCE  = new RecordTypeReader();
 
     @Override
     public RecordType fromJson(JsonNode node, RepositoryManager repositoryManager) throws JsonFormatException, RepositoryException,

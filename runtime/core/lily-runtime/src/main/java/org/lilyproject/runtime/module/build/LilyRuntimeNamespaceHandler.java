@@ -246,7 +246,7 @@ public class LilyRuntimeNamespaceHandler implements NamespaceHandler {
         }
     };
 
-    private static Map<String, ElementProcessor> ELEMENT_PROCESSORS;
+    private static final Map<String, ElementProcessor> ELEMENT_PROCESSORS;
 
     static {
         ELEMENT_PROCESSORS = new HashMap<String, ElementProcessor>();

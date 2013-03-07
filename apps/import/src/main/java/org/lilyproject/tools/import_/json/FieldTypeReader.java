@@ -31,7 +31,7 @@ import org.lilyproject.util.repo.VersionTag;
 import static org.lilyproject.util.json.JsonUtil.getString;
 
 public class FieldTypeReader implements EntityReader<FieldType> {
-    public static EntityReader<FieldType> INSTANCE = new FieldTypeReader();
+    public static final EntityReader<FieldType> INSTANCE = new FieldTypeReader();
 
     @Override
     public FieldType fromJson(JsonNode node, RepositoryManager repositoryManager) throws JsonFormatException, RepositoryException, InterruptedException {

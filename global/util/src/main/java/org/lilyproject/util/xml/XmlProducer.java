@@ -58,7 +58,7 @@ public class XmlProducer {
             return SAXTransformerFactory.newInstance();
         }
     };
-    private static char[] LINE_SEP = new char[] {'\n'};
+    private static final char[] LINE_SEP = new char[] {'\n'};
     private static int LINE_SEP_LENGTH = LINE_SEP.length;
 
     public XmlProducer(OutputStream outputStream) throws SAXException, TransformerConfigurationException {

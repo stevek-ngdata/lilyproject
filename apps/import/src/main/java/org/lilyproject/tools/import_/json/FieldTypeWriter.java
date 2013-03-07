@@ -21,7 +21,7 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.RepositoryManager;
 
 public class FieldTypeWriter implements EntityWriter<FieldType> {
-    public static EntityWriter<FieldType> INSTANCE = new FieldTypeWriter();
+    public static final EntityWriter<FieldType> INSTANCE = new FieldTypeWriter();
 
     @Override
     public ObjectNode toJson(FieldType fieldType, WriteOptions options, RepositoryManager repositoryManager) {

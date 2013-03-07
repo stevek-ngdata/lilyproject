@@ -154,7 +154,7 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
         JsonNode node = JsonFormat.deserializeNonStd(conf);
         char[] padding = new char[extraIndent];
         Arrays.fill(padding, ' ');
-        StringBuffer output = new StringBuffer();
+        StringBuilder output = new StringBuilder();
         output.append("\n");
         output.append(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(node));
 

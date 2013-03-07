@@ -19,7 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class XmlMediaTypeHelper {
-    private static Set xmlMediaTypes;
+    private static final Set xmlMediaTypes;
 
     static {
         xmlMediaTypes = new HashSet();

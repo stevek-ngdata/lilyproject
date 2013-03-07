@@ -37,7 +37,7 @@ public class Words {
         }
     }
 
-    private static Map<WordList, List<String>> WORDS = new EnumMap<WordList, List<String>>(WordList.class);
+    private static final Map<WordList, List<String>> WORDS = new EnumMap<WordList, List<String>>(WordList.class);
 
     static {
         try {

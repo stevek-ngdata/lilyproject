@@ -72,7 +72,7 @@ public class RepositoryWriter {
     private static String pathOf(Artifact artifact) {
         ArtifactHandler artifactHandler = artifact.getArtifactHandler();
 
-        StringBuffer path = new StringBuffer();
+        StringBuilder path = new StringBuilder();
 
         path.append(formatAsDirectory(artifact.getGroupId())).append(PATH_SEPARATOR);
         path.append(artifact.getArtifactId()).append(PATH_SEPARATOR);

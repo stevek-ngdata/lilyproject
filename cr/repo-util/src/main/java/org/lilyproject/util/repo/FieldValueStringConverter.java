@@ -66,7 +66,7 @@ public class FieldValueStringConverter {
         return converter.fromString(value, idGenerator);
     }
 
-    private static Map<String, StringConverter> CONVERTERS;
+    private static final Map<String, StringConverter> CONVERTERS;
     static {
         CONVERTERS = new HashMap<String, StringConverter>();
         CONVERTERS.put("STRING", new StringStringConverter());
