@@ -38,6 +38,9 @@ import org.lilyproject.util.repo.VersionTag;
 
 public class IndexerUtils {
 
+    private IndexerUtils() {
+    }
+
     public static ArrayList<Record> getVariantsAsRecords(IndexUpdateBuilder indexUpdateBuilder, Dep newDep) throws IOException, RepositoryException, InterruptedException {
 
         // build a variant properties map which is a combination of dep.id.variantProperties + dep.moreDimensionedVariants

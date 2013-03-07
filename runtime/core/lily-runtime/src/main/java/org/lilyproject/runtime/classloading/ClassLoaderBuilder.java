@@ -40,6 +40,9 @@ public class ClassLoaderBuilder {
         }
     }
 
+    private ClassLoaderBuilder() {
+    }
+
     public static synchronized ClassLoader build(List<ClasspathEntry> classpathEntries, ClassLoader parentClassLoader,
             ArtifactRepository repository) throws ArtifactNotFoundException, MalformedURLException {
 

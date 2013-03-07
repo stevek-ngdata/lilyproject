@@ -35,6 +35,9 @@ import org.lilyproject.runtime.conf.XmlConfBuilder;
 import org.lilyproject.runtime.repository.ArtifactRepository;
 
 public class LilyRuntimeModelBuilder {
+    private LilyRuntimeModelBuilder() {
+    }
+
     public static LilyRuntimeModel build(File runtimeConfig, Set<String> disabledModuleIds,
             ArtifactRepository repository) throws Exception {
         Conf conf = XmlConfBuilder.build(runtimeConfig);

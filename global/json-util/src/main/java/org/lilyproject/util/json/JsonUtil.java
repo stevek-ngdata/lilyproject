@@ -25,6 +25,9 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
 public class JsonUtil {
+    private JsonUtil() {
+    }
+
     public static JsonNode getNode(JsonNode node, String prop) throws JsonFormatException {
         if (node.get(prop) == null) {
             throw new JsonFormatException("Missing required property: " + prop);

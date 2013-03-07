@@ -26,6 +26,9 @@ import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.RecordEvent;
 
 public class IndexRecordFilterUtil {
+    private IndexRecordFilterUtil() {
+    }
+
     /**
      * Returns Record instances that can be used to evaluate an IndexerConf's IndexRecordFilter. The record
      * instances are created based on state stored in the RecordEvent by the IndexRecordFilterHook.

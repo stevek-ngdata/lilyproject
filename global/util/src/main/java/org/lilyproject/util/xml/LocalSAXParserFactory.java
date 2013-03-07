@@ -41,6 +41,9 @@ public final class LocalSAXParserFactory {
         }
     };
 
+    private LocalSAXParserFactory() {
+    }
+
     public static SAXParserFactory getSAXParserFactory() {
         return LOCAL.get();
     }

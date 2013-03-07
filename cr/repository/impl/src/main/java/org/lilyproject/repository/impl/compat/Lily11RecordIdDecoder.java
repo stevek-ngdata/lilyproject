@@ -65,7 +65,10 @@ public class Lily11RecordIdDecoder {
         }
     }
 
-    public Lily11RecordIdDecoder(IdGeneratorImpl idGenerator) {
+    private Lily11RecordIdDecoder(IdGeneratorImpl idGenerator) {
+    }
+
+    private Lily11RecordIdDecoder() {
     }
 
     private static enum IdIdentifier {USER((byte)0), UUID((byte)1), VARIANT((byte)2);

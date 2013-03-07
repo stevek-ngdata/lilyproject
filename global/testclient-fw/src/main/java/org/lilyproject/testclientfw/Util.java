@@ -24,6 +24,9 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 
 public class Util {
+    private Util() {
+    }
+
     public static File getOutputFileRollOldOne(String name) throws IOException {
         File file = new File(name);
         if (file.exists()) {

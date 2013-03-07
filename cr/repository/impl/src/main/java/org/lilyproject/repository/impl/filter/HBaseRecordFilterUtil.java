@@ -19,6 +19,9 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.lilyproject.repository.api.CompareOp;
 
 public class HBaseRecordFilterUtil {
+    private HBaseRecordFilterUtil() {
+    }
+
     public static CompareFilter.CompareOp translateCompareOp(CompareOp compareOp) {
         CompareFilter.CompareOp result;
         switch (compareOp) {

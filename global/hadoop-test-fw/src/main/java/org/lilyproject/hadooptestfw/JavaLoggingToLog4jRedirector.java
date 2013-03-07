@@ -36,6 +36,9 @@ import java.util.logging.Logger;
 public class JavaLoggingToLog4jRedirector {
     static JDKLogHandler activeHandler;
 
+    private JavaLoggingToLog4jRedirector() {
+    }
+
     /**
      * Activates this feature.
      */

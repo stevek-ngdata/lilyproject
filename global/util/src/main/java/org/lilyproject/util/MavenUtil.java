@@ -30,6 +30,9 @@ import java.util.Map;
 import org.w3c.dom.Document;
 
 public class MavenUtil {
+    private MavenUtil() {
+    }
+
     public static File findLocalMavenRepository() throws IOException {
         String localRepositoryProperty = System.getProperty("localRepository");
         if (localRepositoryProperty != null) {

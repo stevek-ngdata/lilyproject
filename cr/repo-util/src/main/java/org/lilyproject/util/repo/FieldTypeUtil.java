@@ -30,6 +30,9 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 
 public class FieldTypeUtil {
+    private FieldTypeUtil() {
+    }
+
     public static Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds, FieldFilter fieldFilter,
             TypeManager typeManager) throws RepositoryException, InterruptedException {
 

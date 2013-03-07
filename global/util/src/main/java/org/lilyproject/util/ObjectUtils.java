@@ -18,6 +18,9 @@ package org.lilyproject.util;
 import java.util.Arrays;
 
 public class ObjectUtils {
+    private ObjectUtils() {
+    }
+
     public static boolean safeEquals(Object obj1, Object obj2) {
         return obj1 == null && obj2 == null || !(obj1 == null || obj2 == null) && obj1.equals(obj2);
     }

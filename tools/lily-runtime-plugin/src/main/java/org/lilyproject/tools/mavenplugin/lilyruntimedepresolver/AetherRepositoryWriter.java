@@ -27,6 +27,9 @@ import org.sonatype.aether.util.layout.RepositoryLayout;
 
 public class AetherRepositoryWriter {
 
+    private AetherRepositoryWriter() {
+    }
+
     public static void write(Set<Artifact> artifacts, String targetDirectory) throws MojoExecutionException {
         RepositoryLayout m2layout = new MavenDefaultLayout();
 

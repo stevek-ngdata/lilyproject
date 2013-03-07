@@ -16,6 +16,9 @@
 package org.lilyproject.tools.import_.json;
 
 public class ValueTypeNSConverter {
+    private ValueTypeNSConverter() {
+    }
+
     public static String fromJson(String valueType, Namespaces namespaces) throws JsonFormatException {
         int dollarPos = valueType.indexOf('$');
         if (dollarPos == -1) {

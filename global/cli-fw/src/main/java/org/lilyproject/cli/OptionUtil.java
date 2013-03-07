@@ -19,6 +19,10 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 public class OptionUtil {
+
+    private OptionUtil() {
+    }
+
     public static int getIntOption(CommandLine cmd, Option option, int defaultValue) {
         if (cmd.hasOption(option.getOpt())) {
             try {

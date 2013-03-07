@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 public class Words {
+    private Words() {
+    }
+
     public enum WordList {
         SMALL_LIST("wordlist-10.txt", 5000), BIG_LIST("wordlist-50.txt", 100000);
 

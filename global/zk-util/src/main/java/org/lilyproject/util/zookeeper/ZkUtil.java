@@ -33,6 +33,9 @@ import org.apache.zookeeper.data.Stat;
  */
 public class ZkUtil {
 
+    private ZkUtil() {
+    }
+
     public static ZooKeeperItf connect(String connectString, int sessionTimeout) throws ZkConnectException {
         ZooKeeperImpl zooKeeper;
         try {

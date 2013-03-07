@@ -19,6 +19,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 public class DfsUri {
+    private DfsUri() {
+    }
+
     public static URI getBaseDfsUri(URI dfsUri) {
         // It is not strictly necessary to construct this uri without path, since Hadoop ignores the
         // path anyway, but the supplied uri is used as cache key, so seems better to do this.

@@ -26,6 +26,9 @@ import org.lilyproject.repository.api.TypeManager;
 
 public class TracingRepository {
 
+    private TracingRepository() {
+    }
+
     public static Repository wrap(Repository repository) {
         TypeManager typeManager = (TypeManager) Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
                 new Class[]{TypeManager.class}, new TracingTypeManagerIH(repository.getTypeManager()));

@@ -29,6 +29,9 @@ import org.lilyproject.util.hbase.TableConfig;
 import org.lilyproject.util.hbase.TableConfigEntry;
 
 public class TableConfigBuilder {
+    private TableConfigBuilder() {
+    }
+
     public static List<TableConfigEntry> buildTableConfigs(Conf conf) {
         List<TableConfigEntry> result = new ArrayList<TableConfigEntry>();
 

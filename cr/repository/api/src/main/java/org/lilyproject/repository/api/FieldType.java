@@ -15,8 +15,6 @@
  */
 package org.lilyproject.repository.api;
 
-import javax.naming.OperationNotSupportedException;
-
 /**
  * A field type defines a field within a {@link Record}. Each field added to a record should be defined as a field
  * type.
@@ -51,7 +49,7 @@ public interface FieldType {
      * field type e.g. to construct a field type to pass to the
      * {@link TypeManager#updateFieldType(FieldType)}.
      *
-     * @throws OperationNotSupportedException
+     * @throws javax.naming.OperationNotSupportedException
      */
     void setId(SchemaId id);
 

@@ -26,6 +26,9 @@ import org.lilyproject.tools.import_.json.WriteOptions;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 public class ResourceClassUtil {
+    private ResourceClassUtil() {
+    }
+
     public static QName parseQName(String name, MultivaluedMap<String, String> queryParams) {
         if (name.startsWith("{")) {
             return QName.fromString(name);

@@ -26,6 +26,9 @@ public class LocalTransformerFactory {
         }
     };
 
+    private LocalTransformerFactory() {
+    }
+
     public static SAXTransformerFactory get() {
         return (SAXTransformerFactory)LOCAL.get();
     }

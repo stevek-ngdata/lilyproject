@@ -23,6 +23,9 @@ import org.lilyproject.repository.api.RecordId;
 
 public class Lily20LinkDecoder {
 
+    private Lily20LinkDecoder() {
+    }
+
     /**
      * Decodes links from Lily 2.0 and earlier (before table name was added to Link serialization).
      */

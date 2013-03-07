@@ -41,6 +41,9 @@ public class JsonFormat {
         JSON_FACTORY_NON_STD.getCodec().getDeserializationConfig().enable(DeserializationConfig.Feature.USE_BIG_DECIMAL_FOR_FLOATS);
     }
 
+    private JsonFormat() {
+    }
+
     public static void serialize(JsonNode jsonNode, OutputStream outputStream) throws IOException {
         OBJECT_MAPPER.writeValue(outputStream, jsonNode);
     }

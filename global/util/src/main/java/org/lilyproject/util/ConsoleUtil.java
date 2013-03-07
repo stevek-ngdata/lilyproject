@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class ConsoleUtil {
+    private ConsoleUtil() {
+    }
+
     public static boolean promptYesNo(String message, boolean defaultInput) {
         String input = "";
         while (!input.equals("yes") && !input.equals("no") && !input.equals("y") && !input.equals("n")) {

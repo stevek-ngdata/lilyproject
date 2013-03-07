@@ -40,6 +40,9 @@ import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.json.JsonFormat;
 
 public class BatchIndexBuilder {
+    private BatchIndexBuilder() {
+    }
+
     /**
      * @return the ID of the started job
      */

@@ -61,6 +61,9 @@ import org.lilyproject.util.json.JsonUtil;
  */
 public class JsonShardSelectorBuilder {
 
+    private JsonShardSelectorBuilder() {
+    }
+
     public static ShardSelector build(byte[] configData) throws ShardingConfigException {
         JsonNode node;
         try {

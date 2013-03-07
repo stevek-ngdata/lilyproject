@@ -16,6 +16,9 @@
 package org.lilyproject.util;
 
 public class ArgumentValidator {
+    private ArgumentValidator() {
+    }
+
     public static void notNull(Object object, String argName) {
         if (object == null) {
             throw new IllegalArgumentException("Null argument: " + argName);

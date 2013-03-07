@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 public class NetUtils {
+    private NetUtils() {
+    }
+
     public static int getFreePort() {
         ServerSocket socket = null;
         try {

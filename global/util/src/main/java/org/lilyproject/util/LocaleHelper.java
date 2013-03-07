@@ -19,6 +19,9 @@ import java.util.Locale;
 import java.util.StringTokenizer;
 
 public class LocaleHelper {
+    private LocaleHelper() {
+    }
+
     public static Locale parseLocale(String localeString) {
         StringTokenizer localeParser = new StringTokenizer(localeString, "-_");
 

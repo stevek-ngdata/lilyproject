@@ -44,6 +44,9 @@ import org.xml.sax.XMLReader;
  * Utility methods for working with DOM documents.
  */
 public class DocumentHelper {
+    private DocumentHelper() {
+    }
+
     public static Document parse(InputStream is) throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);

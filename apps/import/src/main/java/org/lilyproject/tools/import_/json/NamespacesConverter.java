@@ -23,6 +23,9 @@ import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 
 public class NamespacesConverter {
+    private NamespacesConverter() {
+    }
+
     /**
      * Reads namespaces, returns null if none are defined.
      */

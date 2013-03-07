@@ -20,6 +20,9 @@ import java.io.Closeable;
 import org.apache.commons.logging.LogFactory;
 
 public class IOUtils {
+    private IOUtils() {
+    }
+
     public static void closeQuietly(Closeable cl) {
         if (cl != null) {
             try {

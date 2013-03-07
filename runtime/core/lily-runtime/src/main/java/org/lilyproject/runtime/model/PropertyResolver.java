@@ -27,6 +27,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PropertyResolver  {
+    private PropertyResolver() {
+    }
+
     public static String resolveProperties(String input) {
         return resolveProperties(input, System.getProperties());
     }

@@ -26,6 +26,9 @@ import org.apache.maven.plugin.MojoExecutionException;
 
 public class RepositoryWriter {
 
+    private RepositoryWriter() {
+    }
+
     public static void write(Set<Artifact> artifacts, String targetDirectory) throws MojoExecutionException {
         for (Artifact artifact : artifacts) {
             File src = artifact.getFile();

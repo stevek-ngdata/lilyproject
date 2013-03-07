@@ -26,6 +26,9 @@ import java.lang.management.ManagementFactory;
  * Based upon Hadoop's org.apache.hadoop.metrics.util.MBeanUtil
  */
 public class MBeanUtil {
+    private MBeanUtil() {
+    }
+
     public static ObjectName registerMBean(final String serviceName,
             final String nameName,
             final Object theMbean) {

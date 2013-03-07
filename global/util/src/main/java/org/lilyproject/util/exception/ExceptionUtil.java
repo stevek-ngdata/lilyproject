@@ -16,6 +16,9 @@
 package org.lilyproject.util.exception;
 
 public class ExceptionUtil {
+    private ExceptionUtil() {
+    }
+
     /**
      * Enable the thread interrupted flag if a throwable is an InterruptedException.
      */

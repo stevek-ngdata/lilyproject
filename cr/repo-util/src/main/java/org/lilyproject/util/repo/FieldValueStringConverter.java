@@ -34,6 +34,9 @@ import org.lilyproject.repository.api.ValueType;
  * <p>Complex types such as lists and records are not supported.</p>
  */
 public class FieldValueStringConverter {
+    private FieldValueStringConverter() {
+    }
+
     public static String toString(Object value, ValueType valueType) {
         if (value == null) {
             throw new NullPointerException();

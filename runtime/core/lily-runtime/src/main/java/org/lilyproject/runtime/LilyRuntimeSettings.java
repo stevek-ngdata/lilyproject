@@ -36,9 +36,6 @@ public class LilyRuntimeSettings {
     private SourceLocations sourceLocations;
     private boolean disableServerConnectors;
 
-    public LilyRuntimeSettings() {
-    }
-
     public ArtifactRepository getRepository() {
         return repository;
     }

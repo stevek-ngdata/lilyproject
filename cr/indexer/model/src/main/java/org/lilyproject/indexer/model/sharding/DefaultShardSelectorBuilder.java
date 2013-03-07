@@ -19,6 +19,9 @@ import java.util.Map;
 import java.util.TreeSet;
 
 public class DefaultShardSelectorBuilder {
+    private DefaultShardSelectorBuilder() {
+    }
+
     public static ShardSelector createDefaultSelector(Map<String, String> solrShards) throws ShardingConfigException {
         // Default config: shard on the hash of the master record id modulus number of shards
 

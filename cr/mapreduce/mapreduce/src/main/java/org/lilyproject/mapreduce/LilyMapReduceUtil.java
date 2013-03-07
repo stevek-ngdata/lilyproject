@@ -37,6 +37,9 @@ public class LilyMapReduceUtil {
      */
     public static final String REPOSITORY_TABLES = "lily.mapreduce.tables";
 
+    private LilyMapReduceUtil() {
+    }
+
     /**
      * Set the necessary parameters inside the job configuration for using Lily as input.
      */

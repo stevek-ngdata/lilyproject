@@ -27,6 +27,9 @@ public class XmlMediaTypeHelper {
         xmlMediaTypes.add("application/xml");
     }
 
+    private XmlMediaTypeHelper() {
+    }
+
     /**
      * Returns true if the media type is recognized as the media type of some XML format.
      */

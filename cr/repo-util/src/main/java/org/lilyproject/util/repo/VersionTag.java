@@ -48,6 +48,9 @@ public class VersionTag {
      */
     public static final QName LAST = new QName(NAMESPACE, "last");
 
+    private VersionTag() {
+    }
+
     public static QName qname(String vtag) {
         return new QName(NAMESPACE, vtag);
     }

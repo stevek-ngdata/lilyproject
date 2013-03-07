@@ -31,9 +31,6 @@ import java.util.Set;
 public class LilyRuntimeModel {
     private List<ModuleDefinition> modules = new ArrayList<ModuleDefinition>();
 
-    public LilyRuntimeModel() {
-    }
-
     public List<ModuleDefinition> getModules() {
         return modules;
     }

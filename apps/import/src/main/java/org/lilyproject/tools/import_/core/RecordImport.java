@@ -32,6 +32,9 @@ import org.lilyproject.repository.api.RepositoryException;
 //
 
 public class RecordImport {
+    private RecordImport() {
+    }
+
     public static ImportResult<Record> importRecord(Record newRecord, ImportMode impMode, Repository repository)
             throws RepositoryException, InterruptedException {
         return importRecord(newRecord, impMode, null, repository);

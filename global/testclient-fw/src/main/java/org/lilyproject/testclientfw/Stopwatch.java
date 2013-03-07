@@ -29,6 +29,9 @@ public class Stopwatch {
         }
     };
 
+    private Stopwatch() {
+    }
+
     public static void start() {
         StopwatchData data = dataTL.get();
 

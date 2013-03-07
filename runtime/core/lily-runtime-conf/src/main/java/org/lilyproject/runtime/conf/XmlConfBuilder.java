@@ -39,6 +39,9 @@ import org.xml.sax.XMLReader;
 public class XmlConfBuilder {
     private static final String CONFIG_NAMESPACE = "http://lilyproject.org/configuration";
 
+    private XmlConfBuilder() {
+    }
+
     public static ConfImpl build(File file) throws IOException, SAXException, ParserConfigurationException {
         InputStream is = null;
         try {

@@ -24,6 +24,9 @@ public class RestserviceType {
     public static final String NO_TYPE = "##none";
     public static final String ANY_TYPE = "##any";
 
+    private RestserviceType() {
+    }
+
     public static boolean isCompatible(String providedType, String expectedType) {
         if (providedType.equals(expectedType)) {
             return true;

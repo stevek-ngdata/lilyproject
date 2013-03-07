@@ -56,6 +56,9 @@ public class LilyHBaseSchema {
         blobIncubatorDescriptor.addFamily(new HColumnDescriptor(BlobIncubatorCf.REF.bytes));
     }
 
+    private LilyHBaseSchema() {
+    }
+
     @VisibleForTesting
     static HTableDescriptor createRecordTableDescriptor(String tableName) {
 

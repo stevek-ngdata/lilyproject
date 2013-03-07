@@ -30,6 +30,9 @@ import org.w3c.dom.NodeList;
  * <p>See {@link LocalXPathExpression} for heavy-duty usages.
  */
 public class XPathUtils {
+    private XPathUtils() {
+    }
+
     public static NodeList evalNodeList(String expression, Node node) {
         try {
             return (NodeList)LocalXPathFactory.newXPath().evaluate(expression, node, XPathConstants.NODESET);

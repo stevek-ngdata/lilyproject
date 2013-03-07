@@ -49,6 +49,9 @@ public class FieldFlags {
 
     private static final byte[] DELETE_MARKER = new byte[] { DELETED };
 
+    private FieldFlags() {
+    }
+
 
     public static final byte[] getDeleteMarker() {
         return DELETE_MARKER;

@@ -28,6 +28,9 @@ import org.apache.log4j.spi.LoggingEvent;
 public class TestHelper {
     private static Logger ROOT_LOGGER;
 
+    private TestHelper() {
+    }
+
     private static synchronized void init() {
         if (ROOT_LOGGER == null) {
             JavaLoggingToLog4jRedirector.activate();

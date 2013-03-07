@@ -25,9 +25,6 @@ import org.lilyproject.repository.api.Record;
 public class RecordWritable implements Writable {
     private Record record;
 
-    public RecordWritable() {
-    }
-
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         throw new UnsupportedOperationException("Not implemented");

@@ -22,6 +22,9 @@ import java.util.Properties;
 import org.lilyproject.util.io.Closer;
 
 public class Version {
+    private Version() {
+    }
+
     public static String readVersion(String groupId, String artifactId) {
         String propPath = "/META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
         InputStream is = Version.class.getResourceAsStream(propPath);

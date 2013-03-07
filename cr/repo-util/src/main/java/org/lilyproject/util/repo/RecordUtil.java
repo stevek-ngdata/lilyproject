@@ -25,6 +25,9 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 
 public class RecordUtil {
+    private RecordUtil() {
+    }
+
     /**
      * Checks if the given record is an instance of the given record type. This does an "instance of" check,
      * thus also searches the supertypes for a match.

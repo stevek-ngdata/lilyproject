@@ -33,6 +33,9 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.util.repo.SystemFields;
 
 public class MutationConditionVerifier {
+    private MutationConditionVerifier() {
+    }
+
     /**
      * Checks a set of conditions, if not satisfied it returns false and sets the response
      * status in the supplied record object to conflict, as well as reduces the fields to those

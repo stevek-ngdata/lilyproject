@@ -33,6 +33,9 @@ import static org.lilyproject.tools.import_.core.ImportMode.CREATE_OR_UPDATE;
 import static org.lilyproject.tools.import_.core.ImportMode.UPDATE;
 
 public class RecordTypeImport {
+    private RecordTypeImport() {
+    }
+
     public static ImportResult<RecordType> importRecordType(RecordType newRecordType, ImportMode impMode,
             IdentificationMode idMode, QName identifyingName, boolean refreshSubtypes, TypeManager typeManager)
             throws RepositoryException, InterruptedException {

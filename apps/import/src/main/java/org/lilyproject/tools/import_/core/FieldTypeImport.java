@@ -26,6 +26,9 @@ import org.lilyproject.repository.api.ValueType;
 
 public class FieldTypeImport {
 
+    private FieldTypeImport() {
+    }
+
     public static ImportResult<FieldType> importFieldType(FieldType newFieldType, ImportMode impMode,
             IdentificationMode idMode, QName identifyingName, TypeManager typeManager) throws RepositoryException,
             InterruptedException {

@@ -32,6 +32,9 @@ import org.lilyproject.util.hbase.LocalHTable;
  * hbase table descriptor.
  */
 public class IndexMetaTableMigrationTool {
+    private IndexMetaTableMigrationTool() {
+    }
+
     public static void main(String[] args) throws Exception {
         String zkConnect = System.getProperty("zookeeper");
         String metaTable = System.getProperty("table");

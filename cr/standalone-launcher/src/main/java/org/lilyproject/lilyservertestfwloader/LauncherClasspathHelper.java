@@ -36,6 +36,9 @@ import org.xml.sax.SAXException;
 
 public class LauncherClasspathHelper {
 
+    private LauncherClasspathHelper() {
+    }
+
     public static ClassLoader getClassLoader(String configResource, File repositoryLocation) {
         URL[] classPath = getClassPath(configResource, repositoryLocation);
 

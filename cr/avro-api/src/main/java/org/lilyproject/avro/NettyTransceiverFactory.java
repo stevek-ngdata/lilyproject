@@ -26,6 +26,9 @@ import org.lilyproject.util.concurrent.CustomThreadFactory;
 
 public class NettyTransceiverFactory {
 
+    private NettyTransceiverFactory() {
+    }
+
     public static NettyTransceiver create(InetSocketAddress address) throws IOException {
         return new NettyTransceiver(address, new NioClientSocketChannelFactory(
                 Executors.newCachedThreadPool(new DaemonThreadFactory(new CustomThreadFactory("avro-client-boss"))),

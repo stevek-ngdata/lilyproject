@@ -29,6 +29,9 @@ import org.lilyproject.runtime.repository.ChainedMaven2StyleArtifactRepository;
  * high-level interface for embedded creation of the repository.
  */
 public class LilyRuntimeHelper {
+    private LilyRuntimeHelper() {
+    }
+
     public static LilyRuntimeSettings createSettings(File confDir, String mavenRepoLocation) throws Exception {
         return createSettings(Collections.singletonList(confDir), mavenRepoLocation);
     }

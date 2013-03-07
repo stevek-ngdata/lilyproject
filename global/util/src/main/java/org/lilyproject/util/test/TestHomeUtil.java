@@ -25,6 +25,9 @@ import java.util.UUID;
  */
 public class TestHomeUtil {
 
+    private TestHomeUtil() {
+    }
+
     public static File createTestHome() throws IOException {
         return createTestHome("lily-test-");
     }

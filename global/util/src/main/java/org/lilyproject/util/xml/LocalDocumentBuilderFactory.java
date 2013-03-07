@@ -37,6 +37,9 @@ public class LocalDocumentBuilderFactory {
         }
     };
 
+    private LocalDocumentBuilderFactory() {
+    }
+
     public static DocumentBuilderFactory getFactory() {
         return LOCAL.get();
     }

@@ -43,6 +43,9 @@ public class EntityRegistry {
         SUPPORTED_TYPES.put(RecordScan.class, new RegistryEntry(RecordScanReader.INSTANCE, RecordScanWriter.INSTANCE, "scan"));
     }
 
+    private EntityRegistry() {
+    }
+
     public static EntityReader findReader(Class clazz) {
         for (Map.Entry<Class, EntityRegistry.RegistryEntry> entry : EntityRegistry.SUPPORTED_TYPES.entrySet()) {
             if (clazz.isAssignableFrom(entry.getKey())) {

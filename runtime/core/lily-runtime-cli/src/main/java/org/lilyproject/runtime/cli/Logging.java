@@ -37,6 +37,9 @@ import org.lilyproject.runtime.LilyRuntime;
 
 public class Logging {
 
+    private Logging() {
+    }
+
     public static void setupLogging(boolean verbose, boolean quiet, boolean classLoadingLog, String logConfLocation,
             String consoleLoggingLevel, String consoleLogCategory) {
 

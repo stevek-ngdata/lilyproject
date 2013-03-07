@@ -19,6 +19,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class Logs {
+    private Logs() {
+    }
+
     public static void logThreadJoin(Thread thread) {
         Log log = LogFactory.getLog("org.lilyproject.threads.join");
         if (!log.isInfoEnabled()) {

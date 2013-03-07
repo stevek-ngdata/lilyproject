@@ -19,6 +19,9 @@ import java.util.Arrays;
 
 public class EncodingUtil {
 
+    private EncodingUtil() {
+    }
+
     public static byte[] prefixValue(byte[] fieldValue, byte prefix) {
         byte[] prefixedValue;
         prefixedValue = new byte[fieldValue.length + 1];

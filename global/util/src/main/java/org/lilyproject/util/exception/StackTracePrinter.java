@@ -23,6 +23,9 @@ import java.util.List;
  * Print stack traces with knowledge about {@link RemoteThrowableInfo}.
  */
 public class StackTracePrinter {
+    private StackTracePrinter() {
+    }
+
     public static void printStackTrace(Throwable throwable) {
         printStackTrace(throwable, System.err);
     }

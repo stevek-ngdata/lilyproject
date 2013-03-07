@@ -53,6 +53,9 @@ public class RecordAsBytesConverter {
     /** Version 2 adds metadata serialization. */
     private static final int VERSION_2 = 2;
 
+    private RecordAsBytesConverter() {
+    }
+
     public static final byte[] write(Record record, RepositoryManager repositoryManager)
             throws RepositoryException, InterruptedException {
         DataOutput output = new DataOutputImpl();

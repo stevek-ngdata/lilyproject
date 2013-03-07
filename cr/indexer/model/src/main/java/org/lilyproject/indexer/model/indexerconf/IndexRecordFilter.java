@@ -31,10 +31,6 @@ public class IndexRecordFilter {
     private List<Pair<RecordMatcher, IndexCase>> includes = new ArrayList<Pair<RecordMatcher, IndexCase>>();
     private List<RecordMatcher> excludes = new ArrayList<RecordMatcher>();
 
-    public IndexRecordFilter() {
-
-    }
-
     public void addExclude(RecordMatcher exclude) {
         excludes.add(exclude);
     }

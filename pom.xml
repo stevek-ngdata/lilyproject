@@ -1116,14 +1116,16 @@
           </dependency>
         </dependencies>
       </plugin>
+      <!--
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-pmd-plugin</artifactId>
-        <version>2.7.1</version>
+        <version>3.0</version>
         <configuration>
           <aggregate>true</aggregate>
         </configuration>
       </plugin>
+      -->
     </plugins>
 
     <pluginManagement>
@@ -1368,15 +1370,18 @@
           <aggregate>true</aggregate>
         </configuration>
        </plugin>
+       <!-- disabled for now because the output repeats each warning many times, resulting
+            in annoyingly large files
        <plugin>
          <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-pmd-plugin</artifactId>
-        <version>2.7.1</version>
+        <version>3.0</version>
         <configuration>
           <aggregate>true</aggregate>
           <targetJdk>1.6</targetJdk>
         </configuration>
       </plugin>
+      -->
     </plugins>
   </reporting>
 </project>

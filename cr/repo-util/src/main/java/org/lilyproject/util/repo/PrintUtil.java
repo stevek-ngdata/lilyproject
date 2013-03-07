@@ -40,6 +40,9 @@ import org.lilyproject.util.Pair;
  * Utilities for producing a readable dump of a Record and a RecordType.
  */
 public class PrintUtil {
+    private PrintUtil() {
+    }
+
     public static void print(Record record, Repository repository) {
         print(record, repository, System.out);
     }

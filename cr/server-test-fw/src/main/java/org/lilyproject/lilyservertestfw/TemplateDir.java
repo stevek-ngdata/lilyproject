@@ -27,6 +27,9 @@ public class TemplateDir {
     public static String SOLR_DIR = "solr";
     public static String LILYSERVER_DIR = "lilyserver";
 
+    private TemplateDir() {
+    }
+
     public static void restoreTemplateDir(File testHome) throws IOException {
         File templateDir = getTemplateDir();
         if (templateDir.exists()) {

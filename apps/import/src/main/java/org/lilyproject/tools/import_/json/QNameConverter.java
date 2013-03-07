@@ -18,6 +18,9 @@ package org.lilyproject.tools.import_.json;
 import org.lilyproject.repository.api.QName;
 
 public class QNameConverter {
+    private QNameConverter() {
+    }
+
     public static QName fromJson(String name, Namespaces namespaces) throws JsonFormatException {
 
         if (name.startsWith("{")) {

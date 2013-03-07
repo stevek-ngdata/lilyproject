@@ -30,9 +30,6 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
     private volatile RepositoryManager delegate;
     private final Object delegateAvailable = new Object();
 
-    public PrematureRepositoryManagerImpl() {
-    }
-
     private void waitOnRepoManager() {
         while (delegate == null) {
             synchronized (delegateAvailable) {

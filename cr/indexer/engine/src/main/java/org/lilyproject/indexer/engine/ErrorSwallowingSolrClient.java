@@ -60,6 +60,9 @@ public class ErrorSwallowingSolrClient {
         ERROR_UPDATE_RESPONSE.setResponse(new NamedList<Object>());
     }
 
+    private ErrorSwallowingSolrClient() {
+    }
+
     public static SolrClient wrap(SolrClient solrClient, SolrClientMetrics solrClientMetrics) {
         ErrorSwallowingSolrClientInvocationHandler handler = new ErrorSwallowingSolrClientInvocationHandler(solrClient,
                 solrClientMetrics);

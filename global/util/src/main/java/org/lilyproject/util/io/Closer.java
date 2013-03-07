@@ -22,6 +22,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class Closer {
+    private Closer() {
+    }
+
     /**
      * Closes anything {@link Closeable}, catches any throwable that might occur during closing and logs it as an error.
      */

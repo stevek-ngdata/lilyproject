@@ -24,6 +24,9 @@ import org.lilyproject.repository.api.Blob;
 import org.lilyproject.util.json.JsonUtil;
 
 public class BlobConverter {
+    private BlobConverter() {
+    }
+
     public static ObjectNode toJson(Blob blob) {
         ObjectNode jsonBlob = JsonNodeFactory.instance.objectNode();
         jsonBlob.put("value", valueToString(blob.getValue()));

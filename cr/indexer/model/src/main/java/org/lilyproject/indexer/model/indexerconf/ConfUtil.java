@@ -24,6 +24,9 @@ import org.w3c.dom.Element;
 
 public class ConfUtil {
 
+    private ConfUtil() {
+    }
+
     public static QName parseQName(String qname, Element contextEl) throws IndexerConfException {
         return parseQName(qname, contextEl, false);
     }

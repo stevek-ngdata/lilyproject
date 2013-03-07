@@ -60,6 +60,9 @@ package org.lilyproject.hbaseindex;
 final class ASCIIFoldingUtil {
 
 
+    private ASCIIFoldingUtil() {
+    }
+
     /**
      * Converts characters above ASCII to their ASCII equivalents.  For example,
      * accents are removed from accented characters.

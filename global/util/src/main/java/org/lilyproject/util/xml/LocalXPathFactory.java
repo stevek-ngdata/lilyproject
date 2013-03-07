@@ -29,6 +29,9 @@ public class LocalXPathFactory {
         }
     };
 
+    private LocalXPathFactory() {
+    }
+
     public static XPathFactory getFactory() {
         return LOCAL.get();
     }

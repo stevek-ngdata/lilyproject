@@ -19,10 +19,6 @@ public class SolrClientConfig {
     private String requestWriter;
     private String responseParser;
 
-    public SolrClientConfig() {
-
-    }
-
     public String getRequestWriter() {
         return requestWriter;
     }

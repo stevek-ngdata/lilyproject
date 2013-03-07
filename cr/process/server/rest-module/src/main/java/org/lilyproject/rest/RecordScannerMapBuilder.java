@@ -24,6 +24,9 @@ import org.lilyproject.repository.api.RecordScanner;
 // Convenience class for creating recordscanner caches. For use in the spring application context
 public class RecordScannerMapBuilder {
 
+    private RecordScannerMapBuilder() {
+    }
+
     public static Cache<String,RecordScanner> createRecordScannerMap (int delay) {
         return createRecordScannerMap(delay, TimeUnit.SECONDS);
     }

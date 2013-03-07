@@ -25,6 +25,9 @@ import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
 public class HBaseTestingUtilityFactory {
     public static final String TEST_DIR_KEY = "lily.hbasetestingutility.dir";
 
+    private HBaseTestingUtilityFactory() {
+    }
+
     /**
      * Creates an HBaseTestingUtility with settings applied such that everything will be stored below the
      * supplied directory and makes (to some extent) use of standard port numbers.

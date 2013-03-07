@@ -25,9 +25,6 @@ public class TestRecordType {
     private RecordType recordType;
     private List<TestFieldType> fieldTypes = new ArrayList<TestFieldType>();
 
-    public TestRecordType() {
-    }
-
     public void setRecordType(RecordType recordType) {
         this.recordType = recordType;
     }

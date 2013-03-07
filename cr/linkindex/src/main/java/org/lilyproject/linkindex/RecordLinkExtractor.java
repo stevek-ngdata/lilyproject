@@ -31,6 +31,9 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.ValueType;
 
 public class RecordLinkExtractor {
+    private RecordLinkExtractor() {
+    }
+
     /**
      * Extracts the links from a record. The provided Record object should
      * be "fully loaded" (= contain all fields).
