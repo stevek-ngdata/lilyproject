@@ -72,7 +72,7 @@ public class LocationUtils {
      * @return the string representation
      */
     public static String toString(Location location) {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
 
         String description = location.getDescription();
         if (description != null) {

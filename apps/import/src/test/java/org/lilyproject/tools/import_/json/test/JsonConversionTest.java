@@ -487,9 +487,9 @@ public class JsonConversionTest {
         assertEquals("string", metadata.get("stringfield"));
         assertEquals(55, metadata.getInt("intfield", null).intValue());
         assertEquals(999999999999L, metadata.getLong("longfield", null).longValue());
-        assertEquals(Boolean.TRUE, metadata.getBoolean("booleanfield", null).booleanValue());
-        assertEquals(33.33f, metadata.getFloat("floatfield", null).floatValue(), 0.001);
-        assertEquals(66.66d, metadata.getDouble("doublefield", null).doubleValue(), 0.001);
+        assertEquals(Boolean.TRUE, metadata.getBoolean("booleanfield", null));
+        assertEquals(33.33f, metadata.getFloat("floatfield", null), 0.001);
+        assertEquals(66.66d, metadata.getDouble("doublefield", null), 0.001);
         assertEquals(new ByteArray("foo".getBytes()), metadata.getBytes("binaryfield"));
 
         metadata = record.getMetadata(new QName("ns", "field2"));
