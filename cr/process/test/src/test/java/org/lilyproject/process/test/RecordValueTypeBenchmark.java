@@ -37,7 +37,7 @@ public class RecordValueTypeBenchmark {
 
     private LilyProxy lilyProxy;
 
-	private int nrOfFields = 20;
+    private int nrOfFields = 20;
     private int nrOfRecords = 10000;
     private int nrOfTimes = 10;
     private enum Type {MIXED, SEQ, RVT, JSON};
@@ -54,11 +54,11 @@ public class RecordValueTypeBenchmark {
     long jsonRead = 0;
     long jsonReadValues = 0;
 
-	private List<RecordId> rvtRecordIds;
+    private List<RecordId> rvtRecordIds;
 
-	private List<RecordId> jsonRecordIds;
+    private List<RecordId> jsonRecordIds;
 
-	private String ns;
+    private String ns;
 
 
     public static void main(String[] args) throws Exception {
@@ -81,20 +81,20 @@ public class RecordValueTypeBenchmark {
     }
 
     private void initialize(String[] args) throws Exception {
-    	for (String arg : args) {
-			if (arg.startsWith("f=")) {
-				nrOfFields = Integer.valueOf(arg.substring(2));
-			}
-			if (arg.startsWith("r=")) {
+        for (String arg : args) {
+            if (arg.startsWith("f=")) {
+                nrOfFields = Integer.valueOf(arg.substring(2));
+            }
+            if (arg.startsWith("r=")) {
                 nrOfRecords = Integer.valueOf(arg.substring(2));
-			}
-			if (arg.startsWith("t=")) {
-				type = Type.valueOf(arg.substring(2));
-    		}
-			if (arg.startsWith("n=")) {
-				nrOfTimes = Integer.valueOf(arg.substring(2));
-    		}
-		}
+            }
+            if (arg.startsWith("t=")) {
+                type = Type.valueOf(arg.substring(2));
+            }
+            if (arg.startsWith("n=")) {
+                nrOfTimes = Integer.valueOf(arg.substring(2));
+            }
+        }
         lilyProxy = new LilyProxy();
         lilyProxy.start();
         LilyClient lilyClient = lilyProxy.getLilyServerProxy().getClient();
@@ -104,7 +104,7 @@ public class RecordValueTypeBenchmark {
     }
 
     private void resetDurations() {
-    	// durations
+        // durations
         rvtBuild = 0;
         rvtCreate = 0;
         rvtRead = 0;
@@ -151,39 +151,39 @@ public class RecordValueTypeBenchmark {
         jsonRecordIds = new ArrayList<RecordId>();
 
         switch (type) {
-		case MIXED:
-			for (int i = 0; i < nrOfTimes; i++) {
-				resetDurations();
-				runMixed();
-			}
-			break;
-		case SEQ:
-			for (int i = 0; i < nrOfTimes; i++) {
-				resetDurations();
-				runSequential();
-			}
-			break;
-		case RVT:
-			for (int i = 0; i < nrOfTimes; i++) {
-				resetDurations();
-				runRvt();
-			}
-			break;
-		case JSON:
-			for (int i = 0; i < nrOfTimes; i++) {
-				resetDurations();
-				runJson();
-			}
-			break;
+        case MIXED:
+            for (int i = 0; i < nrOfTimes; i++) {
+                resetDurations();
+                runMixed();
+            }
+            break;
+        case SEQ:
+            for (int i = 0; i < nrOfTimes; i++) {
+                resetDurations();
+                runSequential();
+            }
+            break;
+        case RVT:
+            for (int i = 0; i < nrOfTimes; i++) {
+                resetDurations();
+                runRvt();
+            }
+            break;
+        case JSON:
+            for (int i = 0; i < nrOfTimes; i++) {
+                resetDurations();
+                runJson();
+            }
+            break;
 
-		default:
-			break;
-		}
+        default:
+            break;
+        }
         System.out.println("===> End benchmark");
     }
 
     private void runMixed() throws Exception {
-    	// Build and create the records
+        // Build and create the records
         for (int i = 0; i < nrOfRecords; i++) {
             long rvtBuildBefore = System.currentTimeMillis();
             Record rvtRecord = buildRvtRecord(ns, nrOfFields);
@@ -235,7 +235,7 @@ public class RecordValueTypeBenchmark {
     }
 
     private void runRvt() throws Exception {
-    	// Build and create the records
+        // Build and create the records
         for (int i = 0; i < nrOfRecords; i++) {
             long rvtBuildBefore = System.currentTimeMillis();
             Record rvtRecord = buildRvtRecord(ns, nrOfFields);
@@ -265,7 +265,7 @@ public class RecordValueTypeBenchmark {
     }
 
     private void runJson() throws Exception {
-    	// Build and create the records
+        // Build and create the records
         for (int i = 0; i < nrOfRecords; i++) {
             long jsonBuildBefore = System.currentTimeMillis();
             Record jsonRecord = buildJsonRecord(ns, nrOfFields);
@@ -293,8 +293,8 @@ public class RecordValueTypeBenchmark {
     }
 
     private void runSequential() throws Exception {
-    	runJson();
-    	runRvt();
+        runJson();
+        runRvt();
     }
 
     private Record buildRvtRecord(String ns, int nrOfFields) throws Exception {

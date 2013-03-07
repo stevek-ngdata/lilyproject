@@ -40,13 +40,13 @@ public class JsonObjectNodeMessageBodyReader implements MessageBodyReader<Object
         return false;
     }
 
-	@Override
+    @Override
     public ObjectNode readFrom(Class<ObjectNode> clazz, Type type,
-			Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, String> params, InputStream inputStream)
-			throws IOException, WebApplicationException {
-		ObjectMapper m = new ObjectMapper();
-		return (ObjectNode)m.readTree(inputStream);
-	}
+            Annotation[] annotations, MediaType mediaType,
+            MultivaluedMap<String, String> params, InputStream inputStream)
+            throws IOException, WebApplicationException {
+        ObjectMapper m = new ObjectMapper();
+        return (ObjectNode)m.readTree(inputStream);
+    }
 
 }

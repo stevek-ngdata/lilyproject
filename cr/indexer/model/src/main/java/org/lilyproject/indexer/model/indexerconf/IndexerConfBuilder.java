@@ -593,7 +593,7 @@ public class IndexerConfBuilder {
                         follow instanceof MasterFollow) {
                     String locationString = LocationAttributes.getLocationString(fieldEl);
                     throw new IndexerConfException("In deref expressions, a variant(+/-/master) follow" +
-                    		" cannot follow after a record field. Location: " + locationString);
+                            " cannot follow after a record field. Location: " + locationString);
                 }
             }
             if (follow instanceof RecordFieldFollow) {

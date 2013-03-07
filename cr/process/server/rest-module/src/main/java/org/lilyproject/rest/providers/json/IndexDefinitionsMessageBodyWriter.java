@@ -42,38 +42,38 @@ import org.lilyproject.util.json.JsonFormat;
 @Provider
 public class IndexDefinitionsMessageBodyWriter implements MessageBodyWriter<Collection<IndexDefinition>> {
 
-	@Override
+    @Override
     public long getSize(Collection<IndexDefinition> indices, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType) {
-		return -1;
-	}
+            Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return -1;
+    }
 
-	@Override
+    @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
-			MediaType mediaType) {
-		if (Collection.class.isAssignableFrom(type) && mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-		    if (genericType instanceof ParameterizedType) {
-		        ParameterizedType parameterizedType = (ParameterizedType)genericType;
-		        if (Arrays.asList(parameterizedType.getActualTypeArguments()).contains(IndexDefinition.class)) {
-		            return true;
-		        }
-		    }
-		}
-		return false;
-	}
+            MediaType mediaType) {
+        if (Collection.class.isAssignableFrom(type) && mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
+            if (genericType instanceof ParameterizedType) {
+                ParameterizedType parameterizedType = (ParameterizedType)genericType;
+                if (Arrays.asList(parameterizedType.getActualTypeArguments()).contains(IndexDefinition.class)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-	@Override
+    @Override
     public void writeTo(Collection<IndexDefinition> indices, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
-			throws IOException, WebApplicationException {
-	    ArrayNode array = JsonNodeFactory.instance.arrayNode();
-	    IndexDefinitionConverter converter = IndexDefinitionConverter.INSTANCE;
+            Type genericType, Annotation[] annotations, MediaType mediaType,
+            MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
+            throws IOException, WebApplicationException {
+        ArrayNode array = JsonNodeFactory.instance.arrayNode();
+        IndexDefinitionConverter converter = IndexDefinitionConverter.INSTANCE;
 
-	    for (IndexDefinition index : indices) {
-	        array.add(converter.toJson(index));
-	    }
+        for (IndexDefinition index : indices) {
+            array.add(converter.toJson(index));
+        }
 
-	    IOUtils.write(JsonFormat.serializeAsBytes(array), outputStream);
-	}
+        IOUtils.write(JsonFormat.serializeAsBytes(array), outputStream);
+    }
 }

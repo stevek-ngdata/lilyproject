@@ -36,30 +36,30 @@ import org.lilyproject.indexer.model.impl.IndexDefinitionConverter;
 @Provider
 public class IndexDefinitionMessageBodyWriter implements MessageBodyWriter<IndexDefinition> {
 
-	@Override
+    @Override
     public long getSize(IndexDefinition indexDefinition, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType) {
-		return -1;
-	}
+            Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return -1;
+    }
 
-	@Override
+    @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
-			MediaType mediaType) {
-		if (IndexDefinition.class.isAssignableFrom(type) && mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-			return true;
-		}
-		return false;
-	}
+            MediaType mediaType) {
+        if (IndexDefinition.class.isAssignableFrom(type) && mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
+            return true;
+        }
+        return false;
+    }
 
-	@Override
+    @Override
     public void writeTo(IndexDefinition indexDefinition, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
-			throws IOException, WebApplicationException {
+            Type genericType, Annotation[] annotations, MediaType mediaType,
+            MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
+            throws IOException, WebApplicationException {
 
-	    byte[] jsonBytes = IndexDefinitionConverter.INSTANCE.toJsonBytes(indexDefinition);
-	    IOUtils.write(jsonBytes, outputStream);
-	}
+        byte[] jsonBytes = IndexDefinitionConverter.INSTANCE.toJsonBytes(indexDefinition);
+        IOUtils.write(jsonBytes, outputStream);
+    }
 
 
 }

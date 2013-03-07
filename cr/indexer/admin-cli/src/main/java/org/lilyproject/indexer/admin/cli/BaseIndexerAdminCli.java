@@ -141,7 +141,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withArgName("batchconfig.json")
                 .hasOptionalArg()
                 .withDescription("Default configuration for batch builds in this index. If no value is provided" +
-                		"then the default batch index configuration will be removed.")
+                        "then the default batch index configuration will be removed.")
                 .withLongOpt("default-batch-config")
                 .create("dbi");
 
@@ -149,7 +149,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withArgName("batchconfig.json")
                 .hasArg()
                 .withDescription("Configuration for the current batch build of this index. Build state must be set" +
-                		" to BUILD_REQUESTED.")
+                        " to BUILD_REQUESTED.")
                 .withLongOpt("batch-config")
                 .create("bi");
 

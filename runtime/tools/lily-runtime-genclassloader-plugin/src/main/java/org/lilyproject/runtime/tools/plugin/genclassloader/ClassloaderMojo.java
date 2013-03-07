@@ -304,11 +304,11 @@ public class ClassloaderMojo extends AbstractMojo {
      * @throws SAXException
      */
     private void createDependencyListing(File classloaderTemplate) throws IOException, SAXException {
-    	if(classloaderTemplate != null && classloaderTemplate.exists()) {
-    		getLog().info("Found classloader template, trying to parse it...");
-    		parseClassloaderTemplate(classloaderTemplate);
-    	}
-    	final boolean hasEntries = entryMap.size() > 0;
+        if(classloaderTemplate != null && classloaderTemplate.exists()) {
+            getLog().info("Found classloader template, trying to parse it...");
+            parseClassloaderTemplate(classloaderTemplate);
+        }
+        final boolean hasEntries = entryMap.size() > 0;
         // fill in file with all dependencies
         FileOutputStream fos = new FileOutputStream(projectDescriptorFile);
         TransformerHandler ch = null;
@@ -345,18 +345,18 @@ public class ClassloaderMojo extends AbstractMojo {
                     if (!artifact.getGroupId().equals("org.lilyproject"))
                         atts.addAttribute("", "version", "version", "CDATA", artifact.getBaseVersion());
                     entry = new Entry(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier());
-                	if (hasEntries && entryMap.containsKey(entry)) {
-                		entryVersion = extractAttVal(entryMap.get(entry).getAttributes(), "version");
-                		entryShare = extractAttVal(entryMap.get(entry).getAttributes(), "share");
-                		entryMap.remove(entry);
-                		if (entryVersion != null && !entryVersion.equals("") && !entryVersion.equals(artifact.getBaseVersion())) {
+                    if (hasEntries && entryMap.containsKey(entry)) {
+                        entryVersion = extractAttVal(entryMap.get(entry).getAttributes(), "version");
+                        entryShare = extractAttVal(entryMap.get(entry).getAttributes(), "share");
+                        entryMap.remove(entry);
+                        if (entryVersion != null && !entryVersion.equals("") && !entryVersion.equals(artifact.getBaseVersion())) {
                             getLog().warn("version conflict between entry in template and artifact on classpath for " + entry);
                         }
-                		if(entryShare != null) {
-                			atts.addAttribute("", "", "share", "CDATA", entryShare);
-                		}
+                        if(entryShare != null) {
+                            atts.addAttribute("", "", "share", "CDATA", entryShare);
+                        }
                     } else {
-                    	// atts.addAttribute("", "", "share", "CDATA", SHARE_DEFAULT);
+                        // atts.addAttribute("", "", "share", "CDATA", SHARE_DEFAULT);
                     }
                     ch.startElement("", "artifact", "artifact", atts);
                     ch.endElement("", "artifact", "artifact");
@@ -367,7 +367,7 @@ public class ClassloaderMojo extends AbstractMojo {
                 ch.endDocument();
                 fos.close();
                 if(entryMap.size() > 0) {
-                	getLog().warn("Classloader template contains entries that could not be resolved.");
+                    getLog().warn("Classloader template contains entries that could not be resolved.");
                 }
             } catch (TransformerConfigurationException ex) {
                 ex.printStackTrace();
