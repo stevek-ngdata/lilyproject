@@ -35,5 +35,13 @@ public interface RecordWriter {
      */
     void close();
     
+    
+    /**
+     * Get the number of records written to this writer.
+     * 
+     * @return total count of records written
+     */
+    long getNumRecords();
+    
 
 }

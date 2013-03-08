@@ -30,6 +30,7 @@ import org.lilyproject.repository.bulk.RecordWriter;
  */
 public class MapReduceRecordWriter implements RecordWriter {
 
+    private long recordsWritten;
     private ImmutableBytesWritable rowKey = new ImmutableBytesWritable();
     private BulkIngester bulkIngester;
     private Mapper<?,?,ImmutableBytesWritable,Put>.Context context;
@@ -47,6 +48,7 @@ public class MapReduceRecordWriter implements RecordWriter {
         Put put;
         try {
             put = bulkIngester.buildPut(record);
+            recordsWritten++;
         } catch (RepositoryException e) {
             throw new RuntimeException(e);
         }
@@ -57,6 +59,11 @@ public class MapReduceRecordWriter implements RecordWriter {
     @Override
     public void close() {
         // No-op
+    }
+    
+    @Override
+    public long getNumRecords() {
+        return recordsWritten;
     }
     
 }

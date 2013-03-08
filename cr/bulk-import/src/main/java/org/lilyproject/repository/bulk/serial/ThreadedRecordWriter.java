@@ -107,13 +107,13 @@ public class ThreadedRecordWriter implements RecordWriter {
     }
 
 
-    public long getNumRecordsWritten() {
-        return recordsWritten.longValue();
-    }
-
-
     public long getNumWriteFailures() {
         return writeFailures.longValue();
+    }
+    
+    @Override
+    public long getNumRecords() {
+        return recordsWritten.longValue();
     }
 
 }

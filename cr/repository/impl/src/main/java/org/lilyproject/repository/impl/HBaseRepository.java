@@ -249,7 +249,7 @@ public class HBaseRepository extends BaseRepository {
                 Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
                 Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
 
-                Put put = buildPut(newRecord, version, fieldTypes, recordEvent, referencedBlobs, unReferencedBlobs);
+                Put put = buildPut(newRecord, version, fieldTypes, recordEvent, referencedBlobs, unReferencedBlobs, newOcc);
 
                 if (record.hasAttributes()) {
                     recordEvent.setAttributes(record.getAttributes());
@@ -267,7 +267,6 @@ public class HBaseRepository extends BaseRepository {
                 reserveBlobs(null, referencedBlobs);
 
                 put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
-                put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
                 boolean success = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
                         oldOcc == -1 ? null : Bytes.toBytes(oldOcc), put);
                 if (!success) {
@@ -301,13 +300,14 @@ public class HBaseRepository extends BaseRepository {
      * Build a Put for inserting a new (blank) record into a Lily repository table.
      */
     public Put buildPut(Record newRecord, long version, FieldTypes fieldTypes, RecordEvent recordEvent,
-            Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs) throws RecordException,
+            Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, long occ) throws RecordException,
             InterruptedException, RepositoryException {
         Record dummyOriginalRecord = newRecord();
         Put put = new Put(newRecord.getId().toBytes());
         put.add(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(false));
         calculateRecordChanges(newRecord, dummyOriginalRecord, version, put, recordEvent, referencedBlobs,
                 unReferencedBlobs, false, fieldTypes);
+        put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(occ));
         return put;
     }
 

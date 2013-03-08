@@ -29,6 +29,7 @@ import org.lilyproject.repository.bulk.RecordWriter;
  */
 public class DebugRecordWriter implements RecordWriter {
     
+    private long numRecords;
     private PrintStream output;
     
     public DebugRecordWriter(OutputStream outputStream) {
@@ -38,11 +39,17 @@ public class DebugRecordWriter implements RecordWriter {
     @Override
     public void write(Record record) throws IOException, InterruptedException {
         output.println(record.toString());
+        numRecords++;
     }
     
     @Override
     public void close() {
         output.flush();
+    }
+    
+    @Override
+    public long getNumRecords() {
+        return numRecords;
     }
 
 }

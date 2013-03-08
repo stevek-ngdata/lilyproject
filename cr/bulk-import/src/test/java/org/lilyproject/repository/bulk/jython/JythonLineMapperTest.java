@@ -23,8 +23,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
-import org.lilyproject.repository.bulk.LineMappingContext;
-
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.junit.Before;
@@ -35,6 +33,7 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.bulk.LineMapper;
+import org.lilyproject.repository.bulk.LineMappingContext;
 
 public class JythonLineMapperTest {
     

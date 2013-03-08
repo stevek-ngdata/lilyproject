@@ -45,6 +45,7 @@ public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
     protected String outputTable;
     
     
+    @SuppressWarnings("static-access")
     public AbstractBulkImportCliTool() {
 
         pythonMapperPathArg = OptionBuilder

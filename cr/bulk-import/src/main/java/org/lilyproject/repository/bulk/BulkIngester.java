@@ -17,18 +17,28 @@ package org.lilyproject.repository.bulk;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobAccess;
+import org.lilyproject.repository.api.BlobException;
+import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobReference;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordFactory;
+import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
@@ -92,7 +102,8 @@ public class BulkIngester implements Closeable {
             RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
             
             @SuppressWarnings("resource") // RepositoryManager gets closed in BulkIngester.close
-            RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory, null);
+            RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
+                        recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager());
 
             // FIXME Blobs aren't really supported here (no BlobManager is created), but null is
             // just passed in as the BlobManager so we'll probably get some mystery NPEs if Blobs
@@ -182,13 +193,64 @@ public class BulkIngester implements Closeable {
             record.setId(getIdGenerator().newRecordId());
         }
         return hbaseRepo.buildPut(record, 1L, fieldTypes, recordEvent, Sets.<BlobReference> newHashSet(),
-                Sets.<BlobReference> newHashSet());
+                Sets.<BlobReference> newHashSet(), 1L);
     }
     
     @Override
     public void close() throws IOException {
         flush();
         repositoryManager.close();
+    }
+    
+    
+    /**
+     * BlobManager that ensures that blobs aren't supported in bulk import.
+     * <p>
+     * In the future, it may be interesting to support blobs, but at the moment it seems as this
+     * would likely lead to poor import performance.
+     */
+    private static class BlobsNotSupportedBlobManager implements BlobManager {
+
+        private static final String NOT_SUPPORTED_MESSAGE = "Blobs are not supported for bulk imports";
+        
+        @Override
+        public void incubateBlob(byte[] blobKey) throws IOException {
+            throw new UnsupportedOperationException(NOT_SUPPORTED_MESSAGE);
+        }
+
+        @Override
+        public Set<BlobReference> reserveBlobs(Set<BlobReference> blobs) throws IOException {
+            throw new UnsupportedOperationException(NOT_SUPPORTED_MESSAGE);
+        }
+
+        @Override
+        public void handleBlobReferences(RecordId recordId, Set<BlobReference> referencedBlobs,
+                Set<BlobReference> unReferencedBlobs) {
+            throw new UnsupportedOperationException(NOT_SUPPORTED_MESSAGE);
+        }
+
+        @Override
+        public OutputStream getOutputStream(Blob blob) throws BlobException {
+            throw new UnsupportedOperationException(NOT_SUPPORTED_MESSAGE);
+        }
+
+        @Override
+        public BlobAccess getBlobAccess(Record record, QName fieldName, FieldType fieldType, int... indexes)
+                throws BlobException {
+            throw new UnsupportedOperationException(NOT_SUPPORTED_MESSAGE);
+        }
+
+        @Override
+        public void register(BlobStoreAccess blobStoreAccess) {
+            throw new UnsupportedOperationException(NOT_SUPPORTED_MESSAGE);
+        }
+
+        @Override
+        public void delete(byte[] blobKey) throws BlobException {
+            throw new UnsupportedOperationException(NOT_SUPPORTED_MESSAGE);
+        }
+        
+        
     }
 
 }

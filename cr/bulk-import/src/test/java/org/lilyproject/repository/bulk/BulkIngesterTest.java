@@ -67,7 +67,7 @@ public class BulkIngesterTest {
         RecordEvent expectedRecordEvent = new RecordEvent();
         expectedRecordEvent.setType(Type.CREATE);
         when(hbaseRepository.buildPut(record, 1L, fieldTypes, expectedRecordEvent,
-                        Sets.<BlobReference> newHashSet(), Sets.<BlobReference> newHashSet())).thenReturn(put);
+                        Sets.<BlobReference> newHashSet(), Sets.<BlobReference> newHashSet(), 1L)).thenReturn(put);
     }
 
     @Test

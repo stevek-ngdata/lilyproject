@@ -15,10 +15,12 @@
  */
 package org.lilyproject.repository.bulk.jython;
 
-import org.lilyproject.repository.bulk.LineMappingContext;
+import java.io.PrintWriter;
+import java.io.Writer;
 
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.bulk.LineMapper;
+import org.lilyproject.repository.bulk.LineMappingContext;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -79,7 +81,12 @@ public class JythonLineMapper implements LineMapper {
     private PyObject mapperCallable;
 
     public JythonLineMapper(String pythonCode, String recordMapperSymbol) {
+        this(pythonCode, recordMapperSymbol, new PrintWriter(System.err));
+    }
+
+    public JythonLineMapper(String pythonCode, String recordMapperSymbol, Writer stderrWriter) {
         interpreter = new PythonInterpreter();
+        interpreter.setErr(stderrWriter);
 
         // TODO Should we (or can we) restrict what can be done here?
         interpreter.exec(pythonCode);

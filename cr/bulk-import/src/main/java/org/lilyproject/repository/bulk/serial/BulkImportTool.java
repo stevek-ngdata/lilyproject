@@ -21,6 +21,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 
+import org.python.core.PyException;
+
 import com.google.common.base.Charsets;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -40,77 +42,81 @@ import org.python.google.common.io.Files;
  * MapReduce.
  */
 public class BulkImportTool extends AbstractBulkImportCliTool {
-    
+
     private final Log log = LogFactory.getLog(BulkImportTool.class);
 
     private Option dryRunOption;
-    
+
     private boolean dryRun;
-    
+
+    @SuppressWarnings("static-access")
     @Override
     public List<Option> getOptions() {
-        dryRunOption = OptionBuilder
-                            .withDescription("Only print out the created records without writing them to Lily")
-                            .withLongOpt("dryrun")
-                            .create('d');
-        
+        dryRunOption = OptionBuilder.withDescription("Only print out the created records without writing them to Lily").withLongOpt(
+                "dryrun").create('d');
+
         List<Option> options = super.getOptions();
         options.add(dryRunOption);
         return options;
     }
-    
-    
+
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int status = super.processOptions(cmd);
         if (status != 0) {
             return status;
         }
-        
+
         dryRun = cmd.hasOption(dryRunOption.getOpt());
         return 0;
     }
-   
 
     @Override
     protected String getCmdName() {
         return "lily-bulk-import";
     }
-    
+
     @Override
     public int run(CommandLine cmd) throws Exception {
         BulkIngester bulkIngester = BulkIngester.newBulkIngester(zkConnectionString, 30000, outputTable);
 
         BufferedReader bufferedReader = new BufferedReader(new FileReader(inputPath));
-        
-        LineMapper lineMapper = new JythonLineMapper(Files.toString(new File(pythonMapperPath), Charsets.UTF_8),
-                pythonSymbol);
         RecordWriter recordWriter;
         if (dryRun) {
             recordWriter = new DebugRecordWriter(System.out);
         } else {
             recordWriter = new ThreadedRecordWriter(zkConnectionString, 10, outputTable);
         }
-        LineMappingContext mappingContext = new LineMappingContext(bulkIngester, recordWriter);
-        
         long start = System.currentTimeMillis();
         int numLines = 0;
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-            lineMapper.mapLine(line, mappingContext);
-            numLines++;
+
+        try {
+            LineMapper lineMapper = new JythonLineMapper(Files.toString(new File(pythonMapperPath), Charsets.UTF_8),
+                    pythonSymbol);
+            LineMappingContext mappingContext = new LineMappingContext(bulkIngester, recordWriter);
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                lineMapper.mapLine(line, mappingContext);
+                numLines++;
+            }
+        } catch (PyException pe) {
+            pe.printStackTrace();    // Print the Jython-native stack trace
+            log.error("Exception encountered in Python code", pe);
+            return -1;
+        } finally {
+            bufferedReader.close();
+            recordWriter.close();
         }
-        
-        bufferedReader.close();
-        recordWriter.close();
         float duration = (System.currentTimeMillis() - start) / 1000f;
-        log.info(String.format("Imported %d lines in %.2f seconds", numLines, duration));
-        
+        if (!dryRun) {
+            System.out.printf("Imported %d lines as %d records in %.2f seconds\n", numLines, recordWriter.getNumRecords(), duration);
+        }
+
         return 0;
     }
 
     public static void main(String[] args) throws IOException {
         new BulkImportTool().start(args);
     }
-    
+
 }
