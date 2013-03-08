@@ -83,7 +83,9 @@ public class BulkImportTool extends AbstractBulkImportCliTool implements Tool {
         conf.set(LilyJythonMapper.LILY_ZK_STRING, zkConnectionString);
         conf.set(LilyJythonMapper.MAPPER_CODE, Files.toString(new File(pythonMapperPath), Charsets.UTF_8));
         conf.set(LilyJythonMapper.MAPPER_SYMBOL_NAME, pythonSymbol);
-        conf.set(LilyJythonMapper.TABLE_NAME, outputTable);
+        if (outputTable != null) {
+            conf.set(LilyJythonMapper.TABLE_NAME, outputTable);
+        }
 
         Job job = new Job(conf);
 
