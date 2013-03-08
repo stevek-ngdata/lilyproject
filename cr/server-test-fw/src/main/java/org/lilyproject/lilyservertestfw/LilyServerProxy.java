@@ -443,4 +443,8 @@ public class LilyServerProxy {
 
         throw new Exception("Timed out waiting for batch index build to finish.");
     }
+
+    public LilyServerTestUtility getLilyServerTestingUtility() {
+        return lilyServerTestUtility;
+    }
 }
