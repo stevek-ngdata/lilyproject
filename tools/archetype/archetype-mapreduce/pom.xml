@@ -31,7 +31,7 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <name>Lily: basic archetype</name>
+  <name>Lily: mapreduce archetype</name>
 
   <build>
     <plugins>

@@ -21,7 +21,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-mapreduce-test-jobs</artifactId>
-  <name>Lily: MapReduce support</name>
+  <name>Lily: MapReduce test jobs</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
