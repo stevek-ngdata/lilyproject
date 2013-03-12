@@ -73,10 +73,6 @@ been changed, these new classes need to be taken and the Lily-specific patched
 need to be re-applied if still needed (otherwise, the fork can be removed).
 
 These classes include:
-- org.lilyproject.indexer.batchbuild.hbasemr_patched.TableInputFormat.java
-- org.lilyproject.indexer.batchbuild.hbasemr_patched.TableInputFormatBase.java
-- org.lilyproject.indexer.batchbuild.hbasemr_patched.TableMapReduceUtil.java
-- org.lilyproject.indexer.batchbuild.hbasemr_patched.TableRecordReader.java
 - org.lilyproject.hadooptestfw.fork.HBaseTestingUtility.java
 - org.lilyproject.hadooptestfw.fork.MiniMRCluster.java
 - org.lilyproject.hadooptestfw.fork.MiniZooKeeperCluster.java
@@ -90,10 +86,6 @@ NEW_HBASE_DIR=./hbase-0.90.6-cdh3u4
 OLD_HADOOP_DIR=./hadoop-0.20.2-cdh3u3
 NEW_HADOOP_DIR=./hadoop-0.20.2-cdh3u4
 
-diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormat.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormat.java
-diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormatBase.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormatBase.java
-diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableMapReduceUtil.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableMapReduceUtil.java
-diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableRecordReader.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableRecordReader.java
 diff -u $OLD_HBASE_DIR/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java $NEW_HBASE_DIR/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java
 diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java
 diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java

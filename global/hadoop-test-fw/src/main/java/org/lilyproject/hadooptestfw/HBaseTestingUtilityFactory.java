@@ -86,6 +86,9 @@ public class HBaseTestingUtilityFactory {
 
         // make replication react a little quicker
         conf.setLong("replication.source.sleepforretries", 200);
+        
+        // make retries in ZooKeeper a little quicker
+        conf.setInt("zookeeper.recovery.retry.intervalmill", 100);
 
         return new HBaseTestingUtility(conf, clearData);
     }

@@ -382,4 +382,9 @@ public class MiniZooKeeperCluster {
         }
         return false;
     }
+    
+    // Lily change - added getter
+    public int getClientPort() {
+        return clientPort;
+    }
 }
