@@ -3599,4 +3599,16 @@ public abstract class AbstractRepositoryTest {
         record = repository.read(record.getId());
         assertEquals("y", record.getMetadata(fieldType1.getName()).get("x"));
     }
+
+    @Test
+    public void testMetadataFieldsToDeleteNotStored() throws Exception {
+        Record record = repository.recordBuilder()
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "hi")
+                .metadata(fieldType1.getName(), new MetadataBuilder().value("x", "y").delete("z").build())
+                .create();
+
+        record = repository.read(record.getId());
+        assertEquals(0, record.getMetadata(fieldType1.getName()).getFieldsToDelete().size());
+    }
 }

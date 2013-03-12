@@ -809,7 +809,7 @@ public class HBaseRepository extends BaseRepository {
      */
     private Metadata mergeMetadata(Metadata newMetadata, Metadata oldMetadata) {
         if (oldMetadata == null || oldMetadata.isEmpty()) {
-            return newMetadata;
+            return removeFieldsToDelete(newMetadata);
         }
 
         if (newMetadata == null || newMetadata.isEmpty()) {
@@ -836,6 +836,22 @@ public class HBaseRepository extends BaseRepository {
 
         return result.build();
     }
+
+    /**
+     * Returns a metadata object with the fieldsToDelete removed.
+     */
+    private Metadata removeFieldsToDelete(Metadata metadata) {
+        if (metadata.getFieldsToDelete().size() > 0) {
+            MetadataBuilder builder = new MetadataBuilder();
+            for (Map.Entry<String, Object> entry : metadata.getMap().entrySet()) {
+                builder.object(entry.getKey(), entry.getValue());
+            }
+            return builder.build();
+        } else {
+            return metadata;
+        }
+    }
+
 
     private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue, Metadata metadata)
             throws RepositoryException, InterruptedException {
