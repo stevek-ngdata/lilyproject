@@ -69,7 +69,7 @@ Build Lily and add any proposed exclusions to global/hbase-client/pom.xml,
 or add them to the allowed artifacts in HBaseExclusionsMojo.java 
 
 Some Hadoop and HBase classes have been patched. If the original classes have
-been changed, these new classes need to taken and the Lily-specific patched
+been changed, these new classes need to be taken and the Lily-specific patched
 need to be re-applied if still needed (otherwise, the fork can be removed).
 
 These classes include:
@@ -97,5 +97,4 @@ diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableReco
 diff -u $OLD_HBASE_DIR/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java $NEW_HBASE_DIR/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java
 diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java
 diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java
-diff -u $OLD_HADOOP_DIR/src/test/org/apache/hadoop/mapred/MiniMRCluster.java $NEW_HADOOP_DIR/src/test/org/apache/hadoop/mapred/MiniMRCluster.java
-
+diff -u $OLD_HADOOP_DIR/src/hadoop-mapreduce-project/src/test/mapred/org/apache/hadoop/mapred/MiniMRCluster.java $NEW_HADOOP_DIR/src/hadoop-mapreduce-project/src/test/mapred/org/apache/hadoop/mapred/MiniMRCluster.java

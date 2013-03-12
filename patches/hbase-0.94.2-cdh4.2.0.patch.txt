@@ -1,0 +1,208 @@
+diff --git pom.xml pom.xml
+index 1932b64..cd4451f 100644
+--- pom.xml
++++ pom.xml
+@@ -36,7 +36,7 @@
+   <groupId>org.apache.hbase</groupId>
+   <artifactId>hbase</artifactId>
+   <packaging>jar</packaging>
+-  <version>0.94.2-cdh4.2.0</version>
++  <version>0.94.2-cdh4.2.0-lily</version>
+   <name>HBase</name>
+   <description>
+     HBase is the &amp;lt;a href="http://hadoop.apache.org"&amp;rt;Hadoop&lt;/a&amp;rt; database. Use it when you need
+@@ -339,6 +339,14 @@
+   </pluginRepositories>
+ 
+   <build>
++    <extensions>
++      <extension>
++        <groupId>org.apache.maven.wagon</groupId>
++         <artifactId>wagon-ssh</artifactId>
++         <version>2.0</version>
++      </extension>
++    </extensions>
++
+     <!-- Some plugins (javadoc for example) can be used in the normal build- and the site phase.
+          These plugins inherit their options from the <reporting> section below. These settings
+          can be overwritten here. -->
+diff --git src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java
+index 590e774..dcf79ba 100644
+--- src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java
++++ src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java
+@@ -130,7 +130,18 @@ public class HBaseConfiguration extends Configuration {
+    **/
+   public static void merge(Configuration destConf, Configuration srcConf) {
+     for (Entry<String, String> e : srcConf) {
+-      destConf.set(e.getKey(), e.getValue());
++      // Lily change (only compiles against Hadoop 0.23):
++      // without the isDeprecated check, we see quite some messages logged in LilyClient-using
++      // apps about deprecated properties. These deprecated properties are nowhere explicitly
++      // configured. Rather, Hadoop Configuration internally stores properties both under new
++      // and old names, and then in this situation where we iterate over all of them, we also
++      // get the old names, and would then set these old names in the new config and get the
++      // warning.
++      // (didn't test if this outside of Lily and whether this is only with Cloudera, but would
++      // make sense to do so and report higher up)
++      if (!Configuration.isDeprecated(e.getKey())) {
++        destConf.set(e.getKey(), e.getValue());
++      }
+     }
+   }
+   
+diff --git src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
+index b20415a..45e7455 100644
+--- src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
++++ src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
+@@ -364,6 +364,11 @@ public class HConnectionManager {
+       try {
+         connection.close();
+       } catch (Exception e) {
++        // Lily change
++        if (e instanceof InterruptedException) {
++            Thread.currentThread().interrupt();
++            throw new IOException("Giving up: thread is interrupted.", e);
++        }
+         if (connectSucceeded) {
+           throw new IOException("The connection to " + connection
+               + " could not be deleted.", e);
+@@ -696,7 +701,8 @@ public class HConnectionManager {
+             this.masterLock.wait(ConnectionUtils.getPauseTime(this.pause, tries));
+           } catch (InterruptedException e) {
+             Thread.currentThread().interrupt();
+-            throw new RuntimeException("Thread was interrupted while trying to connect to master.");
++            // Lily change: nest interruptedexc so that we can detect it
++            throw new RuntimeException("Thread was interrupted while trying to connect to master.", e);
+           }
+         }
+ 
+@@ -1067,8 +1073,9 @@ public class HConnectionManager {
+           Thread.sleep(ConnectionUtils.getPauseTime(this.pause, tries));
+         } catch (InterruptedException e) {
+           Thread.currentThread().interrupt();
++          // Lily change: nest interruptedexc so that we can detect it
+           throw new IOException("Giving up trying to location region in " +
+-            "meta: thread is interrupted.");
++            "meta: thread is interrupted.", e);
+         }
+       }
+     }
+diff --git src/main/java/org/apache/hadoop/hbase/client/HTable.java src/main/java/org/apache/hadoop/hbase/client/HTable.java
+index e00ebe1..56aa471 100644
+--- src/main/java/org/apache/hadoop/hbase/client/HTable.java
++++ src/main/java/org/apache/hadoop/hbase/client/HTable.java
+@@ -717,6 +717,8 @@ public class HTable implements HTableInterface {
+ 
+       return results;
+     } catch (InterruptedException e) {
++      // Lily change
++      Thread.currentThread().interrupt();
+       throw new IOException(e);
+     }
+   }
+@@ -764,6 +766,8 @@ public class HTable implements HTableInterface {
+     try {
+       connection.processBatch((List) deletes, tableName, pool, results);
+     } catch (InterruptedException e) {
++      // Lily change
++      Thread.currentThread().interrupt();
+       throw new IOException(e);
+     } finally {
+       // mutate list so that it is empty for complete success, or contains only failed records
+@@ -954,6 +958,8 @@ public class HTable implements HTableInterface {
+       try {
+         this.connection.processBatch(writeBuffer, tableName, pool, results);
+       } catch (InterruptedException e) {
++        // Lily change
++        Thread.currentThread().interrupt();
+         throw new IOException(e);
+       } finally {
+         // mutate list so that it is empty for complete success, or contains
+diff --git src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java
+index 188b7b9..ad56467 100644
+--- src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java
++++ src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java
+@@ -247,7 +247,11 @@ public final class Compression {
+ 
+     Algorithm(String name) {
+       this.conf = new Configuration();
+-      this.conf.setBoolean("hadoop.native.lib", true);
++      if (Configuration.isDeprecated("hadoop.native.lib")) {
++        this.conf.setBoolean("io.native.lib.available", true);
++      } else {
++        this.conf.setBoolean("hadoop.native.lib", true);
++      }
+       this.compressName = name;
+     }
+ 
+diff --git src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
+index 235c078..5a76cc2 100644
+--- src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
++++ src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
+@@ -522,7 +522,11 @@ public class HBaseClient {
+       // otherwise back off and retry
+       try {
+         Thread.sleep(failureSleep);
+-      } catch (InterruptedException ignored) {}
++      } catch (InterruptedException ignored) {
++        // Lily change
++        Thread.currentThread().interrupt();
++        throw new IOException("Giving up: thread is interrupted.", ignored);
++      }
+ 
+       LOG.info("Retrying connect to server: " + remoteId.getAddress() +
+         " after sleeping " + failureSleep + "ms. Already tried " + curRetries +
+@@ -606,6 +610,10 @@ public class HBaseClient {
+           receiveResponse();
+         }
+       } catch (Throwable t) {
++        // Lily change
++        if (t instanceof InterruptedException) {
++            Thread.currentThread().interrupt();
++        }
+         LOG.warn("Unexpected exception receiving call responses", t);
+         markClosed(new IOException("Unexpected exception receiving call responses", t));
+       }
+@@ -1008,6 +1016,12 @@ public class HBaseClient {
+         } catch (InterruptedException ignored) {
+           // save the fact that we were interrupted
+           interrupted = true;
++
++          // Lily change: noticed that often HBase kept hanging on the above call.wait when the
++          // thread was interrupted, even if there was no reason for the call to take a long
++          // time (= hbase & zookeeper running)
++          Thread.currentThread().interrupt();
++          throw new RuntimeException("HBaseClient: interrupted while waiting for call to be done.");
+         }
+       }
+ 
+@@ -1131,6 +1145,15 @@ public class HBaseClient {
+      * refs for keys in HashMap properly. For now its ok.
+      */
+     ConnectionId remoteId = new ConnectionId(addr, protocol, ticket, rpcTimeout);
++
++
++    // Lily change: stop if interrupted. Without this change, this loop would
++    // sometimes be executed tightly many millions times (see while condition).
++    // (this might be a side effect of other interruptions we added)
++    if (Thread.currentThread().isInterrupted()) {
++      throw new InterruptedException("Thread is interrupted.");
++    }
++
+     synchronized (connections) {
+       connection = connections.get(remoteId);
+       if (connection == null) {
+diff --git src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
+index 1c45c0a..6caa4ff 100644
+--- src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
++++ src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
+@@ -270,6 +270,9 @@ public class HBaseRPC {
+         Thread.sleep(1000);
+       } catch (InterruptedException ie) {
+         // IGNORE
++        // Lily change
++        Thread.currentThread().interrupt();
++        throw new RuntimeException("Thread interrupted.", ie);
+       }
+     }
+   }
