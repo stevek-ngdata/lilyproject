@@ -134,6 +134,12 @@ public class IndexUpdater implements EventListener {
     }
 
     @Override
+    public void processEvents(List<SepEvent> events) {
+        for (SepEvent event : events) {
+            processEvent(event);
+        }
+    }
+    
     public void processEvent(SepEvent event) {
 
         long before = System.currentTimeMillis();

@@ -17,6 +17,7 @@ package org.lilyproject.util.repo.test;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.ngdata.sep.EventListener;
@@ -140,6 +141,13 @@ public class RecordEventTest {
         private Map<String, String> attr;
 
         @Override
+        public void processEvents(List<SepEvent> events) {
+            for (SepEvent event : events) {
+                processEvent(event);
+            }
+        }
+        
+        
         public void processEvent(SepEvent event) {
             if (event.getPayload() == null) {
                 return;

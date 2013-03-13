@@ -3235,8 +3235,14 @@ public class IndexerTest {
         public void addExpectedEvent(RecordId recordId, RecordEvent recordEvent) {
             this.expectedEvents.add(Pair.create(recordId, recordEvent));
         }
-
+        
         @Override
+        public void processEvents(List<SepEvent> events) {
+            for (SepEvent event : events) {
+                processEvent(event);
+            }
+        }
+
         public void processEvent(SepEvent event) {
             if (!enabled) {
                 return;
@@ -3307,8 +3313,8 @@ public class IndexerTest {
         private int msgCount;
 
         @Override
-        public void processEvent(SepEvent event)  {
-            msgCount++;
+        public void processEvents(List<SepEvent> events)  {
+            msgCount += events.size();
         }
 
         public int getMsgCount() {
@@ -3328,9 +3334,9 @@ public class IndexerTest {
         }
 
         @Override
-        public void processEvent(SepEvent event) {
+        public void processEvents(List<SepEvent> events) {
             for (EventListener eventListener : eventListeners) {
-                eventListener.processEvent(event);
+                eventListener.processEvents(events);
             }
         }
 
