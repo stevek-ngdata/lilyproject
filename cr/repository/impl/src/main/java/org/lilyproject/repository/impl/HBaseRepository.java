@@ -873,10 +873,18 @@ public class HBaseRepository extends BaseRepository {
             if (fieldType.getValueType().getDeepestValueType().getBaseName().equals("BLOB")) {
                 throw new RuntimeException("Field metadata is currently not supported for BLOB fields.");
             }
-            MetadataSerDeser.write(metadata, dataOutput);
+            writeMetadataWithLengthSuffix(metadata, dataOutput);
         }
 
         return dataOutput.toByteArray();
+    }
+
+    public static void writeMetadataWithLengthSuffix(Metadata metadata, DataOutput output) {
+        DataOutput tmp = new DataOutputImpl();
+        MetadataSerDeser.write(metadata, tmp);
+        byte[] metadataBytes = tmp.toByteArray();
+        output.writeBytes(metadataBytes);
+        output.writeInt(metadataBytes.length);
     }
 
     private boolean isDeleteMarker(Object fieldValue) {

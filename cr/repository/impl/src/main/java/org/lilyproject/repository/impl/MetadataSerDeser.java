@@ -36,18 +36,15 @@ public class MetadataSerDeser {
 
     /**
      * Writes the metadata to the given output. It can be read back from a variable-length input using
-     * {@link #read(DataInput)}, i.o.w. the metadata can be read back when it is part of a bigger stream,
-     * it knows its own length.
+     * {@link #read(DataInput)}.
      */
     public static void write(Metadata metadata, DataOutput output) {
-        DataOutput tmp = new DataOutputImpl();
-
         // Write the fields
         Map<String, Object> map = metadata.getMap();
-        tmp.writeVInt(map.size());
+        output.writeVInt(map.size());
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             // write the key
-            tmp.writeVUTF(entry.getKey());
+            output.writeVUTF(entry.getKey());
             // write the value
             Object value = entry.getValue();
             ValueSerDeser serdeser = CLASS_TO_SERDESER.get(value.getClass());
@@ -55,20 +52,16 @@ public class MetadataSerDeser {
                 throw new IllegalArgumentException("Unsupported kind of metadata value: type of '" + value + "' is "
                         + value.getClass().getName());
             }
-            tmp.writeByte(serdeser.getTypeByte());
-            serdeser.serialize(value, tmp);
+            output.writeByte(serdeser.getTypeByte());
+            serdeser.serialize(value, output);
         }
 
         // Write the deleted fields
         Set<String> fieldsToDelete = metadata.getFieldsToDelete();
-        tmp.writeVInt(fieldsToDelete.size());
+        output.writeVInt(fieldsToDelete.size());
         for (String field : fieldsToDelete) {
-            tmp.writeVUTF(field);
+            output.writeVUTF(field);
         }
-
-        byte[] metadataBytes = tmp.toByteArray();
-        output.writeBytes(metadataBytes);
-        output.writeInt(metadataBytes.length);
     }
 
     public static Metadata read(DataInput input) {
