@@ -158,10 +158,11 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         if (recordRecordTypeName != null) {
             if (valueTypeRecordTypeName != null) {
                 // Validate the same record type is being used
-                if (!valueTypeRecordTypeName.equals(recordRecordTypeName)) {
-                    throw new RecordException("The record's Record Type '" + recordRecordTypeName +
-                            "' does not match the record value type's record type '" + valueTypeRecordTypeName + "'");
-                }
+                // 20130314: temporarily disabled this, see LILY-1279
+//                if (!valueTypeRecordTypeName.equals(recordRecordTypeName)) {
+//                    throw new RecordException("The record's Record Type '" + recordRecordTypeName +
+//                            "' does not match the record value type's record type '" + valueTypeRecordTypeName + "'");
+//                }
             }
             recordType = typeManager.getRecordTypeByName(recordRecordTypeName, null);
         } else if (valueTypeRecordTypeName != null) {
