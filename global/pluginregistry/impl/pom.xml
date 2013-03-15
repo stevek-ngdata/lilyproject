@@ -21,20 +21,20 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-pluginregistry-impl</artifactId>
-  <version>2.0-solr42-pivotfacets-SNAPSHOT</version>
+  <version>2.0-solr42-pivotfacets</version>
   <name>Lily: Plugin Registry: Implementation</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-pluginregistry-parent</artifactId>
-    <version>2.0-solr42-pivotfacets-SNAPSHOT</version>
+    <version>2.0-solr42-pivotfacets</version>
   </parent>
 
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-pluginregistry-api</artifactId>
-      <version>2.0-solr42-pivotfacets-SNAPSHOT</version>
+      <version>2.0-solr42-pivotfacets</version>
     </dependency>
 
     <dependency>

@@ -28,7 +28,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-process</artifactId>
-    <version>2.0-solr42-pivotfacets-SNAPSHOT</version>
+    <version>2.0-solr42-pivotfacets</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -173,7 +173,7 @@ fi
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-kauri-plugin</artifactId>
-        <version>2.0-solr42-pivotfacets-SNAPSHOT</version>
+        <version>2.0-solr42-pivotfacets</version>
         <inherited>false</inherited>
         <executions>
           <execution>
