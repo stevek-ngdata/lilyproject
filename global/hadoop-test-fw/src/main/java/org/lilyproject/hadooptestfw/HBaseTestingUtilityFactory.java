@@ -88,6 +88,9 @@ public class HBaseTestingUtilityFactory {
         conf.setLong("replication.source.sleepforretries", 200);
         
         // make retries in ZooKeeper a little quicker
+        // This was added with CDH 4.2, where on shutdown HBase's snapshot manager closed a zookeeper
+        // connection which later on was still used by another component, which then got into a retry loop,
+        // leading to a slow shutdown.
         conf.setInt("zookeeper.recovery.retry.intervalmill", 100);
 
         return new HBaseTestingUtility(conf, clearData);
