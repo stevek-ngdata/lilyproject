@@ -238,6 +238,9 @@ public class HBaseRepository extends BaseRepository {
                 RecordEvent recordEvent = new RecordEvent();
                 recordEvent.setType(Type.CREATE);
                 recordEvent.setTableName(getTableName());
+                if (record.hasAttributes()) {
+                    recordEvent.getAttributes().putAll(record.getAttributes());
+                }
 
                 Record newRecord = record.cloneRecord();
                 newRecord.setId(recordId);
@@ -250,10 +253,6 @@ public class HBaseRepository extends BaseRepository {
                 Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
 
                 Put put = buildPut(newRecord, version, fieldTypes, recordEvent, referencedBlobs, unReferencedBlobs, newOcc);
-
-                if (record.hasAttributes()) {
-                    recordEvent.setAttributes(record.getAttributes());
-                }
 
                 // Make sure the record type changed flag stays false for a newly
                 // created record
@@ -412,6 +411,9 @@ public class HBaseRepository extends BaseRepository {
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.UPDATE);
             recordEvent.setTableName(getTableName());
+            if (record.hasAttributes()) {
+                recordEvent.getAttributes().putAll(record.getAttributes());
+            }
 
             for (RecordUpdateHook hook : updateHooks) {
                 hook.beforeUpdate(record, originalRecord, this, fieldTypes, recordEvent);
@@ -436,10 +438,6 @@ public class HBaseRepository extends BaseRepository {
 
             if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent, referencedBlobs,
                     unReferencedBlobs, useLatestRecordType, fieldTypes)) {
-
-                if (record.hasAttributes()) {
-                    recordEvent.setAttributes(record.getAttributes());
-                }
 
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
@@ -1112,6 +1110,9 @@ public class HBaseRepository extends BaseRepository {
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.DELETE);
             recordEvent.setTableName(getTableName());
+            if (attributes != null && !attributes.isEmpty()) {
+                recordEvent.getAttributes().putAll(attributes);
+            }
 
             for (RecordUpdateHook hook : updateHooks) {
                 hook.beforeDelete(originalRecord, this, fieldTypes, recordEvent);
@@ -1140,8 +1141,6 @@ public class HBaseRepository extends BaseRepository {
                 }
 
             }
-
-            recordEvent.setAttributes(attributes);
 
             put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
             put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
