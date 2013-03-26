@@ -24,8 +24,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeBuilder;
@@ -59,6 +61,7 @@ import org.lilyproject.repository.impl.valuetype.RecordValueType;
 import org.lilyproject.repository.impl.valuetype.StringValueType;
 import org.lilyproject.repository.impl.valuetype.UriValueType;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public abstract class AbstractTypeManager implements TypeManager {
@@ -175,6 +178,51 @@ public abstract class AbstractTypeManager implements TypeManager {
         }
 
         return names;
+    }
+    
+    @Override
+    public Collection<FieldTypeEntry> getFieldTypesForRecordType(RecordType recordType, boolean includeSupertypes) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
+        if (!includeSupertypes) {
+            return recordType.getFieldTypeEntries();
+        } else {
+            // Pairs of record type id and version
+            Map<Pair<SchemaId, Long>, RecordType> recordSupertypeMap = Maps.newHashMap();
+            collectRecordSupertypes(Pair.create(recordType.getId(), recordType.getVersion()), recordSupertypeMap);
+            
+            // We use a map of SchemaId to FieldTypeEntry so that we can let mandatory field type entries
+            // for the same field type override non-mandatory versions
+            Map<SchemaId,FieldTypeEntry> fieldTypeMap = Maps.newHashMap();
+            
+            for (Pair<SchemaId,Long> recordSuperTypePair : recordSupertypeMap.keySet()) {
+                RecordType superRecordType = recordSupertypeMap.get(recordSuperTypePair);
+                for (FieldTypeEntry fieldTypeEntry : superRecordType.getFieldTypeEntries()) {
+                    SchemaId fieldTypeId = fieldTypeEntry.getFieldTypeId();
+                    if (fieldTypeMap.containsKey(fieldTypeId)) {
+                        // Only overwrite an existing entry if we have one that is mandatory
+                        if (fieldTypeEntry.isMandatory()) {
+                            fieldTypeMap.put(fieldTypeId, fieldTypeEntry);
+                        }
+                    } else {
+                        fieldTypeMap.put(fieldTypeId, fieldTypeEntry);
+                    }
+                }
+            }
+            return fieldTypeMap.values();
+        }
+    }
+    
+
+    private void collectRecordSupertypes(Pair<SchemaId, Long> recordTypeAndVersion, Map<Pair<SchemaId, Long>, RecordType> recordSuperTypes)
+                throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
+        if (recordSuperTypes.containsKey(recordTypeAndVersion)) {
+            return;
+        }
+        RecordType recordType = getRecordTypeById(recordTypeAndVersion.getV1(), recordTypeAndVersion.getV2());
+        recordSuperTypes.put(recordTypeAndVersion, recordType);
+        for (Entry<SchemaId, Long> entry : recordType.getSupertypes().entrySet()) {
+            collectRecordSupertypes(Pair.create(entry.getKey(), entry.getValue()), recordSuperTypes);
+        }
+        
     }
 
     @Override

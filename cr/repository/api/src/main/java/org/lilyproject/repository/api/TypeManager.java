@@ -298,6 +298,18 @@ public interface TypeManager extends Closeable {
     FieldType getFieldTypeByName(QName name) throws RepositoryException, InterruptedException;
 
     /**
+     * Get all {@link FieldTypeEntry}s for a given {@link RecordType}.
+     * <p>
+     * Optionally include field types from super-types of the target record type.
+     * 
+     * @param recordType record type for which field types are to be fetched
+     * @param includeSupertypes flag to determine if field types from super types of the record type are to be included
+     * @return
+     */
+    Collection<FieldTypeEntry> getFieldTypesForRecordType(RecordType recordType, boolean includeSupertypes)
+                throws RepositoryException, InterruptedException;
+
+    /**
      * Gets the list of all field types that exist in the repository.
      */
     Collection<FieldType> getFieldTypes() throws RepositoryException, InterruptedException;

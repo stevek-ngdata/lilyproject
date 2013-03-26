@@ -15,12 +15,23 @@
  */
 package org.lilyproject.repository.impl.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.lilyproject.repository.api.Scope.VERSIONED;
+
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordType;
@@ -33,14 +44,6 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.lilyproject.repository.api.Scope.VERSIONED;
 
 public abstract class AbstractTypeManagerRecordTypeTest {
 
@@ -665,6 +668,49 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(Long.valueOf(4L), rtC.getVersion());
         assertEquals(Long.valueOf(3L), rtC.getSupertypes().get(rtB.getId()));
         assertEquals(Long.valueOf(2L), rtC.getSupertypes().get(rtD.getId()));
+    }
+    
+    @Test
+    public void testGetFieldTypesForRecordType_WithRecursion() throws TypeException, RepositoryException, InterruptedException {
+        RecordType rtA = typeManager.recordTypeBuilder()
+                .name("GetFieldTypes", "rtA")
+                .fieldEntry().use(fieldType1).add()
+                .create();
+
+        RecordType rtB = typeManager.recordTypeBuilder()
+                .name("GetFieldTypes", "rtB")
+                .fieldEntry().use(fieldType2).add()
+                .supertype().use(rtA).add()
+                .create();
+        
+        RecordType rtC = typeManager.recordTypeBuilder()
+                .name("GetFieldTypes", "rtC")
+                .fieldEntry().use(fieldType3).add()
+                .supertype().use(rtB).add()
+                .create();
+        
+        verifyFieldTypes(Sets.newHashSet(fieldType1.getId()),
+                typeManager.getFieldTypesForRecordType(rtA, true));
+        
+        verifyFieldTypes(Sets.newHashSet(fieldType1.getId(), fieldType2.getId()),
+                typeManager.getFieldTypesForRecordType(rtB, true));
+        
+        verifyFieldTypes(Sets.newHashSet(fieldType1.getId(), fieldType2.getId(), fieldType3.getId()),
+                typeManager.getFieldTypesForRecordType(rtC, true));
+        
+        verifyFieldTypes(Sets.newHashSet(fieldType3.getId()),
+                typeManager.getFieldTypesForRecordType(rtC, false));
+        
+        
+    }
+    
+    private void verifyFieldTypes(Set<SchemaId> expectedSchemaIds, Collection<FieldTypeEntry> actualFieldTypes) {
+        assertEquals(expectedSchemaIds.size(), actualFieldTypes.size());
+        Set<SchemaId> actualSchemaIds = Sets.newHashSet();
+        for (FieldTypeEntry fieldTypeEntry : actualFieldTypes) {
+            actualSchemaIds.add(fieldTypeEntry.getFieldTypeId());
+        }
+        assertEquals(expectedSchemaIds, actualSchemaIds);
     }
 
     protected void waitOnRecordTypeVersion(long version, SchemaId recordTypeId)
