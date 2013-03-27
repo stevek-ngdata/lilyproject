@@ -129,7 +129,9 @@ public class Logging {
         if (verbose) {
             Logger logger = Logger.getLogger("org.lilyproject.runtime");
             logger.setLevel(Level.DEBUG);
-            logger.addAppender(consoleAppender);
+            if (!hasConsoleAppender) {
+                logger.addAppender(consoleAppender);
+            }
             return;
         }
 
