@@ -441,9 +441,12 @@ public abstract class BaseRepository implements Repository {
 
             Map<RecordId, Result> results = getRows(recordIds, fields);
 
-            for (Entry<RecordId, Result> entry : results.entrySet()) {
-                Long version = recdec.getLatestVersion(entry.getValue());
-                records.add(recdec.decodeRecord(entry.getKey(), version, null, entry.getValue(), fieldTypes));
+            for (RecordId recordId : recordIds) {
+                Result result = results.get(recordId);
+                if (result != null){
+                    Long version = recdec.getLatestVersion(result);
+                    records.add(recdec.decodeRecord(recordId, version, null, result, fieldTypes));
+                }
             }
             return records;
         } finally {
