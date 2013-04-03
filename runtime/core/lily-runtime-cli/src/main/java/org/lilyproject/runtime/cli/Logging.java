@@ -156,9 +156,11 @@ public class Logging {
         } else {
             // Always print classloader warnings
             logger = Logger.getLogger(LilyRuntime.CLASSLOADING_LOG_CATEGORY);
-            logger.setLevel(Level.WARN);
-            if (!hasConsoleAppender) {
-                logger.addAppender(consoleAppender);
+            if (logger.getEffectiveLevel().toInt() > Level.WARN.toInt()) {
+                logger.setLevel(Level.WARN);
+                if (!hasConsoleAppender) {
+                    logger.addAppender(consoleAppender);
+                }
             }
         }
     }
