@@ -27,6 +27,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.runtime.classloading.ArtifactSharingMode;
@@ -232,6 +234,12 @@ public class ClassLoaderConfigurer {
                         versionsToString(versions) + ") for share-required artifact " + holder + ": " + version);
                 makeShared(holder, version);
             } catch (UncomparableVersionException e) {
+                classLoadingLog.error("Multiple modules use different versions of the share-required artifact " +
+                        holder +
+                        " and failed to automatically take the highest version because the versions are incomparable");
+                for (ArtifactUser user : Iterables.concat(holder.required, holder.allowed, holder.prohibited)) {
+                    classLoadingLog.error("  version " + user.version + " by " + user.module.getId());
+                }
                 throw new LilyRTException("Multiple modules use different versions of the share-required artifact " +
                         holder + " and cannot compare them: " + versionsToString(versions) +
                         ". Enable classloading logging to see details.");
@@ -414,10 +422,10 @@ public class ClassLoaderConfigurer {
         Matcher m2 = pattern.matcher(version2);
 
         if (!m1.matches()) {
-            throw new UncomparableVersionException(version1);
+            throw new UncomparableVersionException("This version string is not comparable: " + version1);
         }
         if (!m2.matches()) {
-            throw new UncomparableVersionException(version2);
+            throw new UncomparableVersionException("This version string is not comparable: " + version2);
         }
 
         int[] v1 = new int[3];
@@ -453,33 +461,62 @@ public class ClassLoaderConfigurer {
             return 0;
         } else if (suffix1 == null) {
             return 1;
-        } else if (suffix2 == null){
+        } else if (suffix2 == null) {
             return -1;
         }
 
-        // Both have a suffix: try to compare
+        // Both have a suffix: try to compare the suffixes
 
-        Pattern revisionNumberPattern = Pattern.compile("r(\\d+)");
-
-        Matcher rm1 = revisionNumberPattern.matcher(suffix1);
-        Matcher rm2 = revisionNumberPattern.matcher(suffix2);
-
-        if (!rm1.matches()) {
-            throw new UncomparableVersionException(version1);
-        }
-        if (!rm2.matches()) {
-            throw new UncomparableVersionException(version2);
+        // Assume snapshot is more recent than anything else
+        if (suffix1.equals("SNAPSHOT")) {
+            return 1;
+        } else if (suffix2.equals("SNAPSHOT")) {
+            return -1;
         }
 
-        Integer r1 = Integer.parseInt(rm1.group(1));
-        Integer r2 = Integer.parseInt(rm2.group(1));
+        // Suffix style 1: subversion revision indication with -r{number}
+        if (suffix1.startsWith("r") && suffix2.startsWith("r")) {
+            Pattern revisionNumberPattern = Pattern.compile("r(\\d+)");
 
-        return r1.compareTo(r2);
+            Matcher rm1 = revisionNumberPattern.matcher(suffix1);
+            Matcher rm2 = revisionNumberPattern.matcher(suffix2);
+
+            if (!rm1.matches()) {
+                throw new UncomparableVersionException("This version string is not comparable: " + version1);
+            }
+            if (!rm2.matches()) {
+                throw new UncomparableVersionException("This version string is not comparable: " + version2);
+            }
+
+            Integer r1 = Integer.parseInt(rm1.group(1));
+            Integer r2 = Integer.parseInt(rm2.group(1));
+
+            return r1.compareTo(r2);
+        }
+
+        // Suffix style 2: git
+        // For git, suffix is assume to be a "date-githash"
+        Pattern gitSuffixPattern = Pattern.compile("(\\d{8})-([a-z0-9]+)");
+        Matcher gitm1 = gitSuffixPattern.matcher(suffix1);
+        Matcher gitm2 = gitSuffixPattern.matcher(suffix2);
+        if (gitm1.matches() && gitm2.matches()) {
+            String date1 = gitm1.group(1);
+            String date2 = gitm2.group(1);
+
+            if (date1.equals(date2)) {
+                throw new UncomparableVersionException("Can't compare two versions with different git-hashes: " +
+                        version1 + " and " + version2);
+            }
+
+            return date1.compareTo(date2);
+        }
+
+        throw new UncomparableVersionException("Don't know how to compare versions " + version1 + " and " + version2);
     }
 
     public static class UncomparableVersionException extends RuntimeException {
-        public UncomparableVersionException(String version) {
-            super("This version string is not comparable: " + version);
+        public UncomparableVersionException(String message) {
+            super(message);
         }
     }
 }

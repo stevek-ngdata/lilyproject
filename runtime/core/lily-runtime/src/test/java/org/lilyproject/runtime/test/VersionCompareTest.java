@@ -43,5 +43,22 @@ public class VersionCompareTest extends TestCase {
         } catch (ClassLoaderConfigurer.UncomparableVersionException e) {
             // expected
         }
+
+        assertTrue(ClassLoaderConfigurer.compareVersions("2.2", "2.1-SNAPSHOT") > 0);
+        assertTrue(ClassLoaderConfigurer.compareVersions("2.2", "2.2-SNAPSHOT") > 0); // final version is more recent than dev
+
+        assertTrue(ClassLoaderConfigurer.compareVersions("2.2-SNAPSHOT", "2.1-SNAPSHOT") > 0);
+
+        // git compare
+        assertTrue(ClassLoaderConfigurer.compareVersions("2.2-20130102-728c73c", "2.2-20130101-728c73c") > 0);
+        assertTrue(ClassLoaderConfigurer.compareVersions("2.2-SNAPSHOT", "2.2-20130101-728c73c") > 0);
+
+        try {
+            // same date, different hash: can't compare this
+            ClassLoaderConfigurer.compareVersions("2.2-20130101-728c73c", "2.2-20130101-728c73d");
+            fail("Expected exception.");
+        } catch (ClassLoaderConfigurer.UncomparableVersionException e) {
+            // expected
+        }
     }
 }
