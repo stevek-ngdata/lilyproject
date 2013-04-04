@@ -15,7 +15,14 @@
  */
 package org.lilyproject.indexer.engine.test;
 
-import javax.annotation.Nullable;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -110,14 +117,6 @@ import org.lilyproject.util.repo.PrematureRepositoryManager;
 import org.lilyproject.util.repo.PrematureRepositoryManagerImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
 
 public class IndexerTest {
 
@@ -313,7 +312,7 @@ public class IndexerTest {
                 String indexNames = Joiner.on(",").join(
                         Collections2.transform(indexesInfo.getIndexInfos(), new Function<IndexInfo, String>() {
                             @Override
-                            public String apply(@Nullable IndexInfo input) {
+                            public String apply(IndexInfo input) {
                                 return input.getIndexDefinition().getName();
                             }
                         }));
@@ -3012,7 +3011,7 @@ public class IndexerTest {
         final IndexFields indexFields = INDEXER_CONF.getIndexFields();
         indexFields.visitAll(new Predicate<MappingNode>() {
             @Override
-            public boolean apply(@Nullable MappingNode input) {
+            public boolean apply(MappingNode input) {
                 if (input instanceof IndexField) {
                     final IndexField indexField = (IndexField) input;
 
