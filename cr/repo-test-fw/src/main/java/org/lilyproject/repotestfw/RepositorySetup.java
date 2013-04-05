@@ -236,17 +236,8 @@ public class RepositorySetup {
      * <p>New events that are generated after/during a call to this method will not be waited for.</p>
      */
     public void waitForSepProcessing() throws Exception {
-        waitForSepProcessing(Table.RECORD.name);
-    }
-
-    /**
-     * Wait until all currently queued SEP events are processed on a specific table.
-     *
-     * <p>New events that are generated after/during a call to this method will not be waited for.</p>
-     */
-    public void waitForSepProcessing(String tableName) throws Exception {
         long timeout = 60000L;
-        boolean success = hbaseProxy.waitOnReplication(tableName, timeout);
+        boolean success = hbaseProxy.waitOnReplication(timeout);
         if (!success) {
             throw new Exception("Events were not processed within a timeout of " + timeout + "ms");
         }

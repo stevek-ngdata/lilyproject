@@ -293,7 +293,7 @@ public class LilyProxy {
      * @return false if the timeout was reached before all events were processed
      */
     public boolean waitSepEventsProcessed(long timeout, boolean commitSolr) throws Exception {
-        boolean success = hbaseProxy.waitOnReplication(Table.RECORD.name, timeout);
+        boolean success = hbaseProxy.waitOnReplication(timeout);
         if (success && commitSolr) {
             solrProxy.commit();
         }

@@ -950,7 +950,6 @@ public class IndexerTest {
         expectEvent(CREATE, ALTERNATE_TABLE, record2.getId(), nvLinkField1.getId(), nvTag.getId());
         record2 = alternateRepository.create(record2);
 
-        commitIndex(ALTERNATE_TABLE);
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglenonstandardpear", 1);
 
@@ -958,7 +957,6 @@ public class IndexerTest {
         expectEvent(UPDATE, ALTERNATE_TABLE, record1.getId(), nvfield1.getId());
         alternateRepository.update(record1);
 
-        commitIndex(ALTERNATE_TABLE);
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglenonstandardpear", 0);
         verifyResultCount("nv_deref1:derefsinglenonstandardapple", 1);
@@ -988,7 +986,6 @@ public class IndexerTest {
         expectEvent(CREATE, ALTERNATE_TABLE, record2.getId(), nvLinkField1.getId(), nvTag.getId());
         record2 = alternateRepository.create(record2);
 
-        commitIndex(ALTERNATE_TABLE);
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglenonstandardnolinkpear", 1);
 
@@ -996,7 +993,6 @@ public class IndexerTest {
         expectEvent(UPDATE, ALTERNATE_TABLE, record1.getId(), nvfield1.getId());
         alternateRepository.update(record1);
 
-        commitIndex(ALTERNATE_TABLE);
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglenonstandardnolinkpear", 0);
         verifyResultCount("nv_deref1:derefsinglenonstandardnolinkapple", 1);
@@ -1026,15 +1022,13 @@ public class IndexerTest {
         expectEvent(CREATE, Table.RECORD.name, record2.getId(), nvLinkField1.getId(), nvTag.getId());
         record2 = defaultRepository.create(record2);
 
-        commitIndex(Table.RECORD.name);
-        commitIndex(ALTERNATE_TABLE);
+        commitIndex();
         verifyResultCount("nv_deref1:derefmultipear", 1);
 
         record1.setField(nvfield1.getName(),  "derefmulti_apple");
         expectEvent(UPDATE, ALTERNATE_TABLE, record1.getId(), nvfield1.getId());
         alternateRepository.update(record1);
 
-        commitIndex(ALTERNATE_TABLE);
         commitIndex();
         verifyResultCount("nv_deref1:derefmultipear", 0);
         verifyResultCount("nv_deref1:derefmultiapple", 1);
@@ -3127,12 +3121,8 @@ public class IndexerTest {
     }
 
     private void commitIndex() throws Exception {
-        commitIndex(Table.RECORD.name);
-    }
-
-    private void commitIndex(String tableName) throws Exception {
         // wait for all events that exist at this point in time to be processed
-        repoSetup.waitForSepProcessing(tableName);
+        repoSetup.waitForSepProcessing();
 
         // The events that have been processed up to now might themselves have produced new events (reindex events)
         // that now also need to be processed, therefore do another wait.
