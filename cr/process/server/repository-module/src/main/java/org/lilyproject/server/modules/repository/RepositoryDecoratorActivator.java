@@ -28,7 +28,6 @@ import org.lilyproject.plugin.PluginHandle;
 import org.lilyproject.plugin.PluginRegistry;
 import org.lilyproject.plugin.PluginUser;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.impl.FooRepositoryDecorator;
 import org.lilyproject.repository.spi.RepositoryDecorator;
 import org.lilyproject.runtime.conf.Conf;
 
@@ -93,12 +92,7 @@ public class RepositoryDecoratorActivator implements PluginUser<RepositoryDecora
             next = decorators.get(i);
         }
 
-        Repository repo =  decorators.size() == 0 ? repository : decorators.get(0);
-
-        RepositoryDecorator foo = new FooRepositoryDecorator();
-        foo.setDelegate(repo);
-
-        return foo;
+        return decorators.size() == 0 ? repository : decorators.get(0);
     }
 
 }
