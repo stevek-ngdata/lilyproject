@@ -74,7 +74,7 @@ public class RecordTypeFilterJson implements RecordFilterJsonConverter<RecordTyp
 
         String operator = JsonUtil.getString(node, "operator", null);
         if (operator != null) {
-            filter.setOperator(RecordTypeFilter.Operator.valueOf(operator));
+            filter.setOperator(RecordTypeFilter.Operator.valueOf(operator.toUpperCase()));
         }
 
         return filter;
