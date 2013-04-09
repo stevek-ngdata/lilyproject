@@ -127,6 +127,7 @@
     <module>apps/mbox-import</module>
     <module>apps/linkindex-cli</module>
     <module>apps/scan-records</module>
+    <module>apps/generate-split-keys</module>
 
     <module>dist</module>
 

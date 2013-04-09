@@ -1,0 +1,1 @@
+Tool to help generate split keys for usage in conf/general/tables.xml
