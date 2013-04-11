@@ -15,6 +15,7 @@
  */
 package org.lilyproject.tools.generatesplitkeys;
 
+import com.google.common.base.Strings;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -180,9 +181,18 @@ public class GenerateSplitKeys extends BaseCliTool {
             if (!noPrefix) {
                 builder.append(Bytes.toStringBinary(new byte[] { 0 }));
             }
-            builder.append(Long.toHexString(Math.round(current)));
+            builder.append(toFixedLengthHex(Math.round(current), splitKeyLength));
         }
 
         return builder.toString();
+    }
+
+    private String toFixedLengthHex(long value, int length) {
+        String hex = Long.toHexString(value);
+        if (hex.length() > length) {
+            throw new RuntimeException("Unexpected: hex representation is longer than it should be: " +
+                    hex + ", expected only " + length + " characters");
+        }
+        return Strings.repeat("0", length - hex.length()) + hex;
     }
 }
