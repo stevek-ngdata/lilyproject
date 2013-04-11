@@ -654,7 +654,7 @@ public class IndexerConfBuilder {
     }
 
     private Follow parseFollow(Element fieldEl, String derefPart) throws IndexerConfException, InterruptedException, RepositoryException {
-        if (derefPart.contains(":")) { // It's a field name
+        if (derefPart.contains(":") || derefPart.startsWith("{")) { // It's a field name
             return processFieldDeref(fieldEl, derefPart);
         } else if (derefPart.equals("master")) { // Link to master variant
             return new MasterFollow();
