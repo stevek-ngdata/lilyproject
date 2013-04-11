@@ -31,11 +31,11 @@ Example usage:
 
 For only USER record id's:
 
-generate-split-keys --userid-splits 15 -userid-splits-length 2
+lily-generate-split-keys --userid-splits 15 -userid-splits-length 2
 
 For a combination:
 
-generate-split-keys --userid-splits 15 -userid-splits-length 2 --uuid-splits 30 --uuid-splits-length 5
+lily-generate-split-keys --userid-splits 15 -userid-splits-length 2 --uuid-splits 30 --uuid-splits-length 5
 
 The length parameters give the number of characters or bytes that the split keys should
 have as length, excluding the type-prefix byte.
