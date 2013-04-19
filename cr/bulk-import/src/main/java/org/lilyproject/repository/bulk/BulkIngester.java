@@ -19,6 +19,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
@@ -44,6 +46,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseRepository;
+import org.lilyproject.repository.impl.HBaseRepository.FieldValueWriter;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
@@ -194,6 +197,37 @@ public class BulkIngester implements Closeable {
         }
         return hbaseRepo.buildPut(record, 1L, fieldTypes, recordEvent, Sets.<BlobReference> newHashSet(),
                 Sets.<BlobReference> newHashSet(), 1L);
+    }
+    
+    /**
+     * Build a {@code Put} to update a record. No metadata updates are performed, and any existing metadata on the
+     * fields will be overwritten.
+     * <p>
+     * The record to be updated must exist, otherwise a "partial" record will be created. No checking is done to ensure
+     * that the record to be updated exists.
+     * <p>
+     * Additionally, records updated in this manner must be unversioned records.
+     * <p>
+     * In other words, use this method at your own risk. Unless you are very certain about the context you are working
+     * in, updates should go via the Lily API.
+     * 
+     * @param recordId identifier of the record to be updated
+     * @param fieldValues map of field names and values to be updated on the record
+     * @return Put containing all field updates
+     */
+    public Put buildRecordUpdate(RecordId recordId, Map<QName, Object> fieldValues) {
+        Put put = new Put(recordId.toBytes());
+        FieldValueWriter fieldValueWriter = hbaseRepo.newFieldValueWriter(put, null);
+        
+        for (Entry<QName, Object> fieldEntry : fieldValues.entrySet()) {
+            try {
+                fieldValueWriter.addFieldValue(fieldTypes.getFieldType(fieldEntry.getKey()), fieldEntry.getValue(), null);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        return put;
     }
     
     @Override

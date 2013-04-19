@@ -706,6 +706,8 @@ public class HBaseRepository extends BaseRepository {
             }
         }
 
+        FieldValueWriter fieldValueWriter = newFieldValueWriter(put, parentRecord);
+        
         for (Entry<QName, Object> field : fields.entrySet()) {
             QName fieldName = field.getKey();
             Object newValue = field.getValue();
@@ -732,8 +734,6 @@ public class HBaseRepository extends BaseRepository {
                     metadata = originalFieldMetadata.get(fieldName);
                 }
 
-                byte[] encodedFieldValue = encodeFieldValue(parentRecord, fieldType, newValue, metadata);
-
                 if (!metadataOnlyUpdate) {
                     // Check if the newValue contains blobs
                     Set<BlobReference> newReferencedBlobs = getReferencedBlobs(fieldType, newValue);
@@ -752,14 +752,16 @@ public class HBaseRepository extends BaseRepository {
 
                 // Set the value
                 if (Scope.NON_VERSIONED.equals(scope)) {
-                    put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), 1L, encodedFieldValue);
+                    fieldValueWriter.addFieldValue(fieldType, newValue, metadata, 1L);
                 } else {
-                    put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), version, encodedFieldValue);
+                    fieldValueWriter.addFieldValue(fieldType, newValue, metadata, version);
+                    
+                    
                     // If it is a mutable update and the next version of the field was the same as the one that is being updated,
                     // the original value needs to be copied to that next version (due to sparseness of the table).
                     if (originalNextFields != null && !fieldIsNewOrDeleted &&
                             originalNextFields.containsKey(fieldName)) {
-                        copyValueToNextVersionIfNeeded(parentRecord, version, put, originalNextFields, fieldName,
+                        copyValueToNextVersionIfNeeded(parentRecord, version, fieldValueWriter, originalNextFields, fieldName,
                                 originalValue, fieldTypes);
                     }
                 }
@@ -851,31 +853,7 @@ public class HBaseRepository extends BaseRepository {
     }
 
 
-    private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue, Metadata metadata)
-            throws RepositoryException, InterruptedException {
-        if (isDeleteMarker(fieldValue)) {
-            return FieldFlags.getDeleteMarker();
-        }
-        ValueType valueType = fieldType.getValueType();
-
-        DataOutput dataOutput = new DataOutputImpl();
-        boolean hasMetadata = metadata != null && !metadata.getMap().isEmpty();
-
-        dataOutput.writeByte(hasMetadata ? FieldFlags.METADATA_V1 : FieldFlags.DEFAULT);
-        valueType.write(fieldValue, dataOutput, new IdentityRecordStack(parentRecord));
-
-        if (hasMetadata) {
-            if (fieldType.getScope() == Scope.VERSIONED_MUTABLE) {
-                throw new RuntimeException("Field metadata is currently not supported for versioned-mutable fields.");
-            }
-            if (fieldType.getValueType().getDeepestValueType().getBaseName().equals("BLOB")) {
-                throw new RuntimeException("Field metadata is currently not supported for BLOB fields.");
-            }
-            writeMetadataWithLengthSuffix(metadata, dataOutput);
-        }
-
-        return dataOutput.toByteArray();
-    }
+   
 
     public static void writeMetadataWithLengthSuffix(Metadata metadata, DataOutput output) {
         DataOutput tmp = new DataOutputImpl();
@@ -1065,15 +1043,14 @@ public class HBaseRepository extends BaseRepository {
      * and the record relies on what is in the previous cell's version.
      * The original value needs to be copied into it. Otherwise we loose that value.
      */
-    private void copyValueToNextVersionIfNeeded(Record parentRecord, Long version, Put put,
+    private void copyValueToNextVersionIfNeeded(Record parentRecord, Long version, FieldValueWriter fieldValueWriter,
                                                 Map<QName, Object> originalNextFields,
                                                 QName fieldName, Object originalValue, FieldTypes fieldTypes)
             throws RepositoryException, InterruptedException {
         Object originalNextValue = originalNextFields.get(fieldName);
         if ((originalValue == null && originalNextValue == null) || originalValue.equals(originalNextValue)) {
             FieldTypeImpl fieldType = (FieldTypeImpl) fieldTypes.getFieldType(fieldName);
-            byte[] encodedValue = encodeFieldValue(parentRecord, fieldType, originalValue, null);
-            put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), version + 1, encodedValue);
+            fieldValueWriter.addFieldValue(fieldType, originalValue, null, version + 1);
         }
     }
 
@@ -1373,5 +1350,66 @@ public class HBaseRepository extends BaseRepository {
     @Override
     public RecordBuilder recordBuilder() throws RecordException {
         return new RecordBuilderImpl(this);
+    }
+    
+    /**
+     * Instantiate a new {@link FieldValueWriter} linked to this instance.
+     * @param put put to which field values are tot be written
+     * @param parentRecord parent record of this record
+     * @return new FieldValueWriter
+     */
+    public FieldValueWriter newFieldValueWriter(Put put, Record parentRecord) {
+        return new FieldValueWriter(put, parentRecord);
+    }
+    
+    /**
+     * Writes encoded record fields to a {@code Put} object.
+     */
+    public class FieldValueWriter {
+        
+        private Put put;
+        private Record parentRecord;
+        
+        private FieldValueWriter(Put put, Record parentRecord) {
+            this.put = put;
+            this.parentRecord = parentRecord;
+        }
+        
+        public FieldValueWriter addFieldValue(FieldType fieldType, Object value, Metadata metadata) throws RepositoryException, InterruptedException {
+            return addFieldValue(fieldType, value, metadata, 1L);
+        }
+        
+        public FieldValueWriter addFieldValue(FieldType fieldType, Object value, Metadata metadata, long version) throws RepositoryException, InterruptedException {
+            byte[] encodedFieldValue = encodeFieldValue(parentRecord, fieldType, value, metadata);
+            put.add(RecordCf.DATA.bytes, ((FieldTypeImpl)fieldType).getQualifier(), version, encodedFieldValue);
+            return this;
+        }
+        
+        private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue, Metadata metadata)
+                throws RepositoryException, InterruptedException {
+            if (isDeleteMarker(fieldValue)) {
+                return FieldFlags.getDeleteMarker();
+            }
+            ValueType valueType = fieldType.getValueType();
+
+            DataOutput dataOutput = new DataOutputImpl();
+            boolean hasMetadata = metadata != null && !metadata.getMap().isEmpty();
+
+            dataOutput.writeByte(hasMetadata ? FieldFlags.METADATA_V1 : FieldFlags.DEFAULT);
+            valueType.write(fieldValue, dataOutput, new IdentityRecordStack(parentRecord));
+
+            if (hasMetadata) {
+                if (fieldType.getScope() == Scope.VERSIONED_MUTABLE) {
+                    throw new RuntimeException("Field metadata is currently not supported for versioned-mutable fields.");
+                }
+                if (fieldType.getValueType().getDeepestValueType().getBaseName().equals("BLOB")) {
+                    throw new RuntimeException("Field metadata is currently not supported for BLOB fields.");
+                }
+                writeMetadataWithLengthSuffix(metadata, dataOutput);
+            }
+
+            return dataOutput.toByteArray();
+        }
+        
     }
 }
