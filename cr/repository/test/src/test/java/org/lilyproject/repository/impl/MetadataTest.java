@@ -15,6 +15,8 @@
  */
 package org.lilyproject.repository.impl;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.bytes.api.DataOutput;
@@ -27,6 +29,9 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class MetadataTest {
+
+    private DateTime time = new DateTime(2013, 4, 22, 17, 37, 40, 679);
+
     /**
      * Tests that all supported types survive a serialize-deserialize cycle.
      */
@@ -40,6 +45,7 @@ public class MetadataTest {
                 .value("double", 6.66d)
                 .value("boolean", Boolean.TRUE)
                 .value("bytes", new ByteArray("foobar".getBytes()))
+                .value("date", time)
                 .build();
 
         DataOutput output = new DataOutputImpl();
@@ -54,5 +60,6 @@ public class MetadataTest {
         assertEquals(6.66d, (double)readMetadata.getDouble("double", null), 0.001d);
         assertEquals(true, readMetadata.getBoolean("boolean", null));
         assertArrayEquals("foobar".getBytes(), readMetadata.getBytes("bytes").getBytes());
+        assertEquals(time ,readMetadata.getDateTime("date", null).toDateTime(DateTimeZone.getDefault()));
     }
 }

@@ -19,10 +19,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.MetadataBuilder;
 
@@ -269,8 +271,36 @@ public class MetadataSerDeser {
         }
     }
 
+    private static final ValueSerDeser DATETIME_SERDESER = new DateTimeValueSerDeser();
+
+    private static class DateTimeValueSerDeser implements ValueSerDeser {
+
+        @Override
+        public Class getTypeClass() {
+            return org.joda.time.DateTime.class;
+        }
+
+        @Override
+        public byte getTypeByte() {
+            return 8;
+        }
+
+        @Override
+        public void serialize(Object value, DataOutput dataOutput) {
+            DateTime dateTime = (DateTime) value;
+            dateTime = dateTime.toDateTime(DateTimeZone.UTC); //store as UTC
+            dataOutput.writeLong(dateTime.getMillis());
+        }
+
+        @Override
+        public Object deserialize(DataInput dataInput) {
+            // Always construct UTC such that it is not depending on the default timezone of the current host
+            return new DateTime(dataInput.readLong(), DateTimeZone.UTC);
+        }
+    }
+
     private static final ValueSerDeser[] serdesers = new ValueSerDeser[] { STRING_SERDESER, INT_SERDESER, LONG_SERDESER,
-            FLOAT_SERDESER, DOUBLE_SERDESER, BOOLEAN_SERDESER, BYTES_SERDESER };
+            FLOAT_SERDESER, DOUBLE_SERDESER, BOOLEAN_SERDESER, BYTES_SERDESER, DATETIME_SERDESER };
 
     private static final Map<Class, ValueSerDeser> CLASS_TO_SERDESER = new HashMap<Class, ValueSerDeser>();
     static {

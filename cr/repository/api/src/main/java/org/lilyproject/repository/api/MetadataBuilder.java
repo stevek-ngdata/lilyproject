@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.joda.time.DateTime;
 import org.lilyproject.bytes.api.ByteArray;
 
 /**
@@ -105,6 +106,12 @@ public class MetadataBuilder {
             data.put(key, value);
             removeFromFieldsToDelete(key);
         }
+        return this;
+    }
+
+    public MetadataBuilder value(String key, DateTime value) {
+        data.put(key, value);
+        removeFromFieldsToDelete(key);
         return this;
     }
 

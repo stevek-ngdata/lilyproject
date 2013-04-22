@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import org.joda.time.DateTime;
 import org.lilyproject.bytes.api.ByteArray;
 
 /**
@@ -110,6 +111,18 @@ public class Metadata implements Cloneable {
             return (ByteArray)value;
         } else {
             throw new IllegalStateException("Value is not a byte array for metadata field '" + key + "': "
+                    + value.getClass().getName());
+        }
+    }
+
+    public DateTime getDateTime(String key, DateTime defaultValue) {
+        Object value = data.get(key);
+        if (value == null) {
+            return defaultValue;
+        } else if (value instanceof DateTime) {
+            return (DateTime)value;
+        } else {
+            throw new IllegalStateException("Value is not a DateTime for metadata field '" + key + "': "
                     + value.getClass().getName());
         }
     }
