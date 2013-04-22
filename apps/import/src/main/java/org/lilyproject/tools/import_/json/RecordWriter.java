@@ -24,6 +24,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.joda.time.DateTime;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
@@ -144,6 +145,10 @@ public class RecordWriter implements EntityWriter<Record> {
                         ObjectNode binaryNode = metadataNode.putObject(metadata.getKey());
                         binaryNode.put("type", "binary");
                         binaryNode.put("value", ((ByteArray)value).getBytes());
+                    } else if (value instanceof DateTime){
+                        ObjectNode dateTimeNode = metadataNode.putObject(metadata.getKey());
+                        dateTimeNode.put("type", "datetime");
+                        dateTimeNode.put("value", value.toString());
                     } else {
                         throw new RuntimeException("Unsupported type of metadata value: " + value.getClass().getName()
                                 + " for value '" + value + "' in metadata field '" + metadata.getKey()

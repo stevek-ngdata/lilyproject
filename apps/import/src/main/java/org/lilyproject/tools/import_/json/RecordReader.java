@@ -29,6 +29,7 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.format.ISODateTimeFormat;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
@@ -327,21 +328,34 @@ public class RecordReader implements EntityReader<Record> {
                             + name + "' of record field " + recordField);
                 }
 
-                if (!type.equals("binary")) {
+                if (type.equals("binary")) {
+                    JsonNode binaryValue = value.get("value");
+                    if (!binaryValue.isTextual()) {
+                        throw new JsonFormatException("Invalid binary value for metadata field '"
+                                + name + "' of record field " + recordField);
+                    }
+
+                    try {
+                        builder.value(name, new ByteArray(binaryValue.getBinaryValue()));
+                    } catch (IOException e) {
+                        throw new JsonFormatException("Invalid binary value for metadata field '"
+                                + name + "' of record field " + recordField);
+                    }
+                } else if (type.equals("datetime")){
+                    JsonNode datetimeValue = value.get("value");
+                    if (!datetimeValue.isTextual()) {
+                        throw new JsonFormatException("Invalid datetime value for metadata field '"
+                                + name + "' of record field " + recordField);
+                    }
+
+                    try {
+                        builder.value(name, ISODateTimeFormat.dateTime().parseDateTime(datetimeValue.getTextValue()));
+                    } catch (Exception e) {
+                        throw new JsonFormatException("Invalid datetime value for metadata field '"
+                                + name + "' of record field " + recordField);
+                    }
+                } else {
                     throw new JsonFormatException("Unsupported type value '" + type + "' for metadata field '"
-                            + name + "' of record field " + recordField);
-                }
-
-                JsonNode binaryValue = value.get("value");
-                if (!binaryValue.isTextual()) {
-                    throw new JsonFormatException("Invalid binary value for metadata field '"
-                            + name + "' of record field " + recordField);
-                }
-
-                try {
-                    builder.value(name, new ByteArray(binaryValue.getBinaryValue()));
-                } catch (IOException e) {
-                    throw new JsonFormatException("Invalid binary value for metadata field '"
                             + name + "' of record field " + recordField);
                 }
             } else {
