@@ -21,6 +21,7 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
+import org.lilyproject.repository.impl.TenantTableKey;
 
 public class DecoratingRepositoryManager extends AbstractRepositoryManager {
 
@@ -28,7 +29,9 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
     private RecordUpdateHookActivator recordUpdateHookActivator;
     private RepositoryDecoratorActivator repositoryDecoratorActivator;
 
-    public DecoratingRepositoryManager(HBaseRepositoryManager repositoryManager, RecordUpdateHookActivator recordUpdateHookActivator, RepositoryDecoratorActivator repositoryDecoratorActivator) {
+    public DecoratingRepositoryManager(HBaseRepositoryManager repositoryManager,
+            RecordUpdateHookActivator recordUpdateHookActivator,
+            RepositoryDecoratorActivator repositoryDecoratorActivator) {
         super(repositoryManager.getTypeManager(), repositoryManager.getIdGenerator(), repositoryManager.getRecordFactory());
         this.wrappedRepositoryManager = repositoryManager;
         this.recordUpdateHookActivator = recordUpdateHookActivator;
@@ -36,8 +39,9 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
     }
 
     @Override
-    protected Repository createRepository(String tableName) throws IOException, InterruptedException {
-        HBaseRepository repository = (HBaseRepository)wrappedRepositoryManager.getRepository(tableName);
+    protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
+        HBaseRepository repository = (HBaseRepository)wrappedRepositoryManager.getRepository(
+                key.getTenantId()).getTable(key.getTableName());
         recordUpdateHookActivator.activateUpdateHooks(repository);
         return repositoryDecoratorActivator.getDecoratedRepository(repository);
     }

@@ -182,6 +182,7 @@
     "create": {
       "request": [
         {"name": "record", "type": "bytes"}, 
+        {"name": "tenant", "type": "string"},
         {"name": "table", "type": "string"}],
       "response": "bytes",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
@@ -190,6 +191,7 @@
     "update": {
       "request": [
         {"name": "record", "type": "bytes"},
+        {"name": "tenant", "type": "string"},
         {"name": "table", "type": "string"},
         {"name": "updateVersion", "type": "boolean"},
         {"name": "useLatestRecordType", "type": "boolean"},
@@ -201,6 +203,7 @@
     "createOrUpdate": {
       "request": [
         {"name": "record", "type": "bytes"},
+        {"name": "tenant", "type": "string"},
         {"name": "table", "type": "string"},
         {"name": "useLatestRecordType", "type": "boolean"}
       ],
@@ -211,6 +214,7 @@
     "delete": {
       "request": [
         {"name": "recordId", "type": "bytes"},
+        {"name": "tenant", "type": "string"},
         {"name": "table", "type": "string"},
         {"name": "conditions", "type": [{"type": "array", "items": "AvroMutationCondition"}, "null"]},
         {"name": "attributes", "type": [{"type": "map", "values": "string"}, "null"]}
@@ -222,6 +226,7 @@
     "getVariants": {
       "request": [
         {"name": "recordId", "type": "bytes"},
+        {"name": "tenant", "type": "string"},
         {"name": "table", "type": "string"}],
       "response": {"type": "array", "items": "string"},
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
@@ -363,16 +368,22 @@
     // indexer api functionality
 
     "index": {
-      "request": [{"name": "table", "type": "string"}, 
-                  {"name": "recordId", "type": "bytes"}],
+      "request": [
+        {"name": "tenant", "type": "string"},
+        {"name": "table", "type": "string"},
+        {"name": "recordId", "type": "bytes"}
+      ],
       "response": ["null"],
       "errors": ["AvroIndexerException", "AvroGenericException", "AvroInterruptedException"]
     },
 
     "indexOn": {
-      "request": [{"name": "table", "type": "string"},
-                  {"name": "recordId", "type": "bytes"},
-                  {"name": "indexes", "type": {"type": "array", "items": "string"}}],
+      "request": [
+        {"name": "tenant", "type": "string"},
+        {"name": "table", "type": "string"},
+        {"name": "recordId", "type": "bytes"},
+        {"name": "indexes", "type": {"type": "array", "items": "string"}}
+      ],
       "response": ["null"],
       "errors": ["AvroIndexerException", "AvroGenericException", "AvroInterruptedException"]
     }

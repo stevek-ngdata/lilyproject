@@ -24,7 +24,7 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
 
 /**
- * See {@link PrematureRepository}.
+ * See {@link PrematureRepositoryManager}.
  */
 public class PrematureRepositoryManagerImpl implements PrematureRepositoryManager {
     private volatile RepositoryManager delegate;
@@ -51,9 +51,9 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
     }
 
     @Override
-    public Repository getDefaultRepository() throws IOException, InterruptedException {
+    public Repository getPublicRepository() throws IOException, InterruptedException {
         waitOnRepoManager();
-        return delegate.getDefaultRepository();
+        return delegate.getPublicRepository();
     }
 
     @Override

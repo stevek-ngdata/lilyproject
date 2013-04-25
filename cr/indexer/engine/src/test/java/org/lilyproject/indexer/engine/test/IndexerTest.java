@@ -3362,14 +3362,14 @@ public class IndexerTest {
         }
 
         @Override
-        public Repository getDefaultRepository() throws IOException, InterruptedException {
-            throw new RuntimeException("Default repository should not be used by indexer");
+        public Repository getPublicRepository() throws IOException, InterruptedException {
+            throw new RuntimeException("Public repository should not be used by indexer");
         }
 
         @Override
         public synchronized Repository getRepository(String tableName) throws IOException, InterruptedException {
             if (!repositoryCache.containsKey(tableName)) {
-                Repository repository = delegate.getRepository(tableName);
+                Repository repository = (Repository)delegate.getPublicRepository().getTable(tableName);
                 TrackingRepository trackingRepository = new TrackingRepository();
                 trackingRepository.setDelegate(repository);
                 repositoryCache.put(tableName, trackingRepository);

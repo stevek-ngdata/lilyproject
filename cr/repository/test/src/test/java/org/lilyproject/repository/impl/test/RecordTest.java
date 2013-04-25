@@ -40,7 +40,6 @@ import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -63,7 +62,7 @@ public class RecordTest {
         repoSetup.setupRepository();
 
         typeManager = repoSetup.getTypeManager();
-        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
         idGenerator = repoSetup.getIdGenerator();
     }
 

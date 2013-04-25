@@ -20,6 +20,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
@@ -32,7 +33,7 @@ import org.lilyproject.util.io.Closer;
  */
 public abstract class AbstractRepositoryManager implements RepositoryManager {
 
-    private final Map<String,Repository> repositoryCache = Maps.newHashMap();
+    private final Map<TenantTableKey, Repository> repositoryCache = Maps.newHashMap();
     private final TypeManager typeManager;
     private final IdGenerator idGenerator;
     private final RecordFactory recordFactory;
@@ -61,26 +62,39 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
 
     /**
      * Create a new Repository object for the repository cache.
-     * @param tableName Name of the backing HTable for the repository
-     * @return newly-created repository
      */
-    protected abstract Repository createRepository(String tableName) throws IOException, InterruptedException;
+    protected abstract Repository createRepository(TenantTableKey key) throws IOException, InterruptedException;
 
     @Override
-    public Repository getDefaultRepository() throws IOException, InterruptedException {
-        return getRepository(Table.RECORD.name);
+    public Repository getPublicRepository() throws IOException, InterruptedException {
+        return getRepository("public");
     }
 
     @Override
-    public Repository getRepository(String tableName) throws IOException, InterruptedException {
-        if (!repositoryCache.containsKey(tableName)) {
+    public Repository getRepository(String tenantId) throws IOException, InterruptedException {
+        return getRepository(tenantId, Table.RECORD.name);
+    }
+
+    protected Repository getRepository(String tenantId, String tableName) throws IOException, InterruptedException {
+        TenantTableKey key = new TenantTableKey(tenantId, tableName);
+        if (!repositoryCache.containsKey(key)) {
             synchronized (repositoryCache) {
-                if (!repositoryCache.containsKey(tableName)) {
-                    repositoryCache.put(tableName, createRepository(tableName));
+                if (!repositoryCache.containsKey(key)) {
+                    repositoryCache.put(key, createRepository(key));
                 }
             }
         }
-        return repositoryCache.get(tableName);
+        return repositoryCache.get(key);
+    }
+
+    @Override
+    public LTable getTable(String tableName) throws IOException, InterruptedException {
+        return getPublicRepository().getTable(tableName);
+    }
+
+    @Override
+    public LTable getDefaultTable() throws IOException, InterruptedException {
+        return getPublicRepository().getDefaultTable();
     }
 
     @Override

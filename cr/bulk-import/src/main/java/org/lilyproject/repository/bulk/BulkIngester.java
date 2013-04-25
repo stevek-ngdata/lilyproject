@@ -113,9 +113,9 @@ public class BulkIngester implements Closeable {
             // are used. We should either support blobs, or at least forcefully disallow them
             HBaseRepository hbaseRepository;
             if (tableName != null) {
-                hbaseRepository = (HBaseRepository)repositoryManager.getRepository(tableName);
+                hbaseRepository = (HBaseRepository)repositoryManager.getPublicRepository().getTable(tableName);
             } else {
-                hbaseRepository = (HBaseRepository)repositoryManager.getDefaultRepository();
+                hbaseRepository = (HBaseRepository)repositoryManager.getPublicRepository();
             }
             return new BulkIngester(hbaseRepository, LilyHBaseSchema.getRecordTable(hbaseTableFactory, hbaseRepository.getTableName()),
                     typeManager.getFieldTypesSnapshot());

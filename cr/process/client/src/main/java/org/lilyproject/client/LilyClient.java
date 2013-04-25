@@ -247,8 +247,8 @@ public class LilyClient implements Closeable, RepositoryManager {
 
 
     @Override
-    public Repository getDefaultRepository() throws IOException, InterruptedException {
-        return balancingAndRetryingLilyConnection.getDefaultRepository();
+    public Repository getPublicRepository() throws IOException, InterruptedException {
+        return balancingAndRetryingLilyConnection.getPublicRepository();
     }
 
     @Override

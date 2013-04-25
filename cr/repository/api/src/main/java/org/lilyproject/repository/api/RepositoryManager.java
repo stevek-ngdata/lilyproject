@@ -40,17 +40,30 @@ public interface RepositoryManager extends Closeable {
     TypeManager getTypeManager();
 
     /**
-     * Get the default {@code Repository}.
+     * Get the {@code Repository} for the public tenant. This is the same as calling
+     * getRepository("public").
      *
-     * @return the default repository
+     * @return the public repository
      */
-    Repository getDefaultRepository() throws IOException, InterruptedException;
+    Repository getPublicRepository() throws IOException, InterruptedException;
 
     /**
-     * Get the {@code Repository} for a specific HBase table.
+     * Get the {@code Repository} for a specific tenant.
      *
-     * @param tableName Name of the table for which the repository is to be fetched
+     * @param tenantId ID of the tenant for which the repository is to be fetched
      * @return Either a new Repository or a cached instance
      */
-    Repository getRepository(String tableName) throws IOException, InterruptedException;
+    Repository getRepository(String tenantId) throws IOException, InterruptedException;
+
+    /**
+     * Get the specified table for the public tenant.
+     *
+     * <p>This is a shortcut for calling getPublicTenant().getTable(tableName).</p>
+     */
+    LTable getTable(String tableName) throws IOException, InterruptedException;
+
+    /**
+     * Get the default table ("record") from the public tenant.
+     */
+    LTable getDefaultTable() throws IOException, InterruptedException;
 }

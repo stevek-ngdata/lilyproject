@@ -39,6 +39,7 @@ import org.lilyproject.repository.api.RetriesExhaustedTypeException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
+import org.lilyproject.repository.impl.TenantTableKey;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 
 /**
@@ -78,8 +79,8 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
     }
 
     @Override
-    public Repository getDefaultRepository() throws IOException, InterruptedException {
-        return repositoryManager.getDefaultRepository();
+    public Repository getPublicRepository() throws IOException, InterruptedException {
+        return repositoryManager.getPublicRepository();
     }
 
     @Override
@@ -116,10 +117,10 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
         RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
 
         RepositoryManager repositoryManager = new AbstractRepositoryManager(typeManager, idGenerator, recordFactory) {
-
             @Override
-            protected Repository createRepository(String tableName) throws IOException, InterruptedException {
-                InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, tableName, typeManager, idGenerator);
+            protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
+                InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, key, typeManager,
+                        idGenerator);
                 return (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),
                         new Class[]{Repository.class}, repositoryHandler);
             }
@@ -165,14 +166,15 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
 
     private static final class RepositoryInvocationHandler extends RetryBase implements InvocationHandler {
         private final LilyClient lilyClient;
-        private final String tableName;
+        private final TenantTableKey tenantTableKey;
         private final TypeManager typeManager;
         private final IdGenerator idGenerator;
 
-        private RepositoryInvocationHandler(LilyClient lilyClient, String tableName, TypeManager typeManager, IdGenerator idGenerator) {
+        private RepositoryInvocationHandler(LilyClient lilyClient, TenantTableKey tenantTableKey,
+                TypeManager typeManager, IdGenerator idGenerator) {
             super(lilyClient.getRetryConf());
             this.lilyClient = lilyClient;
-            this.tableName = tableName;
+            this.tenantTableKey = tenantTableKey;
             this.typeManager = typeManager;
             this.idGenerator = idGenerator;
         }
@@ -195,7 +197,8 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
 
             while (true) {
                 try {
-                    Repository repository = lilyClient.getPlainRepository(tableName);
+                    // TODO multitenancy
+                    Repository repository = lilyClient.getPlainRepository(tenantTableKey.getTableName());
                     return method.invoke(repository, args);
                 } catch (NoServersException e) {
                     // Needs to be wrapped because NoServersException is not in the throws clause of the

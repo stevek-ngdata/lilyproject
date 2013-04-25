@@ -27,6 +27,7 @@ import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdRecordScanner;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -50,6 +51,11 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     @Override
     public void setDelegate(Repository repository) {
         this.delegate = repository;
+    }
+
+    @Override
+    public LTable getTable(String tableName) throws IOException, InterruptedException {
+        return delegate.getTable(tableName);
     }
 
     @Override

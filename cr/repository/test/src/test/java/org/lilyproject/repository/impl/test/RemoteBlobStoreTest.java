@@ -20,8 +20,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 public class RemoteBlobStoreTest extends AbstractBlobStoreTest {
 
@@ -32,7 +32,7 @@ public class RemoteBlobStoreTest extends AbstractBlobStoreTest {
         repoSetup.setupRepository();
         repoSetup.setupRemoteAccess();
 
-        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
         typeManager = repoSetup.getTypeManager();
         blobManager = repoSetup.getBlobManager();
 

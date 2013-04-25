@@ -25,6 +25,7 @@ import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.indexer.Indexer;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
@@ -39,20 +40,20 @@ import static org.mockito.Mockito.when;
 
 public class AvroLilyImplTest {
 
-    private RepositoryManager repositoryManager;
-    private Repository repository;
-    private TypeManager typeManager;
-    private Indexer indexer;
+    private LTable table;
     private AvroConverter avroConverter;
     private AvroLilyImpl avroLilyImpl;
+    private final static String tenantId = "public";
 
     @Before
     public void setUp() throws IOException, InterruptedException {
-        repositoryManager = mock(RepositoryManager.class);
-        repository = mock(Repository.class);
-        when(repositoryManager.getRepository(Table.RECORD.name)).thenReturn(repository);
-        typeManager = mock(TypeManager.class);
-        indexer = mock(Indexer.class);
+        RepositoryManager repositoryManager = mock(RepositoryManager.class);
+        table = mock(LTable.class);
+        Repository repository = mock(Repository.class);
+        when(repository.getTable(Table.RECORD.name)).thenReturn(table);
+        when(repositoryManager.getRepository(tenantId)).thenReturn(repository);
+        TypeManager typeManager = mock(TypeManager.class);
+        Indexer indexer = mock(Indexer.class);
         avroConverter = mock(AvroConverter.class);
         avroLilyImpl = new AvroLilyImpl(repositoryManager, typeManager, indexer);
         avroLilyImpl.setAvroConverter(avroConverter);
@@ -68,12 +69,12 @@ public class AvroLilyImplTest {
         when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
 
         Record toDelete = mock(Record.class);
-        when(repository.newRecord(recordId)).thenReturn(toDelete);
+        when(table.newRecord(recordId)).thenReturn(toDelete);
 
-        avroLilyImpl.delete(recordIdBytes, Table.RECORD.name, null, attributes);
+        avroLilyImpl.delete(recordIdBytes, tenantId, Table.RECORD.name, null, attributes);
 
         verify(toDelete).setAttributes(attributes);
-        verify(repository).delete(toDelete);
+        verify(table).delete(toDelete);
     }
 
     @Test
@@ -87,9 +88,9 @@ public class AvroLilyImplTest {
         when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
         when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
 
-        avroLilyImpl.delete(recordIdBytes, Table.RECORD.name, avroMutationConditions, null);
+        avroLilyImpl.delete(recordIdBytes, tenantId, Table.RECORD.name, avroMutationConditions, null);
 
-        verify(repository).delete(recordId, mutationConditions);
+        verify(table).delete(recordId, mutationConditions);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -105,7 +106,7 @@ public class AvroLilyImplTest {
         when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
         when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
 
-        avroLilyImpl.delete(recordIdBytes, Table.RECORD.name, avroMutationConditions, attributes);
+        avroLilyImpl.delete(recordIdBytes, tenantId, Table.RECORD.name, avroMutationConditions, attributes);
     }
 
 }

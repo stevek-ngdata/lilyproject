@@ -58,6 +58,7 @@ import org.lilyproject.repository.impl.RecordFactoryImpl;
 import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
 import org.lilyproject.repository.impl.SchemaCache;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilyproject.repository.impl.TenantTableKey;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.AvroLilyTransceiver;
 import org.lilyproject.repository.remote.RemoteRepositoryManager;
@@ -156,8 +157,8 @@ public class RepositorySetup {
 
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory, blobManager) {
             @Override
-            protected Repository createRepository(String tableName) throws IOException, InterruptedException {
-                HBaseRepository repository = (HBaseRepository)super.createRepository(tableName);
+            protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
+                HBaseRepository repository = (HBaseRepository)super.createRepository(key);
                 repository.setRecordUpdateHooks(recordUpdateHooks);
                 return repository;
             }

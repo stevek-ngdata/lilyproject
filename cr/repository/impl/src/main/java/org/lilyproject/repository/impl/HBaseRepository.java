@@ -108,9 +108,9 @@ public class HBaseRepository extends BaseRepository {
 
     private static final Object METADATA_ONLY_UPDATE = new Object();
 
-    public HBaseRepository(RepositoryManager repositoryManager, HTableInterface hbaseTable,
+    public HBaseRepository(TenantTableKey ttk, AbstractRepositoryManager repositoryManager, HTableInterface hbaseTable,
             BlobManager blobManager) throws IOException, InterruptedException {
-        super(repositoryManager, blobManager, hbaseTable, new RepositoryMetrics("hbaserepository"));
+        super(ttk, repositoryManager, blobManager, hbaseTable, new RepositoryMetrics("hbaserepository"));
     }
 
     @Override

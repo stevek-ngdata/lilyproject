@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.ServiceLoader;
 
 import com.google.common.base.Preconditions;
@@ -47,6 +46,7 @@ import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdRecordScanner;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
@@ -67,17 +67,18 @@ import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Pair;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public abstract class BaseRepository implements Repository {
-    protected final RepositoryManager repositoryManager;
+    protected final AbstractRepositoryManager repositoryManager;
     protected final TypeManager typeManager;
     protected final IdGenerator idGenerator;
     protected final BlobManager blobManager;
     protected final RecordDecoder recdec;
     protected final HTableInterface recordTable;
-    private final String tableName;
+    protected final TenantTableKey tenantTableKey;
     protected RepositoryMetrics metrics;
     /**
      * Not all rows in the HBase record table are real records, this filter excludes non-valid
@@ -95,21 +96,31 @@ public abstract class BaseRepository implements Repository {
         REAL_RECORDS_FILTER.setFilterIfMissing(true);
     }
 
-    protected BaseRepository(RepositoryManager repositoryManager, BlobManager blobManager,
-                             HTableInterface recordTable, RepositoryMetrics metrics) {
+    protected BaseRepository(TenantTableKey tenantTableKey, AbstractRepositoryManager repositoryManager,
+            BlobManager blobManager, HTableInterface recordTable, RepositoryMetrics metrics) {
 
         Preconditions.checkNotNull(repositoryManager, "repositoryManager cannot be null");
         Preconditions.checkNotNull(blobManager, "blobManager cannot be null");
         Preconditions.checkNotNull(recordTable, "recordTable cannot be null");
 
+        this.tenantTableKey = tenantTableKey;
         this.repositoryManager = repositoryManager;
         this.typeManager = repositoryManager.getTypeManager();
         this.blobManager = blobManager;
         this.idGenerator = repositoryManager.getIdGenerator();
         this.recordTable = recordTable;
-        this.tableName = Bytes.toString(recordTable.getTableName());
         this.recdec = new RecordDecoder(typeManager, idGenerator);
         this.metrics = metrics;
+    }
+
+    @Override
+    public LTable getTable(String tableName) throws IOException, InterruptedException {
+        return repositoryManager.getRepository(tenantTableKey.getTenantId(), tableName);
+    }
+
+    @Override
+    public LTable getDefaultTable() throws IOException, InterruptedException {
+        return getTable(LilyHBaseSchema.Table.RECORD.name);
     }
 
     @Override
@@ -628,7 +639,7 @@ public abstract class BaseRepository implements Repository {
 
     @Override
     public String getTableName() {
-        return tableName;
+        return tenantTableKey.getTableName();
     }
 
 }
