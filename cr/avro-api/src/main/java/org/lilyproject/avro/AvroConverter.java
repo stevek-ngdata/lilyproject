@@ -15,6 +15,7 @@
  */
 package org.lilyproject.avro;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -44,13 +45,17 @@ import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RemoteException;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeBucket;
 import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.SystemFields;
+
+import static org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
 
 public class AvroConverter {
     protected Log log = LogFactory.getLog(getClass());
@@ -430,7 +435,29 @@ public class AvroConverter {
         return avroException;
     }
 
+    public AvroIOException convert(IOException exception) {
+        AvroIOException avroIOException = new AvroIOException();
+        avroIOException.setMessage$(exception.getMessage());
+        avroIOException.setRemoteCauses(buildCauses(exception));
+        avroIOException.setExceptionClass(exception.getClass().getName());
+        return avroIOException;
+    }
 
+    public IOException convert(AvroIOException avroException) {
+        try {
+            Class exceptionClass = Class.forName(avroException.getExceptionClass());
+            Constructor constructor = exceptionClass.getConstructor(String.class);
+            IOException ioException = (IOException) constructor.newInstance(avroException.getMessage$());
+            restoreCauses(avroException.getRemoteCauses(), ioException);
+            return ioException;
+        } catch (Exception e) {
+            log.error("Failure while converting remote exception", e);
+
+            IOException ioException = new IOException(avroException.getMessage$());
+            restoreCauses(avroException.getRemoteCauses(), ioException);
+            return ioException;
+        }
+    }
 
     public ByteBuffer convert(RecordId recordId) {
         if (recordId == null) {
@@ -639,6 +666,37 @@ public class AvroConverter {
         }
 
         return conditions;
+    }
+
+
+
+    public AvroTableCreateDescriptor convert(TableCreateDescriptor descriptor) {
+        AvroTableCreateDescriptor avroDescriptor = new AvroTableCreateDescriptor();
+        avroDescriptor.setName(descriptor.getName());
+        byte[][] splitKeys = descriptor.getSplitKeys();
+        if (splitKeys != null) {
+            List<ByteBuffer> avroSplitKeys = new ArrayList<ByteBuffer>(splitKeys.length);
+            for (byte[] splitKey : splitKeys) {
+                avroSplitKeys.add(ByteBuffer.wrap(splitKey));
+            }
+            avroDescriptor.setSplitKeys(avroSplitKeys);
+        }
+        return avroDescriptor;
+    }
+
+    public TableCreateDescriptor convert(AvroTableCreateDescriptor avroDescriptor) {
+        String name = avroDescriptor.getName();
+
+        List<ByteBuffer> avroSplitKeys = avroDescriptor.getSplitKeys();
+        byte[][] splitKeys = null;
+        if (avroSplitKeys != null) {
+            splitKeys = new byte[avroSplitKeys.size()][];
+            for (int i = 0; i < avroSplitKeys.size(); i++) {
+                splitKeys[i] = asArray(avroSplitKeys.get(i));
+            }
+        }
+
+        return TableCreateDescriptorImpl.createInstanceWithSplitKeys(name, splitKeys);
     }
 
 

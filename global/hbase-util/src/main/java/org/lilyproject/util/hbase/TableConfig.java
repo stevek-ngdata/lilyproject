@@ -15,16 +15,14 @@
  */
 package org.lilyproject.util.hbase;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 public class TableConfig {
-    private Integer regionCount;
-    private String splitKeysAsString;
-    private byte[] splitKeyPrefix;
+    private byte[][] splitKeys;
     private Long maxFileSize;
     private Long memStoreFlushSize;
     private Map<String, ColumnFamilyConfig> columnFamilies = new HashMap<String, ColumnFamilyConfig>();
@@ -33,16 +31,8 @@ public class TableConfig {
 
     }
 
-    /**
-     * @param splitKeys (optional, can be null) comma-separated list of split keys. If this is specified, it takes
-     *                   precedence over the nrOfRegions parameter.
-     * @param regionCount (optional, can be null) number of regions. Creates splits suited for row keys that are
-     *                    random UUIDs.
-     */
-    public TableConfig(Integer regionCount, String splitKeys, byte[] splitKeyPrefix) {
-        this.regionCount = regionCount;
-        this.splitKeysAsString = splitKeys;
-        this.splitKeyPrefix = splitKeyPrefix == null ? new byte[0] : splitKeyPrefix;
+    public TableConfig(byte[][] splitKeys) {
+        this.splitKeys = splitKeys;
     }
 
     public Map<String, ColumnFamilyConfig> getColumnFamilies() {
@@ -70,6 +60,16 @@ public class TableConfig {
     }
 
     public byte[][] getSplitKeys() {
+        return splitKeys;
+    }
+
+    /**
+     * @param regionCount (optional, can be null) number of regions. Creates splits suited for row keys that are
+     *                    random UUIDs.
+     * @param splitKeysAsString (optional, can be null) comma-separated list of split keys. If this is specified, it takes
+     */
+    public static byte[][] parseSplitKeys(Integer regionCount, String splitKeysAsString, String splitKeyPrefixAsString) {
+        byte[] splitKeyPrefix = splitKeyPrefixAsString != null ? Bytes.toBytesBinary(splitKeyPrefixAsString) : null;
         byte[][] splitKeys = null;
         if (splitKeysAsString != null && !splitKeysAsString.isEmpty()) {
             String[] split = splitKeysAsString.split(",");

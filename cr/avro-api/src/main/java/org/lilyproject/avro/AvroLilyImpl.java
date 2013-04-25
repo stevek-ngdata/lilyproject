@@ -17,6 +17,7 @@ package org.lilyproject.avro;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,8 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.RepositoryTable;
+import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.api.TypeBucket;
 import org.lilyproject.repository.api.TypeManager;
 
@@ -404,6 +407,64 @@ public class AvroLilyImpl implements AvroLily {
         } catch (IndexerException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    @Override
+    public Object createTable(String tenant, AvroTableCreateDescriptor tableCreateDescriptor)
+            throws AvroInterruptedException, AvroIOException {
+        try {
+            RepositoryTableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
+            tableMgr.createTable(converter.convert(tableCreateDescriptor));
+            return null;
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        } catch (IOException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    @Override
+    public Object dropTable(String tenant, String name)
+            throws AvroInterruptedException, AvroIOException {
+        try {
+            RepositoryTableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
+            tableMgr.dropTable(name);
+            return null;
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        } catch (IOException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    @Override
+    public List<String> getTables(String tenant)
+            throws AvroInterruptedException, AvroIOException {
+        try {
+            RepositoryTableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
+            List<String> tables = new ArrayList<String>();
+            for (RepositoryTable table : tableMgr.getTables()) {
+                tables.add(table.getName());
+            }
+            return tables;
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        } catch (IOException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    @Override
+    public boolean tableExists(String tenant, String name)
+            throws AvroInterruptedException, AvroIOException {
+        try {
+            RepositoryTableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
+            return tableMgr.tableExists(name);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        } catch (IOException e) {
             throw converter.convert(e);
         }
     }

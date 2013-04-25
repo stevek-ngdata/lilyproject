@@ -87,6 +87,16 @@
     },
 
     {
+      "name": "AvroIOException",
+      "type": "error",
+      "fields": [
+        {"name": "message", "type": ["null", "string"]},
+        {"name": "exceptionClass", "type": ["null", "string"]},
+        {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
+      ]
+    },
+
+    {
       "name": "AvroGenericException",
       "type": "error",
       "fields": [
@@ -171,6 +181,15 @@
         {"name": "bucketId", "type": "string"},
         {"name": "fieldTypes", "type": {"type": "array", "items": "AvroFieldType"}},
         {"name": "recordTypes", "type": {"type": "array", "items": "AvroRecordType"}}
+      ]
+    },
+
+    {
+      "name": "AvroTableCreateDescriptor",
+      "type": "record",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "splitKeys", "type": ["null", {"type": "array", "items": "bytes"}]}
       ]
     }
   ],
@@ -363,6 +382,43 @@
       "request": [],
       "response": ["null"],
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
+    },
+
+    // table management
+
+    "createTable": {
+      "request": [
+        {"name": "tenant", "type": "string"},
+        {"name": "tableCreateDescriptor", "type": "AvroTableCreateDescriptor"}
+      ],
+      "response": ["null"],
+      "errors":["AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+    },
+
+    "dropTable": {
+      "request": [
+        {"name": "tenant", "type": "string"},
+        {"name": "name", "type": "string"}
+      ],
+      "response": ["null"],
+      "errors":["AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+    },
+
+    "getTables": {
+      "request": [
+        {"name": "tenant", "type": "string"}
+      ],
+      "response": {"type": "array", "items": "string"},
+      "errors":["AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+    },
+
+    "tableExists": {
+      "request": [
+        {"name": "tenant", "type": "string"},
+        {"name": "name", "type": "string"}
+      ],
+      "response": "boolean",
+      "errors":["AvroGenericException", "AvroInterruptedException", "AvroIOException"]
     },
 
     // indexer api functionality

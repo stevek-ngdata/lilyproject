@@ -15,7 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
 import org.lilyproject.util.hbase.TableConfig;
 
@@ -43,13 +42,20 @@ public class TableCreateDescriptorImpl implements TableCreateDescriptor{
         return new TableCreateDescriptorImpl(name, null);
     }
 
-    public static TableCreateDescriptor createInstanceWithSplitKeys(String name, String keyPrefix, String splitKeys) {
-        TableConfig tableConfig = new TableConfig(-1, splitKeys, keyPrefix == null ? null : Bytes.toBytesBinary(keyPrefix));
+    public static TableCreateDescriptor createInstanceWithSplitKeys(String name, byte[][] splitKeys) {
+        TableConfig tableConfig = new TableConfig(splitKeys);
+        return new TableCreateDescriptorImpl(name, tableConfig.getSplitKeys());
+    }
+
+    public static TableCreateDescriptor createInstanceWithSplitKeys(String name, String keyPrefix, String splitKeysSpec) {
+        byte[][] splitKeys = TableConfig.parseSplitKeys(null, splitKeysSpec, keyPrefix);
+        TableConfig tableConfig = new TableConfig(splitKeys);
         return new TableCreateDescriptorImpl(name, tableConfig.getSplitKeys());
     }
 
     public static TableCreateDescriptor createInstance(String name, String keyPrefix, int numRegions) {
-        TableConfig tableConfig = new TableConfig(numRegions, null, keyPrefix == null ? null : Bytes.toBytesBinary(keyPrefix));
+        byte[][] splitKeys = TableConfig.parseSplitKeys(numRegions, null, keyPrefix);
+        TableConfig tableConfig = new TableConfig(splitKeys);
         return new TableCreateDescriptorImpl(name, tableConfig.getSplitKeys());
     }
 

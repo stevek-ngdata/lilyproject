@@ -108,7 +108,8 @@ public class TutorialTest {
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-        repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, new RecordFactoryImpl(typeManager, idGenerator), hbaseTableFactory, blobManager);
+        repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
+                new RecordFactoryImpl(typeManager, idGenerator), hbaseTableFactory, blobManager, configuration);
 
         RepositoryTableManager repoTableManager = new RepositoryTableManagerImpl(/* TODO multitenancy */ "public", configuration, hbaseTableFactory);
         if (!repoTableManager.tableExists(Table.RECORD.name)) {

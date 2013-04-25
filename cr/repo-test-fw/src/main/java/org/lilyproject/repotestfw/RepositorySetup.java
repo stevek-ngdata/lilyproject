@@ -155,7 +155,8 @@ public class RepositorySetup {
         blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
 
-        repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory, blobManager) {
+        repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory,
+                blobManager, hadoopConf) {
             @Override
             protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
                 HBaseRepository repository = (HBaseRepository)super.createRepository(key);

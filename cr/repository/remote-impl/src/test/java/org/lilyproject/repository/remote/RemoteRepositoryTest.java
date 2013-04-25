@@ -56,8 +56,9 @@ public class RemoteRepositoryTest {
         avroConverter = mock(AvroConverter.class);
         recordTable = mock(HTableInterface.class);
 
+        RemoteTableManager tableMgr = new RemoteTableManager(tenantId, avroLilyTransceiver, avroConverter);
         remoteRepository = new RemoteRepository(new TenantTableKey(tenantId, Table.RECORD.name), avroLilyTransceiver,
-                avroConverter, mock(RemoteRepositoryManager.class), mock(BlobManager.class), recordTable);
+                avroConverter, mock(RemoteRepositoryManager.class), mock(BlobManager.class), recordTable, tableMgr);
     }
 
     @Test

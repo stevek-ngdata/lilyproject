@@ -57,6 +57,7 @@ import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeException;
@@ -79,6 +80,7 @@ public abstract class BaseRepository implements Repository {
     protected final RecordDecoder recdec;
     protected final HTableInterface recordTable;
     protected final TenantTableKey tenantTableKey;
+    protected final RepositoryTableManager tableManager;
     protected RepositoryMetrics metrics;
     /**
      * Not all rows in the HBase record table are real records, this filter excludes non-valid
@@ -97,7 +99,8 @@ public abstract class BaseRepository implements Repository {
     }
 
     protected BaseRepository(TenantTableKey tenantTableKey, AbstractRepositoryManager repositoryManager,
-            BlobManager blobManager, HTableInterface recordTable, RepositoryMetrics metrics) {
+            BlobManager blobManager, HTableInterface recordTable, RepositoryMetrics metrics,
+            RepositoryTableManager tableManager) {
 
         Preconditions.checkNotNull(repositoryManager, "repositoryManager cannot be null");
         Preconditions.checkNotNull(blobManager, "blobManager cannot be null");
@@ -111,6 +114,12 @@ public abstract class BaseRepository implements Repository {
         this.recordTable = recordTable;
         this.recdec = new RecordDecoder(typeManager, idGenerator);
         this.metrics = metrics;
+        this.tableManager = tableManager;
+    }
+
+    @Override
+    public RepositoryTableManager getTableManager() {
+        return tableManager;
     }
 
     @Override

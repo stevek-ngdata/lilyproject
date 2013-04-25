@@ -32,8 +32,10 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
 
     private HBaseTableFactory hbaseTableFactory;
     private BlobManager blobManager;
+    private Configuration hbaseConf;
 
-    public HBaseRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory, HBaseTableFactory hbaseTableFactory, BlobManager blobManager) {
+    public HBaseRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
+            HBaseTableFactory hbaseTableFactory, BlobManager blobManager, Configuration hbaseConf) {
         super(typeManager, idGenerator, recordFactory);
         this.hbaseTableFactory = hbaseTableFactory;
         this.blobManager = blobManager;
@@ -41,8 +43,9 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
 
     @Override
     protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
+        RepositoryTableManager tableManager = new RepositoryTableManagerImpl(key.getTenantId(), hbaseConf, hbaseTableFactory);
         HTableInterface htable = LilyHBaseSchema.getRecordTable(hbaseTableFactory, key.toHBaseTableName(), true);
-        return new HBaseRepository(key, this, htable, blobManager);
+        return new HBaseRepository(key, this, htable, blobManager, tableManager);
     }
 
 }

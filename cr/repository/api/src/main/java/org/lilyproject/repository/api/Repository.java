@@ -45,8 +45,7 @@ public interface Repository extends LTable, Closeable {
 
     LTable getDefaultTable() throws IOException, InterruptedException;
 
-    // TODO multitenancy
-    //RepositoryTableManager getTableManager();
+    RepositoryTableManager getTableManager();
 
     /**
      * @return the IdGenerator service

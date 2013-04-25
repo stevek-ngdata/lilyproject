@@ -106,7 +106,7 @@ public class BulkIngester implements Closeable {
             
             @SuppressWarnings("resource") // RepositoryManager gets closed in BulkIngester.close
             RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
-                        recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager());
+                        recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager(), conf);
 
             // FIXME Blobs aren't really supported here (no BlobManager is created), but null is
             // just passed in as the BlobManager so we'll probably get some mystery NPEs if Blobs

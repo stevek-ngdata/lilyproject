@@ -39,6 +39,7 @@ import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 
@@ -51,6 +52,11 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     @Override
     public void setDelegate(Repository repository) {
         this.delegate = repository;
+    }
+
+    @Override
+    public RepositoryTableManager getTableManager() {
+        return delegate.getTableManager();
     }
 
     @Override
