@@ -92,6 +92,7 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -2908,7 +2909,7 @@ public class IndexerTest {
         // reset current read count
         indexUpdaterRepositoryMgr.reset();
 
-        TrackingRepository indexUpdaterRepository = (TrackingRepository)indexUpdaterRepositoryMgr.getRepository(Table.RECORD.name);
+        TrackingRepository indexUpdaterRepository = (TrackingRepository)indexUpdaterRepositoryMgr.getTable(Table.RECORD.name);
 
         Record record = defaultRepository.newRecord();
         record.setRecordType(vRecordType1.getName());
@@ -3367,14 +3368,24 @@ public class IndexerTest {
         }
 
         @Override
-        public synchronized Repository getRepository(String tableName) throws IOException, InterruptedException {
+        public synchronized Repository getRepository(String tenantId) throws IOException, InterruptedException {
+            throw new RuntimeException("Multitenancy not yet implemented here.");
+        }
+
+        @Override
+        public LTable getTable(String tableName) throws IOException, InterruptedException {
             if (!repositoryCache.containsKey(tableName)) {
                 Repository repository = (Repository)delegate.getPublicRepository().getTable(tableName);
-                TrackingRepository trackingRepository = new TrackingRepository();
+                TrackingRepository trackingRepository = new TrackingRepository(this);
                 trackingRepository.setDelegate(repository);
                 repositoryCache.put(tableName, trackingRepository);
             }
             return repositoryCache.get(tableName);
+        }
+
+        @Override
+        public LTable getDefaultTable() throws IOException, InterruptedException {
+            return null;
         }
 
         public void reset() {
@@ -3386,6 +3397,16 @@ public class IndexerTest {
 
     private static class TrackingRepository extends BaseRepositoryDecorator {
         private int readCount;
+        private TrackingRepositoryManager trackingRepoMgr;
+
+        public TrackingRepository(TrackingRepositoryManager trackingRepoMgr) {
+            this.trackingRepoMgr = trackingRepoMgr;
+        }
+
+        @Override
+        public LTable getTable(String tableName) throws IOException, InterruptedException {
+            return trackingRepoMgr.getTable(tableName);
+        }
 
         @Override
         public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)

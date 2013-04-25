@@ -30,6 +30,7 @@ import org.lilyproject.repository.api.IOBlobException;
 import org.lilyproject.repository.api.IORecordException;
 import org.lilyproject.repository.api.IOTypeException;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
@@ -84,9 +85,9 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
     }
 
     @Override
-    public Repository getRepository(String tableName) {
+    public Repository getRepository(String tenantId) {
         try {
-            return repositoryManager.getRepository(tableName);
+            return repositoryManager.getRepository(tenantId);
         } catch (IOException e) {
             // In reality this will never happen, becuse the getRepository call is just creating an invocation handler
             throw new RuntimeException(e);
@@ -95,6 +96,16 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public LTable getTable(String tableName) throws IOException, InterruptedException {
+        return repositoryManager.getRepository(tableName);
+    }
+
+    @Override
+    public LTable getDefaultTable() throws IOException, InterruptedException {
+        return repositoryManager.getDefaultTable();
     }
 
     public Indexer getIndexer() {

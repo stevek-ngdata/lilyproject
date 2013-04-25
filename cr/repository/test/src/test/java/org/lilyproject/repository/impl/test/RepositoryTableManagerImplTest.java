@@ -37,7 +37,7 @@ public class RepositoryTableManagerImplTest {
     public void setUp() {
         configuration = new Configuration();
         tableFactory = mock(HBaseTableFactory.class);
-        tableManager = new RepositoryTableManagerImpl(configuration, tableFactory);
+        tableManager = new RepositoryTableManagerImpl(/* TODO multitenancy */ "public", configuration, tableFactory);
     }
 
     @Test(expected=IllegalArgumentException.class)

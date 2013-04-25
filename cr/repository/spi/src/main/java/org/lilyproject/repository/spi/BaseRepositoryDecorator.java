@@ -59,6 +59,11 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
+    public LTable getDefaultTable() throws IOException, InterruptedException {
+        return delegate.getDefaultTable();
+    }
+
+    @Override
     public Record newRecord() throws RecordException {
         return delegate.newRecord();
     }

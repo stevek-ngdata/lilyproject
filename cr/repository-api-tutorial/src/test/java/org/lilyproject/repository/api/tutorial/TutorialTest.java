@@ -110,7 +110,7 @@ public class TutorialTest {
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, new RecordFactoryImpl(typeManager, idGenerator), hbaseTableFactory, blobManager);
 
-        RepositoryTableManager repoTableManager = new RepositoryTableManagerImpl(configuration, hbaseTableFactory);
+        RepositoryTableManager repoTableManager = new RepositoryTableManagerImpl(/* TODO multitenancy */ "public", configuration, hbaseTableFactory);
         if (!repoTableManager.tableExists(Table.RECORD.name)) {
             repoTableManager.createTable(Table.RECORD.name);
         }

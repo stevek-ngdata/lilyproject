@@ -168,7 +168,7 @@ public class RepositorySetup {
         sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
         eventPublisherManager = new LilyEventPublisherManager(hbaseTableFactory);
 
-        tableManager = new RepositoryTableManagerImpl(hadoopConf, hbaseTableFactory);
+        tableManager = new RepositoryTableManagerImpl(/* TODO multitenancy */ "public", hadoopConf, hbaseTableFactory);
         if (!tableManager.tableExists(Table.RECORD.name)) {
             tableManager.createTable(Table.RECORD.name);
         }

@@ -26,11 +26,7 @@ public class TenantTableKey {
     }
 
     public String toHBaseTableName() {
-        if (tenantId.equals("public")) {
-            return tableName;
-        } else {
-            return tenantId + "__" + tableName;
-        }
+        return RepoUtil.getHBaseTableName(tenantId, tableName);
     }
 
     @Override

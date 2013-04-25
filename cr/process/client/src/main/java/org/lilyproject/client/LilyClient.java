@@ -48,6 +48,7 @@ import org.lilyproject.indexer.RemoteIndexer;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
@@ -186,6 +187,7 @@ public class LilyClient implements Closeable, RepositoryManager {
      * over multiple Lily servers, you need to recall this method regularly to retrieve other
      * repository instances. Most of the time, you will rather use {@link #getRepository(String)}.
      */
+    // TODO multitenancy: it would be more logical for this method to take both tenantId and table as parameter
     public Repository getPlainRepository(String tableName) throws IOException, InterruptedException, NoServersException, RepositoryException, KeeperException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
@@ -199,7 +201,7 @@ public class LilyClient implements Closeable, RepositoryManager {
      */
     public RepositoryTableManager getTableManager() {
         Configuration conf = getHBaseConfiguration(zk);
-        return new RepositoryTableManagerImpl(conf, new HBaseTableFactoryImpl(conf));
+        return new RepositoryTableManagerImpl(/* TODO multitenancy */ "public", conf, new HBaseTableFactoryImpl(conf));
     }
 
     private synchronized ServerNode getServerNode() throws NoServersException, RepositoryException, IOException,
@@ -228,26 +230,44 @@ public class LilyClient implements Closeable, RepositoryManager {
      * the category org.lilyproject.client.
      */
     public Repository getRepository() {
-        return getRepository(Table.RECORD.name);
+        try {
+            return getPublicRepository();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /**
-     * Returns a repository instance that is bound to a non-default storage table. The returned
-     * repository will automatically balance requests over the available Lily servers, and will
-     * retry operations according to what is specified in {@link RetryConf}.
-     * @param tableName name of the storage table for the requested repository
-     */
     @Override
-    public Repository getRepository(String tableName) {
+    public Repository getRepository(String tenantId) {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
-        return balancingAndRetryingLilyConnection.getRepository(tableName);
+        return balancingAndRetryingLilyConnection.getRepository(tenantId);
     }
 
+    @Override
+    public LTable getTable(String tableName) throws IOException, InterruptedException {
+        if (isClosed) {
+            throw new IllegalStateException("This LilyClient is closed.");
+        }
+        return balancingAndRetryingLilyConnection.getTable(tableName);
+    }
+
+    @Override
+    public LTable getDefaultTable() throws IOException, InterruptedException {
+        if (isClosed) {
+            throw new IllegalStateException("This LilyClient is closed.");
+        }
+        return balancingAndRetryingLilyConnection.getDefaultTable();
+    }
 
     @Override
     public Repository getPublicRepository() throws IOException, InterruptedException {
+        if (isClosed) {
+            throw new IllegalStateException("This LilyClient is closed.");
+        }
         return balancingAndRetryingLilyConnection.getPublicRepository();
     }
 
