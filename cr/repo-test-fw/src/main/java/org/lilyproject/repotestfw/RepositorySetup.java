@@ -44,7 +44,7 @@ import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractSchemaCache;
 import org.lilyproject.repository.impl.BlobManagerImpl;
@@ -56,7 +56,7 @@ import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
-import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
+import org.lilyproject.repository.impl.TableManagerImpl;
 import org.lilyproject.repository.impl.RepositoryTenantMasterHook;
 import org.lilyproject.repository.impl.SchemaCache;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
@@ -99,7 +99,7 @@ public class RepositorySetup {
     private RemoteTypeManager remoteTypeManager;
     private RepositoryManager repositoryManager;
     private RemoteRepositoryManager remoteRepositoryManager;
-    private RepositoryTableManager tableManager;
+    private TableManager tableManager;
 
     private Server lilyServer;
 
@@ -182,7 +182,7 @@ public class RepositorySetup {
         sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
         eventPublisherManager = new LilyEventPublisherManager(hbaseTableFactory);
 
-        tableManager = new RepositoryTableManagerImpl(/* TODO multitenancy */ "public", hadoopConf, hbaseTableFactory);
+        tableManager = new TableManagerImpl(/* TODO multitenancy */ "public", hadoopConf, hbaseTableFactory);
         if (!tableManager.tableExists(Table.RECORD.name)) {
             tableManager.createTable(Table.RECORD.name);
         }
@@ -297,7 +297,7 @@ public class RepositorySetup {
         return repositoryManager;
     }
 
-    public RepositoryTableManager getTableManager() {
+    public TableManager getTableManager() {
         return tableManager;
     }
 

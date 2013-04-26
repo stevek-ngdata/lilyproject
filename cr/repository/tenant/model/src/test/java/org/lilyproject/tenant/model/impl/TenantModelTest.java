@@ -195,7 +195,7 @@ public class TenantModelTest {
                 if (events.size() > 0) {
                     System.out.println("The events are:");
                     for (TenantModelEvent event : events) {
-                        System.out.println(event.getEventType() + " - " + event.getTenantId());
+                        System.out.println(event.getEventType() + " - " + event.getTenantName());
                     }
                 } else {
                     System.out.println("There are no events.");

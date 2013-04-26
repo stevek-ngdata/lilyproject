@@ -16,7 +16,7 @@
 package org.lilyproject.repository.cli;
 
 import org.apache.commons.cli.CommandLine;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 
 public class DropTableCli extends BaseTableCliTool {
 
@@ -44,7 +44,7 @@ public class DropTableCli extends BaseTableCliTool {
     }
 
     @Override
-    protected int execute(RepositoryTableManager tableManager) throws Exception {
+    protected int execute(TableManager tableManager) throws Exception {
         System.out.printf("Dropping table '%s'...\n", tableName);
         tableManager.dropTable(tableName);
         System.out.printf("Table '%s' dropped\n", tableName);

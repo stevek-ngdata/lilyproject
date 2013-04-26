@@ -27,11 +27,10 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.tenant.model.api.Tenant;
 import org.lilyproject.tenant.model.api.TenantModel;
 
 import java.util.List;
@@ -117,7 +116,7 @@ public class AbstractTenantTableTest {
     @Test(expected = Exception.class)
     public void testRecordTableCannotBeDeleted() throws Exception {
         String tenantName = "testRecordTableCannotBeDeleted";
-        RepositoryTableManager tableManager = repositoryManager.getRepository(tenantName).getTableManager();
+        TableManager tableManager = repositoryManager.getRepository(tenantName).getTableManager();
         tableManager.dropTable("record");
     }
 
@@ -129,7 +128,7 @@ public class AbstractTenantTableTest {
         assertTrue(tenantModel.waitUntilTenantInState(tenantName, TenantLifecycleState.ACTIVE, 60000L));
 
         Repository repository = repositoryManager.getRepository(tenantName);
-        RepositoryTableManager tableManager = repository.getTableManager();
+        TableManager tableManager = repository.getTableManager();
 
         List<RepositoryTable> tables = tableManager.getTables();
         assertEquals(1, tables.size());

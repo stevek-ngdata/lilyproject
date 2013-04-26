@@ -59,9 +59,9 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
     }
 
     @Override
-    public Repository getRepository(String tenantId) throws IOException, InterruptedException, RepositoryException {
+    public Repository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException {
         waitOnRepoManager();
-        return delegate.getRepository(tenantId);
+        return delegate.getRepository(tenantName);
     }
 
     @Override

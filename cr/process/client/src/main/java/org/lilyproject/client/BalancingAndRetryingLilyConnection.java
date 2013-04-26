@@ -91,9 +91,9 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
     }
 
     @Override
-    public Repository getRepository(String tenantId) {
+    public Repository getRepository(String tenantName) {
         try {
-            return repositoryManager.getRepository(tenantId);
+            return repositoryManager.getRepository(tenantName);
         } catch (IOException e) {
             // In reality this will never happen, becuse the getRepository call is just creating an invocation handler
             throw new RuntimeException(e);

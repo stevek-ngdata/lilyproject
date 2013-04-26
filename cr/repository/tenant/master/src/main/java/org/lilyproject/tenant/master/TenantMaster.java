@@ -204,7 +204,7 @@ public class TenantMaster {
                     }
 
                     try {
-                        Tenant tenant = tenantModel.getTenant(event.getTenantId());
+                        Tenant tenant = tenantModel.getTenant(event.getTenantName());
                         if (tenant.getLifecycleState() == TenantLifecycleState.CREATE_REQUESTED) {
                             for (TenantMasterHook hook : hooks) {
                                 try {

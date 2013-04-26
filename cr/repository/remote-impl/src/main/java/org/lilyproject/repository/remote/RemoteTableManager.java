@@ -7,7 +7,7 @@ import org.lilyproject.avro.AvroIOException;
 import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.AvroTableCreateDescriptor;
 import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.impl.RepositoryTableImpl;
 import org.lilyproject.util.io.Closer;
 
@@ -21,14 +21,14 @@ import java.util.List;
  * <p>Remotely we can also talk directly to HBase, but the reason to go through the lily server is to
  * make sure table creation settings are applied.</p>
  */
-public class RemoteTableManager implements RepositoryTableManager {
-    private String tenantId;
+public class RemoteTableManager implements TableManager {
+    private String tenantName;
     private AvroLily lilyProxy;
     private AvroConverter converter;
     private Transceiver client;
 
-    public RemoteTableManager(String tenantId, AvroLilyTransceiver lilyTransceiver, AvroConverter converter) throws IOException {
-        this.tenantId = tenantId;
+    public RemoteTableManager(String tenantName, AvroLilyTransceiver lilyTransceiver, AvroConverter converter) throws IOException {
+        this.tenantName = tenantName;
         this.converter = converter;
         client = lilyTransceiver.getTransceiver();
         lilyProxy = lilyTransceiver.getLilyProxy();
@@ -44,7 +44,7 @@ public class RemoteTableManager implements RepositoryTableManager {
         try {
             AvroTableCreateDescriptor descriptor = new AvroTableCreateDescriptor();
             descriptor.setName(tableName);
-            lilyProxy.createTable(tenantId, descriptor);
+            lilyProxy.createTable(tenantName, descriptor);
             return new RepositoryTableImpl(tableName);
         } catch (AvroIOException e) {
             throw converter.convert(e);
@@ -56,7 +56,7 @@ public class RemoteTableManager implements RepositoryTableManager {
     @Override
     public RepositoryTable createTable(TableCreateDescriptor descriptor) throws InterruptedException, IOException {
         try {
-            lilyProxy.createTable(tenantId, converter.convert(descriptor));
+            lilyProxy.createTable(tenantName, converter.convert(descriptor));
             return new RepositoryTableImpl(descriptor.getName());
         } catch (AvroIOException e) {
             throw converter.convert(e);
@@ -68,7 +68,7 @@ public class RemoteTableManager implements RepositoryTableManager {
     @Override
     public void dropTable(String tableName) throws InterruptedException, IOException {
         try {
-            lilyProxy.dropTable(tenantId, tableName);
+            lilyProxy.dropTable(tenantName, tableName);
         } catch (AvroIOException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -79,7 +79,7 @@ public class RemoteTableManager implements RepositoryTableManager {
     @Override
     public List<RepositoryTable> getTables() throws InterruptedException, IOException {
         try {
-            List<String> tableNames = lilyProxy.getTables(tenantId);
+            List<String> tableNames = lilyProxy.getTables(tenantName);
             List<RepositoryTable> tables = new ArrayList<RepositoryTable>(tableNames.size());
             for (String name : tableNames) {
                 tables.add(new RepositoryTableImpl(name));
@@ -95,7 +95,7 @@ public class RemoteTableManager implements RepositoryTableManager {
     @Override
     public boolean tableExists(String tableName) throws InterruptedException, IOException {
         try {
-            return lilyProxy.tableExists(tenantId, tableName);
+            return lilyProxy.tableExists(tenantName, tableName);
         } catch (AvroIOException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {

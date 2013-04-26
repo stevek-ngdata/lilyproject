@@ -3368,7 +3368,7 @@ public class IndexerTest {
         }
 
         @Override
-        public synchronized Repository getRepository(String tenantId) throws IOException, InterruptedException {
+        public synchronized Repository getRepository(String tenantName) throws IOException, InterruptedException {
             throw new RuntimeException("Multitenancy not yet implemented here.");
         }
 

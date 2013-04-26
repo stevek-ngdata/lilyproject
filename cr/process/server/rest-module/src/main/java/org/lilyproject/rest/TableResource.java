@@ -30,8 +30,8 @@ import java.util.List;
 
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.repository.api.RepositoryTableManager;
-import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
+import org.lilyproject.repository.api.TableManager;
+import org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
 import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -42,10 +42,10 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 @Path("table")
 public class TableResource {
 
-    private RepositoryTableManager tableManager;
+    private TableManager tableManager;
 
     @Autowired
-    public void setTableManager(RepositoryTableManager tableManager) {
+    public void setTableManager(TableManager tableManager) {
         this.tableManager = tableManager;
     }
 

@@ -45,7 +45,6 @@ import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RemoteException;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeBucket;
@@ -55,7 +54,7 @@ import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.SystemFields;
 
-import static org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
+import static org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
 
 public class AvroConverter {
     protected Log log = LogFactory.getLog(getClass());

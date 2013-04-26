@@ -21,8 +21,8 @@ import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
-import org.lilyproject.repository.api.RepositoryTableManager;
-import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
+import org.lilyproject.repository.api.TableManager;
+import org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
 import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 
 /**
@@ -114,7 +114,7 @@ public class CreateTableCli extends BaseTableCliTool {
     }
 
     @Override
-    protected int execute(RepositoryTableManager tableManager) throws InterruptedException, IOException {
+    protected int execute(TableManager tableManager) throws InterruptedException, IOException {
         byte[][] splitKeys = createDescriptor.getSplitKeys();
         int numRegions = splitKeys != null ? splitKeys.length + 1 : 1;
         System.out.printf("Creating table '%s' with %d region%s...\n", createDescriptor.getName(), numRegions,

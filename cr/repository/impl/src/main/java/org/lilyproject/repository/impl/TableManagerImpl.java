@@ -32,12 +32,12 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 public class TableManagerImpl implements TableManager {
 
-    private String tenantId;
+    private String tenantName;
     private Configuration configuration;
     private HBaseTableFactory tableFactory;
 
-    public TableManagerImpl(String tenantId, Configuration configuration, HBaseTableFactory tableFactory) {
-        this.tenantId = tenantId;
+    public TableManagerImpl(String tenantName, Configuration configuration, HBaseTableFactory tableFactory) {
+        this.tenantName = tenantName;
         this.configuration = configuration;
         this.tableFactory = tableFactory;
     }
@@ -56,7 +56,7 @@ public class TableManagerImpl implements TableManager {
         if (tableExists(descriptor.getName())) {
             throw new IllegalArgumentException(String.format("Table '%s' already exists", descriptor.getName()));
         }
-        String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantId, descriptor.getName());
+        String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantName, descriptor.getName());
         LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, descriptor.getSplitKeys());
         return new RepositoryTableImpl(descriptor.getName());
     }
@@ -69,7 +69,7 @@ public class TableManagerImpl implements TableManager {
         }
 
         HBaseAdmin hbaseAdmin = new HBaseAdmin(configuration);
-        String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantId, tableName);
+        String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantName, tableName);
 
         try {
             if (hbaseAdmin.tableExists(hbaseTableName)
@@ -94,8 +94,8 @@ public class TableManagerImpl implements TableManager {
         try {
             for (HTableDescriptor tableDescriptor : hbaseAdmin.listTables()) {
                 if (LilyHBaseSchema.isRecordTableDescriptor(tableDescriptor)
-                        && TenantTableUtil.belongsToTenant(tableDescriptor.getNameAsString(), tenantId)) {
-                    String name = TenantTableUtil.extractLilyTableName(tenantId, tableDescriptor.getNameAsString());
+                        && TenantTableUtil.belongsToTenant(tableDescriptor.getNameAsString(), tenantName)) {
+                    String name = TenantTableUtil.extractLilyTableName(tenantName, tableDescriptor.getNameAsString());
                     recordTables.add(new RepositoryTableImpl(name));
                 }
             }
@@ -116,7 +116,7 @@ public class TableManagerImpl implements TableManager {
     }
 
     private String getHBaseTableName(String tableName) {
-        return new TenantTableKey(tenantId, tableName).toHBaseTableName();
+        return new TenantTableKey(tenantName, tableName).toHBaseTableName();
     }
 
 }

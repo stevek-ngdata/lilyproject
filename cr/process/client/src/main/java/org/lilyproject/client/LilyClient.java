@@ -53,7 +53,7 @@ import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.BlobStoreAccessConfig;
@@ -61,7 +61,7 @@ import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
 import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
-import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
+import org.lilyproject.repository.impl.TableManagerImpl;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.AvroLilyTransceiver;
@@ -191,7 +191,7 @@ public class LilyClient implements Closeable, RepositoryManager {
      * over multiple Lily servers, you need to recall this method regularly to retrieve other
      * repository instances. Most of the time, you will rather use {@link #getRepository(String)}.
      */
-    // TODO multitenancy: it would be more logical for this method to take both tenantId and table as parameter
+    // TODO multitenancy: it would be more logical for this method to take both tenantName and table as parameter
     public Repository getPlainRepository(String tableName) throws IOException, InterruptedException, NoServersException, RepositoryException, KeeperException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
@@ -201,11 +201,11 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     /**
-     * Get a {@link RepositoryTableManager} for handling the lifecycle of repository tables.
+     * Get a {@link org.lilyproject.repository.api.TableManager} for handling the lifecycle of repository tables.
      */
-    public RepositoryTableManager getTableManager() {
+    public TableManager getTableManager() {
         Configuration conf = getHBaseConfiguration(zk);
-        return new RepositoryTableManagerImpl(/* TODO multitenancy */ "public", conf, new HBaseTableFactoryImpl(conf));
+        return new TableManagerImpl(/* TODO multitenancy */ "public", conf, new HBaseTableFactoryImpl(conf));
     }
 
     private synchronized ServerNode getServerNode() throws NoServersException, RepositoryException, IOException,
@@ -246,11 +246,11 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public Repository getRepository(String tenantId) {
+    public Repository getRepository(String tenantName) {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
-        return balancingAndRetryingLilyConnection.getRepository(tenantId);
+        return balancingAndRetryingLilyConnection.getRepository(tenantName);
     }
 
     @Override

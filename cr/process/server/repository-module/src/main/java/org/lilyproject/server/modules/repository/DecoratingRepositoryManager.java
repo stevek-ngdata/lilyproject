@@ -46,7 +46,7 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
     protected Repository createRepository(TenantTableKey key)
             throws IOException, InterruptedException, RepositoryException {
         HBaseRepository repository = (HBaseRepository)wrappedRepositoryManager.getRepository(
-                key.getTenantId()).getTable(key.getTableName());
+                key.getTenantName()).getTable(key.getTableName());
         recordUpdateHookActivator.activateUpdateHooks(repository);
         return repositoryDecoratorActivator.getDecoratedRepository(repository);
     }

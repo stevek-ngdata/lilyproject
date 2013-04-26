@@ -49,7 +49,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
@@ -59,7 +59,7 @@ import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
-import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
+import org.lilyproject.repository.impl.TableManagerImpl;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.tenant.model.api.TenantModel;
@@ -115,7 +115,7 @@ public class TutorialTest {
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
                 new RecordFactoryImpl(typeManager, idGenerator), hbaseTableFactory, blobManager, configuration, tenantModel);
 
-        RepositoryTableManager repoTableManager = new RepositoryTableManagerImpl(/* TODO multitenancy */ "public", configuration, hbaseTableFactory);
+        TableManager repoTableManager = new TableManagerImpl(/* TODO multitenancy */ "public", configuration, hbaseTableFactory);
         if (!repoTableManager.tableExists(Table.RECORD.name)) {
             repoTableManager.createTable(Table.RECORD.name);
         }

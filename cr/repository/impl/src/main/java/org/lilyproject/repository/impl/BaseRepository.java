@@ -57,7 +57,7 @@ import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeException;
@@ -80,7 +80,7 @@ public abstract class BaseRepository implements Repository {
     protected final RecordDecoder recdec;
     protected final HTableInterface recordTable;
     protected final TenantTableKey tenantTableKey;
-    protected final RepositoryTableManager tableManager;
+    protected final TableManager tableManager;
     protected RepositoryMetrics metrics;
     /**
      * Not all rows in the HBase record table are real records, this filter excludes non-valid
@@ -100,7 +100,7 @@ public abstract class BaseRepository implements Repository {
 
     protected BaseRepository(TenantTableKey tenantTableKey, AbstractRepositoryManager repositoryManager,
             BlobManager blobManager, HTableInterface recordTable, RepositoryMetrics metrics,
-            RepositoryTableManager tableManager) {
+            TableManager tableManager) {
 
         Preconditions.checkNotNull(repositoryManager, "repositoryManager cannot be null");
         Preconditions.checkNotNull(blobManager, "blobManager cannot be null");
@@ -118,13 +118,13 @@ public abstract class BaseRepository implements Repository {
     }
 
     @Override
-    public RepositoryTableManager getTableManager() {
+    public TableManager getTableManager() {
         return tableManager;
     }
 
     @Override
     public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
-        return repositoryManager.getRepository(tenantTableKey.getTenantId(), tableName);
+        return repositoryManager.getRepository(tenantTableKey.getTenantName(), tableName);
     }
 
     @Override

@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.BlobIncubatorMonitor;
 import org.lilyproject.runtime.conf.Conf;
@@ -37,18 +37,18 @@ public class BlobIncubatorMonitorSetup {
     private BlobIncubatorMonitor blobIncubatorMonitor;
     private final ZooKeeperItf zookeeper;
     private final HBaseTableFactory hbaseTableFactory;
-    private final RepositoryTableManager repositoryTableManager;
+    private final TableManager tableManager;
     private final BlobManager blobManager;
     private final TypeManager typeManager;
     private final Conf blobManagerConf;
     private final String hostName;
 
     public BlobIncubatorMonitorSetup(ZooKeeperItf zookeeper, HBaseTableFactory hbaseTableFactory,
-            RepositoryTableManager repositoryTableManager, BlobManager blobManager, TypeManager typeManager,
+            TableManager tableManager, BlobManager blobManager, TypeManager typeManager,
             Conf blobManagerConf, String hostName) throws IOException {
         this.zookeeper = zookeeper;
         this.hbaseTableFactory = hbaseTableFactory;
-        this.repositoryTableManager = repositoryTableManager;
+        this.tableManager = tableManager;
         this.blobManager = blobManager;
         this.typeManager = typeManager;
         this.blobManagerConf = blobManagerConf;
@@ -60,7 +60,7 @@ public class BlobIncubatorMonitorSetup {
         long minimalAge = 1000 * blobManagerConf.getChild("blobIncubatorMonitor").getAttributeAsLong("minimalAge");
         long monitorDelay = blobManagerConf.getChild("blobIncubatorMonitor").getAttributeAsLong("monitorDelay");
         long runDelay = 1000 * blobManagerConf.getChild("blobIncubatorMonitor").getAttributeAsLong("runDelay");
-        blobIncubatorMonitor = new BlobIncubatorMonitor(zookeeper, hbaseTableFactory, repositoryTableManager,
+        blobIncubatorMonitor = new BlobIncubatorMonitor(zookeeper, hbaseTableFactory, tableManager,
                                         blobManager, typeManager, minimalAge, monitorDelay, runDelay);
 
         List<String> blobIncubatorNodes = Collections.EMPTY_LIST;

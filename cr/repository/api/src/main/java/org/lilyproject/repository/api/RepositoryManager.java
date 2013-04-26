@@ -50,10 +50,10 @@ public interface RepositoryManager extends Closeable {
     /**
      * Get the {@code Repository} for a specific tenant.
      *
-     * @param tenantId ID of the tenant for which the repository is to be fetched
+     * @param tenantName name of the tenant for which the repository is to be fetched
      * @return Either a new Repository or a cached instance
      */
-    Repository getRepository(String tenantId) throws IOException, InterruptedException, RepositoryException;
+    Repository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException;
 
     /**
      * Get the specified table for the public tenant.

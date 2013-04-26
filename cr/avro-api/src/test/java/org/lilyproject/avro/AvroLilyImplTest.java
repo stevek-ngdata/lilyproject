@@ -44,7 +44,7 @@ public class AvroLilyImplTest {
     private LTable table;
     private AvroConverter avroConverter;
     private AvroLilyImpl avroLilyImpl;
-    private final static String tenantId = "public";
+    private final static String tenantName = "public";
 
     @Before
     public void setUp() throws IOException, InterruptedException, RepositoryException {
@@ -52,7 +52,7 @@ public class AvroLilyImplTest {
         table = mock(LTable.class);
         Repository repository = mock(Repository.class);
         when(repository.getTable(Table.RECORD.name)).thenReturn(table);
-        when(repositoryManager.getRepository(tenantId)).thenReturn(repository);
+        when(repositoryManager.getRepository(tenantName)).thenReturn(repository);
         TypeManager typeManager = mock(TypeManager.class);
         Indexer indexer = mock(Indexer.class);
         avroConverter = mock(AvroConverter.class);
@@ -72,7 +72,7 @@ public class AvroLilyImplTest {
         Record toDelete = mock(Record.class);
         when(table.newRecord(recordId)).thenReturn(toDelete);
 
-        avroLilyImpl.delete(recordIdBytes, tenantId, Table.RECORD.name, null, attributes);
+        avroLilyImpl.delete(recordIdBytes, tenantName, Table.RECORD.name, null, attributes);
 
         verify(toDelete).setAttributes(attributes);
         verify(table).delete(toDelete);
@@ -89,7 +89,7 @@ public class AvroLilyImplTest {
         when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
         when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
 
-        avroLilyImpl.delete(recordIdBytes, tenantId, Table.RECORD.name, avroMutationConditions, null);
+        avroLilyImpl.delete(recordIdBytes, tenantName, Table.RECORD.name, avroMutationConditions, null);
 
         verify(table).delete(recordId, mutationConditions);
     }
@@ -107,7 +107,7 @@ public class AvroLilyImplTest {
         when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
         when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
 
-        avroLilyImpl.delete(recordIdBytes, tenantId, Table.RECORD.name, avroMutationConditions, attributes);
+        avroLilyImpl.delete(recordIdBytes, tenantName, Table.RECORD.name, avroMutationConditions, attributes);
     }
 
 }

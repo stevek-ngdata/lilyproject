@@ -23,18 +23,18 @@ import org.lilyproject.tenant.model.impl.TenantTableUtil;
  *
  */
 public class TenantTableKey {
-    private final String tenantId;
+    private final String tenantName;
     private final String tableName;
 
-    public TenantTableKey(String tenantId, String tableName) {
-        Preconditions.checkNotNull(tenantId, "tenantId");
+    public TenantTableKey(String tenantName, String tableName) {
+        Preconditions.checkNotNull(tenantName, "tenantName");
         Preconditions.checkNotNull(tableName, "tableName");
-        this.tenantId = tenantId;
+        this.tenantName = tenantName;
         this.tableName = tableName;
     }
 
-    public String getTenantId() {
-        return tenantId;
+    public String getTenantName() {
+        return tenantName;
     }
 
     public String getTableName() {
@@ -42,7 +42,7 @@ public class TenantTableKey {
     }
 
     public String toHBaseTableName() {
-        return TenantTableUtil.getHBaseTableName(tenantId, tableName);
+        return TenantTableUtil.getHBaseTableName(tenantName, tableName);
     }
 
     @Override
@@ -53,14 +53,14 @@ public class TenantTableKey {
         TenantTableKey that = (TenantTableKey)o;
 
         if (!tableName.equals(that.tableName)) return false;
-        if (!tenantId.equals(that.tenantId)) return false;
+        if (!tenantName.equals(that.tenantName)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = tenantId.hashCode();
+        int result = tenantName.hashCode();
         result = 31 * result + tableName.hashCode();
         return result;
     }

@@ -17,19 +17,19 @@ package org.lilyproject.tenant.model.api;
 
 public class TenantModelEvent {
     private TenantModelEventType eventType;
-    private String tenantId;
+    private String tenantName;
 
-    public TenantModelEvent(TenantModelEventType eventType, String tenantId) {
+    public TenantModelEvent(TenantModelEventType eventType, String tenantName) {
         this.eventType = eventType;
-        this.tenantId = tenantId;
+        this.tenantName = tenantName;
     }
 
     public TenantModelEventType getEventType() {
         return eventType;
     }
 
-    public String getTenantId() {
-        return tenantId;
+    public String getTenantName() {
+        return tenantName;
     }
 
     @Override
@@ -40,7 +40,7 @@ public class TenantModelEvent {
         TenantModelEvent that = (TenantModelEvent)o;
 
         if (eventType != that.eventType) return false;
-        if (!tenantId.equals(that.tenantId)) return false;
+        if (!tenantName.equals(that.tenantName)) return false;
 
         return true;
     }
@@ -48,7 +48,7 @@ public class TenantModelEvent {
     @Override
     public int hashCode() {
         int result = eventType.hashCode();
-        result = 31 * result + tenantId.hashCode();
+        result = 31 * result + tenantName.hashCode();
         return result;
     }
 
@@ -56,7 +56,7 @@ public class TenantModelEvent {
     public String toString() {
         return "TenantModelEvent{" +
                 "eventType=" + eventType +
-                ", tenantId='" + tenantId + '\'' +
+                ", tenantName='" + tenantName + '\'' +
                 '}';
     }
 }

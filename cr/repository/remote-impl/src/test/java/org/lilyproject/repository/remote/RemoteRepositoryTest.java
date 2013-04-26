@@ -46,7 +46,7 @@ public class RemoteRepositoryTest {
     private AvroConverter avroConverter;
     private HTableInterface recordTable;
     private RemoteRepository remoteRepository;
-    private static final String tenantId = "public";
+    private static final String tenantName = "public";
 
     @Before
     public void setUp() throws IOException, InterruptedException {
@@ -56,8 +56,8 @@ public class RemoteRepositoryTest {
         avroConverter = mock(AvroConverter.class);
         recordTable = mock(HTableInterface.class);
 
-        RemoteTableManager tableMgr = new RemoteTableManager(tenantId, avroLilyTransceiver, avroConverter);
-        remoteRepository = new RemoteRepository(new TenantTableKey(tenantId, Table.RECORD.name), avroLilyTransceiver,
+        RemoteTableManager tableMgr = new RemoteTableManager(tenantName, avroLilyTransceiver, avroConverter);
+        remoteRepository = new RemoteRepository(new TenantTableKey(tenantName, Table.RECORD.name), avroLilyTransceiver,
                 avroConverter, mock(RemoteRepositoryManager.class), mock(BlobManager.class), recordTable, tableMgr);
     }
 
@@ -70,7 +70,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(recordId);
 
-        verify(avroLily).delete(encodedRecordId, tenantId, Table.RECORD.name, null, null);
+        verify(avroLily).delete(encodedRecordId, tenantName, Table.RECORD.name, null, null);
     }
 
     @Test
@@ -86,7 +86,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(recordId, mutationConditions);
 
-        verify(avroLily).delete(encodedRecordId, tenantId, Table.RECORD.name, encodedMutationConditions, null);
+        verify(avroLily).delete(encodedRecordId, tenantName, Table.RECORD.name, encodedMutationConditions, null);
     }
 
     @Test
@@ -104,7 +104,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(record);
 
-        verify(avroLily).delete(encodedRecordId, tenantId, Table.RECORD.name, null, attributes);
+        verify(avroLily).delete(encodedRecordId, tenantName, Table.RECORD.name, null, attributes);
     }
 
 }

@@ -73,8 +73,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.ResponseStatus;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -110,7 +109,7 @@ public class HBaseRepository extends BaseRepository {
     private static final Object METADATA_ONLY_UPDATE = new Object();
 
     public HBaseRepository(TenantTableKey ttk, AbstractRepositoryManager repositoryManager, HTableInterface hbaseTable,
-            BlobManager blobManager, RepositoryTableManager tableManager) throws IOException, InterruptedException {
+            BlobManager blobManager, TableManager tableManager) throws IOException, InterruptedException {
         super(ttk, repositoryManager, blobManager, hbaseTable, new RepositoryMetrics("hbaserepository"),
                 tableManager);
     }

@@ -72,8 +72,8 @@
       service="org.lilyproject.repository.api.IdGenerator"/>
 
   <lily:export-service
-      ref="repositoryTableManager"
-      service="org.lilyproject.repository.api.RepositoryTableManager"/>
+      ref="tableManager"
+      service="org.lilyproject.repository.api.TableManager"/>
 
   <bean id="hbaseConf"
         factory-bean="hadoopConfFactory"
@@ -88,7 +88,7 @@
     <constructor-arg ref="hbaseTableFactory"/>
   </bean>
 
-  <bean id="repositoryTableManager" class="org.lilyproject.repository.impl.RepositoryTableManagerImpl">
+  <bean id="tableManager" class="org.lilyproject.repository.impl.TableManagerImpl">
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="hbaseTableFactory"/>
   </bean>
@@ -117,7 +117,7 @@
   <bean id="blobIncubatorMonitorSetup" class="org.lilyproject.server.modules.repository.BlobIncubatorMonitorSetup">
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="hbaseTableFactory"/>
-    <constructor-arg ref="repositoryTableManager"/>
+    <constructor-arg ref="tableManager"/>
     <constructor-arg ref="blobManager"/>
     <constructor-arg ref="typeManager"/>
     <constructor-arg>

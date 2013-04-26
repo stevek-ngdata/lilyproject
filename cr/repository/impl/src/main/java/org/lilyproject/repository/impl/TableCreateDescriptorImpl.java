@@ -15,7 +15,7 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
+import org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
 import org.lilyproject.util.hbase.TableConfig;
 
 public class TableCreateDescriptorImpl implements TableCreateDescriptor{

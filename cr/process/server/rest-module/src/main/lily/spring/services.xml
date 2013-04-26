@@ -56,8 +56,8 @@
       service="org.lilyproject.indexer.Indexer"/>
 
   <lily:import-service
-      id="repositoryTableManager"
-      service="org.lilyproject.repository.api.RepositoryTableManager"/>
+      id="tableManager"
+      service="org.lilyproject.repository.api.TableManager"/>
 
   <lily:import-service id="indexerModel" service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 

@@ -39,7 +39,7 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.util.exception.ExceptionUtil;
 import org.lilyproject.util.io.Closer;
@@ -140,7 +140,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
      * @throws IOException
      * @throws InterruptedException
      */
-    private List<String> getRepositoryTables(RepositoryTableManager tableManager, Configuration conf) throws InterruptedException, IOException {
+    private List<String> getRepositoryTables(TableManager tableManager, Configuration conf) throws InterruptedException, IOException {
         Set<String> allRepoTables = Sets.newHashSet();
         for (RepositoryTable repoTable : tableManager.getTables()) {
             allRepoTables.add(repoTable.getName());

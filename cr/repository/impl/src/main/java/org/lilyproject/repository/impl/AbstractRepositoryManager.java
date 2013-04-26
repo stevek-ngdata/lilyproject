@@ -76,16 +76,16 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     }
 
     @Override
-    public Repository getRepository(String tenantId) throws IOException, InterruptedException, RepositoryException {
-        return getRepository(tenantId, Table.RECORD.name);
+    public Repository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException {
+        return getRepository(tenantName, Table.RECORD.name);
     }
 
-    protected Repository getRepository(String tenantId, String tableName)
+    protected Repository getRepository(String tenantName, String tableName)
             throws IOException, InterruptedException, RepositoryException {
-        if (!tenantModel.tenantExistsAndActive(tenantId)) {
-            throw new RepositoryException("Tenant does not exist or is not active: " + tenantId);
+        if (!tenantModel.tenantExistsAndActive(tenantName)) {
+            throw new RepositoryException("Tenant does not exist or is not active: " + tenantName);
         }
-        TenantTableKey key = new TenantTableKey(tenantId, tableName);
+        TenantTableKey key = new TenantTableKey(tenantName, tableName);
         if (!repositoryCache.containsKey(key)) {
             synchronized (repositoryCache) {
                 if (!repositoryCache.containsKey(key)) {

@@ -31,21 +31,21 @@ public class TenantTableUtil {
      * Checks if a table is owned by a certain tenant. Assumes the passed table name is a record table name,
      * i.e. this does not filter out any other tables that might exist in HBase.
      */
-    public static final boolean belongsToTenant(String hbaseTableName, String tenantId) {
-        if (tenantId.equals(PUBLIC_TENANT)) {
+    public static final boolean belongsToTenant(String hbaseTableName, String tenantName) {
+        if (tenantName.equals(PUBLIC_TENANT)) {
             return !hbaseTableName.contains("__");
         } else {
-            return hbaseTableName.startsWith(tenantId + TENANT_TABLE_SEPARATOR);
+            return hbaseTableName.startsWith(tenantName + TENANT_TABLE_SEPARATOR);
         }
     }
 
-    public static String getHBaseTableName(String tenantId, String tableName) {
-        if (tenantId.equals(PUBLIC_TENANT)) {
+    public static String getHBaseTableName(String tenantName, String tableName) {
+        if (tenantName.equals(PUBLIC_TENANT)) {
             // Tables within the public tenant are not prefixed with the tenant name, because of backwards
             // compatibility with the pre-tenant situation.
             return tableName;
         } else {
-            return tenantId + "__" + tableName;
+            return tenantName + "__" + tableName;
         }
     }
 

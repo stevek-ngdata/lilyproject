@@ -18,7 +18,7 @@ package org.lilyproject.repository.cli;
 import org.apache.commons.cli.CommandLine;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.util.Version;
 
 public abstract class BaseTableCliTool extends BaseZkCliTool {
@@ -36,7 +36,7 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
         }
 
         LilyClient lilyClient = new LilyClient(zkConnectionString, 30000);
-        RepositoryTableManager tableManager = lilyClient.getTableManager();
+        TableManager tableManager = lilyClient.getTableManager();
         try {
             status = execute(tableManager);
         } finally {
@@ -50,6 +50,6 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
      * @param tableManager manager for accessing repository tables
      * @return the exit status of the command
      */
-    protected abstract int execute(RepositoryTableManager tableManager) throws Exception;
+    protected abstract int execute(TableManager tableManager) throws Exception;
 
 }

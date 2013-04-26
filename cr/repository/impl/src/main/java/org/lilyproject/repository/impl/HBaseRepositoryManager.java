@@ -23,7 +23,7 @@ import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.tenant.model.api.TenantModel;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -46,7 +46,7 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
 
     @Override
     protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
-        RepositoryTableManager tableManager = new RepositoryTableManagerImpl(key.getTenantId(), hbaseConf, hbaseTableFactory);
+        TableManager tableManager = new TableManagerImpl(key.getTenantName(), hbaseConf, hbaseTableFactory);
         HTableInterface htable = LilyHBaseSchema.getRecordTable(hbaseTableFactory, key.toHBaseTableName(), true);
         return new HBaseRepository(key, this, htable, blobManager, tableManager);
     }

@@ -16,7 +16,7 @@
 package org.lilyproject.repository.impl.test;
 
 import org.junit.Test;
-import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
+import org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
 import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 
 import static org.junit.Assert.assertEquals;
