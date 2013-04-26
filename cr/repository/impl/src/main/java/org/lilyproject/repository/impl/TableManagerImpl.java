@@ -24,19 +24,19 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.tenant.model.impl.TenantTableUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
-public class RepositoryTableManagerImpl implements RepositoryTableManager {
+public class TableManagerImpl implements TableManager {
 
     private String tenantId;
     private Configuration configuration;
     private HBaseTableFactory tableFactory;
 
-    public RepositoryTableManagerImpl(String tenantId, Configuration configuration, HBaseTableFactory tableFactory) {
+    public TableManagerImpl(String tenantId, Configuration configuration, HBaseTableFactory tableFactory) {
         this.tenantId = tenantId;
         this.configuration = configuration;
         this.tableFactory = tableFactory;

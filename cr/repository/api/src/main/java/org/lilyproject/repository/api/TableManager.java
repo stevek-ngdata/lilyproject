@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Handles the life-cycle of Lily repository tables.
  */
-public interface RepositoryTableManager {
+public interface TableManager {
 
     /**
      * Describes properties with which a repository table is to be created.
