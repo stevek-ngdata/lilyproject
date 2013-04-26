@@ -25,6 +25,7 @@ import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.tenant.model.api.TenantModel;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
@@ -35,10 +36,12 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
     private Configuration hbaseConf;
 
     public HBaseRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
-            HBaseTableFactory hbaseTableFactory, BlobManager blobManager, Configuration hbaseConf) {
-        super(typeManager, idGenerator, recordFactory);
+            HBaseTableFactory hbaseTableFactory, BlobManager blobManager, Configuration hbaseConf,
+            TenantModel tenantModel) {
+        super(typeManager, idGenerator, recordFactory, tenantModel);
         this.hbaseTableFactory = hbaseTableFactory;
         this.blobManager = blobManager;
+        this.hbaseConf = hbaseConf;
     }
 
     @Override

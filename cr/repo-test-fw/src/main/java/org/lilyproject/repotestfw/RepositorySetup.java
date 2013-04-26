@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.ngdata.sep.EventListener;
 import com.ngdata.sep.SepModel;
@@ -56,6 +57,7 @@ import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
 import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
+import org.lilyproject.repository.impl.RepositoryTenantMasterHook;
 import org.lilyproject.repository.impl.SchemaCache;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.TenantTableKey;
@@ -67,6 +69,11 @@ import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
+import org.lilyproject.tenant.master.TenantMaster;
+import org.lilyproject.tenant.master.TenantMasterHook;
+import org.lilyproject.tenant.model.api.TenantModel;
+import org.lilyproject.tenant.model.impl.TenantModelImpl;
+import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -84,6 +91,8 @@ public class RepositorySetup {
     private ZooKeeperItf zk;
 
     private HBaseTableFactory hbaseTableFactory;
+    private TenantModel tenantModel;
+    private TenantMaster tenantMaster;
 
     private IdGenerator idGenerator;
     private HBaseTypeManager typeManager;
@@ -129,6 +138,10 @@ public class RepositorySetup {
         zk = ZkUtil.connect(hbaseProxy.getZkConnectString(), 10000);
 
         hbaseTableFactory = new HBaseTableFactoryImpl(hadoopConf);
+        tenantModel = new TenantModelImpl(zk);
+        tenantMaster = new TenantMaster(zk, tenantModel, new DummyLilyInfo(),
+                Collections.<TenantMasterHook>singletonList(new RepositoryTenantMasterHook(hbaseTableFactory)));
+        tenantMaster.start();
 
         coreSetup = true;
     }
@@ -156,7 +169,7 @@ public class RepositorySetup {
         RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
 
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory,
-                blobManager, hadoopConf) {
+                blobManager, hadoopConf, tenantModel) {
             @Override
             protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
                 HBaseRepository repository = (HBaseRepository)super.createRepository(key);
@@ -223,7 +236,7 @@ public class RepositorySetup {
 
 
         remoteRepositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
-                new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory);
+                new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory, tenantModel);
         avroConverter.setRepositoryManager(remoteRepositoryManager);
 
         remoteBlobStoreAccessFactory = createBlobAccess();
@@ -260,6 +273,7 @@ public class RepositorySetup {
             lilyServer.join();
         }
 
+        Closer.close(tenantMaster);
         Closer.close(zk);
         Closer.close(hbaseProxy);
         coreSetup = false;
@@ -269,6 +283,10 @@ public class RepositorySetup {
 
     public ZooKeeperItf getZk() {
         return zk;
+    }
+
+    public TenantModel getTenantModel() {
+        return tenantModel;
     }
 
     public TypeManager getRemoteTypeManager() {
@@ -385,5 +403,35 @@ public class RepositorySetup {
             return typeManager;
         }
 
+    }
+
+    private static class DummyLilyInfo implements LilyInfo {
+        @Override
+        public void setIndexerMaster(boolean indexerMaster) {
+        }
+
+        @Override
+        public void setTenantMaster(boolean tenantMaster) {
+        }
+
+        @Override
+        public String getVersion() {
+            return null;
+        }
+
+        @Override
+        public Set<String> getHostnames() {
+            return null;
+        }
+
+        @Override
+        public boolean isIndexerMaster() {
+            return false;
+        }
+
+        @Override
+        public boolean isTenantMaster() {
+            return false;
+        }
     }
 }

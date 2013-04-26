@@ -3373,7 +3373,7 @@ public class IndexerTest {
         }
 
         @Override
-        public LTable getTable(String tableName) throws IOException, InterruptedException {
+        public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
             if (!repositoryCache.containsKey(tableName)) {
                 Repository repository = (Repository)delegate.getPublicRepository().getTable(tableName);
                 TrackingRepository trackingRepository = new TrackingRepository(this);
@@ -3404,7 +3404,7 @@ public class IndexerTest {
         }
 
         @Override
-        public LTable getTable(String tableName) throws IOException, InterruptedException {
+        public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
             return trackingRepoMgr.getTable(tableName);
         }
 

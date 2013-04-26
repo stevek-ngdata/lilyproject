@@ -38,6 +38,7 @@
     <module>remote-impl</module>
     <module>spi</module>
     <module>test</module>
+    <module>tenant</module>
   </modules>
 
 </project>

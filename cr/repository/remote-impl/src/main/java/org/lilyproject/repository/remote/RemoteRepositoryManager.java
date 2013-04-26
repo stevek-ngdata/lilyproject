@@ -27,6 +27,7 @@ import org.lilyproject.repository.api.RepositoryTableManager;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.TenantTableKey;
 import org.lilyproject.repository.impl.TracingRepository;
+import org.lilyproject.tenant.model.api.TenantModel;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
@@ -39,8 +40,8 @@ public class RemoteRepositoryManager extends AbstractRepositoryManager implement
 
     public RemoteRepositoryManager(RemoteTypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
             AvroLilyTransceiver transceiver, AvroConverter avroConverter, BlobManager blobManager,
-            HBaseTableFactory tableFactory) {
-        super(typeManager, idGenerator, recordFactory);
+            HBaseTableFactory tableFactory, TenantModel tenantModel) {
+        super(typeManager, idGenerator, recordFactory, tenantModel);
         this.transceiver = transceiver;
         this.avroConverter = avroConverter;
         this.blobManager = blobManager;

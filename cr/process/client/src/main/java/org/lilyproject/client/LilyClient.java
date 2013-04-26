@@ -67,6 +67,8 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.AvroLilyTransceiver;
 import org.lilyproject.repository.remote.RemoteRepositoryManager;
 import org.lilyproject.repository.remote.RemoteTypeManager;
+import org.lilyproject.tenant.model.api.TenantModel;
+import org.lilyproject.tenant.model.impl.TenantModelImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -100,10 +102,10 @@ public class LilyClient implements Closeable, RepositoryManager {
 
     private ZkWatcher watcher = new ZkWatcher();
 
-    private BalancingAndRetryingLilyConnection balancingAndRetryingLilyConnection =
-            BalancingAndRetryingLilyConnection.getInstance(this);
+    private BalancingAndRetryingLilyConnection balancingAndRetryingLilyConnection;
     private RemoteSchemaCache schemaCache;
     private HBaseConnections hbaseConnections = new HBaseConnections();
+    private TenantModel tenantModel;
 
     private boolean isClosed = true;
 
@@ -130,6 +132,8 @@ public class LilyClient implements Closeable, RepositoryManager {
         zk.addDefaultWatcher(watcher);
         refreshServers();
         schemaCache.start();
+        tenantModel = new TenantModelImpl(zk);
+        balancingAndRetryingLilyConnection = BalancingAndRetryingLilyConnection.getInstance(this, tenantModel);
     }
 
     @Override
@@ -236,6 +240,8 @@ public class LilyClient implements Closeable, RepositoryManager {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        } catch (RepositoryException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -248,7 +254,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public LTable getTable(String tableName) throws IOException, InterruptedException {
+    public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
@@ -256,7 +262,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public LTable getDefaultTable() throws IOException, InterruptedException {
+    public LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
@@ -264,7 +270,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public Repository getPublicRepository() throws IOException, InterruptedException {
+    public Repository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
@@ -336,7 +342,7 @@ public class LilyClient implements Closeable, RepositoryManager {
         RemoteTypeManager remoteTypeManager = new RemoteTypeManager(lilySocketAddr, avroConverter, idGenerator, zk, schemaCache);
         RecordFactory recordFactory = new RecordFactoryImpl(remoteTypeManager, idGenerator);
         RepositoryManager repositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
-                transceiver, avroConverter, blobManager, tableFactory);
+                transceiver, avroConverter, blobManager, tableFactory, tenantModel);
         avroConverter.setRepositoryManager(repositoryManager);
         return repositoryManager;
     }

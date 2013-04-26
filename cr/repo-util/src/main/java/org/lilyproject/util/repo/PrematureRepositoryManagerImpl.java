@@ -21,6 +21,7 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
 
@@ -52,25 +53,25 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
     }
 
     @Override
-    public Repository getPublicRepository() throws IOException, InterruptedException {
+    public Repository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getPublicRepository();
     }
 
     @Override
-    public Repository getRepository(String tenantId) throws IOException, InterruptedException {
+    public Repository getRepository(String tenantId) throws IOException, InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getRepository(tenantId);
     }
 
     @Override
-    public LTable getTable(String tableName) throws IOException, InterruptedException {
+    public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getTable(tableName);
     }
 
     @Override
-    public LTable getDefaultTable() throws IOException, InterruptedException {
+    public LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getDefaultTable();
     }

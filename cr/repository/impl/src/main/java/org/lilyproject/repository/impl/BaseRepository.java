@@ -123,12 +123,12 @@ public abstract class BaseRepository implements Repository {
     }
 
     @Override
-    public LTable getTable(String tableName) throws IOException, InterruptedException {
+    public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
         return repositoryManager.getRepository(tenantTableKey.getTenantId(), tableName);
     }
 
     @Override
-    public LTable getDefaultTable() throws IOException, InterruptedException {
+    public LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException {
         return getTable(LilyHBaseSchema.Table.RECORD.name);
     }
 

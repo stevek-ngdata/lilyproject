@@ -62,6 +62,8 @@ import org.lilyproject.repository.impl.RecordFactoryImpl;
 import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+import org.lilyproject.tenant.model.api.TenantModel;
+import org.lilyproject.tenant.model.impl.TenantModelImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -101,6 +103,8 @@ public class TutorialTest {
         zooKeeper = new StateWatchingZooKeeper(HBASE_PROXY.getZkConnectString(), 10000);
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
 
+        TenantModel tenantModel = new TenantModelImpl(zooKeeper);
+
         typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
 
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
@@ -109,7 +113,7 @@ public class TutorialTest {
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
-                new RecordFactoryImpl(typeManager, idGenerator), hbaseTableFactory, blobManager, configuration);
+                new RecordFactoryImpl(typeManager, idGenerator), hbaseTableFactory, blobManager, configuration, tenantModel);
 
         RepositoryTableManager repoTableManager = new RepositoryTableManagerImpl(/* TODO multitenancy */ "public", configuration, hbaseTableFactory);
         if (!repoTableManager.tableExists(Table.RECORD.name)) {

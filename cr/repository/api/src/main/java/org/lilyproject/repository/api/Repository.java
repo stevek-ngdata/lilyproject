@@ -41,9 +41,9 @@ public interface Repository extends LTable, Closeable {
      * <p>For backwards compatibility, you can cast the returned LTable to Repository. New code should
      * be written against the LTable interface.</p>
      */
-    LTable getTable(String tableName) throws IOException, InterruptedException;
+    LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException;
 
-    LTable getDefaultTable() throws IOException, InterruptedException;
+    LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException;
 
     RepositoryTableManager getTableManager();
 

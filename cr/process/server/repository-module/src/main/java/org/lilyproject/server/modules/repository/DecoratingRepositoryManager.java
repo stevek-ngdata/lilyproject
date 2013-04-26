@@ -18,10 +18,12 @@ package org.lilyproject.server.modules.repository;
 import java.io.IOException;
 
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.TenantTableKey;
+import org.lilyproject.tenant.model.api.TenantModel;
 
 public class DecoratingRepositoryManager extends AbstractRepositoryManager {
 
@@ -31,15 +33,18 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
 
     public DecoratingRepositoryManager(HBaseRepositoryManager repositoryManager,
             RecordUpdateHookActivator recordUpdateHookActivator,
-            RepositoryDecoratorActivator repositoryDecoratorActivator) {
-        super(repositoryManager.getTypeManager(), repositoryManager.getIdGenerator(), repositoryManager.getRecordFactory());
+            RepositoryDecoratorActivator repositoryDecoratorActivator,
+            TenantModel tenantModel) {
+        super(repositoryManager.getTypeManager(), repositoryManager.getIdGenerator(),
+                repositoryManager.getRecordFactory(), tenantModel);
         this.wrappedRepositoryManager = repositoryManager;
         this.recordUpdateHookActivator = recordUpdateHookActivator;
         this.repositoryDecoratorActivator = repositoryDecoratorActivator;
     }
 
     @Override
-    protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
+    protected Repository createRepository(TenantTableKey key)
+            throws IOException, InterruptedException, RepositoryException {
         HBaseRepository repository = (HBaseRepository)wrappedRepositoryManager.getRepository(
                 key.getTenantId()).getTable(key.getTableName());
         recordUpdateHookActivator.activateUpdateHooks(repository);

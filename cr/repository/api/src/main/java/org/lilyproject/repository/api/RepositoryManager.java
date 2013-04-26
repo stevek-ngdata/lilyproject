@@ -45,7 +45,7 @@ public interface RepositoryManager extends Closeable {
      *
      * @return the public repository
      */
-    Repository getPublicRepository() throws IOException, InterruptedException;
+    Repository getPublicRepository() throws IOException, InterruptedException, RepositoryException;
 
     /**
      * Get the {@code Repository} for a specific tenant.
@@ -53,17 +53,17 @@ public interface RepositoryManager extends Closeable {
      * @param tenantId ID of the tenant for which the repository is to be fetched
      * @return Either a new Repository or a cached instance
      */
-    Repository getRepository(String tenantId) throws IOException, InterruptedException;
+    Repository getRepository(String tenantId) throws IOException, InterruptedException, RepositoryException;
 
     /**
      * Get the specified table for the public tenant.
      *
      * <p>This is a shortcut for calling getPublicTenant().getTable(tableName).</p>
      */
-    LTable getTable(String tableName) throws IOException, InterruptedException;
+    LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException;
 
     /**
      * Get the default table ("record") from the public tenant.
      */
-    LTable getDefaultTable() throws IOException, InterruptedException;
+    LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException;
 }

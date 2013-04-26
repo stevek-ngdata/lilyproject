@@ -30,6 +30,7 @@ import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -46,7 +47,7 @@ public class AvroLilyImplTest {
     private final static String tenantId = "public";
 
     @Before
-    public void setUp() throws IOException, InterruptedException {
+    public void setUp() throws IOException, InterruptedException, RepositoryException {
         RepositoryManager repositoryManager = mock(RepositoryManager.class);
         table = mock(LTable.class);
         Repository repository = mock(Repository.class);

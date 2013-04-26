@@ -60,12 +60,12 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public LTable getTable(String tableName) throws IOException, InterruptedException {
+    public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
         return delegate.getTable(tableName);
     }
 
     @Override
-    public LTable getDefaultTable() throws IOException, InterruptedException {
+    public LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException {
         return delegate.getDefaultTable();
     }
 

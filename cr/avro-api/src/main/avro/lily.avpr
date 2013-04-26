@@ -392,7 +392,7 @@
         {"name": "tableCreateDescriptor", "type": "AvroTableCreateDescriptor"}
       ],
       "response": ["null"],
-      "errors":["AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+      "errors":["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException", "AvroIOException"]
     },
 
     "dropTable": {
@@ -401,7 +401,7 @@
         {"name": "name", "type": "string"}
       ],
       "response": ["null"],
-      "errors":["AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+      "errors":["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException", "AvroIOException"]
     },
 
     "getTables": {
@@ -409,7 +409,7 @@
         {"name": "tenant", "type": "string"}
       ],
       "response": {"type": "array", "items": "string"},
-      "errors":["AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+      "errors":["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException", "AvroIOException"]
     },
 
     "tableExists": {
@@ -418,7 +418,7 @@
         {"name": "name", "type": "string"}
       ],
       "response": "boolean",
-      "errors":["AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+      "errors":["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException", "AvroIOException"]
     },
 
     // indexer api functionality

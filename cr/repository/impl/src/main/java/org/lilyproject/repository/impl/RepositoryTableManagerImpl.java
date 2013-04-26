@@ -25,6 +25,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.tenant.model.impl.TenantTableUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -48,10 +49,14 @@ public class RepositoryTableManagerImpl implements RepositoryTableManager {
 
     @Override
     public RepositoryTable createTable(TableCreateDescriptor descriptor) throws InterruptedException, IOException {
+        if (!TenantTableUtil.isValidTableName(descriptor.getName())) {
+            throw new IllegalArgumentException(String.format("'%s' is not a valid table name. "
+                    + TenantTableUtil.VALID_NAME_EXPLANATION, descriptor.getName()));
+        }
         if (tableExists(descriptor.getName())) {
             throw new IllegalArgumentException(String.format("Table '%s' already exists", descriptor.getName()));
         }
-        String hbaseTableName = RepoUtil.getHBaseTableName(tenantId, descriptor.getName());
+        String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantId, descriptor.getName());
         LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, descriptor.getSplitKeys());
         return new RepositoryTableImpl(descriptor.getName());
     }
@@ -64,13 +69,13 @@ public class RepositoryTableManagerImpl implements RepositoryTableManager {
         }
 
         HBaseAdmin hbaseAdmin = new HBaseAdmin(configuration);
-        String hbaseTableName = RepoUtil.getHBaseTableName(tenantId, tableName);
+        String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantId, tableName);
 
         try {
             if (hbaseAdmin.tableExists(hbaseTableName)
                     && LilyHBaseSchema.isRecordTableDescriptor(hbaseAdmin.getTableDescriptor(Bytes.toBytes(hbaseTableName)))) {
-                hbaseAdmin.disableTable(tableName);
-                hbaseAdmin.deleteTable(tableName);
+                hbaseAdmin.disableTable(hbaseTableName);
+                hbaseAdmin.deleteTable(hbaseTableName);
             } else {
                 throw new IllegalArgumentException(
                         String.format("Table '%s' is not a valid record table (HBase table name: '%s')",
@@ -89,8 +94,9 @@ public class RepositoryTableManagerImpl implements RepositoryTableManager {
         try {
             for (HTableDescriptor tableDescriptor : hbaseAdmin.listTables()) {
                 if (LilyHBaseSchema.isRecordTableDescriptor(tableDescriptor)
-                        && RepoUtil.belongsToTenant(tableDescriptor.getNameAsString(), tenantId)) {
-                    recordTables.add(new RepositoryTableImpl(tableDescriptor.getNameAsString()));
+                        && TenantTableUtil.belongsToTenant(tableDescriptor.getNameAsString(), tenantId)) {
+                    String name = TenantTableUtil.extractLilyTableName(tenantId, tableDescriptor.getNameAsString());
+                    recordTables.add(new RepositoryTableImpl(name));
                 }
             }
         } finally {

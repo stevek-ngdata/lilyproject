@@ -413,7 +413,7 @@ public class AvroLilyImpl implements AvroLily {
 
     @Override
     public Object createTable(String tenant, AvroTableCreateDescriptor tableCreateDescriptor)
-            throws AvroInterruptedException, AvroIOException {
+            throws AvroInterruptedException, AvroIOException, AvroRepositoryException {
         try {
             RepositoryTableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
             tableMgr.createTable(converter.convert(tableCreateDescriptor));
@@ -422,12 +422,14 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         } catch (IOException e) {
             throw converter.convert(e);
+        } catch (RepositoryException e) {
+            throw converter.convert(e);
         }
     }
 
     @Override
     public Object dropTable(String tenant, String name)
-            throws AvroInterruptedException, AvroIOException {
+            throws AvroInterruptedException, AvroIOException, AvroRepositoryException {
         try {
             RepositoryTableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
             tableMgr.dropTable(name);
@@ -436,12 +438,14 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         } catch (IOException e) {
             throw converter.convert(e);
+        } catch (RepositoryException e) {
+            throw converter.convert(e);
         }
     }
 
     @Override
     public List<String> getTables(String tenant)
-            throws AvroInterruptedException, AvroIOException {
+            throws AvroInterruptedException, AvroIOException, AvroRepositoryException {
         try {
             RepositoryTableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
             List<String> tables = new ArrayList<String>();
@@ -453,18 +457,22 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         } catch (IOException e) {
             throw converter.convert(e);
+        } catch (RepositoryException e) {
+            throw converter.convert(e);
         }
     }
 
     @Override
     public boolean tableExists(String tenant, String name)
-            throws AvroInterruptedException, AvroIOException {
+            throws AvroInterruptedException, AvroIOException, AvroRepositoryException {
         try {
             RepositoryTableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
             return tableMgr.tableExists(name);
         } catch (InterruptedException e) {
             throw converter.convert(e);
         } catch (IOException e) {
+            throw converter.convert(e);
+        } catch (RepositoryException e) {
             throw converter.convert(e);
         }
     }
