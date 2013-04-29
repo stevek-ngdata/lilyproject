@@ -18,6 +18,9 @@ package org.lilyproject.tenant.master;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
+import org.lilyproject.plugin.PluginHandle;
+import org.lilyproject.plugin.PluginRegistry;
+import org.lilyproject.plugin.PluginUser;
 import org.lilyproject.tenant.model.api.Tenant;
 import org.lilyproject.tenant.model.api.TenantModel;
 import org.lilyproject.tenant.model.api.TenantModelEvent;
@@ -34,6 +37,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -46,7 +50,7 @@ import static org.lilyproject.tenant.model.api.Tenant.TenantLifecycleState;
  * TenantMaster is a component which is active in only one lily-server and performs side effects when
  * a tenant is being created or deleted.
  */
-public class TenantMaster {
+public class TenantMaster implements PluginUser<TenantMasterHook> {
     private final ZooKeeperItf zk;
 
     private final TenantModel tenantModel;
@@ -61,6 +65,8 @@ public class TenantMaster {
 
     private LilyInfo lilyInfo;
 
+    private PluginRegistry pluginRegistry;
+
     private Log log = LogFactory.getLog(getClass());
 
     public TenantMaster(ZooKeeperItf zk, TenantModel tenantModel, LilyInfo lilyInfo, List<TenantMasterHook> hooks) {
@@ -70,14 +76,26 @@ public class TenantMaster {
         this.hooks = hooks;
     }
 
+    public TenantMaster(ZooKeeperItf zk, TenantModel tenantModel, LilyInfo lilyInfo, PluginRegistry pluginRegistry) {
+        this.zk = zk;
+        this.tenantModel = tenantModel;
+        this.lilyInfo = lilyInfo;
+        this.hooks = new ArrayList<TenantMasterHook>();
+        this.pluginRegistry = pluginRegistry;
+    }
+
     @PostConstruct
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
         leaderElection = new LeaderElection(zk, "Tenant Master", "/lily/tenant/masters",
                 new MyLeaderElectionCallback());
+
+        pluginRegistry.setPluginUser(TenantMasterHook.class, this);
     }
 
     @PreDestroy
     public void stop() {
+        pluginRegistry.unsetPluginUser(TenantMasterHook.class, this);
+
         try {
             if (leaderElection != null) {
                 leaderElection.stop();
@@ -85,7 +103,16 @@ public class TenantMaster {
         } catch (InterruptedException e) {
             log.info("Interrupted while shutting down leader election.");
         }
+    }
 
+    @Override
+    public void pluginAdded(PluginHandle<TenantMasterHook> pluginHandle) {
+        hooks.add(pluginHandle.getPlugin());
+    }
+
+    @Override
+    public void pluginRemoved(PluginHandle<TenantMasterHook> pluginHandle) {
+        // we don't need to be this dynamic for now
     }
 
     private class MyLeaderElectionCallback implements LeaderElectionCallback {

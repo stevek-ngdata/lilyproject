@@ -181,4 +181,10 @@
     <constructor-arg ref="rawRepositoryManager"/>
   </bean>
 
+  <bean class="org.lilyproject.repository.impl.RepositoryTenantMasterHook">
+    <constructor-arg ref="hbaseTableFactory"/>
+    <constructor-arg ref="hbaseConf"/>
+    <constructor-arg ref="pluginRegistry"/>
+  </bean>
+
 </beans>
