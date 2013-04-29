@@ -24,6 +24,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
@@ -38,13 +39,10 @@ public class ScannerCli extends BaseZkCliTool {
     private Option stopOption;
     private Option recordTypeOption;
     private Option tableOption;
+    private Option tenantOption;
 
-    /**
-     * @param args
-     */
     public static void main(String[] args) {
         new ScannerCli().start(args);
-
     }
 
     @Override
@@ -67,45 +65,58 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Limit printing to a number of records")
                 .withLongOpt("limit")
                 .create("l");
+
         countOption = OptionBuilder
                 .withDescription("Count the number of records")
                 .withLongOpt("count")
                 .create("c");
+
         printOption = OptionBuilder
                 .withDescription("Print records to the command line")
                 .withLongOpt("print")
                 .create("p");
+
         configOption = OptionBuilder
                 .hasArg()
                 .withArgName("file")
                 .withDescription("Configure the record scanner using a json file")
                 .withLongOpt("config")
                 .create();
+
         startOption = OptionBuilder
                 .hasArg()
                 .withArgName("id")
                 .withDescription("Scan records starting at the record with the given ID")
                 .withLongOpt("start")
                 .create();
+
         stopOption = OptionBuilder
                 .hasArg()
                 .withArgName("id")
                 .withDescription("Scan records stopping at the record with the given ID")
                 .withLongOpt("stop")
                 .create();
+
         recordTypeOption = OptionBuilder
                 .hasArg()
                 .withArgName("{namespace}recordTypeName")
                 .withDescription("Filter records by record type name")
                 .withLongOpt("record-type")
                 .create("r");
+
         tableOption = OptionBuilder
                 .hasArg()
                 .withArgName("table")
                 .withDescription("Repository table to scan (defaults to record)")
                 .withLongOpt("table")
-                .create("t");
+                .create();
 
+        tenantOption = OptionBuilder
+                .hasArg()
+                .withArgName("tenant")
+                .withDescription("Repository tenant (defaults to public)")
+                .withLongOpt("tenant")
+                .create();
 
         options.add(printOption);
         options.add(limitOption);
@@ -115,6 +126,7 @@ public class ScannerCli extends BaseZkCliTool {
         options.add(stopOption);
         options.add(recordTypeOption);
         options.add(tableOption);
+        options.add(tenantOption);
 
         return options;
     }
@@ -136,13 +148,15 @@ public class ScannerCli extends BaseZkCliTool {
         String recordTypeFilter = cmd.hasOption(recordTypeOption.getOpt()) ? cmd.getOptionValue(recordTypeOption.getOpt()) : null;
         File configFile = cmd.hasOption(configOption.getLongOpt()) ? new File (cmd.getOptionValue(configOption.getLongOpt())) : null;
         long limit = cmd.hasOption(limitOption.getLongOpt()) ? Long.parseLong(cmd.getOptionValue(limitOption.getLongOpt())) : -1;
+        String tenant = OptionUtil.getStringOption(cmd, tenantOption, "public");
         String table = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
+        Repository repository = (Repository)lilyClient.getRepository(tenant).getTable(table);
         if (cmd.hasOption(countOption.getOpt())) {
-            RecordScanTool.count(lilyClient.getRepository(table), startId, stopId,recordTypeFilter, configFile);
+            RecordScanTool.count(repository, startId, stopId,recordTypeFilter, configFile);
         } else if (cmd.hasOption(printOption.getOpt())) {
-            RecordScanTool.print(lilyClient.getRepository(table), startId, stopId, limit, recordTypeFilter, configFile);
+            RecordScanTool.print(repository, startId, stopId, limit, recordTypeFilter, configFile);
         }
 
         return 0;

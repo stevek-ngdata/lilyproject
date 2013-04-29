@@ -29,6 +29,7 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.CloudSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.zookeeper.KeeperException;
+import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.IdGenerator;
@@ -48,9 +49,13 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
 
     private Option solrCloudOption;
 
+    private Option tenantOption;
+
     protected SolrServer solrServer;
 
     protected LilyClient lilyClient;
+
+    protected String tenantName;
 
     protected Repository repository;
 
@@ -78,8 +83,16 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
                 .withLongOpt("solrcloud")
                 .create("sc");
 
+        tenantOption = OptionBuilder
+                .withArgName("tenant")
+                .hasArg()
+                .withDescription("Repository tenant, defaults to public tenant")
+                .withLongOpt("tenant")
+                .create();
+
         options.add(solrOption);
         options.add(solrCloudOption);
+        options.add(tenantOption);
 
         return options;
     }
@@ -98,6 +111,8 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
             solrUrl = useSolrCloud ? zkConnectionString + "/solr": cmd.getOptionValue(solrOption.getOpt());
         }
 
+        tenantName = OptionUtil.getStringOption(cmd, tenantOption, "public");
+
         return 0;
     }
 
@@ -110,7 +125,7 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
     public void setupLily() throws IOException, ZkConnectException, NoServersException, InterruptedException,
             KeeperException, RepositoryException {
         lilyClient = new LilyClient(getZooKeeper());
-        repository = lilyClient.getRepository();
+        repository = lilyClient.getRepository(tenantName);
         idGenerator = repository.getIdGenerator();
         typeManager = repository.getTypeManager();
     }
