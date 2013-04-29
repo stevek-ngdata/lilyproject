@@ -37,6 +37,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
 
 /**
@@ -78,7 +79,8 @@ public class IndexesInfoImpl implements IndexesInfo {
             byte[] indexerConfXml = indexDef.getConfiguration();
             IndexerConf indexerConf = null;
             try {
-                indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfXml), repositoryManager);
+                indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfXml),
+                        /* TODO multitenancy */ repositoryManager.getPublicRepository());
             } catch (Throwable t) {
                 log.error("Error parsing indexer conf", t);
             }

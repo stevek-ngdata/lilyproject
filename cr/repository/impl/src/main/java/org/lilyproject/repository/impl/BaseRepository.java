@@ -651,11 +651,6 @@ public abstract class BaseRepository implements Repository {
     }
 
     @Override
-    public RepositoryManager getRepositoryManager() {
-        return repositoryManager;
-    }
-
-    @Override
     public String getTableName() {
         return tenantTableKey.getTableName();
     }

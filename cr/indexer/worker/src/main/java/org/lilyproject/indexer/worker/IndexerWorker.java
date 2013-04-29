@@ -183,7 +183,7 @@ public class IndexerWorker {
         IndexUpdaterHandle handle = null;
         try {
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
-                    repositoryManager);
+                    /* TODO multitenancy */ repositoryManager.getPublicRepository());
 
             final SolrShardManager solrShardMgr = getSolrShardManager(index);
 

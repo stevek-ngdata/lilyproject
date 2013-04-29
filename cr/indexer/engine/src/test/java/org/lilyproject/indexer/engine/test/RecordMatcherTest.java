@@ -35,7 +35,6 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
@@ -47,7 +46,6 @@ import static org.junit.Assert.assertNotNull;
 
 public class RecordMatcherTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
-    private static RepositoryManager repositoryManager;
     private static Repository repository;
     private static TypeManager typeManager;
 
@@ -61,7 +59,6 @@ public class RecordMatcherTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repositoryManager = repoSetup.getRepositoryManager();
         repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
         typeManager = repository.getTypeManager();
 
@@ -115,7 +112,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record recordTypeA = newRecordOfType(new QName("ns1", "typeA"));
         Record recordTypeB = newRecordOfType(new QName("ns1", "typeB"));
@@ -134,7 +131,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record recordNs1TypeA = newRecordOfType(new QName("ns1", "typeA"));
         Record recordNs2TypeA = newRecordOfType(new QName("ns2", "typeA"));
@@ -153,7 +150,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record recordNs1TypeB = newRecordOfType(new QName("ns1", "typeB"));
         Record recordNs2TypeB = newRecordOfType(new QName("ns2", "typeB"));
@@ -250,7 +247,7 @@ public class RecordMatcherTest {
                     Collections.<String>emptyList()
             );
 
-            IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+            IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
             if (rt.equals("rt6")) {
                 assertNull(idxConf.getRecordFilter().getIndexCase(Table.RECORD.name, record));
@@ -272,7 +269,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record record = repository.recordBuilder().id("record").build();
 
@@ -288,7 +285,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record record = repository.recordBuilder().id("record").build();
 
@@ -305,7 +302,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         //
         // Test string field
@@ -357,7 +354,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record trueRecord = repository.recordBuilder()
                 .id("record")
@@ -393,7 +390,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         //
         // Record with exactly two properties should be matched by first rule
@@ -439,7 +436,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         // An empty variant expression should only match record without variant properties
         Record recordProp1 = repository.recordBuilder()
@@ -467,7 +464,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         // There are no conditions on variant properties, so a record id with variant properties should pass
         Record recordProp1 = repository.recordBuilder()
@@ -487,7 +484,7 @@ public class RecordMatcherTest {
                 Lists.newArrayList("recordType='ns2:*'")
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record recordNs1TypeA = newRecordOfType(new QName("ns1", "typeA"));
         Record recordNs2TypeA = newRecordOfType(new QName("ns2", "typeA"));
@@ -504,7 +501,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record record1 = repository.recordBuilder()
                 .id("record", ImmutableMap.of("prop1", "val1"))
@@ -547,7 +544,7 @@ public class RecordMatcherTest {
                 Collections.<String>emptyList()
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         // A record of any type with any number of variant properties should match
         Record record1 = repository.recordBuilder()
@@ -567,7 +564,7 @@ public class RecordMatcherTest {
                 Lists.newArrayList("")
         );
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         // A record of any type with any number of variant properties should match
         Record record1 = repository.recordBuilder()
@@ -587,7 +584,7 @@ public class RecordMatcherTest {
                         Lists.<String>newArrayList());
 
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record record = repository.recordBuilder().id("record").field(new QName("ns", "int"), new Integer(42)).build();
 
@@ -600,7 +597,7 @@ public class RecordMatcherTest {
                 Lists.newArrayList("vtags='last' tables='myrecordtable'"),
                 Lists.<String>newArrayList());
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record record = repository.recordBuilder().id("record").field(new QName("ns", "int"), new Integer(42)).build();
 
@@ -613,7 +610,7 @@ public class RecordMatcherTest {
                 Lists.newArrayList("vtags='last'"),
                 Lists.newArrayList("tables='myrecordtable'"));
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record record = repository.recordBuilder().id("record").field(new QName("ns", "int"), new Integer(42)).build();
 
@@ -626,7 +623,7 @@ public class RecordMatcherTest {
                 Lists.newArrayList("vtags='last'"),
                 Lists.newArrayList("tables='myrecordtable'"));
 
-        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repositoryManager);
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
         Record record = repository.recordBuilder().id("record").field(new QName("ns", "int"), new Integer(42)).build();
 

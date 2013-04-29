@@ -38,6 +38,7 @@ import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.json.JsonFormat;
+import org.lilyproject.util.repo.PureRepository;
 
 public class BatchIndexBuilder {
     private BatchIndexBuilder() {
@@ -115,7 +116,7 @@ public class BatchIndexBuilder {
         // creation preferences (otherwise would need to serialize that config towards the mappers).
         // This also requires to parse the indexerconf, to know if we actually need a derefmap.
         IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
-                repositoryManager);
+                /* TODO multitenancy */ PureRepository.wrap(repositoryManager.getPublicRepository()));
         if (indexerConf.containsDerefExpressions()) {
             DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory, repositoryManager.getIdGenerator());
         }

@@ -38,6 +38,7 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.repo.PureRepository;
 
 public class LinkIndexCli extends BaseZkCliTool {
     private Option indexOption;
@@ -109,7 +110,7 @@ public class LinkIndexCli extends BaseZkCliTool {
         }
 
         lilyClient = new LilyClient(zkConnectionString, 60000);
-        Repository repository = lilyClient.getRepository();
+        Repository repository = PureRepository.wrap(lilyClient.getRepository());
         typeManager = repository.getTypeManager();
 
         Configuration hbaseConf = HBaseConfiguration.create();
@@ -117,7 +118,7 @@ public class LinkIndexCli extends BaseZkCliTool {
 
         IndexManager indexManager = new IndexManager(hbaseConf, new HBaseTableFactoryImpl(hbaseConf));
 
-        LinkIndex linkIndex = new LinkIndex(indexManager, repository.getRepositoryManager());
+        LinkIndex linkIndex = new LinkIndex(indexManager, repository);
 
         //
         // Determine the index to query
@@ -151,7 +152,7 @@ public class LinkIndexCli extends BaseZkCliTool {
         SchemaId vtagId = null;
         if (cmd.hasOption(vtagOption.getOpt())) {
             String vtagParam = cmd.getOptionValue(vtagOption.getOpt());
-            vtagId = repository.getTypeManager().getFieldTypeByName(new QName("org.lilyproject.vtag", vtagParam)).getId();
+            vtagId = typeManager.getFieldTypeByName(new QName("org.lilyproject.vtag", vtagParam)).getId();
         }
 
         //
@@ -165,7 +166,7 @@ public class LinkIndexCli extends BaseZkCliTool {
             }
 
             String fieldParam = cmd.getOptionValue(fieldOption.getOpt());
-            FieldType field = repository.getTypeManager().getFieldTypeByName(QName.fromString(fieldParam));
+            FieldType field = typeManager.getFieldTypeByName(QName.fromString(fieldParam));
             fieldId = field.getId();
 
             if (!field.getValueType().getDeepestValueType().getBaseName().equals("LINK")) {

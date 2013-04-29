@@ -46,6 +46,7 @@ import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.repo.PureRepository;
 import org.lilyproject.util.repo.VersionTag;
 
 import static org.junit.Assert.assertEquals;
@@ -79,7 +80,8 @@ public class LinkIndexTest {
 
         IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
 
-        linkIndex = new LinkIndex(indexManager, repoSetup.getRepositoryManager());
+        linkIndex = new LinkIndex(indexManager,
+                PureRepository.wrap(repoSetup.getRepositoryManager().getPublicRepository()));
 
         repoSetup.getSepModel().addSubscription("LinkIndexUpdater");
         repoSetup.getTableManager().createTable(TABLE_A);

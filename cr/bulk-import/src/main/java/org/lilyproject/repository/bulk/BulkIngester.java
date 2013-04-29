@@ -120,17 +120,18 @@ public class BulkIngester implements Closeable {
             } else {
                 hbaseRepository = (HBaseRepository)repositoryManager.getPublicRepository();
             }
-            return new BulkIngester(hbaseRepository, LilyHBaseSchema.getRecordTable(hbaseTableFactory, hbaseRepository.getTableName()),
-                    typeManager.getFieldTypesSnapshot());
+            return new BulkIngester(repositoryManager, hbaseRepository, LilyHBaseSchema.getRecordTable(hbaseTableFactory,
+                    hbaseRepository.getTableName()), typeManager.getFieldTypesSnapshot());
         } catch (Exception e) {
             ExceptionUtil.handleInterrupt(e);
             throw new RuntimeException(e);
         }
     }
 
-    BulkIngester(HBaseRepository hbaseRepo, HTableInterface recordTable, FieldTypes fieldTypes) {
+    BulkIngester(RepositoryManager repositoryManager, HBaseRepository hbaseRepo, HTableInterface recordTable,
+            FieldTypes fieldTypes) {
+        this.repositoryManager = repositoryManager;
         this.hbaseRepo = hbaseRepo;
-        this.repositoryManager = hbaseRepo.getRepositoryManager();
         this.recordFactory = repositoryManager.getRecordFactory();
         this.recordTable = recordTable;
         this.fieldTypes = fieldTypes;

@@ -85,7 +85,8 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             zk = ZkUtil.connect(zkConnectString, zkSessionTimeout);
 
             byte[] indexerConfBytes = Base64.decode(jobConf.get("org.lilyproject.indexer.batchbuild.indexerconf"));
-            IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes), lilyClient);
+            IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes),
+                    /* TODO multitenancy */ lilyClient.getPublicRepository());
 
             String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
 

@@ -58,12 +58,6 @@ public interface Repository extends LTable, Closeable {
     TypeManager getTypeManager();
 
     /**
-     * Returns the RepositoryManager that is responsible for this Repository.
-     * @return owning RepositoryManager
-     */
-    RepositoryManager getRepositoryManager();
-
-    /**
      * @return the factory for creating records
      */
     RecordFactory getRecordFactory();

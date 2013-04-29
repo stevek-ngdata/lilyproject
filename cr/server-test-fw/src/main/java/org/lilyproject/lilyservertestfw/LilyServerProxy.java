@@ -44,6 +44,7 @@ import org.lilyproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.jmx.JmxLiaison;
+import org.lilyproject.util.repo.PureRepository;
 import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
@@ -274,7 +275,8 @@ public class LilyServerProxy {
     }
 
     public void validateIndexerconf(byte[] indexerConfiguration) throws Exception {
-        IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration), getClient().getRepository().getRepositoryManager());
+        IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration),
+                PureRepository.wrap(getClient().getRepository()));
     }
 
     /**
