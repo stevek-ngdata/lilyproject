@@ -55,13 +55,14 @@
       id="indexer"
       service="org.lilyproject.indexer.Indexer"/>
 
-  <lily:import-service
-      id="tableManager"
-      service="org.lilyproject.repository.api.TableManager"/>
-
   <lily:import-service id="indexerModel" service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
   <bean id="linkTransformer" class="org.lilyproject.tools.import_.json.DefaultLinkTransformer"/>
+
+  <bean id="publicRepository" factory-bean="repositoryManager" factory-method="getPublicRepository"
+        autowire-candidate="false"/>
+
+  <bean id="tableManager" factory-bean="publicRepository" factory-method="getTableManager"/>
 
   <bean id="recordScannerMap" class="org.lilyproject.rest.RecordScannerMapBuilder"
         factory-method="createRecordScannerMap" scope="singleton">

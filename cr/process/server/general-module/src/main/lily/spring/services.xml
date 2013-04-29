@@ -64,6 +64,10 @@
       service="com.ngdata.sep.SepModel"/>
 
   <lily:export-service
+      ref="tenantModel"
+      service="org.lilyproject.tenant.model.api.TenantModel"/>
+
+  <lily:export-service
       ref="prematureRepositoryManager"
       service="org.lilyproject.util.repo.PrematureRepositoryManager"/>
 
@@ -170,6 +174,10 @@
     <constructor-arg>
       <bean factory-bean="networkItfInfo" factory-method="getHostName"/>
     </constructor-arg>
+  </bean>
+
+  <bean id="tenantModel" class="org.lilyproject.tenant.model.impl.TenantModelImpl">
+    <constructor-arg ref="zooKeeper"/>
   </bean>
 
 </beans>
