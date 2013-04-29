@@ -147,11 +147,6 @@ public abstract class BaseRepository implements Repository {
     }
 
     @Override
-    public void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess) {
-        blobManager.register(blobStoreAccess);
-    }
-
-    @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         return blobManager.getOutputStream(blob);
     }

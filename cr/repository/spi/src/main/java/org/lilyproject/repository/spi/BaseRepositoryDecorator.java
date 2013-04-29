@@ -215,11 +215,6 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess) {
-        delegate.registerBlobStoreAccess(blobStoreAccess);
-    }
-
-    @Override
     public OutputStream getOutputStream(Blob blob) throws RepositoryException, InterruptedException {
         return delegate.getOutputStream(blob);
     }

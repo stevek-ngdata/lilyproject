@@ -62,12 +62,4 @@ public interface Repository extends LTable, Closeable {
      */
     RecordFactory getRecordFactory();
 
-    /**
-     * A {@link BlobStoreAccess} must be registered with the repository before
-     * it can be used. Any BlobStoreAccess that has ever been used to store
-     * binary data of a blob must be registered before that data can be
-     * retrieved again.
-     */
-    void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess);
-
 }
