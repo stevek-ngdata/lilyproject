@@ -48,6 +48,7 @@ import org.lilyproject.indexer.RemoteIndexer;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
@@ -239,7 +240,7 @@ public class LilyClient implements Closeable, RepositoryManager {
      */
     public Repository getRepository() {
         try {
-            return getPublicRepository();
+            return (Repository)getPublicRepository();
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
@@ -250,7 +251,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public Repository getRepository(String tenantName) {
+    public LRepository getRepository(String tenantName) {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
@@ -274,7 +275,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public Repository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
+    public LRepository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }

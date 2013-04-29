@@ -33,6 +33,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.tools.import_.json.RecordScanReader;
@@ -97,7 +98,7 @@ public class BatchIndexBuilder {
         JsonNode batchConfigurationNode =
                 JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration));
         RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(batchConfigurationNode.get("scan"),
-                /* TODO multitenancy */ repositoryManager.getPublicRepository());
+                /* TODO multitenancy */ (Repository)repositoryManager.getPublicRepository());
         recordScan.setReturnFields(ReturnFields.ALL);
         recordScan.setCacheBlocks(false);
         recordScan.setCaching(1024);
@@ -116,7 +117,7 @@ public class BatchIndexBuilder {
         // creation preferences (otherwise would need to serialize that config towards the mappers).
         // This also requires to parse the indexerconf, to know if we actually need a derefmap.
         IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
-                /* TODO multitenancy */ PureRepository.wrap(repositoryManager.getPublicRepository()));
+                /* TODO multitenancy */ PureRepository.wrap((Repository)repositoryManager.getPublicRepository()));
         if (indexerConf.containsDerefExpressions()) {
             DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory, repositoryManager.getIdGenerator());
         }

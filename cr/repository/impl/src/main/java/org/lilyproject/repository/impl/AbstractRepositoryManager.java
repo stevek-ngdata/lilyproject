@@ -20,6 +20,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
@@ -71,12 +72,12 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     protected abstract Repository createRepository(TenantTableKey key) throws IOException, InterruptedException, RepositoryException;
 
     @Override
-    public Repository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
+    public LRepository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
         return getRepository("public");
     }
 
     @Override
-    public Repository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException {
+    public LRepository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException {
         return getRepository(tenantName, Table.RECORD.name);
     }
 

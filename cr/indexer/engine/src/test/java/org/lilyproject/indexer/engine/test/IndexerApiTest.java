@@ -86,7 +86,7 @@ public class IndexerApiTest {
         repoSetup.setupRepository();
 
         repositoryManager = repoSetup.getRepositoryManager();
-        repository = repositoryManager.getRepository(Table.RECORD.name);
+        repository = (Repository)repositoryManager.getDefaultTable();
         typeManager = repoSetup.getTypeManager();
 
         setupSchema();
@@ -107,7 +107,7 @@ public class IndexerApiTest {
 
     public void changeIndexUpdater(String confName) throws Exception {
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
-                repoSetup.getRepositoryManager().getPublicRepository());
+                (Repository)repoSetup.getRepositoryManager().getPublicRepository());
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
         Indexer indexer =
                 new Indexer("test", INDEXER_CONF, repositoryManager, solrShardManager, indexLocker, new IndexerMetrics("test"),

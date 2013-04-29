@@ -55,7 +55,8 @@ public class LilyIdScanInputFormat extends AbstractLilyScanInputFormat<RecordIdW
 
         IdRecordScanner scanner = null;
         try {
-            scanner = lilyClient.getRepository(Bytes.toString(split.getTableName())).getScannerWithIds(scan);
+            // TODO multitenancy
+            scanner = lilyClient.getPublicRepository().getTable(Bytes.toString(split.getTableName())).getScannerWithIds(scan);
         } catch (RepositoryException e) {
             Closer.close(lilyClient);
             throw new IOException("Error setting up RecordScanner", e);

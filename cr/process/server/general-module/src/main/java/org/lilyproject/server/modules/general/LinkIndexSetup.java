@@ -27,6 +27,7 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
@@ -75,7 +76,7 @@ public class LinkIndexSetup {
             IndexManager indexManager = new IndexManager(hbaseConf, tableFactory);
 
             LinkIndex linkIndex = new LinkIndex(indexManager,
-                    /* TODO multitenancy */ PureRepository.wrap(repositoryManager.getPublicRepository()));
+                    /* TODO multitenancy */ PureRepository.wrap((Repository)repositoryManager.getPublicRepository()));
 
             LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repositoryManager, linkIndex);
 

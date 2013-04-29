@@ -154,7 +154,7 @@ public class ScannerCli extends BaseZkCliTool {
         String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
-        Repository repository = PureRepository.wrap(lilyClient.getRepository(tenant));
+        Repository repository = (Repository)PureRepository.wrap((Repository)lilyClient.getRepository(tenant));
         LTable table = repository.getTable(tableName);
         if (cmd.hasOption(countOption.getOpt())) {
             RecordScanTool.count(repository, table, startId, stopId,recordTypeFilter, configFile);

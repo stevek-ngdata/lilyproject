@@ -28,6 +28,7 @@ import java.lang.reflect.Type;
 
 import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.rest.Entity;
 import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
@@ -52,7 +53,7 @@ public class EntityMessageBodyWriter extends RepositoryEnabled implements Messag
             throws IOException, WebApplicationException {
         try {
             EntityWriter writer = EntityRegistry.findWriter(object.getEntity().getClass());
-            ObjectNode json = writer.toJson(object.getEntity(), object.getWriteOptions(), /* TODO multitenancy */ repositoryMgr.getPublicRepository());
+            ObjectNode json = writer.toJson(object.getEntity(), object.getWriteOptions(), /* TODO multitenancy */ (Repository)repositoryMgr.getPublicRepository());
             JsonFormat.serialize(json, new CloseShieldOutputStream(entityStream));
         } catch (Throwable e) {
             // We catch every throwable, since otherwise no one does it and we will not have any trace

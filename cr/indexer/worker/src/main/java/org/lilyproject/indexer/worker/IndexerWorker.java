@@ -58,6 +58,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
@@ -183,7 +184,7 @@ public class IndexerWorker {
         IndexUpdaterHandle handle = null;
         try {
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
-                    /* TODO multitenancy */ repositoryManager.getPublicRepository());
+                    /* TODO multitenancy */ (Repository)repositoryManager.getPublicRepository());
 
             final SolrShardManager solrShardMgr = getSolrShardManager(index);
 

@@ -37,6 +37,7 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
@@ -125,7 +126,8 @@ public class LinkIndexUpdater implements EventListener {
 
                 VTaggedRecord vtRecord;
                 try {
-                    vtRecord = new VTaggedRecord(absRecordId.getRecordId(), eventHelper, repositoryManager.getRepository(recordEvent.getTableName()));
+                    vtRecord = new VTaggedRecord(absRecordId.getRecordId(), eventHelper,
+                            (Repository)repositoryManager.getRepository(recordEvent.getTableName()));
                 } catch (RecordNotFoundException e) {
                     // record not found: delete all links for all vtags
                     linkIndex.deleteLinks(absRecordId);

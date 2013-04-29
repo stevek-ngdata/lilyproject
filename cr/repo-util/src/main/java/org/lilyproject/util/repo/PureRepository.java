@@ -31,6 +31,8 @@ public class PureRepository {
      * <p>The relevance of this is when you want to pass around a Repository instance but want to avoid by
      * accident calling table-scoped operations on it, because the Repository might not represent the desired
      * table.</p>
+     *
+     * <p>Even better is to use the new {@link org.lilyproject.repository.api.LRepository} interface.</p>
      */
     public static Repository wrap(Repository repository) {
         return (Repository)Proxy.newProxyInstance(Repository.class.getClassLoader(), new Class[]{Repository.class},

@@ -20,10 +20,10 @@ import org.apache.hadoop.hbase.TableNotFoundException;
 import org.junit.Test;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.RepositoryTable;
@@ -36,7 +36,6 @@ import org.lilyproject.tenant.model.api.TenantModel;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.lilyproject.tenant.model.api.Tenant.TenantLifecycleState;
 
@@ -68,7 +67,7 @@ public class AbstractTenantTableTest {
      */
     @Test(expected = TableNotFoundException.class)
     public void testTableCreationIsRequired() throws Exception {
-        Repository repository = repositoryManager.getPublicRepository();
+        LRepository repository = repositoryManager.getPublicRepository();
         repository.getTable("aNonExistingTable");
     }
 
@@ -94,7 +93,7 @@ public class AbstractTenantTableTest {
         List<String> tenants = Lists.newArrayList("company1", "company2", "public");
 
         for (String tenant : tenants) {
-            Repository repo = repositoryManager.getRepository(tenant);
+            LRepository repo = repositoryManager.getRepository(tenant);
             repo.getTableManager().createTable("mytable");
             LTable table = repo.getTable("mytable");
             table.recordBuilder()
@@ -107,7 +106,7 @@ public class AbstractTenantTableTest {
         IdGenerator idGenerator = repositoryManager.getIdGenerator();
 
         for (String tenant : tenants) {
-            Repository repo = repositoryManager.getRepository(tenant);
+            LRepository repo = repositoryManager.getRepository(tenant);
             LTable table = repo.getTable("mytable");
             assertEquals(tenant + "-value1", table.read(idGenerator.newRecordId("id1")).getField(fieldType1.getName()));
         }
@@ -127,7 +126,7 @@ public class AbstractTenantTableTest {
         tenantModel.create(tenantName);
         assertTrue(tenantModel.waitUntilTenantInState(tenantName, TenantLifecycleState.ACTIVE, 60000L));
 
-        Repository repository = repositoryManager.getRepository(tenantName);
+        LRepository repository = repositoryManager.getRepository(tenantName);
         TableManager tableManager = repository.getTableManager();
 
         List<RepositoryTable> tables = tableManager.getTables();

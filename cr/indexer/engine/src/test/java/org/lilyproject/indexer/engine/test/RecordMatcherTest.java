@@ -59,7 +59,7 @@ public class RecordMatcherTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
         typeManager = repository.getTypeManager();
 
         stringField = typeManager.createFieldType("STRING", new QName("ns", "string"), Scope.NON_VERSIONED);

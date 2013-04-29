@@ -174,7 +174,7 @@ public class IndexUpdater implements EventListener {
                             indexer.vtagSetToNameString(recordEvent.getVtagsToIndex())));
                 }
                 String tableName = recordEvent.getTableName();
-                index(repositoryManager.getRepository(tableName), tableName, recordId, recordEvent.getVtagsToIndex());
+                index((Repository)repositoryManager.getTable(tableName), tableName, recordId, recordEvent.getVtagsToIndex());
             } else if (recordEvent.getType().equals(DELETE)) {
                 // Record is deleted: delete its index entry. We do not check for a matching index case, since
                 // we can't (record is not available anymore), and besides IndexAwareMQFeeder takes care of sending us
@@ -203,7 +203,7 @@ public class IndexUpdater implements EventListener {
                 // than the old one, perform the necessary deletes on Solr.
                 Pair<Record,Record> oldAndNewRecords =
                         IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, recordEvent,
-                                                        repositoryManager.getRepository(recordEvent.getTableName()));
+                                (Repository)repositoryManager.getTable(recordEvent.getTableName()));
                 Record oldRecord = oldAndNewRecords.getV1();
                 Record newRecord = oldAndNewRecords.getV2();
                 IndexCase caseOld = oldRecord != null ? indexer.getConf().getIndexCase(
@@ -248,7 +248,7 @@ public class IndexUpdater implements EventListener {
                             // mappings read here. The processing of later events will bring the index up to date with
                             // any new changes.
                             vtRecord = new VTaggedRecord(recordId, eventHelper,
-                                            repositoryManager.getRepository(recordEvent.getTableName()));
+                                    (Repository)repositoryManager.getTable(recordEvent.getTableName()));
                         } catch (RecordNotFoundException e) {
                             // The record has been deleted in the meantime.
                             // For now, we do nothing, when the delete event is received the record will be removed

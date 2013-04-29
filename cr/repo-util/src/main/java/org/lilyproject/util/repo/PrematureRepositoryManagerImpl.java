@@ -18,9 +18,9 @@ package org.lilyproject.util.repo;
 import java.io.IOException;
 
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RecordFactory;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
@@ -53,13 +53,13 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
     }
 
     @Override
-    public Repository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
+    public LRepository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getPublicRepository();
     }
 
     @Override
-    public Repository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException {
+    public LRepository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getRepository(tenantName);
     }

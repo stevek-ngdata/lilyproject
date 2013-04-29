@@ -81,7 +81,7 @@ public class JsonConversionTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
 
         TypeManager typeManager = repository.getTypeManager();
         typeManager.createFieldType("STRING", new QName("ns", "stringField"), Scope.NON_VERSIONED);

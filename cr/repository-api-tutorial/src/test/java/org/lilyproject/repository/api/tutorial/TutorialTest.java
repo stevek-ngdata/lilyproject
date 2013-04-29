@@ -120,7 +120,7 @@ public class TutorialTest {
             repoTableManager.createTable(Table.RECORD.name);
         }
 
-        repository = repositoryManager.getRepository(Table.RECORD.name);
+        repository = (Repository)repositoryManager.getDefaultTable();
     }
 
     @AfterClass

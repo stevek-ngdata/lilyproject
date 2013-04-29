@@ -36,6 +36,7 @@ import org.lilyproject.repository.api.CompareOp;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.rest.PostAction;
 import org.lilyproject.rest.RepositoryEnabled;
@@ -107,7 +108,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
                 EntityRegistry.RegistryEntry registryEntry = EntityRegistry.findReaderRegistryEntry((Class)entityType);
                 ObjectNode objectNode = JsonUtil.getObject(postNode, registryEntry.getPropertyName());
                 entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces,
-                /* TODO multitenancy */ repositoryMgr.getPublicRepository(), linkTransformer);
+                /* TODO multitenancy */ (Repository)repositoryMgr.getPublicRepository(), linkTransformer);
             }
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
@@ -142,7 +143,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
                 FieldType fieldType = systemFields.isSystemField(fieldName) ? systemFields.get(fieldName) :
                         repositoryMgr.getTypeManager().getFieldTypeByName(fieldName);
                 value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces,
-                /* TODO multitenancy */ repositoryMgr.getPublicRepository(), linkTransformer);
+                /* TODO multitenancy */ (Repository)repositoryMgr.getPublicRepository(), linkTransformer);
             }
 
             boolean allowMissing = JsonUtil.getBoolean(conditionNode, "allowMissing", false);

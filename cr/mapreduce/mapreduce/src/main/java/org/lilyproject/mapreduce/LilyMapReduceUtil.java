@@ -23,6 +23,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.tools.import_.json.RecordScanWriter;
 import org.lilyproject.tools.import_.json.WriteOptions;
@@ -81,7 +82,7 @@ public class LilyMapReduceUtil {
         if (scan != null) {
             try {
                 JsonNode node = RecordScanWriter.INSTANCE.toJson(scan, new WriteOptions(),
-                    /* TODO multitenancy */ repositoryManager.getPublicRepository());
+                    /* TODO multitenancy */ (Repository)repositoryManager.getPublicRepository());
                 String scanData = JsonFormat.serializeAsString(node);
                 job.getConfiguration().set(AbstractLilyScanInputFormat.SCAN, scanData);
             } catch (Exception e) {

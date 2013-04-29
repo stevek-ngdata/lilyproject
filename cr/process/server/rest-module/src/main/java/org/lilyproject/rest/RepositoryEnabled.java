@@ -39,7 +39,7 @@ public class RepositoryEnabled {
     @Deprecated
     public Repository getRepository() {
         try {
-            return repositoryMgr.getRepository(Table.RECORD.name);
+            return (Repository)repositoryMgr.getDefaultTable();
         } catch (Exception e) {
             ExceptionUtil.handleInterrupt(e);
             throw new ResourceException("Error retrieving repository", e, INTERNAL_SERVER_ERROR.getStatusCode());
@@ -64,7 +64,7 @@ public class RepositoryEnabled {
 
     public Repository getRepository(String tableName) {
         try {
-            return repositoryMgr.getRepository(tableName);
+            return (Repository)repositoryMgr.getTable(tableName);
         } catch (Exception e) {
             ExceptionUtil.handleInterrupt(e);
             throw new ResourceException("Error retrieving repository", e, INTERNAL_SERVER_ERROR.getStatusCode());

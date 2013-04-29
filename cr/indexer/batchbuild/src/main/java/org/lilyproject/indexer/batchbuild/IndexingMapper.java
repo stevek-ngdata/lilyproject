@@ -56,6 +56,7 @@ import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.mapreduce.RecordIdWritable;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -86,7 +87,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
             byte[] indexerConfBytes = Base64.decode(jobConf.get("org.lilyproject.indexer.batchbuild.indexerconf"));
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes),
-                    /* TODO multitenancy */ lilyClient.getPublicRepository());
+                    /* TODO multitenancy */ (Repository)lilyClient.getPublicRepository());
 
             String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
 

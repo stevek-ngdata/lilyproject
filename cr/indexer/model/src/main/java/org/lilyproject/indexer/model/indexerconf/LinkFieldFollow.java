@@ -75,7 +75,7 @@ public class LinkFieldFollow implements Follow {
                 RecordId linkedRecordId = link.resolve(ctx.contextRecord, idGenerator);
                 Record linkedRecord = null;
                 String table = link.getTable() != null ? link.getTable() : indexUpdateBuilder.getTable();
-                Repository repository = repoMgr.getRepository(table);
+                Repository repository = (Repository)repoMgr.getTable(table);
                 try {
                     linkedRecord = VersionTag.getIdRecord(linkedRecordId, indexUpdateBuilder.getVTag(), repository);
                 } catch (RecordNotFoundException rnfe) {

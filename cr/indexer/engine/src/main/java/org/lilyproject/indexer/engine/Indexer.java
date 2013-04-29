@@ -39,6 +39,7 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
@@ -109,7 +110,7 @@ public class Indexer {
     public void index(String table, RecordId recordId) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
 
-        VTaggedRecord vtRecord = new VTaggedRecord(recordId, repositoryManager.getRepository(table));
+        VTaggedRecord vtRecord = new VTaggedRecord(recordId, (Repository)repositoryManager.getTable(table));
         IdRecord record = vtRecord.getRecord();
 
         IndexCase indexCase = conf.getIndexCase(table, record);
@@ -118,7 +119,7 @@ public class Indexer {
 
     public void index(String table, IdRecord idRecord) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
-        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repositoryManager.getRepository(table));
+        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, (Repository)repositoryManager.getTable(table));
         index(table, vtRecord, idRecord);
     }
 
@@ -134,7 +135,7 @@ public class Indexer {
 
     void index(String table, IdRecord idRecord, Set<SchemaId> vtags)
             throws RepositoryException, IOException, ShardSelectorException, SolrClientException, InterruptedException {
-        final VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repositoryManager.getRepository(table));
+        final VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, (Repository)repositoryManager.getTable(table));
 
         Set<SchemaId> vtagsToIndex = retainExistingVtagsOnly(vtags, vtRecord);
 

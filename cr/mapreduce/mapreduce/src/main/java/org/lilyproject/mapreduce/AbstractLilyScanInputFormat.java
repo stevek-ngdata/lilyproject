@@ -37,6 +37,7 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.TableManager;
@@ -220,7 +221,8 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
         if (scanData != null) {
             try {
                 JsonNode node = JsonFormat.deserializeNonStd(scanData);
-                scan = RecordScanReader.INSTANCE.fromJson(node, /* TODO multitenancy */repositoryManager.getPublicRepository());
+                scan = RecordScanReader.INSTANCE.fromJson(node,
+                    /* TODO multitenancy */ (Repository)repositoryManager.getPublicRepository());
             } catch (Exception e) {
                 ExceptionUtil.handleInterrupt(e);
                 throw new RuntimeException(e);

@@ -168,7 +168,7 @@ public class ValueEvaluator {
         BodyContentHandler ch = new BodyContentHandler(woh);
 
         try {
-            is = repositoryManager.getRepository(table).getInputStream(record, fieldType.getName(), indexes);
+            is = repositoryManager.getTable(table).getInputStream(record, fieldType.getName(), indexes);
 
             Metadata metadata = new Metadata();
             metadata.add(Metadata.CONTENT_TYPE, blob.getMediaType());

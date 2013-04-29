@@ -207,8 +207,8 @@ public class IndexerTest {
         repositoryManager = repoSetup.getRepositoryManager();
         repoSetup.getTableManager().createTable(ALTERNATE_TABLE);
 
-        defaultRepository = repositoryManager.getRepository(Table.RECORD.name);
-        alternateRepository = repositoryManager.getRepository(ALTERNATE_TABLE);
+        defaultRepository = (Repository)repositoryManager.getDefaultTable();
+        alternateRepository = (Repository)repositoryManager.getRepository(ALTERNATE_TABLE);
         indexUpdaterRepositoryMgr = new TrackingRepositoryManager(repoSetup.getRepositoryManager());
 
 
@@ -251,7 +251,7 @@ public class IndexerTest {
         // which some test cases expect, and hence it won't be visible but will cause the remainder of the
         // code in this method not to be executed! (so keep this in mind for anything related to resource cleanup)
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
-                repoSetup.getRepositoryManager().getPublicRepository());
+                (Repository)repoSetup.getRepositoryManager().getPublicRepository());
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
 
         Configuration hbaseConf = repoSetup.getHadoopConf();

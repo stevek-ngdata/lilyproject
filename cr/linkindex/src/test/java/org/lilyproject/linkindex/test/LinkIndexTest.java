@@ -75,13 +75,13 @@ public class LinkIndexTest {
         repoSetup.setupRepository();
 
         typeManager = repoSetup.getTypeManager();
-        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
         ids = repository.getIdGenerator();
 
         IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
 
         linkIndex = new LinkIndex(indexManager,
-                PureRepository.wrap(repoSetup.getRepositoryManager().getPublicRepository()));
+                PureRepository.wrap((Repository)repoSetup.getRepositoryManager().getPublicRepository()));
 
         repoSetup.getSepModel().addSubscription("LinkIndexUpdater");
         repoSetup.getTableManager().createTable(TABLE_A);

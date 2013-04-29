@@ -29,37 +29,21 @@ import java.io.IOException;
 /**
  * A Repository is a set of tables, tables contain records.
  *
- * <p>A Repository is tenant-specific and obtained from {@link RepositoryManager}.</p>
+ * <p>This interface is here for backwards compatibility with pre-2.2 Lily versions. In Lily 2.2, the functionality
+ * has been split out over 2 new interfaces: {@link LRepository} and {@link LTable}, from which Repository extends.
+ * <b style='color:red'>New code should be written against either {@link LRepository} or {@link LTable}.</b></p>
  *
- * <p>For backwards compatibility, Repository extends from Table. The methods of Table will in this
- * case be executed against the default table, that is the table called "records".</p>
+ * <p>A Repository is tenant-specific and table-specific. It is obtained by:</p>
+ *
+ * <li>calling on {@link RepositoryManager#getRepository(String)} or related methods</li>
+ * <li>casting the result of calling {@link RepositoryManager#getTable(String)} or {@link Repository#getTable(String)}
+ * to Repository.</li>
+ *
+ * <p>For backwards compatibility, Repository extends from LTable. The methods of LTable will in this
+ * case be executed against the table for which this repository has been retrieved: either the
+ * default table called "record" or another table in case this Repository instance was cast from
+ * a call on {@link Repository#getTable(String)}.
  */
-public interface Repository extends LTable, Closeable {
-    /**
-     * TODO multitenancy
-     *
-     * <p>For backwards compatibility, you can cast the returned LTable to Repository. New code should
-     * be written against the LTable interface.</p>
-     */
-    LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException;
-
-    LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException;
-
-    TableManager getTableManager();
-
-    /**
-     * @return the IdGenerator service
-     */
-    IdGenerator getIdGenerator();
-
-    /**
-     * @return the TypeManager service
-     */
-    TypeManager getTypeManager();
-
-    /**
-     * @return the factory for creating records
-     */
-    RecordFactory getRecordFactory();
+public interface Repository extends LTable, LRepository, Closeable {
 
 }

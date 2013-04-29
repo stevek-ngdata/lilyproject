@@ -45,7 +45,7 @@ public interface RepositoryManager extends Closeable {
      *
      * @return the public repository
      */
-    Repository getPublicRepository() throws IOException, InterruptedException, RepositoryException;
+    LRepository getPublicRepository() throws IOException, InterruptedException, RepositoryException;
 
     /**
      * Get the {@code Repository} for a specific tenant.
@@ -53,17 +53,23 @@ public interface RepositoryManager extends Closeable {
      * @param tenantName name of the tenant for which the repository is to be fetched
      * @return Either a new Repository or a cached instance
      */
-    Repository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException;
+    LRepository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException;
 
     /**
      * Get the specified table for the public tenant.
      *
      * <p>This is a shortcut for calling getPublicTenant().getTable(tableName).</p>
+     *
+     * <p><b>It is strongly recommended to get a {@link LRepository} instance for a specific tenant and then
+     * work from there, so that your code can easily be applied to different tenants.</b></p>
      */
     LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException;
 
     /**
      * Get the default table ("record") from the public tenant.
+     *
+     * <p><b>It is strongly recommended to get a {@link LRepository} instance for a specific tenant and then
+     * work from there, so that your code can easily be applied to different tenants.</b></p>
      */
     LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException;
 }
