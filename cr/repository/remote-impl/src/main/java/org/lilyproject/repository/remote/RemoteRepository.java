@@ -35,6 +35,7 @@ import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TableManager;
@@ -57,9 +58,9 @@ public class RemoteRepository extends BaseRepository {
 
     public RemoteRepository(TenantTableKey tenantTableKey, AvroLilyTransceiver lilyTransceiver, AvroConverter converter,
             AbstractRepositoryManager repositoryManager, BlobManager blobManager, HTableInterface recordTable,
-            TableManager tableManager)
+            TableManager tableManager, RecordFactory recordFactory)
             throws IOException, InterruptedException {
-        super(tenantTableKey, repositoryManager, blobManager, recordTable, null, tableManager);
+        super(tenantTableKey, repositoryManager, blobManager, recordTable, null, tableManager, recordFactory);
         this.converter = converter;
         client = lilyTransceiver.getTransceiver();
         lilyProxy = lilyTransceiver.getLilyProxy();

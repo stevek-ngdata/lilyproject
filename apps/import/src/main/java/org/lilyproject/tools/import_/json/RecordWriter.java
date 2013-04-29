@@ -32,8 +32,8 @@ import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.ValueType;
 
@@ -42,12 +42,12 @@ public class RecordWriter implements EntityWriter<Record> {
     public static final RecordWriter INSTANCE = new RecordWriter();
 
     @Override
-    public ObjectNode toJson(Record record, WriteOptions options, RepositoryManager repositoryManager) throws RepositoryException,
+    public ObjectNode toJson(Record record, WriteOptions options, Repository repository) throws RepositoryException,
             InterruptedException {
         Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
                 NamespacesImpl.DEFAULT_USE_PREFIXES);
 
-        ObjectNode recordNode = toJson(record, options, namespaces, repositoryManager);
+        ObjectNode recordNode = toJson(record, options, namespaces, repository);
 
         if (namespaces.usePrefixes()) {
             recordNode.put("namespaces", NamespacesConverter.toJson(namespaces));
@@ -57,7 +57,7 @@ public class RecordWriter implements EntityWriter<Record> {
     }
 
     @Override
-    public ObjectNode toJson(Record record, WriteOptions options, Namespaces namespaces, RepositoryManager repositoryManager)
+    public ObjectNode toJson(Record record, WriteOptions options, Namespaces namespaces, Repository repository)
             throws RepositoryException, InterruptedException {
         JsonNodeFactory factory = JsonNodeFactory.instance;
         ObjectNode recordNode = factory.objectNode();
@@ -96,13 +96,13 @@ public class RecordWriter implements EntityWriter<Record> {
             }
 
             for (Map.Entry<QName, Object> field : fields.entrySet()) {
-                FieldType fieldType = repositoryManager.getTypeManager().getFieldTypeByName(field.getKey());
+                FieldType fieldType = repository.getTypeManager().getFieldTypeByName(field.getKey());
                 String fieldName = QNameConverter.toJson(fieldType.getName(), namespaces);
 
                 // fields entry
                 fieldsNode.put(
                         fieldName,
-                        valueToJson(field.getValue(), fieldType.getValueType(), options, namespaces, repositoryManager));
+                        valueToJson(field.getValue(), fieldType.getValueType(), options, namespaces, repository));
 
                 // schema entry
                 if (schemaNode != null) {
@@ -178,27 +178,27 @@ public class RecordWriter implements EntityWriter<Record> {
     }
 
     private JsonNode listToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
-            RepositoryManager repositoryManager) throws RepositoryException, InterruptedException {
+            Repository repository) throws RepositoryException, InterruptedException {
         List list = (List)value;
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
         for (Object item : list) {
-            array.add(valueToJson(item, valueType, options, namespaces, repositoryManager));
+            array.add(valueToJson(item, valueType, options, namespaces, repository));
         }
         return array;
     }
 
     private JsonNode pathToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
-            RepositoryManager repositoryManager) throws RepositoryException, InterruptedException {
+            Repository repository) throws RepositoryException, InterruptedException {
         HierarchyPath path = (HierarchyPath)value;
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
         for (Object element : path.getElements()) {
-            array.add(valueToJson(element, valueType, options, namespaces, repositoryManager));
+            array.add(valueToJson(element, valueType, options, namespaces, repository));
         }
         return array;
     }
 
     public JsonNode valueToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
-            RepositoryManager repositoryManager) throws RepositoryException, InterruptedException {
+            Repository repository) throws RepositoryException, InterruptedException {
         String name = valueType.getBaseName();
 
         JsonNodeFactory factory = JsonNodeFactory.instance;
@@ -206,9 +206,9 @@ public class RecordWriter implements EntityWriter<Record> {
         JsonNode result;
 
         if (name.equals("LIST")) {
-            result = listToJson(value, valueType.getNestedValueType(), options, namespaces, repositoryManager);
+            result = listToJson(value, valueType.getNestedValueType(), options, namespaces, repository);
         } else if (name.equals("PATH")) {
-            result = pathToJson(value, valueType.getNestedValueType(), options, namespaces, repositoryManager);
+            result = pathToJson(value, valueType.getNestedValueType(), options, namespaces, repository);
         } else if (name.equals("STRING")) {
             result = factory.textNode((String)value);
         } else if (name.equals("LONG")) {
@@ -227,7 +227,7 @@ public class RecordWriter implements EntityWriter<Record> {
             Blob blob = (Blob)value;
             result = BlobConverter.toJson(blob);
         } else if (name.equals("RECORD")){
-            result = toJson((Record)value, options, namespaces, repositoryManager);
+            result = toJson((Record)value, options, namespaces, repository);
         } else if (name.equals("BYTEARRAY")) {
             result = factory.binaryNode(((ByteArray) value).getBytes());
         } else {

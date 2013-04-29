@@ -19,6 +19,7 @@ import java.util.ServiceLoader;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.RecordFilter;
@@ -37,7 +38,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
     }
 
     @Override
-    public ObjectNode toJson(RecordFilter filter, Namespaces namespaces, RepositoryManager repositoryManager,
+    public ObjectNode toJson(RecordFilter filter, Namespaces namespaces, Repository repository,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
 
@@ -45,7 +46,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
 
         for (RecordFilterJsonConverter json : filterLoader) {
             if (json.supports(className)) {
-                ObjectNode node = json.toJson(filter, namespaces, repositoryManager, converter);
+                ObjectNode node = json.toJson(filter, namespaces, repository, converter);
                 node.put("@class", className);
                 return node;
             }
@@ -55,7 +56,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
     }
 
     @Override
-    public RecordFilter fromJson(JsonNode node, Namespaces namespaces, RepositoryManager repositoryManager,
+    public RecordFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
@@ -63,7 +64,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
 
         for (RecordFilterJsonConverter json : filterLoader) {
             if (json.supports(className)) {
-                return json.fromJson(node, namespaces, repositoryManager, converter);
+                return json.fromJson(node, namespaces, repository, converter);
             }
         }
 

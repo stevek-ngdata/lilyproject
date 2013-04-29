@@ -25,7 +25,6 @@ import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;

@@ -140,7 +140,7 @@ public class RepositorySetup {
         hbaseTableFactory = new HBaseTableFactoryImpl(hadoopConf);
         tenantModel = new TenantModelImpl(zk);
         tenantMaster = new TenantMaster(zk, tenantModel, new DummyLilyInfo(),
-                Collections.<TenantMasterHook>singletonList(new RepositoryTenantMasterHook(hbaseTableFactory)));
+                Collections.<TenantMasterHook>singletonList(new RepositoryTenantMasterHook(hbaseTableFactory, hbaseProxy.getConf())));
         tenantMaster.start();
 
         coreSetup = true;

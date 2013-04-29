@@ -36,8 +36,8 @@ import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.MetadataBuilder;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.util.json.JsonUtil;
 
@@ -50,21 +50,21 @@ public class RecordReader implements EntityReader<Record> {
     private final LinkTransformer defaultLinkTransformer = new DefaultLinkTransformer();
 
     @Override
-    public Record fromJson(JsonNode node, RepositoryManager repositoryManager) throws JsonFormatException, RepositoryException,
+    public Record fromJson(JsonNode node, Repository repository) throws JsonFormatException, RepositoryException,
             InterruptedException {
-        return fromJson(node, null, repositoryManager);
+        return fromJson(node, null, repository);
     }
 
     @Override
-    public Record fromJson(JsonNode nodeNode, Namespaces namespaces, RepositoryManager repositoryManager)
+    public Record fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
-        return fromJson(nodeNode, namespaces, repositoryManager, defaultLinkTransformer);
+        return fromJson(nodeNode, namespaces, repository, defaultLinkTransformer);
     }
 
 
     @Override
-    public Record fromJson(JsonNode nodeNode, Namespaces namespaces, RepositoryManager repositoryManager,
-                            LinkTransformer linkTransformer)
+    public Record fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository,
+            LinkTransformer linkTransformer)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         if (!nodeNode.isObject()) {
@@ -76,11 +76,11 @@ public class RecordReader implements EntityReader<Record> {
 
         namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 
-        Record record = repositoryManager.getRecordFactory().newRecord();
+        Record record = repository.getRecordFactory().newRecord();
 
         String id = getString(node, "id", null);
         if (id != null) {
-            record.setId(repositoryManager.getIdGenerator().fromString(id));
+            record.setId(repository.getIdGenerator().fromString(id));
         }
 
         JsonNode typeNode = node.get("type");
@@ -101,9 +101,9 @@ public class RecordReader implements EntityReader<Record> {
                 Map.Entry<String, JsonNode> entry = it.next();
 
                 QName qname = QNameConverter.fromJson(entry.getKey(), namespaces);
-                FieldType fieldType = repositoryManager.getTypeManager().getFieldTypeByName(qname);
+                FieldType fieldType = repository.getTypeManager().getFieldTypeByName(qname);
                 Object value = readValue(fields.get(entry.getKey()), fieldType.getValueType(), entry.getKey(),
-                        namespaces, repositoryManager, linkTransformer);
+                        namespaces, repository, linkTransformer);
                 record.setField(qname, value);
             }
         }
@@ -167,7 +167,8 @@ public class RecordReader implements EntityReader<Record> {
         return record;
     }
 
-    private Object readList(JsonNode node, ValueType valueType, String prop, Namespaces namespaces, RepositoryManager repositoryManager, LinkTransformer linkTransformer)
+    private Object readList(JsonNode node, ValueType valueType, String prop, Namespaces namespaces,
+            Repository repository, LinkTransformer linkTransformer)
             throws JsonFormatException, RepositoryException, InterruptedException {
         if (!node.isArray()) {
             throw new JsonFormatException("List value should be specified as array in " + prop);
@@ -175,14 +176,14 @@ public class RecordReader implements EntityReader<Record> {
 
         List<Object> value = new ArrayList<Object>();
         for (int i = 0; i < node.size(); i++) {
-            value.add(readValue(node.get(i), valueType, prop, namespaces, repositoryManager, linkTransformer));
+            value.add(readValue(node.get(i), valueType, prop, namespaces, repository, linkTransformer));
         }
 
         return value;
     }
 
     private Object readPath(JsonNode node, ValueType valueType, String prop, Namespaces namespaces,
-                                RepositoryManager repositoryManager, LinkTransformer linkTransformer)
+                                Repository repository, LinkTransformer linkTransformer)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         if (!node.isArray()) {
@@ -191,22 +192,22 @@ public class RecordReader implements EntityReader<Record> {
 
         Object[] elements = new Object[node.size()];
         for (int i = 0; i < node.size(); i++) {
-            elements[i] = readValue(node.get(i), valueType, prop, namespaces, repositoryManager, linkTransformer);
+            elements[i] = readValue(node.get(i), valueType, prop, namespaces, repository, linkTransformer);
         }
 
         return new HierarchyPath(elements);
     }
 
     public Object readValue(JsonNode node, ValueType valueType, String prop, Namespaces namespaces,
-                            RepositoryManager repositoryManager, LinkTransformer linkTransformer)
+                            Repository repository, LinkTransformer linkTransformer)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         String name = valueType.getBaseName();
 
         if (name.equals("LIST")) {
-            return readList(node, valueType.getNestedValueType(), prop, namespaces, repositoryManager, linkTransformer);
+            return readList(node, valueType.getNestedValueType(), prop, namespaces, repository, linkTransformer);
         } else if (name.equals("PATH")) {
-            return readPath(node, valueType.getNestedValueType(), prop, namespaces, repositoryManager, linkTransformer);
+            return readPath(node, valueType.getNestedValueType(), prop, namespaces, repository, linkTransformer);
         } else if (name.equals("STRING")) {
             if (!node.isTextual()) {
                 throw new JsonFormatException("Expected text value for property '" + prop + "'");
@@ -258,7 +259,7 @@ public class RecordReader implements EntityReader<Record> {
                 throw new JsonFormatException("Expected text value for property '" + prop + "'");
             }
 
-            return linkTransformer.transform(node.getTextValue(), repositoryManager);
+            return linkTransformer.transform(node.getTextValue(), repository);
         } else if (name.equals("DATE")) {
             if (!node.isTextual()) {
                 throw new JsonFormatException("Expected text value for property '" + prop + "'");
@@ -279,7 +280,7 @@ public class RecordReader implements EntityReader<Record> {
             ObjectNode blobNode = (ObjectNode)node;
             return BlobConverter.fromJson(blobNode);
         } else if (name.equals("RECORD")) {
-            return fromJson(node, namespaces, repositoryManager);
+            return fromJson(node, namespaces, repository);
 
         } else if (name.equals("BYTEARRAY")) {
             if (!node.isTextual()) {

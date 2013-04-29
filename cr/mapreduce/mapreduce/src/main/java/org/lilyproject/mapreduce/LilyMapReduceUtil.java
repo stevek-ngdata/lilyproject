@@ -80,7 +80,8 @@ public class LilyMapReduceUtil {
 
         if (scan != null) {
             try {
-                JsonNode node = RecordScanWriter.INSTANCE.toJson(scan, new WriteOptions(), repositoryManager);
+                JsonNode node = RecordScanWriter.INSTANCE.toJson(scan, new WriteOptions(),
+                    /* TODO multitenancy */ repositoryManager.getPublicRepository());
                 String scanData = JsonFormat.serializeAsString(node);
                 job.getConfiguration().set(AbstractLilyScanInputFormat.SCAN, scanData);
             } catch (Exception e) {

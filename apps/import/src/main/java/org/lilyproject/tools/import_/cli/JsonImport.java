@@ -183,7 +183,7 @@ public class JsonImport {
             throw new ImportException("Field type should be specified as object node.");
         }
 
-        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson(node, namespaces, repository.getRepositoryManager());
+        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson(node, namespaces, repository);
 
         if (fieldType.getName() == null) {
             throw new ImportException("Missing name property on field type.");
@@ -220,7 +220,7 @@ public class JsonImport {
             throw new ImportException("Field type should be specified as object node.");
         }
 
-        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson(node, namespaces, repository.getRepositoryManager());
+        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson(node, namespaces, repository);
 
         if (fieldType.getName() == null) {
             throw new ImportException("Missing name property on field type.");
@@ -262,7 +262,7 @@ public class JsonImport {
             throw new ImportException("Record type should be specified as object node.");
         }
 
-        RecordType recordType = RecordTypeReader.INSTANCE.fromJson(node, namespaces, repository.getRepositoryManager());
+        RecordType recordType = RecordTypeReader.INSTANCE.fromJson(node, namespaces, repository);
         return importRecordType(recordType);
     }
 
@@ -301,7 +301,7 @@ public class JsonImport {
             throw new ImportException("Record should be specified as object node.");
         }
 
-        Record record = RecordReader.INSTANCE.fromJson(node, namespaces, repository.getRepositoryManager());
+        Record record = RecordReader.INSTANCE.fromJson(node, namespaces, repository);
 
         // Create-or-update requires client to specify the ID
         if (record.getId() == null) {

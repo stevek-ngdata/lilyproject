@@ -22,18 +22,18 @@ import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.FieldTypeEntry;
 import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.SchemaId;
 
 public class RecordTypeWriter implements EntityWriter<RecordType> {
     public static final EntityWriter<RecordType> INSTANCE = new RecordTypeWriter();
 
     @Override
-    public ObjectNode toJson(RecordType recordType, WriteOptions options, RepositoryManager repositoryManager) {
+    public ObjectNode toJson(RecordType recordType, WriteOptions options, Repository repository) {
         Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
                         NamespacesImpl.DEFAULT_USE_PREFIXES);
 
-        ObjectNode rtNode = toJson(recordType, options, namespaces, repositoryManager);
+        ObjectNode rtNode = toJson(recordType, options, namespaces, repository);
 
         if (namespaces.usePrefixes()) {
             rtNode.put("namespaces", NamespacesConverter.toJson(namespaces));
@@ -43,7 +43,7 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
     }
 
     @Override
-    public ObjectNode toJson(RecordType recordType, WriteOptions options, Namespaces namespaces, RepositoryManager repositoryManager) {
+    public ObjectNode toJson(RecordType recordType, WriteOptions options, Namespaces namespaces, Repository repository) {
         return toJson(recordType, options, namespaces, true);
     }
 

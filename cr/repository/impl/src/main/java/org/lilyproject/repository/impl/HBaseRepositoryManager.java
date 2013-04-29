@@ -48,7 +48,7 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
     protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
         TableManager tableManager = new TableManagerImpl(key.getTenantName(), hbaseConf, hbaseTableFactory);
         HTableInterface htable = LilyHBaseSchema.getRecordTable(hbaseTableFactory, key.toHBaseTableName(), true);
-        return new HBaseRepository(key, this, htable, blobManager, tableManager);
+        return new HBaseRepository(key, this, htable, blobManager, tableManager, getRecordFactory());
     }
 
 }

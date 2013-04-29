@@ -95,7 +95,8 @@ public class BatchIndexBuilder {
 
         JsonNode batchConfigurationNode =
                 JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration));
-        RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(batchConfigurationNode.get("scan"), repositoryManager);
+        RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(batchConfigurationNode.get("scan"),
+                /* TODO multitenancy */ repositoryManager.getPublicRepository());
         recordScan.setReturnFields(ReturnFields.ALL);
         recordScan.setCacheBlocks(false);
         recordScan.setCaching(1024);

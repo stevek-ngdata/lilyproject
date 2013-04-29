@@ -19,8 +19,8 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -34,12 +34,13 @@ public class FieldTypeReader implements EntityReader<FieldType> {
     public static final EntityReader<FieldType> INSTANCE = new FieldTypeReader();
 
     @Override
-    public FieldType fromJson(JsonNode node, RepositoryManager repositoryManager) throws JsonFormatException, RepositoryException, InterruptedException {
-        return fromJson(node, null, repositoryManager);
+    public FieldType fromJson(JsonNode node, Repository repository) throws JsonFormatException, RepositoryException,
+            InterruptedException {
+        return fromJson(node, null, repository);
     }
 
     @Override
-    public FieldType fromJson(JsonNode nodeNode, Namespaces namespaces, RepositoryManager repositoryManager)
+    public FieldType fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         if (!nodeNode.isObject()) {
@@ -57,7 +58,7 @@ public class FieldTypeReader implements EntityReader<FieldType> {
         String scopeName = getString(node, "scope", "non_versioned");
         Scope scope = parseScope(scopeName);
 
-        TypeManager typeManager = repositoryManager.getTypeManager();
+        TypeManager typeManager = repository.getTypeManager();
 
         // Be gentle to users of Lily 1.0
         if (node.has("valueType") && node.get("valueType").isObject() && node.get("valueType").has("primitive")) {
@@ -104,8 +105,8 @@ public class FieldTypeReader implements EntityReader<FieldType> {
     }
 
     @Override
-    public FieldType fromJson(JsonNode node, Namespaces namespaces, RepositoryManager repositoryManager,
+    public FieldType fromJson(JsonNode node, Namespaces namespaces, Repository repository,
             LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
-        return fromJson(node, namespaces, repositoryManager);
+        return fromJson(node, namespaces, repository);
     }
 }

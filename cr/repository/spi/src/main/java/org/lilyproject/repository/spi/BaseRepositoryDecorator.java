@@ -33,6 +33,7 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
@@ -52,6 +53,11 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     @Override
     public void setDelegate(Repository repository) {
         this.delegate = repository;
+    }
+
+    @Override
+    public RecordFactory getRecordFactory() {
+        return delegate.getRecordFactory();
     }
 
     @Override

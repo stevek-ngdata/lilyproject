@@ -220,7 +220,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
         if (scanData != null) {
             try {
                 JsonNode node = JsonFormat.deserializeNonStd(scanData);
-                scan = RecordScanReader.INSTANCE.fromJson(node, repositoryManager);
+                scan = RecordScanReader.INSTANCE.fromJson(node, /* TODO multitenancy */repositoryManager.getPublicRepository());
             } catch (Exception e) {
                 ExceptionUtil.handleInterrupt(e);
                 throw new RuntimeException(e);

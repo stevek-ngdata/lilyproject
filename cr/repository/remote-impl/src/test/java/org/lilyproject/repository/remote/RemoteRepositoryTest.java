@@ -31,6 +31,7 @@ import org.lilyproject.avro.AvroMutationCondition;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.TenantTableKey;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -58,7 +59,8 @@ public class RemoteRepositoryTest {
 
         RemoteTableManager tableMgr = new RemoteTableManager(tenantName, avroLilyTransceiver, avroConverter);
         remoteRepository = new RemoteRepository(new TenantTableKey(tenantName, Table.RECORD.name), avroLilyTransceiver,
-                avroConverter, mock(RemoteRepositoryManager.class), mock(BlobManager.class), recordTable, tableMgr);
+                avroConverter, mock(RemoteRepositoryManager.class), mock(BlobManager.class), recordTable, tableMgr,
+                mock(RecordFactory.class));
     }
 
     @Test

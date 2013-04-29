@@ -24,10 +24,12 @@ import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.repo.PureRepository;
 
 public class ScannerCli extends BaseZkCliTool {
     private LilyClient lilyClient;
@@ -149,14 +151,15 @@ public class ScannerCli extends BaseZkCliTool {
         File configFile = cmd.hasOption(configOption.getLongOpt()) ? new File (cmd.getOptionValue(configOption.getLongOpt())) : null;
         long limit = cmd.hasOption(limitOption.getLongOpt()) ? Long.parseLong(cmd.getOptionValue(limitOption.getLongOpt())) : -1;
         String tenant = OptionUtil.getStringOption(cmd, tenantOption, "public");
-        String table = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
+        String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
-        Repository repository = (Repository)lilyClient.getRepository(tenant).getTable(table);
+        Repository repository = PureRepository.wrap(lilyClient.getRepository(tenant));
+        LTable table = repository.getTable(tableName);
         if (cmd.hasOption(countOption.getOpt())) {
-            RecordScanTool.count(repository, startId, stopId,recordTypeFilter, configFile);
+            RecordScanTool.count(repository, table, startId, stopId,recordTypeFilter, configFile);
         } else if (cmd.hasOption(printOption.getOpt())) {
-            RecordScanTool.print(repository, startId, stopId, limit, recordTypeFilter, configFile);
+            RecordScanTool.print(repository, table, startId, stopId, limit, recordTypeFilter, configFile);
         }
 
         return 0;

@@ -53,7 +53,7 @@ public class RemoteRepositoryManager extends AbstractRepositoryManager implement
         String hbaseTableName = key.toHBaseTableName();
         TableManager tableManager = new RemoteTableManager(key.getTenantName(), transceiver, avroConverter);
         Repository repo = new RemoteRepository(key, transceiver, avroConverter, this, blobManager,
-                LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, true), tableManager);
+                LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, true), tableManager, getRecordFactory());
         if ("true".equals(System.getProperty("lilyclient.trace"))) {
             repo = TracingRepository.wrap(repo);
         }

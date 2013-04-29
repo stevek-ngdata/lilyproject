@@ -50,6 +50,7 @@ import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.RecordScan;
@@ -77,11 +78,13 @@ public abstract class BaseRepository implements Repository {
     protected final TypeManager typeManager;
     protected final IdGenerator idGenerator;
     protected final BlobManager blobManager;
+    protected final RecordFactory recordFactory;
     protected final RecordDecoder recdec;
     protected final HTableInterface recordTable;
     protected final TenantTableKey tenantTableKey;
     protected final TableManager tableManager;
     protected RepositoryMetrics metrics;
+
     /**
      * Not all rows in the HBase record table are real records, this filter excludes non-valid
      * record rows.
@@ -100,7 +103,7 @@ public abstract class BaseRepository implements Repository {
 
     protected BaseRepository(TenantTableKey tenantTableKey, AbstractRepositoryManager repositoryManager,
             BlobManager blobManager, HTableInterface recordTable, RepositoryMetrics metrics,
-            TableManager tableManager) {
+            TableManager tableManager, RecordFactory recordFactory) {
 
         Preconditions.checkNotNull(repositoryManager, "repositoryManager cannot be null");
         Preconditions.checkNotNull(blobManager, "blobManager cannot be null");
@@ -115,11 +118,17 @@ public abstract class BaseRepository implements Repository {
         this.recdec = new RecordDecoder(typeManager, idGenerator);
         this.metrics = metrics;
         this.tableManager = tableManager;
+        this.recordFactory = recordFactory;
     }
 
     @Override
     public TableManager getTableManager() {
         return tableManager;
+    }
+
+    @Override
+    public RecordFactory getRecordFactory() {
+        return recordFactory;
     }
 
     @Override
