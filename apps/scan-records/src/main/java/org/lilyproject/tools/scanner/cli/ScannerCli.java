@@ -24,6 +24,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.util.Version;
@@ -154,7 +155,7 @@ public class ScannerCli extends BaseZkCliTool {
         String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
-        Repository repository = (Repository)PureRepository.wrap((Repository)lilyClient.getRepository(tenant));
+        LRepository repository = lilyClient.getRepository(tenant);
         LTable table = repository.getTable(tableName);
         if (cmd.hasOption(countOption.getOpt())) {
             RecordScanTool.count(repository, table, startId, stopId,recordTypeFilter, configFile);

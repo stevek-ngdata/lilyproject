@@ -20,12 +20,12 @@ import java.io.FileInputStream;
 import java.util.Date;
 
 import org.codehaus.jackson.JsonNode;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.repository.api.filter.RecordFilterList;
 import org.lilyproject.repository.api.filter.RecordFilterList.Operator;
@@ -35,42 +35,42 @@ import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.PrintUtil;
 
 public class RecordScanTool {
-    private Repository repository;
+    private LRepository repository;
     private LTable table;
     private static int DEFAULT_CACHE = 1024;
     private static boolean DEFAULT_CACHE_BLOCKS = false;
 
-    public static void count(Repository repository, LTable table) throws Exception {
+    public static void count(LRepository repository, LTable table) throws Exception {
         count(repository, table, null, null);
     }
 
-    public static void count(Repository repository, LTable table, String startId, String stopId) throws Exception {
+    public static void count(LRepository repository, LTable table, String startId, String stopId) throws Exception {
         count(repository, table, startId, stopId, null, null);
     }
 
-    public static void count(Repository repository, LTable table, String startId, String stopId,
+    public static void count(LRepository repository, LTable table, String startId, String stopId,
             String recordTypeFilter, File configFile) throws Exception {
         new RecordScanTool(repository, table).count(startId, stopId, recordTypeFilter, configFile);
     }
 
-    public static void print(Repository repository, LTable table) throws Exception {
+    public static void print(LRepository repository, LTable table) throws Exception {
         print(repository, table, -1L);
     }
 
-    public static void print(Repository repository, LTable table, long limit) throws Exception {
+    public static void print(LRepository repository, LTable table, long limit) throws Exception {
         print(repository, table, limit, null);
     }
 
-    public static void print(Repository repository, LTable table, long limit, File config) throws Exception {
+    public static void print(LRepository repository, LTable table, long limit, File config) throws Exception {
         print(repository, table, null, null, limit, null, config);
     }
 
-    public static void print(Repository repository, LTable table, String startId, String stopId, long limit,
+    public static void print(LRepository repository, LTable table, String startId, String stopId, long limit,
             String recordTypeFilter, File config) throws Exception {
         new RecordScanTool(repository, table).print(startId, stopId, limit, recordTypeFilter, config);
     }
 
-    public RecordScanTool(Repository repository, LTable table) {
+    public RecordScanTool(LRepository repository, LTable table) {
         this.repository = repository;
         this.table = table;
     }

@@ -17,7 +17,7 @@ package org.lilyproject.tools.import_.json;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.tools.import_.json.filters.RecordFilterJsonConverters;
@@ -26,13 +26,13 @@ public class RecordFilterReader implements EntityReader<RecordFilter> {
     public static final RecordScanReader INSTANCE = new RecordScanReader();
 
     @Override
-    public RecordFilter fromJson(JsonNode node, Repository repository)
+    public RecordFilter fromJson(JsonNode node, LRepository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(node, null, repository);
     }
 
     @Override
-    public RecordFilter fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository)
+    public RecordFilter fromJson(JsonNode nodeNode, Namespaces namespaces, LRepository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         if (!nodeNode.isObject()) {
@@ -49,7 +49,7 @@ public class RecordFilterReader implements EntityReader<RecordFilter> {
     }
 
     @Override
-    public RecordFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
+    public RecordFilter fromJson(JsonNode node, Namespaces namespaces, LRepository repository,
             LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(node, namespaces, repository);
     }

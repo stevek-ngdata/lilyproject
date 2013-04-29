@@ -29,10 +29,10 @@ import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.ValueType;
@@ -42,7 +42,7 @@ public class RecordWriter implements EntityWriter<Record> {
     public static final RecordWriter INSTANCE = new RecordWriter();
 
     @Override
-    public ObjectNode toJson(Record record, WriteOptions options, Repository repository) throws RepositoryException,
+    public ObjectNode toJson(Record record, WriteOptions options, LRepository repository) throws RepositoryException,
             InterruptedException {
         Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
                 NamespacesImpl.DEFAULT_USE_PREFIXES);
@@ -57,7 +57,7 @@ public class RecordWriter implements EntityWriter<Record> {
     }
 
     @Override
-    public ObjectNode toJson(Record record, WriteOptions options, Namespaces namespaces, Repository repository)
+    public ObjectNode toJson(Record record, WriteOptions options, Namespaces namespaces, LRepository repository)
             throws RepositoryException, InterruptedException {
         JsonNodeFactory factory = JsonNodeFactory.instance;
         ObjectNode recordNode = factory.objectNode();
@@ -178,7 +178,7 @@ public class RecordWriter implements EntityWriter<Record> {
     }
 
     private JsonNode listToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
-            Repository repository) throws RepositoryException, InterruptedException {
+            LRepository repository) throws RepositoryException, InterruptedException {
         List list = (List)value;
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
         for (Object item : list) {
@@ -188,7 +188,7 @@ public class RecordWriter implements EntityWriter<Record> {
     }
 
     private JsonNode pathToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
-            Repository repository) throws RepositoryException, InterruptedException {
+            LRepository repository) throws RepositoryException, InterruptedException {
         HierarchyPath path = (HierarchyPath)value;
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
         for (Object element : path.getElements()) {
@@ -198,7 +198,7 @@ public class RecordWriter implements EntityWriter<Record> {
     }
 
     public JsonNode valueToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
-            Repository repository) throws RepositoryException, InterruptedException {
+            LRepository repository) throws RepositoryException, InterruptedException {
         String name = valueType.getBaseName();
 
         JsonNodeFactory factory = JsonNodeFactory.instance;

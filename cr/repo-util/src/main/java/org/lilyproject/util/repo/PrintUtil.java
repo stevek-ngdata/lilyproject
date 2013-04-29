@@ -26,11 +26,11 @@ import java.util.TreeMap;
 
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -43,11 +43,11 @@ public class PrintUtil {
     private PrintUtil() {
     }
 
-    public static void print(Record record, Repository repository) {
+    public static void print(Record record, LRepository repository) {
         print(record, repository, System.out);
     }
 
-    public static void print(Record record, Repository repository, PrintStream out) {
+    public static void print(Record record, LRepository repository, PrintStream out) {
         TypeManager typeManager = repository.getTypeManager();
 
         // Group the fields per scope
@@ -156,11 +156,11 @@ public class PrintUtil {
         out.println("  Record type = " + record.getRecordTypeName(scope) + ", version " + record.getRecordTypeVersion(scope));
     }
 
-    public static void print(RecordType recordType, Repository repository) {
+    public static void print(RecordType recordType, LRepository repository) {
         print(recordType, repository, System.out);
     }
 
-    public static void print(RecordType recordType, Repository repository, PrintStream out) {
+    public static void print(RecordType recordType, LRepository repository, PrintStream out) {
 
         List<SchemaId> failedFieldTypes = new ArrayList<SchemaId>();
 

@@ -19,9 +19,8 @@ import java.util.ServiceLoader;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.Namespaces;
@@ -38,7 +37,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
     }
 
     @Override
-    public ObjectNode toJson(RecordFilter filter, Namespaces namespaces, Repository repository,
+    public ObjectNode toJson(RecordFilter filter, Namespaces namespaces, LRepository repository,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
 
@@ -56,7 +55,7 @@ public class RecordFilterJsonConverters implements RecordFilterJsonConverter<Rec
     }
 
     @Override
-    public RecordFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
+    public RecordFilter fromJson(JsonNode node, Namespaces namespaces, LRepository repository,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
 

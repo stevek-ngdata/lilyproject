@@ -18,8 +18,8 @@ package org.lilyproject.tools.import_.json;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -34,13 +34,13 @@ public class FieldTypeReader implements EntityReader<FieldType> {
     public static final EntityReader<FieldType> INSTANCE = new FieldTypeReader();
 
     @Override
-    public FieldType fromJson(JsonNode node, Repository repository) throws JsonFormatException, RepositoryException,
+    public FieldType fromJson(JsonNode node, LRepository repository) throws JsonFormatException, RepositoryException,
             InterruptedException {
         return fromJson(node, null, repository);
     }
 
     @Override
-    public FieldType fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository)
+    public FieldType fromJson(JsonNode nodeNode, Namespaces namespaces, LRepository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         if (!nodeNode.isObject()) {
@@ -105,7 +105,7 @@ public class FieldTypeReader implements EntityReader<FieldType> {
     }
 
     @Override
-    public FieldType fromJson(JsonNode node, Namespaces namespaces, Repository repository,
+    public FieldType fromJson(JsonNode node, Namespaces namespaces, LRepository repository,
             LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(node, namespaces, repository);
     }

@@ -33,10 +33,10 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.MetadataBuilder;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.util.json.JsonUtil;
@@ -50,20 +50,20 @@ public class RecordReader implements EntityReader<Record> {
     private final LinkTransformer defaultLinkTransformer = new DefaultLinkTransformer();
 
     @Override
-    public Record fromJson(JsonNode node, Repository repository) throws JsonFormatException, RepositoryException,
+    public Record fromJson(JsonNode node, LRepository repository) throws JsonFormatException, RepositoryException,
             InterruptedException {
         return fromJson(node, null, repository);
     }
 
     @Override
-    public Record fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository)
+    public Record fromJson(JsonNode nodeNode, Namespaces namespaces, LRepository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(nodeNode, namespaces, repository, defaultLinkTransformer);
     }
 
 
     @Override
-    public Record fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository,
+    public Record fromJson(JsonNode nodeNode, Namespaces namespaces, LRepository repository,
             LinkTransformer linkTransformer)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
@@ -168,7 +168,7 @@ public class RecordReader implements EntityReader<Record> {
     }
 
     private Object readList(JsonNode node, ValueType valueType, String prop, Namespaces namespaces,
-            Repository repository, LinkTransformer linkTransformer)
+            LRepository repository, LinkTransformer linkTransformer)
             throws JsonFormatException, RepositoryException, InterruptedException {
         if (!node.isArray()) {
             throw new JsonFormatException("List value should be specified as array in " + prop);
@@ -183,7 +183,7 @@ public class RecordReader implements EntityReader<Record> {
     }
 
     private Object readPath(JsonNode node, ValueType valueType, String prop, Namespaces namespaces,
-                                Repository repository, LinkTransformer linkTransformer)
+                                LRepository repository, LinkTransformer linkTransformer)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         if (!node.isArray()) {
@@ -199,7 +199,7 @@ public class RecordReader implements EntityReader<Record> {
     }
 
     public Object readValue(JsonNode node, ValueType valueType, String prop, Namespaces namespaces,
-                            Repository repository, LinkTransformer linkTransformer)
+                            LRepository repository, LinkTransformer linkTransformer)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         String name = valueType.getBaseName();

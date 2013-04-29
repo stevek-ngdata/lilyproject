@@ -17,9 +17,9 @@ package org.lilyproject.tools.import_.json;
 
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.tools.import_.json.filters.RecordFilterJsonConverters;
 import org.lilyproject.util.json.JsonFormat;
@@ -28,7 +28,7 @@ public class RecordScanWriter implements EntityWriter<RecordScan> {
     public static final RecordScanWriter INSTANCE = new RecordScanWriter();
 
     @Override
-    public ObjectNode toJson(RecordScan entity, WriteOptions options, Repository repository)
+    public ObjectNode toJson(RecordScan entity, WriteOptions options, LRepository repository)
             throws RepositoryException, InterruptedException {
         Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
                         NamespacesImpl.DEFAULT_USE_PREFIXES);
@@ -43,7 +43,7 @@ public class RecordScanWriter implements EntityWriter<RecordScan> {
     }
 
     @Override
-    public ObjectNode toJson(RecordScan scan, WriteOptions options, Namespaces namespaces, Repository repository)
+    public ObjectNode toJson(RecordScan scan, WriteOptions options, Namespaces namespaces, LRepository repository)
             throws RepositoryException, InterruptedException {
 
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();

@@ -18,8 +18,8 @@ package org.lilyproject.tools.import_.json.filters;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.CompareOp;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.filter.FieldValueFilter;
@@ -44,7 +44,7 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
     }
 
     @Override
-    public FieldValueFilter fromJson(JsonNode node, Namespaces namespaces, Repository repository,
+    public FieldValueFilter fromJson(JsonNode node, Namespaces namespaces, LRepository repository,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
         FieldValueFilter filter = new FieldValueFilter();
@@ -78,7 +78,7 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
     }
 
     @Override
-    public ObjectNode toJson(FieldValueFilter filter, Namespaces namespaces, Repository repository,
+    public ObjectNode toJson(FieldValueFilter filter, Namespaces namespaces, LRepository repository,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();
