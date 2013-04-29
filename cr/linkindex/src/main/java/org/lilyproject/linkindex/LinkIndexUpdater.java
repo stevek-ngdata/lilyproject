@@ -127,7 +127,7 @@ public class LinkIndexUpdater implements EventListener {
                 VTaggedRecord vtRecord;
                 try {
                     vtRecord = new VTaggedRecord(absRecordId.getRecordId(), eventHelper,
-                            (Repository)repositoryManager.getRepository(recordEvent.getTableName()));
+                            (Repository)repositoryManager.getTable(recordEvent.getTableName()));
                 } catch (RecordNotFoundException e) {
                     // record not found: delete all links for all vtags
                     linkIndex.deleteLinks(absRecordId);

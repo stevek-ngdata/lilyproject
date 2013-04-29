@@ -208,7 +208,7 @@ public class IndexerTest {
         repoSetup.getTableManager().createTable(ALTERNATE_TABLE);
 
         defaultRepository = (Repository)repositoryManager.getDefaultTable();
-        alternateRepository = (Repository)repositoryManager.getRepository(ALTERNATE_TABLE);
+        alternateRepository = (Repository)repositoryManager.getTable(ALTERNATE_TABLE);
         indexUpdaterRepositoryMgr = new TrackingRepositoryManager(repoSetup.getRepositoryManager());
 
 
