@@ -131,9 +131,9 @@ public class LilyClient implements Closeable, RepositoryManager {
         this.isClosed = false; // needs to be before refreshServers and schemaCache.start()
         zk.addDefaultWatcher(watcher);
         refreshServers();
-        schemaCache.start();
         tenantModel = new TenantModelImpl(zk);
         balancingAndRetryingLilyConnection = BalancingAndRetryingLilyConnection.getInstance(this, tenantModel);
+        schemaCache.start();
     }
 
     @Override
@@ -176,28 +176,32 @@ public class LilyClient implements Closeable, RepositoryManager {
 
 
     /**
-     * Returns the default plain repository.
-     * @return the default plain repository
-     * @see #getPlainRepository(String)
+     * Returns the plain repository for the default table (record) of the public repository. A plain repository
+     * is one for which the operations (both on itself and on the LTable's retrieved from it) behave as described
+     * in {@link #getPlainTable(String, String)}.
+     *
+     * @see #getPlainTable(String, String)
      */
     public Repository getPlainRepository() throws IOException, NoServersException, InterruptedException,
             KeeperException, RepositoryException {
-        return getPlainRepository(Table.RECORD.name);
+        return (Repository)getPlainTable("public", Table.RECORD.name);
     }
 
     /**
-     * Returns a Repository that uses one of the available Lily servers (randomly selected).
-     * This repository instance will not automatically retry operations and to balance requests
+     * Returns an LTable that will execute its operations against one specific Lily server, randomly selected from
+     * the available Lily servers.
+     *
+     * <p>This LTable instance will not automatically retry operations and to balance requests
      * over multiple Lily servers, you need to recall this method regularly to retrieve other
-     * repository instances. Most of the time, you will rather use {@link #getRepository(String)}.
+     * repository instances. Most of the time, you will rather use {@link #getRepository(String)}.</p>
      */
-    // TODO multitenancy: it would be more logical for this method to take both tenantName and table as parameter
-    public Repository getPlainRepository(String tableName) throws IOException, InterruptedException, NoServersException, RepositoryException, KeeperException {
+    public LTable getPlainTable(String tenantName, String tableName) throws IOException, InterruptedException,
+            NoServersException, RepositoryException, KeeperException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
 
-        return getServerNode().repoMgr.getRepository(tableName);
+        return getServerNode().repoMgr.getRepository(tenantName).getTable(tableName);
     }
 
     /**

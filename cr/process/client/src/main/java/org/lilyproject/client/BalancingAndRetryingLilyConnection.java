@@ -216,8 +216,8 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
 
             while (true) {
                 try {
-                    // TODO multitenancy
-                    Repository repository = lilyClient.getPlainRepository(tenantTableKey.getTableName());
+                    Repository repository = (Repository)lilyClient.getPlainTable(tenantTableKey.getTenantName(),
+                            tenantTableKey.getTableName());
                     return method.invoke(repository, args);
                 } catch (NoServersException e) {
                     // Needs to be wrapped because NoServersException is not in the throws clause of the
