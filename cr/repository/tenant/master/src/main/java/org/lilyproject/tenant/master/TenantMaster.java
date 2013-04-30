@@ -89,12 +89,16 @@ public class TenantMaster implements PluginUser<TenantMasterHook> {
         leaderElection = new LeaderElection(zk, "Tenant Master", "/lily/tenant/masters",
                 new MyLeaderElectionCallback());
 
-        pluginRegistry.setPluginUser(TenantMasterHook.class, this);
+        if (pluginRegistry != null) {
+            pluginRegistry.setPluginUser(TenantMasterHook.class, this);
+        }
     }
 
     @PreDestroy
     public void stop() {
-        pluginRegistry.unsetPluginUser(TenantMasterHook.class, this);
+        if (pluginRegistry != null) {
+            pluginRegistry.unsetPluginUser(TenantMasterHook.class, this);
+        }
 
         try {
             if (leaderElection != null) {
