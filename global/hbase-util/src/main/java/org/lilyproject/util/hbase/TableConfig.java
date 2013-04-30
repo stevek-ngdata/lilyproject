@@ -69,7 +69,7 @@ public class TableConfig {
      * @param splitKeysAsString (optional, can be null) comma-separated list of split keys. If this is specified, it takes
      */
     public static byte[][] parseSplitKeys(Integer regionCount, String splitKeysAsString, String splitKeyPrefixAsString) {
-        byte[] splitKeyPrefix = splitKeyPrefixAsString != null ? Bytes.toBytesBinary(splitKeyPrefixAsString) : null;
+        byte[] splitKeyPrefix = splitKeyPrefixAsString != null ? Bytes.toBytesBinary(splitKeyPrefixAsString) : new byte[0];
         byte[][] splitKeys = null;
         if (splitKeysAsString != null && !splitKeysAsString.isEmpty()) {
             String[] split = splitKeysAsString.split(",");
