@@ -40,12 +40,12 @@ import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobAccess;
 import org.lilyproject.repository.api.BlobException;
 import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdRecordScanner;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -57,7 +57,6 @@ import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.repository.api.SchemaId;
@@ -252,7 +251,7 @@ public abstract class BaseRepository implements Repository {
 
         // add user's filter
         if (scan.getRecordFilter() != null) {
-            Filter filter = filterFactory.createHBaseFilter(scan.getRecordFilter(), repositoryManager, filterFactory);
+            Filter filter = filterFactory.createHBaseFilter(scan.getRecordFilter(), this, filterFactory);
             filterList.addFilter(filter);
         }
 
@@ -305,10 +304,10 @@ public abstract class BaseRepository implements Repository {
 
     private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {
         @Override
-        public Filter createHBaseFilter(RecordFilter filter, RepositoryManager repositoryManager, HBaseRecordFilterFactory factory)
+        public Filter createHBaseFilter(RecordFilter filter, LRepository repository, HBaseRecordFilterFactory factory)
                 throws RepositoryException, InterruptedException {
             for (HBaseRecordFilterFactory filterFactory : FILTER_FACTORIES) {
-                Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repositoryManager, factory);
+                Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repository, factory);
                 if (hbaseFilter != null) {
                     return hbaseFilter;
                 }

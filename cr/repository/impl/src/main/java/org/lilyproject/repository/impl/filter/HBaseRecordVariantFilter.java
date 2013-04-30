@@ -20,8 +20,8 @@ import java.util.Arrays;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.api.filter.RecordVariantFilter;
 import org.lilyproject.repository.impl.hbase.LilyRecordVariantFilter;
@@ -29,7 +29,7 @@ import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 
 public class HBaseRecordVariantFilter implements HBaseRecordFilterFactory {
     @Override
-    public Filter createHBaseFilter(RecordFilter uncastFilter, RepositoryManager repositoryManager, HBaseRecordFilterFactory factory)
+    public Filter createHBaseFilter(RecordFilter uncastFilter, LRepository repository, HBaseRecordFilterFactory factory)
             throws RepositoryException, InterruptedException {
 
         if (!(uncastFilter instanceof RecordVariantFilter)) {

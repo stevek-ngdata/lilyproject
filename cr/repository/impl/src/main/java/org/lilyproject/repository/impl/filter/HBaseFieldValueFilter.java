@@ -21,8 +21,8 @@ import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.CompareOp;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.FieldValueFilter;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.impl.FieldTypeImpl;
@@ -32,7 +32,7 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 
 public class HBaseFieldValueFilter implements HBaseRecordFilterFactory {
     @Override
-    public Filter createHBaseFilter(RecordFilter uncastFilter, RepositoryManager repositoryManager, HBaseRecordFilterFactory factory)
+    public Filter createHBaseFilter(RecordFilter uncastFilter, LRepository repository, HBaseRecordFilterFactory factory)
             throws RepositoryException, InterruptedException {
 
         if (!(uncastFilter instanceof FieldValueFilter)) {
@@ -54,7 +54,7 @@ public class HBaseFieldValueFilter implements HBaseRecordFilterFactory {
             throw new IllegalArgumentException("FieldValueFilter does not support this compare operator: " + compareOp);
         }
 
-        FieldType fieldType = repositoryManager.getTypeManager().getFieldTypeByName(filter.getField());
+        FieldType fieldType = repository.getTypeManager().getFieldTypeByName(filter.getField());
         DataOutput dataOutput = new DataOutputImpl();
         fieldType.getValueType().write(filter.getFieldValue(), dataOutput, new IdentityRecordStack());
         byte[] fieldValue = dataOutput.toByteArray();
