@@ -31,6 +31,7 @@ import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
+import org.lilyproject.tenant.model.api.TenantExistsException;
 import org.lilyproject.tenant.model.api.TenantModel;
 
 import java.util.List;
@@ -42,7 +43,7 @@ import static org.lilyproject.tenant.model.api.Tenant.TenantLifecycleState;
 /**
  * Tests related to tenants and tables.
  */
-public class AbstractTenantTableTest {
+public abstract class AbstractTenantTableTest {
     protected static final RepositorySetup repoSetup = new RepositorySetup();
     protected static RepositoryManager repositoryManager;
 
@@ -69,6 +70,16 @@ public class AbstractTenantTableTest {
     public void testTableCreationIsRequired() throws Exception {
         LRepository repository = repositoryManager.getPublicRepository();
         repository.getTable("aNonExistingTable");
+    }
+
+    /**
+     * Trying to get a non-existing table should fail.
+     */
+    @Test(expected = TenantExistsException.class)
+    public void testCreateTenantTwice() throws Exception {
+        TenantModel tenantModel = repoSetup.getTenantModel();
+        tenantModel.create("sometenant");
+        tenantModel.create("sometenant");
     }
 
     /**
