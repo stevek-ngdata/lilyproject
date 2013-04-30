@@ -77,13 +77,14 @@ public class Indexer {
     private final Log log = LogFactory.getLog(getClass());
 
     public Indexer(String indexName, IndexerConf conf, RepositoryManager repositoryManager, SolrShardManager solrShardMgr,
-                   IndexLocker indexLocker, IndexerMetrics metrics, DerefMap derefMap) {
+                   IndexLocker indexLocker, IndexerMetrics metrics, DerefMap derefMap)
+            throws RepositoryException, InterruptedException {
         this.indexName = indexName;
         this.conf = conf;
         this.repositoryManager = repositoryManager;
         this.solrShardMgr = solrShardMgr;
         this.indexLocker = indexLocker;
-        this.typeManager = repositoryManager.getTypeManager();
+        this.typeManager = repositoryManager.getPublicRepository().getTypeManager();
         this.systemFields = SystemFields.getInstance(typeManager, repositoryManager.getIdGenerator());
         this.valueEvaluator = new ValueEvaluator(conf);
         this.metrics = metrics;

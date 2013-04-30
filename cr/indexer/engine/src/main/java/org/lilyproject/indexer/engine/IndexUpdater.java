@@ -40,12 +40,12 @@ import org.lilyproject.linkindex.LinkIndexException;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
@@ -95,7 +95,7 @@ import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
  * Updates the index in response to repository events.
  */
 public class IndexUpdater implements EventListener {
-    private RepositoryManager repositoryManager;
+    private LRepository repository;
     private Indexer indexer;
     private IndexUpdaterMetrics metrics;
     private ClassLoader myContextClassLoader;
@@ -117,12 +117,12 @@ public class IndexUpdater implements EventListener {
      *                       because the IndexUpdater generates events itself, which should only be sent to
      *                       this subscription.
      */
-    public IndexUpdater(Indexer indexer, RepositoryManager repositoryManager, IndexLocker indexLocker,
+    public IndexUpdater(Indexer indexer, LRepository repository, IndexLocker indexLocker,
             IndexUpdaterMetrics metrics, DerefMap derefMap, LilyEventPublisherManager eventPublisherMgr,
-            String subscriptionId) throws IOException {
+            String subscriptionId) {
         this.indexer = indexer;
-        this.repositoryManager = repositoryManager;
-        this.idGenerator = repositoryManager.getIdGenerator();
+        this.repository = repository;
+        this.idGenerator = repository.getIdGenerator();
         this.indexLocker = indexLocker;
         this.derefMap = derefMap;
         this.eventPublisherMgr = eventPublisherMgr;
@@ -174,7 +174,7 @@ public class IndexUpdater implements EventListener {
                             indexer.vtagSetToNameString(recordEvent.getVtagsToIndex())));
                 }
                 String tableName = recordEvent.getTableName();
-                index((Repository)repositoryManager.getTable(tableName), tableName, recordId, recordEvent.getVtagsToIndex());
+                index((Repository)repository.getTable(tableName), tableName, recordId, recordEvent.getVtagsToIndex());
             } else if (recordEvent.getType().equals(DELETE)) {
                 // Record is deleted: delete its index entry. We do not check for a matching index case, since
                 // we can't (record is not available anymore), and besides IndexAwareMQFeeder takes care of sending us
@@ -203,7 +203,7 @@ public class IndexUpdater implements EventListener {
                 // than the old one, perform the necessary deletes on Solr.
                 Pair<Record,Record> oldAndNewRecords =
                         IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, recordEvent,
-                                (Repository)repositoryManager.getTable(recordEvent.getTableName()));
+                                (Repository)repository.getTable(recordEvent.getTableName()));
                 Record oldRecord = oldAndNewRecords.getV1();
                 Record newRecord = oldAndNewRecords.getV2();
                 IndexCase caseOld = oldRecord != null ? indexer.getConf().getIndexCase(
@@ -237,7 +237,7 @@ public class IndexUpdater implements EventListener {
                     doIndexing = caseOld.getVersionTags().size() > 0;
                 }
 
-                RecordEventHelper eventHelper = new RecordEventHelper(recordEvent, null, repositoryManager.getTypeManager());
+                RecordEventHelper eventHelper = new RecordEventHelper(recordEvent, null, repository.getTypeManager());
 
                 if (doIndexing) {
                     indexLocker.lock(recordId);
@@ -248,7 +248,7 @@ public class IndexUpdater implements EventListener {
                             // mappings read here. The processing of later events will bring the index up to date with
                             // any new changes.
                             vtRecord = new VTaggedRecord(recordId, eventHelper,
-                                    (Repository)repositoryManager.getTable(recordEvent.getTableName()));
+                                    (Repository)repository.getTable(recordEvent.getTableName()));
                         } catch (RecordNotFoundException e) {
                             // The record has been deleted in the meantime.
                             // For now, we do nothing, when the delete event is received the record will be removed

@@ -94,7 +94,7 @@ public abstract class AbstractTenantTableTest {
         assertTrue(tenantModel.waitUntilTenantInState("company1", TenantLifecycleState.ACTIVE, 60000L));
         assertTrue(tenantModel.waitUntilTenantInState("company2", TenantLifecycleState.ACTIVE, 60000L));
 
-        TypeManager typeMgr = repositoryManager.getTypeManager();
+        TypeManager typeMgr = repositoryManager.getPublicRepository().getTypeManager();
         FieldType fieldType1 = typeMgr.createFieldType("STRING", new QName("test", "field1"), Scope.NON_VERSIONED);
         RecordType recordType1 = typeMgr.recordTypeBuilder()
                 .name(new QName("test", "rt1"))

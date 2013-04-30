@@ -122,7 +122,7 @@ public class LinkIndexUpdater implements EventListener {
                 boolean isNewRecord = recordEvent.getType().equals(CREATE);
 
                 RecordEventHelper eventHelper = new RecordEventHelper(recordEvent, LINK_FIELD_FILTER,
-                        repositoryManager.getTypeManager());
+                        repositoryManager.getPublicRepository().getTypeManager());
 
                 VTaggedRecord vtRecord;
                 try {
@@ -207,7 +207,7 @@ public class LinkIndexUpdater implements EventListener {
                 links = Collections.emptySet();
             } else {
                 LinkCollector collector = new LinkCollector(repositoryManager.getIdGenerator());
-                RecordLinkExtractor.extract(versionRecord, collector, repositoryManager);
+                RecordLinkExtractor.extract(versionRecord, collector, repositoryManager.getPublicRepository());
                 links = collector.getLinks();
             }
             return links;
@@ -231,7 +231,7 @@ public class LinkIndexUpdater implements EventListener {
         }
 
         try {
-            return repositoryManager.getTypeManager().getFieldTypeById(fieldTypeId).getName().getName();
+            return repositoryManager.getPublicRepository().getTypeManager().getFieldTypeById(fieldTypeId).getName().getName();
         } catch (Throwable t) {
             return "failed to load name";
         }

@@ -92,6 +92,7 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
@@ -105,6 +106,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
@@ -135,7 +137,7 @@ public class IndexerTest {
     private static DerefMap derefMap;
     private static WriteableIndexerModel indexerModel;
     private static IndexesInfo indexesInfo;
-    private static TrackingRepositoryManager indexUpdaterRepositoryMgr;
+    private static TrackingRepository indexUpdaterRepositoryMgr;
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -209,7 +211,7 @@ public class IndexerTest {
 
         defaultRepository = (Repository)repositoryManager.getDefaultTable();
         alternateRepository = (Repository)repositoryManager.getTable(ALTERNATE_TABLE);
-        indexUpdaterRepositoryMgr = new TrackingRepositoryManager(repoSetup.getRepositoryManager());
+        indexUpdaterRepositoryMgr = new TrackingRepository(repoSetup.getRepositoryManager().getPublicRepository());
 
 
         typeManager = repoSetup.getTypeManager();
@@ -2910,7 +2912,7 @@ public class IndexerTest {
         // reset current read count
         indexUpdaterRepositoryMgr.reset();
 
-        TrackingRepository indexUpdaterRepository = (TrackingRepository)indexUpdaterRepositoryMgr.getTable(Table.RECORD.name);
+        TrackingTable indexUpdaterTable = (TrackingTable)indexUpdaterRepositoryMgr.getTable(Table.RECORD.name);
 
         Record record = defaultRepository.newRecord();
         record.setRecordType(vRecordType1.getName());
@@ -2921,7 +2923,7 @@ public class IndexerTest {
         record = defaultRepository.create(record);
         commitIndex();
 
-        assertEquals(0, indexUpdaterRepository.reads());
+        assertEquals(0, indexUpdaterTable.reads());
         verifyResultCount("+v_field2:met +lily.vtag:live", 0);
         verifyResultCount("+v_field2:met +lily.vtag:latest", 0);
 
@@ -2931,7 +2933,7 @@ public class IndexerTest {
         record = defaultRepository.update(record);
         commitIndex();
 
-        assertEquals(0, indexUpdaterRepository.reads());
+        assertEquals(0, indexUpdaterTable.reads());
         verifyResultCount("+v_field2:moma +lily.vtag:live", 0);
         verifyResultCount("+v_field2:moma +lily.vtag:latest", 0);
 
@@ -2940,7 +2942,7 @@ public class IndexerTest {
         defaultRepository.delete(record.getId());
         commitIndex();
 
-        assertEquals(0, indexUpdaterRepository.reads());
+        assertEquals(0, indexUpdaterTable.reads());
         verifyResultCount("+v_field2:moma +lily.vtag:live", 0);
         verifyResultCount("+v_field2:moma +lily.vtag:latest", 0);
 
@@ -2954,7 +2956,7 @@ public class IndexerTest {
         record = defaultRepository.create(record);
         commitIndex();
 
-        assertEquals(1, indexUpdaterRepository.reads());
+        assertEquals(1, indexUpdaterTable.reads());
         verifyResultCount("+v_field2:met +lily.vtag:live", 1);
         verifyResultCount("+v_field2:met +lily.vtag:latest", 1);
     }
@@ -3334,18 +3336,13 @@ public class IndexerTest {
 
     }
 
-    private static class TrackingRepositoryManager implements RepositoryManager {
+    private static class TrackingRepository implements LRepository {
 
-        private RepositoryManager delegate;
-        private Map<String,TrackingRepository> repositoryCache = Maps.newHashMap();
+        private LRepository delegate;
+        private Map<String, TrackingTable> tableCache = Maps.newHashMap();
 
-        TrackingRepositoryManager(RepositoryManager delegate) {
+        TrackingRepository(LRepository delegate) {
             this.delegate = delegate;
-        }
-
-        @Override
-        public void close() throws IOException {
-            delegate.close();
         }
 
         @Override
@@ -3364,24 +3361,19 @@ public class IndexerTest {
         }
 
         @Override
-        public Repository getPublicRepository() throws InterruptedException {
-            throw new RuntimeException("Public repository should not be used by indexer");
-        }
-
-        @Override
-        public synchronized Repository getRepository(String tenantName) throws InterruptedException {
-            throw new RuntimeException("Multitenancy not yet implemented here.");
+        public TableManager getTableManager() {
+            return delegate.getTableManager();
         }
 
         @Override
         public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-            if (!repositoryCache.containsKey(tableName)) {
-                Repository repository = (Repository)delegate.getPublicRepository().getTable(tableName);
-                TrackingRepository trackingRepository = new TrackingRepository(this);
-                trackingRepository.setDelegate(repository);
-                repositoryCache.put(tableName, trackingRepository);
+            if (!tableCache.containsKey(tableName)) {
+                Repository repository = (Repository)delegate.getTable(tableName);
+                TrackingTable trackingTable = new TrackingTable(this);
+                trackingTable.setDelegate(repository);
+                tableCache.put(tableName, trackingTable);
             }
-            return repositoryCache.get(tableName);
+            return tableCache.get(tableName);
         }
 
         @Override
@@ -3390,23 +3382,23 @@ public class IndexerTest {
         }
 
         public void reset() {
-            for (TrackingRepository repo : repositoryCache.values()) {
+            for (TrackingTable repo : tableCache.values()) {
                 repo.reads();
             }
         }
     }
 
-    private static class TrackingRepository extends BaseRepositoryDecorator {
+    private static class TrackingTable extends BaseRepositoryDecorator {
         private int readCount;
-        private TrackingRepositoryManager trackingRepoMgr;
+        private TrackingRepository trackingRepository;
 
-        public TrackingRepository(TrackingRepositoryManager trackingRepoMgr) {
-            this.trackingRepoMgr = trackingRepoMgr;
+        public TrackingTable(TrackingRepository trackingRepository) {
+            this.trackingRepository = trackingRepository;
         }
 
         @Override
         public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-            return trackingRepoMgr.getTable(tableName);
+            return trackingRepository.getTable(tableName);
         }
 
         @Override

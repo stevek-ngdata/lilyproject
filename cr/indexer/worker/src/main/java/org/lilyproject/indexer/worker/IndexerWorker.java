@@ -183,8 +183,9 @@ public class IndexerWorker {
     private void addIndexUpdater(IndexDefinition index) {
         IndexUpdaterHandle handle = null;
         try {
+            Repository repository = /* TODO multitenancy */ (Repository)repositoryManager.getPublicRepository();
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
-                    /* TODO multitenancy */ (Repository)repositoryManager.getPublicRepository());
+                     repository);
 
             final SolrShardManager solrShardMgr = getSolrShardManager(index);
 
@@ -205,8 +206,7 @@ public class IndexerWorker {
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
             LilyEventPublisherManager eventPublisherManager = new LilyEventPublisherManager(tableFactory);
-            IndexUpdater indexUpdater = new IndexUpdater(indexer,
-                            repositoryManager, indexLocker, updaterMetrics, derefMap,
+            IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, updaterMetrics, derefMap,
                             eventPublisherManager, index.getQueueSubscriptionId());
 
             SepConsumer sepConsumer = new SepConsumer(index.getQueueSubscriptionId(),
