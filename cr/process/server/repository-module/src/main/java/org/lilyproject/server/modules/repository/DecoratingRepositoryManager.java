@@ -15,8 +15,6 @@
  */
 package org.lilyproject.server.modules.repository;
 
-import java.io.IOException;
-
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
@@ -44,7 +42,7 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
 
     @Override
     protected Repository createRepository(TenantTableKey key)
-            throws IOException, InterruptedException, RepositoryException {
+            throws InterruptedException, RepositoryException {
         HBaseRepository repository = (HBaseRepository)wrappedRepositoryManager.getRepository(
                 key.getTenantName()).getTable(key.getTableName());
         recordUpdateHookActivator.activateUpdateHooks(repository);
@@ -53,7 +51,7 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
     }
 
     @Override
-    protected Repository getRepository(String tenantName, String tableName) throws IOException, InterruptedException, RepositoryException {
+    protected Repository getRepository(String tenantName, String tableName) throws InterruptedException, RepositoryException {
         return super.getRepository(tenantName, tableName);
     }
 }

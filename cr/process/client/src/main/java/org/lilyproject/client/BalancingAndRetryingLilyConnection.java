@@ -87,7 +87,7 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
     }
 
     @Override
-    public LRepository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
+    public LRepository getPublicRepository() throws InterruptedException, RepositoryException {
         return (Repository)repositoryManager.getPublicRepository();
     }
 
@@ -95,9 +95,6 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
     public LRepository getRepository(String tenantName) {
         try {
             return (Repository)repositoryManager.getRepository(tenantName);
-        } catch (IOException e) {
-            // In reality this will never happen, becuse the getRepository call is just creating an invocation handler
-            throw new RuntimeException(e);
         } catch (InterruptedException e) {
             // Same comment here as with the IOException -- it shouldn't be possible for this exception to be thrown in reality
             Thread.currentThread().interrupt();
@@ -108,12 +105,12 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
     }
 
     @Override
-    public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
+    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
         return repositoryManager.getTable(tableName);
     }
 
     @Override
-    public LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException {
+    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
         return repositoryManager.getDefaultTable();
     }
 
@@ -138,7 +135,7 @@ public class BalancingAndRetryingLilyConnection implements RepositoryManager {
 
         RepositoryManager repositoryManager = new AbstractRepositoryManager(typeManager, idGenerator, recordFactory, tenantModel) {
             @Override
-            protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
+            protected Repository createRepository(TenantTableKey key) throws InterruptedException {
                 InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, key, typeManager,
                         idGenerator);
                 return (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),

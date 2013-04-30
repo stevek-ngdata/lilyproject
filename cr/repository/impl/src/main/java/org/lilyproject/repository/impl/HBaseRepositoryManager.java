@@ -23,7 +23,9 @@ import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TableManager;
+import org.lilyproject.repository.api.TableNotFoundException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.tenant.model.api.TenantModel;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -45,10 +47,16 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
     }
 
     @Override
-    protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
+    protected Repository createRepository(TenantTableKey key) throws InterruptedException, RepositoryException {
         TableManager tableManager = new TableManagerImpl(key.getTenantName(), hbaseConf, hbaseTableFactory);
-        HTableInterface htable = LilyHBaseSchema.getRecordTable(hbaseTableFactory, key.toHBaseTableName(), true);
-        return new HBaseRepository(key, this, htable, blobManager, tableManager, getRecordFactory());
+        try {
+            HTableInterface htable = LilyHBaseSchema.getRecordTable(hbaseTableFactory, key.toHBaseTableName(), true);
+            return new HBaseRepository(key, this, htable, blobManager, tableManager, getRecordFactory());
+        } catch (org.apache.hadoop.hbase.TableNotFoundException e) {
+            throw new TableNotFoundException(key.getTenantName(), key.getTableName());
+        } catch (IOException e) {
+            throw new RepositoryException(e);
+        }
     }
 
 }

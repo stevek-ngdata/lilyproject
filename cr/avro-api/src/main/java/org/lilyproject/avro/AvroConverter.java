@@ -37,6 +37,7 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeEntry;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -44,10 +45,10 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RemoteException;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeBucket;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
@@ -59,19 +60,9 @@ import static org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
 public class AvroConverter {
     protected Log log = LogFactory.getLog(getClass());
 
-    private RepositoryManager repositoryManager;
-
     public AvroConverter() {
-
     }
 
-    public AvroConverter (RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
-    }
-
-    public void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
-    }
 
     private byte[] asArray(ByteBuffer buffer) {
         byte[] bytes = new byte[buffer.remaining()];
@@ -79,26 +70,28 @@ public class AvroConverter {
         return bytes;
     }
 
-    public ByteBuffer convert(Record record) throws AvroRepositoryException, AvroInterruptedException,
-            RepositoryException, InterruptedException {
-        return ByteBuffer.wrap(RecordAsBytesConverter.write(record, repositoryManager));
+    public ByteBuffer convert(Record record, LRepository repository) throws AvroRepositoryException,
+            AvroInterruptedException, RepositoryException, InterruptedException {
+        return ByteBuffer.wrap(RecordAsBytesConverter.write(record, repository));
     }
 
-    public ByteBuffer convert(IdRecord idRecord) throws AvroRepositoryException, AvroInterruptedException,
-            RepositoryException, InterruptedException {
-        return ByteBuffer.wrap(RecordAsBytesConverter.writeIdRecord(idRecord, repositoryManager));
+    public ByteBuffer convert(IdRecord idRecord, LRepository repository) throws AvroRepositoryException,
+            AvroInterruptedException, RepositoryException, InterruptedException {
+        return ByteBuffer.wrap(RecordAsBytesConverter.writeIdRecord(idRecord, repository));
     }
 
-    public Record convertRecord(ByteBuffer recordData) throws RepositoryException, InterruptedException {
-        return RecordAsBytesConverter.read(new DataInputImpl(asArray(recordData)), repositoryManager);
+    public Record convertRecord(ByteBuffer recordData, LRepository repository)
+            throws RepositoryException, InterruptedException {
+        return RecordAsBytesConverter.read(new DataInputImpl(asArray(recordData)), repository);
     }
 
-    public IdRecord convertIdRecord(ByteBuffer avroIdRecord) throws RepositoryException, InterruptedException {
-        return RecordAsBytesConverter.readIdRecord(new DataInputImpl(asArray(avroIdRecord)), repositoryManager);
+    public IdRecord convertIdRecord(ByteBuffer avroIdRecord, LRepository repository)
+            throws RepositoryException, InterruptedException {
+        return RecordAsBytesConverter.readIdRecord(new DataInputImpl(asArray(avroIdRecord)), repository);
     }
 
-    public List<AvroMutationCondition> convert(Record parentRecord, List<MutationCondition> conditions)
-            throws AvroRepositoryException, AvroInterruptedException {
+    public List<AvroMutationCondition> convert(Record parentRecord, List<MutationCondition> conditions,
+            LRepository repository) throws AvroRepositoryException, AvroInterruptedException {
 
         if (conditions == null) {
             return null;
@@ -106,7 +99,7 @@ public class AvroConverter {
 
         List<AvroMutationCondition> avroConditions = new ArrayList<AvroMutationCondition>(conditions.size());
 
-        SystemFields systemFields = SystemFields.getInstance(repositoryManager.getTypeManager(), repositoryManager.getIdGenerator());
+        SystemFields systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
 
         IdentityRecordStack parentRecords = new IdentityRecordStack(parentRecord);
 
@@ -116,7 +109,7 @@ public class AvroConverter {
                 if (systemFields.isSystemField(condition.getField())) {
                     fieldType = systemFields.get(condition.getField());
                 } else {
-                    fieldType = repositoryManager.getTypeManager().getFieldTypeByName(condition.getField());
+                    fieldType = repository.getTypeManager().getFieldTypeByName(condition.getField());
                 }
 
                 AvroMutationCondition avroCond = new AvroMutationCondition();
@@ -145,33 +138,34 @@ public class AvroConverter {
         return avroConditions;
     }
 
-    public List<Record> convertAvroRecords(List<ByteBuffer> avroRecords) throws RepositoryException,
-            InterruptedException {
+    public List<Record> convertAvroRecords(List<ByteBuffer> avroRecords, LRepository repository)
+            throws RepositoryException, InterruptedException {
         List<Record> records = new ArrayList<Record>();
         for (ByteBuffer avroRecord : avroRecords) {
-            records.add(convertRecord(avroRecord));
+            records.add(convertRecord(avroRecord, repository));
         }
         return records;
     }
 
-    public List<ByteBuffer> convertRecords(Collection<Record> records) throws AvroRepositoryException,
-            AvroInterruptedException, RepositoryException, InterruptedException {
+    public List<ByteBuffer> convertRecords(Collection<Record> records, LRepository repository)
+            throws AvroRepositoryException, AvroInterruptedException, RepositoryException, InterruptedException {
         List<ByteBuffer> avroRecords = new ArrayList<ByteBuffer>(records.size());
         for (Record record : records) {
-            avroRecords.add(convert(record));
+            avroRecords.add(convert(record, repository));
         }
         return avroRecords;
     }
 
 
-    public FieldType convert(AvroFieldType avroFieldType) throws RepositoryException, InterruptedException {
-        ValueType valueType = convert(avroFieldType.getValueType());
+    public FieldType convert(AvroFieldType avroFieldType, TypeManager typeManager)
+            throws RepositoryException, InterruptedException {
+        ValueType valueType = convert(avroFieldType.getValueType(), typeManager);
         QName name = convert(avroFieldType.getName());
         SchemaId id = convert(avroFieldType.getId());
         if (id != null) {
-            return repositoryManager.getTypeManager().newFieldType(id, valueType, name, convert(avroFieldType.getScope()));
+            return typeManager.newFieldType(id, valueType, name, convert(avroFieldType.getScope()));
         }
-        return repositoryManager.getTypeManager().newFieldType(valueType, name, convert(avroFieldType.getScope()));
+        return typeManager.newFieldType(valueType, name, convert(avroFieldType.getScope()));
     }
 
     public Scope convert(AvroScope scope) {
@@ -192,15 +186,15 @@ public class AvroConverter {
         return scope == null ? null : AvroScope.values()[scope.ordinal()];
     }
 
-    public RecordType convert(AvroRecordType avroRecordType) throws RepositoryException {
+    public RecordType convert(AvroRecordType avroRecordType, TypeManager typeManager) throws RepositoryException {
         SchemaId recordTypeId = convert(avroRecordType.getId());
         QName recordTypeName = convert(avroRecordType.getName());
-        RecordType recordType = repositoryManager.getTypeManager().newRecordType(recordTypeId, recordTypeName);
+        RecordType recordType = typeManager.newRecordType(recordTypeId, recordTypeName);
         recordType.setVersion(avroRecordType.getVersion());
         List<AvroFieldTypeEntry> fieldTypeEntries = avroRecordType.getFieldTypeEntries();
         if (fieldTypeEntries != null) {
             for (AvroFieldTypeEntry avroFieldTypeEntry : fieldTypeEntries) {
-                recordType.addFieldTypeEntry(convert(avroFieldTypeEntry));
+                recordType.addFieldTypeEntry(convert(avroFieldTypeEntry, typeManager));
             }
         }
         List<AvroSupertype> supertypes = avroRecordType.getSupertypes();
@@ -248,16 +242,15 @@ public class AvroConverter {
         return avroTypes;
     }
 
-    public Pair<List<FieldType>, List<RecordType>> convertAvroFieldAndRecordTypes(AvroFieldAndRecordTypes types)
-            throws RepositoryException,
-            InterruptedException {
+    public Pair<List<FieldType>, List<RecordType>> convertAvroFieldAndRecordTypes(AvroFieldAndRecordTypes types,
+            TypeManager typeManager) throws RepositoryException, InterruptedException {
         List<FieldType> fieldTypes = new ArrayList<FieldType>(types.getFieldTypes().size());
         for (AvroFieldType avroFieldType : types.getFieldTypes()) {
-            fieldTypes.add(convert(avroFieldType));
+            fieldTypes.add(convert(avroFieldType, typeManager));
         }
         List<RecordType> recordTypes = new ArrayList<RecordType>(types.getRecordTypes().size());
         for (AvroRecordType avroRecordType : types.getRecordTypes()) {
-            recordTypes.add(convert(avroRecordType));
+            recordTypes.add(convert(avroRecordType, typeManager));
         }
         return new Pair<List<FieldType>, List<RecordType>>(fieldTypes, recordTypes);
     }
@@ -278,20 +271,21 @@ public class AvroConverter {
         return avroTypeBucket;
     }
 
-    public TypeBucket convertAvroTypeBucket(AvroTypeBucket avroTypeBucket) throws RepositoryException,
-            InterruptedException {
+    public TypeBucket convertAvroTypeBucket(AvroTypeBucket avroTypeBucket, TypeManager  typeManager)
+            throws RepositoryException, InterruptedException {
         TypeBucket typeBucket = new TypeBucket(avroTypeBucket.getBucketId());
         for (AvroFieldType avroFieldType : avroTypeBucket.getFieldTypes()) {
-            typeBucket.add(convert(avroFieldType));
+            typeBucket.add(convert(avroFieldType, typeManager));
         }
         for (AvroRecordType avroRecordType : avroTypeBucket.getRecordTypes()) {
-            typeBucket.add(convert(avroRecordType));
+            typeBucket.add(convert(avroRecordType, typeManager));
         }
         return typeBucket;
     }
 
-    public ValueType convert(AvroValueType valueType) throws RepositoryException, InterruptedException {
-        return valueType == null ? null : repositoryManager.getTypeManager().getValueType(valueType.getValueType());
+    public ValueType convert(AvroValueType valueType, TypeManager typeManager)
+            throws RepositoryException, InterruptedException {
+        return valueType == null ? null : typeManager.getValueType(valueType.getValueType());
     }
 
     public AvroValueType convert(ValueType valueType) {
@@ -332,8 +326,9 @@ public class AvroConverter {
         return avroSupertype;
     }
 
-    public FieldTypeEntry convert(AvroFieldTypeEntry avroFieldTypeEntry) {
-        return repositoryManager.getTypeManager().newFieldTypeEntry(convert(avroFieldTypeEntry.getId()), avroFieldTypeEntry.getMandatory());
+    public FieldTypeEntry convert(AvroFieldTypeEntry avroFieldTypeEntry, TypeManager typeManager) {
+        return typeManager.newFieldTypeEntry(convert(avroFieldTypeEntry.getId()),
+                avroFieldTypeEntry.getMandatory());
     }
 
     public AvroFieldTypeEntry convert(FieldTypeEntry fieldTypeEntry) {
@@ -549,20 +544,20 @@ public class AvroConverter {
         return result;
     }
 
-    public List<FieldType> convertAvroFieldTypes(List<AvroFieldType> avroFieldTypes)
+    public List<FieldType> convertAvroFieldTypes(List<AvroFieldType> avroFieldTypes, TypeManager typeManager)
             throws RepositoryException, InterruptedException {
         List<FieldType> fieldTypes = new ArrayList<FieldType>();
         for (AvroFieldType avroFieldType : avroFieldTypes) {
-            fieldTypes.add(convert(avroFieldType));
+            fieldTypes.add(convert(avroFieldType, typeManager));
         }
         return fieldTypes;
     }
 
-    public List<RecordType> convertAvroRecordTypes(List<AvroRecordType> avroRecordTypes)
+    public List<RecordType> convertAvroRecordTypes(List<AvroRecordType> avroRecordTypes, TypeManager typeManager)
             throws RepositoryException, InterruptedException {
         List<RecordType> recordTypes = new ArrayList<RecordType>();
         for (AvroRecordType avroRecordType : avroRecordTypes) {
-            recordTypes.add(convert(avroRecordType));
+            recordTypes.add(convert(avroRecordType, typeManager));
         }
         return recordTypes;
     }
@@ -639,7 +634,7 @@ public class AvroConverter {
 
 
 
-    public List<MutationCondition> convertFromAvro(List<AvroMutationCondition> avroConditions)
+    public List<MutationCondition> convertFromAvro(List<AvroMutationCondition> avroConditions, LRepository repository)
             throws RepositoryException, InterruptedException {
 
         if (avroConditions == null) {
@@ -654,7 +649,7 @@ public class AvroConverter {
             // value is optional
             Object value = null;
             if (avroCond.getValue() != null) {
-                ValueType valueType = repositoryManager.getTypeManager().getValueType(avroCond.getValueType());
+                ValueType valueType = repository.getTypeManager().getValueType(avroCond.getValueType());
                 value = valueType.read(avroCond.getValue().array());
             }
 
@@ -704,16 +699,16 @@ public class AvroConverter {
         return op == null ? null : AvroCompareOp.values()[op.ordinal()];
     }
 
-    public RecordId convertAvroRecordId(ByteBuffer recordId) {
+    public RecordId convertAvroRecordId(ByteBuffer recordId, LRepository repository) {
         byte[] bytes = new byte[recordId.remaining()];
         recordId.get(bytes);
-        return repositoryManager.getIdGenerator().fromBytes(bytes);
+        return repository.getIdGenerator().fromBytes(bytes);
     }
 
-    public Set<RecordId> convertAvroRecordIds(List<String> avroRecordIds) {
+    public Set<RecordId> convertAvroRecordIds(List<String> avroRecordIds, LRepository repository) {
         Set<RecordId> recordIds = new HashSet<RecordId>();
         for (String avroRecordId : avroRecordIds) {
-            recordIds.add(repositoryManager.getIdGenerator().fromString(avroRecordId));
+            recordIds.add(repository.getIdGenerator().fromString(avroRecordId));
         }
         return recordIds;
     }

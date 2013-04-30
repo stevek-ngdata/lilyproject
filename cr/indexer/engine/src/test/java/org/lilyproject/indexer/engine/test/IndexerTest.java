@@ -3364,17 +3364,17 @@ public class IndexerTest {
         }
 
         @Override
-        public Repository getPublicRepository() throws IOException, InterruptedException {
+        public Repository getPublicRepository() throws InterruptedException {
             throw new RuntimeException("Public repository should not be used by indexer");
         }
 
         @Override
-        public synchronized Repository getRepository(String tenantName) throws IOException, InterruptedException {
+        public synchronized Repository getRepository(String tenantName) throws InterruptedException {
             throw new RuntimeException("Multitenancy not yet implemented here.");
         }
 
         @Override
-        public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
+        public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
             if (!repositoryCache.containsKey(tableName)) {
                 Repository repository = (Repository)delegate.getPublicRepository().getTable(tableName);
                 TrackingRepository trackingRepository = new TrackingRepository(this);
@@ -3385,7 +3385,7 @@ public class IndexerTest {
         }
 
         @Override
-        public LTable getDefaultTable() throws IOException, InterruptedException {
+        public LTable getDefaultTable() throws InterruptedException {
             return null;
         }
 
@@ -3405,7 +3405,7 @@ public class IndexerTest {
         }
 
         @Override
-        public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
+        public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
             return trackingRepoMgr.getTable(tableName);
         }
 

@@ -84,7 +84,7 @@ public class RemoteRepositoryTest {
         List<AvroMutationCondition> encodedMutationConditions = Lists.newArrayList(mock(AvroMutationCondition.class));
 
         when(avroConverter.convert(recordId)).thenReturn(encodedRecordId);
-        when(avroConverter.convert(null, mutationConditions)).thenReturn(encodedMutationConditions);
+        when(avroConverter.convert(null, mutationConditions, remoteRepository)).thenReturn(encodedMutationConditions);
 
         remoteRepository.delete(recordId, mutationConditions);
 

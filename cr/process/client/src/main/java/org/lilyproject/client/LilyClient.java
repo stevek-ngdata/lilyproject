@@ -241,8 +241,6 @@ public class LilyClient implements Closeable, RepositoryManager {
     public Repository getRepository() {
         try {
             return (Repository)getPublicRepository();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (RepositoryException e) {
@@ -259,7 +257,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
+    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
@@ -267,7 +265,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException {
+    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
@@ -275,7 +273,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public LRepository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
+    public LRepository getPublicRepository() throws InterruptedException, RepositoryException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
@@ -348,7 +346,6 @@ public class LilyClient implements Closeable, RepositoryManager {
         RecordFactory recordFactory = new RecordFactoryImpl(remoteTypeManager, idGenerator);
         RepositoryManager repositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
                 transceiver, avroConverter, blobManager, tableFactory, tenantModel);
-        avroConverter.setRepositoryManager(repositoryManager);
         return repositoryManager;
     }
 

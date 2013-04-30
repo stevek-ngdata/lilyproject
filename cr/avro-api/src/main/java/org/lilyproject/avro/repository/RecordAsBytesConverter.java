@@ -26,12 +26,12 @@ import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.ResponseStatus;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -56,14 +56,14 @@ public class RecordAsBytesConverter {
     private RecordAsBytesConverter() {
     }
 
-    public static final byte[] write(Record record, RepositoryManager repositoryManager)
+    public static final byte[] write(Record record, LRepository repository)
             throws RepositoryException, InterruptedException {
         DataOutput output = new DataOutputImpl();
-        write(record, output, repositoryManager);
+        write(record, output, repository);
         return output.toByteArray();
     }
 
-    public static final void write(Record record, DataOutput output, RepositoryManager repositoryManager)
+    public static final void write(Record record, DataOutput output, LRepository repository)
             throws RepositoryException, InterruptedException {
         // Write serialization format version
         output.writeShort(VERSION_2);
@@ -82,7 +82,7 @@ public class RecordAsBytesConverter {
         }
 
         // Write the fields array
-        FieldTypes fieldTypes = repositoryManager.getTypeManager().getFieldTypesSnapshot();
+        FieldTypes fieldTypes = repository.getTypeManager().getFieldTypesSnapshot();
         output.writeVInt(record.getFields().size());
         for (Map.Entry<QName, Object> entry : record.getFields().entrySet()) {
             if (entry.getKey() == null) {
@@ -138,7 +138,7 @@ public class RecordAsBytesConverter {
         }
     }
 
-    public static final Record read(DataInput input, RepositoryManager repositoryManager)
+    public static final Record read(DataInput input, LRepository repository)
             throws RepositoryException, InterruptedException {
         // Read & check version
         int version = input.readShort();
@@ -146,12 +146,12 @@ public class RecordAsBytesConverter {
             throw new RuntimeException("Unsupported record serialization version: " + version);
         }
 
-        Record record = repositoryManager.getRecordFactory().newRecord();
+        Record record = repository.getRecordFactory().newRecord();
 
         // Read ID
         byte[] idBytes = readNullOrBytes(input);
         if (idBytes != null) {
-            record.setId(repositoryManager.getIdGenerator().fromBytes(idBytes));
+            record.setId(repository.getIdGenerator().fromBytes(idBytes));
         }
 
         // Read version
@@ -165,7 +165,7 @@ public class RecordAsBytesConverter {
         }
 
         // Read fields array
-        TypeManager typeManager = repositoryManager.getTypeManager();
+        TypeManager typeManager = repository.getTypeManager();
         int size = input.readVInt();
         for (int i = 0; i < size; i++) {
             QName name = readQName(input);
@@ -209,16 +209,16 @@ public class RecordAsBytesConverter {
         return record;
     }
 
-    public static final byte[] writeIdRecord(IdRecord record, RepositoryManager repositoryManager)
+    public static final byte[] writeIdRecord(IdRecord record, LRepository repository)
             throws RepositoryException, InterruptedException {
         DataOutput output = new DataOutputImpl();
-        writeIdRecord(record, output, repositoryManager);
+        writeIdRecord(record, output, repository);
         return output.toByteArray();
     }
 
-    public static final void writeIdRecord(IdRecord record, DataOutput output, RepositoryManager repositoryManager)
+    public static final void writeIdRecord(IdRecord record, DataOutput output, LRepository repository)
             throws RepositoryException, InterruptedException {
-        write(record, output, repositoryManager);
+        write(record, output, repository);
 
         output.writeVInt(record.getFieldIdToNameMapping().size());
         for (Map.Entry<SchemaId, QName> entry : record.getFieldIdToNameMapping().entrySet()) {
@@ -232,11 +232,11 @@ public class RecordAsBytesConverter {
         }
     }
 
-    public static final IdRecord readIdRecord(DataInput input, RepositoryManager repositoryManager)
+    public static final IdRecord readIdRecord(DataInput input, LRepository repository)
             throws RepositoryException, InterruptedException {
-        Record record = read(input, repositoryManager);
+        Record record = read(input, repository);
 
-        IdGenerator idGenerator = repositoryManager.getIdGenerator();
+        IdGenerator idGenerator = repository.getIdGenerator();
 
         int size = input.readVInt();
         Map<SchemaId, QName> idToQNameMapping = new HashMap<SchemaId, QName>();

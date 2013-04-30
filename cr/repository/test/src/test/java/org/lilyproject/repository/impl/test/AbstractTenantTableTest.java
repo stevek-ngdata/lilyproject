@@ -16,7 +16,6 @@
 package org.lilyproject.repository.impl.test;
 
 import com.google.common.collect.Lists;
-import org.apache.hadoop.hbase.TableNotFoundException;
 import org.junit.Test;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
@@ -29,6 +28,7 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TableNotFoundException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.tenant.model.api.TenantExistsException;

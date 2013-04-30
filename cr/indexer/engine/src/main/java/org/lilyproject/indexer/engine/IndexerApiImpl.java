@@ -90,8 +90,6 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
             return repositoryManager.getTable(table).readWithIds(recordId, null, null);
         } catch (RepositoryException e) {
             throw new IndexerException("failed to read from repository", e);
-        } catch (IOException e) {
-            throw new IndexerException("error retrieving repository", e);
         }
     }
 

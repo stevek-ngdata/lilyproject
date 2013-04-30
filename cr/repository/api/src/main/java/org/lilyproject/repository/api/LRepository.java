@@ -41,13 +41,13 @@ public interface LRepository {
      *
      * <p>For backwards compatibility, you can cast the returned LTable to {@link Repository}.</p>
      */
-    LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException;
+    LTable getTable(String tableName) throws InterruptedException, RepositoryException;
 
     /**
      * Get a table object for the default "record" table. This is equivalent to calling
      * getTable("record").
      */
-    LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException;
+    LTable getDefaultTable() throws InterruptedException, RepositoryException;
 
 
     TableManager getTableManager();

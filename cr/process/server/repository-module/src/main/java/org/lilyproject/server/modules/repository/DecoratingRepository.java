@@ -38,12 +38,12 @@ public class DecoratingRepository extends BaseRepositoryDecorator {
     }
 
     @Override
-    public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
+    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
         return decoratingRepositoryManager.getRepository(tenantName, tableName);
     }
 
     @Override
-    public LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException {
+    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
         return decoratingRepositoryManager.getRepository("public", LilyHBaseSchema.Table.RECORD.name);
     }
 }

@@ -25,6 +25,7 @@ import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.indexer.Indexer;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.Record;
@@ -41,6 +42,7 @@ import static org.mockito.Mockito.when;
 
 public class AvroLilyImplTest {
 
+    private LRepository repository;
     private LTable table;
     private AvroConverter avroConverter;
     private AvroLilyImpl avroLilyImpl;
@@ -51,6 +53,7 @@ public class AvroLilyImplTest {
         RepositoryManager repositoryManager = mock(RepositoryManager.class);
         table = mock(LTable.class);
         Repository repository = mock(Repository.class);
+        this.repository = repository;
         when(repository.getTable(Table.RECORD.name)).thenReturn(table);
         when(repositoryManager.getRepository(tenantName)).thenReturn(repository);
         TypeManager typeManager = mock(TypeManager.class);
@@ -67,7 +70,7 @@ public class AvroLilyImplTest {
         attributes.put("atrKey", "atrValue");
 
         RecordId recordId = mock(RecordId.class);
-        when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
+        when(avroConverter.convertAvroRecordId(recordIdBytes, repository)).thenReturn(recordId);
 
         Record toDelete = mock(Record.class);
         when(table.newRecord(recordId)).thenReturn(toDelete);
@@ -86,8 +89,8 @@ public class AvroLilyImplTest {
         RecordId recordId = mock(RecordId.class);
         List<MutationCondition> mutationConditions = Lists.newArrayList(mock(MutationCondition.class));
 
-        when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
-        when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
+        when(avroConverter.convertAvroRecordId(recordIdBytes, repository)).thenReturn(recordId);
+        when(avroConverter.convertFromAvro(avroMutationConditions, repository)).thenReturn(mutationConditions);
 
         avroLilyImpl.delete(recordIdBytes, tenantName, Table.RECORD.name, avroMutationConditions, null);
 
@@ -104,8 +107,8 @@ public class AvroLilyImplTest {
         RecordId recordId = mock(RecordId.class);
         List<MutationCondition> mutationConditions = Lists.newArrayList(mock(MutationCondition.class));
 
-        when(avroConverter.convertAvroRecordId(recordIdBytes)).thenReturn(recordId);
-        when(avroConverter.convertFromAvro(avroMutationConditions)).thenReturn(mutationConditions);
+        when(avroConverter.convertAvroRecordId(recordIdBytes, repository)).thenReturn(recordId);
+        when(avroConverter.convertFromAvro(avroMutationConditions, repository)).thenReturn(mutationConditions);
 
         avroLilyImpl.delete(recordIdBytes, tenantName, Table.RECORD.name, avroMutationConditions, attributes);
     }

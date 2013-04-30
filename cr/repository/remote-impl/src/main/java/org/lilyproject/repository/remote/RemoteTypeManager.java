@@ -86,7 +86,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     public RecordType createRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
 
         try {
-            RecordType newRecordType = converter.convert(lilyProxy.createRecordType(converter.convert(recordType)));
+            RecordType newRecordType = converter.convert(lilyProxy.createRecordType(converter.convert(recordType)), this);
             updateRecordTypeCache(newRecordType.clone());
             return newRecordType;
         } catch (AvroRepositoryException e) {
@@ -110,7 +110,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
             throws RepositoryException, InterruptedException {
         try {
             RecordType newRecordType =
-                    converter.convert(lilyProxy.createOrUpdateRecordType(converter.convert(recordType), refreshSubtypes));
+                    converter.convert(lilyProxy.createOrUpdateRecordType(converter.convert(recordType), refreshSubtypes), this);
             updateRecordTypeCache(newRecordType.clone());
             return newRecordType;
         } catch (AvroRepositoryException e) {
@@ -134,7 +134,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
             } else {
                 avroVersion = version;
             }
-            return converter.convert(lilyProxy.getRecordTypeById(converter.convert(id), avroVersion));
+            return converter.convert(lilyProxy.getRecordTypeById(converter.convert(id), avroVersion), this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -156,7 +156,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
             throws RepositoryException, InterruptedException {
         try {
             RecordType newRecordType = converter.convert(
-                    lilyProxy.updateRecordType(converter.convert(recordType), refreshSubtypes));
+                    lilyProxy.updateRecordType(converter.convert(recordType), refreshSubtypes), this);
             updateRecordTypeCache(newRecordType);
             return newRecordType;
         } catch (AvroRepositoryException e) {
@@ -187,7 +187,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         try {
             AvroFieldType avroFieldType = converter.convert(fieldType);
             AvroFieldType createFieldType = lilyProxy.createFieldType(avroFieldType);
-            FieldType newFieldType = converter.convert(createFieldType);
+            FieldType newFieldType = converter.convert(createFieldType, this);
             updateFieldTypeCache(newFieldType);
             return newFieldType;
         } catch (AvroRepositoryException e) {
@@ -204,7 +204,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     @Override
     public FieldType createOrUpdateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
         try {
-            FieldType newFieldType = converter.convert(lilyProxy.createOrUpdateFieldType(converter.convert(fieldType)));
+            FieldType newFieldType = converter.convert(lilyProxy.createOrUpdateFieldType(converter.convert(fieldType)), this);
             updateFieldTypeCache(newFieldType);
             return newFieldType;
         } catch (AvroRepositoryException e) {
@@ -222,7 +222,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     public FieldType updateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
 
         try {
-            FieldType newFieldType = converter.convert(lilyProxy.updateFieldType(converter.convert(fieldType)));
+            FieldType newFieldType = converter.convert(lilyProxy.updateFieldType(converter.convert(fieldType)), this);
             updateFieldTypeCache(newFieldType);
             return newFieldType;
         } catch (AvroRepositoryException e) {
@@ -239,7 +239,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     @Override
     public List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException {
         try {
-            return converter.convertAvroFieldTypes(lilyProxy.getFieldTypesWithoutCache());
+            return converter.convertAvroFieldTypes(lilyProxy.getFieldTypesWithoutCache(), this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
@@ -252,7 +252,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     @Override
     public List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException {
         try {
-            return converter.convertAvroRecordTypes(lilyProxy.getRecordTypesWithoutCache());
+            return converter.convertAvroRecordTypes(lilyProxy.getRecordTypesWithoutCache(), this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
@@ -266,7 +266,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     public Pair<List<FieldType>, List<RecordType>> getTypesWithoutCache() throws RepositoryException,
             InterruptedException {
         try {
-            return converter.convertAvroFieldAndRecordTypes(lilyProxy.getTypesWithoutCache());
+            return converter.convertAvroFieldAndRecordTypes(lilyProxy.getTypesWithoutCache(), this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
@@ -282,7 +282,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         try {
 
             AvroTypeBucket avroTypeBucket = lilyProxy.getTypeBucketWithoutCache(bucketId);
-            return converter.convertAvroTypeBucket(avroTypeBucket);
+            return converter.convertAvroTypeBucket(avroTypeBucket, this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {

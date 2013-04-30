@@ -171,7 +171,7 @@ public class RepositorySetup {
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory,
                 blobManager, hadoopConf, tenantModel) {
             @Override
-            protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
+            protected Repository createRepository(TenantTableKey key) throws InterruptedException, RepositoryException {
                 HBaseRepository repository = (HBaseRepository)super.createRepository(key);
                 repository.setRecordUpdateHooks(recordUpdateHooks);
                 return repository;
@@ -233,11 +233,8 @@ public class RepositorySetup {
         remoteSchemaCache.setTypeManager(remoteTypeManager);
         RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
 
-
-
         remoteRepositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
                 new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory, tenantModel);
-        avroConverter.setRepositoryManager(remoteRepositoryManager);
 
         remoteBlobStoreAccessFactory = createBlobAccess();
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);

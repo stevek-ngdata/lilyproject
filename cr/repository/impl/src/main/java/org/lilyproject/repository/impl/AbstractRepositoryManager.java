@@ -69,20 +69,20 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     /**
      * Create a new Repository object for the repository cache.
      */
-    protected abstract Repository createRepository(TenantTableKey key) throws IOException, InterruptedException, RepositoryException;
+    protected abstract Repository createRepository(TenantTableKey key) throws InterruptedException, RepositoryException;
 
     @Override
-    public LRepository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
+    public LRepository getPublicRepository() throws InterruptedException, RepositoryException {
         return getRepository("public");
     }
 
     @Override
-    public LRepository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException {
+    public LRepository getRepository(String tenantName) throws InterruptedException, RepositoryException {
         return getRepository(tenantName, Table.RECORD.name);
     }
 
     protected Repository getRepository(String tenantName, String tableName)
-            throws IOException, InterruptedException, RepositoryException {
+            throws InterruptedException, RepositoryException {
         if (!tenantModel.tenantExistsAndActive(tenantName)) {
             throw new RepositoryException("Tenant does not exist or is not active: " + tenantName);
         }
@@ -98,12 +98,12 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     }
 
     @Override
-    public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
+    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
         return getPublicRepository().getTable(tableName);
     }
 
     @Override
-    public LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException {
+    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
         return getPublicRepository().getDefaultTable();
     }
 

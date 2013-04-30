@@ -53,25 +53,25 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
     }
 
     @Override
-    public LRepository getPublicRepository() throws IOException, InterruptedException, RepositoryException {
+    public LRepository getPublicRepository() throws InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getPublicRepository();
     }
 
     @Override
-    public LRepository getRepository(String tenantName) throws IOException, InterruptedException, RepositoryException {
+    public LRepository getRepository(String tenantName) throws InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getRepository(tenantName);
     }
 
     @Override
-    public LTable getTable(String tableName) throws IOException, InterruptedException, RepositoryException {
+    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getTable(tableName);
     }
 
     @Override
-    public LTable getDefaultTable() throws IOException, InterruptedException, RepositoryException {
+    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getDefaultTable();
     }

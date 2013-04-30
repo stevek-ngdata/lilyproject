@@ -22,8 +22,10 @@ import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TableManager;
+import org.lilyproject.repository.api.TableNotFoundException;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.TenantTableKey;
 import org.lilyproject.repository.impl.TracingRepository;
@@ -49,15 +51,21 @@ public class RemoteRepositoryManager extends AbstractRepositoryManager implement
     }
 
     @Override
-    protected Repository createRepository(TenantTableKey key) throws IOException, InterruptedException {
+    protected Repository createRepository(TenantTableKey key) throws InterruptedException, RepositoryException {
         String hbaseTableName = key.toHBaseTableName();
-        TableManager tableManager = new RemoteTableManager(key.getTenantName(), transceiver, avroConverter);
-        Repository repo = new RemoteRepository(key, transceiver, avroConverter, this, blobManager,
-                LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, true), tableManager, getRecordFactory());
-        if ("true".equals(System.getProperty("lilyclient.trace"))) {
-            repo = TracingRepository.wrap(repo);
+        try {
+            TableManager tableManager = new RemoteTableManager(key.getTenantName(), transceiver, avroConverter);
+            Repository repo = new RemoteRepository(key, transceiver, avroConverter, this, blobManager,
+                    LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, true), tableManager, getRecordFactory());
+            if ("true".equals(System.getProperty("lilyclient.trace"))) {
+                repo = TracingRepository.wrap(repo);
+            }
+            return repo;
+        } catch (org.apache.hadoop.hbase.TableNotFoundException e) {
+            throw new TableNotFoundException(key.getTenantName(), key.getTableName());
+        } catch (IOException e) {
+            throw new RepositoryException(e);
         }
-        return repo;
     }
 
 }

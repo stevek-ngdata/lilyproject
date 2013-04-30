@@ -81,7 +81,7 @@ public class RemoteRepository extends BaseRepository {
     @Override
     public Record create(Record record) throws RepositoryException, InterruptedException {
         try {
-            return converter.convertRecord(lilyProxy.create(converter.convert(record), tenantName, tableName));
+            return converter.convertRecord(lilyProxy.create(converter.convert(record, this), tenantName, tableName), this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -98,8 +98,8 @@ public class RemoteRepository extends BaseRepository {
             throws RepositoryException, InterruptedException {
         try {
             ByteBuffer record = lilyProxy.delete(converter.convert(recordId), tenantName, tableName,
-                    converter.convert(null, conditions), null);
-            return record == null ? null : converter.convertRecord(record);
+                    converter.convert(null, conditions, this), null);
+            return record == null ? null : converter.convertRecord(record, this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -163,8 +163,8 @@ public class RemoteRepository extends BaseRepository {
                          List<MutationCondition> conditions) throws RepositoryException, InterruptedException {
         try {
             return converter
-                    .convertRecord(lilyProxy.update(converter.convert(record), tenantName, tableName,
-                            updateVersion, useLatestRecordType, converter.convert(record, conditions)));
+                    .convertRecord(lilyProxy.update(converter.convert(record, this), tenantName, tableName,
+                            updateVersion, useLatestRecordType, converter.convert(record, conditions, this)), this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -185,8 +185,8 @@ public class RemoteRepository extends BaseRepository {
     public Record createOrUpdate(Record record, boolean useLatestRecordType)
             throws RepositoryException, InterruptedException {
         try {
-            return converter.convertRecord(lilyProxy.createOrUpdate(converter.convert(record), tenantName, tableName,
-                    useLatestRecordType));
+            return converter.convertRecord(lilyProxy.createOrUpdate(converter.convert(record, this), tenantName,
+                    tableName, useLatestRecordType), this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -201,7 +201,7 @@ public class RemoteRepository extends BaseRepository {
     @Override
     public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException {
         try {
-            return converter.convertAvroRecordIds(lilyProxy.getVariants(converter.convert(recordId), tenantName, tableName));
+            return converter.convertAvroRecordIds(lilyProxy.getVariants(converter.convert(recordId), tenantName, tableName), this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
