@@ -48,6 +48,12 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
         HBaseRepository repository = (HBaseRepository)wrappedRepositoryManager.getRepository(
                 key.getTenantName()).getTable(key.getTableName());
         recordUpdateHookActivator.activateUpdateHooks(repository);
-        return repositoryDecoratorActivator.getDecoratedRepository(repository);
+        return new DecoratingRepository(repositoryDecoratorActivator.getDecoratedRepository(repository),
+                key.getTenantName(), this);
+    }
+
+    @Override
+    protected Repository getRepository(String tenantName, String tableName) throws IOException, InterruptedException, RepositoryException {
+        return super.getRepository(tenantName, tableName);
     }
 }
