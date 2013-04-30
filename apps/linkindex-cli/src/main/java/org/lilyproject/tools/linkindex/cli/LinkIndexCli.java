@@ -118,7 +118,7 @@ public class LinkIndexCli extends BaseZkCliTool {
 
         IndexManager indexManager = new IndexManager(hbaseConf, new HBaseTableFactoryImpl(hbaseConf));
 
-        LinkIndex linkIndex = new LinkIndex(indexManager, repository);
+        LinkIndex linkIndex = new LinkIndex(indexManager, lilyClient);
 
         //
         // Determine the index to query
