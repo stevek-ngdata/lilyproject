@@ -27,14 +27,12 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.repo.PureRepository;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class LinkIndexSetup {
@@ -75,8 +73,7 @@ public class LinkIndexSetup {
         if (linkIndexEnabled) {
             IndexManager indexManager = new IndexManager(hbaseConf, tableFactory);
 
-            LinkIndex linkIndex = new LinkIndex(indexManager,
-                    /* TODO multitenancy */ PureRepository.wrap((Repository)repositoryManager.getPublicRepository()));
+            LinkIndex linkIndex = new LinkIndex(indexManager, /* TODO multitenancy */ repositoryManager);
 
             LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repositoryManager, linkIndex);
 
