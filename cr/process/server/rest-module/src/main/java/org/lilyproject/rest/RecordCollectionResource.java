@@ -25,11 +25,13 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.tools.restresourcegenerator.GenerateTenantAndTableResource;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @Path("record")
+@GenerateTenantAndTableResource
 public class RecordCollectionResource extends RepositoryEnabled {
 
     @POST

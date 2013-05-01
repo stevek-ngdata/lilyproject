@@ -29,12 +29,14 @@ import java.io.OutputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.NullInputStream;
 import org.lilyproject.repository.api.Blob;
+import org.lilyproject.tools.restresourcegenerator.GenerateTenantAndTableResource;
 import org.lilyproject.util.io.Closer;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @Path("blob")
+@GenerateTenantAndTableResource
 public class BlobCollectionResource extends RepositoryEnabled {
 
     @POST

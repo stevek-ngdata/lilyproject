@@ -29,9 +29,11 @@ import com.google.common.cache.Cache;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.tools.restresourcegenerator.GenerateTenantAndTableResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path("scan")
+@GenerateTenantAndTableResource
 public class RecordScanCollectionResource extends RepositoryEnabled {
     @Autowired
     private Cache<String, RecordScanner> recordScannerMap;

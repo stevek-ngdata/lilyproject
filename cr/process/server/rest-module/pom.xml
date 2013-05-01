@@ -35,6 +35,11 @@
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
+      <artifactId>lily-tenant-table-rest-resources-generator</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
       <artifactId>lily-jersey-helper</artifactId>
     </dependency>
 
@@ -103,6 +108,19 @@
     </resources>
 
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <annotationProcessors>
+            <annotationProcessor>org.lilyproject.tools.restresourcegenerator.GenerateTenantTableResourcesProcessor</annotationProcessor>
+          </annotationProcessors>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-runtime-genclassloader-plugin</artifactId>

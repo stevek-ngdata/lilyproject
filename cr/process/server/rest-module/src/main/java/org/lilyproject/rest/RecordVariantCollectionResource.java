@@ -30,11 +30,13 @@ import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.tools.restresourcegenerator.GenerateTenantAndTableResource;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("record/{id}/variant")
+@GenerateTenantAndTableResource
 public class RecordVariantCollectionResource extends RepositoryEnabled {
 
     @GET

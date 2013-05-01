@@ -122,6 +122,7 @@
     <module>tools/print-host</module>
     <module>tools/archetype</module>
     <module>tools/generate-split-keys</module>
+    <module>tools/tenant-table-rest-resource-generator</module>
 
     <module>apps/import</module>
     <module>apps/tester</module>
@@ -427,6 +428,11 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rest-module</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-tenant-table-rest-resources-generator</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>
       <dependency>

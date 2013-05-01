@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.rest;
+package org.lilyproject.process.test;
 
-import javax.ws.rs.Path;
-
-@TableEnabled
-@TenantEnabled
-@Path("tenant/{tenantName}/table/{tableName}/record/{id}")
-public class TenantAndTableBasedRecordResource extends RecordResource {
+public class TenantBasedRecordRestTest extends RecordRestTest {
+    @Override
+    protected String buildUri(String path) {
+        if (path.startsWith("/record") || path.startsWith("/scan") || path.startsWith("/blob")) {
+            path = "/tenant/public" + path;
+        }
+        return super.buildUri(path);
+    }
 }
+

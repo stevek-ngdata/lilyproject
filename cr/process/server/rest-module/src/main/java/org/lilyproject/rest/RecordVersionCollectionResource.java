@@ -31,11 +31,13 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.tools.restresourcegenerator.GenerateTenantAndTableResource;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("record/{id}/version")
+@GenerateTenantAndTableResource
 public class RecordVersionCollectionResource extends RepositoryEnabled {
 
     @GET
