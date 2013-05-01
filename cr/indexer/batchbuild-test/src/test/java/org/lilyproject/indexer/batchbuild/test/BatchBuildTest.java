@@ -42,12 +42,13 @@ import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.LilyServerProxy;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -64,7 +65,8 @@ import static org.junit.Assert.fail;
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;
     private static LilyClient lilyClient;
-    private static Repository repository;
+    private static LRepository repository;
+    private static LTable table;
     private static TypeManager typeManager;
     private static SolrServer solrServer;
     private static SolrProxy solrProxy;
@@ -94,7 +96,8 @@ public class BatchBuildTest {
         solrServer = solrProxy.getSolrServer();
         lilyServerProxy = lilyProxy.getLilyServerProxy();
         lilyClient = lilyServerProxy.getClient();
-        repository = lilyClient.getRepository();
+        repository = lilyClient.getPublicRepository();
+        table = repository.getDefaultTable();
 
         typeManager = repository.getTypeManager();
         FieldType ft1 = typeManager.createFieldType("STRING", new QName("batchindex-test", "field1"),
@@ -125,7 +128,6 @@ public class BatchBuildTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        Closer.close(repository);
         Closer.close(lilyClient);
         Closer.close(solrServer);
         Closer.close(solrProxy);
@@ -147,7 +149,7 @@ public class BatchBuildTest {
         //
         // First create some content
         //
-        repository.recordBuilder()
+        table.recordBuilder()
                 .id("batch-index-test")
                 .recordType(rt1.getName())
                 .field(ft1.getName(), "test1")
@@ -174,13 +176,13 @@ public class BatchBuildTest {
         //
         // First create some content
         //
-        repository.recordBuilder()
+        table.recordBuilder()
                 .id(assertId)
                 .recordType(rt1.getName())
                 .field(ft1.getName(), "test2 index")
                 .create();
 
-        repository.recordBuilder()
+        table.recordBuilder()
                 .id("batch-noindex-test2")
                 .recordType(rt1.getName())
                 .field(ft1.getName(), "test2 noindex")
@@ -215,19 +217,19 @@ public class BatchBuildTest {
         //
         // First create some content
         //
-        Record recordToChange1 = repository.recordBuilder()
+        Record recordToChange1 = table.recordBuilder()
                 .id(assertId2)
                 .recordType(rt1.getName())
                 .field(ft1.getName(), "test3 index run1")
                 .create();
 
-        Record recordToChange2 = repository.recordBuilder()
+        Record recordToChange2 = table.recordBuilder()
                 .id(assertId1)
                 .recordType(rt1.getName())
                 .field(ft1.getName(), "test3 index run1")
                 .create();
 
-        repository.recordBuilder()
+        table.recordBuilder()
                 .id("batch-noindex-test3")
                 .recordType(rt1.getName())
                 .field(ft1.getName(), "test3 noindex run1")
@@ -245,8 +247,8 @@ public class BatchBuildTest {
         // change some fields and reindex using a specific configuration. Only one of the 2 changes should be picked up
         recordToChange1.setField(ft1.getName(), "test3 index run2");
         recordToChange2.setField(ft1.getName(), "test3 index run2");
-        repository.update(recordToChange1);
-        repository.update(recordToChange2);
+        table.update(recordToChange1);
+        table.update(recordToChange2);
 
         byte[] batchConf = getResourceAsByteArray("batchIndexConf-test3.json");
         setBatchIndexConf(defaultConf, batchConf, true);
@@ -264,8 +266,8 @@ public class BatchBuildTest {
         // Set things up for run 3 where the default configuration should be used again
         recordToChange1.setField(ft1.getName(), "test3 index run3");
         recordToChange2.setField(ft1.getName(), "test3 index run3");
-        repository.update(recordToChange1);
-        repository.update(recordToChange2);
+        table.update(recordToChange1);
+        table.update(recordToChange2);
         // Now rebuild the index and see if the default indexer has kicked in
         this.buildAndCommit();
 
@@ -305,13 +307,13 @@ public class BatchBuildTest {
         DerefMap derefMap = DerefMapHbaseImpl
                 .create(INDEX_NAME, lilyProxy.getHBaseProxy().getConf(), null, repository.getIdGenerator());
 
-        Record linkedRecord = repository.recordBuilder()
+        Record linkedRecord = table.recordBuilder()
                 .id("deref-test-linkedrecord")
                 .recordType(rt1.getName())
                 .field(ft1.getName(), "deref test linkedrecord")
                 .create();
 
-        Record record = repository.recordBuilder()
+        Record record = table.recordBuilder()
                 .id("deref-test-main")
                 .recordType(rt1.getName())
                 .field(ft1.getName(), "deref test main")

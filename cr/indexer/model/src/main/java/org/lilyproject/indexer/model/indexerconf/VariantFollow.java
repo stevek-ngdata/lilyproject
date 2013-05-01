@@ -20,9 +20,10 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.util.repo.VersionTag;
@@ -44,7 +45,8 @@ public class VariantFollow implements Follow {
     @Override
     public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback)
             throws RepositoryException, IOException, InterruptedException {
-        Repository repository = (Repository)indexUpdateBuilder.getRepositoryManager().getTable(indexUpdateBuilder.getTable());
+        LRepository repository = indexUpdateBuilder.getRepository();
+        LTable table = repository.getTable(indexUpdateBuilder.getTable());
         IdGenerator idGenerator = repository.getIdGenerator();
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
 
@@ -59,7 +61,7 @@ public class VariantFollow implements Follow {
 
         Record lessDimensionedRecord = null;
         try {
-            lessDimensionedRecord = VersionTag.getIdRecord(newDep.id, indexUpdateBuilder.getVTag(), repository);
+            lessDimensionedRecord = VersionTag.getIdRecord(newDep.id, indexUpdateBuilder.getVTag(), table, repository);
         } catch (RecordNotFoundException e) {
             // It's ok that the variant does not exist
         } catch (VersionNotFoundException e) {

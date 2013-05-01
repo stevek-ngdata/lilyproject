@@ -16,10 +16,10 @@
 package org.lilyproject.indexer.model.util;
 
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.Pair;
@@ -48,7 +48,7 @@ public class IndexRecordFilterUtil {
      * more filters than either the old or new record state would match.</p>
      */
     public static Pair<Record,Record> getOldAndNewRecordForRecordFilterEvaluation(RecordId recordId, RecordEvent recordEvent,
-            Repository repository) throws RepositoryException, InterruptedException {
+            LRepository repository) throws RepositoryException, InterruptedException {
 
         //
         // Create the 'old' and 'new' Record instances.
@@ -67,8 +67,8 @@ public class IndexRecordFilterUtil {
 
         RecordEvent.IndexRecordFilterData idxSel = recordEvent.getIndexRecordFilterData();
         if (idxSel != null) {
-            Record newRecord = idxSel.getNewRecordExists() ? repository.newRecord(recordId) : null;
-            Record oldRecord = idxSel.getOldRecordExists() ? repository.newRecord(recordId) : null;
+            Record newRecord = idxSel.getNewRecordExists() ? repository.getRecordFactory().newRecord(recordId) : null;
+            Record oldRecord = idxSel.getOldRecordExists() ? repository.getRecordFactory().newRecord(recordId) : null;
 
             TypeManager typeManager = repository.getTypeManager();
 

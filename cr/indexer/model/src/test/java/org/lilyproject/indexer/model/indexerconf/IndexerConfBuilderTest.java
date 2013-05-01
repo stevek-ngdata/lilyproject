@@ -22,7 +22,7 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.mockito.Mockito;
@@ -36,13 +36,13 @@ public class IndexerConfBuilderTest {
 
     private TypeManager typeManager;
     private IdGenerator idGenerator;
-    private Repository repository;
+    private LRepository repository;
 
     @Before
     public void setUp() {
         typeManager = mock(TypeManager.class, Mockito.RETURNS_DEEP_STUBS);
         idGenerator = new IdGeneratorImpl();
-        repository = mock(Repository.class);
+        repository = mock(LRepository.class);
         when(repository.getTypeManager()).thenReturn(typeManager);
         when(repository.getIdGenerator()).thenReturn(idGenerator);
     }

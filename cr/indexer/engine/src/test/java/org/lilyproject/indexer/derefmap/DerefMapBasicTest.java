@@ -32,8 +32,8 @@ import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
@@ -53,7 +53,6 @@ import static org.junit.Assert.assertTrue;
 public class DerefMapBasicTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
 
-    private static Repository repository;
     private static IdGenerator ids;
     private static DerefMapHbaseImpl derefMap;
 
@@ -66,7 +65,7 @@ public class DerefMapBasicTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = (Repository)repoSetup.getRepositoryManager().getTable(Table.RECORD.name);
+        LRepository repository = repoSetup.getRepositoryManager().getPublicRepository();
         ids = repository.getIdGenerator();
 
         derefMap = (DerefMapHbaseImpl) DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), null, ids);

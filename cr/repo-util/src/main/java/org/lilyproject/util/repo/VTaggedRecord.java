@@ -26,9 +26,10 @@ import java.util.Set;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -59,23 +60,24 @@ public class VTaggedRecord {
 
     private SchemaId lastVTag;
 
-    private Repository repository;
+    private LTable table;
 
     private TypeManager typeManager;
 
-    public VTaggedRecord(RecordId recordId, Repository repository) throws RepositoryException, InterruptedException {
-        this(recordId, null, repository);
+    public VTaggedRecord(RecordId recordId, LTable table, LRepository repository)
+            throws RepositoryException, InterruptedException {
+        this(recordId, null, table, repository);
     }
 
     /**
      * Construct based on a recordId. This will do a repository read to get the latest record.
      */
-    public VTaggedRecord(RecordId recordId, RecordEventHelper eventHelper, Repository repository)
+    public VTaggedRecord(RecordId recordId, RecordEventHelper eventHelper, LTable table, LRepository repository)
             throws RepositoryException, InterruptedException {
         // Load the last version of the record to get vtag and non-versioned fields information
         // We will also reuse this record object in case the last version or the non-versioned data is needed,
         // to avoid extra gets on HBase.
-        this(repository.readWithIds(recordId, null, null), eventHelper, repository);
+        this(table.readWithIds(recordId, null, null), eventHelper, table, repository);
     }
 
     /**
@@ -83,9 +85,9 @@ public class VTaggedRecord {
      * available. The existing IdRecord should be the last (when it was read) and should have been read with all
      * fields!
      */
-    public VTaggedRecord(IdRecord idRecord, RecordEventHelper eventHelper, Repository repository)
+    public VTaggedRecord(IdRecord idRecord, RecordEventHelper eventHelper, LTable table, LRepository repository)
             throws RepositoryException, InterruptedException {
-        this.repository = repository;
+        this.table = table;
         this.typeManager = repository.getTypeManager();
         this.record = idRecord;
         this.recordEventHelper = eventHelper;
@@ -253,7 +255,7 @@ public class VTaggedRecord {
         } else if (record.getVersion() != null && version == record.getVersion()) {
             return record;
         } else {
-            return repository.readWithIds(record.getId(), version, fields);
+            return table.readWithIds(record.getId(), version, fields);
         }
     }
 

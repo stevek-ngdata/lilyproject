@@ -18,6 +18,7 @@ package org.lilyproject.indexer.model.indexerconf;
 import java.io.IOException;
 import java.util.List;
 
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
@@ -28,7 +29,7 @@ public interface IndexUpdateBuilder {
 
     public void addField(String fieldName, List<String> value) throws InterruptedException, RepositoryException;
 
-    public RepositoryManager getRepositoryManager();
+    public LRepository getRepository();
 
     public SystemFields getSystemFields();
 

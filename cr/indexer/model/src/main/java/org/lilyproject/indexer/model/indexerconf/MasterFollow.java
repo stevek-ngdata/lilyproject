@@ -18,9 +18,10 @@ package org.lilyproject.indexer.model.indexerconf;
 import java.io.IOException;
 import java.util.Collections;
 
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.util.repo.VersionTag;
@@ -35,12 +36,13 @@ public class MasterFollow implements Follow {
             return;
         }
 
-        Repository repository = (Repository)indexUpdateBuilder.getRepositoryManager().getTable(indexUpdateBuilder.getTable());
+        LRepository repository = indexUpdateBuilder.getRepository();
+        LTable table = repository.getTable(indexUpdateBuilder.getTable());
 
         Dep masterDep = new Dep(ctx.dep.id.getMaster(), Collections.<String>emptySet());
         Record master = null;
         try {
-            master = VersionTag.getIdRecord(masterDep.id, indexUpdateBuilder.getVTag(), repository);
+            master = VersionTag.getIdRecord(masterDep.id, indexUpdateBuilder.getVTag(), table, repository);
         } catch (RecordNotFoundException e) {
             // It's ok that the master does not exist
         } catch (VersionNotFoundException e) {

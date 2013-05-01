@@ -51,7 +51,7 @@ public class ShallowJsonFormatter extends DefaultFormatter {
     protected static class RecordKeyValueFormatter implements ValueFormatter {
         @Override
         public String format(Object record, ValueType valueType, FormatContext formatCtx) throws InterruptedException {
-            TypeManager typeManager = formatCtx.repositoryManager.getTypeManager();
+            TypeManager typeManager = formatCtx.repository.getTypeManager();
 
             StringWriter writer = new StringWriter();
             try {

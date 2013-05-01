@@ -26,10 +26,11 @@ import com.google.common.collect.Lists;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdRecordScanner;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.VersionNotFoundException;
@@ -54,12 +55,13 @@ public class IndexerUtils {
 
         final RecordScan scan = new RecordScan();
         scan.setRecordFilter(new RecordVariantFilter(newDep.id.getMaster(), varProps));
-        Repository repository = (Repository)indexUpdateBuilder.getRepositoryManager().getTable(indexUpdateBuilder.getTable());
-        final IdRecordScanner scanner = repository.getScannerWithIds(scan);
+        LRepository repository = indexUpdateBuilder.getRepository();
+        LTable table = repository.getTable(indexUpdateBuilder.getTable());
+        final IdRecordScanner scanner = table.getScannerWithIds(scan);
         IdRecord next;
         while ((next = scanner.next()) != null) {
             try {
-                final Record record = VersionTag.getIdRecord(next, indexUpdateBuilder.getVTag(), repository);
+                final Record record = VersionTag.getIdRecord(next, indexUpdateBuilder.getVTag(), table, repository);
                 result.add(record);
             } catch (RecordNotFoundException rnfe) {
                 //ok

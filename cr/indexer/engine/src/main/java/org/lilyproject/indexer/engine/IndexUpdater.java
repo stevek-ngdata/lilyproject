@@ -44,7 +44,6 @@ import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -174,7 +173,7 @@ public class IndexUpdater implements EventListener {
                             indexer.vtagSetToNameString(recordEvent.getVtagsToIndex())));
                 }
                 String tableName = recordEvent.getTableName();
-                index((Repository)repository.getTable(tableName), tableName, recordId, recordEvent.getVtagsToIndex());
+                index(repository, tableName, recordId, recordEvent.getVtagsToIndex());
             } else if (recordEvent.getType().equals(DELETE)) {
                 // Record is deleted: delete its index entry. We do not check for a matching index case, since
                 // we can't (record is not available anymore), and besides IndexAwareMQFeeder takes care of sending us
@@ -203,7 +202,7 @@ public class IndexUpdater implements EventListener {
                 // than the old one, perform the necessary deletes on Solr.
                 Pair<Record,Record> oldAndNewRecords =
                         IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, recordEvent,
-                                (Repository)repository.getTable(recordEvent.getTableName()));
+                                repository);
                 Record oldRecord = oldAndNewRecords.getV1();
                 Record newRecord = oldAndNewRecords.getV2();
                 IndexCase caseOld = oldRecord != null ? indexer.getConf().getIndexCase(
@@ -248,7 +247,7 @@ public class IndexUpdater implements EventListener {
                             // mappings read here. The processing of later events will bring the index up to date with
                             // any new changes.
                             vtRecord = new VTaggedRecord(recordId, eventHelper,
-                                    (Repository)repository.getTable(recordEvent.getTableName()));
+                                    repository.getTable(recordEvent.getTableName()), repository);
                         } catch (RecordNotFoundException e) {
                             // The record has been deleted in the meantime.
                             // For now, we do nothing, when the delete event is received the record will be removed
@@ -518,7 +517,7 @@ public class IndexUpdater implements EventListener {
      *
      * @throws IOException
      */
-    private void index(Repository repository, String table, RecordId recordId, Set<SchemaId> vtagsToIndex) throws RepositoryException, InterruptedException,
+    private void index(LRepository repository, String table, RecordId recordId, Set<SchemaId> vtagsToIndex) throws RepositoryException, InterruptedException,
             SolrClientException, ShardSelectorException, IndexLockException, IOException {
         boolean lockObtained = false;
         try {
@@ -527,7 +526,7 @@ public class IndexUpdater implements EventListener {
 
             VTaggedRecord vtRecord;
             try {
-                vtRecord = new VTaggedRecord(recordId, repository);
+                vtRecord = new VTaggedRecord(recordId, repository.getTable(table), repository);
             } catch (RecordNotFoundException e) {
                 // can't index what doesn't exist
                 return;

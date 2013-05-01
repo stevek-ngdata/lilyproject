@@ -21,8 +21,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.repo.SystemFields;
 import org.w3c.dom.Element;
@@ -35,14 +35,14 @@ public class NameTemplateParser {
     private static Pattern fieldPattern = Pattern.compile("([^:]+):([^:]+)?");
 
     // used for parsing qnames
-    private Repository repository;
+    private LRepository repository;
     private SystemFields systemFields;
 
     public NameTemplateParser() {
         this(null, null);
     }
 
-    public NameTemplateParser(Repository repository, SystemFields systemFields) {
+    public NameTemplateParser(LRepository repository, SystemFields systemFields) {
         this.repository = repository;
         this.systemFields = systemFields;
     }

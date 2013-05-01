@@ -41,8 +41,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -94,7 +94,7 @@ public class IndexerConfBuilder {
 
     private IndexerConf conf;
 
-    private Repository repository;
+    private LRepository repository;
 
     private TypeManager typeManager;
 
@@ -104,7 +104,7 @@ public class IndexerConfBuilder {
         // prevents instantiation
     }
 
-    public static IndexerConf build(InputStream is, Repository repository) throws IndexerConfException {
+    public static IndexerConf build(InputStream is, LRepository repository) throws IndexerConfException {
         Document doc;
         try {
             doc = DocumentHelper.parse(is);
@@ -114,7 +114,7 @@ public class IndexerConfBuilder {
         return new IndexerConfBuilder().build(doc, repository);
     }
 
-    private IndexerConf build(Document doc, Repository repository) throws IndexerConfException {
+    private IndexerConf build(Document doc, LRepository repository) throws IndexerConfException {
         validate(doc);
         this.doc = doc;
         this.repository = repository;

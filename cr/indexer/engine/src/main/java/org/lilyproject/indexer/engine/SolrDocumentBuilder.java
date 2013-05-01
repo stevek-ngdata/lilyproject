@@ -45,11 +45,11 @@ import org.lilyproject.indexer.model.indexerconf.TemplatePart;
 import org.lilyproject.indexer.model.indexerconf.Value;
 import org.lilyproject.indexer.model.indexerconf.VariantPropertyTemplatePart;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
@@ -59,7 +59,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
     private final Log log = LogFactory.getLog(getClass());
 
-    private final RepositoryManager repositoryManager;
+    private final LRepository repository;
     private final IndexRecordFilter indexRecordFilter;
     private final SystemFields systemFields;
     private final TypeManager typeManager;
@@ -78,12 +78,12 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     private SchemaId vtag;
     private long version;
 
-    public SolrDocumentBuilder(RepositoryManager repositoryManager, IndexRecordFilter indexRecordFilter, SystemFields systemFields,
+    public SolrDocumentBuilder(LRepository repository, IndexRecordFilter indexRecordFilter, SystemFields systemFields,
                                ValueEvaluator valueEvaluator, String table, IdRecord record, String key, SchemaId vtag, long version) {
-        this.repositoryManager = repositoryManager;
+        this.repository = repository;
         this.indexRecordFilter = indexRecordFilter;
         this.systemFields = systemFields;
-        this.typeManager = repositoryManager.getTypeManager();
+        this.typeManager = repository.getTypeManager();
         this.valueEvaluator = valueEvaluator;
         this.table = table;
         this.recordId = record.getId();
@@ -121,8 +121,8 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     }
 
     @Override
-    public RepositoryManager getRepositoryManager() {
-        return repositoryManager;
+    public LRepository getRepository() {
+        return repository;
     }
 
     @Override

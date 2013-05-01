@@ -58,7 +58,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
@@ -183,7 +183,7 @@ public class IndexerWorker {
     private void addIndexUpdater(IndexDefinition index) {
         IndexUpdaterHandle handle = null;
         try {
-            Repository repository = /* TODO multitenancy */ (Repository)repositoryManager.getPublicRepository();
+            LRepository repository = repositoryManager.getPublicRepository();
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
                      repository);
 
@@ -199,9 +199,8 @@ public class IndexerWorker {
                             repositoryManager.getIdGenerator()) : null;
 
             // create and register the indexer
-            Indexer indexer = new Indexer(index.getName(), indexerConf,
-                    repositoryManager, solrShardMgr, indexLocker, indexerMetrics,
-                    derefMap);
+            Indexer indexer = new Indexer(index.getName(), indexerConf, repository, solrShardMgr, indexLocker,
+                    indexerMetrics, derefMap);
             indexerRegistry.register(indexer);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
