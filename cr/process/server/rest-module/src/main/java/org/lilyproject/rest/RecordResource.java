@@ -29,11 +29,12 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ResponseStatus;
 import org.lilyproject.tools.import_.core.ImportMode;
 import org.lilyproject.tools.import_.core.ImportResult;
@@ -52,11 +53,12 @@ public class RecordResource extends RepositoryEnabled {
     @GET
     @Produces("application/json")
     public Entity<Record> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
-        Repository repository = getRepository(uriInfo);
+        LRepository repository = getRepository(uriInfo);
+        LTable table = getTable(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
         try {
-            return Entity.create(repository.read(recordId, fieldQNames), uriInfo);
+            return Entity.create(table.read(recordId, fieldQNames), uriInfo);
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -68,7 +70,8 @@ public class RecordResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response put(@PathParam("id") String id, Record record, @Context UriInfo uriInfo) {
-        Repository repository = getRepository(uriInfo);
+        LRepository repository = getRepository(uriInfo);
+        LTable table = getTable(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
 
         if (record.getId() != null && !record.getId().equals(recordId)) {
@@ -80,7 +83,7 @@ public class RecordResource extends RepositoryEnabled {
 
         ImportResult<Record> result;
         try {
-            result = RecordImport.importRecord(record, ImportMode.CREATE_OR_UPDATE, repository);
+            result = RecordImport.importRecord(record, ImportMode.CREATE_OR_UPDATE, table);
         } catch (Exception e) {
             throw new ResourceException("Error creating or updating record with id " + id, e,
                     INTERNAL_SERVER_ERROR.getStatusCode());
@@ -111,7 +114,8 @@ public class RecordResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response post(@PathParam("id") String id, PostAction<Record> postAction, @Context UriInfo uriInfo) {
-        Repository repository = getRepository(uriInfo);
+        LRepository repository = getRepository(uriInfo);
+        LTable table = getTable(uriInfo);
         if (postAction.getAction().equals("update")) {
             RecordId recordId = repository.getIdGenerator().fromString(id);
             Record record = postAction.getEntity();
@@ -125,7 +129,7 @@ public class RecordResource extends RepositoryEnabled {
 
             ImportResult<Record> result;
             try {
-                result = RecordImport.importRecord(record, ImportMode.UPDATE, postAction.getConditions(), repository);
+                result = RecordImport.importRecord(record, ImportMode.UPDATE, postAction.getConditions(), table);
             } catch (Exception e) {
                 throw new ResourceException(e, INTERNAL_SERVER_ERROR.getStatusCode());
             }
@@ -154,7 +158,7 @@ public class RecordResource extends RepositoryEnabled {
         } else if (postAction.getAction().equals("delete")) {
             RecordId recordId = repository.getIdGenerator().fromString(id);
             try {
-                Record record = repository.delete(recordId, postAction.getConditions());
+                Record record = table.delete(recordId, postAction.getConditions());
                 if (record != null && record.getResponseStatus() == ResponseStatus.CONFLICT) {
                     return Response.status(CONFLICT.getStatusCode()).entity(Entity.create(record, uriInfo)).build();
                 }
@@ -171,10 +175,11 @@ public class RecordResource extends RepositoryEnabled {
 
     @DELETE
     public Response delete(@PathParam("id") String id, @Context UriInfo uriInfo) {
-        Repository repository = getRepository(uriInfo);
+        LRepository repository = getRepository(uriInfo);
+        LTable table = getTable(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
         try {
-            repository.delete(recordId);
+            table.delete(recordId);
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {

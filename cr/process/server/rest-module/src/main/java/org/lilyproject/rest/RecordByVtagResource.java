@@ -24,11 +24,12 @@ import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.util.repo.VersionTag;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
@@ -42,11 +43,12 @@ public class RecordByVtagResource extends RepositoryEnabled {
     public Entity<Record> get(@PathParam("id") String id, @PathParam("vtag") String vtag, @Context UriInfo uriInfo) {
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
 
-        Repository repository = getRepository(uriInfo);
+        LRepository repository = getRepository(uriInfo);
+        LTable table = getTable(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
         Record record;
         try {
-            record = VersionTag.getRecord(recordId, vtag, fieldQNames, repository);
+            record = VersionTag.getRecord(recordId, vtag, fieldQNames, table, repository);
             if (record == null) {
                 throw new ResourceException("Undefined version tag: " + vtag, NOT_FOUND.getStatusCode());
             }

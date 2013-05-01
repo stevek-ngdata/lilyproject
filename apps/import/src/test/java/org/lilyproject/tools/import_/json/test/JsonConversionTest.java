@@ -33,13 +33,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.MetadataBuilder;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.repository.api.Scope;
@@ -59,7 +60,6 @@ import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.tools.import_.json.RecordScanWriter;
 import org.lilyproject.tools.import_.json.RecordWriter;
 import org.lilyproject.tools.import_.json.WriteOptions;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 
@@ -72,7 +72,8 @@ import static org.junit.Assert.fail;
 
 public class JsonConversionTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
-    private static Repository repository;
+    private static LRepository repository;
+    private static LTable table;
     private RecordScanWriter writer;
     private RecordScanReader reader;
 
@@ -81,7 +82,8 @@ public class JsonConversionTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
+        repository = repoSetup.getRepositoryManager().getPublicRepository();
+        table = repository.getDefaultTable();
 
         TypeManager typeManager = repository.getTypeManager();
         typeManager.createFieldType("STRING", new QName("ns", "stringField"), Scope.NON_VERSIONED);
@@ -118,9 +120,9 @@ public class JsonConversionTest {
      */
     @Test
     public void testNamespaceContexts() throws Exception {
-        JsonImport.load(repository, getClass().getResourceAsStream("nscontexttest.json"), false);
+        JsonImport.load(table, repository, getClass().getResourceAsStream("nscontexttest.json"));
 
-        Record record1 = repository.read(repository.getIdGenerator().fromString("USER.record1"));
+        Record record1 = table.read(repository.getIdGenerator().fromString("USER.record1"));
         assertEquals("value1", record1.getField(new QName("import1", "f1")));
         assertEquals(new Integer(55), record1.getField(new QName("import2", "f2")));
     }
@@ -396,7 +398,7 @@ public class JsonConversionTest {
 
     @Test
     public void testRecordAttributes() throws Exception {
-        Record record = repository.newRecord();
+        Record record = repository.getRecordFactory().newRecord();
         record.getAttributes().put("one", "onevalue");
 
         ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repository);
@@ -417,7 +419,7 @@ public class JsonConversionTest {
 
     @Test
     public void testMetadata() throws Exception {
-        Record record = repository.newRecord();
+        Record record = repository.getRecordFactory().newRecord();
         record.setMetadata(new QName("ns", "field1"),
                 new MetadataBuilder()
                         .value("stringfield", "string")
@@ -496,7 +498,7 @@ public class JsonConversionTest {
 
     @Test
     public void testMetadataToDelete() throws Exception {
-        Record record = repository.newRecord();
+        Record record = repository.getRecordFactory().newRecord();
         record.setMetadata(new QName("ns", "field1"),
                 new MetadataBuilder()
                         .value("mfield1", "value1")

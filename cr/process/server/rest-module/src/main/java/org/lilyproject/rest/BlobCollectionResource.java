@@ -59,7 +59,7 @@ public class BlobCollectionResource extends RepositoryEnabled {
 
         OutputStream os = null;
         try {
-            os = getRepository(uriInfo).getOutputStream(blob);
+            os = getTable(uriInfo).getOutputStream(blob);
             IOUtils.copyLarge(is, os);
         } catch (Exception e) {
             throw new ResourceException("Error writing blob.", e, INTERNAL_SERVER_ERROR.getStatusCode());

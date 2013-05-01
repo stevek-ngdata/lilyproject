@@ -29,7 +29,6 @@ import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -112,11 +111,11 @@ public class VersionTag {
     /**
      * Returns null if the vtag does not exist or is not defined for the record.
      */
-    public static Record getRecord(RecordId recordId, String vtag, List<QName> fields, Repository repository)
-            throws RepositoryException, InterruptedException {
+    public static Record getRecord(RecordId recordId, String vtag, List<QName> fields,
+            LTable table, LRepository repository) throws RepositoryException, InterruptedException {
 
         QName vtagName = new QName(NAMESPACE, vtag);
-        Record record = repository.read(recordId);
+        Record record = table.read(recordId);
 
         long version;
         if (vtag.equals("last")) {
@@ -134,7 +133,7 @@ public class VersionTag {
                 reduceToNonVersioned(record, fields != null ? new HashSet<QName>(fields) : null,
                         repository.getTypeManager());
             } else {
-                record = repository.read(recordId, version, fields);
+                record = table.read(recordId, version, fields);
             }
 
             return record;

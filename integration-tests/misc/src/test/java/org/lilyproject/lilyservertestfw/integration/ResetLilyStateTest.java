@@ -58,7 +58,7 @@ public class ResetLilyStateTest {
 
             // Load a schema
             InputStream is = ResetLilyStateTest.class.getResourceAsStream("schema.json");
-            JsonImport.load(repository, is, false);
+            JsonImport.loadSchema(repository, is);
             is.close();
 
             // Create a record to assure the schema we just created is in the cache.
@@ -108,7 +108,7 @@ public class ResetLilyStateTest {
 
         // Create schema via client 1
         InputStream is = ResetLilyStateTest.class.getResourceAsStream("schema.json");
-        JsonImport.load(repository1, is, false);
+        JsonImport.loadSchema(repository1, is);
         is.close();
 
         // Give client 2 just a bit of time to refresh its cache

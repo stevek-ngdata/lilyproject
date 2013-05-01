@@ -25,10 +25,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -39,14 +40,15 @@ public class RecordVariantCollectionResource extends RepositoryEnabled {
     @GET
     @Produces("application/json")
     public EntityList<Record> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
-        Repository repository = getRepository(uriInfo);
+        LRepository repository = getRepository(uriInfo);
+        LTable table = getTable(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
         try {
-            Set<RecordId> recordIds = repository.getVariants(recordId);
+            Set<RecordId> recordIds = table.getVariants(recordId);
 
             List<Record> records = new ArrayList<Record>();
             for (RecordId variant : recordIds) {
-                records.add(repository.newRecord(variant));
+                records.add(repository.getRecordFactory().newRecord(variant));
             }
             return EntityList.create(records, uriInfo);
         } catch (RecordNotFoundException e) {

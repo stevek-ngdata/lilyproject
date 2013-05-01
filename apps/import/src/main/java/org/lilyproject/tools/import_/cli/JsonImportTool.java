@@ -25,7 +25,8 @@ import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
@@ -104,7 +105,7 @@ public class JsonImportTool extends BaseZkCliTool {
 
         int workers = OptionUtil.getIntOption(cmd, workersOption, 1);
 
-        String table = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
+        String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
         String tenant = OptionUtil.getStringOption(cmd, tenantOption, "public");
 
         if (cmd.getArgList().size() < 1) {
@@ -118,14 +119,15 @@ public class JsonImportTool extends BaseZkCliTool {
 
         for (String arg : (List<String>)cmd.getArgList()) {
             System.out.println("----------------------------------------------------------------------");
-            System.out.println("Importing " + arg + " to " + table + " table");
+            System.out.println("Importing " + arg + " to " + tableName + " table of tenant " + tenant);
             InputStream is = new FileInputStream(arg);
             try {
-                Repository repository = (Repository)lilyClient.getRepository(tenant).getTable(table);
+                LRepository repository = lilyClient.getRepository(tenant);
+                LTable table = repository.getTable(tableName);
                 if (cmd.hasOption(quietOption.getOpt())) {
-                    JsonImport.load(repository, new DefaultImportListener(System.out, EntityType.RECORD), is, schemaOnly, workers);
+                    JsonImport.load(table, repository, new DefaultImportListener(System.out, EntityType.RECORD), is, schemaOnly, workers);
                 } else {
-                    JsonImport.load(repository, is, schemaOnly, workers);
+                    JsonImport.load(table, repository, new DefaultImportListener(), is, schemaOnly, workers);
                 }
             } finally {
                 Closer.close(is);

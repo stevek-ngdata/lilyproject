@@ -17,10 +17,10 @@ package org.lilyproject.rest;
 
 import javax.ws.rs.core.UriInfo;
 
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.exception.ExceptionUtil;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
@@ -34,12 +34,20 @@ public class RepositoryEnabled {
     }
 
     /**
-     * @deprecated Use getRepository(String) instead
+     * Returns a repository based on the tenantName path parameter.
+     * <p>
+     * This method discerns between classes marked with the {@link TenantEnabled} annotation and those without.
+     * @param uriInfo context info from the incoming request
+     * @return the appropriate repository (based on the tenantName parameter, or the public repository)
      */
-    @Deprecated
-    public Repository getRepository() {
+    protected LRepository getRepository(UriInfo uriInfo) {
         try {
-            return (Repository)repositoryMgr.getDefaultTable();
+            TenantEnabled tenantEnabledAnnotation = getClass().getAnnotation(TenantEnabled.class);
+            if (tenantEnabledAnnotation != null) {
+                return repositoryMgr.getRepository(uriInfo.getPathParameters().getFirst(tenantEnabledAnnotation.tenantName()));
+            } else {
+                return repositoryMgr.getPublicRepository();
+            }
         } catch (Exception e) {
             ExceptionUtil.handleInterrupt(e);
             throw new ResourceException("Error retrieving repository", e, INTERNAL_SERVER_ERROR.getStatusCode());
@@ -47,27 +55,27 @@ public class RepositoryEnabled {
     }
 
     /**
-     * Returns a repository based on the tableName path parameter.
+     * Returns a table based on the tableName path parameter. The table is retrieved from the repository
+     * determined by {@link #getRepository(javax.ws.rs.core.UriInfo)}.
+     *
      * <p>
      * This method discerns between classes marked with the {@link TableEnabled} annotation and those without.
      * @param uriInfo context info from the incoming request
-     * @return the appropriate repository (based on the tableName parameter, or the default repository)
+     * @return the appropriate table (based on the tableName parameter, or the default table)
      */
-    protected Repository getRepository(UriInfo uriInfo) {
-        TableEnabled tableEnabledAnnotation = getClass().getAnnotation(TableEnabled.class);
-        if (tableEnabledAnnotation != null) {
-            return getRepository(uriInfo.getPathParameters().getFirst(tableEnabledAnnotation.tableName()));
-        } else {
-            return getRepository(Table.RECORD.name);
+    protected LTable getTable(UriInfo uriInfo) {
+        LRepository repository = getRepository(uriInfo);
+        try {
+            TableEnabled tableEnabledAnnotation = getClass().getAnnotation(TableEnabled.class);
+            if (tableEnabledAnnotation != null) {
+                return repository.getTable(uriInfo.getPathParameters().getFirst(tableEnabledAnnotation.tableName()));
+            } else {
+                return repository.getDefaultTable();
+            }
+        } catch (Exception e) {
+            ExceptionUtil.handleInterrupt(e);
+            throw new ResourceException("Error retrieving table", e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
     }
 
-    public Repository getRepository(String tableName) {
-        try {
-            return (Repository)repositoryMgr.getTable(tableName);
-        } catch (Exception e) {
-            ExceptionUtil.handleInterrupt(e);
-            throw new ResourceException("Error retrieving repository", e, INTERNAL_SERVER_ERROR.getStatusCode());
-        }
-    }
 }

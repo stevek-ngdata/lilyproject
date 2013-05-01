@@ -33,7 +33,8 @@ import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.io.Closer;
@@ -57,7 +58,9 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
 
     protected String tenantName;
 
-    protected Repository repository;
+    protected LRepository repository;
+
+    protected LTable table;
 
     protected IdGenerator idGenerator;
 
@@ -125,7 +128,8 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
     public void setupLily() throws IOException, ZkConnectException, NoServersException, InterruptedException,
             KeeperException, RepositoryException {
         lilyClient = new LilyClient(getZooKeeper());
-        repository = (Repository)lilyClient.getRepository(tenantName);
+        repository = lilyClient.getRepository(tenantName);
+        table = repository.getDefaultTable();
         idGenerator = repository.getIdGenerator();
         typeManager = repository.getTypeManager();
     }

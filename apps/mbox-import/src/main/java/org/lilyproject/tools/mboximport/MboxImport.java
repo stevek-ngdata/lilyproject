@@ -173,7 +173,7 @@ public class MboxImport extends BaseRepositoryTestTool {
         System.out.println("Creating the schema (if necessary)");
         System.out.println();
         InputStream is = getClass().getClassLoader().getResourceAsStream("org/lilyproject/tools/mboximport/mail_schema.json");
-        JsonImport.load(repository, is, false);
+        JsonImport.loadSchema(repository, is);
         System.out.println();
     }
 
@@ -259,7 +259,7 @@ public class MboxImport extends BaseRepositoryTestTool {
                     // TODO could fill in filename
                     long startTime = System.nanoTime();
                     Blob blob = new Blob(mediaType, (long)data.length, null);
-                    OutputStream os = repository.getOutputStream(blob);
+                    OutputStream os = table.getOutputStream(blob);
                     try {
                         IOUtils.write(data, os);
                     } finally {
@@ -314,7 +314,7 @@ public class MboxImport extends BaseRepositoryTestTool {
             partRecordIds.add(idGenerator.newRecordId());
         }
 
-        Record messageRecord = repository.newRecord(idGenerator.newRecordId());
+        Record messageRecord = repository.getRecordFactory().newRecord(idGenerator.newRecordId());
         messageRecord.setRecordType(new QName(NS, "Message"));
         if (message.subject != null) {
             messageRecord.setField(new QName(NS, "subject"), message.subject);
@@ -348,20 +348,20 @@ public class MboxImport extends BaseRepositoryTestTool {
         messageRecord.setField(new QName(NS, "parts"), partLinks);
 
         long startTime = System.nanoTime();
-        messageRecord = repository.createOrUpdate(messageRecord);
+        messageRecord = table.createOrUpdate(messageRecord);
         double duration = System.nanoTime() - startTime;
         metrics.increment("Message record", "Create", duration / 1e6d);
 
         for (int i = 0; i < message.parts.size(); i++) {
             Part part = message.parts.get(i);
-            Record partRecord = repository.newRecord(partRecordIds.get(i));
+            Record partRecord = table.newRecord(partRecordIds.get(i));
             partRecord.setRecordType(new QName(NS, "Part"));
             partRecord.setField(new QName(NS, "mediaType"), part.blob.getMediaType());
             partRecord.setField(new QName(NS, "content"), part.blob);
             partRecord.setField(new QName(NS, "message"), new Link(messageRecord.getId()));
 
             startTime = System.nanoTime();
-            partRecord = repository.createOrUpdate(partRecord);
+            partRecord = table.createOrUpdate(partRecord);
             duration = System.nanoTime() - startTime;
             metrics.increment("Part record", "Create", duration / 1e6d);
 

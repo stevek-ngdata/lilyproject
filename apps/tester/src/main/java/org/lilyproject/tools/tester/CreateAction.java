@@ -25,7 +25,6 @@ import org.codehaus.jackson.JsonNode;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.tools.import_.json.QNameConverter;
 import org.lilyproject.util.json.JsonFormatException;
@@ -75,15 +74,10 @@ public class CreateAction extends AbstractTestAction implements TestAction {
     private ActionResult createRecord(TestRecordType recordTypeToCreate) {
         double duration = 0;
         Record record;
-        try {
-            if (testActionContext.roundRobinPrefixGenerator == null) {
-                record = testActionContext.repository.newRecord();
-            } else {
-                record = testActionContext.repository.newRecord(createPrefixedRecordId());
-            }
-        } catch (RecordException e) {
-            reportError("Error preparing create record.", e);
-            return new ActionResult(false, null, 0);
+        if (testActionContext.roundRobinPrefixGenerator == null) {
+            record = testActionContext.repository.getRecordFactory().newRecord();
+        } else {
+            record = testActionContext.repository.getRecordFactory().newRecord(createPrefixedRecordId());
         }
 
         // Prepare record by generating values for the fields
@@ -104,7 +98,7 @@ public class CreateAction extends AbstractTestAction implements TestAction {
         long before = System.nanoTime();
         long createDuration = 0;
         try {
-            record = testActionContext.repository.create(record);
+            record = testActionContext.table.create(record);
             createDuration = System.nanoTime() - before;
             success = true;
         } catch (Throwable t) {

@@ -25,10 +25,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.VersionNotFoundException;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -42,11 +43,12 @@ public class RecordByVersionResource extends RepositoryEnabled {
     public Entity<Record> get(@PathParam("id") String id, @PathParam("version") Long version,
             @Context UriInfo uriInfo) {
 
-        Repository repository = getRepository(uriInfo);
+        LRepository repository = getRepository(uriInfo);
+        LTable table = getTable(uriInfo);
         RecordId recordId = repository.getIdGenerator().fromString(id);
 
         try {
-            return Entity.create(repository.read(recordId, version), uriInfo);
+            return Entity.create(table.read(recordId, version), uriInfo);
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (VersionNotFoundException e) {
@@ -79,7 +81,7 @@ public class RecordByVersionResource extends RepositoryEnabled {
 
         try {
             boolean useLatestRecordType = record.getRecordTypeName() == null || record.getRecordTypeVersion() == null;
-            record = getRepository(uriInfo).update(record, true, useLatestRecordType);
+            record = getTable(uriInfo).update(record, true, useLatestRecordType);
         } catch (RecordNotFoundException e) {
             throw new ResourceException("Record not found: " + recordId, NOT_FOUND.getStatusCode());
         } catch (VersionNotFoundException e) {

@@ -44,7 +44,7 @@ public class RecordCollectionResource extends RepositoryEnabled {
 
         try {
             // TODO record we respond with should be full record or be limited to user-specified field list
-            record = getRepository(uriInfo).create(record);
+            record = getTable(uriInfo).create(record);
             URI uri = uriInfo.getBaseUriBuilder().path(RecordResource.class).build(record.getId());
             return Response.created(uri).entity(Entity.create(record, uriInfo)).build();
         } catch (Exception e) {

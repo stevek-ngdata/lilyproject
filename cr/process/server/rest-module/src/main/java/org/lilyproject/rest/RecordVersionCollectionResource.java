@@ -25,11 +25,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -44,13 +45,14 @@ public class RecordVersionCollectionResource extends RepositoryEnabled {
             @DefaultValue("10") @QueryParam("max-results") Long maxResults,
             @Context UriInfo uriInfo) {
 
-        Repository repository = getRepository(uriInfo);
+        LRepository repository = getRepository(uriInfo);
+        LTable table = getTable(uriInfo);
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
 
         RecordId recordId = repository.getIdGenerator().fromString(id);
         List<Record> records;
         try {
-            records = repository.readVersions(recordId, startIndex, startIndex + maxResults - 1, fieldQNames);
+            records = table.readVersions(recordId, startIndex, startIndex + maxResults - 1, fieldQNames);
             return EntityList.create(records, uriInfo);
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());

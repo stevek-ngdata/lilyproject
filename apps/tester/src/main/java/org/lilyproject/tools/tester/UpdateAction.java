@@ -22,7 +22,6 @@ import org.codehaus.jackson.JsonNode;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.QNameConverter;
@@ -89,13 +88,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
             fieldsToUpdate.addAll(recordTypeToUpdate.getFieldTypes());
         }
 
-        Record record = null;
-        try {
-            record = testActionContext.repository.newRecord(recordId);
-        } catch (RecordException e) {
-            reportError("Error preparing update record.", e);
-            return new ActionResult(false, null, 0);
-        }
+        Record record = testActionContext.repository.getRecordFactory().newRecord(recordId);
 
         // If there is a Link-field that links to specified record type we need to read the field
         // in order to update the record that is linked to
@@ -110,7 +103,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
         if (readRecord) {
             before = System.nanoTime();
             try {
-                originalRecord = testActionContext.repository.read(record.getId());
+                originalRecord = testActionContext.table.read(record.getId());
                 long readDuration = System.nanoTime() - before;
                 report(true, readDuration, "repoRead");
                 duration += readDuration;
@@ -140,7 +133,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
         before = System.nanoTime();
         long updateDuration = 0;
         try {
-            record = testActionContext.repository.update(record);
+            record = testActionContext.table.update(record);
             updateDuration = System.nanoTime() - before;
             success = true;
         } catch (Throwable t) {
