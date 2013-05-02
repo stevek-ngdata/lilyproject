@@ -86,12 +86,6 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
     }
 
     @Override
-    public RecordFactory getRecordFactory() {
-        waitOnRepoManager();
-        return delegate.getRecordFactory();
-    }
-
-    @Override
     public IdGenerator getIdGenerator() {
         waitOnRepoManager();
         return delegate.getIdGenerator();

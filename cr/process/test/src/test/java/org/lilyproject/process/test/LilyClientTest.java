@@ -199,7 +199,6 @@ public class LilyClientTest {
         assertNotNull(repositoryManager.getPublicRepository());
         assertNotNull(repositoryManager.getTable(Table.RECORD.name));
         assertNotNull(repositoryManager.getIdGenerator());
-        assertNotNull(repositoryManager.getRecordFactory());
         assertNotNull(repositoryManager.getTypeManager());
     }
 }

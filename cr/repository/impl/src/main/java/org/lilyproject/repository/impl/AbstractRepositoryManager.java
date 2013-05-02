@@ -61,8 +61,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
         return idGenerator;
     }
 
-    @Override
-    public RecordFactory getRecordFactory() {
+    protected RecordFactory getRecordFactory() {
         return recordFactory;
     }
 

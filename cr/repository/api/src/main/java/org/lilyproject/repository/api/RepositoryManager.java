@@ -16,18 +16,12 @@
 package org.lilyproject.repository.api;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * Handles storage and retrieval of {@link Repository} objects for each HTable, as well as general repository services
  * such as a {@link TypeManager} and {@link IdGenerator}.
  */
 public interface RepositoryManager extends Closeable {
-
-    /**
-     * @return the factory for creating records
-     */
-    RecordFactory getRecordFactory();
 
     /**
      * @return the IdGenerator service

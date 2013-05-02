@@ -636,12 +636,12 @@ public abstract class BaseRepository implements Repository {
 
     @Override
     public Record newRecord() throws RecordException {
-        return repositoryManager.getRecordFactory().newRecord();
+        return recordFactory.newRecord();
     }
 
     @Override
     public Record newRecord(RecordId recordId) throws RecordException {
-        return repositoryManager.getRecordFactory().newRecord(recordId);
+        return recordFactory.newRecord(recordId);
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package org.lilyproject.server.modules.repository;
 
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
@@ -32,9 +33,9 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
     public DecoratingRepositoryManager(HBaseRepositoryManager repositoryManager,
             RecordUpdateHookActivator recordUpdateHookActivator,
             RepositoryDecoratorActivator repositoryDecoratorActivator,
-            TenantModel tenantModel) {
+            TenantModel tenantModel, RecordFactory recordFactory) {
         super(repositoryManager.getTypeManager(), repositoryManager.getIdGenerator(),
-                repositoryManager.getRecordFactory(), tenantModel);
+                recordFactory, tenantModel);
         this.wrappedRepositoryManager = repositoryManager;
         this.recordUpdateHookActivator = recordUpdateHookActivator;
         this.repositoryDecoratorActivator = repositoryDecoratorActivator;

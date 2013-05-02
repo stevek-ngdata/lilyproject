@@ -132,7 +132,7 @@ public class BulkIngester implements Closeable {
             FieldTypes fieldTypes) {
         this.repositoryManager = repositoryManager;
         this.hbaseRepo = hbaseRepo;
-        this.recordFactory = repositoryManager.getRecordFactory();
+        this.recordFactory = hbaseRepo.getRecordFactory();
         this.recordTable = recordTable;
         this.fieldTypes = fieldTypes;
     }
