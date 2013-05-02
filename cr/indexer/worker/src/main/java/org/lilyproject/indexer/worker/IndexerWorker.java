@@ -196,7 +196,7 @@ public class IndexerWorker {
             // we should maintain a deref map.
             DerefMap derefMap = index.isEnableDerefMap() && indexerConf.containsDerefExpressions() ?
                     DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory,
-                            repositoryManager.getIdGenerator()) : null;
+                            repository.getIdGenerator()) : null;
 
             // create and register the indexer
             Indexer indexer = new Indexer(index.getName(), indexerConf, repository, solrShardMgr, indexLocker,

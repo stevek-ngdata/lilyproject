@@ -32,8 +32,8 @@ import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -47,7 +47,7 @@ public class BatchIndexBuilder {
      * @return the ID of the started job
      */
     public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf, Configuration hbaseConf,
-                                         RepositoryManager repositoryManager, String zkConnectString, int zkSessionTimeout,
+                                         LRepository repository, String zkConnectString, int zkSessionTimeout,
                                          SolrClientConfig solrConfig,
                                          byte[] batchIndexConfiguration, boolean enableLocking,
                                          List<String> tableList, HBaseTableFactory tableFactory) throws Exception {
@@ -95,8 +95,7 @@ public class BatchIndexBuilder {
 
         JsonNode batchConfigurationNode =
                 JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration));
-        RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(batchConfigurationNode.get("scan"),
-                /* TODO multitenancy */ repositoryManager.getPublicRepository());
+        RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(batchConfigurationNode.get("scan"), repository);
         recordScan.setReturnFields(ReturnFields.ALL);
         recordScan.setCacheBlocks(false);
         recordScan.setCaching(1024);
@@ -115,16 +114,16 @@ public class BatchIndexBuilder {
         // creation preferences (otherwise would need to serialize that config towards the mappers).
         // This also requires to parse the indexerconf, to know if we actually need a derefmap.
         IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
-                repositoryManager.getPublicRepository());
+                repository);
         if (indexerConf.containsDerefExpressions()) {
-            DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory, repositoryManager.getIdGenerator());
+            DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory, repository.getIdGenerator());
         }
 
         job.getConfiguration().set("hbase.zookeeper.quorum", hbaseConf.get("hbase.zookeeper.quorum"));
         job.getConfiguration().set("hbase.zookeeper.property.clientPort",
                 hbaseConf.get("hbase.zookeeper.property.clientPort"));
 
-        LilyMapReduceUtil.initMapperJob(recordScan, true, zkConnectString, repositoryManager, job, tableList);
+        LilyMapReduceUtil.initMapperJob(recordScan, true, zkConnectString, repository, job, tableList);
 
         //
         // Provide Lily ZooKeeper props

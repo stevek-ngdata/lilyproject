@@ -57,6 +57,7 @@ import org.lilyproject.indexer.model.api.IndexerModelEvent;
 import org.lilyproject.indexer.model.api.IndexerModelEventType;
 import org.lilyproject.indexer.model.api.IndexerModelListener;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.Logs;
@@ -306,8 +307,10 @@ public class IndexerMaster {
                     Job job = null;
                     boolean jobStarted;
                     try {
+                        // TODO multitenancy
+                        LRepository repository = repositoryManager.getPublicRepository();
                         job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
-                                repositoryManager, zkConnectString, zkSessionTimeout, solrClientConfig,
+                                repository, zkConnectString, zkSessionTimeout, solrClientConfig,
                                 batchIndexConfiguration, enableLocking, batchTables, tableFactory);
                         jobStarted = true;
                     } catch (Throwable t) {
