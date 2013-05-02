@@ -55,8 +55,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
         return typeManager;
     }
 
-    @Override
-    public IdGenerator getIdGenerator() {
+    protected IdGenerator getIdGenerator() {
         return idGenerator;
     }
 

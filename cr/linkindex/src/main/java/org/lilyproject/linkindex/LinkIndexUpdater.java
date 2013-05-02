@@ -85,16 +85,26 @@ public class LinkIndexUpdater implements EventListener {
             return;
         }
 
-        RecordId recordId = repositoryManager.getIdGenerator().fromBytes(event.getRow());
+        LRepository repository = null;
+        try {
+            repository = repositoryManager.getPublicRepository();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } catch (RepositoryException e) {
+            throw new RuntimeException(e);
+        }
+
+        RecordId recordId = repository.getIdGenerator().fromBytes(event.getRow());
         RecordEvent recordEvent;
         try {
-            recordEvent = new RecordEvent(event.getPayload(), repositoryManager.getIdGenerator());
+            recordEvent = new RecordEvent(event.getPayload(), repository.getIdGenerator());
         } catch (IOException e) {
             log.error("Error reading record event, processing of message cancelled", e);
             return;
         }
         AbsoluteRecordId absoluteRecordId =
-                repositoryManager.getIdGenerator().newAbsoluteRecordId(recordEvent.getTableName(), recordId);
+                repository.getIdGenerator().newAbsoluteRecordId(recordEvent.getTableName(), recordId);
         update(absoluteRecordId, recordEvent);
     }
 
@@ -208,8 +218,9 @@ public class LinkIndexUpdater implements EventListener {
             if (versionRecord == null) {
                 links = Collections.emptySet();
             } else {
-                LinkCollector collector = new LinkCollector(repositoryManager.getIdGenerator());
-                RecordLinkExtractor.extract(versionRecord, collector, repositoryManager.getPublicRepository());
+                LRepository repository = repositoryManager.getPublicRepository();
+                LinkCollector collector = new LinkCollector(repository.getIdGenerator());
+                RecordLinkExtractor.extract(versionRecord, collector, repository);
                 links = collector.getLinks();
             }
             return links;

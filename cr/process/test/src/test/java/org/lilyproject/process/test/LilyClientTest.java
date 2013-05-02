@@ -198,6 +198,5 @@ public class LilyClientTest {
         RepositoryManager repositoryManager = lilyProxy.getLilyServerProxy().getClient();
         assertNotNull(repositoryManager.getPublicRepository());
         assertNotNull(repositoryManager.getTable(Table.RECORD.name));
-        assertNotNull(repositoryManager.getIdGenerator());
     }
 }

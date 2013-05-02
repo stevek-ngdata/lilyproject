@@ -114,10 +114,9 @@ public abstract class AbstractTenantTableTest {
                     .create();
         }
 
-        IdGenerator idGenerator = repositoryManager.getIdGenerator();
-
         for (String tenant : tenants) {
             LRepository repo = repositoryManager.getRepository(tenant);
+            IdGenerator idGenerator = repo.getIdGenerator();
             LTable table = repo.getTable("mytable");
             assertEquals(tenant + "-value1", table.read(idGenerator.newRecordId("id1")).getField(fieldType1.getName()));
         }

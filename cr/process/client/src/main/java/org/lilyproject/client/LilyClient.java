@@ -327,12 +327,6 @@ public class LilyClient implements Closeable, RepositoryManager {
         return repositoryManager.getPublicRepository();
     }
 
-    @Override
-    public IdGenerator getIdGenerator() {
-        return repositoryManager.getIdGenerator();
-    }
-
-
     /**
      * Returns an Indexer that uses one of the available Lily servers (randomly selected).
      * This indexer instance will not automatically retry operations and to balance requests

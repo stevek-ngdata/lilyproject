@@ -24,11 +24,6 @@ import java.io.Closeable;
 public interface RepositoryManager extends Closeable {
 
     /**
-     * @return the IdGenerator service
-     */
-    IdGenerator getIdGenerator();
-
-    /**
      * Get the {@code Repository} for the public tenant. This is the same as calling
      * getRepository("public").
      *

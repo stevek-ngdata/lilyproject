@@ -161,6 +161,7 @@
     <constructor-arg ref="tenantModel"/>
     <constructor-arg ref="recordFactory"/>
     <constructor-arg ref="typeManager"/>
+    <constructor-arg ref="idGenerator"/>
   </bean>
 
   <bean id="mbeanExporter" class="org.springframework.jmx.export.MBeanExporter">

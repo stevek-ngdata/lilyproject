@@ -85,10 +85,4 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
         }
     }
 
-    @Override
-    public IdGenerator getIdGenerator() {
-        waitOnRepoManager();
-        return delegate.getIdGenerator();
-    }
-
 }
