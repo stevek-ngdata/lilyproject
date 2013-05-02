@@ -49,9 +49,4 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
         return new DecoratingRepository(repositoryDecoratorActivator.getDecoratedRepository(repository),
                 key.getTenantName(), this);
     }
-
-    @Override
-    protected Repository getRepository(String tenantName, String tableName) throws InterruptedException, RepositoryException {
-        return super.getRepository(tenantName, tableName);
-    }
 }
