@@ -29,16 +29,15 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.linkindex.FieldedLink;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.repo.PureRepository;
 
 public class LinkIndexCli extends BaseZkCliTool {
     private Option indexOption;
@@ -110,7 +109,7 @@ public class LinkIndexCli extends BaseZkCliTool {
         }
 
         lilyClient = new LilyClient(zkConnectionString, 60000);
-        Repository repository = PureRepository.wrap(lilyClient.getRepository());
+        LRepository repository = lilyClient.getPublicRepository();
         typeManager = repository.getTypeManager();
 
         Configuration hbaseConf = HBaseConfiguration.create();
