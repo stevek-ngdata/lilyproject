@@ -541,21 +541,20 @@ public interface LTable {
      */
     RecordBuilder recordBuilder() throws RecordException, InterruptedException;
 
-//   TODO multitenancy
-//
-//    /**
-//     * Returns the name of this table.
-//     */
-//    String getName();
-//
-//    /**
-//     * Returns the name of this table in the underlying HBase storage.
-//     */
-//    String getStorageName();
-
     /**
-     * Returns the name of the underlying storage table that this repository uses.
-     * @return HBase table name
+     * Returns the table name of this table.
      */
     String getTableName();
+
+    /**
+     * Returns the name of the underlying HBase table.
+     *
+     * <p>This table name will be different from {@link #getTableName()} in case of the non-public tenant.</p>
+     */
+    String getStorageTableName();
+
+    /**
+     * Returns the name of the tenant to which this table belongs.
+     */
+    String getTenantName();
 }

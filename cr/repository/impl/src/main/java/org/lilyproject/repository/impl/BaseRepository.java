@@ -649,4 +649,13 @@ public abstract class BaseRepository implements Repository {
         return tenantTableKey.getTableName();
     }
 
+    @Override
+    public String getStorageTableName() {
+        return tenantTableKey.toHBaseTableName();
+    }
+
+    @Override
+    public String getTenantName() {
+        return tenantTableKey.getTenantName();
+    }
 }
