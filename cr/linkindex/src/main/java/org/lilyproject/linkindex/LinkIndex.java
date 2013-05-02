@@ -35,6 +35,7 @@ import org.lilyproject.linkindex.LinkIndexMetrics.Action;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.Pair;
@@ -98,14 +99,14 @@ public class LinkIndex {
         }
     }
 
-    public void deleteLinks(RecordId sourceRecord) throws LinkIndexException {
+    public void deleteLinks(RecordId sourceRecord) throws LinkIndexException, InterruptedException {
         deleteLinks(getAbsoluteId(sourceRecord));
     }
 
     /**
      * Deletes all links of a record, irrespective of the vtag.
      */
-    public void deleteLinks(AbsoluteRecordId sourceRecord) throws LinkIndexException {
+    public void deleteLinks(AbsoluteRecordId sourceRecord) throws LinkIndexException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             byte[] sourceAsBytes = sourceRecord.toBytes();
@@ -140,11 +141,11 @@ public class LinkIndex {
         }
     }
 
-    public void deleteLinks(RecordId sourceRecord, SchemaId vtag) throws LinkIndexException {
+    public void deleteLinks(RecordId sourceRecord, SchemaId vtag) throws LinkIndexException, InterruptedException {
         deleteLinks(getAbsoluteId(sourceRecord), vtag);
     }
 
-    public void deleteLinks(AbsoluteRecordId sourceRecord, SchemaId vtag) throws LinkIndexException {
+    public void deleteLinks(AbsoluteRecordId sourceRecord, SchemaId vtag) throws LinkIndexException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             byte[] sourceAsBytes = sourceRecord.toBytes();
@@ -180,11 +181,13 @@ public class LinkIndex {
         }
     }
 
-    public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws LinkIndexException {
+    public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links)
+            throws LinkIndexException, InterruptedException {
         updateLinks(sourceRecord, vtag, links, false);
     }
 
-    public void updateLinks(AbsoluteRecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws LinkIndexException {
+    public void updateLinks(AbsoluteRecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links)
+            throws LinkIndexException, InterruptedException {
         updateLinks(sourceRecord, vtag, links, false);
     }
 
@@ -194,13 +197,13 @@ public class LinkIndex {
      *                    time.
      */
     public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links, boolean isNewRecord)
-            throws LinkIndexException {
+            throws LinkIndexException, InterruptedException {
         updateLinks(getAbsoluteId(sourceRecord), vtag, links, isNewRecord);
     }
 
 
     public void updateLinks(AbsoluteRecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links, boolean isNewRecord)
-            throws LinkIndexException {
+            throws LinkIndexException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             // We could simply delete all the old entries using deleteLinks() and then add
@@ -297,20 +300,21 @@ public class LinkIndex {
         return entry;
     }
 
-    public Set<RecordId> getReferrers(RecordId record, SchemaId vtag) throws LinkIndexException {
+    public Set<RecordId> getReferrers(RecordId record, SchemaId vtag) throws LinkIndexException, InterruptedException {
         return getReferrers(record, vtag, null);
     }
 
-    public Set<AbsoluteRecordId> getAbsoluteReferrers(AbsoluteRecordId record, SchemaId vtag) throws LinkIndexException {
+    public Set<AbsoluteRecordId> getAbsoluteReferrers(AbsoluteRecordId record, SchemaId vtag) throws LinkIndexException, InterruptedException {
         return getAbsoluteReferrers(record, vtag, null);
     }
 
-    public Set<RecordId> getReferrers(RecordId record, SchemaId vtag, SchemaId sourceField) throws LinkIndexException {
+    public Set<RecordId> getReferrers(RecordId record, SchemaId vtag, SchemaId sourceField)
+            throws LinkIndexException, InterruptedException {
         return getReferrers(getAbsoluteId(record), vtag, sourceField);
     }
 
     public Set<RecordId> getReferrers(AbsoluteRecordId record, SchemaId vtag, SchemaId sourceField)
-            throws LinkIndexException {
+            throws LinkIndexException, InterruptedException {
         Set<AbsoluteRecordId> absoluteReferrers = getAbsoluteReferrers(record, vtag, sourceField);
         Set<RecordId> referrers = Sets.newHashSetWithExpectedSize(absoluteReferrers.size());
         for (AbsoluteRecordId absoluteReferrer : absoluteReferrers) {
@@ -320,7 +324,7 @@ public class LinkIndex {
     }
 
     public Set<AbsoluteRecordId> getAbsoluteReferrers(AbsoluteRecordId record, SchemaId vtag, SchemaId sourceField)
-            throws LinkIndexException {
+            throws LinkIndexException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -351,7 +355,8 @@ public class LinkIndex {
         }
     }
 
-    public Set<FieldedLink> getFieldedReferrers(RecordId record, SchemaId vtag) throws LinkIndexException {
+    public Set<FieldedLink> getFieldedReferrers(RecordId record, SchemaId vtag)
+            throws LinkIndexException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -379,11 +384,13 @@ public class LinkIndex {
         }
     }
 
-    public Set<Pair<FieldedLink, SchemaId>> getAllForwardLinks(RecordId record) throws LinkIndexException {
+    public Set<Pair<FieldedLink, SchemaId>> getAllForwardLinks(RecordId record)
+            throws LinkIndexException, InterruptedException {
         return this.getAllForwardLinks(getAbsoluteId(record));
     }
 
-    public Set<Pair<FieldedLink, SchemaId>> getAllForwardLinks(AbsoluteRecordId record) throws LinkIndexException {
+    public Set<Pair<FieldedLink, SchemaId>> getAllForwardLinks(AbsoluteRecordId record)
+            throws LinkIndexException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -411,13 +418,13 @@ public class LinkIndex {
     }
 
     public Set<RecordId> getForwardLinks(RecordId record, SchemaId vtag)
-            throws LinkIndexException {
+            throws LinkIndexException, InterruptedException {
         return getForwardLinks(record, vtag, null);
     }
 
 
     public Set<RecordId> getForwardLinks(RecordId record, SchemaId vtag, SchemaId sourceField)
-            throws LinkIndexException {
+            throws LinkIndexException, InterruptedException {
         Set<AbsoluteRecordId> absoluteLinks = getForwardLinks(getAbsoluteId(record), vtag, sourceField);
         Set<RecordId> relativeLinks = Sets.newHashSetWithExpectedSize(absoluteLinks.size());
         for (AbsoluteRecordId absoluteLink : absoluteLinks) {
@@ -427,7 +434,7 @@ public class LinkIndex {
     }
 
     public Set<AbsoluteRecordId> getForwardLinks(AbsoluteRecordId record, SchemaId vtag, SchemaId sourceField)
-            throws LinkIndexException {
+            throws LinkIndexException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -459,12 +466,12 @@ public class LinkIndex {
     }
 
     public Set<FieldedLink> getFieldedForwardLinks(RecordId record, SchemaId vtag)
-            throws LinkIndexException {
+            throws LinkIndexException, InterruptedException {
         return getFieldedForwardLinks(getAbsoluteId(record), vtag);
     }
 
     public Set<FieldedLink> getFieldedForwardLinks(AbsoluteRecordId record, SchemaId vtag)
-            throws LinkIndexException {
+            throws LinkIndexException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -493,17 +500,21 @@ public class LinkIndex {
         }
     }
 
-    private IdGenerator getIdGenerator() {
+    private IdGenerator getIdGenerator() throws InterruptedException, LinkIndexException {
         // synchronization not an issue, doesn't matter if this happens twice
         // can't assign IdGenerator in constructor since the repository is a premature one
         if (lazyIdGenerator == null) {
-            lazyIdGenerator = repositoryManager.getIdGenerator();
+            try {
+                lazyIdGenerator = repositoryManager.getPublicRepository().getIdGenerator();
+            } catch (RepositoryException e) {
+                throw new LinkIndexException(e);
+            }
         }
 
         return lazyIdGenerator;
     }
 
-    private AbsoluteRecordId getAbsoluteId(RecordId recordId) {
+    private AbsoluteRecordId getAbsoluteId(RecordId recordId) throws LinkIndexException, InterruptedException {
         return getIdGenerator().newAbsoluteRecordId(Table.RECORD.name, recordId);
     }
 
