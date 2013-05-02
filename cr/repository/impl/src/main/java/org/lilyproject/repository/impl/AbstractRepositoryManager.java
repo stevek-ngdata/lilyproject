@@ -81,7 +81,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
         return getRepository(tenantName, Table.RECORD.name);
     }
 
-    protected Repository getRepository(String tenantName, String tableName)
+    public Repository getRepository(String tenantName, String tableName)
             throws InterruptedException, RepositoryException {
         if (!tenantModel.tenantExistsAndActive(tenantName)) {
             throw new RepositoryException("Tenant does not exist or is not active: " + tenantName);

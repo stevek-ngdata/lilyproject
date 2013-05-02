@@ -36,7 +36,7 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
         }
 
         LilyClient lilyClient = new LilyClient(zkConnectionString, 30000);
-        TableManager tableManager = lilyClient.getTableManager();
+        TableManager tableManager = lilyClient.getPublicRepository().getTableManager();
         try {
             status = execute(tableManager);
         } finally {

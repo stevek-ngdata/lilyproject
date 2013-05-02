@@ -95,8 +95,6 @@
   </bean>
 
   <bean id="recordFactory" class="org.lilyproject.repository.impl.RecordFactoryImpl">
-    <constructor-arg ref="typeManager"/>
-    <constructor-arg ref="idGenerator"/>
   </bean>
 
   <bean id="blobManager" factory-bean="blobManagerSetup" factory-method="getBlobManager"/>

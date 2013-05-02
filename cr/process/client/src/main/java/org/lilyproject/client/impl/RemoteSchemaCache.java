@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.client;
+package org.lilyproject.client.impl;
 
+import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractSchemaCache;
 import org.lilyproject.repository.impl.SchemaCache;

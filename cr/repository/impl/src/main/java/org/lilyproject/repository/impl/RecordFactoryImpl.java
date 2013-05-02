@@ -15,28 +15,23 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.TypeManager;
 
 public class RecordFactoryImpl implements RecordFactory {
 
-    private RecordDecoder recordDecoder;
-
-    public RecordFactoryImpl(TypeManager typeManager, IdGenerator idGenerator) {
-        recordDecoder = new RecordDecoder(typeManager, idGenerator);
+    public RecordFactoryImpl() {
     }
 
     @Override
     public Record newRecord() {
-        return recordDecoder.newRecord();
+        return new RecordImpl();
     }
 
     @Override
     public Record newRecord(RecordId recordId) {
-        return recordDecoder.newRecord(recordId);
+        return new RecordImpl(recordId);
     }
 
 }

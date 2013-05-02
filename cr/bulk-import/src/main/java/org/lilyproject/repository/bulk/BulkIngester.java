@@ -105,7 +105,7 @@ public class BulkIngester implements Closeable {
             TenantModel tenantModel = new TenantModelImpl(zk);
             IdGenerator idGenerator = new IdGeneratorImpl();
             TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
-            RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
+            RecordFactory recordFactory = new RecordFactoryImpl();
             
             @SuppressWarnings("resource") // RepositoryManager gets closed in BulkIngester.close
             RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,

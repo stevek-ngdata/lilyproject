@@ -114,7 +114,7 @@ public abstract class BaseRepository implements Repository {
         this.blobManager = blobManager;
         this.idGenerator = repositoryManager.getIdGenerator();
         this.recordTable = recordTable;
-        this.recdec = new RecordDecoder(typeManager, idGenerator);
+        this.recdec = new RecordDecoder(typeManager, idGenerator, new RecordFactoryImpl());
         this.metrics = metrics;
         this.tableManager = tableManager;
         this.recordFactory = recordFactory;

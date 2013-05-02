@@ -43,6 +43,11 @@ import org.apache.zookeeper.data.Stat;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.avro.AvroConverter;
+import org.lilyproject.client.impl.HBaseConnections;
+import org.lilyproject.client.impl.LoadBalancingAndRetryingRepositoryManager;
+import org.lilyproject.client.impl.LoadBalancingUtil;
+import org.lilyproject.client.impl.RemoteSchemaCache;
+import org.lilyproject.client.impl.RetryUtil;
 import org.lilyproject.indexer.Indexer;
 import org.lilyproject.indexer.RemoteIndexer;
 import org.lilyproject.repository.api.BlobManager;
@@ -54,7 +59,6 @@ import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.BlobStoreAccessConfig;
@@ -62,7 +66,6 @@ import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
 import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
-import org.lilyproject.repository.impl.TableManagerImpl;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.AvroLilyTransceiver;
@@ -103,7 +106,9 @@ public class LilyClient implements Closeable, RepositoryManager {
 
     private ZkWatcher watcher = new ZkWatcher();
 
-    private BalancingAndRetryingLilyConnection balancingAndRetryingLilyConnection;
+    private RepositoryManager repositoryManager;
+    private Indexer retryingAndLBIndexer;
+
     private RemoteSchemaCache schemaCache;
     private HBaseConnections hbaseConnections = new HBaseConnections();
     private TenantModel tenantModel;
@@ -126,14 +131,65 @@ public class LilyClient implements Closeable, RepositoryManager {
         init();
     }
 
-
-
     private void init() throws InterruptedException, KeeperException, NoServersException, RepositoryException {
         this.isClosed = false; // needs to be before refreshServers and schemaCache.start()
         zk.addDefaultWatcher(watcher);
         refreshServers();
         tenantModel = new TenantModelImpl(zk);
-        balancingAndRetryingLilyConnection = BalancingAndRetryingLilyConnection.getInstance(this, tenantModel);
+
+        LoadBalancingUtil.LBInstanceProvider<TypeManager> typeManagerProvider = new LoadBalancingUtil.LBInstanceProvider<TypeManager>() {
+            @Override
+            public TypeManager getInstance(String tenantName, String tableName)
+                    throws RepositoryException, InterruptedException {
+                try {
+                    return ((Repository)getPlainRepository("public")).getTypeManager();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (KeeperException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+        LoadBalancingUtil.LBInstanceProvider<Repository> repositoryProvider = new LoadBalancingUtil.LBInstanceProvider<Repository>() {
+            @Override
+            public Repository getInstance(String tenantName, String tableName)
+                    throws RepositoryException, InterruptedException {
+                try {
+                    return (Repository)getPlainTable(tenantName, tableName);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (KeeperException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+        IdGenerator idGenerator = new IdGeneratorImpl();
+        RecordFactory recordFactory = new RecordFactoryImpl();
+
+        repositoryManager = new LoadBalancingAndRetryingRepositoryManager(repositoryProvider, typeManagerProvider,
+                retryConf, idGenerator, recordFactory, tenantModel);
+
+        LoadBalancingUtil.LBInstanceProvider<Indexer> indexerProvider = new LoadBalancingUtil.LBInstanceProvider<Indexer>() {
+            @Override
+            public Indexer getInstance(String tenantName, String tableName) throws InterruptedException {
+                try {
+                    return getPlainIndexer();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (KeeperException e) {
+                    throw new RuntimeException(e);
+                } catch (RepositoryException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+        this.retryingAndLBIndexer = RetryUtil.getRetryingInstance(
+                LoadBalancingUtil.getLoadBalancedInstance(indexerProvider, Indexer.class, null, null), Indexer.class,
+                retryConf);
+
         schemaCache.start();
     }
 
@@ -205,12 +261,13 @@ public class LilyClient implements Closeable, RepositoryManager {
         return getServerNode().repoMgr.getRepository(tenantName).getTable(tableName);
     }
 
-    /**
-     * Get a {@link org.lilyproject.repository.api.TableManager} for handling the lifecycle of repository tables.
-     */
-    public TableManager getTableManager() {
-        Configuration conf = getHBaseConfiguration(zk);
-        return new TableManagerImpl(/* TODO multitenancy */ "public", conf, new HBaseTableFactoryImpl(conf));
+    public LRepository getPlainRepository(String tenantName) throws IOException, InterruptedException,
+            NoServersException, RepositoryException, KeeperException {
+        if (isClosed) {
+            throw new IllegalStateException("This LilyClient is closed.");
+        }
+
+        return getServerNode().repoMgr.getRepository(tenantName);
     }
 
     private synchronized ServerNode getServerNode() throws NoServersException, RepositoryException, IOException,
@@ -237,6 +294,8 @@ public class LilyClient implements Closeable, RepositoryManager {
      *
      * <p>To see some information when the client goes into retry mode, enable INFO logging for
      * the category org.lilyproject.client.
+     *
+     * @deprecated prefer to use one of the methods from the {@link RepositoryManager} interface
      */
     public Repository getRepository() {
         try {
@@ -249,50 +308,38 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public LRepository getRepository(String tenantName) {
-        if (isClosed) {
-            throw new IllegalStateException("This LilyClient is closed.");
-        }
-        return balancingAndRetryingLilyConnection.getRepository(tenantName);
+    public LRepository getRepository(String tenantName) throws RepositoryException, InterruptedException {
+        return repositoryManager.getRepository(tenantName);
     }
 
     @Override
     public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-        if (isClosed) {
-            throw new IllegalStateException("This LilyClient is closed.");
-        }
-        return balancingAndRetryingLilyConnection.getTable(tableName);
+        return repositoryManager.getTable(tableName);
     }
 
     @Override
     public LTable getDefaultTable() throws InterruptedException, RepositoryException {
-        if (isClosed) {
-            throw new IllegalStateException("This LilyClient is closed.");
-        }
-        return balancingAndRetryingLilyConnection.getDefaultTable();
+        return repositoryManager.getDefaultTable();
     }
 
     @Override
     public LRepository getPublicRepository() throws InterruptedException, RepositoryException {
-        if (isClosed) {
-            throw new IllegalStateException("This LilyClient is closed.");
-        }
-        return balancingAndRetryingLilyConnection.getPublicRepository();
+        return repositoryManager.getPublicRepository();
     }
 
     @Override
     public RecordFactory getRecordFactory() {
-        return balancingAndRetryingLilyConnection.getRecordFactory();
+        return repositoryManager.getRecordFactory();
     }
 
     @Override
     public TypeManager getTypeManager() {
-        return balancingAndRetryingLilyConnection.getTypeManager();
+        return repositoryManager.getTypeManager();
     }
 
     @Override
     public IdGenerator getIdGenerator() {
-        return balancingAndRetryingLilyConnection.getIdGenerator();
+        return repositoryManager.getIdGenerator();
     }
 
 
@@ -319,18 +366,11 @@ public class LilyClient implements Closeable, RepositoryManager {
      * the category org.lilyproject.client.
      */
     public Indexer getIndexer() {
-        if (isClosed) {
-            throw new IllegalStateException("This LilyClient is closed.");
-        }
-        return balancingAndRetryingLilyConnection.getIndexer();
+        return retryingAndLBIndexer;
     }
 
     public RetryConf getRetryConf() {
         return retryConf;
-    }
-
-    public void setRetryConf(RetryConf retryConf) {
-        this.retryConf = retryConf;
     }
 
     private RepositoryManager constructRepositoryManager(ServerNode server) throws IOException, InterruptedException {
@@ -343,7 +383,7 @@ public class LilyClient implements Closeable, RepositoryManager {
         HBaseTableFactoryImpl tableFactory = new HBaseTableFactoryImpl(hbaseConf);
         AvroConverter avroConverter = new AvroConverter();
         RemoteTypeManager remoteTypeManager = new RemoteTypeManager(lilySocketAddr, avroConverter, idGenerator, zk, schemaCache);
-        RecordFactory recordFactory = new RecordFactoryImpl(remoteTypeManager, idGenerator);
+        RecordFactory recordFactory = new RecordFactoryImpl();
         RepositoryManager repositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
                 transceiver, avroConverter, blobManager, tableFactory, tenantModel);
         return repositoryManager;

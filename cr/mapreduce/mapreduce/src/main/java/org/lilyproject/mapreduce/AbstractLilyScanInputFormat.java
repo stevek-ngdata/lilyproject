@@ -38,6 +38,7 @@ import org.codehaus.jackson.JsonNode;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.TableManager;
@@ -116,7 +117,8 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
             //
             hbaseConf = LilyClient.getHBaseConfiguration(zk);
 
-            for (String tableName : getRepositoryTables(lilyClient.getTableManager(), jobContext.getConfiguration())) {
+            for (String tableName : getRepositoryTables(/* TODO multitenancy */ lilyClient.getPublicRepository().getTableManager(),
+                    jobContext.getConfiguration())) {
                 HTable table = new HTable(hbaseConf, tableName);
                 try {
                     inputSplits.addAll(getSplits(table, startRow, stopRow));
@@ -126,6 +128,8 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
             }
             return inputSplits;
         } catch (ZkConnectException e) {
+            throw new IOException("Error setting up splits", e);
+        } catch (RepositoryException e) {
             throw new IOException("Error setting up splits", e);
         } finally {
             Closer.close(zk);

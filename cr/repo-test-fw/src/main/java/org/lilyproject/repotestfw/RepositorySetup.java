@@ -166,7 +166,7 @@ public class RepositorySetup {
 
         blobStoreAccessFactory = createBlobAccess();
         blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-        RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
+        RecordFactory recordFactory = new RecordFactoryImpl();
 
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory,
                 blobManager, hadoopConf, tenantModel) {
@@ -231,7 +231,7 @@ public class RepositorySetup {
         remoteSchemaCache = new RemoteTestSchemaCache(zk);
         remoteTypeManager = new RemoteTypeManager(remoteAddr, avroConverter, idGenerator, zk, remoteSchemaCache);
         remoteSchemaCache.setTypeManager(remoteTypeManager);
-        RecordFactory recordFactory = new RecordFactoryImpl(typeManager, idGenerator);
+        RecordFactory recordFactory = new RecordFactoryImpl();
 
         remoteRepositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
                 new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory, tenantModel);

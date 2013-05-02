@@ -113,7 +113,7 @@ public class TutorialTest {
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
-                new RecordFactoryImpl(typeManager, idGenerator), hbaseTableFactory, blobManager, configuration, tenantModel);
+                new RecordFactoryImpl(), hbaseTableFactory, blobManager, configuration, tenantModel);
 
         TableManager repoTableManager = new TableManagerImpl(/* TODO multitenancy */ "public", configuration, hbaseTableFactory);
         if (!repoTableManager.tableExists(Table.RECORD.name)) {
