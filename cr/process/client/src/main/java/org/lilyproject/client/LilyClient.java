@@ -328,11 +328,6 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public TypeManager getTypeManager() {
-        return repositoryManager.getTypeManager();
-    }
-
-    @Override
     public IdGenerator getIdGenerator() {
         return repositoryManager.getIdGenerator();
     }

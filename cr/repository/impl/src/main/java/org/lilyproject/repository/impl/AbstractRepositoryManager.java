@@ -51,8 +51,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
         this.tenantModel = tenantModel;
     }
 
-    @Override
-    public TypeManager getTypeManager() {
+    protected TypeManager getTypeManager() {
         return typeManager;
     }
 

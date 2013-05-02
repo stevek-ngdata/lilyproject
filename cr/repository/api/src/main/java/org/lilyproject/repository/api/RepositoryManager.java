@@ -29,11 +29,6 @@ public interface RepositoryManager extends Closeable {
     IdGenerator getIdGenerator();
 
     /**
-     * @return the TypeManager service
-     */
-    TypeManager getTypeManager();
-
-    /**
      * Get the {@code Repository} for the public tenant. This is the same as calling
      * getRepository("public").
      *

@@ -34,6 +34,7 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.CompareOp;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RepositoryException;
@@ -126,8 +127,11 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             return null;
         }
 
+        // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
+        LRepository repository = repositoryMgr.getPublicRepository();
+
         List<MutationCondition> result = new ArrayList<MutationCondition>();
-        SystemFields systemFields = SystemFields.getInstance(repositoryMgr.getTypeManager(), repositoryMgr.getIdGenerator());
+        SystemFields systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
 
         for (int i = 0; i < conditions.size(); i++) {
             JsonNode conditionNode = conditions.get(i);
@@ -141,8 +145,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             Object value = null;
             if (!valueNode.isNull()) {
                 FieldType fieldType = systemFields.isSystemField(fieldName) ? systemFields.get(fieldName) :
-                        repositoryMgr.getTypeManager().getFieldTypeByName(fieldName);
-                // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
+                        repository.getTypeManager().getFieldTypeByName(fieldName);
                 value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces,
                     repositoryMgr.getPublicRepository(), linkTransformer);
             }
