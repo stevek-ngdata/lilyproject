@@ -15,7 +15,9 @@
  */
 package org.lilyproject.rest;
 
+import org.lilyproject.tools.restresourcegenerator.GenerateTableResource;
 import org.lilyproject.tools.restresourcegenerator.GenerateTenantAndTableResource;
+import org.lilyproject.tools.restresourcegenerator.GenerateTenantResource;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -26,6 +28,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 @Path("record/{id}/field/{fieldName}/data")
+@GenerateTableResource
+@GenerateTenantResource
 @GenerateTenantAndTableResource
 public class BlobByFieldResource extends RepositoryEnabled {
 

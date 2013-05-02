@@ -19,8 +19,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to put on JAX-RS classes for which tenant and table based variants should be generated.
+ * Annotation to put on JAX-RS classes for which table based variants (within the public tenant) should be generated.
  */
 @Target({ElementType.TYPE})
-public @interface GenerateTenantAndTableResource {
+public @interface GenerateTableResource {
 }

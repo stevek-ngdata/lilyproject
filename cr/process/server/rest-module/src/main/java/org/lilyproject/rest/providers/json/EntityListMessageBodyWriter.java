@@ -31,7 +31,6 @@ import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.rest.EntityList;
 import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
@@ -79,8 +78,9 @@ public class EntityListMessageBodyWriter extends RepositoryEnabled implements Me
 
             EntityWriter writer = getEntityWriter(genericType);
             for (Object entity : entityList.getEntities()) {
+                // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
                 resultsNode.add(writer.toJson(entity, entityList.getWriteOptions(),
-                    /* TODO multitenancy */ (Repository)repositoryMgr.getPublicRepository()));
+                        repositoryMgr.getPublicRepository()));
             }
 
             JsonFormat.serialize(listNode, new CloseShieldOutputStream(entityStream));

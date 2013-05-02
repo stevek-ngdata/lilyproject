@@ -24,7 +24,7 @@ public class TenantAndTableBasedRecordRestTest extends RecordRestTest {
     @Before
     public void setup() throws Exception {
         if (!extraTableCreated) {
-            post("/table", String.format("{\"name\": \"%s\"}", REPOSITORY_TABLE_NAME));
+            post("/tenant/public/table", String.format("{\"name\": \"%s\"}", REPOSITORY_TABLE_NAME));
             extraTableCreated = true;
         }
     }

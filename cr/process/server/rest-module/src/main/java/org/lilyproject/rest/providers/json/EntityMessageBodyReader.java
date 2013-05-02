@@ -27,7 +27,6 @@ import java.lang.reflect.Type;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.tools.import_.json.JsonFormatException;
@@ -69,7 +68,9 @@ public class EntityMessageBodyReader extends RepositoryEnabled implements Messag
         ObjectNode objectNode = (ObjectNode)node;
 
         try {
-            return EntityRegistry.findReader(type).fromJson(objectNode, null, /* TODO multitenancy */ (Repository)repositoryMgr.getPublicRepository(), linkTransformer);
+            // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
+            return EntityRegistry.findReader(type).fromJson(objectNode, null, repositoryMgr.getPublicRepository(),
+                    linkTransformer);
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
         } catch (Exception e) {

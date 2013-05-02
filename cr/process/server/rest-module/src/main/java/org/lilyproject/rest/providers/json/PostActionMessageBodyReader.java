@@ -36,7 +36,6 @@ import org.lilyproject.repository.api.CompareOp;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.rest.PostAction;
 import org.lilyproject.rest.RepositoryEnabled;
@@ -107,8 +106,9 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             if (!action.equals("delete")) {
                 EntityRegistry.RegistryEntry registryEntry = EntityRegistry.findReaderRegistryEntry((Class)entityType);
                 ObjectNode objectNode = JsonUtil.getObject(postNode, registryEntry.getPropertyName());
+                // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
                 entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces,
-                /* TODO multitenancy */ (Repository)repositoryMgr.getPublicRepository(), linkTransformer);
+                    repositoryMgr.getPublicRepository(), linkTransformer);
             }
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
@@ -142,8 +142,9 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             if (!valueNode.isNull()) {
                 FieldType fieldType = systemFields.isSystemField(fieldName) ? systemFields.get(fieldName) :
                         repositoryMgr.getTypeManager().getFieldTypeByName(fieldName);
+                // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
                 value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces,
-                /* TODO multitenancy */ (Repository)repositoryMgr.getPublicRepository(), linkTransformer);
+                    repositoryMgr.getPublicRepository(), linkTransformer);
             }
 
             boolean allowMissing = JsonUtil.getBoolean(conditionNode, "allowMissing", false);

@@ -33,6 +33,7 @@ import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
 import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
+import org.lilyproject.tools.restresourcegenerator.GenerateTenantResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -40,14 +41,8 @@ import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("table")
-public class TableResource {
-
-    private TableManager tableManager;
-
-    @Autowired
-    public void setTableManager(TableManager tableManager) {
-        this.tableManager = tableManager;
-    }
+@GenerateTenantResource
+public class TableResource extends RepositoryEnabled {
 
     /**
      * Get all record table names.
@@ -56,7 +51,7 @@ public class TableResource {
     @Produces("application/json")
     public List<RepositoryTable> get(@Context UriInfo uriInfo) {
         try {
-            return tableManager.getTables();
+            return getRepository(uriInfo).getTableManager().getTables();
         } catch (Exception e) {
             throw new ResourceException("Error getting repository tables", e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
@@ -64,8 +59,9 @@ public class TableResource {
 
     @DELETE
     @Path("{name}")
-    public Response dropTable(@PathParam("name") String tableName) {
+    public Response dropTable(@PathParam("name") String tableName, @Context UriInfo uriInfo) {
         try {
+            TableManager tableManager = getRepository(uriInfo).getTableManager();
             if (!tableManager.tableExists(tableName)) {
                 throw new ResourceException("Table '" + tableName + "' not found", NOT_FOUND.getStatusCode());
             }
@@ -83,7 +79,7 @@ public class TableResource {
     // TODO Allow providing split information
     @POST
     @Consumes("application/json")
-    public Response createTable(ObjectNode descriptorJson) {
+    public Response createTable(ObjectNode descriptorJson, @Context UriInfo uriInfo) {
         try {
             if (!descriptorJson.has("name")) {
                 throw new ResourceException("Name must be included in POST body", BAD_REQUEST.getStatusCode());
@@ -103,7 +99,7 @@ public class TableResource {
             } else {
                 descriptor = TableCreateDescriptorImpl.createInstance(tableName);
             }
-            tableManager.createTable(descriptor);
+            getRepository(uriInfo).getTableManager().createTable(descriptor);
             return Response.ok().build();
         } catch (Exception e) {
             throw new ResourceException("Error creating table", e, INTERNAL_SERVER_ERROR.getStatusCode());
