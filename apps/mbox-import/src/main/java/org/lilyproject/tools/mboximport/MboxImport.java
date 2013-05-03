@@ -84,6 +84,7 @@ public class MboxImport extends BaseRepositoryTestTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

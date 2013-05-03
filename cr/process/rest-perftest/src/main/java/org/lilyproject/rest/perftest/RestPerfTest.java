@@ -65,6 +65,7 @@ public class RestPerfTest extends BaseTestTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

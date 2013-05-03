@@ -35,6 +35,7 @@ public abstract class BaseZkCliTool extends BaseCliTool {
     protected Option zkOption;
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

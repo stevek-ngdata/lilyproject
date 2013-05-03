@@ -63,6 +63,7 @@ public class LinkIndexCli extends BaseZkCliTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

@@ -91,6 +91,7 @@ public class Tester extends BaseRepositoryTestTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

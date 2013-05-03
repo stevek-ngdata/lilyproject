@@ -66,6 +66,7 @@ public class HbaseIndexPerfTest extends BaseTestTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

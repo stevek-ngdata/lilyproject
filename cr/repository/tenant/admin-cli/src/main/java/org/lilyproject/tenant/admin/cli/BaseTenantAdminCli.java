@@ -35,6 +35,7 @@ public abstract class BaseTenantAdminCli extends BaseZkCliTool {
     protected Option forceOption;
     protected Option nameOption;
 
+    @SuppressWarnings("static-access")
     public BaseTenantAdminCli() {
         nameOption = OptionBuilder
                 .withArgName("name")

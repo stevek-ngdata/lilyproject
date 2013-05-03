@@ -88,6 +88,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

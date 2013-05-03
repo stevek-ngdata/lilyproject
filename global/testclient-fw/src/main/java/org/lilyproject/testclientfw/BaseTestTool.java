@@ -80,6 +80,7 @@ public abstract class BaseTestTool extends BaseZkCliTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

@@ -100,6 +100,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
         CLASSIC, CLOUD
     }
 
+    @SuppressWarnings("static-access")
     public BaseIndexerAdminCli() {
         // Here we instantiate various options, but it is up to subclasses to decide which ones
         // they acutally want to use (see getOptions() method).

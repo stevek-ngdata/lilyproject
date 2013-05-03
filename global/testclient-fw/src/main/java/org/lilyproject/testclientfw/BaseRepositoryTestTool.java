@@ -71,6 +71,7 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
     protected boolean useSolrCloud;
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
