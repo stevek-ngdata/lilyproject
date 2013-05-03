@@ -47,7 +47,7 @@ public class DropTableCli extends BaseTableCliTool {
     protected int execute(TableManager tableManager) throws Exception {
         System.out.printf("Dropping table '%s'...\n", tableName);
         tableManager.dropTable(tableName);
-        System.out.printf("Table '%s' dropped\n", tableName);
+        System.out.printf("Table '%s' in tenant '%s' dropped\n", tableName, tenantName);
         return 0;
     }
 

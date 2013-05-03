@@ -16,16 +16,57 @@
 package org.lilyproject.repository.cli;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.util.Version;
 
+import java.util.List;
+
 public abstract class BaseTableCliTool extends BaseZkCliTool {
+    private Option tenantOpt;
+    protected String tenantName;
+
+    @SuppressWarnings("static-access")
+    public BaseTableCliTool() {
+        tenantOpt = OptionBuilder
+                .withArgName("tenant")
+                .hasArg()
+                .withDescription("Repository tenant, defaults to public tenant")
+                .withLongOpt("tenant")
+                .create();
+    }
+
+    @Override
+    public List<Option> getOptions() {
+        List<Option> options = super.getOptions();
+
+        options.add(tenantOpt);
+
+        return options;
+    }
 
     @Override
     protected String getVersion() {
         return Version.readVersion("org.lilyproject", "lily-repository-admin-cli");
+    }
+
+    @Override
+    protected int processOptions(CommandLine cmd) throws Exception {
+        int result = super.processOptions(cmd);
+        if (result != 0) {
+            return result;
+        }
+
+        if (cmd.hasOption(tenantOpt.getLongOpt())) {
+            tenantName = cmd.getOptionValue(tenantOpt.getLongOpt());
+        } else {
+            tenantName = "public";
+        }
+
+        return 0;
     }
 
     @Override
@@ -36,7 +77,7 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
         }
 
         LilyClient lilyClient = new LilyClient(zkConnectionString, 30000);
-        TableManager tableManager = lilyClient.getPublicRepository().getTableManager();
+        TableManager tableManager = lilyClient.getRepository(tenantName).getTableManager();
         try {
             status = execute(tableManager);
         } finally {
