@@ -316,6 +316,38 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
+
+    <!-- Tenant admin CLI -->
+    <file>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-add-tenant</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-add-tenant.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-delete-tenant</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-delete-tenant.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-list-tenants</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-list-tenants.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
   </files>
 
   <fileSets>

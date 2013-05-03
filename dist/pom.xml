@@ -86,6 +86,7 @@
             <artifact>org.lilyproject:lily-print-host:${project.version}</artifact>
             <artifact>org.lilyproject:lily-linkindex-cli:${project.version}</artifact>
             <artifact>org.lilyproject:lily-scan-records:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-tenant-admin-cli:${project.version}</artifact>
             <artifact>org.lilyproject:lily-record-row-visualizer:${project.version}</artifact>
             <artifact>org.lilyproject:lily-archetype-basic:${project.version}</artifact>
             <artifact>org.lilyproject:lily-archetype-lily-server-plugin:${project.version}</artifact>
