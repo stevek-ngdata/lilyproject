@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.ngdata.sep.EventListener;
-import com.ngdata.sep.SepEvent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.linkindex.LinkIndexUpdaterMetrics.Action;
@@ -37,12 +35,13 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
-import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.sep.LilyEventListener;
+import org.lilyproject.sep.LilySepEvent;
 import org.lilyproject.util.exception.ExceptionUtil;
 import org.lilyproject.util.repo.FieldFilter;
 import org.lilyproject.util.repo.RecordEvent;
@@ -58,7 +57,7 @@ import org.lilyproject.util.repo.VTaggedRecord;
 /**
  * Keeps the {@link LinkIndex} up to date when changes happen to records.
  */
-public class LinkIndexUpdater implements EventListener {
+public class LinkIndexUpdater extends LilyEventListener {
     private RepositoryManager repositoryManager;
     private LinkIndex linkIndex;
 
@@ -66,24 +65,20 @@ public class LinkIndexUpdater implements EventListener {
     private LinkIndexUpdaterMetrics metrics;
 
     public LinkIndexUpdater(RepositoryManager repositoryManager, LinkIndex linkIndex) throws RepositoryException, InterruptedException {
+        super(repositoryManager);
         this.repositoryManager = repositoryManager;
         this.linkIndex = linkIndex;
         metrics = new LinkIndexUpdaterMetrics("linkIndexUpdater");
     }
 
     @Override
-    public void processEvents(List<SepEvent> events) {
-        for (SepEvent event : events) {
+    public void processLilyEvents(List<LilySepEvent> events) {
+        for (LilySepEvent event : events) {
             processEvent(event);
         }
     }
     
-    public void processEvent(SepEvent event) {
-
-        if (event.getPayload() == null) {
-            log.warn("Empty payload on " + event);
-            return;
-        }
+    public void processEvent(LilySepEvent event) {
 
         LRepository repository = null;
         try {
@@ -95,16 +90,14 @@ public class LinkIndexUpdater implements EventListener {
             throw new RuntimeException(e);
         }
 
-        RecordId recordId = repository.getIdGenerator().fromBytes(event.getRow());
         RecordEvent recordEvent;
         try {
-            recordEvent = new RecordEvent(event.getPayload(), repository.getIdGenerator());
+            recordEvent = event.getRecordEvent();
         } catch (IOException e) {
             log.error("Error reading record event, processing of message cancelled", e);
             return;
         }
-        AbsoluteRecordId absoluteRecordId =
-                repository.getIdGenerator().newAbsoluteRecordId(recordEvent.getTableName(), recordId);
+        AbsoluteRecordId absoluteRecordId = event.getAbsoluteRecordId();
         update(absoluteRecordId, recordEvent);
     }
 

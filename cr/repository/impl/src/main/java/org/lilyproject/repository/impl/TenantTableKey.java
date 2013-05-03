@@ -16,7 +16,7 @@
 package org.lilyproject.repository.impl;
 
 import com.google.common.base.Preconditions;
-import org.lilyproject.tenant.model.impl.TenantTableUtil;
+import org.lilyproject.util.repo.TenantTableUtil;
 
 /**
  * An object that can be used anywhere the combination of tenant and table is needed.

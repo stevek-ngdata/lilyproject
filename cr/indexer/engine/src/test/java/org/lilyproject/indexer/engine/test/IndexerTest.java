@@ -41,8 +41,6 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.ngdata.sep.EventListener;
-import com.ngdata.sep.SepEvent;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -112,6 +110,8 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.repotestfw.RepositorySetup;
+import org.lilyproject.sep.LilyEventListener;
+import org.lilyproject.sep.LilySepEvent;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.Pair;
@@ -138,7 +138,7 @@ public class IndexerTest {
     private static DerefMap derefMap;
     private static WriteableIndexerModel indexerModel;
     private static IndexesInfo indexesInfo;
-    private static TrackingRepository indexUpdaterRepositoryMgr;
+    private static TrackingRepository indexUpdaterRepository;
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -172,8 +172,8 @@ public class IndexerTest {
 
     private static Log log = LogFactory.getLog(IndexerTest.class);
 
-    private static MessageVerifier messageVerifier = new MessageVerifier();
-    private static OtherListener otherListener = new OtherListener();
+    private static MessageVerifier messageVerifier;
+    private static OtherListener otherListener;
 
     private static RecordType nvRecordType1;
     private static RecordType vRecordType1;
@@ -213,11 +213,14 @@ public class IndexerTest {
 
         defaultTable = (Repository)repositoryManager.getDefaultTable();
         alternateTable = (Repository)repositoryManager.getTable(ALTERNATE_TABLE);
-        indexUpdaterRepositoryMgr = new TrackingRepository(repoSetup.getRepositoryManager().getPublicRepository());
+        indexUpdaterRepository = new TrackingRepository(repoSetup.getRepositoryManager().getPublicRepository());
 
 
         typeManager = repository.getTypeManager();
         idGenerator = repository.getIdGenerator();
+
+        otherListener = new OtherListener(repositoryManager);
+        messageVerifier = new MessageVerifier(repositoryManager);
 
         // Field types should exist before the indexer conf is loaded
         setupSchema();
@@ -286,10 +289,11 @@ public class IndexerTest {
 
         repoSetup.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + indexName);
 
-        IndexUpdater indexUpdater = new IndexUpdater(indexer, indexUpdaterRepositoryMgr, indexLocker,
-                new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisherManager(), "IndexUpdater_" + indexName);
+        IndexUpdater indexUpdater = new IndexUpdater(indexer, new TrackingRepositoryManager(indexUpdaterRepository),
+                indexLocker, new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisherManager(),
+                "IndexUpdater_" + indexName);
         repoSetup.startSepEventSlave("IndexUpdater_" + indexName,
-                new CompositeEventListener(indexUpdater, messageVerifier, otherListener));
+                new CompositeEventListener(repositoryManager, indexUpdater, messageVerifier, otherListener));
 
         waitForIndexesInfoUpdate(1);
     }
@@ -2912,9 +2916,9 @@ public class IndexerTest {
         messageVerifier.disable();
 
         // reset current read count
-        indexUpdaterRepositoryMgr.reset();
+        indexUpdaterRepository.reset();
 
-        TrackingTable indexUpdaterTable = (TrackingTable)indexUpdaterRepositoryMgr.getTable(Table.RECORD.name);
+        TrackingTable indexUpdaterTable = (TrackingTable)indexUpdaterRepository.getTable(Table.RECORD.name);
 
         Record record = defaultTable.newRecord();
         record.setRecordType(vRecordType1.getName());
@@ -3208,10 +3212,14 @@ public class IndexerTest {
         messageVerifier.addExpectedEvent(recordId, event);
     }
 
-    private static class MessageVerifier implements EventListener {
+    private static class MessageVerifier extends LilyEventListener {
         private List<Pair<RecordId, RecordEvent>> expectedEvents = Lists.newArrayList();
         private int failures = 0;
         private boolean enabled;
+
+        public MessageVerifier(RepositoryManager repositoryManager) {
+            super(repositoryManager);
+        }
 
         public int getFailures() {
             return failures;
@@ -3230,15 +3238,15 @@ public class IndexerTest {
         public void addExpectedEvent(RecordId recordId, RecordEvent recordEvent) {
             this.expectedEvents.add(Pair.create(recordId, recordEvent));
         }
-        
+
         @Override
-        public void processEvents(List<SepEvent> events) {
-            for (SepEvent event : events) {
+        public void processLilyEvents(List<LilySepEvent> events) {
+            for (LilySepEvent event : events) {
                 processEvent(event);
             }
         }
 
-        public void processEvent(SepEvent event) {
+        public void processEvent(LilySepEvent event) {
             if (!enabled) {
                 return;
             }
@@ -3304,11 +3312,15 @@ public class IndexerTest {
     /**
      * An arbitrary, non-indexing, MQ listener.
      */
-    private static class OtherListener implements EventListener {
+    private static class OtherListener extends LilyEventListener {
         private int msgCount;
 
+        public OtherListener(RepositoryManager repositoryManager) {
+            super(repositoryManager);
+        }
+
         @Override
-        public void processEvents(List<SepEvent> events)  {
+        public void processLilyEvents(List<LilySepEvent> events) {
             msgCount += events.size();
         }
 
@@ -3321,21 +3333,54 @@ public class IndexerTest {
         }
     }
 
-    private static class CompositeEventListener implements EventListener {
-        private List<EventListener> eventListeners;
+    private static class CompositeEventListener extends LilyEventListener {
+        private List<LilyEventListener> eventListeners;
 
-        CompositeEventListener(EventListener...eventListeners) {
+        CompositeEventListener(RepositoryManager repositoryManager, LilyEventListener...eventListeners) {
+            super(repositoryManager);
             this.eventListeners = Lists.newArrayList(eventListeners);
         }
 
         @Override
-        public void processEvents(List<SepEvent> events) {
-            for (EventListener eventListener : eventListeners) {
-                eventListener.processEvents(events);
+        public void processLilyEvents(List<LilySepEvent> events) {
+            for (LilyEventListener eventListener : eventListeners) {
+                eventListener.processLilyEvents(events);
             }
         }
+    }
 
+    private static class TrackingRepositoryManager implements RepositoryManager {
+        private TrackingRepository repository;
 
+        // This is not yet multitenant-ready
+
+        public TrackingRepositoryManager(TrackingRepository repository) {
+            this.repository = repository;
+        }
+
+        @Override
+        public LRepository getPublicRepository() throws InterruptedException, RepositoryException {
+            return repository;
+        }
+
+        @Override
+        public LRepository getRepository(String tenantName) throws InterruptedException, RepositoryException {
+            return repository;
+        }
+
+        @Override
+        public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
+            return repository.getTable(tableName);
+        }
+
+        @Override
+        public LTable getDefaultTable() throws InterruptedException, RepositoryException {
+            return repository.getDefaultTable();
+        }
+
+        @Override
+        public void close() throws IOException {
+        }
     }
 
     private static class TrackingRepository implements LRepository {

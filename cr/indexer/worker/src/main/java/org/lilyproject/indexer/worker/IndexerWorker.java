@@ -205,8 +205,8 @@ public class IndexerWorker {
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
             LilyEventPublisherManager eventPublisherManager = new LilyEventPublisherManager(tableFactory);
-            IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, updaterMetrics, derefMap,
-                            eventPublisherManager, index.getQueueSubscriptionId());
+            IndexUpdater indexUpdater = new IndexUpdater(indexer, repositoryManager, indexLocker, updaterMetrics,
+                    derefMap, eventPublisherManager, index.getQueueSubscriptionId());
 
             SepConsumer sepConsumer = new SepConsumer(index.getQueueSubscriptionId(),
                     index.getSubscriptionTimestamp(), indexUpdater, settings.getListenersPerIndex(), hostName,

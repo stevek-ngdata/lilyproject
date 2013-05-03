@@ -27,8 +27,6 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.ngdata.sep.EventListener;
-import com.ngdata.sep.SepEvent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
@@ -39,16 +37,18 @@ import org.lilyproject.indexer.model.util.IndexRecordFilterUtil;
 import org.lilyproject.linkindex.LinkIndexException;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
+import org.lilyproject.sep.LilyEventListener;
 import org.lilyproject.sep.LilyEventPublisherManager;
+import org.lilyproject.sep.LilySepEvent;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
@@ -93,8 +93,8 @@ import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
 /**
  * Updates the index in response to repository events.
  */
-public class IndexUpdater implements EventListener {
-    private LRepository repository;
+public class IndexUpdater extends LilyEventListener {
+    private RepositoryManager repositoryManager;
     private Indexer indexer;
     private IndexUpdaterMetrics metrics;
     private ClassLoader myContextClassLoader;
@@ -109,19 +109,18 @@ public class IndexUpdater implements EventListener {
     private DerefMap derefMap;
 
     private Log log = LogFactory.getLog(getClass());
-    private IdGenerator idGenerator;
 
     /**
      * @param subscriptionId id of the SEP subscription to which this listener is listening. This is needed
      *                       because the IndexUpdater generates events itself, which should only be sent to
      *                       this subscription.
      */
-    public IndexUpdater(Indexer indexer, LRepository repository, IndexLocker indexLocker,
+    public IndexUpdater(Indexer indexer, RepositoryManager repositoryManager, IndexLocker indexLocker,
             IndexUpdaterMetrics metrics, DerefMap derefMap, LilyEventPublisherManager eventPublisherMgr,
             String subscriptionId) {
+        super(repositoryManager);
         this.indexer = indexer;
-        this.repository = repository;
-        this.idGenerator = repository.getIdGenerator();
+        this.repositoryManager = repositoryManager;
         this.indexLocker = indexLocker;
         this.derefMap = derefMap;
         this.eventPublisherMgr = eventPublisherMgr;
@@ -133,13 +132,13 @@ public class IndexUpdater implements EventListener {
     }
 
     @Override
-    public void processEvents(List<SepEvent> events) {
-        for (SepEvent event : events) {
+    public void processLilyEvents(List<LilySepEvent> events) {
+        for (LilySepEvent event : events) {
             processEvent(event);
         }
     }
     
-    public void processEvent(SepEvent event) {
+    public void processEvent(LilySepEvent event) {
 
         long before = System.currentTimeMillis();
 
@@ -154,14 +153,9 @@ public class IndexUpdater implements EventListener {
         try {
             Thread.currentThread().setContextClassLoader(myContextClassLoader);
 
-            byte[] payload = event.getPayload();
-            if (payload == null) {
-                log.warn("Ignoring SepEvent with empty payload: " + event);
-                return;
-            }
-
-            recordEvent = new RecordEvent(payload, idGenerator);
-            recordId = idGenerator.fromBytes(event.getRow());
+            recordEvent = event.getRecordEvent();
+            recordId = event.getRecordId();
+            LRepository repository = repositoryManager.getRepository(event.getLilyTenantName());
 
             if (log.isDebugEnabled()) {
                 log.debug("Received message: " + recordEvent.toJson());

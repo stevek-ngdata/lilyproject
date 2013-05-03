@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tenant.model.impl;
+package org.lilyproject.util.repo;
 
 import java.util.regex.Pattern;
 
@@ -33,7 +33,7 @@ public class TenantTableUtil {
      */
     public static final boolean belongsToTenant(String hbaseTableName, String tenantName) {
         if (tenantName.equals(PUBLIC_TENANT)) {
-            return !hbaseTableName.contains("__");
+            return !hbaseTableName.contains(TENANT_TABLE_SEPARATOR);
         } else {
             return hbaseTableName.startsWith(tenantName + TENANT_TABLE_SEPARATOR);
         }
@@ -45,7 +45,7 @@ public class TenantTableUtil {
             // compatibility with the pre-tenant situation.
             return tableName;
         } else {
-            return tenantName + "__" + tableName;
+            return tenantName + TENANT_TABLE_SEPARATOR + tableName;
         }
     }
 
@@ -53,11 +53,7 @@ public class TenantTableUtil {
         return VALID_NAME_CHARS.matcher(name).matches() && !name.contains(TENANT_TABLE_SEPARATOR);
     }
 
-    public static boolean isValidTenantName(String name) {
-        return VALID_NAME_CHARS.matcher(name).matches() && !name.contains(TENANT_TABLE_SEPARATOR);
-    }
-
-    public static boolean isPublicTenant(String name) {
+    private static boolean isPublicTenant(String name) {
         return PUBLIC_TENANT.equals(name);
     }
 
@@ -71,6 +67,23 @@ public class TenantTableUtil {
                         hbaseTableName, tenantName));
             }
             return hbaseTableName.substring(prefix.length());
+        }
+    }
+
+    /**
+     * Splits an HBase table name into Lily tenant and table names. Assumes the provided HBase table name is a valid
+     * Lily record table (should be check on beforehand).
+     *
+     * @return an array of size 2: first element is tenant name, second is table name
+     */
+    public static String[] getTenantAndTable(String hbaseTableName) {
+        int pos = hbaseTableName.indexOf(TENANT_TABLE_SEPARATOR);
+        if (pos == -1) {
+            return new String[] { "public", hbaseTableName };
+        } else {
+            String tenant = hbaseTableName.substring(0, pos);
+            String table = hbaseTableName.substring(pos + TENANT_TABLE_SEPARATOR.length());
+            return new String[] { tenant, table };
         }
     }
 }

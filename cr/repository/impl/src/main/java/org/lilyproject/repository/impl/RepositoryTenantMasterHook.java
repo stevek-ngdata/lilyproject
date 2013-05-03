@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.lilyproject.plugin.PluginRegistry;
 import org.lilyproject.tenant.master.TenantMasterHook;
-import org.lilyproject.tenant.model.impl.TenantTableUtil;
+import org.lilyproject.util.repo.TenantTableUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 

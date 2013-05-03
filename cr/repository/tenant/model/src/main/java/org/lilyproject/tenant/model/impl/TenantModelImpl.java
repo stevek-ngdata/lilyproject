@@ -43,6 +43,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.apache.zookeeper.Watcher.Event.EventType.NodeChildrenChanged;
 import static org.apache.zookeeper.Watcher.Event.EventType.NodeDataChanged;
@@ -106,9 +107,9 @@ public class TenantModelImpl implements TenantModel {
 
     @Override
     public void create(String tenantName) throws TenantExistsException, InterruptedException, TenantModelException {
-        if (!TenantTableUtil.isValidTenantName(tenantName)) {
+        if (!TenantUtil.isValidTenantName(tenantName)) {
             throw new IllegalArgumentException(String.format("'%s' is not a valid tenant name. "
-                    + TenantTableUtil.VALID_NAME_EXPLANATION, tenantName));
+                    + TenantUtil.VALID_NAME_EXPLANATION, tenantName));
         }
         Tenant tenant = new Tenant(tenantName, TenantLifecycleState.CREATE_REQUESTED);
         byte[] tenantBytes = TenantJsonSerDeser.INSTANCE.toJsonBytes(tenant);

@@ -26,6 +26,7 @@ import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.TenantUnavailableException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.tenant.model.api.TenantModel;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -81,7 +82,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     public Repository getRepository(String tenantName, String tableName)
             throws InterruptedException, RepositoryException {
         if (!tenantModel.tenantExistsAndActive(tenantName)) {
-            throw new RepositoryException("Tenant does not exist or is not active: " + tenantName);
+            throw new TenantUnavailableException("Tenant does not exist or is not active: " + tenantName);
         }
         TenantTableKey key = new TenantTableKey(tenantName, tableName);
         if (!repositoryCache.containsKey(key)) {

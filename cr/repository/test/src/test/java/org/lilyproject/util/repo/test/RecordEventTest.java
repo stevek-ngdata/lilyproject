@@ -146,7 +146,6 @@ public class RecordEventTest {
             }
         }
         
-        
         public void processEvent(SepEvent event) {
             if (event.getPayload() == null) {
                 return;
