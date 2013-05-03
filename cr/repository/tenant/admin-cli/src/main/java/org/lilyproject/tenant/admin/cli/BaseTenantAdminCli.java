@@ -23,6 +23,7 @@ import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.tenant.model.api.TenantModel;
 import org.lilyproject.tenant.model.impl.TenantModelImpl;
 import org.lilyproject.util.Version;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.lilyproject.util.zookeeper.ZooKeeperOperation;
@@ -85,5 +86,12 @@ public abstract class BaseTenantAdminCli extends BaseZkCliTool {
         tenantModel = new TenantModelImpl(zk);
 
         return 0;
+    }
+
+    @Override
+    protected void cleanup() {
+        Closer.close(tenantModel);
+        Closer.close(zk);
+        super.cleanup();
     }
 }
