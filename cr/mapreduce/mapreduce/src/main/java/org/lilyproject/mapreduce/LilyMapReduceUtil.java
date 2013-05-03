@@ -37,6 +37,11 @@ public class LilyMapReduceUtil {
      */
     public static final String REPOSITORY_TABLES = "lily.mapreduce.tables";
 
+    /**
+     * Config key for storing the tenant on which the MR job should be executed.
+     */
+    public static final String TENANT = "lily.mapreduce.tenant";
+
     private LilyMapReduceUtil() {
     }
 
@@ -73,6 +78,8 @@ public class LilyMapReduceUtil {
         }
 
         job.getConfiguration().set(ZK_CONNECT_STRING, zooKeeperConnectString);
+
+        job.getConfiguration().set(TENANT, repository.getTenantName());
 
         if (repositoryTables != null && !repositoryTables.isEmpty()) {
             job.getConfiguration().set(REPOSITORY_TABLES, Joiner.on(',').join(repositoryTables));

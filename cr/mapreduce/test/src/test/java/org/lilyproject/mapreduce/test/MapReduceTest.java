@@ -18,6 +18,7 @@ package org.lilyproject.mapreduce.test;
 import java.io.File;
 import java.io.IOException;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -29,20 +30,26 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.mapreduce.testjobs.Test1Mapper;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.tenant.model.api.Tenant;
+import org.lilyproject.tenant.model.impl.TenantModelImpl;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MapReduceTest {
     private static LilyProxy lilyProxy;
@@ -50,6 +57,7 @@ public class MapReduceTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        TestHelper.setupLogging();
         lilyProxy = new LilyProxy();
 
         //
@@ -135,14 +143,15 @@ public class MapReduceTest {
 
     @Test
     public void testOne() throws Exception {
-        LilyClient client = lilyProxy.getLilyServerProxy().getClient();
+        RepositoryManager repoMgr = lilyProxy.getLilyServerProxy().getClient();
 
         //
-        // First create some content
+        // Create some content in the default table of the public tenant
         //
-        Repository repository = client.getRepository();
+        LRepository repository = repoMgr.getPublicRepository();
         TypeManager typeManager = repository.getTypeManager();
         IdGenerator idGenerator = repository.getIdGenerator();
+        LTable table = repository.getDefaultTable();
 
         FieldType ft1 = typeManager.createFieldType("STRING", new QName("test", "field1"), Scope.NON_VERSIONED);
 
@@ -153,7 +162,7 @@ public class MapReduceTest {
                 .create();
 
         for (int i = 0; i < 100; i++) {
-            repository.recordBuilder()
+            table.recordBuilder()
                     .id(String.format("%1$03d", i))
                     .recordType(rt1.getName())
                     .field(ft1.getName(), "foo bar bar")
@@ -161,7 +170,37 @@ public class MapReduceTest {
         }
 
         //
-        // Launch MapReduce job
+        // Also create some content in another tenant with two tables
+        //
+        TenantModelImpl tenantModel = new TenantModelImpl(lilyProxy.getLilyServerProxy().getZooKeeper());
+        String tenantName = "othertenant";
+        tenantModel.create(tenantName);
+        assertTrue(tenantModel.waitUntilTenantInState(tenantName, Tenant.TenantLifecycleState.ACTIVE, 60000L));
+        tenantModel.close();
+
+        LRepository repository2 = repoMgr.getRepository(tenantName);
+        repository2.getTableManager().createTable("foobar");
+        LTable table2 = repository2.getTable("foobar");
+        LTable table3 = repository2.getDefaultTable();
+
+        for (int i = 0; i < 50; i++) {
+            table2.recordBuilder()
+                    .id(String.valueOf(i))
+                    .recordType(rt1.getName())
+                    .field(ft1.getName(), "foo bar bar")
+                    .create();
+        }
+
+        for (int i = 0; i < 20; i++) {
+            table3.recordBuilder()
+                    .id(String.valueOf(i))
+                    .recordType(rt1.getName())
+                    .field(ft1.getName(), "foo bar bar")
+                    .create();
+        }
+
+        //
+        // Launch MapReduce job on public tenant
         //
         {
             Configuration config = HBaseConfiguration.create();
@@ -178,7 +217,7 @@ public class MapReduceTest {
 
             job.setNumReduceTasks(0);
 
-            LilyMapReduceUtil.initMapperJob(null, "localhost", client.getPublicRepository(), job);
+            LilyMapReduceUtil.initMapperJob(null, "localhost", repository, job);
 
             boolean b = job.waitForCompletion(true);
             if (!b) {
@@ -190,9 +229,8 @@ public class MapReduceTest {
             assertEquals("Number of input records", 100L, getTotalInputRecords(job));
         }
 
-
         //
-        // Launch a job with a custom scan
+        // Launch a job with a custom scan on the public tenant
         //
         {
             Configuration config = HBaseConfiguration.create();
@@ -213,7 +251,7 @@ public class MapReduceTest {
             scan.setStartRecordId(idGenerator.newRecordId(String.format("%1$03d", 15)));
             scan.setStopRecordId(idGenerator.newRecordId(String.format("%1$03d", 25)));
 
-            LilyMapReduceUtil.initMapperJob(scan, "localhost", client.getPublicRepository(), job);
+            LilyMapReduceUtil.initMapperJob(scan, "localhost", repository, job);
 
             boolean b = job.waitForCompletion(true);
             if (!b) {
@@ -233,6 +271,63 @@ public class MapReduceTest {
             */
         }
 
+        //
+        // Launch MapReduce job on the custom tenant - over all tables
+        //
+        {
+            Configuration config = HBaseConfiguration.create();
+
+            config.set("mapred.job.tracker", "localhost:9001");
+            config.set("fs.defaultFS", "hdfs://localhost:8020");
+
+            Job job = new Job(config, "Test1");
+            job.setJarByClass(Test1Mapper.class);
+
+            job.setMapperClass(Test1Mapper.class);
+
+            job.setOutputFormatClass(NullOutputFormat.class);
+
+            job.setNumReduceTasks(0);
+
+            LilyMapReduceUtil.initMapperJob(null, "localhost", repository2, job);
+
+            boolean b = job.waitForCompletion(true);
+            if (!b) {
+                throw new IOException("error with job!");
+            }
+
+            // Verify some counters
+            assertEquals("Number of input records", 70L, getTotalInputRecords(job));
+        }
+
+        //
+        // Launch MapReduce job on the custom tenant - over one specific table
+        //
+        {
+            Configuration config = HBaseConfiguration.create();
+
+            config.set("mapred.job.tracker", "localhost:9001");
+            config.set("fs.defaultFS", "hdfs://localhost:8020");
+
+            Job job = new Job(config, "Test1");
+            job.setJarByClass(Test1Mapper.class);
+
+            job.setMapperClass(Test1Mapper.class);
+
+            job.setOutputFormatClass(NullOutputFormat.class);
+
+            job.setNumReduceTasks(0);
+
+            LilyMapReduceUtil.initMapperJob(null, "localhost", repository2, job, Lists.newArrayList("foobar"));
+
+            boolean b = job.waitForCompletion(true);
+            if (!b) {
+                throw new IOException("error with job!");
+            }
+
+            // Verify some counters
+            assertEquals("Number of input records", 50L, getTotalInputRecords(job));
+        }
     }
 
     private long getTotalLaunchedMaps(Job job) throws IOException {
