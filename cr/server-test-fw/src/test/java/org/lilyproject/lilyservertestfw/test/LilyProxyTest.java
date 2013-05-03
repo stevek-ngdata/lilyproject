@@ -30,6 +30,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
@@ -53,6 +54,7 @@ public class LilyProxyTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        TestHelper.setupLogging();
         lilyProxy = new LilyProxy();
         byte[] schemaData = IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
         lilyProxy.start(schemaData, null);

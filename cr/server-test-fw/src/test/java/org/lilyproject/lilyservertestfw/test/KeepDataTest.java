@@ -30,6 +30,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeExistsException;
@@ -49,6 +50,9 @@ import org.lilyproject.repository.api.TypeManager;
  * Example usage:
  *   mvn -DargLine="-Dlily.lilyproxy.dir=/home/lilyuser/tmp/test1 -Dlily.lilyproxy.mode=embed -Dlily.lilyproxy.clear=false" \
  *                 test -Dtest=KeepDataTest
+ *
+ * FIXME: this seems like something which should go into /integration-tests, iiuc the current test relies on manual
+ * inspection of the results.
  */
 public class KeepDataTest {
     private static final QName RECORDTYPE1 = new QName("org.lilyproject.lilytestutility", "TestRecordType");
@@ -58,6 +62,7 @@ public class KeepDataTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        TestHelper.setupLogging();
         lilyProxy = new LilyProxy();
         byte[] schemaData = IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
         lilyProxy.start(schemaData, null);
