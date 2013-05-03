@@ -15,8 +15,6 @@
  */
 package org.lilyproject.repository.api;
 
-import java.io.IOException;
-
 // IMPORTANT:
 //   The Repository implementation might be wrapped to add automatic retrying of operations in case
 //   of IO exceptions or when no Lily servers are available. In case this fails, a
@@ -66,4 +64,9 @@ public interface LRepository {
      * @return the factory for creating records
      */
     RecordFactory getRecordFactory();
+
+    /**
+     * The name of the tenant for this repository.
+     */
+    String getTenantName();
 }
