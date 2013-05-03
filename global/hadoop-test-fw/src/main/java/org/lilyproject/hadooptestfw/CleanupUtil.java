@@ -327,14 +327,22 @@ public class CleanupUtil {
         fs.delete(blobRootPath, true);
     }
 
-    public void cleanHBaseReplicas() throws Exception {
+    /**
+     * Removes nay HBase replication peers. This method does not wait for the actual related processes to stop,
+     * for this {@link ReplicationPeerUtil#waitOnReplicationPeerStopped(String)} can be used on the list of
+     * returned peer id's.
+     */
+    public List<String> cleanHBaseReplicas() throws Exception {
         ReplicationAdmin repliAdmin = new ReplicationAdmin(conf);
+        List<String> removedPeers = new ArrayList<String>();
         try {
             for (String peerId : repliAdmin.listPeers().keySet()) {
                 repliAdmin.removePeer(peerId);
+                removedPeers.add(peerId);
             }
         } finally {
             Closer.close(repliAdmin);
         }
+        return removedPeers;
     }
 }
