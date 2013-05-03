@@ -24,23 +24,6 @@ import java.util.List;
 public interface TableManager {
 
     /**
-     * Describes properties with which a repository table is to be created.
-     */
-    static interface TableCreateDescriptor {
-
-        /**
-         * Returns the name of the repository table.
-         */
-        String getName();
-
-        /**
-         * Return the region split keys of the table.
-         */
-        byte[][] getSplitKeys();
-
-    }
-
-    /**
      * Create a new record table. An exception will be thrown if the table already exists.
      *
      * @param tableName name of the table to create

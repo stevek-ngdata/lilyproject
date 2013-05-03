@@ -21,9 +21,9 @@ import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
+import org.lilyproject.repository.api.TableCreateDescriptor;
 import org.lilyproject.repository.api.TableManager;
-import org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
-import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
+import org.lilyproject.util.hbase.TableConfig;
 
 /**
  * Command-line utility for creating new record tables in Lily.
@@ -104,11 +104,13 @@ public class CreateTableCli extends BaseTableCliTool {
         }
 
         if (splitKeys != null) {
-            createDescriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys(tableName, splitKeyPrefix, splitKeys);
+            byte[][] parsedSplitKeys = TableConfig.parseSplitKeys(null, splitKeys, splitKeyPrefix);
+            createDescriptor = new TableCreateDescriptor(tableName, parsedSplitKeys);
         } else if (regionCount != -1) {
-            createDescriptor = TableCreateDescriptorImpl.createInstance(tableName, splitKeyPrefix, regionCount);
+            byte[][] parsedSplitKeys = TableConfig.parseSplitKeys(regionCount, null, splitKeyPrefix);
+            createDescriptor = new TableCreateDescriptor(tableName, parsedSplitKeys);
         } else {
-            createDescriptor = TableCreateDescriptorImpl.createInstance(tableName);
+            createDescriptor = new TableCreateDescriptor(tableName);
         }
         return 0;
     }

@@ -30,11 +30,10 @@ import java.util.List;
 
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.RepositoryTable;
+import org.lilyproject.repository.api.TableCreateDescriptor;
 import org.lilyproject.repository.api.TableManager;
-import org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
-import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 import org.lilyproject.tools.restresourcegenerator.GenerateTenantResource;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.lilyproject.util.hbase.TableConfig;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
@@ -91,13 +90,13 @@ public class TableResource extends RepositoryEnabled {
                 keyPrefix = descriptorJson.get("keyPrefix").asText();
             }
             if (descriptorJson.has("splitKeys")) {
-                descriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys(tableName, keyPrefix, descriptorJson.get("splitKeys").asText());
-            } else
-
-            if (descriptorJson.has("numRegions")) {
-               descriptor = TableCreateDescriptorImpl.createInstance(tableName, keyPrefix, descriptorJson.get("numRegions").asInt());
+                byte[][] splitKeys = TableConfig.parseSplitKeys(null, descriptorJson.get("splitKeys").asText(), keyPrefix);
+                descriptor = new TableCreateDescriptor(tableName, splitKeys);
+            } else if (descriptorJson.has("numRegions")) {
+                byte[][] splitKeys = TableConfig.parseSplitKeys(descriptorJson.get("numRegions").asInt(), null, keyPrefix);
+               descriptor = new TableCreateDescriptor(tableName, splitKeys);
             } else {
-                descriptor = TableCreateDescriptorImpl.createInstance(tableName);
+                descriptor = new TableCreateDescriptor(tableName);
             }
             getRepository(uriInfo).getTableManager().createTable(descriptor);
             return Response.ok().build();

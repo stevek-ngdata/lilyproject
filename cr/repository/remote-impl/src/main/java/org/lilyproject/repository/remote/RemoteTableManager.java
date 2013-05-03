@@ -7,6 +7,7 @@ import org.lilyproject.avro.AvroIOException;
 import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.AvroTableCreateDescriptor;
 import org.lilyproject.repository.api.RepositoryTable;
+import org.lilyproject.repository.api.TableCreateDescriptor;
 import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.impl.RepositoryTableImpl;
 import org.lilyproject.util.io.Closer;

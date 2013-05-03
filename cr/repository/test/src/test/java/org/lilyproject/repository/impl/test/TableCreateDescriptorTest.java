@@ -16,31 +16,33 @@
 package org.lilyproject.repository.impl.test;
 
 import org.junit.Test;
-import org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
-import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
+import org.lilyproject.repository.api.TableCreateDescriptor;
+import org.lilyproject.util.hbase.TableConfig;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class TableCreateDescriptorImplTest {
+public class TableCreateDescriptorTest {
 
     @Test
     public void testCreateInstance_OnlyName() {
-        TableCreateDescriptor descriptor = TableCreateDescriptorImpl.createInstance("mytable");
+        TableCreateDescriptor descriptor = new TableCreateDescriptor("mytable");
         assertEquals("mytable", descriptor.getName());
         assertNull(descriptor.getSplitKeys());
     }
 
-
     @Test
     public void testCreateInstanceWithSplits_NoPrefix() {
-        TableCreateDescriptor descriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys("mytable", null, "04,08");
+        byte[][] splitKeys = TableConfig.parseSplitKeys(null, "04,08", null);
+        TableCreateDescriptor descriptor = new TableCreateDescriptor("mytable", splitKeys);
         assertEquals(2, descriptor.getSplitKeys().length);
     }
 
     @Test
     public void testCreateInstanceWithSplits_WithPrefix() {
-        TableCreateDescriptor descriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys("mytable", "\\x01", "04,08,12");
+        byte[][] inputSplitKeys = TableConfig.parseSplitKeys(null, "04,08,12", "\\x01");
+        TableCreateDescriptor descriptor = new TableCreateDescriptor("mytable", inputSplitKeys);
+
         byte[][] splitKeys = descriptor.getSplitKeys();
         assertEquals(3, splitKeys.length);
 
@@ -48,13 +50,15 @@ public class TableCreateDescriptorImplTest {
 
     @Test
     public void testCreateInstance_NoPrefix() {
-        TableCreateDescriptor descriptor = TableCreateDescriptorImpl.createInstance("mytable", null, 3);
+        byte[][] splitKeys = TableConfig.parseSplitKeys(3, null, null);
+        TableCreateDescriptor descriptor = new TableCreateDescriptor("mytable", splitKeys);
         assertEquals(2, descriptor.getSplitKeys().length);
     }
 
     @Test
     public void testCreateInstance_WithPrefix() {
-        TableCreateDescriptor descriptor = TableCreateDescriptorImpl.createInstance("mytable", "\\x01", 3);
+        byte[][] inputSplitKeys = TableConfig.parseSplitKeys(3, null, "\\x01");
+        TableCreateDescriptor descriptor = new TableCreateDescriptor("mytable", inputSplitKeys);
         byte[][] splitKeys = descriptor.getSplitKeys();
         assertEquals(2, descriptor.getSplitKeys().length);
         assertEquals(1, splitKeys[0][0]);

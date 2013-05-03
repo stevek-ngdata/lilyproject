@@ -47,15 +47,13 @@ import org.lilyproject.repository.api.RemoteException;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TableCreateDescriptor;
 import org.lilyproject.repository.api.TypeBucket;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
-import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.SystemFields;
-
-import static org.lilyproject.repository.api.TableManager.TableCreateDescriptor;
 
 public class AvroConverter {
     protected Log log = LogFactory.getLog(getClass());
@@ -690,7 +688,7 @@ public class AvroConverter {
             }
         }
 
-        return TableCreateDescriptorImpl.createInstanceWithSplitKeys(name, splitKeys);
+        return new TableCreateDescriptor(name, splitKeys);
     }
 
 

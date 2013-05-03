@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.RepositoryTable;
+import org.lilyproject.repository.api.TableCreateDescriptor;
 import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.tenant.model.impl.TenantTableUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -44,7 +45,7 @@ public class TableManagerImpl implements TableManager {
 
     @Override
     public RepositoryTable createTable(String tableName) throws InterruptedException, IOException {
-        return createTable(TableCreateDescriptorImpl.createInstance(tableName));
+        return createTable(new TableCreateDescriptor(tableName));
     }
 
     @Override
