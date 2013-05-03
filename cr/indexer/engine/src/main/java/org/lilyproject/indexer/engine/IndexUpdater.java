@@ -478,7 +478,8 @@ public class IndexUpdater extends LilyEventListener {
             payload.setIndexRecordFilterData(filterData);
 
             try {
-                eventPublisherMgr.getEventPublisher(referrer.getTable()).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
+                eventPublisherMgr.getEventPublisher(/* TODO multitenancy */ "public",
+                        referrer.getTable()).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.
