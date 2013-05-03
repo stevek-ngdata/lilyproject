@@ -46,7 +46,7 @@ public class RemoteTableManager implements TableManager {
             AvroTableCreateDescriptor descriptor = new AvroTableCreateDescriptor();
             descriptor.setName(tableName);
             lilyProxy.createTable(tenantName, descriptor);
-            return new RepositoryTableImpl(tableName);
+            return new RepositoryTableImpl(tenantName, tableName);
         } catch (AvroIOException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -58,7 +58,7 @@ public class RemoteTableManager implements TableManager {
     public RepositoryTable createTable(TableCreateDescriptor descriptor) throws InterruptedException, IOException {
         try {
             lilyProxy.createTable(tenantName, converter.convert(descriptor));
-            return new RepositoryTableImpl(descriptor.getName());
+            return new RepositoryTableImpl(tenantName, descriptor.getName());
         } catch (AvroIOException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -83,7 +83,7 @@ public class RemoteTableManager implements TableManager {
             List<String> tableNames = lilyProxy.getTables(tenantName);
             List<RepositoryTable> tables = new ArrayList<RepositoryTable>(tableNames.size());
             for (String name : tableNames) {
-                tables.add(new RepositoryTableImpl(name));
+                tables.add(new RepositoryTableImpl(tenantName, name));
             }
             return tables;
         } catch (AvroIOException e) {

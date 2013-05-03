@@ -25,4 +25,8 @@ public interface RepositoryTable {
      */
     String getName();
 
+    String getTenantName();
+
+    String getStorageName();
+
 }

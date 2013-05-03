@@ -59,7 +59,7 @@ public class TableManagerImpl implements TableManager {
         }
         String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantName, descriptor.getName());
         LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, descriptor.getSplitKeys());
-        return new RepositoryTableImpl(descriptor.getName());
+        return new RepositoryTableImpl(tenantName, descriptor.getName());
     }
 
     @Override
@@ -97,7 +97,7 @@ public class TableManagerImpl implements TableManager {
                 if (LilyHBaseSchema.isRecordTableDescriptor(tableDescriptor)
                         && TenantTableUtil.belongsToTenant(tableDescriptor.getNameAsString(), tenantName)) {
                     String name = TenantTableUtil.extractLilyTableName(tenantName, tableDescriptor.getNameAsString());
-                    recordTables.add(new RepositoryTableImpl(name));
+                    recordTables.add(new RepositoryTableImpl(tenantName, name));
                 }
             }
         } finally {
