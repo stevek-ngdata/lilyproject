@@ -3413,6 +3413,11 @@ public class IndexerTest {
         }
 
         @Override
+        public String getTenantName() {
+            return delegate.getTenantName();
+        }
+
+        @Override
         public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
             if (!tableCache.containsKey(tableName)) {
                 Repository repository = (Repository)delegate.getTable(tableName);
