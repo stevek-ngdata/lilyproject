@@ -3428,6 +3428,11 @@ public class IndexerTest {
             return null;
         }
 
+        @Override
+        public String getTenantName() {
+            return delegate.getTenantName();
+        }
+
         public void reset() {
             for (TrackingTable repo : tableCache.values()) {
                 repo.reads();
