@@ -20,7 +20,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   <artifactId>lily-tenant-model</artifactId>
-  <name>Lily: Tenanat: Model</name>
+  <name>Lily: Tenant: Model</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
