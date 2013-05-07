@@ -38,8 +38,8 @@ import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.rest.BaseRepositoryResource;
 import org.lilyproject.rest.PostAction;
-import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.LinkTransformer;
@@ -56,7 +56,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @Provider
-public class PostActionMessageBodyReader extends RepositoryEnabled implements MessageBodyReader<PostAction> {
+public class PostActionMessageBodyReader extends BaseRepositoryResource implements MessageBodyReader<PostAction> {
 
     private LinkTransformer linkTransformer;
 

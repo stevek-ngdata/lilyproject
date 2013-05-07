@@ -34,8 +34,8 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.tools.restresourcegenerator.GenerateTableResource;
-import org.lilyproject.tools.restresourcegenerator.GenerateTenantAndTableResource;
-import org.lilyproject.tools.restresourcegenerator.GenerateTenantResource;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryAndTableResource;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
@@ -44,9 +44,9 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 
 @Path("scan/{id}")
 @GenerateTableResource
-@GenerateTenantResource
-@GenerateTenantAndTableResource
-public class RecordScanResource extends RepositoryEnabled {
+@GenerateRepositoryResource
+@GenerateRepositoryAndTableResource
+public class RecordScanResource extends BaseRepositoryResource {
     @Autowired
     private Cache<String, RecordScanner> recordScannerMap;
 

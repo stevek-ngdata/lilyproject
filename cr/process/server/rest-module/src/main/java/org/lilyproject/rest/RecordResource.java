@@ -40,9 +40,9 @@ import org.lilyproject.tools.import_.core.ImportMode;
 import org.lilyproject.tools.import_.core.ImportResult;
 import org.lilyproject.tools.import_.core.ImportResultType;
 import org.lilyproject.tools.import_.core.RecordImport;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryAndTableResource;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryResource;
 import org.lilyproject.tools.restresourcegenerator.GenerateTableResource;
-import org.lilyproject.tools.restresourcegenerator.GenerateTenantAndTableResource;
-import org.lilyproject.tools.restresourcegenerator.GenerateTenantResource;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -52,9 +52,9 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 
 @Path("record/{id}")
 @GenerateTableResource
-@GenerateTenantResource
-@GenerateTenantAndTableResource
-public class RecordResource extends RepositoryEnabled {
+@GenerateRepositoryResource
+@GenerateRepositoryAndTableResource
+public class RecordResource extends BaseRepositoryResource {
 
     @GET
     @Produces("application/json")

@@ -30,19 +30,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * An annotation processor to automatically generate table and tenant+table variants of some JAX-RS resource
- * classes. This will be done for classes annotated with {@link GenerateTenantAndTableResource}.
+ * An annotation processor to automatically generate alternatives of some JAX-RS resource
+ * classes. This will be done for classes annotated with annotations like {@link GenerateRepositoryAndTableResource}.
  */
 @SupportedAnnotationTypes(
-        {"org.lilyproject.tools.restresourcegenerator.GenerateTenantAndTableResource",
+        {"org.lilyproject.tools.restresourcegenerator.GenerateRepositoryAndTableResource",
         "org.lilyproject.tools.restresourcegenerator.GenerateTableResource",
-        "org.lilyproject.tools.restresourcegenerator.GenerateTenantResource"})
-public class GenerateTenantTableResourcesProcessor extends AbstractProcessor {
+        "org.lilyproject.tools.restresourcegenerator.GenerateRepositoryResource"})
+public class GenerateRepositoryAndTableResourcesProcessor extends AbstractProcessor {
     private static Map<String, ResourceClassGenerator> generators = new HashMap<String, ResourceClassGenerator>();
     static {
         generators.put(GenerateTableResource.class.getName(), new TableBasedResourceGenerator());
-        generators.put(GenerateTenantResource.class.getName(), new TenantBasedResourceGenerator());
-        generators.put(GenerateTenantAndTableResource.class.getName(), new TenantAndTableBasedResourceGenerator());
+        generators.put(GenerateRepositoryResource.class.getName(), new RepositoryBasedResourceGenerator());
+        generators.put(GenerateRepositoryAndTableResource.class.getName(), new RepositoryAndTableBasedResourceGenerator());
     }
 
     @Override
@@ -52,7 +52,7 @@ public class GenerateTenantTableResourcesProcessor extends AbstractProcessor {
                 Path pathAnnotation = element.getAnnotation(Path.class);
                 if (pathAnnotation == null) {
                     throw new RuntimeException("A JAX-RS resource with the "
-                            + GenerateTenantAndTableResource.class.getSimpleName()
+                            + GenerateRepositoryAndTableResource.class.getSimpleName()
                             + " annotation is missing a javax.ws.rs.Path annotation: " + element.toString());
                 }
                 String jaxRsPath = pathAnnotation.value();
@@ -95,19 +95,22 @@ public class GenerateTenantTableResourcesProcessor extends AbstractProcessor {
         }
     }
 
-    private static class TenantBasedResourceGenerator implements ResourceClassGenerator {
+    private static class RepositoryBasedResourceGenerator implements ResourceClassGenerator {
         @Override
         public void generateResourceClass(String packageName, String className, String jaxRsPath, Filer filer) {
             try {
-                System.out.println("Generating /tenant/{tenantName} variant of JAX-RS class " + packageName + "." + className);
-                String generatedClassName = "TenantBased" + className;
+                // Note that the {repositoryName} wildcard conflicts with some other resources at the same level,
+                // such as schema. But its unlikely one will call his repository that way, and the alternatives seemed
+                // worse, except for starting with a new API under a different root.
+                System.out.println("Generating /{repositoryName} variant of JAX-RS class " + packageName + "." + className);
+                String generatedClassName = "RepositoryBased" + className;
                 PrintWriter writer = new PrintWriter(filer.createSourceFile(packageName + "." + generatedClassName).openWriter());
                 writer.println("package " + packageName + ";");
                 writer.println();
                 writer.println("import javax.ws.rs.Path;");
                 writer.println();
-                writer.println("@TenantEnabled");
-                writer.println("@Path(\"tenant/{tenantName}/" + escapeJavaString(jaxRsPath) + "\")");
+                writer.println("@RepositoryEnabled");
+                writer.println("@Path(\"{repositoryName}/" + escapeJavaString(jaxRsPath) + "\")");
                 writer.println("public class " + generatedClassName + " extends " + className + " {");
                 writer.println("}");
                 writer.close();
@@ -117,20 +120,20 @@ public class GenerateTenantTableResourcesProcessor extends AbstractProcessor {
         }
     }
 
-    private static class TenantAndTableBasedResourceGenerator implements ResourceClassGenerator {
+    private static class RepositoryAndTableBasedResourceGenerator implements ResourceClassGenerator {
         @Override
         public void generateResourceClass(String packageName, String className, String jaxRsPath, Filer filer) {
             try {
-                System.out.println("Generating /tenant/{tenantName}/table/{tableName} variant of JAX-RS class " + packageName + "." + className);
-                String generatedClassName = "TableAndTenantBased" + className;
+                System.out.println("Generating /{repositoryName}/table/{tableName} variant of JAX-RS class " + packageName + "." + className);
+                String generatedClassName = "RepositoryAndTableBased" + className;
                 PrintWriter writer = new PrintWriter(filer.createSourceFile(packageName + "." + generatedClassName).openWriter());
                 writer.println("package " + packageName + ";");
                 writer.println();
                 writer.println("import javax.ws.rs.Path;");
                 writer.println();
                 writer.println("@TableEnabled");
-                writer.println("@TenantEnabled");
-                writer.println("@Path(\"tenant/{tenantName}/table/{tableName}/" + escapeJavaString(jaxRsPath) + "\")");
+                writer.println("@RepositoryEnabled");
+                writer.println("@Path(\"{repositoryName}/table/{tableName}/" + escapeJavaString(jaxRsPath) + "\")");
                 writer.println("public class " + generatedClassName + " extends " + className + " {");
                 writer.println("}");
                 writer.close();

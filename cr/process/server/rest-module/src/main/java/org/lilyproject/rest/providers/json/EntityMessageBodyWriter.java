@@ -28,14 +28,14 @@ import java.lang.reflect.Type;
 
 import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.rest.BaseRepositoryResource;
 import org.lilyproject.rest.Entity;
-import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.tools.import_.json.EntityWriter;
 import org.lilyproject.util.json.JsonFormat;
 
 @Provider
-public class EntityMessageBodyWriter extends RepositoryEnabled implements MessageBodyWriter<Entity> {
+public class EntityMessageBodyWriter extends BaseRepositoryResource implements MessageBodyWriter<Entity> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type.equals(Entity.class) && mediaType.equals(MediaType.APPLICATION_JSON_TYPE);

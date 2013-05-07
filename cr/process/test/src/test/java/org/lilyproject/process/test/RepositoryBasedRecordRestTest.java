@@ -15,11 +15,14 @@
  */
 package org.lilyproject.process.test;
 
-public class TenantBasedRecordRestTest extends RecordRestTest {
+/**
+ * Variant of the RecordRestTest that explicitly tells what repository to use.
+ */
+public class RepositoryBasedRecordRestTest extends RecordRestTest {
     @Override
     protected String buildUri(String path) {
         if (path.startsWith("/record") || path.startsWith("/scan") || path.startsWith("/blob")) {
-            path = "/tenant/public" + path;
+            path = "/default" + path;
         }
         return super.buildUri(path);
     }

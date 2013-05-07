@@ -32,7 +32,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.TableCreateDescriptor;
 import org.lilyproject.repository.api.TableManager;
-import org.lilyproject.tools.restresourcegenerator.GenerateTenantResource;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryResource;
 import org.lilyproject.util.hbase.TableConfig;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -40,8 +40,8 @@ import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("table")
-@GenerateTenantResource
-public class TableResource extends RepositoryEnabled {
+@GenerateRepositoryResource
+public class TableResource extends BaseRepositoryResource {
 
     /**
      * Get all record table names.

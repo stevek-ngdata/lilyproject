@@ -114,7 +114,7 @@
         <version>3.1</version>
         <configuration>
           <annotationProcessors>
-            <annotationProcessor>org.lilyproject.tools.restresourcegenerator.GenerateTenantTableResourcesProcessor</annotationProcessor>
+            <annotationProcessor>org.lilyproject.tools.restresourcegenerator.GenerateRepositoryAndTableResourcesProcessor</annotationProcessor>
           </annotationProcessors>
           <source>1.6</source>
           <target>1.6</target>

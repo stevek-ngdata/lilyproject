@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.rest;
+package org.lilyproject.tools.restresourcegenerator;
 
-import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Signifies that a RestResource makes use of a specific tenant name that is included in its url.
- * <p>
- * The default tenantName parameter is named "tenantName".
+ * Annotation to put on JAX-RS classes for which alternatives should be generated that allow to specify the
+ * repository name (assuming default table).
  */
 @Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface TenantEnabled {
-    String tenantName() default "tenantName";
+public @interface GenerateRepositoryResource {
 }

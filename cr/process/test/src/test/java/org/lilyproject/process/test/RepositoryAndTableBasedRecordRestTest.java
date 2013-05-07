@@ -17,14 +17,14 @@ package org.lilyproject.process.test;
 
 import org.junit.Before;
 
-public class TenantAndTableBasedRecordRestTest extends RecordRestTest {
+public class RepositoryAndTableBasedRecordRestTest extends RecordRestTest {
     private static boolean extraTableCreated = false;
-    private static final String REPOSITORY_TABLE_NAME = "tenantAndTableBasedRecordRestTestTable";
+    private static final String REPOSITORY_TABLE_NAME = "repositoryAndTableBasedRecordRestTestTable";
 
     @Before
     public void setup() throws Exception {
         if (!extraTableCreated) {
-            post("/tenant/public/table", String.format("{\"name\": \"%s\"}", REPOSITORY_TABLE_NAME));
+            post("/default/table", String.format("{\"name\": \"%s\"}", REPOSITORY_TABLE_NAME));
             extraTableCreated = true;
         }
     }
@@ -32,7 +32,7 @@ public class TenantAndTableBasedRecordRestTest extends RecordRestTest {
     @Override
     protected String buildUri(String path) {
         if (path.startsWith("/record") || path.startsWith("/scan") || path.startsWith("/blob")) {
-            path = "/tenant/public/table/" + REPOSITORY_TABLE_NAME + path;
+            path = "/default/table/" + REPOSITORY_TABLE_NAME + path;
         }
         return super.buildUri(path);
     }

@@ -116,7 +116,7 @@
   <bean id="blobIncubatorMonitorSetup" class="org.lilyproject.server.modules.repository.BlobIncubatorMonitorSetup">
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="hbaseTableFactory"/>
-    <constructor-arg value="#{repositoryManager.getPublicRepository().getTableManager()}"/>
+    <constructor-arg value="#{repositoryManager.getDefaultRepository().getTableManager()}"/>
     <constructor-arg ref="blobManager"/>
     <constructor-arg ref="typeManager"/>
     <constructor-arg>

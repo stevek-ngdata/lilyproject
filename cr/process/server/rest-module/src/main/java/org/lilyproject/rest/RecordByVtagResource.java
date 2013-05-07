@@ -30,9 +30,9 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryAndTableResource;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryResource;
 import org.lilyproject.tools.restresourcegenerator.GenerateTableResource;
-import org.lilyproject.tools.restresourcegenerator.GenerateTenantAndTableResource;
-import org.lilyproject.tools.restresourcegenerator.GenerateTenantResource;
 import org.lilyproject.util.repo.VersionTag;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
@@ -40,9 +40,9 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("record/{id}/vtag/{vtag}")
 @GenerateTableResource
-@GenerateTenantResource
-@GenerateTenantAndTableResource
-public class RecordByVtagResource extends RepositoryEnabled {
+@GenerateRepositoryResource
+@GenerateRepositoryAndTableResource
+public class RecordByVtagResource extends BaseRepositoryResource {
 
     @GET
     @Produces("application/json")
