@@ -319,32 +319,32 @@
 
     <!-- Tenant admin CLI -->
     <file>
-      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-add-tenant</source>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-add-repository</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-add-tenant.bat</source>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-add-repository.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-delete-tenant</source>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-delete-repository</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-delete-tenant.bat</source>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-delete-repository.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-list-tenants</source>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-list-repositories</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-list-tenants.bat</source>
+      <source>${basedir}/../cr/repository/tenant/admin-cli/target/dist-scripts/lily-list-repositories.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>

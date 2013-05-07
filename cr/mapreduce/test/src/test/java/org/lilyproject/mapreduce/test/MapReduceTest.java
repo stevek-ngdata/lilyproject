@@ -29,7 +29,6 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.client.LilyClient;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
@@ -44,8 +43,8 @@ import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.tenant.model.api.Tenant;
-import org.lilyproject.tenant.model.impl.TenantModelImpl;
+import org.lilyproject.tenant.model.api.RepositoryDefinition;
+import org.lilyproject.tenant.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import static org.junit.Assert.assertEquals;
@@ -148,7 +147,7 @@ public class MapReduceTest {
         //
         // Create some content in the default table of the public tenant
         //
-        LRepository repository = repoMgr.getPublicRepository();
+        LRepository repository = repoMgr.getDefaultRepository();
         TypeManager typeManager = repository.getTypeManager();
         IdGenerator idGenerator = repository.getIdGenerator();
         LTable table = repository.getDefaultTable();
@@ -172,13 +171,13 @@ public class MapReduceTest {
         //
         // Also create some content in another tenant with two tables
         //
-        TenantModelImpl tenantModel = new TenantModelImpl(lilyProxy.getLilyServerProxy().getZooKeeper());
-        String tenantName = "othertenant";
-        tenantModel.create(tenantName);
-        assertTrue(tenantModel.waitUntilTenantInState(tenantName, Tenant.TenantLifecycleState.ACTIVE, 60000L));
+        RepositoryModelImpl tenantModel = new RepositoryModelImpl(lilyProxy.getLilyServerProxy().getZooKeeper());
+        String repositoryName = "othertenant";
+        tenantModel.create(repositoryName);
+        assertTrue(tenantModel.waitUntilRepositoryInState(repositoryName, RepositoryDefinition.RepositoryLifecycleState.ACTIVE, 60000L));
         tenantModel.close();
 
-        LRepository repository2 = repoMgr.getRepository(tenantName);
+        LRepository repository2 = repoMgr.getRepository(repositoryName);
         repository2.getTableManager().createTable("foobar");
         LTable table2 = repository2.getTable("foobar");
         LTable table3 = repository2.getDefaultTable();

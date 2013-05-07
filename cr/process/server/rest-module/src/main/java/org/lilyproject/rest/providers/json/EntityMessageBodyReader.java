@@ -69,7 +69,7 @@ public class EntityMessageBodyReader extends RepositoryEnabled implements Messag
 
         try {
             // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
-            return EntityRegistry.findReader(type).fromJson(objectNode, null, repositoryMgr.getPublicRepository(),
+            return EntityRegistry.findReader(type).fromJson(objectNode, null, repositoryMgr.getDefaultRepository(),
                     linkTransformer);
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());

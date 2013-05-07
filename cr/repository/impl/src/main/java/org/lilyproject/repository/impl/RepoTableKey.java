@@ -16,25 +16,25 @@
 package org.lilyproject.repository.impl;
 
 import com.google.common.base.Preconditions;
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 /**
  * An object that can be used anywhere the combination of tenant and table is needed.
  *
  */
-public class TenantTableKey {
-    private final String tenantName;
+public class RepoTableKey {
+    private final String repositoryName;
     private final String tableName;
 
-    public TenantTableKey(String tenantName, String tableName) {
-        Preconditions.checkNotNull(tenantName, "tenantName");
+    public RepoTableKey(String repositoryName, String tableName) {
+        Preconditions.checkNotNull(repositoryName, "repositoryName");
         Preconditions.checkNotNull(tableName, "tableName");
-        this.tenantName = tenantName;
+        this.repositoryName = repositoryName;
         this.tableName = tableName;
     }
 
-    public String getTenantName() {
-        return tenantName;
+    public String getRepositoryName() {
+        return repositoryName;
     }
 
     public String getTableName() {
@@ -42,7 +42,7 @@ public class TenantTableKey {
     }
 
     public String toHBaseTableName() {
-        return TenantTableUtil.getHBaseTableName(tenantName, tableName);
+        return RepoAndTableUtil.getHBaseTableName(repositoryName, tableName);
     }
 
     @Override
@@ -50,17 +50,17 @@ public class TenantTableKey {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        TenantTableKey that = (TenantTableKey)o;
+        RepoTableKey that = (RepoTableKey)o;
 
         if (!tableName.equals(that.tableName)) return false;
-        if (!tenantName.equals(that.tenantName)) return false;
+        if (!repositoryName.equals(that.repositoryName)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = tenantName.hashCode();
+        int result = repositoryName.hashCode();
         result = 31 * result + tableName.hashCode();
         return result;
     }

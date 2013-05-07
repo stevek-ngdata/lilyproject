@@ -22,7 +22,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.tenant.master.RepositoryMaster;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import com.ngdata.sep.EventListener;
 import com.ngdata.sep.SepModel;
@@ -59,10 +60,10 @@ import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
 import org.lilyproject.repository.impl.TableManagerImpl;
-import org.lilyproject.repository.impl.RepositoryTenantMasterHook;
+import org.lilyproject.repository.impl.CoreRepositoryMasterHook;
 import org.lilyproject.repository.impl.SchemaCache;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
-import org.lilyproject.repository.impl.TenantTableKey;
+import org.lilyproject.repository.impl.RepoTableKey;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.AvroLilyTransceiver;
 import org.lilyproject.repository.remote.RemoteRepositoryManager;
@@ -71,10 +72,9 @@ import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
-import org.lilyproject.tenant.master.TenantMaster;
-import org.lilyproject.tenant.master.TenantMasterHook;
-import org.lilyproject.tenant.model.api.TenantModel;
-import org.lilyproject.tenant.model.impl.TenantModelImpl;
+import org.lilyproject.tenant.master.RepositoryMasterHook;
+import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.tenant.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
@@ -93,8 +93,8 @@ public class RepositorySetup {
     private ZooKeeperItf zk;
 
     private HBaseTableFactory hbaseTableFactory;
-    private TenantModel tenantModel;
-    private TenantMaster tenantMaster;
+    private RepositoryModel repositoryModel;
+    private RepositoryMaster repositoryMaster;
 
     private IdGenerator idGenerator;
     private HBaseTypeManager typeManager;
@@ -140,10 +140,10 @@ public class RepositorySetup {
         zk = ZkUtil.connect(hbaseProxy.getZkConnectString(), 10000);
 
         hbaseTableFactory = new HBaseTableFactoryImpl(hadoopConf);
-        tenantModel = new TenantModelImpl(zk);
-        tenantMaster = new TenantMaster(zk, tenantModel, new DummyLilyInfo(),
-                Collections.<TenantMasterHook>singletonList(new RepositoryTenantMasterHook(hbaseTableFactory, hbaseProxy.getConf())));
-        tenantMaster.start();
+        repositoryModel = new RepositoryModelImpl(zk);
+        repositoryMaster = new RepositoryMaster(zk, repositoryModel, new DummyLilyInfo(),
+                Collections.<RepositoryMasterHook>singletonList(new CoreRepositoryMasterHook(hbaseTableFactory, hbaseProxy.getConf())));
+        repositoryMaster.start();
 
         coreSetup = true;
     }
@@ -171,9 +171,9 @@ public class RepositorySetup {
         RecordFactory recordFactory = new RecordFactoryImpl();
 
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory,
-                blobManager, hadoopConf, tenantModel) {
+                blobManager, hadoopConf, repositoryModel) {
             @Override
-            protected Repository createRepository(TenantTableKey key) throws InterruptedException, RepositoryException {
+            protected Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException {
                 HBaseRepository repository = (HBaseRepository)super.createRepository(key);
                 repository.setRecordUpdateHooks(recordUpdateHooks);
                 return repository;
@@ -184,7 +184,7 @@ public class RepositorySetup {
         sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
         eventPublisherManager = new LilyEventPublisherManager(hbaseTableFactory);
 
-        tableManager = new TableManagerImpl(/* TODO multitenancy */ TenantTableUtil.PUBLIC_TENANT, hadoopConf, hbaseTableFactory);
+        tableManager = new TableManagerImpl(/* TODO multitenancy */ RepoAndTableUtil.DEFAULT_TENANT, hadoopConf, hbaseTableFactory);
         if (!tableManager.tableExists(Table.RECORD.name)) {
             tableManager.createTable(Table.RECORD.name);
         }
@@ -236,7 +236,7 @@ public class RepositorySetup {
         RecordFactory recordFactory = new RecordFactoryImpl();
 
         remoteRepositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
-                new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory, tenantModel);
+                new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory, repositoryModel);
 
         remoteBlobStoreAccessFactory = createBlobAccess();
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);
@@ -272,7 +272,7 @@ public class RepositorySetup {
             lilyServer.join();
         }
 
-        Closer.close(tenantMaster);
+        Closer.close(repositoryMaster);
         Closer.close(zk);
         Closer.close(hbaseProxy);
         coreSetup = false;
@@ -284,8 +284,8 @@ public class RepositorySetup {
         return zk;
     }
 
-    public TenantModel getTenantModel() {
-        return tenantModel;
+    public RepositoryModel getRepositoryModel() {
+        return repositoryModel;
     }
 
     public TypeManager getRemoteTypeManager() {
@@ -410,7 +410,7 @@ public class RepositorySetup {
         }
 
         @Override
-        public void setTenantMaster(boolean tenantMaster) {
+        public void setRepositoryMaster(boolean tenantMaster) {
         }
 
         @Override
@@ -429,7 +429,7 @@ public class RepositorySetup {
         }
 
         @Override
-        public boolean isTenantMaster() {
+        public boolean isRepositoryMaster() {
             return false;
         }
     }

@@ -21,12 +21,12 @@ import org.apache.zookeeper.KeeperException;
 import org.lilyproject.plugin.PluginHandle;
 import org.lilyproject.plugin.PluginRegistry;
 import org.lilyproject.plugin.PluginUser;
-import org.lilyproject.tenant.model.api.Tenant;
-import org.lilyproject.tenant.model.api.TenantModel;
-import org.lilyproject.tenant.model.api.TenantModelEvent;
-import org.lilyproject.tenant.model.api.TenantModelEventType;
-import org.lilyproject.tenant.model.api.TenantModelListener;
-import org.lilyproject.tenant.model.api.TenantNotFoundException;
+import org.lilyproject.tenant.model.api.RepositoryDefinition;
+import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.tenant.model.api.RepositoryModelEvent;
+import org.lilyproject.tenant.model.api.RepositoryModelEventType;
+import org.lilyproject.tenant.model.api.RepositoryModelListener;
+import org.lilyproject.tenant.model.api.RepositoryNotFoundException;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.zookeeper.LeaderElection;
@@ -44,22 +44,22 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static org.lilyproject.tenant.model.api.Tenant.TenantLifecycleState;
+import static org.lilyproject.tenant.model.api.RepositoryDefinition.RepositoryLifecycleState;
 
 /**
- * TenantMaster is a component which is active in only one lily-server and performs side effects when
- * a tenant is being created or deleted.
+ * RepositoryMaster is a component which is active in only one lily-server and performs side effects when
+ * a repository is being created or deleted.
  */
-public class TenantMaster implements PluginUser<TenantMasterHook> {
+public class RepositoryMaster implements PluginUser<RepositoryMasterHook> {
     private final ZooKeeperItf zk;
 
-    private final TenantModel tenantModel;
+    private final RepositoryModel repositoryModel;
 
-    private TenantModelListener listener = new MyListener();
+    private RepositoryModelListener listener = new MyListener();
 
     private LeaderElection leaderElection;
 
-    private List<TenantMasterHook> hooks;
+    private List<RepositoryMasterHook> hooks;
 
     private EventWorker eventWorker = new EventWorker();
 
@@ -69,35 +69,35 @@ public class TenantMaster implements PluginUser<TenantMasterHook> {
 
     private Log log = LogFactory.getLog(getClass());
 
-    public TenantMaster(ZooKeeperItf zk, TenantModel tenantModel, LilyInfo lilyInfo, List<TenantMasterHook> hooks) {
+    public RepositoryMaster(ZooKeeperItf zk, RepositoryModel repositoryModel, LilyInfo lilyInfo, List<RepositoryMasterHook> hooks) {
         this.zk = zk;
-        this.tenantModel = tenantModel;
+        this.repositoryModel = repositoryModel;
         this.lilyInfo = lilyInfo;
         this.hooks = hooks;
     }
 
-    public TenantMaster(ZooKeeperItf zk, TenantModel tenantModel, LilyInfo lilyInfo, PluginRegistry pluginRegistry) {
+    public RepositoryMaster(ZooKeeperItf zk, RepositoryModel repositoryModel, LilyInfo lilyInfo, PluginRegistry pluginRegistry) {
         this.zk = zk;
-        this.tenantModel = tenantModel;
+        this.repositoryModel = repositoryModel;
         this.lilyInfo = lilyInfo;
-        this.hooks = new ArrayList<TenantMasterHook>();
+        this.hooks = new ArrayList<RepositoryMasterHook>();
         this.pluginRegistry = pluginRegistry;
     }
 
     @PostConstruct
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
-        leaderElection = new LeaderElection(zk, "Tenant Master", "/lily/tenant/masters",
+        leaderElection = new LeaderElection(zk, "Repository Master", "/lily/repositorymodel/masters",
                 new MyLeaderElectionCallback());
 
         if (pluginRegistry != null) {
-            pluginRegistry.setPluginUser(TenantMasterHook.class, this);
+            pluginRegistry.setPluginUser(RepositoryMasterHook.class, this);
         }
     }
 
     @PreDestroy
     public void stop() {
         if (pluginRegistry != null) {
-            pluginRegistry.unsetPluginUser(TenantMasterHook.class, this);
+            pluginRegistry.unsetPluginUser(RepositoryMasterHook.class, this);
         }
 
         try {
@@ -110,66 +110,66 @@ public class TenantMaster implements PluginUser<TenantMasterHook> {
     }
 
     @Override
-    public void pluginAdded(PluginHandle<TenantMasterHook> pluginHandle) {
+    public void pluginAdded(PluginHandle<RepositoryMasterHook> pluginHandle) {
         hooks.add(pluginHandle.getPlugin());
     }
 
     @Override
-    public void pluginRemoved(PluginHandle<TenantMasterHook> pluginHandle) {
+    public void pluginRemoved(PluginHandle<RepositoryMasterHook> pluginHandle) {
         // we don't need to be this dynamic for now
     }
 
     private class MyLeaderElectionCallback implements LeaderElectionCallback {
         @Override
         public void activateAsLeader() throws Exception {
-            log.info("Starting up as tenant master.");
+            log.info("Starting up as repository master.");
 
             // Start these processes, but it is not until we have registered our model listener
             // that these will receive work.
             eventWorker.start();
 
-            Set<Tenant> tenants = tenantModel.getTenants(listener);
+            Set<RepositoryDefinition> repoDefs = repositoryModel.getRepositories(listener);
 
-            // Perform an initial run over the tenants by generating fake events
-            for (Tenant tenant : tenants) {
-                eventWorker.putEvent(new TenantModelEvent(TenantModelEventType.TENANT_UPDATED, tenant.getName()));
+            // Perform an initial run over the repository definitions by generating fake events
+            for (RepositoryDefinition repoDef : repoDefs) {
+                eventWorker.putEvent(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_UPDATED, repoDef.getName()));
             }
 
-            log.info("Startup as tenant master successful.");
-            lilyInfo.setTenantMaster(true);
+            log.info("Startup as repository master successful.");
+            lilyInfo.setRepositoryMaster(true);
         }
 
         @Override
         public void deactivateAsLeader() throws Exception {
-            log.info("Shutting down as tenant master.");
+            log.info("Shutting down as repository master.");
 
-            tenantModel.unregisterListener(listener);
+            repositoryModel.unregisterListener(listener);
 
             // Argument false for shutdown: we do not interrupt the event worker thread: if there
             // was something running there that is blocked until the ZK connection comes back up
             // we want it to finish
             eventWorker.shutdown(false);
 
-            log.info("Shutdown as tenant master successful.");
-            lilyInfo.setTenantMaster(false);
+            log.info("Shutdown as repository master successful.");
+            lilyInfo.setRepositoryMaster(false);
         }
     }
 
-    private class MyListener implements TenantModelListener {
+    private class MyListener implements RepositoryModelListener {
         @Override
-        public void process(TenantModelEvent event) {
+        public void process(RepositoryModelEvent event) {
             try {
                 // Let another thread process the events, so that we don't block the ZK watcher thread
                 eventWorker.putEvent(event);
             } catch (InterruptedException e) {
-                log.info("TenantMaster.TenantModelListener interrupted.");
+                log.info("RepositoryMaster.RepositoryModelListener interrupted.");
             }
         }
     }
 
     private class EventWorker implements Runnable {
 
-        private BlockingQueue<TenantModelEvent> eventQueue = new LinkedBlockingQueue<TenantModelEvent>();
+        private BlockingQueue<RepositoryModelEvent> eventQueue = new LinkedBlockingQueue<RepositoryModelEvent>();
 
         private boolean stop;
 
@@ -200,11 +200,11 @@ public class TenantMaster implements PluginUser<TenantMasterHook> {
             }
             eventQueue.clear();
             stop = false;
-            thread = new Thread(this, "TenantMasterEventWorker");
+            thread = new Thread(this, "RepositoryMasterEventWorker");
             thread.start();
         }
 
-        public void putEvent(TenantModelEvent event) throws InterruptedException {
+        public void putEvent(RepositoryModelEvent event) throws InterruptedException {
             if (stop) {
                 throw new RuntimeException("This EventWorker is stopped, no events should be added.");
             }
@@ -216,7 +216,7 @@ public class TenantMaster implements PluginUser<TenantMasterHook> {
             long startedAt = System.currentTimeMillis();
 
             while (!stop && !Thread.interrupted()) {
-                TenantModelEvent event = null;
+                RepositoryModelEvent event = null;
                 try {
                     while (!stop && event == null) {
                         event = eventQueue.poll(1000, TimeUnit.MILLISECONDS);
@@ -235,39 +235,42 @@ public class TenantMaster implements PluginUser<TenantMasterHook> {
                     }
 
                     try {
-                        Tenant tenant = tenantModel.getTenant(event.getTenantName());
-                        if (tenant.getLifecycleState() == TenantLifecycleState.CREATE_REQUESTED) {
-                            for (TenantMasterHook hook : hooks) {
+                        RepositoryDefinition repoDef = repositoryModel.getRepository(event.getRepositoryName());
+                        if (repoDef.getLifecycleState() == RepositoryLifecycleState.CREATE_REQUESTED) {
+                            for (RepositoryMasterHook hook : hooks) {
                                 try {
-                                    hook.postCreate(tenant.getName());
+                                    hook.postCreate(repoDef.getName());
                                 } catch (InterruptedException e) {
                                     return;
                                 } catch (Throwable t) {
-                                    log.error("Failure executing a tenant post-create hook.", t);
+                                    log.error("Failure executing a repository post-create hook for "
+                                            + event.getRepositoryName(), t);
                                 }
                             }
-                            Tenant updatedTenant = new Tenant(tenant.getName(), TenantLifecycleState.ACTIVE);
-                            tenantModel.updateTenant(updatedTenant);
-                        } else if (tenant.getLifecycleState() == TenantLifecycleState.DELETE_REQUESTED) {
-                            for (TenantMasterHook hook : hooks) {
+                            RepositoryDefinition updatedRepoDef = new RepositoryDefinition(repoDef.getName(),
+                                    RepositoryLifecycleState.ACTIVE);
+                            repositoryModel.updateRepository(updatedRepoDef);
+                        } else if (repoDef.getLifecycleState() == RepositoryLifecycleState.DELETE_REQUESTED) {
+                            for (RepositoryMasterHook hook : hooks) {
                                 try {
-                                    hook.preDelete(tenant.getName());
+                                    hook.preDelete(repoDef.getName());
                                 } catch (InterruptedException e) {
                                     return;
                                 } catch (Throwable t) {
-                                    log.error("Failure executing a tenant pre-delete hook.", t);
+                                    log.error("Failure executing a repository pre-delete hook for "
+                                            + event.getRepositoryName(), t);
                                 }
                             }
-                            tenantModel.deleteDirect(tenant.getName());
+                            repositoryModel.deleteDirect(repoDef.getName());
                         }
-                    } catch (TenantNotFoundException e) {
+                    } catch (RepositoryNotFoundException e) {
                         // no problem
                     }
 
                 } catch (InterruptedException e) {
                     return;
                 } catch (Throwable t) {
-                    log.error("Error processing tenant model event in TenantMaster. Event: " + event, t);
+                    log.error("Error processing repository model event in RepositoryMaster. Event: " + event, t);
                 }
             }
         }

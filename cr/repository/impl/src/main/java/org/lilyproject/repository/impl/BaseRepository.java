@@ -80,7 +80,7 @@ public abstract class BaseRepository implements Repository {
     protected final RecordFactory recordFactory;
     protected final RecordDecoder recdec;
     protected final HTableInterface recordTable;
-    protected final TenantTableKey tenantTableKey;
+    protected final RepoTableKey repoTableKey;
     protected final TableManager tableManager;
     protected RepositoryMetrics metrics;
 
@@ -100,7 +100,7 @@ public abstract class BaseRepository implements Repository {
         REAL_RECORDS_FILTER.setFilterIfMissing(true);
     }
 
-    protected BaseRepository(TenantTableKey tenantTableKey, AbstractRepositoryManager repositoryManager,
+    protected BaseRepository(RepoTableKey repoTableKey, AbstractRepositoryManager repositoryManager,
             BlobManager blobManager, HTableInterface recordTable, RepositoryMetrics metrics,
             TableManager tableManager, RecordFactory recordFactory) {
 
@@ -108,7 +108,7 @@ public abstract class BaseRepository implements Repository {
         Preconditions.checkNotNull(blobManager, "blobManager cannot be null");
         Preconditions.checkNotNull(recordTable, "recordTable cannot be null");
 
-        this.tenantTableKey = tenantTableKey;
+        this.repoTableKey = repoTableKey;
         this.repositoryManager = repositoryManager;
         this.typeManager = repositoryManager.getTypeManager();
         this.blobManager = blobManager;
@@ -132,7 +132,7 @@ public abstract class BaseRepository implements Repository {
 
     @Override
     public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-        return repositoryManager.getRepository(tenantTableKey.getTenantName(), tableName);
+        return repositoryManager.getRepository(repoTableKey.getRepositoryName(), tableName);
     }
 
     @Override
@@ -646,16 +646,16 @@ public abstract class BaseRepository implements Repository {
 
     @Override
     public String getTableName() {
-        return tenantTableKey.getTableName();
+        return repoTableKey.getTableName();
     }
 
     @Override
     public String getStorageTableName() {
-        return tenantTableKey.toHBaseTableName();
+        return repoTableKey.toHBaseTableName();
     }
 
     @Override
-    public String getTenantName() {
-        return tenantTableKey.getTenantName();
+    public String getRepositoryName() {
+        return repoTableKey.getRepositoryName();
     }
 }

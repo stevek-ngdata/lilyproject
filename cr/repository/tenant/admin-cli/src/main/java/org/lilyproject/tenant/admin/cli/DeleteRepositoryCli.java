@@ -20,14 +20,14 @@ import org.apache.commons.cli.Option;
 
 import java.util.List;
 
-public class DeleteTenantCli extends BaseTenantAdminCli {
+public class DeleteRepositoryCli extends BaseRepositoriesAdminCli {
     @Override
     protected String getCmdName() {
-        return "lily-delete-tenant";
+        return "lily-delete-repository";
     }
 
     public static void main(String[] args) {
-        new DeleteTenantCli().start(args);
+        new DeleteRepositoryCli().start(args);
     }
 
     @Override
@@ -44,15 +44,15 @@ public class DeleteTenantCli extends BaseTenantAdminCli {
             return result;
         }
 
-        String tenantName = cmd.getOptionValue(nameOption.getOpt());
-        if (tenantName == null) {
-            System.out.println("Specify the name of the tenant to delete with -" + nameOption.getOpt());
+        String repositoryName = cmd.getOptionValue(nameOption.getOpt());
+        if (repositoryName == null) {
+            System.out.println("Specify the name of the repository to delete with -" + nameOption.getOpt());
             return 1;
         }
 
-        tenantModel.delete(tenantName);
+        repositoryModel.delete(repositoryName);
 
-        System.out.println(String.format("Deletion of tenant '%s' has been requested.", tenantName));
+        System.out.println(String.format("Deletion of repository '%s' has been requested.", repositoryName));
 
         return 0;
     }

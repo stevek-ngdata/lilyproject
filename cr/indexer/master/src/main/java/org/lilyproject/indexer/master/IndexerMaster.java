@@ -308,7 +308,7 @@ public class IndexerMaster {
                     boolean jobStarted;
                     try {
                         // TODO multitenancy
-                        LRepository repository = repositoryManager.getPublicRepository();
+                        LRepository repository = repositoryManager.getDefaultRepository();
                         job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
                                 repository, zkConnectString, zkSessionTimeout, solrClientConfig,
                                 batchIndexConfiguration, enableLocking, batchTables, tableFactory);

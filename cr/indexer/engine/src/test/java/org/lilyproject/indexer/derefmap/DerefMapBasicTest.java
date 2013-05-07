@@ -65,7 +65,7 @@ public class DerefMapBasicTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        LRepository repository = repoSetup.getRepositoryManager().getPublicRepository();
+        LRepository repository = repoSetup.getRepositoryManager().getDefaultRepository();
         ids = repository.getIdGenerator();
 
         derefMap = (DerefMapHbaseImpl) DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), null, ids);

@@ -46,7 +46,7 @@ public class RepositoryEnabled {
             if (tenantEnabledAnnotation != null) {
                 return repositoryMgr.getRepository(uriInfo.getPathParameters().getFirst(tenantEnabledAnnotation.tenantName()));
             } else {
-                return repositoryMgr.getPublicRepository();
+                return repositoryMgr.getDefaultRepository();
             }
         } catch (Exception e) {
             ExceptionUtil.handleInterrupt(e);

@@ -27,9 +27,9 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TableNotFoundException;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
-import org.lilyproject.repository.impl.TenantTableKey;
+import org.lilyproject.repository.impl.RepoTableKey;
 import org.lilyproject.repository.impl.TracingRepository;
-import org.lilyproject.tenant.model.api.TenantModel;
+import org.lilyproject.tenant.model.api.RepositoryModel;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
@@ -42,8 +42,8 @@ public class RemoteRepositoryManager extends AbstractRepositoryManager implement
 
     public RemoteRepositoryManager(RemoteTypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
             AvroLilyTransceiver transceiver, AvroConverter avroConverter, BlobManager blobManager,
-            HBaseTableFactory tableFactory, TenantModel tenantModel) {
-        super(typeManager, idGenerator, recordFactory, tenantModel);
+            HBaseTableFactory tableFactory, RepositoryModel repositoryModel) {
+        super(typeManager, idGenerator, recordFactory, repositoryModel);
         this.transceiver = transceiver;
         this.avroConverter = avroConverter;
         this.blobManager = blobManager;
@@ -51,10 +51,10 @@ public class RemoteRepositoryManager extends AbstractRepositoryManager implement
     }
 
     @Override
-    protected Repository createRepository(TenantTableKey key) throws InterruptedException, RepositoryException {
+    protected Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException {
         String hbaseTableName = key.toHBaseTableName();
         try {
-            TableManager tableManager = new RemoteTableManager(key.getTenantName(), transceiver, avroConverter);
+            TableManager tableManager = new RemoteTableManager(key.getRepositoryName(), transceiver, avroConverter);
             Repository repo = new RemoteRepository(key, transceiver, avroConverter, this, blobManager,
                     LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, true), tableManager, getRecordFactory());
             if ("true".equals(System.getProperty("lilyclient.trace"))) {
@@ -62,7 +62,7 @@ public class RemoteRepositoryManager extends AbstractRepositoryManager implement
             }
             return repo;
         } catch (org.apache.hadoop.hbase.TableNotFoundException e) {
-            throw new TableNotFoundException(key.getTenantName(), key.getTableName());
+            throw new TableNotFoundException(key.getRepositoryName(), key.getTableName());
         } catch (IOException e) {
             throw new RepositoryException(e);
         }

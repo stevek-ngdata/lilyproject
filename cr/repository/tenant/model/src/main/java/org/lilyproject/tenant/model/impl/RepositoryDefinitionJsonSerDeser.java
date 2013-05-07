@@ -17,23 +17,21 @@ package org.lilyproject.tenant.model.impl;
 
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.tenant.model.api.Tenant;
+import org.lilyproject.tenant.model.api.RepositoryDefinition;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.json.JsonUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import static org.lilyproject.tenant.model.api.Tenant.TenantLifecycleState;
+public class RepositoryDefinitionJsonSerDeser {
+    public static RepositoryDefinitionJsonSerDeser INSTANCE = new RepositoryDefinitionJsonSerDeser();
 
-public class TenantJsonSerDeser {
-    public static TenantJsonSerDeser INSTANCE = new TenantJsonSerDeser();
-
-    private TenantJsonSerDeser() {
+    private RepositoryDefinitionJsonSerDeser() {
 
     }
 
-    public Tenant fromJsonBytes(String name, byte[] json) {
+    public RepositoryDefinition fromJsonBytes(String name, byte[] json) {
         ObjectNode node;
         try {
             node = (ObjectNode)JsonFormat.deserialize(new ByteArrayInputStream(json));
@@ -43,20 +41,20 @@ public class TenantJsonSerDeser {
         return fromJson(name, node);
     }
 
-    public Tenant fromJson(String name, ObjectNode node) {
-        TenantLifecycleState lifecycleState = JsonUtil.getEnum(node, "lifecycleState", TenantLifecycleState.class);
-        return new Tenant(name, lifecycleState);
+    public RepositoryDefinition fromJson(String name, ObjectNode node) {
+        RepositoryDefinition.RepositoryLifecycleState lifecycleState = JsonUtil.getEnum(node, "lifecycleState", RepositoryDefinition.RepositoryLifecycleState.class);
+        return new RepositoryDefinition(name, lifecycleState);
     }
 
-    public ObjectNode toJson(Tenant tenant) {
+    public ObjectNode toJson(RepositoryDefinition repositoryDefinition) {
         ObjectNode node = JsonNodeFactory.instance.objectNode();
-        node.put("lifecycleState", tenant.getLifecycleState().toString());
+        node.put("lifecycleState", repositoryDefinition.getLifecycleState().toString());
         return node;
     }
 
-    byte[] toJsonBytes(Tenant tenant) {
+    byte[] toJsonBytes(RepositoryDefinition repositoryDefinition) {
         try {
-            return JsonFormat.serializeAsBytes(toJson(tenant));
+            return JsonFormat.serializeAsBytes(toJson(repositoryDefinition));
         } catch (IOException e) {
             throw new RuntimeException("Error serializing tenant definition to JSON.", e);
         }

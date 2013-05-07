@@ -68,5 +68,5 @@ public interface LRepository {
     /**
      * The name of the tenant for this repository.
      */
-    String getTenantName();
+    String getRepositoryName();
 }

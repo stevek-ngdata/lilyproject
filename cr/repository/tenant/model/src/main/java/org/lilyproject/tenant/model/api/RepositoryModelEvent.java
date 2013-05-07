@@ -15,21 +15,21 @@
  */
 package org.lilyproject.tenant.model.api;
 
-public class TenantModelEvent {
-    private TenantModelEventType eventType;
-    private String tenantName;
+public class RepositoryModelEvent {
+    private RepositoryModelEventType eventType;
+    private String repositoryName;
 
-    public TenantModelEvent(TenantModelEventType eventType, String tenantName) {
+    public RepositoryModelEvent(RepositoryModelEventType eventType, String repositoryName) {
         this.eventType = eventType;
-        this.tenantName = tenantName;
+        this.repositoryName = repositoryName;
     }
 
-    public TenantModelEventType getEventType() {
+    public RepositoryModelEventType getEventType() {
         return eventType;
     }
 
-    public String getTenantName() {
-        return tenantName;
+    public String getRepositoryName() {
+        return repositoryName;
     }
 
     @Override
@@ -37,10 +37,10 @@ public class TenantModelEvent {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        TenantModelEvent that = (TenantModelEvent)o;
+        RepositoryModelEvent that = (RepositoryModelEvent)o;
 
         if (eventType != that.eventType) return false;
-        if (!tenantName.equals(that.tenantName)) return false;
+        if (!repositoryName.equals(that.repositoryName)) return false;
 
         return true;
     }
@@ -48,15 +48,15 @@ public class TenantModelEvent {
     @Override
     public int hashCode() {
         int result = eventType.hashCode();
-        result = 31 * result + tenantName.hashCode();
+        result = 31 * result + repositoryName.hashCode();
         return result;
     }
 
     @Override
     public String toString() {
-        return "TenantModelEvent{" +
+        return "RepositoryModelEvent{" +
                 "eventType=" + eventType +
-                ", tenantName='" + tenantName + '\'' +
+                ", repositoryName='" + repositoryName + '\'' +
                 '}';
     }
 }

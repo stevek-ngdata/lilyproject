@@ -22,11 +22,11 @@ import org.apache.zookeeper.Watcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.lilyproject.tenant.model.api.Tenant;
-import org.lilyproject.tenant.model.api.TenantModel;
-import org.lilyproject.tenant.model.api.TenantModelEvent;
-import org.lilyproject.tenant.model.api.TenantModelEventType;
-import org.lilyproject.tenant.model.api.TenantModelListener;
+import org.lilyproject.tenant.model.api.RepositoryDefinition;
+import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.tenant.model.api.RepositoryModelEvent;
+import org.lilyproject.tenant.model.api.RepositoryModelEventType;
+import org.lilyproject.tenant.model.api.RepositoryModelListener;
 import org.lilyproject.util.net.NetUtils;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -42,14 +42,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.lilyproject.tenant.model.api.Tenant.TenantLifecycleState;
 
 public class TenantModelTest {
     private MiniZooKeeperCluster zkCluster;
     private File zkDir;
     private int zkClientPort;
     private ZooKeeperItf zk;
-    private TenantModel tenantModel;
+    private RepositoryModel repositoryModel;
 
     @Before
     public void setUpBeforeClass() throws Exception {
@@ -61,7 +60,7 @@ public class TenantModelTest {
         zkCluster.startup(zkDir);
 
         zk = ZkUtil.connect("localhost:" + zkClientPort, 5000);
-        tenantModel = new TenantModelImpl(zk);
+        repositoryModel = new RepositoryModelImpl(zk);
     }
 
     @After
@@ -70,8 +69,8 @@ public class TenantModelTest {
             zk.close();
         }
 
-        if (tenantModel != null) {
-            ((TenantModelImpl)tenantModel).close();
+        if (repositoryModel != null) {
+            ((RepositoryModelImpl)repositoryModel).close();
         }
 
         if (zkCluster != null) {
@@ -83,36 +82,36 @@ public class TenantModelTest {
     @Test
     public void testTenants() throws Exception {
         TestListener listener = new TestListener();
-        tenantModel.registerListener(listener);
+        repositoryModel.registerListener(listener);
 
-        tenantModel.create("tenant1");
+        repositoryModel.create("tenant1");
         listener.waitForEvents(1);
-        listener.verifyEvents(new TenantModelEvent(TenantModelEventType.TENANT_ADDED, "tenant1"));
+        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_ADDED, "tenant1"));
 
-        assertFalse(tenantModel.tenantExistsAndActive("tenant1"));
+        assertFalse(repositoryModel.repositoryExistsAndActive("tenant1"));
 
-        assertEquals(2, tenantModel.getTenants().size()); // 2 because the public tenant is also there
+        assertEquals(2, repositoryModel.getRepositories().size()); // 2 because the public tenant is also there
 
-        tenantModel.updateTenant(new Tenant("tenant1", TenantLifecycleState.ACTIVE));
+        repositoryModel.updateRepository(new RepositoryDefinition("tenant1", RepositoryDefinition.RepositoryLifecycleState.ACTIVE));
         listener.waitForEvents(1);
-        listener.verifyEvents(new TenantModelEvent(TenantModelEventType.TENANT_UPDATED, "tenant1"));
+        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_UPDATED, "tenant1"));
 
-        assertTrue(tenantModel.tenantExistsAndActive("tenant1"));
+        assertTrue(repositoryModel.repositoryExistsAndActive("tenant1"));
 
-        tenantModel.delete("tenant1");
+        repositoryModel.delete("tenant1");
         listener.waitForEvents(1);
-        listener.verifyEvents(new TenantModelEvent(TenantModelEventType.TENANT_UPDATED, "tenant1"));
+        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_UPDATED, "tenant1"));
 
-        assertEquals(2, tenantModel.getTenants().size());
-        assertEquals(TenantLifecycleState.DELETE_REQUESTED, tenantModel.getTenant("tenant1").getLifecycleState());
+        assertEquals(2, repositoryModel.getRepositories().size());
+        assertEquals(RepositoryDefinition.RepositoryLifecycleState.DELETE_REQUESTED, repositoryModel.getRepository("tenant1").getLifecycleState());
 
-        tenantModel.deleteDirect("tenant1");
-        assertEquals(1, tenantModel.getTenants().size());
+        repositoryModel.deleteDirect("tenant1");
+        assertEquals(1, repositoryModel.getRepositories().size());
         listener.waitForEvents(1);
-        listener.verifyEvents(new TenantModelEvent(TenantModelEventType.TENANT_REMOVED, "tenant1"));
+        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_REMOVED, "tenant1"));
 
-        tenantModel.unregisterListener(listener);
-        tenantModel.create("tenant1");
+        repositoryModel.unregisterListener(listener);
+        repositoryModel.create("tenant1");
         Thread.sleep(20); // this is not very robust, but if the code would be wrong this will fail most of the time
         listener.waitForEvents(0);
     }
@@ -121,63 +120,63 @@ public class TenantModelTest {
     public void testTwoModelInstances() throws Exception {
         ZooKeeperItf zk1 = ZkUtil.connect("localhost:" + zkClientPort, 5000);
         ZooKeeperItf zk2 = ZkUtil.connect("localhost:" + zkClientPort, 5000);
-        TenantModel tenantModel1 = new TenantModelImpl(zk1);
-        TenantModel tenantModel2 = new TenantModelImpl(zk2);
+        RepositoryModel repositoryModel1 = new RepositoryModelImpl(zk1);
+        RepositoryModel repositoryModel2 = new RepositoryModelImpl(zk2);
 
         TestListener model1Listener = new TestListener();
-        assertEquals(1, tenantModel1.getTenants(model1Listener).size());
+        assertEquals(1, repositoryModel1.getRepositories(model1Listener).size());
 
         TestListener model2Listener = new TestListener();
-        assertEquals(1, tenantModel2.getTenants(model2Listener).size());
+        assertEquals(1, repositoryModel2.getRepositories(model2Listener).size());
 
-        tenantModel1.create("tenant1");
-        tenantModel1.create("tenant2");
-        tenantModel2.create("tenant3");
-        tenantModel2.create("tenant4");
+        repositoryModel1.create("tenant1");
+        repositoryModel1.create("tenant2");
+        repositoryModel2.create("tenant3");
+        repositoryModel2.create("tenant4");
 
         model2Listener.waitForEvents(4);
         model1Listener.waitForEvents(4);
 
-        assertEquals(5, tenantModel1.getTenants().size());
-        assertEquals(5, tenantModel2.getTenants().size());
+        assertEquals(5, repositoryModel1.getRepositories().size());
+        assertEquals(5, repositoryModel2.getRepositories().size());
 
-        ((TenantModelImpl)tenantModel1).close();
-        ((TenantModelImpl)tenantModel2).close();
+        ((RepositoryModelImpl)repositoryModel1).close();
+        ((RepositoryModelImpl)repositoryModel2).close();
 
         zk1.close();
         zk2.close();
     }
 
     @Test(expected = Exception.class)
-    public void testPublicTenantCannotBeDeleted() throws Exception {
-        tenantModel.delete("public");
+    public void testDefaultRepositoryCannotBeDeleted() throws Exception {
+        repositoryModel.delete("default");
     }
 
     @Test(expected = Exception.class)
-    public void testPublicTenantCannotBeDirectDeleted() throws Exception {
-        tenantModel.deleteDirect("public");
+    public void testDefaultRepositoryCannotBeDirectDeleted() throws Exception {
+        repositoryModel.deleteDirect("default");
     }
 
     @Test(expected = Exception.class)
-    public void testPublicTenantCannotBeUpdated() throws Exception {
-        tenantModel.updateTenant(new Tenant("public", TenantLifecycleState.ACTIVE));
+    public void testDefaultRepositoryCannotBeUpdated() throws Exception {
+        repositoryModel.updateRepository(new RepositoryDefinition("default", RepositoryDefinition.RepositoryLifecycleState.ACTIVE));
     }
 
     @Test(expected = Exception.class)
-    public void testInvalidTenantName() throws Exception {
-        tenantModel.create("tenant#");
+    public void testInvalidRepositoryName() throws Exception {
+        repositoryModel.create("repository#");
     }
 
     @Test(expected = Exception.class)
-    public void testInvalidTenantName2() throws Exception {
-        tenantModel.create("tenant__");
+    public void testInvalidRepositoryName2() throws Exception {
+        repositoryModel.create("repository__");
     }
 
-    public static class TestListener implements TenantModelListener {
-        private List<TenantModelEvent> events = new ArrayList<TenantModelEvent>();
+    public static class TestListener implements RepositoryModelListener {
+        private List<RepositoryModelEvent> events = new ArrayList<RepositoryModelEvent>();
 
         @Override
-        public void process(TenantModelEvent event) {
+        public void process(RepositoryModelEvent event) {
             events.add(event);
         }
 
@@ -190,12 +189,12 @@ public class TenantModelTest {
             }
         }
 
-        public void verifyEvents(TenantModelEvent... expectedEvents) {
+        public void verifyEvents(RepositoryModelEvent... expectedEvents) {
             if (events.size() != expectedEvents.length) {
                 if (events.size() > 0) {
                     System.out.println("The events are:");
-                    for (TenantModelEvent event : events) {
-                        System.out.println(event.getEventType() + " - " + event.getTenantName());
+                    for (RepositoryModelEvent event : events) {
+                        System.out.println(event.getEventType() + " - " + event.getRepositoryName());
                     }
                 } else {
                     System.out.println("There are no events.");
@@ -204,15 +203,15 @@ public class TenantModelTest {
                 assertEquals("Expected number of events", expectedEvents.length, events.size());
             }
 
-            Set<TenantModelEvent> expectedEventsSet = new HashSet<TenantModelEvent>(Arrays.asList(expectedEvents));
+            Set<RepositoryModelEvent> expectedEventsSet = new HashSet<RepositoryModelEvent>(Arrays.asList(expectedEvents));
 
-            for (TenantModelEvent event : expectedEvents) {
+            for (RepositoryModelEvent event : expectedEvents) {
                 if (!events.contains(event)) {
                     fail("Expected event not present among events: " + event);
                 }
             }
 
-            for (TenantModelEvent event : events) {
+            for (RepositoryModelEvent event : events) {
                 if (!expectedEventsSet.contains(event)) {
                     fail("Got an event which is not among the expected events: " + event);
                 }

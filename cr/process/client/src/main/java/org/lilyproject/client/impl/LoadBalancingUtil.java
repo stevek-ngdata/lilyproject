@@ -28,19 +28,19 @@ public class LoadBalancingUtil {
      * provided by the {@link LBInstanceProvider}.
      */
     public static <T> T getLoadBalancedInstance(LBInstanceProvider<T> provider, Class<T> delegateType,
-            String tenantName, String tableName) {
-        InvocationHandler ih = new LBIndexerInvocationHandler<T>(provider, tenantName, tableName);
+            String repositoryName, String tableName) {
+        InvocationHandler ih = new LBIndexerInvocationHandler<T>(provider, repositoryName, tableName);
         return (T)Proxy.newProxyInstance(LoadBalancingUtil.class.getClassLoader(), new Class[]{delegateType}, ih);
     }
 
     private static final class LBIndexerInvocationHandler<T> implements InvocationHandler {
         private final LBInstanceProvider<T> provider;
-        private final String tenantName;
+        private final String repositoryName;
         private final String tableName;
 
-        private LBIndexerInvocationHandler(LBInstanceProvider<T> provider, String tenantName, String tableName) {
+        private LBIndexerInvocationHandler(LBInstanceProvider<T> provider, String repositoryName, String tableName) {
             this.provider = provider;
-            this.tenantName = tenantName;
+            this.repositoryName = repositoryName;
             this.tableName = tableName;
         }
 
@@ -51,7 +51,7 @@ public class LoadBalancingUtil {
             }
 
             try {
-                T delegate = provider.getInstance(tenantName, tableName);
+                T delegate = provider.getInstance(repositoryName, tableName);
                 return method.invoke(delegate, args);
             } catch (InvocationTargetException e) {
                 throw e.getTargetException();
@@ -67,6 +67,6 @@ public class LoadBalancingUtil {
          * i.e. it should not matter that in a sequence of method calls, each one is executed against a different
          * underlying object).
          */
-        T getInstance(String tenantName, String tableName) throws RepositoryException, InterruptedException;
+        T getInstance(String repositoryName, String tableName) throws RepositoryException, InterruptedException;
     }
 }

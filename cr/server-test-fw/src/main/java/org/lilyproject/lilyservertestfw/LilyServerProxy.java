@@ -275,7 +275,7 @@ public class LilyServerProxy {
 
     public void validateIndexerconf(byte[] indexerConfiguration) throws Exception {
         IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration),
-                getClient().getPublicRepository());
+                getClient().getDefaultRepository());
     }
 
     /**

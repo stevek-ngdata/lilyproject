@@ -17,15 +17,15 @@ package org.lilyproject.tenant.model.impl;
 
 import java.util.regex.Pattern;
 
-public class TenantUtil {
-    public static final String TENANT_TABLE_SEPARATOR = "__";
+public class RepoDefUtil {
+    public static final String REPOSITORY_TABLE_SEPARATOR = "__";
 
     private static final String VALID_NAME_PATTERN = "[a-zA-Z_0-9-.]+";
     private static final Pattern VALID_NAME_CHARS = Pattern.compile(VALID_NAME_PATTERN);
     public static final String VALID_NAME_EXPLANATION = "A valid name should follow the regex " + VALID_NAME_PATTERN
-            + " and not contain " + TENANT_TABLE_SEPARATOR + ".";
+            + " and not contain " + REPOSITORY_TABLE_SEPARATOR + ".";
 
-    public static boolean isValidTenantName(String name) {
-        return VALID_NAME_CHARS.matcher(name).matches() && !name.contains(TENANT_TABLE_SEPARATOR);
+    public static boolean isValidRepositoryName(String name) {
+        return VALID_NAME_CHARS.matcher(name).matches() && !name.contains(REPOSITORY_TABLE_SEPARATOR);
     }
 }

@@ -32,16 +32,16 @@ import java.util.List;
  */
 public class LilySepEvent extends SepEvent {
     private IdGenerator idGenerator;
-    private String lilyTenantName;
+    private String lilyRepositoryName;
     private String lilyTableName;
     private RecordId recordId;
     private AbsoluteRecordId absRecordId;
 
-    public LilySepEvent(IdGenerator idGenerator, String lilyTenantName, String lilyTableName, byte[] table,
+    public LilySepEvent(IdGenerator idGenerator, String lilyRepositoryName, String lilyTableName, byte[] table,
             byte[] row, List<KeyValue> keyValues, byte[] payload) {
         super(table, row, keyValues, payload);
         this.idGenerator = idGenerator;
-        this.lilyTenantName = lilyTenantName;
+        this.lilyRepositoryName = lilyRepositoryName;
         this.lilyTableName = lilyTableName;
     }
 
@@ -49,8 +49,8 @@ public class LilySepEvent extends SepEvent {
         return lilyTableName;
     }
 
-    public String getLilyTenantName() {
-        return lilyTenantName;
+    public String getLilyRepositoryName() {
+        return lilyRepositoryName;
     }
 
     public RecordId getRecordId() {

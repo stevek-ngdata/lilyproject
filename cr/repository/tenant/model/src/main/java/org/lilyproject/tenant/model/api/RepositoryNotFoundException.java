@@ -15,6 +15,20 @@
  */
 package org.lilyproject.tenant.model.api;
 
-public interface TenantModelListener {
-    void process(TenantModelEvent event);
+public class RepositoryNotFoundException extends Exception {
+    public RepositoryNotFoundException() {
+        super();
+    }
+
+    public RepositoryNotFoundException(String message) {
+        super(message);
+    }
+
+    public RepositoryNotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public RepositoryNotFoundException(Throwable cause) {
+        super(cause);
+    }
 }

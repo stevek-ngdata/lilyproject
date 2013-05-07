@@ -505,7 +505,7 @@ public class LinkIndex {
         // can't assign IdGenerator in constructor since the repository is a premature one
         if (lazyIdGenerator == null) {
             try {
-                lazyIdGenerator = repositoryManager.getPublicRepository().getIdGenerator();
+                lazyIdGenerator = repositoryManager.getDefaultRepository().getIdGenerator();
             } catch (RepositoryException e) {
                 throw new LinkIndexException(e);
             }

@@ -23,8 +23,8 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
-import org.lilyproject.repository.impl.TenantTableKey;
-import org.lilyproject.tenant.model.api.TenantModel;
+import org.lilyproject.repository.impl.RepoTableKey;
+import org.lilyproject.tenant.model.api.RepositoryModel;
 
 public class DecoratingRepositoryManager extends AbstractRepositoryManager {
 
@@ -35,21 +35,21 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
     public DecoratingRepositoryManager(HBaseRepositoryManager repositoryManager,
             RecordUpdateHookActivator recordUpdateHookActivator,
             RepositoryDecoratorActivator repositoryDecoratorActivator,
-            TenantModel tenantModel, RecordFactory recordFactory, TypeManager typeManager,
+            RepositoryModel repositoryModel, RecordFactory recordFactory, TypeManager typeManager,
             IdGenerator idGenerator) {
-        super(typeManager, idGenerator, recordFactory, tenantModel);
+        super(typeManager, idGenerator, recordFactory, repositoryModel);
         this.wrappedRepositoryManager = repositoryManager;
         this.recordUpdateHookActivator = recordUpdateHookActivator;
         this.repositoryDecoratorActivator = repositoryDecoratorActivator;
     }
 
     @Override
-    protected Repository createRepository(TenantTableKey key)
+    protected Repository createRepository(RepoTableKey key)
             throws InterruptedException, RepositoryException {
         HBaseRepository repository = (HBaseRepository)wrappedRepositoryManager.getRepository(
-                key.getTenantName()).getTable(key.getTableName());
+                key.getRepositoryName()).getTable(key.getTableName());
         recordUpdateHookActivator.activateUpdateHooks(repository);
         return new DecoratingRepository(repositoryDecoratorActivator.getDecoratedRepository(repository),
-                key.getTenantName(), this);
+                key.getRepositoryName(), this);
     }
 }

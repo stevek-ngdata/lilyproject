@@ -64,8 +64,8 @@
       service="com.ngdata.sep.SepModel"/>
 
   <lily:export-service
-      ref="tenantModel"
-      service="org.lilyproject.tenant.model.api.TenantModel"/>
+      ref="repositoryModel"
+      service="org.lilyproject.tenant.model.api.RepositoryModel"/>
 
   <lily:export-service
       ref="prematureRepositoryManager"
@@ -176,7 +176,7 @@
     </constructor-arg>
   </bean>
 
-  <bean id="tenantModel" class="org.lilyproject.tenant.model.impl.TenantModelImpl">
+  <bean id="repositoryModel" class="org.lilyproject.tenant.model.impl.RepositoryModelImpl">
     <constructor-arg ref="zooKeeper"/>
   </bean>
 

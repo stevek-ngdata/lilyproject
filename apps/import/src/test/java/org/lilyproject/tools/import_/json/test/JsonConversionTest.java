@@ -82,7 +82,7 @@ public class JsonConversionTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = repoSetup.getRepositoryManager().getPublicRepository();
+        repository = repoSetup.getRepositoryManager().getDefaultRepository();
         table = repository.getDefaultTable();
 
         TypeManager typeManager = repository.getTypeManager();

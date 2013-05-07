@@ -79,7 +79,7 @@ public class IndexesInfoImpl implements IndexesInfo {
             IndexerConf indexerConf = null;
             try {
                 indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfXml),
-                        repositoryManager.getPublicRepository());
+                        repositoryManager.getDefaultRepository());
             } catch (Throwable t) {
                 log.error("Error parsing indexer conf", t);
             }

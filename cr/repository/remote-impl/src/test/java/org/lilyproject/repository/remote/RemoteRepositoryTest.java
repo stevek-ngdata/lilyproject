@@ -33,7 +33,7 @@ import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.impl.TenantTableKey;
+import org.lilyproject.repository.impl.RepoTableKey;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 import static org.mockito.Mockito.mock;
@@ -47,7 +47,7 @@ public class RemoteRepositoryTest {
     private AvroConverter avroConverter;
     private HTableInterface recordTable;
     private RemoteRepository remoteRepository;
-    private static final String tenantName = "public";
+    private static final String repositoryName = "default";
 
     @Before
     public void setUp() throws IOException, InterruptedException {
@@ -57,8 +57,8 @@ public class RemoteRepositoryTest {
         avroConverter = mock(AvroConverter.class);
         recordTable = mock(HTableInterface.class);
 
-        RemoteTableManager tableMgr = new RemoteTableManager(tenantName, avroLilyTransceiver, avroConverter);
-        remoteRepository = new RemoteRepository(new TenantTableKey(tenantName, Table.RECORD.name), avroLilyTransceiver,
+        RemoteTableManager tableMgr = new RemoteTableManager(repositoryName, avroLilyTransceiver, avroConverter);
+        remoteRepository = new RemoteRepository(new RepoTableKey(repositoryName, Table.RECORD.name), avroLilyTransceiver,
                 avroConverter, mock(RemoteRepositoryManager.class), mock(BlobManager.class), recordTable, tableMgr,
                 mock(RecordFactory.class));
     }
@@ -72,7 +72,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(recordId);
 
-        verify(avroLily).delete(encodedRecordId, tenantName, Table.RECORD.name, null, null);
+        verify(avroLily).delete(encodedRecordId, repositoryName, Table.RECORD.name, null, null);
     }
 
     @Test
@@ -88,7 +88,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(recordId, mutationConditions);
 
-        verify(avroLily).delete(encodedRecordId, tenantName, Table.RECORD.name, encodedMutationConditions, null);
+        verify(avroLily).delete(encodedRecordId, repositoryName, Table.RECORD.name, encodedMutationConditions, null);
     }
 
     @Test
@@ -106,7 +106,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(record);
 
-        verify(avroLily).delete(encodedRecordId, tenantName, Table.RECORD.name, null, attributes);
+        verify(avroLily).delete(encodedRecordId, repositoryName, Table.RECORD.name, null, attributes);
     }
 
 }

@@ -50,13 +50,13 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
 
     private Option solrCloudOption;
 
-    private Option tenantOption;
+    private Option repositoryOption;
 
     protected SolrServer solrServer;
 
     protected LilyClient lilyClient;
 
-    protected String tenantName;
+    protected String repositoryName;
 
     protected LRepository repository;
 
@@ -87,16 +87,16 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
                 .withLongOpt("solrcloud")
                 .create("sc");
 
-        tenantOption = OptionBuilder
-                .withArgName("tenant")
+        repositoryOption = OptionBuilder
+                .withArgName("repository")
                 .hasArg()
-                .withDescription("Repository tenant, defaults to public tenant")
-                .withLongOpt("tenant")
+                .withDescription("Repository name, if not specified the default repository is used")
+                .withLongOpt("repository")
                 .create();
 
         options.add(solrOption);
         options.add(solrCloudOption);
-        options.add(tenantOption);
+        options.add(repositoryOption);
 
         return options;
     }
@@ -115,7 +115,7 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
             solrUrl = useSolrCloud ? zkConnectionString + "/solr": cmd.getOptionValue(solrOption.getOpt());
         }
 
-        tenantName = OptionUtil.getStringOption(cmd, tenantOption, "public");
+        repositoryName = OptionUtil.getStringOption(cmd, repositoryOption, "default");
 
         return 0;
     }
@@ -129,7 +129,7 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
     public void setupLily() throws IOException, ZkConnectException, NoServersException, InterruptedException,
             KeeperException, RepositoryException {
         lilyClient = new LilyClient(getZooKeeper());
-        repository = lilyClient.getRepository(tenantName);
+        repository = lilyClient.getRepository(repositoryName);
         table = repository.getDefaultTable();
         idGenerator = repository.getIdGenerator();
         typeManager = repository.getTypeManager();

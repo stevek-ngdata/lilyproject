@@ -109,7 +109,7 @@ public class HBaseRepository extends BaseRepository {
 
     private static final Object METADATA_ONLY_UPDATE = new Object();
 
-    public HBaseRepository(TenantTableKey ttk, AbstractRepositoryManager repositoryManager, HTableInterface hbaseTable,
+    public HBaseRepository(RepoTableKey ttk, AbstractRepositoryManager repositoryManager, HTableInterface hbaseTable,
             BlobManager blobManager, TableManager tableManager, RecordFactory recordFactory)
             throws IOException, InterruptedException {
         super(ttk, repositoryManager, blobManager, hbaseTable, new RepositoryMetrics("hbaserepository"),

@@ -31,14 +31,14 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TableNotFoundException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.tenant.model.api.TenantExistsException;
-import org.lilyproject.tenant.model.api.TenantModel;
+import org.lilyproject.tenant.model.api.RepositoryDefinition;
+import org.lilyproject.tenant.model.api.RepositoryExistsException;
+import org.lilyproject.tenant.model.api.RepositoryModel;
 
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.lilyproject.tenant.model.api.Tenant.TenantLifecycleState;
 
 /**
  * Tests related to tenants and tables.
@@ -60,7 +60,7 @@ public abstract class AbstractTenantTableTest {
      */
     @Test
     public void testPublicTenantExists() throws Exception {
-        repositoryManager.getPublicRepository();
+        repositoryManager.getDefaultRepository();
     }
 
     /**
@@ -68,18 +68,18 @@ public abstract class AbstractTenantTableTest {
      */
     @Test(expected = TableNotFoundException.class)
     public void testTableCreationIsRequired() throws Exception {
-        LRepository repository = repositoryManager.getPublicRepository();
+        LRepository repository = repositoryManager.getDefaultRepository();
         repository.getTable("aNonExistingTable");
     }
 
     /**
      * Trying to get a non-existing table should fail.
      */
-    @Test(expected = TenantExistsException.class)
+    @Test(expected = RepositoryExistsException.class)
     public void testCreateTenantTwice() throws Exception {
-        TenantModel tenantModel = repoSetup.getTenantModel();
-        tenantModel.create("sometenant");
-        tenantModel.create("sometenant");
+        RepositoryModel repositoryModel = repoSetup.getRepositoryModel();
+        repositoryModel.create("sometenant");
+        repositoryModel.create("sometenant");
     }
 
     /**
@@ -88,20 +88,20 @@ public abstract class AbstractTenantTableTest {
      */
     @Test
     public void testTwoTenantsSameTableSameId() throws Exception {
-        TenantModel tenantModel = repoSetup.getTenantModel();
-        tenantModel.create("company1");
-        tenantModel.create("company2");
-        assertTrue(tenantModel.waitUntilTenantInState("company1", TenantLifecycleState.ACTIVE, 60000L));
-        assertTrue(tenantModel.waitUntilTenantInState("company2", TenantLifecycleState.ACTIVE, 60000L));
+        RepositoryModel repositoryModel = repoSetup.getRepositoryModel();
+        repositoryModel.create("company1");
+        repositoryModel.create("company2");
+        assertTrue(repositoryModel.waitUntilRepositoryInState("company1", RepositoryDefinition.RepositoryLifecycleState.ACTIVE, 60000L));
+        assertTrue(repositoryModel.waitUntilRepositoryInState("company2", RepositoryDefinition.RepositoryLifecycleState.ACTIVE, 60000L));
 
-        TypeManager typeMgr = repositoryManager.getPublicRepository().getTypeManager();
+        TypeManager typeMgr = repositoryManager.getDefaultRepository().getTypeManager();
         FieldType fieldType1 = typeMgr.createFieldType("STRING", new QName("test", "field1"), Scope.NON_VERSIONED);
         RecordType recordType1 = typeMgr.recordTypeBuilder()
                 .name(new QName("test", "rt1"))
                 .field(fieldType1.getId(), false)
                 .create();
 
-        List<String> tenants = Lists.newArrayList("company1", "company2", "public");
+        List<String> tenants = Lists.newArrayList("company1", "company2", "default");
 
         for (String tenant : tenants) {
             LRepository repo = repositoryManager.getRepository(tenant);
@@ -124,19 +124,19 @@ public abstract class AbstractTenantTableTest {
 
     @Test(expected = Exception.class)
     public void testRecordTableCannotBeDeleted() throws Exception {
-        String tenantName = "testRecordTableCannotBeDeleted";
-        TableManager tableManager = repositoryManager.getRepository(tenantName).getTableManager();
+        String repositoryName = "testRecordTableCannotBeDeleted";
+        TableManager tableManager = repositoryManager.getRepository(repositoryName).getTableManager();
         tableManager.dropTable("record");
     }
 
     @Test
     public void testBasicTableManagement() throws Exception {
-        String tenantName = "tablemgmttest";
-        TenantModel tenantModel = repoSetup.getTenantModel();
-        tenantModel.create(tenantName);
-        assertTrue(tenantModel.waitUntilTenantInState(tenantName, TenantLifecycleState.ACTIVE, 60000L));
+        String repositoryName = "tablemgmttest";
+        RepositoryModel repositoryModel = repoSetup.getRepositoryModel();
+        repositoryModel.create(repositoryName);
+        assertTrue(repositoryModel.waitUntilRepositoryInState(repositoryName, RepositoryDefinition.RepositoryLifecycleState.ACTIVE, 60000L));
 
-        LRepository repository = repositoryManager.getRepository(tenantName);
+        LRepository repository = repositoryManager.getRepository(repositoryName);
         TableManager tableManager = repository.getTableManager();
 
         List<RepositoryTable> tables = tableManager.getTables();

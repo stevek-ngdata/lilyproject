@@ -96,7 +96,7 @@ public class BatchBuildTest {
         solrServer = solrProxy.getSolrServer();
         lilyServerProxy = lilyProxy.getLilyServerProxy();
         lilyClient = lilyServerProxy.getClient();
-        repository = lilyClient.getPublicRepository();
+        repository = lilyClient.getDefaultRepository();
         table = repository.getDefaultTable();
 
         typeManager = repository.getTypeManager();

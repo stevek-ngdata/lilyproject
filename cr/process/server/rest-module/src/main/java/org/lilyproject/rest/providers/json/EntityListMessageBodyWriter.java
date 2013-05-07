@@ -80,7 +80,7 @@ public class EntityListMessageBodyWriter extends RepositoryEnabled implements Me
             for (Object entity : entityList.getEntities()) {
                 // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
                 resultsNode.add(writer.toJson(entity, entityList.getWriteOptions(),
-                        repositoryMgr.getPublicRepository()));
+                        repositoryMgr.getDefaultRepository()));
             }
 
             JsonFormat.serialize(listNode, new CloseShieldOutputStream(entityStream));

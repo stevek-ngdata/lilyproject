@@ -48,16 +48,16 @@
         <configuration>
           <scripts>
             <script>
-              <basename>lily-list-tenants</basename>
-              <mainClass>org.lilyproject.tenant.admin.cli.ListTenantsCli</mainClass>
+              <basename>lily-list-repositories</basename>
+              <mainClass>org.lilyproject.tenant.admin.cli.ListRepositoriesCli</mainClass>
             </script>
             <script>
-              <basename>lily-add-tenant</basename>
-              <mainClass>org.lilyproject.tenant.admin.cli.AddTenantCli</mainClass>
+              <basename>lily-add-repository</basename>
+              <mainClass>org.lilyproject.tenant.admin.cli.AddRepositoryCli</mainClass>
             </script>
             <script>
-              <basename>lily-delete-tenant</basename>
-              <mainClass>org.lilyproject.tenant.admin.cli.DeleteTenantCli</mainClass>
+              <basename>lily-delete-repository</basename>
+              <mainClass>org.lilyproject.tenant.admin.cli.DeleteRepositoryCli</mainClass>
             </script>
           </scripts>
         </configuration>

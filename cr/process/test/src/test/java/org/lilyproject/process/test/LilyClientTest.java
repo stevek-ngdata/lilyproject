@@ -196,7 +196,7 @@ public class LilyClientTest {
     @Test
     public void testLilyClientAsRepositoryManager() throws IOException, InterruptedException, KeeperException, ZkConnectException, NoServersException, RepositoryException {
         RepositoryManager repositoryManager = lilyProxy.getLilyServerProxy().getClient();
-        assertNotNull(repositoryManager.getPublicRepository());
+        assertNotNull(repositoryManager.getDefaultRepository());
         assertNotNull(repositoryManager.getTable(Table.RECORD.name));
     }
 }

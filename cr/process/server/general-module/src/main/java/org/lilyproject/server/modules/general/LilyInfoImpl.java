@@ -32,7 +32,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class LilyInfoImpl implements LilyInfo {
     private boolean indexerMaster;
-    private boolean tenantMaster;
+    private boolean repositoryMaster;
 
     private final ZooKeeperItf zk;
     private final Watcher watcher = new RepositoryNodesWatcher();
@@ -100,12 +100,12 @@ public class LilyInfoImpl implements LilyInfo {
     }
 
     @Override
-    public void setTenantMaster(boolean tenantMaster) {
-        this.tenantMaster = tenantMaster;
+    public void setRepositoryMaster(boolean repositoryMaster) {
+        this.repositoryMaster = repositoryMaster;
     }
 
     @Override
-    public boolean isTenantMaster() {
-        return tenantMaster;
+    public boolean isRepositoryMaster() {
+        return repositoryMaster;
     }
 }

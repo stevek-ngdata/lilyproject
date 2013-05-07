@@ -62,8 +62,8 @@ import org.lilyproject.repository.impl.RecordFactoryImpl;
 import org.lilyproject.repository.impl.TableManagerImpl;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-import org.lilyproject.tenant.model.api.TenantModel;
-import org.lilyproject.tenant.model.impl.TenantModelImpl;
+import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.tenant.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -103,7 +103,7 @@ public class TutorialTest {
         zooKeeper = new StateWatchingZooKeeper(HBASE_PROXY.getZkConnectString(), 10000);
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
 
-        TenantModel tenantModel = new TenantModelImpl(zooKeeper);
+        RepositoryModel repositoryModel = new RepositoryModelImpl(zooKeeper);
 
         typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
 
@@ -113,9 +113,9 @@ public class TutorialTest {
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
-                new RecordFactoryImpl(), hbaseTableFactory, blobManager, configuration, tenantModel);
+                new RecordFactoryImpl(), hbaseTableFactory, blobManager, configuration, repositoryModel);
 
-        TableManager repoTableManager = new TableManagerImpl(/* TODO multitenancy */ "public", configuration, hbaseTableFactory);
+        TableManager repoTableManager = new TableManagerImpl(/* TODO multitenancy */ "default", configuration, hbaseTableFactory);
         if (!repoTableManager.tableExists(Table.RECORD.name)) {
             repoTableManager.createTable(Table.RECORD.name);
         }

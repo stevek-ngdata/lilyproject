@@ -60,7 +60,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
 
     private Configuration conf;
     protected String zkConnectString;
-    protected String tenantName;
+    protected String repositoryName;
 
     @Override
     public void setConf(Configuration conf) {
@@ -70,8 +70,8 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
             log.warn("ZooKeeper connection string not specified, will use 'localhost'.");
             zkConnectString = "localhost";
         }
-        tenantName = conf.get(LilyMapReduceUtil.TENANT);
-        if (tenantName == null) {
+        repositoryName = conf.get(LilyMapReduceUtil.TENANT);
+        if (repositoryName == null) {
             throw new RuntimeException("Missing " + LilyMapReduceUtil.TENANT + " in job conf.");
         }
     }
@@ -98,7 +98,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
                 throw new IOException("Error setting up LilyClient", e);
             }
 
-            LRepository repository = lilyClient.getRepository(tenantName);
+            LRepository repository = lilyClient.getRepository(repositoryName);
             RecordScan scan = getScan(repository);
 
             // Determine start and stop row

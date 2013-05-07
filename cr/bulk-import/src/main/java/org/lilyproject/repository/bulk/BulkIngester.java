@@ -51,8 +51,8 @@ import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-import org.lilyproject.tenant.model.api.TenantModel;
-import org.lilyproject.tenant.model.impl.TenantModelImpl;
+import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.tenant.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.exception.ExceptionUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
@@ -102,23 +102,23 @@ public class BulkIngester implements Closeable {
             Configuration conf = HBaseConfiguration.create();
             conf.set("hbase.zookeeper.quorum", zkConnString);
             HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(conf);
-            TenantModel tenantModel = new TenantModelImpl(zk);
+            RepositoryModel repositoryModel = new RepositoryModelImpl(zk);
             IdGenerator idGenerator = new IdGeneratorImpl();
             TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
             RecordFactory recordFactory = new RecordFactoryImpl();
             
             @SuppressWarnings("resource") // RepositoryManager gets closed in BulkIngester.close
             RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
-                        recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager(), conf, tenantModel);
+                        recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager(), conf, repositoryModel);
 
             // FIXME Blobs aren't really supported here (no BlobManager is created), but null is
             // just passed in as the BlobManager so we'll probably get some mystery NPEs if Blobs
             // are used. We should either support blobs, or at least forcefully disallow them
             HBaseRepository hbaseRepository;
             if (tableName != null) {
-                hbaseRepository = (HBaseRepository)repositoryManager.getPublicRepository().getTable(tableName);
+                hbaseRepository = (HBaseRepository)repositoryManager.getDefaultRepository().getTable(tableName);
             } else {
-                hbaseRepository = (HBaseRepository)repositoryManager.getPublicRepository();
+                hbaseRepository = (HBaseRepository)repositoryManager.getDefaultRepository();
             }
             return new BulkIngester(repositoryManager, hbaseRepository, LilyHBaseSchema.getRecordTable(hbaseTableFactory,
                     hbaseRepository.getStorageTableName()), typeManager.getFieldTypesSnapshot());

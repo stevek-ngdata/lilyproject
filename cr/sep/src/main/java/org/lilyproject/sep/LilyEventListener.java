@@ -24,7 +24,7 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TenantUnavailableException;
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +50,7 @@ public abstract class LilyEventListener implements EventListener {
                 continue;
             }
 
-            String[] tenantAndTable = TenantTableUtil.getTenantAndTable(Bytes.toString(event.getTable()));
+            String[] tenantAndTable = RepoAndTableUtil.getTenantAndTable(Bytes.toString(event.getTable()));
             IdGenerator idGenerator = null;
             try {
                 idGenerator = repositoryManager.getRepository(tenantAndTable[0]).getIdGenerator();

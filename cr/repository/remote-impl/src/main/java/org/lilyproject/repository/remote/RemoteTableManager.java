@@ -23,13 +23,13 @@ import java.util.List;
  * make sure table creation settings are applied.</p>
  */
 public class RemoteTableManager implements TableManager {
-    private String tenantName;
+    private String repositoryName;
     private AvroLily lilyProxy;
     private AvroConverter converter;
     private Transceiver client;
 
-    public RemoteTableManager(String tenantName, AvroLilyTransceiver lilyTransceiver, AvroConverter converter) throws IOException {
-        this.tenantName = tenantName;
+    public RemoteTableManager(String repositoryName, AvroLilyTransceiver lilyTransceiver, AvroConverter converter) throws IOException {
+        this.repositoryName = repositoryName;
         this.converter = converter;
         client = lilyTransceiver.getTransceiver();
         lilyProxy = lilyTransceiver.getLilyProxy();
@@ -45,8 +45,8 @@ public class RemoteTableManager implements TableManager {
         try {
             AvroTableCreateDescriptor descriptor = new AvroTableCreateDescriptor();
             descriptor.setName(tableName);
-            lilyProxy.createTable(tenantName, descriptor);
-            return new RepositoryTableImpl(tenantName, tableName);
+            lilyProxy.createTable(repositoryName, descriptor);
+            return new RepositoryTableImpl(repositoryName, tableName);
         } catch (AvroIOException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -57,8 +57,8 @@ public class RemoteTableManager implements TableManager {
     @Override
     public RepositoryTable createTable(TableCreateDescriptor descriptor) throws InterruptedException, IOException {
         try {
-            lilyProxy.createTable(tenantName, converter.convert(descriptor));
-            return new RepositoryTableImpl(tenantName, descriptor.getName());
+            lilyProxy.createTable(repositoryName, converter.convert(descriptor));
+            return new RepositoryTableImpl(repositoryName, descriptor.getName());
         } catch (AvroIOException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -69,7 +69,7 @@ public class RemoteTableManager implements TableManager {
     @Override
     public void dropTable(String tableName) throws InterruptedException, IOException {
         try {
-            lilyProxy.dropTable(tenantName, tableName);
+            lilyProxy.dropTable(repositoryName, tableName);
         } catch (AvroIOException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -80,10 +80,10 @@ public class RemoteTableManager implements TableManager {
     @Override
     public List<RepositoryTable> getTables() throws InterruptedException, IOException {
         try {
-            List<String> tableNames = lilyProxy.getTables(tenantName);
+            List<String> tableNames = lilyProxy.getTables(repositoryName);
             List<RepositoryTable> tables = new ArrayList<RepositoryTable>(tableNames.size());
             for (String name : tableNames) {
-                tables.add(new RepositoryTableImpl(tenantName, name));
+                tables.add(new RepositoryTableImpl(repositoryName, name));
             }
             return tables;
         } catch (AvroIOException e) {
@@ -96,7 +96,7 @@ public class RemoteTableManager implements TableManager {
     @Override
     public boolean tableExists(String tableName) throws InterruptedException, IOException {
         try {
-            return lilyProxy.tableExists(tenantName, tableName);
+            return lilyProxy.tableExists(repositoryName, tableName);
         } catch (AvroIOException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {

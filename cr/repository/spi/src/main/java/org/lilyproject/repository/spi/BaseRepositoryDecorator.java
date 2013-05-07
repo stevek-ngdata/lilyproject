@@ -300,7 +300,7 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public String getTenantName() {
-        return delegate.getTenantName();
+    public String getRepositoryName() {
+        return delegate.getRepositoryName();
     }
 }

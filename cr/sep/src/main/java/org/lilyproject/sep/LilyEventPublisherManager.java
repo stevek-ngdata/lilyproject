@@ -23,7 +23,7 @@ import com.ngdata.sep.EventPublisher;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 public class LilyEventPublisherManager {
 
@@ -35,9 +35,9 @@ public class LilyEventPublisherManager {
         eventPublishers = Maps.newHashMap();
     }
 
-    public synchronized EventPublisher getEventPublisher(String tenantName, String tableName)
+    public synchronized EventPublisher getEventPublisher(String repositoryName, String tableName)
             throws IOException, InterruptedException {
-        String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantName, tableName);
+        String hbaseTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, tableName);
         if (!eventPublishers.containsKey(hbaseTableName)) {
             eventPublishers.put(hbaseTableName, createEventPublisher(hbaseTableName));
         }

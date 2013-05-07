@@ -17,54 +17,57 @@ package org.lilyproject.util.repo;
 
 import java.util.regex.Pattern;
 
-public class TenantTableUtil {
-    public static final String PUBLIC_TENANT = "public";
+public class RepoAndTableUtil {
+    public static final String DEFAULT_TENANT = "default";
 
-    public static final String TENANT_TABLE_SEPARATOR = "__";
+    /**
+     * Separator between repository name and table name in the HBase table name.
+     */
+    public static final String REPOSITORY_TABLE_SEPARATOR = "__";
 
     private static final String VALID_NAME_PATTERN = "[a-zA-Z_0-9-.]+";
     private static final Pattern VALID_NAME_CHARS = Pattern.compile(VALID_NAME_PATTERN);
     public static final String VALID_NAME_EXPLANATION = "A valid name should follow the regex " + VALID_NAME_PATTERN
-            + " and not contain " + TENANT_TABLE_SEPARATOR + ".";
+            + " and not contain " + REPOSITORY_TABLE_SEPARATOR + ".";
 
     /**
-     * Checks if a table is owned by a certain tenant. Assumes the passed table name is a record table name,
+     * Checks if a table is owned by a certain repository. Assumes the passed table name is a record table name,
      * i.e. this does not filter out any other tables that might exist in HBase.
      */
-    public static final boolean belongsToTenant(String hbaseTableName, String tenantName) {
-        if (tenantName.equals(PUBLIC_TENANT)) {
-            return !hbaseTableName.contains(TENANT_TABLE_SEPARATOR);
+    public static final boolean belongsToRepository(String hbaseTableName, String repositoryName) {
+        if (repositoryName.equals(DEFAULT_TENANT)) {
+            return !hbaseTableName.contains(REPOSITORY_TABLE_SEPARATOR);
         } else {
-            return hbaseTableName.startsWith(tenantName + TENANT_TABLE_SEPARATOR);
+            return hbaseTableName.startsWith(repositoryName + REPOSITORY_TABLE_SEPARATOR);
         }
     }
 
-    public static String getHBaseTableName(String tenantName, String tableName) {
-        if (tenantName.equals(PUBLIC_TENANT)) {
-            // Tables within the public tenant are not prefixed with the tenant name, because of backwards
-            // compatibility with the pre-tenant situation.
+    public static String getHBaseTableName(String repositoryName, String tableName) {
+        if (repositoryName.equals(DEFAULT_TENANT)) {
+            // Tables within the default repository are not prefixed with the repository name, because of backwards
+            // compatibility with the pre-multiple-repositories situation.
             return tableName;
         } else {
-            return tenantName + TENANT_TABLE_SEPARATOR + tableName;
+            return repositoryName + REPOSITORY_TABLE_SEPARATOR + tableName;
         }
     }
 
     public static boolean isValidTableName(String name) {
-        return VALID_NAME_CHARS.matcher(name).matches() && !name.contains(TENANT_TABLE_SEPARATOR);
+        return VALID_NAME_CHARS.matcher(name).matches() && !name.contains(REPOSITORY_TABLE_SEPARATOR);
     }
 
     private static boolean isPublicTenant(String name) {
-        return PUBLIC_TENANT.equals(name);
+        return DEFAULT_TENANT.equals(name);
     }
 
-    public static String extractLilyTableName(String tenantName, String hbaseTableName) {
-        if (isPublicTenant(tenantName)) {
+    public static String extractLilyTableName(String repositoryName, String hbaseTableName) {
+        if (isPublicTenant(repositoryName)) {
             return hbaseTableName;
         } else {
-            String prefix = tenantName + TENANT_TABLE_SEPARATOR;
+            String prefix = repositoryName + REPOSITORY_TABLE_SEPARATOR;
             if (!hbaseTableName.startsWith(prefix)) {
-                throw new IllegalArgumentException(String.format("HBase table '%s' does not belong to tenant '%s'",
-                        hbaseTableName, tenantName));
+                throw new IllegalArgumentException(String.format("HBase table '%s' does not belong to repository '%s'",
+                        hbaseTableName, repositoryName));
             }
             return hbaseTableName.substring(prefix.length());
         }
@@ -77,12 +80,12 @@ public class TenantTableUtil {
      * @return an array of size 2: first element is tenant name, second is table name
      */
     public static String[] getTenantAndTable(String hbaseTableName) {
-        int pos = hbaseTableName.indexOf(TENANT_TABLE_SEPARATOR);
+        int pos = hbaseTableName.indexOf(REPOSITORY_TABLE_SEPARATOR);
         if (pos == -1) {
-            return new String[] { PUBLIC_TENANT, hbaseTableName };
+            return new String[] {DEFAULT_TENANT, hbaseTableName };
         } else {
             String tenant = hbaseTableName.substring(0, pos);
-            String table = hbaseTableName.substring(pos + TENANT_TABLE_SEPARATOR.length());
+            String table = hbaseTableName.substring(pos + REPOSITORY_TABLE_SEPARATOR.length());
             return new String[] { tenant, table };
         }
     }

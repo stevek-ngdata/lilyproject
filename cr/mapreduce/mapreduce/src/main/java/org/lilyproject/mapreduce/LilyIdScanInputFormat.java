@@ -29,7 +29,7 @@ import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 /**
  * A MapReduce InputFormat for Lily based on Lily scanners.
@@ -49,7 +49,7 @@ public class LilyIdScanInputFormat extends AbstractLilyScanInputFormat<RecordIdW
 
         LRepository repository = null;
         try {
-            repository = lilyClient.getRepository(tenantName);
+            repository = lilyClient.getRepository(repositoryName);
         } catch (RepositoryException e) {
             throw new IOException("Error getting Lily repository object", e);
         }
@@ -65,8 +65,8 @@ public class LilyIdScanInputFormat extends AbstractLilyScanInputFormat<RecordIdW
         IdRecordScanner scanner = null;
         try {
             String hbaseTableName = Bytes.toString(split.getTableName());
-            String repositoryTableName = TenantTableUtil.extractLilyTableName(tenantName, hbaseTableName);
-            scanner = lilyClient.getRepository(tenantName).getTable(repositoryTableName).getScannerWithIds(scan);
+            String repositoryTableName = RepoAndTableUtil.extractLilyTableName(repositoryName, hbaseTableName);
+            scanner = lilyClient.getRepository(repositoryName).getTable(repositoryTableName).getScannerWithIds(scan);
         } catch (RepositoryException e) {
             Closer.close(lilyClient);
             throw new IOException("Error setting up RecordScanner", e);

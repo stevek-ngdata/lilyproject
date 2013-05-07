@@ -20,27 +20,27 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.cli.BaseZkCliTool;
-import org.lilyproject.tenant.model.api.TenantModel;
-import org.lilyproject.tenant.model.impl.TenantModelImpl;
+import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.tenant.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.lilyproject.util.zookeeper.ZooKeeperOperation;
 
-public abstract class BaseTenantAdminCli extends BaseZkCliTool {
+public abstract class BaseRepositoriesAdminCli extends BaseZkCliTool {
     private ZooKeeperItf zk;
-    protected TenantModel tenantModel;
+    protected RepositoryModel repositoryModel;
 
     protected Option forceOption;
     protected Option nameOption;
 
     @SuppressWarnings("static-access")
-    public BaseTenantAdminCli() {
+    public BaseRepositoriesAdminCli() {
         nameOption = OptionBuilder
                 .withArgName("name")
                 .hasArg()
-                .withDescription("Tenant name.")
+                .withDescription("Repository name.")
                 .withLongOpt("name")
                 .create("n");
 
@@ -84,14 +84,14 @@ public abstract class BaseTenantAdminCli extends BaseZkCliTool {
             }
         }
 
-        tenantModel = new TenantModelImpl(zk);
+        repositoryModel = new RepositoryModelImpl(zk);
 
         return 0;
     }
 
     @Override
     protected void cleanup() {
-        Closer.close(tenantModel);
+        Closer.close(repositoryModel);
         Closer.close(zk);
         super.cleanup();
     }

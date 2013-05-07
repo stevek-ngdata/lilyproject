@@ -21,9 +21,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
-import java.io.IOException;
-
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 /**
  * A Repository which calls back to the DecoratingRepositoryManager when it needs repository objects,
@@ -31,21 +29,21 @@ import org.lilyproject.util.repo.TenantTableUtil;
  */
 public class DecoratingRepository extends BaseRepositoryDecorator {
     private DecoratingRepositoryManager decoratingRepositoryManager;
-    private String tenantName;
+    private String repositoryName;
 
-    public DecoratingRepository(Repository delegate, String tenantName, DecoratingRepositoryManager decoratingRepositoryManager) {
+    public DecoratingRepository(Repository delegate, String repositoryName, DecoratingRepositoryManager decoratingRepositoryManager) {
         setDelegate(delegate);
         this.decoratingRepositoryManager = decoratingRepositoryManager;
-        this.tenantName = tenantName;
+        this.repositoryName = repositoryName;
     }
 
     @Override
     public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-        return decoratingRepositoryManager.getRepository(tenantName, tableName);
+        return decoratingRepositoryManager.getRepository(repositoryName, tableName);
     }
 
     @Override
     public LTable getDefaultTable() throws InterruptedException, RepositoryException {
-        return decoratingRepositoryManager.getRepository(TenantTableUtil.PUBLIC_TENANT, LilyHBaseSchema.Table.RECORD.name);
+        return decoratingRepositoryManager.getRepository(RepoAndTableUtil.DEFAULT_TENANT, LilyHBaseSchema.Table.RECORD.name);
     }
 }

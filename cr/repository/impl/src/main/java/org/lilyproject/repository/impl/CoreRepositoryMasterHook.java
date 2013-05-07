@@ -20,8 +20,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.lilyproject.plugin.PluginRegistry;
-import org.lilyproject.tenant.master.TenantMasterHook;
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.tenant.master.RepositoryMasterHook;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
@@ -29,20 +29,20 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 /**
- * A TenantMasterHook responsible for performing core repository actions when a tenant is added or removed.
+ * A RepositoryMasterHook responsible for performing core repository actions when a tenant is added or removed.
  */
-public class RepositoryTenantMasterHook implements TenantMasterHook {
+public class CoreRepositoryMasterHook implements RepositoryMasterHook {
     private HBaseTableFactory tableFactory;
     private PluginRegistry pluginRegistry;
     private Configuration hbaseConf;
     private final Log log = LogFactory.getLog(getClass());
 
-    public RepositoryTenantMasterHook(HBaseTableFactory tableFactory, Configuration hbaseConf) {
+    public CoreRepositoryMasterHook(HBaseTableFactory tableFactory, Configuration hbaseConf) {
         this.tableFactory = tableFactory;
         this.hbaseConf = hbaseConf;
     }
 
-    public RepositoryTenantMasterHook(HBaseTableFactory tableFactory, Configuration hbaseConf,
+    public CoreRepositoryMasterHook(HBaseTableFactory tableFactory, Configuration hbaseConf,
             PluginRegistry pluginRegistry) {
         this.tableFactory = tableFactory;
         this.hbaseConf = hbaseConf;
@@ -51,29 +51,29 @@ public class RepositoryTenantMasterHook implements TenantMasterHook {
 
     @PostConstruct
     public void postConstruct() {
-        pluginRegistry.addPlugin(TenantMasterHook.class, getClass().getSimpleName(), this);
+        pluginRegistry.addPlugin(RepositoryMasterHook.class, getClass().getSimpleName(), this);
     }
 
     @PreDestroy
     public void preDestroy() {
-        pluginRegistry.removePlugin(TenantMasterHook.class, getClass().getSimpleName(), this);
+        pluginRegistry.removePlugin(RepositoryMasterHook.class, getClass().getSimpleName(), this);
     }
 
     @Override
-    public void postCreate(String tenantName) throws Exception {
-        log.info("Performing tenant post-creation actions.");
+    public void postCreate(String repositoryName) throws Exception {
+        log.info("Performing repository post-creation actions for repository " + repositoryName);
 
-        String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantName, LilyHBaseSchema.Table.RECORD.name);
+        String hbaseTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, LilyHBaseSchema.Table.RECORD.name);
         LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, false);
     }
 
     @Override
-    public void preDelete(String tenantName) throws Exception {
-        log.info("Performing tenant pre-delete actions.");
+    public void preDelete(String repositoryName) throws Exception {
+        log.info("Performing repository pre-delete actions for repository " + repositoryName);
 
         HBaseAdmin hbaseAdmin = new HBaseAdmin(hbaseConf);
         try {
-            String recordTableName = TenantTableUtil.getHBaseTableName(tenantName, "record");
+            String recordTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, "record");
             log.info("Disabling and deleting table " + recordTableName);
             hbaseAdmin.disableTable(recordTableName);
             hbaseAdmin.deleteTable(recordTableName);

@@ -18,7 +18,7 @@ package org.lilyproject.tools.scanner.cli;
 import java.io.File;
 import java.util.List;
 
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -152,7 +152,7 @@ public class ScannerCli extends BaseZkCliTool {
         String recordTypeFilter = cmd.hasOption(recordTypeOption.getOpt()) ? cmd.getOptionValue(recordTypeOption.getOpt()) : null;
         File configFile = cmd.hasOption(configOption.getLongOpt()) ? new File (cmd.getOptionValue(configOption.getLongOpt())) : null;
         long limit = cmd.hasOption(limitOption.getLongOpt()) ? Long.parseLong(cmd.getOptionValue(limitOption.getLongOpt())) : -1;
-        String tenant = OptionUtil.getStringOption(cmd, tenantOption, TenantTableUtil.PUBLIC_TENANT);
+        String tenant = OptionUtil.getStringOption(cmd, tenantOption, RepoAndTableUtil.DEFAULT_TENANT);
         String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);

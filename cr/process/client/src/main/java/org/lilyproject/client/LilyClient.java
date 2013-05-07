@@ -29,7 +29,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -73,8 +74,7 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.AvroLilyTransceiver;
 import org.lilyproject.repository.remote.RemoteRepositoryManager;
 import org.lilyproject.repository.remote.RemoteTypeManager;
-import org.lilyproject.tenant.model.api.TenantModel;
-import org.lilyproject.tenant.model.impl.TenantModelImpl;
+import org.lilyproject.tenant.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -113,7 +113,7 @@ public class LilyClient implements Closeable, RepositoryManager {
 
     private RemoteSchemaCache schemaCache;
     private HBaseConnections hbaseConnections = new HBaseConnections();
-    private TenantModel tenantModel;
+    private RepositoryModel repositoryModel;
 
     private boolean isClosed = true;
 
@@ -137,14 +137,14 @@ public class LilyClient implements Closeable, RepositoryManager {
         this.isClosed = false; // needs to be before refreshServers and schemaCache.start()
         zk.addDefaultWatcher(watcher);
         refreshServers();
-        tenantModel = new TenantModelImpl(zk);
+        repositoryModel = new RepositoryModelImpl(zk);
 
         LoadBalancingUtil.LBInstanceProvider<TypeManager> typeManagerProvider = new LoadBalancingUtil.LBInstanceProvider<TypeManager>() {
             @Override
-            public TypeManager getInstance(String tenantName, String tableName)
+            public TypeManager getInstance(String repositoryName, String tableName)
                     throws RepositoryException, InterruptedException {
                 try {
-                    return ((Repository)getPlainRepository(TenantTableUtil.PUBLIC_TENANT)).getTypeManager();
+                    return ((Repository)getPlainRepository(RepoAndTableUtil.DEFAULT_TENANT)).getTypeManager();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 } catch (KeeperException e) {
@@ -155,10 +155,10 @@ public class LilyClient implements Closeable, RepositoryManager {
 
         LoadBalancingUtil.LBInstanceProvider<Repository> repositoryProvider = new LoadBalancingUtil.LBInstanceProvider<Repository>() {
             @Override
-            public Repository getInstance(String tenantName, String tableName)
+            public Repository getInstance(String repositoryName, String tableName)
                     throws RepositoryException, InterruptedException {
                 try {
-                    return (Repository)getPlainTable(tenantName, tableName);
+                    return (Repository)getPlainTable(repositoryName, tableName);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 } catch (KeeperException e) {
@@ -171,11 +171,11 @@ public class LilyClient implements Closeable, RepositoryManager {
         RecordFactory recordFactory = new RecordFactoryImpl();
 
         repositoryManager = new LoadBalancingAndRetryingRepositoryManager(repositoryProvider, typeManagerProvider,
-                retryConf, idGenerator, recordFactory, tenantModel);
+                retryConf, idGenerator, recordFactory, repositoryModel);
 
         LoadBalancingUtil.LBInstanceProvider<Indexer> indexerProvider = new LoadBalancingUtil.LBInstanceProvider<Indexer>() {
             @Override
-            public Indexer getInstance(String tenantName, String tableName) throws InterruptedException {
+            public Indexer getInstance(String repositoryName, String tableName) throws InterruptedException {
                 try {
                     return getPlainIndexer();
                 } catch (IOException e) {
@@ -243,7 +243,7 @@ public class LilyClient implements Closeable, RepositoryManager {
      */
     public Repository getPlainRepository() throws IOException, NoServersException, InterruptedException,
             KeeperException, RepositoryException {
-        return (Repository)getPlainTable(TenantTableUtil.PUBLIC_TENANT, Table.RECORD.name);
+        return (Repository)getPlainTable(RepoAndTableUtil.DEFAULT_TENANT, Table.RECORD.name);
     }
 
     /**
@@ -254,22 +254,22 @@ public class LilyClient implements Closeable, RepositoryManager {
      * over multiple Lily servers, you need to recall this method regularly to retrieve other
      * repository instances. Most of the time, you will rather use {@link #getRepository(String)}.</p>
      */
-    public LTable getPlainTable(String tenantName, String tableName) throws IOException, InterruptedException,
+    public LTable getPlainTable(String repositoryName, String tableName) throws IOException, InterruptedException,
             NoServersException, RepositoryException, KeeperException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
 
-        return getServerNode().repoMgr.getRepository(tenantName).getTable(tableName);
+        return getServerNode().repoMgr.getRepository(repositoryName).getTable(tableName);
     }
 
-    public LRepository getPlainRepository(String tenantName) throws IOException, InterruptedException,
+    public LRepository getPlainRepository(String repositoryName) throws IOException, InterruptedException,
             NoServersException, RepositoryException, KeeperException {
         if (isClosed) {
             throw new IllegalStateException("This LilyClient is closed.");
         }
 
-        return getServerNode().repoMgr.getRepository(tenantName);
+        return getServerNode().repoMgr.getRepository(repositoryName);
     }
 
     private synchronized ServerNode getServerNode() throws NoServersException, RepositoryException, IOException,
@@ -302,7 +302,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     @Deprecated
     public Repository getRepository() {
         try {
-            return (Repository)getPublicRepository();
+            return (Repository)getDefaultRepository();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (RepositoryException e) {
@@ -311,8 +311,8 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public LRepository getRepository(String tenantName) throws RepositoryException, InterruptedException {
-        return repositoryManager.getRepository(tenantName);
+    public LRepository getRepository(String repositoryName) throws RepositoryException, InterruptedException {
+        return repositoryManager.getRepository(repositoryName);
     }
 
     @Override
@@ -326,8 +326,8 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public LRepository getPublicRepository() throws InterruptedException, RepositoryException {
-        return repositoryManager.getPublicRepository();
+    public LRepository getDefaultRepository() throws InterruptedException, RepositoryException {
+        return repositoryManager.getDefaultRepository();
     }
 
     /**
@@ -372,7 +372,7 @@ public class LilyClient implements Closeable, RepositoryManager {
         RemoteTypeManager remoteTypeManager = new RemoteTypeManager(lilySocketAddr, avroConverter, idGenerator, zk, schemaCache);
         RecordFactory recordFactory = new RecordFactoryImpl();
         RepositoryManager repositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
-                transceiver, avroConverter, blobManager, tableFactory, tenantModel);
+                transceiver, avroConverter, blobManager, tableFactory, repositoryModel);
         return repositoryManager;
     }
 

@@ -26,19 +26,19 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.TableCreateDescriptor;
 import org.lilyproject.repository.api.TableManager;
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 public class TableManagerImpl implements TableManager {
 
-    private String tenantName;
+    private String repositoryName;
     private Configuration configuration;
     private HBaseTableFactory tableFactory;
 
-    public TableManagerImpl(String tenantName, Configuration configuration, HBaseTableFactory tableFactory) {
-        this.tenantName = tenantName;
+    public TableManagerImpl(String repositoryName, Configuration configuration, HBaseTableFactory tableFactory) {
+        this.repositoryName = repositoryName;
         this.configuration = configuration;
         this.tableFactory = tableFactory;
     }
@@ -50,16 +50,16 @@ public class TableManagerImpl implements TableManager {
 
     @Override
     public RepositoryTable createTable(TableCreateDescriptor descriptor) throws InterruptedException, IOException {
-        if (!TenantTableUtil.isValidTableName(descriptor.getName())) {
+        if (!RepoAndTableUtil.isValidTableName(descriptor.getName())) {
             throw new IllegalArgumentException(String.format("'%s' is not a valid table name. "
-                    + TenantTableUtil.VALID_NAME_EXPLANATION, descriptor.getName()));
+                    + RepoAndTableUtil.VALID_NAME_EXPLANATION, descriptor.getName()));
         }
         if (tableExists(descriptor.getName())) {
             throw new IllegalArgumentException(String.format("Table '%s' already exists", descriptor.getName()));
         }
-        String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantName, descriptor.getName());
+        String hbaseTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, descriptor.getName());
         LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, descriptor.getSplitKeys());
-        return new RepositoryTableImpl(tenantName, descriptor.getName());
+        return new RepositoryTableImpl(repositoryName, descriptor.getName());
     }
 
     @Override
@@ -70,7 +70,7 @@ public class TableManagerImpl implements TableManager {
         }
 
         HBaseAdmin hbaseAdmin = new HBaseAdmin(configuration);
-        String hbaseTableName = TenantTableUtil.getHBaseTableName(tenantName, tableName);
+        String hbaseTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, tableName);
 
         try {
             if (hbaseAdmin.tableExists(hbaseTableName)
@@ -95,9 +95,9 @@ public class TableManagerImpl implements TableManager {
         try {
             for (HTableDescriptor tableDescriptor : hbaseAdmin.listTables()) {
                 if (LilyHBaseSchema.isRecordTableDescriptor(tableDescriptor)
-                        && TenantTableUtil.belongsToTenant(tableDescriptor.getNameAsString(), tenantName)) {
-                    String name = TenantTableUtil.extractLilyTableName(tenantName, tableDescriptor.getNameAsString());
-                    recordTables.add(new RepositoryTableImpl(tenantName, name));
+                        && RepoAndTableUtil.belongsToRepository(tableDescriptor.getNameAsString(), repositoryName)) {
+                    String name = RepoAndTableUtil.extractLilyTableName(repositoryName, tableDescriptor.getNameAsString());
+                    recordTables.add(new RepositoryTableImpl(repositoryName, name));
                 }
             }
         } finally {
@@ -117,7 +117,7 @@ public class TableManagerImpl implements TableManager {
     }
 
     private String getHBaseTableName(String tableName) {
-        return new TenantTableKey(tenantName, tableName).toHBaseTableName();
+        return new RepoTableKey(repositoryName, tableName).toHBaseTableName();
     }
 
 }

@@ -23,9 +23,9 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
-import org.lilyproject.repository.impl.TenantTableKey;
+import org.lilyproject.repository.impl.RepoTableKey;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
-import org.lilyproject.tenant.model.api.TenantModel;
+import org.lilyproject.tenant.model.api.RepositoryModel;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 /**
@@ -42,8 +42,8 @@ public class LoadBalancingAndRetryingRepositoryManager extends AbstractRepositor
 
     public LoadBalancingAndRetryingRepositoryManager(LoadBalancingUtil.LBInstanceProvider<Repository> repositoryProvider,
             LoadBalancingUtil.LBInstanceProvider<TypeManager> typeManagerProvider, RetryConf retryConf, IdGenerator idGenerator,
-            RecordFactory recordFactory, TenantModel tenantModel) {
-        super(createTypeManager(typeManagerProvider, retryConf), idGenerator, recordFactory, tenantModel);
+            RecordFactory recordFactory, RepositoryModel repositoryModel) {
+        super(createTypeManager(typeManagerProvider, retryConf), idGenerator, recordFactory, repositoryModel);
         this.repositoryProvider = repositoryProvider;
         this.typeManagerProvider = typeManagerProvider;
         this.retryConf = retryConf;
@@ -55,11 +55,11 @@ public class LoadBalancingAndRetryingRepositoryManager extends AbstractRepositor
     }
 
     @Override
-    protected Repository createRepository(TenantTableKey key) throws InterruptedException, RepositoryException {
+    protected Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException {
         // Note that the parent caches these instances
         return new LBAwareRepository(RetryUtil.getRetryingInstance(
-                LoadBalancingUtil.getLoadBalancedInstance(repositoryProvider, Repository.class, key.getTenantName(),
-                        key.getTableName()), Repository.class, retryConf), this, key.getTenantName());
+                LoadBalancingUtil.getLoadBalancedInstance(repositoryProvider, Repository.class, key.getRepositoryName(),
+                        key.getTableName()), Repository.class, retryConf), this, key.getRepositoryName());
     }
 
     /**
@@ -70,26 +70,26 @@ public class LoadBalancingAndRetryingRepositoryManager extends AbstractRepositor
     public class LBAwareRepository extends BaseRepositoryDecorator {
         private TypeManager typeManager;
         private AbstractRepositoryManager repositoryManager;
-        private String tenantName;
+        private String repositoryName;
 
         /**
          *
          * @param repositoryManager the one which gives load-balancing-and-retrying repositories
          */
-        public LBAwareRepository(Repository delegate, AbstractRepositoryManager repositoryManager, String tenantName) {
+        public LBAwareRepository(Repository delegate, AbstractRepositoryManager repositoryManager, String repositoryName) {
             setDelegate(delegate);
             this.repositoryManager = repositoryManager;
-            this.tenantName = tenantName;
+            this.repositoryName = repositoryName;
         }
 
         @Override
         public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-            return repositoryManager.getRepository(tenantName, tableName);
+            return repositoryManager.getRepository(repositoryName, tableName);
         }
 
         @Override
         public LTable getDefaultTable() throws InterruptedException, RepositoryException {
-            return repositoryManager.getRepository(tenantName, LilyHBaseSchema.Table.RECORD.name);
+            return repositoryManager.getRepository(repositoryName, LilyHBaseSchema.Table.RECORD.name);
         }
 
         @Override

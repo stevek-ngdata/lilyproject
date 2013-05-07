@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
@@ -157,7 +157,7 @@ public class IndexUpdater extends LilyEventListener {
 
             recordEvent = event.getRecordEvent();
             recordId = event.getRecordId();
-            LRepository repository = repositoryManager.getRepository(event.getLilyTenantName());
+            LRepository repository = repositoryManager.getRepository(event.getLilyRepositoryName());
 
             if (log.isDebugEnabled()) {
                 log.debug("Received message: " + recordEvent.toJson());
@@ -480,7 +480,7 @@ public class IndexUpdater extends LilyEventListener {
             payload.setIndexRecordFilterData(filterData);
 
             try {
-                eventPublisherMgr.getEventPublisher(/* TODO multitenancy */ TenantTableUtil.PUBLIC_TENANT,
+                eventPublisherMgr.getEventPublisher(/* TODO multitenancy */ RepoAndTableUtil.DEFAULT_TENANT,
                         referrer.getTable()).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index

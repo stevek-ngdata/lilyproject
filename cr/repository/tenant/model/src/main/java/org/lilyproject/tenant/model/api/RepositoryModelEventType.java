@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tenant.master;
+package org.lilyproject.tenant.model.api;
 
-public interface TenantMasterHook {
-    void postCreate(String tenantName) throws Exception;
-
-    void preDelete(String tenantName) throws Exception;
+public enum RepositoryModelEventType {
+    REPOSITORY_ADDED, REPOSITORY_REMOVED, REPOSITORY_UPDATED
 }

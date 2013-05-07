@@ -24,5 +24,5 @@ public interface LilyInfoMBean {
 
     boolean isIndexerMaster();
 
-    boolean isTenantMaster();
+    boolean isRepositoryMaster();
 }

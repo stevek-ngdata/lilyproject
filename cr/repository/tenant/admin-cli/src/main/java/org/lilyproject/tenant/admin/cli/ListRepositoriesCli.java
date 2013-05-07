@@ -16,21 +16,21 @@
 package org.lilyproject.tenant.admin.cli;
 
 import org.apache.commons.cli.CommandLine;
-import org.lilyproject.tenant.model.api.Tenant;
+import org.lilyproject.tenant.model.api.RepositoryDefinition;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class ListTenantsCli extends BaseTenantAdminCli {
+public class ListRepositoriesCli extends BaseRepositoriesAdminCli {
     @Override
     protected String getCmdName() {
-        return "lily-list-tenants";
+        return "lily-list-repositories";
     }
 
     public static void main(String[] args) {
-        new ListTenantsCli().start(args);
+        new ListRepositoriesCli().start(args);
     }
 
     @Override
@@ -40,20 +40,20 @@ public class ListTenantsCli extends BaseTenantAdminCli {
             return result;
         }
 
-        List<Tenant> tenants = new ArrayList<Tenant>(tenantModel.getTenants());
-        Collections.sort(tenants, new TenantComparator());
+        List<RepositoryDefinition> repositories = new ArrayList<RepositoryDefinition>(repositoryModel.getRepositories());
+        Collections.sort(repositories, new TenantComparator());
 
-        System.out.println("Tenants:");
-        for (Tenant tenant : tenants) {
-            System.out.println(" * " + tenant.getName() + " - " + tenant.getLifecycleState().toString());
+        System.out.println("Repositories:");
+        for (RepositoryDefinition repository : repositories) {
+            System.out.println(" * " + repository.getName() + " - " + repository.getLifecycleState().toString());
         }
 
         return 0;
     }
 
-    private static class TenantComparator implements Comparator<Tenant> {
+    private static class TenantComparator implements Comparator<RepositoryDefinition> {
         @Override
-        public int compare(Tenant o1, Tenant o2) {
+        public int compare(RepositoryDefinition o1, RepositoryDefinition o2) {
             return o1.getName().compareTo(o2.getName());
         }
     }

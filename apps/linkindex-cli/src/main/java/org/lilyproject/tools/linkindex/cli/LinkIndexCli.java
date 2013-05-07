@@ -110,7 +110,7 @@ public class LinkIndexCli extends BaseZkCliTool {
         }
 
         lilyClient = new LilyClient(zkConnectionString, 60000);
-        LRepository repository = lilyClient.getPublicRepository();
+        LRepository repository = lilyClient.getDefaultRepository();
         typeManager = repository.getTypeManager();
 
         Configuration hbaseConf = HBaseConfiguration.create();

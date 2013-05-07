@@ -27,7 +27,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TableNotFoundException;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.tenant.model.api.TenantModel;
+import org.lilyproject.tenant.model.api.RepositoryModel;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
@@ -39,21 +39,21 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
 
     public HBaseRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
             HBaseTableFactory hbaseTableFactory, BlobManager blobManager, Configuration hbaseConf,
-            TenantModel tenantModel) {
-        super(typeManager, idGenerator, recordFactory, tenantModel);
+            RepositoryModel repositoryModel) {
+        super(typeManager, idGenerator, recordFactory, repositoryModel);
         this.hbaseTableFactory = hbaseTableFactory;
         this.blobManager = blobManager;
         this.hbaseConf = hbaseConf;
     }
 
     @Override
-    protected Repository createRepository(TenantTableKey key) throws InterruptedException, RepositoryException {
-        TableManager tableManager = new TableManagerImpl(key.getTenantName(), hbaseConf, hbaseTableFactory);
+    protected Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException {
+        TableManager tableManager = new TableManagerImpl(key.getRepositoryName(), hbaseConf, hbaseTableFactory);
         try {
             HTableInterface htable = LilyHBaseSchema.getRecordTable(hbaseTableFactory, key.toHBaseTableName(), true);
             return new HBaseRepository(key, this, htable, blobManager, tableManager, getRecordFactory());
         } catch (org.apache.hadoop.hbase.TableNotFoundException e) {
-            throw new TableNotFoundException(key.getTenantName(), key.getTableName());
+            throw new TableNotFoundException(key.getRepositoryName(), key.getTableName());
         } catch (IOException e) {
             throw new RepositoryException(e);
         }

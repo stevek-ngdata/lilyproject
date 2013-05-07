@@ -82,7 +82,7 @@ public class LinkIndexUpdater extends LilyEventListener {
 
         LRepository repository = null;
         try {
-            repository = repositoryManager.getPublicRepository();
+            repository = repositoryManager.getDefaultRepository();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
@@ -126,11 +126,11 @@ public class LinkIndexUpdater extends LilyEventListener {
                 boolean isNewRecord = recordEvent.getType().equals(CREATE);
 
                 RecordEventHelper eventHelper = new RecordEventHelper(recordEvent, LINK_FIELD_FILTER,
-                        repositoryManager.getPublicRepository().getTypeManager());
+                        repositoryManager.getDefaultRepository().getTypeManager());
 
                 VTaggedRecord vtRecord;
                 try {
-                    LRepository repository = repositoryManager.getPublicRepository();
+                    LRepository repository = repositoryManager.getDefaultRepository();
                     LTable table = repository.getTable(recordEvent.getTableName());
                     vtRecord = new VTaggedRecord(absRecordId.getRecordId(), eventHelper, table, repository);
                 } catch (RecordNotFoundException e) {
@@ -211,7 +211,7 @@ public class LinkIndexUpdater extends LilyEventListener {
             if (versionRecord == null) {
                 links = Collections.emptySet();
             } else {
-                LRepository repository = repositoryManager.getPublicRepository();
+                LRepository repository = repositoryManager.getDefaultRepository();
                 LinkCollector collector = new LinkCollector(repository.getIdGenerator());
                 RecordLinkExtractor.extract(versionRecord, collector, repository);
                 links = collector.getLinks();
@@ -237,7 +237,7 @@ public class LinkIndexUpdater extends LilyEventListener {
         }
 
         try {
-            return repositoryManager.getPublicRepository().getTypeManager().getFieldTypeById(fieldTypeId).getName().getName();
+            return repositoryManager.getDefaultRepository().getTypeManager().getFieldTypeById(fieldTypeId).getName().getName();
         } catch (Throwable t) {
             return "failed to load name";
         }

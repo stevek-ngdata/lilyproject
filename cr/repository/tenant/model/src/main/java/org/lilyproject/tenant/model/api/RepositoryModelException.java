@@ -15,8 +15,20 @@
  */
 package org.lilyproject.tenant.model.api;
 
-public class TenantExistsException extends Exception {
-    public TenantExistsException(String message) {
+public class RepositoryModelException extends Exception {
+    public RepositoryModelException() {
+        super();
+    }
+
+    public RepositoryModelException(String message) {
         super(message);
+    }
+
+    public RepositoryModelException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public RepositoryModelException(Throwable cause) {
+        super(cause);
     }
 }

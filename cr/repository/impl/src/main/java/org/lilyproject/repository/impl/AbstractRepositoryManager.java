@@ -18,7 +18,7 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.util.Map;
 
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import com.google.common.collect.Maps;
 import org.lilyproject.repository.api.IdGenerator;
@@ -30,7 +30,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TenantUnavailableException;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.tenant.model.api.TenantModel;
+import org.lilyproject.tenant.model.api.RepositoryModel;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 
@@ -39,19 +39,19 @@ import org.lilyproject.util.io.Closer;
  */
 public abstract class AbstractRepositoryManager implements RepositoryManager {
 
-    private final Map<TenantTableKey, Repository> repositoryCache = Maps.newHashMap();
+    private final Map<RepoTableKey, Repository> repositoryCache = Maps.newHashMap();
     private final TypeManager typeManager;
     private final IdGenerator idGenerator;
     private final RecordFactory recordFactory;
-    private final TenantModel tenantModel;
+    private final RepositoryModel repositoryModel;
 
 
     public AbstractRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
-            TenantModel tenantModel) {
+            RepositoryModel repositoryModel) {
         this.typeManager = typeManager;
         this.idGenerator = idGenerator;
         this.recordFactory = recordFactory;
-        this.tenantModel = tenantModel;
+        this.repositoryModel = repositoryModel;
     }
 
     protected TypeManager getTypeManager() {
@@ -69,24 +69,24 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     /**
      * Create a new Repository object for the repository cache.
      */
-    protected abstract Repository createRepository(TenantTableKey key) throws InterruptedException, RepositoryException;
+    protected abstract Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException;
 
     @Override
-    public LRepository getPublicRepository() throws InterruptedException, RepositoryException {
-        return getRepository(TenantTableUtil.PUBLIC_TENANT);
+    public LRepository getDefaultRepository() throws InterruptedException, RepositoryException {
+        return getRepository(RepoAndTableUtil.DEFAULT_TENANT);
     }
 
     @Override
-    public LRepository getRepository(String tenantName) throws InterruptedException, RepositoryException {
-        return getRepository(tenantName, Table.RECORD.name);
+    public LRepository getRepository(String repositoryName) throws InterruptedException, RepositoryException {
+        return getRepository(repositoryName, Table.RECORD.name);
     }
 
-    public Repository getRepository(String tenantName, String tableName)
+    public Repository getRepository(String repositoryName, String tableName)
             throws InterruptedException, RepositoryException {
-        if (!tenantModel.tenantExistsAndActive(tenantName)) {
-            throw new TenantUnavailableException("Tenant does not exist or is not active: " + tenantName);
+        if (!repositoryModel.repositoryExistsAndActive(repositoryName)) {
+            throw new TenantUnavailableException("Repository does not exist or is not active: " + repositoryName);
         }
-        TenantTableKey key = new TenantTableKey(tenantName, tableName);
+        RepoTableKey key = new RepoTableKey(repositoryName, tableName);
         if (!repositoryCache.containsKey(key)) {
             synchronized (repositoryCache) {
                 if (!repositoryCache.containsKey(key)) {
@@ -99,12 +99,12 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
 
     @Override
     public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-        return getPublicRepository().getTable(tableName);
+        return getDefaultRepository().getTable(tableName);
     }
 
     @Override
     public LTable getDefaultTable() throws InterruptedException, RepositoryException {
-        return getPublicRepository().getDefaultTable();
+        return getDefaultRepository().getDefaultTable();
     }
 
     @Override

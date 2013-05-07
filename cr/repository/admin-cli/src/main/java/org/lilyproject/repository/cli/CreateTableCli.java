@@ -122,7 +122,7 @@ public class CreateTableCli extends BaseTableCliTool {
         System.out.printf("Creating table '%s' with %d region%s...\n", createDescriptor.getName(), numRegions,
                 numRegions == 1 ? "" : "s");
         tableManager.createTable(createDescriptor);
-        System.out.printf("Table '%s' in tenant '%s' created\n", createDescriptor.getName(), tenantName);
+        System.out.printf("Table '%s' in repository '%s' created\n", createDescriptor.getName(), repositoryName);
         return 0;
     }
 

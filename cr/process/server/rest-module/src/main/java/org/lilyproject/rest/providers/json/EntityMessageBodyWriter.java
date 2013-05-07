@@ -54,7 +54,7 @@ public class EntityMessageBodyWriter extends RepositoryEnabled implements Messag
             EntityWriter writer = EntityRegistry.findWriter(object.getEntity().getClass());
             // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
             ObjectNode json = writer.toJson(object.getEntity(), object.getWriteOptions(),
-                    repositoryMgr.getPublicRepository());
+                    repositoryMgr.getDefaultRepository());
             JsonFormat.serialize(json, new CloseShieldOutputStream(entityStream));
         } catch (Throwable e) {
             // We catch every throwable, since otherwise no one does it and we will not have any trace

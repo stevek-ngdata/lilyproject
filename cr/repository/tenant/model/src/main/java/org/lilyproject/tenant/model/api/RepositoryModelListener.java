@@ -15,20 +15,6 @@
  */
 package org.lilyproject.tenant.model.api;
 
-public class TenantNotFoundException extends Exception {
-    public TenantNotFoundException() {
-        super();
-    }
-
-    public TenantNotFoundException(String message) {
-        super(message);
-    }
-
-    public TenantNotFoundException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public TenantNotFoundException(Throwable cause) {
-        super(cause);
-    }
+public interface RepositoryModelListener {
+    void process(RepositoryModelEvent event);
 }

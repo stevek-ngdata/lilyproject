@@ -554,7 +554,7 @@ public interface LTable {
     String getStorageTableName();
 
     /**
-     * Returns the name of the tenant to which this table belongs.
+     * Returns the name of the repository to which this table belongs.
      */
-    String getTenantName();
+    String getRepositoryName();
 }

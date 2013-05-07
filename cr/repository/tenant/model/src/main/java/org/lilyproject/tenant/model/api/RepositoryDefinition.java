@@ -22,13 +22,13 @@ import com.google.common.base.Preconditions;
  *
  * <p>Lily supports multi-tenancy, whereby each tenant has its own Repository containing its own tables.</p>
  *
- * <p>Tenants are managed through {@link TenantModel}.</p>
+ * <p>Tenants are managed through {@link RepositoryModel}.</p>
  */
-public class Tenant {
+public class RepositoryDefinition {
     private String name;
-    private TenantLifecycleState lifecycleState;
+    private RepositoryLifecycleState lifecycleState;
 
-    public Tenant(String name, TenantLifecycleState lifecycleState) {
+    public RepositoryDefinition(String name, RepositoryLifecycleState lifecycleState) {
         Preconditions.checkNotNull(name, "name");
         Preconditions.checkNotNull(lifecycleState, "lifecycleState");
 
@@ -40,7 +40,7 @@ public class Tenant {
         return name;
     }
 
-    public TenantLifecycleState getLifecycleState() {
+    public RepositoryLifecycleState getLifecycleState() {
         return lifecycleState;
     }
 
@@ -49,10 +49,10 @@ public class Tenant {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Tenant tenant = (Tenant)o;
+        RepositoryDefinition repoDef = (RepositoryDefinition)o;
 
-        if (lifecycleState != tenant.lifecycleState) return false;
-        if (!name.equals(tenant.name)) return false;
+        if (lifecycleState != repoDef.lifecycleState) return false;
+        if (!name.equals(repoDef.name)) return false;
 
         return true;
     }
@@ -64,7 +64,7 @@ public class Tenant {
         return result;
     }
 
-    public static enum TenantLifecycleState {
+    public static enum RepositoryLifecycleState {
         ACTIVE, CREATE_REQUESTED, DELETE_REQUESTED
     }
 }

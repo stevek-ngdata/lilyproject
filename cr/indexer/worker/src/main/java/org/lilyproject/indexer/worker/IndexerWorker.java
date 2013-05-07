@@ -183,7 +183,7 @@ public class IndexerWorker {
     private void addIndexUpdater(IndexDefinition index) {
         IndexUpdaterHandle handle = null;
         try {
-            LRepository repository = repositoryManager.getPublicRepository();
+            LRepository repository = repositoryManager.getDefaultRepository();
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
                      repository);
 

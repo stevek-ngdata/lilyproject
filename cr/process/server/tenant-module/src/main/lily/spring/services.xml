@@ -40,8 +40,8 @@
       service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
 
   <lily:import-service
-      id="tenantModel"
-      service="org.lilyproject.tenant.model.api.TenantModel"/>
+      id="repositoryModel"
+      service="org.lilyproject.tenant.model.api.RepositoryModel"/>
 
   <lily:import-service
       id="lilyInfo"
@@ -51,9 +51,9 @@
       id="pluginRegistry"
       service="org.lilyproject.plugin.PluginRegistry"/>
 
-  <bean id="tenantMaster" class="org.lilyproject.tenant.master.TenantMaster">
+  <bean id="tenantMaster" class="org.lilyproject.tenant.master.RepositoryMaster">
     <constructor-arg ref="zooKeeper"/>
-    <constructor-arg ref="tenantModel"/>
+    <constructor-arg ref="repositoryModel"/>
     <constructor-arg ref="lilyInfo"/>
     <constructor-arg ref="pluginRegistry"/>
   </bean>

@@ -208,12 +208,12 @@ public class IndexerTest {
 
         prematureRepositoryManager.setRepositoryManager(repoSetup.getRepositoryManager());
         repositoryManager = repoSetup.getRepositoryManager();
-        repository = repositoryManager.getPublicRepository();
+        repository = repositoryManager.getDefaultRepository();
         repository.getTableManager().createTable(ALTERNATE_TABLE);
 
         defaultTable = (Repository)repositoryManager.getDefaultTable();
         alternateTable = (Repository)repositoryManager.getTable(ALTERNATE_TABLE);
-        indexUpdaterRepository = new TrackingRepository(repoSetup.getRepositoryManager().getPublicRepository());
+        indexUpdaterRepository = new TrackingRepository(repoSetup.getRepositoryManager().getDefaultRepository());
 
 
         typeManager = repository.getTypeManager();
@@ -258,7 +258,7 @@ public class IndexerTest {
         // which some test cases expect, and hence it won't be visible but will cause the remainder of the
         // code in this method not to be executed! (so keep this in mind for anything related to resource cleanup)
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
-                repoSetup.getRepositoryManager().getPublicRepository());
+                repoSetup.getRepositoryManager().getDefaultRepository());
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
 
         Configuration hbaseConf = repoSetup.getHadoopConf();
@@ -3359,12 +3359,12 @@ public class IndexerTest {
         }
 
         @Override
-        public LRepository getPublicRepository() throws InterruptedException, RepositoryException {
+        public LRepository getDefaultRepository() throws InterruptedException, RepositoryException {
             return repository;
         }
 
         @Override
-        public LRepository getRepository(String tenantName) throws InterruptedException, RepositoryException {
+        public LRepository getRepository(String repositoryName) throws InterruptedException, RepositoryException {
             return repository;
         }
 
@@ -3413,8 +3413,8 @@ public class IndexerTest {
         }
 
         @Override
-        public String getTenantName() {
-            return delegate.getTenantName();
+        public String getRepositoryName() {
+            return delegate.getRepositoryName();
         }
 
         @Override

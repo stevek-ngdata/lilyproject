@@ -327,7 +327,7 @@ public class AvroLilyImpl implements AvroLily {
     @Override
     public List<String> getVariants(ByteBuffer recordId, String tenant, String tableName) throws AvroRepositoryException, AvroInterruptedException {
         try {
-            LRepository repository = repositoryManager.getPublicRepository();
+            LRepository repository = repositoryManager.getDefaultRepository();
             LTable table = repository.getTable(tableName);
             return converter.convert(table.getVariants(converter.convertAvroRecordId(recordId, repository)));
         } catch (RepositoryException e) {

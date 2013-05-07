@@ -34,7 +34,7 @@ public class ListTablesCli extends BaseTableCliTool {
     @Override
     protected int execute(TableManager tableManager) throws Exception {
         List<RepositoryTable> tables = tableManager.getTables();
-        System.out.printf("Listing tables for tenant '%s'\n", tenantName);
+        System.out.printf("Listing tables in repository '%s'\n", repositoryName);
         if (tables.isEmpty()) {
             System.out.println("No repository tables found");
         } else {

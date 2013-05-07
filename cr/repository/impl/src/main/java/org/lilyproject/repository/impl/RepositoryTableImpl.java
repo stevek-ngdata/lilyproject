@@ -16,15 +16,15 @@
 package org.lilyproject.repository.impl;
 
 import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 public class RepositoryTableImpl implements RepositoryTable {
 
     private String name;
-    private String tenantName;
+    private String repositoryName;
 
-    public RepositoryTableImpl(String tenantName, String name) {
-        this.tenantName = tenantName;
+    public RepositoryTableImpl(String repositoryName, String name) {
+        this.repositoryName = repositoryName;
         this.name = name;
     }
 
@@ -34,12 +34,12 @@ public class RepositoryTableImpl implements RepositoryTable {
     }
 
     @Override
-    public String getTenantName() {
-        return tenantName;
+    public String getRepositoryName() {
+        return repositoryName;
     }
 
     @Override
     public String getStorageName() {
-        return TenantTableUtil.getHBaseTableName(tenantName, name);
+        return RepoAndTableUtil.getHBaseTableName(repositoryName, name);
     }
 }

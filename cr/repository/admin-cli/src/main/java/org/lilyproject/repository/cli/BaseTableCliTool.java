@@ -25,19 +25,19 @@ import org.lilyproject.util.Version;
 
 import java.util.List;
 
-import org.lilyproject.util.repo.TenantTableUtil;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 public abstract class BaseTableCliTool extends BaseZkCliTool {
-    private Option tenantOpt;
-    protected String tenantName;
+    private Option repositoryOpt;
+    protected String repositoryName;
 
     @SuppressWarnings("static-access")
     public BaseTableCliTool() {
-        tenantOpt = OptionBuilder
-                .withArgName("tenant")
+        repositoryOpt = OptionBuilder
+                .withArgName("repo")
                 .hasArg()
-                .withDescription("Repository tenant, defaults to public tenant")
-                .withLongOpt("tenant")
+                .withDescription("Repository name, if not specified the default repository is used")
+                .withLongOpt("repo")
                 .create();
     }
 
@@ -45,7 +45,7 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
-        options.add(tenantOpt);
+        options.add(repositoryOpt);
 
         return options;
     }
@@ -62,10 +62,10 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
             return result;
         }
 
-        if (cmd.hasOption(tenantOpt.getLongOpt())) {
-            tenantName = cmd.getOptionValue(tenantOpt.getLongOpt());
+        if (cmd.hasOption(repositoryOpt.getLongOpt())) {
+            repositoryName = cmd.getOptionValue(repositoryOpt.getLongOpt());
         } else {
-            tenantName = TenantTableUtil.PUBLIC_TENANT;
+            repositoryName = RepoAndTableUtil.DEFAULT_TENANT;
         }
 
         return 0;
@@ -79,7 +79,7 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
         }
 
         LilyClient lilyClient = new LilyClient(zkConnectionString, 30000);
-        TableManager tableManager = lilyClient.getRepository(tenantName).getTableManager();
+        TableManager tableManager = lilyClient.getRepository(repositoryName).getTableManager();
         try {
             status = execute(tableManager);
         } finally {

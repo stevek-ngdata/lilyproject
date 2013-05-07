@@ -79,7 +79,7 @@ public class LilyMapReduceUtil {
 
         job.getConfiguration().set(ZK_CONNECT_STRING, zooKeeperConnectString);
 
-        job.getConfiguration().set(TENANT, repository.getTenantName());
+        job.getConfiguration().set(TENANT, repository.getRepositoryName());
 
         if (repositoryTables != null && !repositoryTables.isEmpty()) {
             job.getConfiguration().set(REPOSITORY_TABLES, Joiner.on(',').join(repositoryTables));

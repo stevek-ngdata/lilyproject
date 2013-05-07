@@ -20,15 +20,15 @@ import org.apache.commons.cli.Option;
 
 import java.util.List;
 
-public class AddTenantCli extends BaseTenantAdminCli {
+public class AddRepositoryCli extends BaseRepositoriesAdminCli {
 
     @Override
     protected String getCmdName() {
-        return "lily-add-tenant";
+        return "lily-add-repository";
     }
 
     public static void main(String[] args) {
-        new AddTenantCli().start(args);
+        new AddRepositoryCli().start(args);
     }
 
     @Override
@@ -45,19 +45,19 @@ public class AddTenantCli extends BaseTenantAdminCli {
             return result;
         }
 
-        String tenantName = cmd.getOptionValue(nameOption.getOpt());
-        if (tenantName == null) {
-            System.out.println("Specify a name for the tenant with -" + nameOption.getOpt());
+        String repositoryName = cmd.getOptionValue(nameOption.getOpt());
+        if (repositoryName == null) {
+            System.out.println("Specify a name for the repository with -" + nameOption.getOpt());
             return 1;
         }
 
-        tenantModel.create(tenantName);
+        repositoryModel.create(repositoryName);
 
-        System.out.println("Tenant " + tenantName + " created.");
+        System.out.println("Repository " + repositoryName + " created.");
         System.out.println();
-        System.out.println("Waiting for tenant to become active. This will only work when a Lily server is running.");
+        System.out.println("Waiting for repository to become active. This will only work when a Lily server is running.");
         System.out.println("You can safely interrupt this with ctrl+c");
-        while (!tenantModel.tenantExistsAndActive(tenantName)) {
+        while (!repositoryModel.repositoryExistsAndActive(repositoryName)) {
             System.out.print(".");
             Thread.sleep(1000L);
         }

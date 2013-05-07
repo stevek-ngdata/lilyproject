@@ -18,5 +18,5 @@ package org.lilyproject.util;
 public interface LilyInfo extends LilyInfoMBean {
     void setIndexerMaster(boolean indexerMaster);
 
-    void setTenantMaster(boolean tenantMaster);
+    void setRepositoryMaster(boolean repositoryMaster);
 }

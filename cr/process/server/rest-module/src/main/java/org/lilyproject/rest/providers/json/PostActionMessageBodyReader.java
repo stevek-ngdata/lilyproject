@@ -109,7 +109,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
                 ObjectNode objectNode = JsonUtil.getObject(postNode, registryEntry.getPropertyName());
                 // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
                 entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces,
-                    repositoryMgr.getPublicRepository(), linkTransformer);
+                    repositoryMgr.getDefaultRepository(), linkTransformer);
             }
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
@@ -128,7 +128,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
         }
 
         // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
-        LRepository repository = repositoryMgr.getPublicRepository();
+        LRepository repository = repositoryMgr.getDefaultRepository();
 
         List<MutationCondition> result = new ArrayList<MutationCondition>();
         SystemFields systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
@@ -147,7 +147,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
                 FieldType fieldType = systemFields.isSystemField(fieldName) ? systemFields.get(fieldName) :
                         repository.getTypeManager().getFieldTypeByName(fieldName);
                 value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces,
-                    repositoryMgr.getPublicRepository(), linkTransformer);
+                    repositoryMgr.getDefaultRepository(), linkTransformer);
             }
 
             boolean allowMissing = JsonUtil.getBoolean(conditionNode, "allowMissing", false);
