@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tenant.admin.cli;
+package org.lilyproject.repository.cli;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;

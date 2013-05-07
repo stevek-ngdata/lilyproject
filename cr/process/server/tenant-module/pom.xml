@@ -33,7 +33,7 @@
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-tenant-master</artifactId>
+      <artifactId>lily-repository-master</artifactId>
     </dependency>
   </dependencies>
 
