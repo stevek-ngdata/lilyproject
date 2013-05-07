@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tenant.master;
+package org.lilyproject.repository.master;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,12 +21,12 @@ import org.apache.zookeeper.KeeperException;
 import org.lilyproject.plugin.PluginHandle;
 import org.lilyproject.plugin.PluginRegistry;
 import org.lilyproject.plugin.PluginUser;
-import org.lilyproject.tenant.model.api.RepositoryDefinition;
-import org.lilyproject.tenant.model.api.RepositoryModel;
-import org.lilyproject.tenant.model.api.RepositoryModelEvent;
-import org.lilyproject.tenant.model.api.RepositoryModelEventType;
-import org.lilyproject.tenant.model.api.RepositoryModelListener;
-import org.lilyproject.tenant.model.api.RepositoryNotFoundException;
+import org.lilyproject.repository.model.api.RepositoryDefinition;
+import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryModelEvent;
+import org.lilyproject.repository.model.api.RepositoryModelEventType;
+import org.lilyproject.repository.model.api.RepositoryModelListener;
+import org.lilyproject.repository.model.api.RepositoryNotFoundException;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.zookeeper.LeaderElection;
@@ -44,7 +44,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static org.lilyproject.tenant.model.api.RepositoryDefinition.RepositoryLifecycleState;
+import static org.lilyproject.repository.model.api.RepositoryDefinition.RepositoryLifecycleState;
 
 /**
  * RepositoryMaster is a component which is active in only one lily-server and performs side effects when

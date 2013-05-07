@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tenant.model.impl;
+package org.lilyproject.repository.model.impl;
 
 import java.util.regex.Pattern;
 

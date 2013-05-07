@@ -25,7 +25,7 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.RepoTableKey;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
-import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryModel;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 /**

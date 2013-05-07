@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryModel;
 import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import org.apache.commons.logging.Log;
@@ -74,7 +74,7 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.remote.AvroLilyTransceiver;
 import org.lilyproject.repository.remote.RemoteRepositoryManager;
 import org.lilyproject.repository.remote.RemoteTypeManager;
-import org.lilyproject.tenant.model.impl.RepositoryModelImpl;
+import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;

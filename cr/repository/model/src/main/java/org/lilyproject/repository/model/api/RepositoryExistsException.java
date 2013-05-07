@@ -13,22 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tenant.model.api;
+package org.lilyproject.repository.model.api;
 
-public class RepositoryModelException extends Exception {
-    public RepositoryModelException() {
-        super();
-    }
-
-    public RepositoryModelException(String message) {
+public class RepositoryExistsException extends Exception {
+    public RepositoryExistsException(String message) {
         super(message);
-    }
-
-    public RepositoryModelException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public RepositoryModelException(Throwable cause) {
-        super(cause);
     }
 }

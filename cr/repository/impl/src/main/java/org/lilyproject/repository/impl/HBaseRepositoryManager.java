@@ -27,7 +27,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TableNotFoundException;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryModel;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 

@@ -31,9 +31,9 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TableNotFoundException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.tenant.model.api.RepositoryDefinition;
-import org.lilyproject.tenant.model.api.RepositoryExistsException;
-import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryDefinition;
+import org.lilyproject.repository.model.api.RepositoryExistsException;
+import org.lilyproject.repository.model.api.RepositoryModel;
 
 import java.util.List;
 

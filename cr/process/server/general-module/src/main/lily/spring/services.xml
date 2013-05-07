@@ -65,7 +65,7 @@
 
   <lily:export-service
       ref="repositoryModel"
-      service="org.lilyproject.tenant.model.api.RepositoryModel"/>
+      service="org.lilyproject.repository.model.api.RepositoryModel"/>
 
   <lily:export-service
       ref="prematureRepositoryManager"
@@ -176,7 +176,7 @@
     </constructor-arg>
   </bean>
 
-  <bean id="repositoryModel" class="org.lilyproject.tenant.model.impl.RepositoryModelImpl">
+  <bean id="repositoryModel" class="org.lilyproject.repository.model.impl.RepositoryModelImpl">
     <constructor-arg ref="zooKeeper"/>
   </bean>
 

@@ -30,7 +30,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TenantUnavailableException;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryModel;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 

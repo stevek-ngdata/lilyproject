@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tenant.model.impl;
+package org.lilyproject.repository.model.impl;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
@@ -24,14 +24,14 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
-import org.lilyproject.tenant.model.api.RepositoryDefinition;
-import org.lilyproject.tenant.model.api.RepositoryExistsException;
-import org.lilyproject.tenant.model.api.RepositoryModel;
-import org.lilyproject.tenant.model.api.RepositoryModelEvent;
-import org.lilyproject.tenant.model.api.RepositoryModelEventType;
-import org.lilyproject.tenant.model.api.RepositoryModelException;
-import org.lilyproject.tenant.model.api.RepositoryModelListener;
-import org.lilyproject.tenant.model.api.RepositoryNotFoundException;
+import org.lilyproject.repository.model.api.RepositoryDefinition;
+import org.lilyproject.repository.model.api.RepositoryExistsException;
+import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryModelEvent;
+import org.lilyproject.repository.model.api.RepositoryModelEventType;
+import org.lilyproject.repository.model.api.RepositoryModelException;
+import org.lilyproject.repository.model.api.RepositoryModelListener;
+import org.lilyproject.repository.model.api.RepositoryNotFoundException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -46,14 +46,14 @@ import java.util.Set;
 
 import static org.apache.zookeeper.Watcher.Event.EventType.NodeChildrenChanged;
 import static org.apache.zookeeper.Watcher.Event.EventType.NodeDataChanged;
-import static org.lilyproject.tenant.model.api.RepositoryDefinition.RepositoryLifecycleState;
+import static org.lilyproject.repository.model.api.RepositoryDefinition.RepositoryLifecycleState;
 
 public class RepositoryModelImpl implements RepositoryModel {
     private Map<String, RepositoryDefinition> repos = new HashMap<String, RepositoryDefinition>();
 
     /**
      * Lock to be obtained when changing tenants or when dispatching events. This assures the correct functioning
-     * of methods like {@link #getRepositories(org.lilyproject.tenant.model.api.RepositoryModelListener)}.
+     * of methods like {@link #getRepositories(org.lilyproject.repository.model.api.RepositoryModelListener)}.
      */
     private final Object reposLock = new Object();
 

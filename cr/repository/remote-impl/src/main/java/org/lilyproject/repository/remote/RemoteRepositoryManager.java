@@ -29,7 +29,7 @@ import org.lilyproject.repository.api.TableNotFoundException;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.RepoTableKey;
 import org.lilyproject.repository.impl.TracingRepository;
-import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryModel;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 

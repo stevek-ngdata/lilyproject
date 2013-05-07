@@ -20,7 +20,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.lilyproject.plugin.PluginRegistry;
-import org.lilyproject.tenant.master.RepositoryMasterHook;
+import org.lilyproject.repository.master.RepositoryMasterHook;
 import org.lilyproject.util.repo.RepoAndTableUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;

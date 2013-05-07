@@ -24,7 +24,7 @@ import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.RepoTableKey;
-import org.lilyproject.tenant.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryModel;
 
 public class DecoratingRepositoryManager extends AbstractRepositoryManager {
 

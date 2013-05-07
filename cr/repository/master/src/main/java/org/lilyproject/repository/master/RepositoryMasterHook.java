@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tenant.model.api;
+package org.lilyproject.repository.master;
 
-public class RepositoryExistsException extends Exception {
-    public RepositoryExistsException(String message) {
-        super(message);
-    }
+public interface RepositoryMasterHook {
+    void postCreate(String repositoryName) throws Exception;
+
+    void preDelete(String repositoryName) throws Exception;
 }

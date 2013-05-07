@@ -43,8 +43,8 @@ import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.tenant.model.api.RepositoryDefinition;
-import org.lilyproject.tenant.model.impl.RepositoryModelImpl;
+import org.lilyproject.repository.model.api.RepositoryDefinition;
+import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import static org.junit.Assert.assertEquals;

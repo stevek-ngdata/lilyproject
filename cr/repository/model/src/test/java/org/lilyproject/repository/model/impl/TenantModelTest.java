@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tenant.model.impl;
+package org.lilyproject.repository.model.impl;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -22,11 +22,11 @@ import org.apache.zookeeper.Watcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.lilyproject.tenant.model.api.RepositoryDefinition;
-import org.lilyproject.tenant.model.api.RepositoryModel;
-import org.lilyproject.tenant.model.api.RepositoryModelEvent;
-import org.lilyproject.tenant.model.api.RepositoryModelEventType;
-import org.lilyproject.tenant.model.api.RepositoryModelListener;
+import org.lilyproject.repository.model.api.RepositoryDefinition;
+import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryModelEvent;
+import org.lilyproject.repository.model.api.RepositoryModelEventType;
+import org.lilyproject.repository.model.api.RepositoryModelListener;
 import org.lilyproject.util.net.NetUtils;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;

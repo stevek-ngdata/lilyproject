@@ -61,7 +61,7 @@
 
   <lily:import-service
       id="repositoryModel"
-      service="org.lilyproject.tenant.model.api.RepositoryModel"/>
+      service="org.lilyproject.repository.model.api.RepositoryModel"/>
 
   <lily:export-service
       ref="repositoryManager"

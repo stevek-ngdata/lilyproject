@@ -16,7 +16,7 @@
 package org.lilyproject.repository.cli;
 
 import org.apache.commons.cli.CommandLine;
-import org.lilyproject.tenant.model.api.RepositoryDefinition;
+import org.lilyproject.repository.model.api.RepositoryDefinition;
 
 import java.util.ArrayList;
 import java.util.Collections;

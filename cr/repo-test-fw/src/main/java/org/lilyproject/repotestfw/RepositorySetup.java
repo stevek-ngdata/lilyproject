@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.lilyproject.tenant.master.RepositoryMaster;
+import org.lilyproject.repository.master.RepositoryMaster;
 import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import com.ngdata.sep.EventListener;
@@ -72,9 +72,9 @@ import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
-import org.lilyproject.tenant.master.RepositoryMasterHook;
-import org.lilyproject.tenant.model.api.RepositoryModel;
-import org.lilyproject.tenant.model.impl.RepositoryModelImpl;
+import org.lilyproject.repository.master.RepositoryMasterHook;
+import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;

@@ -13,8 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.tenant.model.api;
+package org.lilyproject.repository.model.api;
 
-public enum RepositoryModelEventType {
-    REPOSITORY_ADDED, REPOSITORY_REMOVED, REPOSITORY_UPDATED
+public class RepositoryNotFoundException extends Exception {
+    public RepositoryNotFoundException() {
+        super();
+    }
+
+    public RepositoryNotFoundException(String message) {
+        super(message);
+    }
+
+    public RepositoryNotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public RepositoryNotFoundException(Throwable cause) {
+        super(cause);
+    }
 }
