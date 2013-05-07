@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.lilyproject.util.repo.TenantTableUtil;
+
 import com.ngdata.sep.EventListener;
 import com.ngdata.sep.SepModel;
 import com.ngdata.sep.impl.SepConsumer;
@@ -182,7 +184,7 @@ public class RepositorySetup {
         sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
         eventPublisherManager = new LilyEventPublisherManager(hbaseTableFactory);
 
-        tableManager = new TableManagerImpl(/* TODO multitenancy */ "public", hadoopConf, hbaseTableFactory);
+        tableManager = new TableManagerImpl(/* TODO multitenancy */ TenantTableUtil.PUBLIC_TENANT, hadoopConf, hbaseTableFactory);
         if (!tableManager.tableExists(Table.RECORD.name)) {
             tableManager.createTable(Table.RECORD.name);
         }

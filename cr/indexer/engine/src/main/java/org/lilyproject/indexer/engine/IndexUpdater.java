@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.lilyproject.util.repo.TenantTableUtil;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
@@ -478,7 +480,7 @@ public class IndexUpdater extends LilyEventListener {
             payload.setIndexRecordFilterData(filterData);
 
             try {
-                eventPublisherMgr.getEventPublisher(/* TODO multitenancy */ "public",
+                eventPublisherMgr.getEventPublisher(/* TODO multitenancy */ TenantTableUtil.PUBLIC_TENANT,
                         referrer.getTable()).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index

@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.lilyproject.util.repo.TenantTableUtil;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -142,7 +144,7 @@ public class LilyClient implements Closeable, RepositoryManager {
             public TypeManager getInstance(String tenantName, String tableName)
                     throws RepositoryException, InterruptedException {
                 try {
-                    return ((Repository)getPlainRepository("public")).getTypeManager();
+                    return ((Repository)getPlainRepository(TenantTableUtil.PUBLIC_TENANT)).getTypeManager();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 } catch (KeeperException e) {
@@ -241,7 +243,7 @@ public class LilyClient implements Closeable, RepositoryManager {
      */
     public Repository getPlainRepository() throws IOException, NoServersException, InterruptedException,
             KeeperException, RepositoryException {
-        return (Repository)getPlainTable("public", Table.RECORD.name);
+        return (Repository)getPlainTable(TenantTableUtil.PUBLIC_TENANT, Table.RECORD.name);
     }
 
     /**
@@ -297,6 +299,7 @@ public class LilyClient implements Closeable, RepositoryManager {
      *
      * @deprecated prefer to use one of the methods from the {@link RepositoryManager} interface
      */
+    @Deprecated
     public Repository getRepository() {
         try {
             return (Repository)getPublicRepository();

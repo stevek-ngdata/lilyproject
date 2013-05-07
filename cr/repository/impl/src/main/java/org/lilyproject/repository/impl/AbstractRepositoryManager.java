@@ -18,6 +18,8 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.util.Map;
 
+import org.lilyproject.util.repo.TenantTableUtil;
+
 import com.google.common.collect.Maps;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.LRepository;
@@ -71,7 +73,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
 
     @Override
     public LRepository getPublicRepository() throws InterruptedException, RepositoryException {
-        return getRepository("public");
+        return getRepository(TenantTableUtil.PUBLIC_TENANT);
     }
 
     @Override

@@ -25,6 +25,8 @@ import org.lilyproject.util.Version;
 
 import java.util.List;
 
+import org.lilyproject.util.repo.TenantTableUtil;
+
 public abstract class BaseTableCliTool extends BaseZkCliTool {
     private Option tenantOpt;
     protected String tenantName;
@@ -63,7 +65,7 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
         if (cmd.hasOption(tenantOpt.getLongOpt())) {
             tenantName = cmd.getOptionValue(tenantOpt.getLongOpt());
         } else {
-            tenantName = "public";
+            tenantName = TenantTableUtil.PUBLIC_TENANT;
         }
 
         return 0;

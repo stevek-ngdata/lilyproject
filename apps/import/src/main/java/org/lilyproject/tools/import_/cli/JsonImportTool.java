@@ -19,6 +19,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
 
+import org.lilyproject.util.repo.TenantTableUtil;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -107,7 +109,7 @@ public class JsonImportTool extends BaseZkCliTool {
         int workers = OptionUtil.getIntOption(cmd, workersOption, 1);
 
         String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
-        String tenant = OptionUtil.getStringOption(cmd, tenantOption, "public");
+        String tenant = OptionUtil.getStringOption(cmd, tenantOption, TenantTableUtil.PUBLIC_TENANT);
 
         if (cmd.getArgList().size() < 1) {
             System.out.println("No import file specified!");

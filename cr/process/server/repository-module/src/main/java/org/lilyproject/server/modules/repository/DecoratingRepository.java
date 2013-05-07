@@ -23,6 +23,8 @@ import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 import java.io.IOException;
 
+import org.lilyproject.util.repo.TenantTableUtil;
+
 /**
  * A Repository which calls back to the DecoratingRepositoryManager when it needs repository objects,
  * so that these are also decorated, and managed from the same place (in the same cache).
@@ -44,6 +46,6 @@ public class DecoratingRepository extends BaseRepositoryDecorator {
 
     @Override
     public LTable getDefaultTable() throws InterruptedException, RepositoryException {
-        return decoratingRepositoryManager.getRepository("public", LilyHBaseSchema.Table.RECORD.name);
+        return decoratingRepositoryManager.getRepository(TenantTableUtil.PUBLIC_TENANT, LilyHBaseSchema.Table.RECORD.name);
     }
 }

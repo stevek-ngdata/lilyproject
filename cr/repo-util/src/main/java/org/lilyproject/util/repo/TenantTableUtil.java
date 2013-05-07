@@ -79,7 +79,7 @@ public class TenantTableUtil {
     public static String[] getTenantAndTable(String hbaseTableName) {
         int pos = hbaseTableName.indexOf(TENANT_TABLE_SEPARATOR);
         if (pos == -1) {
-            return new String[] { "public", hbaseTableName };
+            return new String[] { PUBLIC_TENANT, hbaseTableName };
         } else {
             String tenant = hbaseTableName.substring(0, pos);
             String table = hbaseTableName.substring(pos + TENANT_TABLE_SEPARATOR.length());
