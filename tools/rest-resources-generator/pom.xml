@@ -18,7 +18,7 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>lily-tenant-table-rest-resources-generator</artifactId>
+  <artifactId>lily-rest-resources-generator</artifactId>
   <version>2.2-SNAPSHOT</version>
   <name>Lily: Java Annotation Processor to generate REST resource classes</name>
   <packaging>jar</packaging>
