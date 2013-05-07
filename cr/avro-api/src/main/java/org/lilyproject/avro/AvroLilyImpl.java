@@ -57,9 +57,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer create(ByteBuffer record, String tenant, String tableName) throws AvroRepositoryException, AvroInterruptedException {
+    public ByteBuffer create(ByteBuffer record, String repositoryName, String tableName)
+            throws AvroRepositoryException, AvroInterruptedException {
         try {
-            LRepository repository = repositoryManager.getRepository(tenant);
+            LRepository repository = repositoryManager.getRepository(repositoryName);
             LTable table = repository.getTable(tableName);
             return converter.convert(table.create(converter.convertRecord(record, repository)), repository);
         } catch (RepositoryException e) {
@@ -70,10 +71,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer createOrUpdate(ByteBuffer record, String tenant, String tableName, boolean useLatestRecordType)
+    public ByteBuffer createOrUpdate(ByteBuffer record, String repositoryName, String tableName, boolean useLatestRecordType)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
-            LRepository repository = repositoryManager.getRepository(tenant);
+            LRepository repository = repositoryManager.getRepository(repositoryName);
             LTable table = repository.getTable(tableName);
             return converter.convert(
                     table.createOrUpdate(converter.convertRecord(record, repository), useLatestRecordType), repository);
@@ -85,10 +86,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer delete(ByteBuffer recordId, String tenant, String tableName, List<AvroMutationCondition> conditions,
+    public ByteBuffer delete(ByteBuffer recordId, String repositoryName, String tableName, List<AvroMutationCondition> conditions,
             Map<String,String> attributes) throws AvroRepositoryException, AvroInterruptedException {
         try {
-            LRepository repository = repositoryManager.getRepository(tenant);
+            LRepository repository = repositoryManager.getRepository(repositoryName);
             LTable table = repository.getTable(tableName);
             RecordId decodedRecordId = converter.convertAvroRecordId(recordId, repository);
             Record record = null;
@@ -112,10 +113,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer update(ByteBuffer record, String tenant, String tableName, boolean updateVersion,
+    public ByteBuffer update(ByteBuffer record, String repositoryName, String tableName, boolean updateVersion,
             boolean useLatestRecordType, List<AvroMutationCondition> conditions) throws AvroRemoteException {
         try {
-            LRepository repository = repositoryManager.getRepository(tenant);
+            LRepository repository = repositoryManager.getRepository(repositoryName);
             LTable table = repository.getTable(tableName);
             return converter.convert(table.update(converter.convertRecord(record, repository), updateVersion,
                     useLatestRecordType, converter.convertFromAvro(conditions, repository)), repository);
@@ -325,9 +326,9 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public List<String> getVariants(ByteBuffer recordId, String tenant, String tableName) throws AvroRepositoryException, AvroInterruptedException {
+    public List<String> getVariants(ByteBuffer recordId, String repositoryName, String tableName) throws AvroRepositoryException, AvroInterruptedException {
         try {
-            LRepository repository = repositoryManager.getDefaultRepository();
+            LRepository repository = repositoryManager.getRepository(repositoryName);
             LTable table = repository.getTable(tableName);
             return converter.convert(table.getVariants(converter.convertAvroRecordId(recordId, repository)));
         } catch (RepositoryException e) {
@@ -385,10 +386,11 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public Object index(String tenant, String table, ByteBuffer recordId) throws AvroInterruptedException, AvroIndexerException {
+    public Object index(String repositoryName, String table, ByteBuffer recordId)
+            throws AvroInterruptedException, AvroIndexerException {
         try {
-            // TODO multitenancy
-            LRepository repository = repositoryManager.getRepository(tenant);
+            // TODO multiple repositories
+            LRepository repository = repositoryManager.getRepository(repositoryName);
             indexer.index(table, converter.convertAvroRecordId(recordId, repository));
             return null;
         } catch (InterruptedException e) {
@@ -401,11 +403,11 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public Object indexOn(String tenant, String table, ByteBuffer recordId, List<String> indexes)
+    public Object indexOn(String repositoryName, String table, ByteBuffer recordId, List<String> indexes)
             throws AvroInterruptedException, AvroIndexerException {
         try {
-            // TODO multitenancy
-            LRepository repository = repositoryManager.getRepository(tenant);
+            // TODO multiple repositories
+            LRepository repository = repositoryManager.getRepository(repositoryName);
             indexer.indexOn(table, converter.convertAvroRecordId(recordId, repository), new HashSet<String>(indexes));
             return null;
         } catch (IndexerException e) {
@@ -434,10 +436,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public Object dropTable(String tenant, String name)
+    public Object dropTable(String repositoryName, String name)
             throws AvroInterruptedException, AvroIOException, AvroRepositoryException {
         try {
-            TableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
+            TableManager tableMgr = repositoryManager.getRepository(repositoryName).getTableManager();
             tableMgr.dropTable(name);
             return null;
         } catch (InterruptedException e) {
@@ -450,10 +452,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public List<String> getTables(String tenant)
+    public List<String> getTables(String repositoryName)
             throws AvroInterruptedException, AvroIOException, AvroRepositoryException {
         try {
-            TableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
+            TableManager tableMgr = repositoryManager.getRepository(repositoryName).getTableManager();
             List<String> tables = new ArrayList<String>();
             for (RepositoryTable table : tableMgr.getTables()) {
                 tables.add(table.getName());
@@ -469,10 +471,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public boolean tableExists(String tenant, String name)
+    public boolean tableExists(String repositoryName, String name)
             throws AvroInterruptedException, AvroIOException, AvroRepositoryException {
         try {
-            TableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
+            TableManager tableMgr = repositoryManager.getRepository(repositoryName).getTableManager();
             return tableMgr.tableExists(name);
         } catch (InterruptedException e) {
             throw converter.convert(e);

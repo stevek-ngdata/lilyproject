@@ -49,6 +49,7 @@ import org.lilyproject.util.test.TestHomeUtil;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.lilyproject.repository.model.api.RepositoryDefinition.RepositoryLifecycleState;
 
 public class MapReduceTest {
     private static LilyProxy lilyProxy;
@@ -145,7 +146,7 @@ public class MapReduceTest {
         RepositoryManager repoMgr = lilyProxy.getLilyServerProxy().getClient();
 
         //
-        // Create some content in the default table of the public tenant
+        // Create some content in the default table of the default repository
         //
         LRepository repository = repoMgr.getDefaultRepository();
         TypeManager typeManager = repository.getTypeManager();
@@ -169,13 +170,13 @@ public class MapReduceTest {
         }
 
         //
-        // Also create some content in another tenant with two tables
+        // Also create some content in another repository with two tables
         //
-        RepositoryModelImpl tenantModel = new RepositoryModelImpl(lilyProxy.getLilyServerProxy().getZooKeeper());
-        String repositoryName = "othertenant";
-        tenantModel.create(repositoryName);
-        assertTrue(tenantModel.waitUntilRepositoryInState(repositoryName, RepositoryDefinition.RepositoryLifecycleState.ACTIVE, 60000L));
-        tenantModel.close();
+        RepositoryModelImpl repositoryModel = new RepositoryModelImpl(lilyProxy.getLilyServerProxy().getZooKeeper());
+        String repositoryName = "otherrepo";
+        repositoryModel.create(repositoryName);
+        assertTrue(repositoryModel.waitUntilRepositoryInState(repositoryName, RepositoryLifecycleState.ACTIVE, 60000L));
+        repositoryModel.close();
 
         LRepository repository2 = repoMgr.getRepository(repositoryName);
         repository2.getTableManager().createTable("foobar");
@@ -199,7 +200,7 @@ public class MapReduceTest {
         }
 
         //
-        // Launch MapReduce job on public tenant
+        // Launch MapReduce job on default repository
         //
         {
             Configuration config = HBaseConfiguration.create();
@@ -229,7 +230,7 @@ public class MapReduceTest {
         }
 
         //
-        // Launch a job with a custom scan on the public tenant
+        // Launch a job with a custom scan on the default repository
         //
         {
             Configuration config = HBaseConfiguration.create();
@@ -271,7 +272,7 @@ public class MapReduceTest {
         }
 
         //
-        // Launch MapReduce job on the custom tenant - over all tables
+        // Launch MapReduce job on the custom repository - over all tables
         //
         {
             Configuration config = HBaseConfiguration.create();
@@ -300,7 +301,7 @@ public class MapReduceTest {
         }
 
         //
-        // Launch MapReduce job on the custom tenant - over one specific table
+        // Launch MapReduce job on the custom repository - over one specific table
         //
         {
             Configuration config = HBaseConfiguration.create();

@@ -18,11 +18,12 @@ package org.lilyproject.repository.model.api;
 import com.google.common.base.Preconditions;
 
 /**
- * Definition of a tenant in the context of multi-tenancy.
+ * Definition of a repository.
  *
- * <p>Lily supports multi-tenancy, whereby each tenant has its own Repository containing its own tables.</p>
+ * <p>Lily supports having multiple named repositories, whereby each repository has its own set of
+ * namespaced tables.</p>
  *
- * <p>Tenants are managed through {@link RepositoryModel}.</p>
+ * <p>Repositories are managed through {@link RepositoryModel}.</p>
  */
 public class RepositoryDefinition {
     private String name;

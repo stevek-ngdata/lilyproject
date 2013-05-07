@@ -20,8 +20,8 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-tenant-module</artifactId>
-  <name>Lily: Tenant Module</name>
+  <artifactId>lily-repository-master-module</artifactId>
+  <name>Lily: Repository Master Module</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>

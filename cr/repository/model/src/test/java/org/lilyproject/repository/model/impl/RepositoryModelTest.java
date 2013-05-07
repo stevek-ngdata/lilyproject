@@ -43,7 +43,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class TenantModelTest {
+public class RepositoryModelTest {
     private MiniZooKeeperCluster zkCluster;
     private File zkDir;
     private int zkClientPort;
@@ -52,7 +52,7 @@ public class TenantModelTest {
 
     @Before
     public void setUpBeforeClass() throws Exception {
-        zkDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "lily.tenantmodeltest");
+        zkDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "lily.repositorymodeltest");
         zkClientPort = NetUtils.getFreePort();
 
         zkCluster = new MiniZooKeeperCluster();
@@ -80,38 +80,38 @@ public class TenantModelTest {
     }
 
     @Test
-    public void testTenants() throws Exception {
+    public void testRepositories() throws Exception {
         TestListener listener = new TestListener();
         repositoryModel.registerListener(listener);
 
-        repositoryModel.create("tenant1");
+        repositoryModel.create("repo1");
         listener.waitForEvents(1);
-        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_ADDED, "tenant1"));
+        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_ADDED, "repo1"));
 
-        assertFalse(repositoryModel.repositoryExistsAndActive("tenant1"));
+        assertFalse(repositoryModel.repositoryExistsAndActive("repo1"));
 
-        assertEquals(2, repositoryModel.getRepositories().size()); // 2 because the public tenant is also there
+        assertEquals(2, repositoryModel.getRepositories().size()); // 2 because the default repository is also there
 
-        repositoryModel.updateRepository(new RepositoryDefinition("tenant1", RepositoryDefinition.RepositoryLifecycleState.ACTIVE));
+        repositoryModel.updateRepository(new RepositoryDefinition("repo1", RepositoryDefinition.RepositoryLifecycleState.ACTIVE));
         listener.waitForEvents(1);
-        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_UPDATED, "tenant1"));
+        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_UPDATED, "repo1"));
 
-        assertTrue(repositoryModel.repositoryExistsAndActive("tenant1"));
+        assertTrue(repositoryModel.repositoryExistsAndActive("repo1"));
 
-        repositoryModel.delete("tenant1");
+        repositoryModel.delete("repo1");
         listener.waitForEvents(1);
-        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_UPDATED, "tenant1"));
+        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_UPDATED, "repo1"));
 
         assertEquals(2, repositoryModel.getRepositories().size());
-        assertEquals(RepositoryDefinition.RepositoryLifecycleState.DELETE_REQUESTED, repositoryModel.getRepository("tenant1").getLifecycleState());
+        assertEquals(RepositoryDefinition.RepositoryLifecycleState.DELETE_REQUESTED, repositoryModel.getRepository("repo1").getLifecycleState());
 
-        repositoryModel.deleteDirect("tenant1");
+        repositoryModel.deleteDirect("repo1");
         assertEquals(1, repositoryModel.getRepositories().size());
         listener.waitForEvents(1);
-        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_REMOVED, "tenant1"));
+        listener.verifyEvents(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_REMOVED, "repo1"));
 
         repositoryModel.unregisterListener(listener);
-        repositoryModel.create("tenant1");
+        repositoryModel.create("repo1");
         Thread.sleep(20); // this is not very robust, but if the code would be wrong this will fail most of the time
         listener.waitForEvents(0);
     }

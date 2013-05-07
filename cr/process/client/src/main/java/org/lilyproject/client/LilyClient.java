@@ -144,7 +144,7 @@ public class LilyClient implements Closeable, RepositoryManager {
             public TypeManager getInstance(String repositoryName, String tableName)
                     throws RepositoryException, InterruptedException {
                 try {
-                    return ((Repository)getPlainRepository(RepoAndTableUtil.DEFAULT_TENANT)).getTypeManager();
+                    return ((Repository)getPlainRepository(RepoAndTableUtil.DEFAULT_REPOSITORY)).getTypeManager();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 } catch (KeeperException e) {
@@ -243,7 +243,7 @@ public class LilyClient implements Closeable, RepositoryManager {
      */
     public Repository getPlainRepository() throws IOException, NoServersException, InterruptedException,
             KeeperException, RepositoryException {
-        return (Repository)getPlainTable(RepoAndTableUtil.DEFAULT_TENANT, Table.RECORD.name);
+        return (Repository)getPlainTable(RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name);
     }
 
     /**

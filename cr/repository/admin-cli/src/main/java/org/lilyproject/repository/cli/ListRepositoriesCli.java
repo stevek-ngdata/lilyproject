@@ -41,7 +41,7 @@ public class ListRepositoriesCli extends BaseRepositoriesAdminCli {
         }
 
         List<RepositoryDefinition> repositories = new ArrayList<RepositoryDefinition>(repositoryModel.getRepositories());
-        Collections.sort(repositories, new TenantComparator());
+        Collections.sort(repositories, new RepositoryDefinitionComparator());
 
         System.out.println("Repositories:");
         for (RepositoryDefinition repository : repositories) {
@@ -51,7 +51,7 @@ public class ListRepositoriesCli extends BaseRepositoriesAdminCli {
         return 0;
     }
 
-    private static class TenantComparator implements Comparator<RepositoryDefinition> {
+    private static class RepositoryDefinitionComparator implements Comparator<RepositoryDefinition> {
         @Override
         public int compare(RepositoryDefinition o1, RepositoryDefinition o2) {
             return o1.getName().compareTo(o2.getName());

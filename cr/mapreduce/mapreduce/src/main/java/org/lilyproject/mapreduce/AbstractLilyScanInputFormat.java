@@ -70,9 +70,9 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
             log.warn("ZooKeeper connection string not specified, will use 'localhost'.");
             zkConnectString = "localhost";
         }
-        repositoryName = conf.get(LilyMapReduceUtil.TENANT);
+        repositoryName = conf.get(LilyMapReduceUtil.REPOSITORY_NAME);
         if (repositoryName == null) {
-            throw new RuntimeException("Missing " + LilyMapReduceUtil.TENANT + " in job conf.");
+            throw new RuntimeException("Missing " + LilyMapReduceUtil.REPOSITORY_NAME + " in job conf.");
         }
     }
 
@@ -151,7 +151,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
      */
     private List<String> getRepositoryHBaseTableNames(TableManager tableManager, Configuration conf)
             throws InterruptedException, IOException {
-        // key is lily table name, value is hbase table name (= the name including the tenant prefix)
+        // key is lily table name, value is hbase table name (= the name including the repository name prefix)
         Map<String, String> allRepoTables = Maps.newHashMap();
         for (RepositoryTable repoTable : tableManager.getTables()) {
             allRepoTables.put(repoTable.getName(), repoTable.getStorageName());

@@ -52,7 +52,7 @@ public class RepositoryModelImpl implements RepositoryModel {
     private Map<String, RepositoryDefinition> repos = new HashMap<String, RepositoryDefinition>();
 
     /**
-     * Lock to be obtained when changing tenants or when dispatching events. This assures the correct functioning
+     * Lock to be obtained when changing repos or when dispatching events. This assures the correct functioning
      * of methods like {@link #getRepositories(org.lilyproject.repository.model.api.RepositoryModelListener)}.
      */
     private final Object reposLock = new Object();
@@ -204,7 +204,7 @@ public class RepositoryModelImpl implements RepositoryModel {
     }
 
     @Override
-    public boolean tenantActive(String repositoryName) throws RepositoryNotFoundException {
+    public boolean repositoryActive(String repositoryName) throws RepositoryNotFoundException {
         RepositoryDefinition repoDef = repos.get(repositoryName);
         if (repoDef == null) {
             throw new RepositoryNotFoundException("No repository named " + repositoryName);
@@ -251,13 +251,13 @@ public class RepositoryModelImpl implements RepositoryModel {
             Map<String, RepositoryDefinition> newRepos = loadRepositories(true);
 
             // Find out changes in repositories
-            Set<String> removedTenants = Sets.difference(repos.keySet(), newRepos.keySet());
-            for (String id : removedTenants) {
+            Set<String> removedRepos = Sets.difference(repos.keySet(), newRepos.keySet());
+            for (String id : removedRepos) {
                 events.add(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_REMOVED, id));
             }
 
-            Set<String> addedTenants = Sets.difference(newRepos.keySet(), repos.keySet());
-            for (String id : addedTenants) {
+            Set<String> addedRepos = Sets.difference(newRepos.keySet(), repos.keySet());
+            for (String id : addedRepos) {
                 events.add(new RepositoryModelEvent(RepositoryModelEventType.REPOSITORY_ADDED, id));
             }
 
@@ -283,8 +283,8 @@ public class RepositoryModelImpl implements RepositoryModel {
     }
 
     private RepositoryDefinition loadRepository(String name, boolean watch) throws KeeperException, InterruptedException {
-        byte[] tenantJson = zk.getData(REPOSITORY_COLLECTION_PATH + "/" + name, watch ? zkWatcher : null, new Stat());
-        return RepositoryDefinitionJsonSerDeser.INSTANCE.fromJsonBytes(name, tenantJson);
+        byte[] repoJson = zk.getData(REPOSITORY_COLLECTION_PATH + "/" + name, watch ? zkWatcher : null, new Stat());
+        return RepositoryDefinitionJsonSerDeser.INSTANCE.fromJsonBytes(name, repoJson);
     }
 
     private void notifyListeners(List<RepositoryModelEvent> events) {

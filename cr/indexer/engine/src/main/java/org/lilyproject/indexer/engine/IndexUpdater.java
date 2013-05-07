@@ -480,7 +480,7 @@ public class IndexUpdater extends LilyEventListener {
             payload.setIndexRecordFilterData(filterData);
 
             try {
-                eventPublisherMgr.getEventPublisher(/* TODO multitenancy */ RepoAndTableUtil.DEFAULT_TENANT,
+                eventPublisherMgr.getEventPublisher(/* TODO multiple repositories */ RepoAndTableUtil.DEFAULT_REPOSITORY,
                         referrer.getTable()).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index

@@ -85,7 +85,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
                     getIntProp("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", null, jobConf);
             zk = ZkUtil.connect(zkConnectString, zkSessionTimeout);
 
-            // TODO multitenancy
+            // TODO multiple repositories
             LRepository repository = lilyClient.getDefaultRepository();
 
             byte[] indexerConfBytes = Base64.decode(jobConf.get("org.lilyproject.indexer.batchbuild.indexerconf"));

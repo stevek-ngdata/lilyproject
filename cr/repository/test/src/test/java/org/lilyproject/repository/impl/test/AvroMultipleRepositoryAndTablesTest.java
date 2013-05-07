@@ -19,7 +19,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.lilyproject.hadooptestfw.TestHelper;
 
-public class AvroTenantTableTest extends AbstractTenantTableTest {
+public class AvroMultipleRepositoryAndTablesTest extends AbstractMultipleRepositoryAndTablesTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();

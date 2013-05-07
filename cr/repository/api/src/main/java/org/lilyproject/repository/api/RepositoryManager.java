@@ -28,7 +28,7 @@ import java.io.Closeable;
  * Since each repository has its own tables (which maps to HBase tables), this feature is suited to have
  * a few big repositories rather than many small repositories.</p>
  *
- * <p>Repositories need to be defined up front through the {@code TenantModel}.</p>
+ * <p>Repositories need to be defined up front through the {@code RepositoryModel}.</p>
  */
 public interface RepositoryManager extends Closeable {
 

@@ -65,7 +65,7 @@ public abstract class BaseTableCliTool extends BaseZkCliTool {
         if (cmd.hasOption(repositoryOpt.getLongOpt())) {
             repositoryName = cmd.getOptionValue(repositoryOpt.getLongOpt());
         } else {
-            repositoryName = RepoAndTableUtil.DEFAULT_TENANT;
+            repositoryName = RepoAndTableUtil.DEFAULT_REPOSITORY;
         }
 
         return 0;

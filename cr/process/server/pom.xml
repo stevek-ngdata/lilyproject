@@ -40,7 +40,7 @@
     <module>rest-module</module>
     <module>webui-module</module>
     <module>indexer-integration-module</module>
-    <module>tenant-module</module>
+    <module>repository-master-module</module>
   </modules>
 
   <build>

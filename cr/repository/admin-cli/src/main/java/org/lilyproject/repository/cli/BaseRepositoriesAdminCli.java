@@ -52,7 +52,7 @@ public abstract class BaseRepositoriesAdminCli extends BaseZkCliTool {
 
     @Override
     protected String getVersion() {
-        return Version.readVersion("org.lilyproject", "lily-tenant-admin-cli");
+        return Version.readVersion("org.lilyproject", "lily-repository-admin-cli");
     }
 
     @Override

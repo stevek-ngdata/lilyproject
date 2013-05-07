@@ -36,7 +36,7 @@ public class RepositoryDefinitionJsonSerDeser {
         try {
             node = (ObjectNode)JsonFormat.deserialize(new ByteArrayInputStream(json));
         } catch (IOException e) {
-            throw new RuntimeException("Error parsing tenant definition JSON.", e);
+            throw new RuntimeException("Error parsing repository definition JSON.", e);
         }
         return fromJson(name, node);
     }
@@ -56,7 +56,7 @@ public class RepositoryDefinitionJsonSerDeser {
         try {
             return JsonFormat.serializeAsBytes(toJson(repositoryDefinition));
         } catch (IOException e) {
-            throw new RuntimeException("Error serializing tenant definition to JSON.", e);
+            throw new RuntimeException("Error serializing repository definition to JSON.", e);
         }
     }
 }

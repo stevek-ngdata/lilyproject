@@ -51,7 +51,7 @@
       id="pluginRegistry"
       service="org.lilyproject.plugin.PluginRegistry"/>
 
-  <bean id="tenantMaster" class="org.lilyproject.repository.master.RepositoryMaster">
+  <bean id="repositoryMaster" class="org.lilyproject.repository.master.RepositoryMaster">
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="repositoryModel"/>
     <constructor-arg ref="lilyInfo"/>

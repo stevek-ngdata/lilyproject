@@ -36,7 +36,7 @@ public class RemoteTableManager implements TableManager {
     }
 
     public void close() throws IOException {
-        // TODO multitenancy study the lifecycle
+        // TODO multiple repositories study the lifecycle
         Closer.close(client);
     }
 

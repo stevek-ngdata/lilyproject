@@ -26,8 +26,6 @@ package org.lilyproject.repository.api;
 /**
  * A repository is a set of tables, tables contain records.
  *
- * <p>A Repository is scoped to (= is specific for) a certain tenant.</p>
- *
  * <p>An LRepository instance can be obtained from {@link RepositoryManager}.</p>
  */
 public interface LRepository {

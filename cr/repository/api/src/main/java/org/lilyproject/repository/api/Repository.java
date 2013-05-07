@@ -33,7 +33,7 @@ import java.io.IOException;
  * has been split out over 2 new interfaces: {@link LRepository} and {@link LTable}, from which Repository extends.
  * <b style='color:red'>New code should be written against either {@link LRepository} or {@link LTable}.</b></p>
  *
- * <p>A Repository is tenant-specific and table-specific. It is obtained by:</p>
+ * <p>A Repository object represents one specific table within one specific named repository. It is obtained by:</p>
  *
  * <li>calling on {@link RepositoryManager#getRepository(String)} or related methods</li>
  * <li>casting the result of calling {@link RepositoryManager#getTable(String)} or {@link Repository#getTable(String)}

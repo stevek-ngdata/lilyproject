@@ -38,7 +38,7 @@ public class JsonImportTool extends BaseZkCliTool {
     private Option workersOption;
     private Option quietOption;
     private Option tableOption;
-    private Option tenantOption;
+    private Option repositoryOption;
     private LilyClient lilyClient;
 
     @Override
@@ -88,13 +88,13 @@ public class JsonImportTool extends BaseZkCliTool {
                 .create();
         options.add(tableOption);
 
-        tenantOption = OptionBuilder
-                .withArgName("tenant")
+        repositoryOption = OptionBuilder
+                .withArgName("repository")
                 .hasArg()
-                .withDescription("Repository tenant, defaults to public tenant")
-                .withLongOpt("tenant")
+                .withDescription("Repository name, if not specified default repository is used")
+                .withLongOpt("repository")
                 .create();
-        options.add(tenantOption);
+        options.add(repositoryOption);
 
         return options;
     }
@@ -109,7 +109,7 @@ public class JsonImportTool extends BaseZkCliTool {
         int workers = OptionUtil.getIntOption(cmd, workersOption, 1);
 
         String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
-        String tenant = OptionUtil.getStringOption(cmd, tenantOption, RepoAndTableUtil.DEFAULT_TENANT);
+        String tenant = OptionUtil.getStringOption(cmd, repositoryOption, RepoAndTableUtil.DEFAULT_REPOSITORY);
 
         if (cmd.getArgList().size() < 1) {
             System.out.println("No import file specified!");

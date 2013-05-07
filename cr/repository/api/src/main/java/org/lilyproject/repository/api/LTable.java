@@ -549,7 +549,7 @@ public interface LTable {
     /**
      * Returns the name of the underlying HBase table.
      *
-     * <p>This table name will be different from {@link #getTableName()} in case of the non-public tenant.</p>
+     * <p>This table name will be different from {@link #getTableName()} in case of the non-default repository.</p>
      */
     String getStorageTableName();
 

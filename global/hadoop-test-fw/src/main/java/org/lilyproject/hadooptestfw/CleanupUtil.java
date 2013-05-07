@@ -183,7 +183,7 @@ public class CleanupUtil {
 
                 if (Bytes.equals(table.getValue(LilyHBaseSchema.TABLE_TYPE_PROPERTY), LilyHBaseSchema.TABLE_TYPE_RECORD)
                         && !table.getNameAsString().equals(LilyHBaseSchema.Table.RECORD.name)) {
-                    // Drop all record tables that are not the default table of the public tenant
+                    // Drop all record tables that are not the default table of the default repository
                     admin.disableTable(table.getName());
                     admin.deleteTable(table.getName());
                 } else {

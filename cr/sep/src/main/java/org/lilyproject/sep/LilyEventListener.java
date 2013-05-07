@@ -23,7 +23,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.TenantUnavailableException;
+import org.lilyproject.repository.api.RepositoryUnavailableException;
 import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ public abstract class LilyEventListener implements EventListener {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
-            } catch (TenantUnavailableException e) {
+            } catch (RepositoryUnavailableException e) {
                 log.warn(String.format("Skipping an event because tenant is not available. Tenant: %s, table: %s, row: %s",
                         tenantAndTable[0], tenantAndTable[1], Bytes.toStringBinary(event.getRow())));
             } catch (RepositoryException e) {

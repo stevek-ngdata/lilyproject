@@ -32,7 +32,7 @@ public interface RepositoryModel {
      * Soft-delete a repository.
      *
      * <p>This doesn't delete the repository but puts it in the lifecycle state DELETE_REQUESTED.
-     * This allows cleanup operations to happen, once these are done the tenant will be
+     * This allows cleanup operations to happen, once these are done the repository will be
      * fully deleted.</p>
      */
     void delete(String repositoryName) throws InterruptedException, RepositoryModelException;
@@ -79,7 +79,7 @@ public interface RepositoryModel {
      * <p>The implementation of this method should be fast and suited for very-frequent calling,
      * i.e. it should not perform any IO.</p>
      */
-    boolean tenantActive(String repositoryName) throws RepositoryNotFoundException;
+    boolean repositoryActive(String repositoryName) throws RepositoryNotFoundException;
 
     /**
      * Waits until a repository is in the given state. If the repository would not yet be known, this method will wait

@@ -29,7 +29,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 /**
- * A RepositoryMasterHook responsible for performing core repository actions when a tenant is added or removed.
+ * A RepositoryMasterHook responsible for performing core repository actions when a repository is added or removed.
  */
 public class CoreRepositoryMasterHook implements RepositoryMasterHook {
     private HBaseTableFactory tableFactory;

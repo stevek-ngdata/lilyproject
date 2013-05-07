@@ -18,7 +18,7 @@ package org.lilyproject.util.repo;
 import java.util.regex.Pattern;
 
 public class RepoAndTableUtil {
-    public static final String DEFAULT_TENANT = "default";
+    public static final String DEFAULT_REPOSITORY = "default";
 
     /**
      * Separator between repository name and table name in the HBase table name.
@@ -35,7 +35,7 @@ public class RepoAndTableUtil {
      * i.e. this does not filter out any other tables that might exist in HBase.
      */
     public static final boolean belongsToRepository(String hbaseTableName, String repositoryName) {
-        if (repositoryName.equals(DEFAULT_TENANT)) {
+        if (repositoryName.equals(DEFAULT_REPOSITORY)) {
             return !hbaseTableName.contains(REPOSITORY_TABLE_SEPARATOR);
         } else {
             return hbaseTableName.startsWith(repositoryName + REPOSITORY_TABLE_SEPARATOR);
@@ -43,7 +43,7 @@ public class RepoAndTableUtil {
     }
 
     public static String getHBaseTableName(String repositoryName, String tableName) {
-        if (repositoryName.equals(DEFAULT_TENANT)) {
+        if (repositoryName.equals(DEFAULT_REPOSITORY)) {
             // Tables within the default repository are not prefixed with the repository name, because of backwards
             // compatibility with the pre-multiple-repositories situation.
             return tableName;
@@ -56,12 +56,12 @@ public class RepoAndTableUtil {
         return VALID_NAME_CHARS.matcher(name).matches() && !name.contains(REPOSITORY_TABLE_SEPARATOR);
     }
 
-    private static boolean isPublicTenant(String name) {
-        return DEFAULT_TENANT.equals(name);
+    private static boolean isDefaultRepository(String name) {
+        return DEFAULT_REPOSITORY.equals(name);
     }
 
     public static String extractLilyTableName(String repositoryName, String hbaseTableName) {
-        if (isPublicTenant(repositoryName)) {
+        if (isDefaultRepository(repositoryName)) {
             return hbaseTableName;
         } else {
             String prefix = repositoryName + REPOSITORY_TABLE_SEPARATOR;
@@ -82,7 +82,7 @@ public class RepoAndTableUtil {
     public static String[] getTenantAndTable(String hbaseTableName) {
         int pos = hbaseTableName.indexOf(REPOSITORY_TABLE_SEPARATOR);
         if (pos == -1) {
-            return new String[] {DEFAULT_TENANT, hbaseTableName };
+            return new String[] {DEFAULT_REPOSITORY, hbaseTableName };
         } else {
             String tenant = hbaseTableName.substring(0, pos);
             String table = hbaseTableName.substring(pos + REPOSITORY_TABLE_SEPARATOR.length());

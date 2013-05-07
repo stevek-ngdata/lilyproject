@@ -18,6 +18,7 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.util.Map;
 
+import org.lilyproject.repository.api.RepositoryUnavailableException;
 import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import com.google.common.collect.Maps;
@@ -28,7 +29,6 @@ import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.TenantUnavailableException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.model.api.RepositoryModel;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -73,7 +73,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
 
     @Override
     public LRepository getDefaultRepository() throws InterruptedException, RepositoryException {
-        return getRepository(RepoAndTableUtil.DEFAULT_TENANT);
+        return getRepository(RepoAndTableUtil.DEFAULT_REPOSITORY);
     }
 
     @Override
@@ -84,7 +84,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     public Repository getRepository(String repositoryName, String tableName)
             throws InterruptedException, RepositoryException {
         if (!repositoryModel.repositoryExistsAndActive(repositoryName)) {
-            throw new TenantUnavailableException("Repository does not exist or is not active: " + repositoryName);
+            throw new RepositoryUnavailableException("Repository does not exist or is not active: " + repositoryName);
         }
         RepoTableKey key = new RepoTableKey(repositoryName, tableName);
         if (!repositoryCache.containsKey(key)) {

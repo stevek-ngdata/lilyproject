@@ -41,25 +41,25 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Tests related to tenants and tables.
+ * Tests related to multiple repositories and tables.
  */
-public abstract class AbstractTenantTableTest {
+public abstract class AbstractMultipleRepositoryAndTablesTest {
     protected static final RepositorySetup repoSetup = new RepositorySetup();
     protected static RepositoryManager repositoryManager;
 
     /**
-     * Trying to get a Repository for non-existing tenant should fail.
+     * Trying to get a non-existing repository should fail.
      */
     @Test(expected = RepositoryException.class)
-    public void testTenantRegistrationIsRequired() throws Exception {
-        repositoryManager.getRepository("funkyTenant");
+    public void testRepositoryRegistrationIsRequired() throws Exception {
+        repositoryManager.getRepository("funkyRepo");
     }
 
     /**
-     * The public tenant should exist without need to create it.
+     * The default repository should exist without need to create it.
      */
     @Test
-    public void testPublicTenantExists() throws Exception {
+    public void testDefaultRepositoryExists() throws Exception {
         repositoryManager.getDefaultRepository();
     }
 
@@ -76,18 +76,18 @@ public abstract class AbstractTenantTableTest {
      * Trying to get a non-existing table should fail.
      */
     @Test(expected = RepositoryExistsException.class)
-    public void testCreateTenantTwice() throws Exception {
+    public void testCreateRepositoryTwice() throws Exception {
         RepositoryModel repositoryModel = repoSetup.getRepositoryModel();
-        repositoryModel.create("sometenant");
-        repositoryModel.create("sometenant");
+        repositoryModel.create("somerepo");
+        repositoryModel.create("somerepo");
     }
 
     /**
-     * Tests that two tenants can have a table with the same name containing records with the
+     * Tests that two repositories can have a table with the same name containing records with the
      * same id's, without conflict.
      */
     @Test
-    public void testTwoTenantsSameTableSameId() throws Exception {
+    public void testTwoRepositoriesSameTableSameId() throws Exception {
         RepositoryModel repositoryModel = repoSetup.getRepositoryModel();
         repositoryModel.create("company1");
         repositoryModel.create("company2");
@@ -101,24 +101,24 @@ public abstract class AbstractTenantTableTest {
                 .field(fieldType1.getId(), false)
                 .create();
 
-        List<String> tenants = Lists.newArrayList("company1", "company2", "default");
+        List<String> repositories = Lists.newArrayList("company1", "company2", "default");
 
-        for (String tenant : tenants) {
-            LRepository repo = repositoryManager.getRepository(tenant);
+        for (String repoName : repositories) {
+            LRepository repo = repositoryManager.getRepository(repoName);
             repo.getTableManager().createTable("mytable");
             LTable table = repo.getTable("mytable");
             table.recordBuilder()
                     .id("id1")
                     .recordType(recordType1.getName())
-                    .field(fieldType1.getName(), tenant + "-value1")
+                    .field(fieldType1.getName(), repoName + "-value1")
                     .create();
         }
 
-        for (String tenant : tenants) {
-            LRepository repo = repositoryManager.getRepository(tenant);
+        for (String repoName : repositories) {
+            LRepository repo = repositoryManager.getRepository(repoName);
             IdGenerator idGenerator = repo.getIdGenerator();
             LTable table = repo.getTable("mytable");
-            assertEquals(tenant + "-value1", table.read(idGenerator.newRecordId("id1")).getField(fieldType1.getName()));
+            assertEquals(repoName + "-value1", table.read(idGenerator.newRecordId("id1")).getField(fieldType1.getName()));
         }
     }
 

@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.test;
+package org.lilyproject.repository.api;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.lilyproject.hadooptestfw.TestHelper;
+import java.util.HashMap;
+import java.util.Map;
 
-public class HBaseTenantTableTest extends AbstractTenantTableTest {
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        TestHelper.setupLogging();
-        repoSetup.setupCore();
-        repoSetup.setupRepository();
-        repositoryManager = repoSetup.getRepositoryManager();
+/**
+ * Indicates the repository either does not exist or is in an active state.
+ */
+public class RepositoryUnavailableException extends RepositoryException {
+    public RepositoryUnavailableException(String message) {
+        super(message);
     }
 
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-        repoSetup.stop();
+    public RepositoryUnavailableException(String message, Map<String, String> state) {
+        super(message, state);
+    }
+
+    @Override
+    public Map<String, String> getState() {
+        return new HashMap<String, String>();
     }
 }

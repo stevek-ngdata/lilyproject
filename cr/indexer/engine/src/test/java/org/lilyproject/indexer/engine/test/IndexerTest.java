@@ -3352,7 +3352,7 @@ public class IndexerTest {
     private static class TrackingRepositoryManager implements RepositoryManager {
         private TrackingRepository repository;
 
-        // This is not yet multitenant-ready
+        // This is not yet multirepository-ready
 
         public TrackingRepositoryManager(TrackingRepository repository) {
             this.repository = repository;

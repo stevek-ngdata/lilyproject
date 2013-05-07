@@ -115,7 +115,7 @@ public class TutorialTest {
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
                 new RecordFactoryImpl(), hbaseTableFactory, blobManager, configuration, repositoryModel);
 
-        TableManager repoTableManager = new TableManagerImpl(/* TODO multitenancy */ "default", configuration, hbaseTableFactory);
+        TableManager repoTableManager = new TableManagerImpl(/* TODO multiple repositories */ "default", configuration, hbaseTableFactory);
         if (!repoTableManager.tableExists(Table.RECORD.name)) {
             repoTableManager.createTable(Table.RECORD.name);
         }

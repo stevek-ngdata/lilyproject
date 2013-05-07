@@ -19,7 +19,7 @@ import com.google.common.base.Preconditions;
 import org.lilyproject.util.repo.RepoAndTableUtil;
 
 /**
- * An object that can be used anywhere the combination of tenant and table is needed.
+ * An object that can be used anywhere the combination of repository name and table name is needed.
  *
  */
 public class RepoTableKey {
