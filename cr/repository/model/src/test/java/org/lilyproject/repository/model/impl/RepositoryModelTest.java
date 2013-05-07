@@ -129,10 +129,10 @@ public class RepositoryModelTest {
         TestListener model2Listener = new TestListener();
         assertEquals(1, repositoryModel2.getRepositories(model2Listener).size());
 
-        repositoryModel1.create("tenant1");
-        repositoryModel1.create("tenant2");
-        repositoryModel2.create("tenant3");
-        repositoryModel2.create("tenant4");
+        repositoryModel1.create("repo1");
+        repositoryModel1.create("repo2");
+        repositoryModel2.create("repo3");
+        repositoryModel2.create("repo4");
 
         model2Listener.waitForEvents(4);
         model1Listener.waitForEvents(4);

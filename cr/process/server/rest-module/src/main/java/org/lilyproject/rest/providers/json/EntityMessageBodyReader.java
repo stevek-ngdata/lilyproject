@@ -68,7 +68,7 @@ public class EntityMessageBodyReader extends BaseRepositoryResource implements M
         ObjectNode objectNode = (ObjectNode)node;
 
         try {
-            // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
+            // Multiple repositories: ok to use public repo since only non-repository-specific things are needed
             return EntityRegistry.findReader(type).fromJson(objectNode, null, repositoryMgr.getDefaultRepository(),
                     linkTransformer);
         } catch (JsonFormatException e) {

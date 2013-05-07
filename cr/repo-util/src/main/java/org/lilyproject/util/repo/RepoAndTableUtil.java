@@ -74,19 +74,19 @@ public class RepoAndTableUtil {
     }
 
     /**
-     * Splits an HBase table name into Lily tenant and table names. Assumes the provided HBase table name is a valid
+     * Splits an HBase table name into Lily repository and table names. Assumes the provided HBase table name is a valid
      * Lily record table (should be check on beforehand).
      *
-     * @return an array of size 2: first element is tenant name, second is table name
+     * @return an array of size 2: first element is repository name, second is table name
      */
-    public static String[] getTenantAndTable(String hbaseTableName) {
+    public static String[] getRepositoryAndTable(String hbaseTableName) {
         int pos = hbaseTableName.indexOf(REPOSITORY_TABLE_SEPARATOR);
         if (pos == -1) {
             return new String[] {DEFAULT_REPOSITORY, hbaseTableName };
         } else {
-            String tenant = hbaseTableName.substring(0, pos);
+            String repository = hbaseTableName.substring(0, pos);
             String table = hbaseTableName.substring(pos + REPOSITORY_TABLE_SEPARATOR.length());
-            return new String[] { tenant, table };
+            return new String[] { repository, table };
         }
     }
 }

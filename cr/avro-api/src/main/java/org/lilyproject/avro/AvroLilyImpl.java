@@ -420,10 +420,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public Object createTable(String tenant, AvroTableCreateDescriptor tableCreateDescriptor)
+    public Object createTable(String repository, AvroTableCreateDescriptor tableCreateDescriptor)
             throws AvroInterruptedException, AvroIOException, AvroRepositoryException {
         try {
-            TableManager tableMgr = repositoryManager.getRepository(tenant).getTableManager();
+            TableManager tableMgr = repositoryManager.getRepository(repository).getTableManager();
             tableMgr.createTable(converter.convert(tableCreateDescriptor));
             return null;
         } catch (InterruptedException e) {

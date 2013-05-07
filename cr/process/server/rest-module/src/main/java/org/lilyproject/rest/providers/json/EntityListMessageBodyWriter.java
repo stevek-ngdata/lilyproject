@@ -78,7 +78,7 @@ public class EntityListMessageBodyWriter extends BaseRepositoryResource implemen
 
             EntityWriter writer = getEntityWriter(genericType);
             for (Object entity : entityList.getEntities()) {
-                // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
+                // Multiple repositories: ok to use public repo since only non-repository-specific things are needed
                 resultsNode.add(writer.toJson(entity, entityList.getWriteOptions(),
                         repositoryMgr.getDefaultRepository()));
             }

@@ -50,20 +50,21 @@ public abstract class LilyEventListener implements EventListener {
                 continue;
             }
 
-            String[] tenantAndTable = RepoAndTableUtil.getTenantAndTable(Bytes.toString(event.getTable()));
+            String[] repoAndTable = RepoAndTableUtil.getRepositoryAndTable(Bytes.toString(event.getTable()));
             IdGenerator idGenerator = null;
             try {
-                idGenerator = repositoryManager.getRepository(tenantAndTable[0]).getIdGenerator();
+                idGenerator = repositoryManager.getRepository(repoAndTable[0]).getIdGenerator();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             } catch (RepositoryUnavailableException e) {
-                log.warn(String.format("Skipping an event because tenant is not available. Tenant: %s, table: %s, row: %s",
-                        tenantAndTable[0], tenantAndTable[1], Bytes.toStringBinary(event.getRow())));
+                log.warn(String.format("Skipping an event because repository is not available. "
+                        + "Repository: %s, table: %s, row: %s", repoAndTable[0], repoAndTable[1],
+                        Bytes.toStringBinary(event.getRow())));
             } catch (RepositoryException e) {
                 throw new RuntimeException(e);
             }
-            lilyEvents.add(new LilySepEvent(idGenerator, tenantAndTable[0], tenantAndTable[1], event.getTable(),
+            lilyEvents.add(new LilySepEvent(idGenerator, repoAndTable[0], repoAndTable[1], event.getTable(),
                     event.getRow(), event.getKeyValues(), event.getPayload()));
         }
         processLilyEvents(lilyEvents);

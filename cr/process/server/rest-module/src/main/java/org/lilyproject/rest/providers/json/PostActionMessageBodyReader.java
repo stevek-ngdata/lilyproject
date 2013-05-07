@@ -107,7 +107,7 @@ public class PostActionMessageBodyReader extends BaseRepositoryResource implemen
             if (!action.equals("delete")) {
                 EntityRegistry.RegistryEntry registryEntry = EntityRegistry.findReaderRegistryEntry((Class)entityType);
                 ObjectNode objectNode = JsonUtil.getObject(postNode, registryEntry.getPropertyName());
-                // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
+                // Multiple repositories: ok to use public repo since only non-repository-specific things are needed
                 entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces,
                     repositoryMgr.getDefaultRepository(), linkTransformer);
             }
@@ -127,7 +127,7 @@ public class PostActionMessageBodyReader extends BaseRepositoryResource implemen
             return null;
         }
 
-        // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
+        // Multiple repositories: ok to use public repo since only non-repository-specific things are needed
         LRepository repository = repositoryMgr.getDefaultRepository();
 
         List<MutationCondition> result = new ArrayList<MutationCondition>();

@@ -117,9 +117,9 @@ public class ScannerCli extends BaseZkCliTool {
 
         repositoryOption = OptionBuilder
                 .hasArg()
-                .withArgName("tenant")
-                .withDescription("Repository tenant (defaults to public)")
-                .withLongOpt("tenant")
+                .withArgName("repository")
+                .withDescription("Repository name (defaults to 'default')")
+                .withLongOpt("repository")
                 .create();
 
         options.add(printOption);
@@ -152,11 +152,11 @@ public class ScannerCli extends BaseZkCliTool {
         String recordTypeFilter = cmd.hasOption(recordTypeOption.getOpt()) ? cmd.getOptionValue(recordTypeOption.getOpt()) : null;
         File configFile = cmd.hasOption(configOption.getLongOpt()) ? new File (cmd.getOptionValue(configOption.getLongOpt())) : null;
         long limit = cmd.hasOption(limitOption.getLongOpt()) ? Long.parseLong(cmd.getOptionValue(limitOption.getLongOpt())) : -1;
-        String tenant = OptionUtil.getStringOption(cmd, repositoryOption, RepoAndTableUtil.DEFAULT_REPOSITORY);
+        String repositoryName = OptionUtil.getStringOption(cmd, repositoryOption, RepoAndTableUtil.DEFAULT_REPOSITORY);
         String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
-        LRepository repository = lilyClient.getRepository(tenant);
+        LRepository repository = lilyClient.getRepository(repositoryName);
         LTable table = repository.getTable(tableName);
         if (cmd.hasOption(countOption.getOpt())) {
             RecordScanTool.count(repository, table, startId, stopId,recordTypeFilter, configFile);

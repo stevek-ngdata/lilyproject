@@ -109,7 +109,7 @@ public class JsonImportTool extends BaseZkCliTool {
         int workers = OptionUtil.getIntOption(cmd, workersOption, 1);
 
         String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
-        String tenant = OptionUtil.getStringOption(cmd, repositoryOption, RepoAndTableUtil.DEFAULT_REPOSITORY);
+        String repositoryName = OptionUtil.getStringOption(cmd, repositoryOption, RepoAndTableUtil.DEFAULT_REPOSITORY);
 
         if (cmd.getArgList().size() < 1) {
             System.out.println("No import file specified!");
@@ -122,10 +122,10 @@ public class JsonImportTool extends BaseZkCliTool {
 
         for (String arg : (List<String>)cmd.getArgList()) {
             System.out.println("----------------------------------------------------------------------");
-            System.out.println("Importing " + arg + " to " + tableName + " table of tenant " + tenant);
+            System.out.println("Importing " + arg + " to " + tableName + " table of repository " + repositoryName);
             InputStream is = new FileInputStream(arg);
             try {
-                LRepository repository = lilyClient.getRepository(tenant);
+                LRepository repository = lilyClient.getRepository(repositoryName);
                 LTable table = repository.getTable(tableName);
                 if (cmd.hasOption(quietOption.getOpt())) {
                     JsonImport.load(table, repository, new DefaultImportListener(System.out, EntityType.RECORD), is, schemaOnly, workers);

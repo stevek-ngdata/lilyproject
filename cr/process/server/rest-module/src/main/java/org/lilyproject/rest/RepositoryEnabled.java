@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Signifies that a RestResource makes use of a specific tenant name that is included in its url.
+ * Signifies that a RestResource makes use of a specific repository name that is included in its url.
  * <p>
  * The default repositoryName parameter is named "repositoryName".
  */

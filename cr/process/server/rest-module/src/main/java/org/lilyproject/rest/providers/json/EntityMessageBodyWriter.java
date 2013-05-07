@@ -52,7 +52,7 @@ public class EntityMessageBodyWriter extends BaseRepositoryResource implements M
             throws IOException, WebApplicationException {
         try {
             EntityWriter writer = EntityRegistry.findWriter(object.getEntity().getClass());
-            // Multitenancy: ok to use public repo since only non-tenant-specific things are needed
+            // Multiple repositories: ok to use public repo since only non-repository-specific things are needed
             ObjectNode json = writer.toJson(object.getEntity(), object.getWriteOptions(),
                     repositoryMgr.getDefaultRepository());
             JsonFormat.serialize(json, new CloseShieldOutputStream(entityStream));

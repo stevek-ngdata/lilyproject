@@ -64,7 +64,7 @@ public interface LRepository {
     RecordFactory getRecordFactory();
 
     /**
-     * The name of the tenant for this repository.
+     * The name of this repository.
      */
     String getRepositoryName();
 }
