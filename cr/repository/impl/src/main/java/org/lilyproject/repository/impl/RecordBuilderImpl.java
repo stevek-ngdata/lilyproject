@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
@@ -26,7 +28,6 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.ArgumentValidator;
 
@@ -35,7 +36,8 @@ import org.lilyproject.util.ArgumentValidator;
  */
 public class RecordBuilderImpl implements RecordBuilder {
 
-    private final Repository repository;
+    private final LTable table;
+    private final IdGenerator idGenerator;
     private Record record;
     private List<MutationCondition> mutationConditions = null;
     private boolean updateVersion = false;
@@ -49,18 +51,20 @@ public class RecordBuilderImpl implements RecordBuilder {
     private List<Record> records;
     private enum Mode {ROOT_RECORD, NESTED_RECORD, NESTED_RECORD_LIST}
 
-    public RecordBuilderImpl(Repository repository) throws RecordException {
-        this.repository = repository;
+    public RecordBuilderImpl(LTable table, IdGenerator idGenerator) throws RecordException {
+        this.table = table;
+        this.idGenerator = idGenerator;
         this.mode = Mode.ROOT_RECORD;
-        this.record = repository.newRecord();
+        this.record = this.table.newRecord();
     }
 
     public RecordBuilderImpl(RecordBuilderImpl parent, QName parentField, Mode mode) throws RecordException {
-        this.repository = parent.repository;
+        this.table = parent.table;
+        this.idGenerator = parent.idGenerator;
         this.mode = mode;
         this.parent = parent;
         this.parentField = parentField;
-        this.record = repository.newRecord();
+        this.record = table.newRecord();
         defaultNamespace(parent.defaultNamespace);
     }
 
@@ -103,31 +107,31 @@ public class RecordBuilderImpl implements RecordBuilder {
 
     @Override
     public RecordBuilder id(RecordId id, Map<String, String> variantProperties) {
-        record.setId(repository.getIdGenerator().newRecordId(id.getMaster(), variantProperties));
+        record.setId(idGenerator.newRecordId(id.getMaster(), variantProperties));
         return this;
     }
 
     @Override
     public RecordBuilder id(String userId) {
-        record.setId(repository.getIdGenerator().newRecordId(userId));
+        record.setId(idGenerator.newRecordId(userId));
         return this;
     }
 
     @Override
     public RecordBuilder id(String userId, Map<String, String> variantProperties) {
-        record.setId(repository.getIdGenerator().newRecordId(userId, variantProperties));
+        record.setId(idGenerator.newRecordId(userId, variantProperties));
         return this;
     }
 
     @Override
     public RecordBuilder assignNewUuid() {
-        record.setId(repository.getIdGenerator().newRecordId());
+        record.setId(idGenerator.newRecordId());
         return this;
     }
 
     @Override
     public RecordBuilder assignNewUuid(Map<String, String> variantProperties) {
-        record.setId(repository.getIdGenerator().newRecordId(variantProperties));
+        record.setId(idGenerator.newRecordId(variantProperties));
         return this;
     }
 
@@ -189,7 +193,7 @@ public class RecordBuilderImpl implements RecordBuilder {
 
     @Override
     public RecordBuilder reset() throws RecordException {
-        record = repository.newRecord();
+        record = table.newRecord();
         mutationConditions = null;
         updateVersion = false;
         useLatestRecordType = true;
@@ -212,7 +216,7 @@ public class RecordBuilderImpl implements RecordBuilder {
     @Override
     public Record update() throws RepositoryException, InterruptedException {
         if (mode == Mode.ROOT_RECORD) {
-            return repository.update(record, updateVersion, useLatestRecordType, mutationConditions);
+            return table.update(record, updateVersion, useLatestRecordType, mutationConditions);
         } else {
             throw new IllegalStateException("update should only be called for root records, current mode is " + mode);
         }
@@ -221,7 +225,7 @@ public class RecordBuilderImpl implements RecordBuilder {
     @Override
     public Record create() throws RepositoryException, InterruptedException {
         if (mode == Mode.ROOT_RECORD) {
-            return repository.create(record);
+            return table.create(record);
         } else {
             throw new IllegalStateException("update should only be called for root records, current mode is " + mode);
         }
@@ -230,7 +234,7 @@ public class RecordBuilderImpl implements RecordBuilder {
     @Override
     public Record createOrUpdate() throws RepositoryException, InterruptedException {
         if (mode == Mode.ROOT_RECORD) {
-            return repository.createOrUpdate(record, useLatestRecordType);
+            return table.createOrUpdate(record, useLatestRecordType);
         } else {
             throw new IllegalStateException("update should only be called for root records, current mode is " + mode);
         }

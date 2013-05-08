@@ -19,7 +19,7 @@ package org.lilyproject.repository.impl.test;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import org.lilyproject.repository.api.Repository;
 
 public class AvroRepositoryTest extends AbstractRepositoryTest {
 
@@ -32,7 +32,7 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
         repoSetup.setupRemoteAccess();
 
         idGenerator = repoSetup.getIdGenerator();
-        repository = repoSetup.getRemoteRepositoryManager().getRepository(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRemoteRepositoryManager().getDefaultTable();
         typeManager = repoSetup.getRemoteTypeManager();
 
         setupTypes();

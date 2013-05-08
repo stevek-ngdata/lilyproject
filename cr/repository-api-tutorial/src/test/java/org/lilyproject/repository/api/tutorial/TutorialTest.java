@@ -49,7 +49,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
@@ -59,9 +59,11 @@ import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
-import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
+import org.lilyproject.repository.impl.TableManagerImpl;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -101,6 +103,8 @@ public class TutorialTest {
         zooKeeper = new StateWatchingZooKeeper(HBASE_PROXY.getZkConnectString(), 10000);
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
 
+        RepositoryModel repositoryModel = new RepositoryModelImpl(zooKeeper);
+
         typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
 
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
@@ -108,14 +112,15 @@ public class TutorialTest {
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-        repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, new RecordFactoryImpl(typeManager, idGenerator), hbaseTableFactory, blobManager);
+        repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
+                new RecordFactoryImpl(), hbaseTableFactory, blobManager, configuration, repositoryModel);
 
-        RepositoryTableManager repoTableManager = new RepositoryTableManagerImpl(configuration, hbaseTableFactory);
+        TableManager repoTableManager = new TableManagerImpl(/* TODO multiple repositories */ "default", configuration, hbaseTableFactory);
         if (!repoTableManager.tableExists(Table.RECORD.name)) {
             repoTableManager.createTable(Table.RECORD.name);
         }
 
-        repository = repositoryManager.getRepository(Table.RECORD.name);
+        repository = (Repository)repositoryManager.getDefaultTable();
     }
 
     @AfterClass

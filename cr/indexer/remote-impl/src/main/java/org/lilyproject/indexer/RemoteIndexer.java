@@ -22,6 +22,8 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Set;
 
+import org.lilyproject.util.repo.RepoAndTableUtil;
+
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
@@ -60,7 +62,8 @@ public class RemoteIndexer implements Indexer, Closeable {
     @Override
     public void index(String table, RecordId recordId) throws IndexerException, InterruptedException {
         try {
-            lilyProxy.index(table, converter.convert(recordId));
+            // TODO multiple repositories
+            lilyProxy.index(RepoAndTableUtil.DEFAULT_REPOSITORY, table, converter.convert(recordId));
         } catch (AvroIndexerException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -75,7 +78,8 @@ public class RemoteIndexer implements Indexer, Closeable {
     @Override
     public void indexOn(String table, RecordId recordId, Set<String> indexes) throws IndexerException, InterruptedException {
         try {
-            lilyProxy.indexOn(table, converter.convert(recordId), new ArrayList<String>(indexes));
+            // TODO multiple repositories
+            lilyProxy.indexOn(RepoAndTableUtil.DEFAULT_REPOSITORY, table, converter.convert(recordId), new ArrayList<String>(indexes));
         } catch (AvroIndexerException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {

@@ -18,12 +18,19 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.util.Map;
 
+import org.lilyproject.repository.api.RepositoryUnavailableException;
+import org.lilyproject.util.repo.RepoAndTableUtil;
+
 import com.google.common.collect.Maps;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.model.api.RepositoryModel;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 
@@ -32,55 +39,72 @@ import org.lilyproject.util.io.Closer;
  */
 public abstract class AbstractRepositoryManager implements RepositoryManager {
 
-    private final Map<String,Repository> repositoryCache = Maps.newHashMap();
+    private final Map<RepoTableKey, Repository> repositoryCache = Maps.newHashMap();
     private final TypeManager typeManager;
     private final IdGenerator idGenerator;
     private final RecordFactory recordFactory;
+    private final RepositoryModel repositoryModel;
 
 
-    public AbstractRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory) {
+    public AbstractRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
+            RepositoryModel repositoryModel) {
         this.typeManager = typeManager;
         this.idGenerator = idGenerator;
         this.recordFactory = recordFactory;
+        this.repositoryModel = repositoryModel;
     }
 
-    @Override
-    public TypeManager getTypeManager() {
+    protected TypeManager getTypeManager() {
         return typeManager;
     }
 
-    @Override
-    public IdGenerator getIdGenerator() {
+    protected IdGenerator getIdGenerator() {
         return idGenerator;
     }
 
-    @Override
-    public RecordFactory getRecordFactory() {
+    protected RecordFactory getRecordFactory() {
         return recordFactory;
     }
 
     /**
      * Create a new Repository object for the repository cache.
-     * @param tableName Name of the backing HTable for the repository
-     * @return newly-created repository
      */
-    protected abstract Repository createRepository(String tableName) throws IOException, InterruptedException;
+    protected abstract Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException;
 
     @Override
-    public Repository getDefaultRepository() throws IOException, InterruptedException {
-        return getRepository(Table.RECORD.name);
+    public LRepository getDefaultRepository() throws InterruptedException, RepositoryException {
+        return getRepository(RepoAndTableUtil.DEFAULT_REPOSITORY);
     }
 
     @Override
-    public Repository getRepository(String tableName) throws IOException, InterruptedException {
-        if (!repositoryCache.containsKey(tableName)) {
+    public LRepository getRepository(String repositoryName) throws InterruptedException, RepositoryException {
+        return getRepository(repositoryName, Table.RECORD.name);
+    }
+
+    public Repository getRepository(String repositoryName, String tableName)
+            throws InterruptedException, RepositoryException {
+        if (!repositoryModel.repositoryExistsAndActive(repositoryName)) {
+            throw new RepositoryUnavailableException("Repository does not exist or is not active: " + repositoryName);
+        }
+        RepoTableKey key = new RepoTableKey(repositoryName, tableName);
+        if (!repositoryCache.containsKey(key)) {
             synchronized (repositoryCache) {
-                if (!repositoryCache.containsKey(tableName)) {
-                    repositoryCache.put(tableName, createRepository(tableName));
+                if (!repositoryCache.containsKey(key)) {
+                    repositoryCache.put(key, createRepository(key));
                 }
             }
         }
-        return repositoryCache.get(tableName);
+        return repositoryCache.get(key);
+    }
+
+    @Override
+    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
+        return getDefaultRepository().getTable(tableName);
+    }
+
+    @Override
+    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
+        return getDefaultRepository().getDefaultTable();
     }
 
     @Override

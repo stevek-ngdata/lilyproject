@@ -60,7 +60,6 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 import org.lilyproject.repository.impl.valuetype.AbstractValueType;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -84,7 +83,7 @@ public class ValueTypeTest {
         repoSetup.setupRepository();
 
         typeManager = repoSetup.getTypeManager();
-        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
         idGenerator = repoSetup.getIdGenerator();
     }
 

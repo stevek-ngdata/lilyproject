@@ -20,8 +20,8 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Test;
-import org.lilyproject.repository.api.RepositoryTableManager;
-import org.lilyproject.repository.impl.RepositoryTableManagerImpl;
+import org.lilyproject.repository.api.TableManager;
+import org.lilyproject.repository.impl.TableManagerImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
@@ -31,13 +31,13 @@ public class RepositoryTableManagerImplTest {
 
     private Configuration configuration;
     private HBaseTableFactory tableFactory;
-    private RepositoryTableManager tableManager;
+    private TableManager tableManager;
 
     @Before
     public void setUp() {
         configuration = new Configuration();
         tableFactory = mock(HBaseTableFactory.class);
-        tableManager = new RepositoryTableManagerImpl(configuration, tableFactory);
+        tableManager = new TableManagerImpl(/* TODO multiple repositories */ "default", configuration, tableFactory);
     }
 
     @Test(expected=IllegalArgumentException.class)

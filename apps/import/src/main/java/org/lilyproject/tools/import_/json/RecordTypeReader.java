@@ -19,10 +19,10 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
@@ -36,13 +36,13 @@ public class RecordTypeReader implements EntityReader<RecordType> {
     public static final EntityReader<RecordType> INSTANCE  = new RecordTypeReader();
 
     @Override
-    public RecordType fromJson(JsonNode node, RepositoryManager repositoryManager) throws JsonFormatException, RepositoryException,
+    public RecordType fromJson(JsonNode node, LRepository repository) throws JsonFormatException, RepositoryException,
             InterruptedException {
-        return fromJson(node, null, repositoryManager);
+        return fromJson(node, null, repository);
     }
 
     @Override
-    public RecordType fromJson(JsonNode nodeNode, Namespaces namespaces, RepositoryManager repositoryManager)
+    public RecordType fromJson(JsonNode nodeNode, Namespaces namespaces, LRepository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         if (!nodeNode.isObject()) {
@@ -54,7 +54,7 @@ public class RecordTypeReader implements EntityReader<RecordType> {
 
         namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 
-        TypeManager typeManager = repositoryManager.getTypeManager();
+        TypeManager typeManager = repository.getTypeManager();
         QName name = QNameConverter.fromJson(getString(node, "name"), namespaces);
 
         RecordType recordType = typeManager.newRecordType(name);
@@ -155,8 +155,8 @@ public class RecordTypeReader implements EntityReader<RecordType> {
     }
 
     @Override
-    public RecordType fromJson(JsonNode node, Namespaces namespaces, RepositoryManager repositoryManager,
+    public RecordType fromJson(JsonNode node, Namespaces namespaces, LRepository repository,
             LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
-        return fromJson(node, namespaces, repositoryManager);
+        return fromJson(node, namespaces, repository);
     }
 }

@@ -56,7 +56,7 @@ public class ForwardVariantFollow implements Follow {
             // the record already contains all of the new dimensions -> stop here
             //return;
         } else {
-            IdGenerator idGenerator = indexUpdateBuilder.getRepositoryManager().getIdGenerator();
+            IdGenerator idGenerator = indexUpdateBuilder.getRepository().getIdGenerator();
             Dep newDep = ctx.dep.plus(idGenerator, dimensions);
             // now find all the records of this newly defined variant
             final ArrayList<Record> result = IndexerUtils.getVariantsAsRecords(indexUpdateBuilder, newDep);

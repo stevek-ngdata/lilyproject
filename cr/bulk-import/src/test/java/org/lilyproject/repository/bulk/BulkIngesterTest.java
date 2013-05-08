@@ -54,10 +54,9 @@ public class BulkIngesterTest {
     public void setUp() {
         hbaseRepository = mock(HBaseRepository.class);
         repositoryManager = mock(RepositoryManager.class);
-        when(hbaseRepository.getRepositoryManager()).thenReturn(repositoryManager);
         recordTable = mock(HTableInterface.class);
         fieldTypes = mock(FieldTypes.class);
-        bulkIngester = spy(new BulkIngester(hbaseRepository, recordTable, fieldTypes));
+        bulkIngester = spy(new BulkIngester(repositoryManager, hbaseRepository, recordTable, fieldTypes));
     }
 
     /**

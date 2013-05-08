@@ -27,7 +27,7 @@ import java.lang.reflect.Type;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.rest.RepositoryEnabled;
+import org.lilyproject.rest.BaseRepositoryResource;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.LinkTransformer;
@@ -38,7 +38,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @Provider
-public class EntityMessageBodyReader extends RepositoryEnabled implements MessageBodyReader<Object> {
+public class EntityMessageBodyReader extends BaseRepositoryResource implements MessageBodyReader<Object> {
 
     private LinkTransformer linkTransformer;
 
@@ -68,7 +68,9 @@ public class EntityMessageBodyReader extends RepositoryEnabled implements Messag
         ObjectNode objectNode = (ObjectNode)node;
 
         try {
-            return EntityRegistry.findReader(type).fromJson(objectNode, null, repositoryMgr, linkTransformer);
+            // Multiple repositories: ok to use public repo since only non-repository-specific things are needed
+            return EntityRegistry.findReader(type).fromJson(objectNode, null, repositoryMgr.getDefaultRepository(),
+                    linkTransformer);
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
         } catch (Exception e) {

@@ -17,14 +17,13 @@ package org.lilyproject.util.repo;
 
 import java.io.IOException;
 
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.RecordFactory;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.TypeManager;
 
 /**
- * See {@link PrematureRepository}.
+ * See {@link PrematureRepositoryManager}.
  */
 public class PrematureRepositoryManagerImpl implements PrematureRepositoryManager {
     private volatile RepositoryManager delegate;
@@ -51,15 +50,27 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
     }
 
     @Override
-    public Repository getDefaultRepository() throws IOException, InterruptedException {
+    public LRepository getDefaultRepository() throws InterruptedException, RepositoryException {
         waitOnRepoManager();
         return delegate.getDefaultRepository();
     }
 
     @Override
-    public Repository getRepository(String tableName) throws IOException, InterruptedException {
+    public LRepository getRepository(String repositoryName) throws InterruptedException, RepositoryException {
         waitOnRepoManager();
-        return delegate.getRepository(tableName);
+        return delegate.getRepository(repositoryName);
+    }
+
+    @Override
+    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
+        waitOnRepoManager();
+        return delegate.getTable(tableName);
+    }
+
+    @Override
+    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
+        waitOnRepoManager();
+        return delegate.getDefaultTable();
     }
 
     @Override
@@ -69,24 +80,6 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
                 delegate.close();
             }
         }
-    }
-
-    @Override
-    public RecordFactory getRecordFactory() {
-        waitOnRepoManager();
-        return delegate.getRecordFactory();
-    }
-
-    @Override
-    public IdGenerator getIdGenerator() {
-        waitOnRepoManager();
-        return delegate.getIdGenerator();
-    }
-
-    @Override
-    public TypeManager getTypeManager() {
-        waitOnRepoManager();
-        return delegate.getTypeManager();
     }
 
 }

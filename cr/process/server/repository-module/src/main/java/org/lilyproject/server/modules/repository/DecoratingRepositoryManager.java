@@ -15,12 +15,16 @@
  */
 package org.lilyproject.server.modules.repository;
 
-import java.io.IOException;
-
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractRepositoryManager;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
+import org.lilyproject.repository.impl.RepoTableKey;
+import org.lilyproject.repository.model.api.RepositoryModel;
 
 public class DecoratingRepositoryManager extends AbstractRepositoryManager {
 
@@ -28,17 +32,24 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
     private RecordUpdateHookActivator recordUpdateHookActivator;
     private RepositoryDecoratorActivator repositoryDecoratorActivator;
 
-    public DecoratingRepositoryManager(HBaseRepositoryManager repositoryManager, RecordUpdateHookActivator recordUpdateHookActivator, RepositoryDecoratorActivator repositoryDecoratorActivator) {
-        super(repositoryManager.getTypeManager(), repositoryManager.getIdGenerator(), repositoryManager.getRecordFactory());
+    public DecoratingRepositoryManager(HBaseRepositoryManager repositoryManager,
+            RecordUpdateHookActivator recordUpdateHookActivator,
+            RepositoryDecoratorActivator repositoryDecoratorActivator,
+            RepositoryModel repositoryModel, RecordFactory recordFactory, TypeManager typeManager,
+            IdGenerator idGenerator) {
+        super(typeManager, idGenerator, recordFactory, repositoryModel);
         this.wrappedRepositoryManager = repositoryManager;
         this.recordUpdateHookActivator = recordUpdateHookActivator;
         this.repositoryDecoratorActivator = repositoryDecoratorActivator;
     }
 
     @Override
-    protected Repository createRepository(String tableName) throws IOException, InterruptedException {
-        HBaseRepository repository = (HBaseRepository)wrappedRepositoryManager.getRepository(tableName);
+    protected Repository createRepository(RepoTableKey key)
+            throws InterruptedException, RepositoryException {
+        HBaseRepository repository = (HBaseRepository)wrappedRepositoryManager.getRepository(
+                key.getRepositoryName()).getTable(key.getTableName());
         recordUpdateHookActivator.activateUpdateHooks(repository);
-        return repositoryDecoratorActivator.getDecoratedRepository(repository);
+        return new DecoratingRepository(repositoryDecoratorActivator.getDecoratedRepository(repository),
+                key.getRepositoryName(), this);
     }
 }

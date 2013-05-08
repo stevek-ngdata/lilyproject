@@ -26,10 +26,10 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 
@@ -50,13 +50,13 @@ public class DefaultFormatter implements Formatter {
     private static final ValueFormatter ALL_FORMATTER = new AllFormatter();
 
     @Override
-    public List<String> format(List<IndexValue> indexValues, RepositoryManager repositoryManager)
+    public List<String> format(List<IndexValue> indexValues, LRepository repository)
             throws InterruptedException {
 
         List<String> results = new ArrayList<String>();
 
         for (IndexValue value : filterValues(indexValues)) {
-            FormatContext formatCtx = new FormatContext(repositoryManager);
+            FormatContext formatCtx = new FormatContext(repository);
 
             ValueType valueType = value.fieldType.getValueType();
             if (valueType.getBaseName().equals("LIST")) {
@@ -92,11 +92,11 @@ public class DefaultFormatter implements Formatter {
          * want to format each nesting level differently.
          */
         Deque<ValueType> valueTypeStack = new ArrayDeque<ValueType>();
-        RepositoryManager repositoryManager;
+        LRepository repository;
         List<String> results = new ArrayList<String>();
 
-        public FormatContext(RepositoryManager repositoryManager) {
-            this.repositoryManager = repositoryManager;
+        public FormatContext(LRepository repository) {
+            this.repository = repository;
         }
 
         @Override
@@ -170,7 +170,7 @@ public class DefaultFormatter implements Formatter {
         @Override
         public String format(Object record, ValueType valueType, FormatContext formatCtx) throws InterruptedException {
             StringBuilder builder = new StringBuilder();
-            TypeManager typeManager = formatCtx.repositoryManager.getTypeManager();
+            TypeManager typeManager = formatCtx.repository.getTypeManager();
 
             for (Map.Entry<QName, Object> field : ((Record)record).getFields().entrySet()) {
                 ValueType fieldValueType;

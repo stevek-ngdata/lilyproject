@@ -73,7 +73,7 @@ public class LinkIndexSetup {
         if (linkIndexEnabled) {
             IndexManager indexManager = new IndexManager(hbaseConf, tableFactory);
 
-            LinkIndex linkIndex = new LinkIndex(indexManager, repositoryManager);
+            LinkIndex linkIndex = new LinkIndex(indexManager, /* TODO multiple repositories */ repositoryManager);
 
             LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repositoryManager, linkIndex);
 

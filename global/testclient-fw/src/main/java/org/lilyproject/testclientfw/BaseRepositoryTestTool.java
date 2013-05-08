@@ -29,10 +29,12 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.CloudSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.zookeeper.KeeperException;
+import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.io.Closer;
@@ -48,11 +50,17 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
 
     private Option solrCloudOption;
 
+    private Option repositoryOption;
+
     protected SolrServer solrServer;
 
     protected LilyClient lilyClient;
 
-    protected Repository repository;
+    protected String repositoryName;
+
+    protected LRepository repository;
+
+    protected LTable table;
 
     protected IdGenerator idGenerator;
 
@@ -63,6 +71,7 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
     protected boolean useSolrCloud;
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
@@ -78,8 +87,16 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
                 .withLongOpt("solrcloud")
                 .create("sc");
 
+        repositoryOption = OptionBuilder
+                .withArgName("repository")
+                .hasArg()
+                .withDescription("Repository name, if not specified the default repository is used")
+                .withLongOpt("repository")
+                .create();
+
         options.add(solrOption);
         options.add(solrCloudOption);
+        options.add(repositoryOption);
 
         return options;
     }
@@ -98,6 +115,8 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
             solrUrl = useSolrCloud ? zkConnectionString + "/solr": cmd.getOptionValue(solrOption.getOpt());
         }
 
+        repositoryName = OptionUtil.getStringOption(cmd, repositoryOption, "default");
+
         return 0;
     }
 
@@ -110,7 +129,8 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
     public void setupLily() throws IOException, ZkConnectException, NoServersException, InterruptedException,
             KeeperException, RepositoryException {
         lilyClient = new LilyClient(getZooKeeper());
-        repository = lilyClient.getRepository();
+        repository = lilyClient.getRepository(repositoryName);
+        table = repository.getDefaultTable();
         idGenerator = repository.getIdGenerator();
         typeManager = repository.getTypeManager();
     }

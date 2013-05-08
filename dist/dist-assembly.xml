@@ -219,6 +219,8 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
+
+    <!-- Repository admin CLI -->
     <file>
       <source>${basedir}/../cr/repository/admin-cli/target/lily-create-table</source>
       <outputDirectory>/bin/</outputDirectory>
@@ -246,6 +248,36 @@
     </file>
     <file>
       <source>${basedir}/../cr/repository/admin-cli/target/lily-list-tables.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-add-repository</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-add-repository.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-delete-repository</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-delete-repository.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-list-repositories</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-list-repositories.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
@@ -316,6 +348,7 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
+
   </files>
 
   <fileSets>

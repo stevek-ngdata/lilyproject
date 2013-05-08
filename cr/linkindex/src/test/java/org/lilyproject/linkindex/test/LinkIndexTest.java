@@ -74,7 +74,7 @@ public class LinkIndexTest {
         repoSetup.setupRepository();
 
         typeManager = repoSetup.getTypeManager();
-        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
         ids = repository.getIdGenerator();
 
         IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());

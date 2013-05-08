@@ -18,17 +18,17 @@ package org.lilyproject.tools.import_.json;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.LRepository;
 
 public class FieldTypeWriter implements EntityWriter<FieldType> {
     public static final EntityWriter<FieldType> INSTANCE = new FieldTypeWriter();
 
     @Override
-    public ObjectNode toJson(FieldType fieldType, WriteOptions options, RepositoryManager repositoryManager) {
+    public ObjectNode toJson(FieldType fieldType, WriteOptions options, LRepository repository) {
         Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
                         NamespacesImpl.DEFAULT_USE_PREFIXES);
 
-        ObjectNode fieldNode = toJson(fieldType, options, namespaces, repositoryManager);
+        ObjectNode fieldNode = toJson(fieldType, options, namespaces, repository);
 
         if (namespaces.usePrefixes()) {
             fieldNode.put("namespaces", NamespacesConverter.toJson(namespaces));
@@ -38,7 +38,7 @@ public class FieldTypeWriter implements EntityWriter<FieldType> {
     }
 
     @Override
-    public ObjectNode toJson(FieldType fieldType, WriteOptions options, Namespaces namespaces, RepositoryManager repositoryManager) {
+    public ObjectNode toJson(FieldType fieldType, WriteOptions options, Namespaces namespaces, LRepository repository) {
         return toJson(fieldType, namespaces, true);
     }
 

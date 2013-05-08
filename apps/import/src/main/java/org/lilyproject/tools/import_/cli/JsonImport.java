@@ -28,6 +28,8 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordType;
@@ -53,37 +55,98 @@ import org.lilyproject.util.json.JsonFormat;
 
 public class JsonImport {
     private Namespaces namespaces = new NamespacesImpl();
-    private Repository repository;
+    private LRepository repository;
+    private LTable table;
     private TypeManager typeManager;
     private ImportListener importListener;
     private int threadCount;
     private ThreadPoolExecutor executor;
     private volatile boolean errorHappened = false;
 
+    /**
+     * Loads only the schema, ignores any records in the input.
+     */
+    public static void loadSchema(LRepository repository, InputStream is, int threadCount) throws Exception {
+        load(null, repository, new DefaultImportListener(), is, true, threadCount);
+    }
+
+    public static void load(LTable table, LRepository repository, InputStream is, int threadCount) throws Exception {
+        load(table, repository, new DefaultImportListener(), is, false, threadCount);
+    }
+
+    /**
+     * Loads only the schema, ignores any records in the input.
+     */
+    public static void loadSchema(LRepository repository, InputStream is) throws Exception {
+        loadSchema(repository, new DefaultImportListener(), is);
+    }
+
+    public static void load(LTable table, LRepository repository, InputStream is) throws Exception {
+        load(table, repository, new DefaultImportListener(), is);
+    }
+
+    /**
+     * Loads only the schema, ignores any records in the input.
+     */
+    public static void loadSchema(LRepository repository, ImportListener importListener, InputStream is)
+            throws Exception {
+        load(null, repository, importListener, is, true, 1);
+    }
+
+    public static void load(LTable table, LRepository repository, ImportListener importListener, InputStream is)
+            throws Exception {
+        load(table, repository, importListener, is, false, 1);
+    }
+
+    /**
+     *
+     * @param table can be null when schemaOnly is true
+     */
+    public static void load(LTable table, LRepository repository, ImportListener importListener, InputStream is,
+            boolean schemaOnly, int threadCount) throws Exception {
+        new JsonImport(table, repository, importListener, threadCount).load(is, schemaOnly);
+    }
+
+    /**
+     * @deprecated  use one of the variants taking LRepository and/or LTable as argument
+     */
     public static void load(Repository repository, InputStream is, boolean schemaOnly, int threadCount) throws Exception {
-        load(repository, new DefaultImportListener(), is, schemaOnly, threadCount);
+        load(repository, repository, new DefaultImportListener(), is, schemaOnly, threadCount);
     }
 
+    /**
+     * @deprecated  use one of the variants taking LRepository and/or LTable as argument
+     */
     public static void load(Repository repository, InputStream is, boolean schemaOnly) throws Exception {
-        load(repository, new DefaultImportListener(), is, schemaOnly);
+        if (schemaOnly)
+            loadSchema(repository, new DefaultImportListener(), is);
+        else
+            load(repository, repository, new DefaultImportListener(), is);
     }
 
+    /**
+     * @deprecated  use one of the variants taking LRepository and/or LTable as argument
+     */
     public static void load(Repository repository, ImportListener importListener, InputStream is, boolean schemaOnly)
             throws Exception {
-        load(repository, importListener, is, schemaOnly, 1);
+        load(repository, repository, importListener, is, schemaOnly, 1);
     }
 
+    /**
+     * @deprecated  use one of the variants taking LRepository and/or LTable as argument
+     */
     public static void load(Repository repository, ImportListener importListener, InputStream is, boolean schemaOnly,
             int threadCount) throws Exception {
-        new JsonImport(repository, importListener, threadCount).load(is, schemaOnly);
+        load(repository, repository, importListener, is, schemaOnly, threadCount);
     }
 
-    public JsonImport(Repository repository, ImportListener importListener) {
-        this(repository, importListener, 1);
+    public JsonImport(LTable table, LRepository repository, ImportListener importListener) {
+        this(table, repository, importListener, 1);
     }
 
-    public JsonImport(Repository repository, ImportListener importListener, int threadCount) {
+    public JsonImport(LTable table, LRepository repository, ImportListener importListener, int threadCount) {
         this.importListener = new SynchronizedImportListener(importListener);
+        this.table = table;
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
         this.threadCount = threadCount;
@@ -183,7 +246,7 @@ public class JsonImport {
             throw new ImportException("Field type should be specified as object node.");
         }
 
-        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson(node, namespaces, repository.getRepositoryManager());
+        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson(node, namespaces, repository);
 
         if (fieldType.getName() == null) {
             throw new ImportException("Missing name property on field type.");
@@ -220,7 +283,7 @@ public class JsonImport {
             throw new ImportException("Field type should be specified as object node.");
         }
 
-        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson(node, namespaces, repository.getRepositoryManager());
+        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson(node, namespaces, repository);
 
         if (fieldType.getName() == null) {
             throw new ImportException("Missing name property on field type.");
@@ -262,7 +325,7 @@ public class JsonImport {
             throw new ImportException("Record type should be specified as object node.");
         }
 
-        RecordType recordType = RecordTypeReader.INSTANCE.fromJson(node, namespaces, repository.getRepositoryManager());
+        RecordType recordType = RecordTypeReader.INSTANCE.fromJson(node, namespaces, repository);
         return importRecordType(recordType);
     }
 
@@ -301,14 +364,14 @@ public class JsonImport {
             throw new ImportException("Record should be specified as object node.");
         }
 
-        Record record = RecordReader.INSTANCE.fromJson(node, namespaces, repository.getRepositoryManager());
+        Record record = RecordReader.INSTANCE.fromJson(node, namespaces, repository);
 
         // Create-or-update requires client to specify the ID
         if (record.getId() == null) {
             record.setId(repository.getIdGenerator().newRecordId());
         }
 
-        ImportResult<Record> result = RecordImport.importRecord(record, ImportMode.CREATE_OR_UPDATE, repository);
+        ImportResult<Record> result = RecordImport.importRecord(record, ImportMode.CREATE_OR_UPDATE, table);
         record = result.getEntity();
 
         switch (result.getResultType()) {

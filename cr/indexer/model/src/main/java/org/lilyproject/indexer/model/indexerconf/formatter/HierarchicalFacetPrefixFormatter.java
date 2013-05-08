@@ -22,7 +22,7 @@ import java.util.List;
 import com.google.common.base.Splitter;
 import org.lilyproject.indexer.model.indexerconf.Formatter;
 import org.lilyproject.indexer.model.indexerconf.IndexValue;
-import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.ValueType;
 
 /**
@@ -56,7 +56,7 @@ import org.lilyproject.repository.api.ValueType;
  */
 public class HierarchicalFacetPrefixFormatter implements Formatter {
     @Override
-    public List<String> format(List<IndexValue> indexValues, RepositoryManager repositoryManager) throws InterruptedException {
+    public List<String> format(List<IndexValue> indexValues, LRepository repository) throws InterruptedException {
         List<String> result = new ArrayList<String>();
         for (IndexValue indexValue : indexValues) {
             ValueType valueType = indexValue.fieldType.getValueType();

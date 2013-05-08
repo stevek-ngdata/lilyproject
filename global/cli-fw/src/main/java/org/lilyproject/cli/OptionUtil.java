@@ -24,12 +24,13 @@ public class OptionUtil {
     }
 
     public static int getIntOption(CommandLine cmd, Option option, int defaultValue) {
-        if (cmd.hasOption(option.getOpt())) {
+        String opt = option.getOpt() == null ? option.getLongOpt() : option.getOpt();
+        if (cmd.hasOption(opt)) {
             try {
-                return Integer.parseInt(cmd.getOptionValue(option.getOpt()));
+                return Integer.parseInt(cmd.getOptionValue(opt));
             } catch (NumberFormatException e) {
                 System.out.println("Invalid value for option " + option.getLongOpt() + " : " +
-                        cmd.getOptionValue(option.getOpt()));
+                        cmd.getOptionValue(opt));
                 System.exit(1);
             }
         }
@@ -37,8 +38,9 @@ public class OptionUtil {
     }
 
     public static String getStringOption(CommandLine cmd, Option option, String defaultValue) {
-        if (cmd.hasOption(option.getOpt())) {
-            return cmd.getOptionValue(option.getOpt());
+        String opt = option.getOpt() == null ? option.getLongOpt() : option.getOpt();
+        if (cmd.hasOption(opt)) {
+            return cmd.getOptionValue(opt);
         } else {
             return defaultValue;
         }

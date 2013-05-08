@@ -39,6 +39,7 @@ import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.indexer.model.util.IndexesInfoImpl;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
@@ -60,7 +61,7 @@ public class IndexerMasterTest {
     private static final QName NAME = new QName("org.lilyproject.test", "name");
 
     private final static RepositorySetup repoSetup = new RepositorySetup();
-    private Repository repository;
+    private LRepository repository;
     private HBaseAdmin hBaseAdmin;
     private IndexesInfo indexesInfo;
 
@@ -72,7 +73,7 @@ public class IndexerMasterTest {
 
     @Before
     public void setUp() throws Exception {
-        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getTable(Table.RECORD.name);
         hBaseAdmin = new HBaseAdmin(repoSetup.getHadoopConf());
 
         final IndexerModelImpl model = new IndexerModelImpl(repoSetup.getZk());
@@ -81,7 +82,6 @@ public class IndexerMasterTest {
 
     @After
     public void tearDown() throws IOException {
-        repository.close();
         hBaseAdmin.close();
     }
 

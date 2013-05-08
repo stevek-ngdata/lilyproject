@@ -18,8 +18,8 @@ package org.lilyproject.tools.import_.json.filters;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.api.filter.RecordFilterList;
 import org.lilyproject.tools.import_.json.JsonFormatException;
@@ -35,7 +35,7 @@ public class RecordFilterListJson implements RecordFilterJsonConverter<RecordFil
     }
 
     @Override
-    public ObjectNode toJson(RecordFilterList filter, Namespaces namespaces, RepositoryManager repositoryManager,
+    public ObjectNode toJson(RecordFilterList filter, Namespaces namespaces, LRepository repository,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
 
@@ -48,7 +48,7 @@ public class RecordFilterListJson implements RecordFilterJsonConverter<RecordFil
         if (filter.getFilters() != null) {
             ArrayNode filters = node.putArray("filters");
             for (RecordFilter subFilter : filter.getFilters()) {
-                filters.add(converter.toJson(subFilter, namespaces, repositoryManager, converter));
+                filters.add(converter.toJson(subFilter, namespaces, repository, converter));
             }
         }
 
@@ -56,7 +56,7 @@ public class RecordFilterListJson implements RecordFilterJsonConverter<RecordFil
     }
 
     @Override
-    public RecordFilterList fromJson(JsonNode node, Namespaces namespaces, RepositoryManager repositoryManager,
+    public RecordFilterList fromJson(JsonNode node, Namespaces namespaces, LRepository repository,
             RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
@@ -74,7 +74,7 @@ public class RecordFilterListJson implements RecordFilterJsonConverter<RecordFil
                     throw new JsonFormatException("filters should contain a json object");
                 }
                 ObjectNode subFilterObjectNode = (ObjectNode)subFilterNode;
-                filter.addFilter(converter.fromJson(subFilterObjectNode, namespaces, repositoryManager, converter));
+                filter.addFilter(converter.fromJson(subFilterObjectNode, namespaces, repository, converter));
             }
         }
 

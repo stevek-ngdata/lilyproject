@@ -34,11 +34,12 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.CompareOp;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.rest.BaseRepositoryResource;
 import org.lilyproject.rest.PostAction;
-import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.LinkTransformer;
@@ -55,7 +56,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @Provider
-public class PostActionMessageBodyReader extends RepositoryEnabled implements MessageBodyReader<PostAction> {
+public class PostActionMessageBodyReader extends BaseRepositoryResource implements MessageBodyReader<PostAction> {
 
     private LinkTransformer linkTransformer;
 
@@ -106,7 +107,9 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             if (!action.equals("delete")) {
                 EntityRegistry.RegistryEntry registryEntry = EntityRegistry.findReaderRegistryEntry((Class)entityType);
                 ObjectNode objectNode = JsonUtil.getObject(postNode, registryEntry.getPropertyName());
-                entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces, repositoryMgr, linkTransformer);
+                // Multiple repositories: ok to use public repo since only non-repository-specific things are needed
+                entity = EntityRegistry.findReader((Class)entityType).fromJson(objectNode, namespaces,
+                    repositoryMgr.getDefaultRepository(), linkTransformer);
             }
         } catch (JsonFormatException e) {
             throw new ResourceException("Error in submitted JSON.", e, BAD_REQUEST.getStatusCode());
@@ -117,14 +120,18 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
         return new PostAction(action, entity, conditions);
     }
 
-    private List<MutationCondition> readMutationConditions(ObjectNode postNode, Namespaces namespaces) throws JsonFormatException, RepositoryException, InterruptedException {
+    private List<MutationCondition> readMutationConditions(ObjectNode postNode, Namespaces namespaces)
+            throws JsonFormatException, RepositoryException, InterruptedException, IOException {
         ArrayNode conditions = JsonUtil.getArray(postNode, "conditions", null);
         if (conditions == null) {
             return null;
         }
 
+        // Multiple repositories: ok to use public repo since only non-repository-specific things are needed
+        LRepository repository = repositoryMgr.getDefaultRepository();
+
         List<MutationCondition> result = new ArrayList<MutationCondition>();
-        SystemFields systemFields = SystemFields.getInstance(repositoryMgr.getTypeManager(), repositoryMgr.getIdGenerator());
+        SystemFields systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
 
         for (int i = 0; i < conditions.size(); i++) {
             JsonNode conditionNode = conditions.get(i);
@@ -138,8 +145,9 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             Object value = null;
             if (!valueNode.isNull()) {
                 FieldType fieldType = systemFields.isSystemField(fieldName) ? systemFields.get(fieldName) :
-                        repositoryMgr.getTypeManager().getFieldTypeByName(fieldName);
-                value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces, repositoryMgr, linkTransformer);
+                        repository.getTypeManager().getFieldTypeByName(fieldName);
+                value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces,
+                    repositoryMgr.getDefaultRepository(), linkTransformer);
             }
 
             boolean allowMissing = JsonUtil.getBoolean(conditionNode, "allowMissing", false);

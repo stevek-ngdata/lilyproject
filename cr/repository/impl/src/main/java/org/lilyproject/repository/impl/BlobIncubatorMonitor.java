@@ -39,7 +39,7 @@ import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeException;
 import org.lilyproject.repository.api.TypeManager;
@@ -70,10 +70,10 @@ public class BlobIncubatorMonitor {
     private MonitorThread monitorThread;
     private HTableInterface blobIncubatorTable;
     private HBaseTableFactory tableFactory;
-    private RepositoryTableManager repositoryTableManager;
+    private TableManager tableManager;
     private final long runDelay;
 
-    public BlobIncubatorMonitor(ZooKeeperItf zk, HBaseTableFactory tableFactory, RepositoryTableManager repositoryTableManager,
+    public BlobIncubatorMonitor(ZooKeeperItf zk, HBaseTableFactory tableFactory, TableManager tableManager,
             BlobManager blobManager, TypeManager typeManager, long minimalAge, long monitorDelay, long runDelay) throws IOException, InterruptedException {
         this.zk = zk;
         this.blobManager = blobManager;
@@ -85,7 +85,7 @@ public class BlobIncubatorMonitor {
         this.blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(tableFactory, false);
 
         this.tableFactory = tableFactory;
-        this.repositoryTableManager = repositoryTableManager;
+        this.tableManager = tableManager;
     }
 
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
@@ -286,7 +286,7 @@ public class BlobIncubatorMonitor {
             Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL, valueComparator);
             get.setFilter(filter);
 
-            for (RepositoryTable repoTable : repositoryTableManager.getTables()) {
+            for (RepositoryTable repoTable : tableManager.getTables()) {
                 HTableInterface recordTable = LilyHBaseSchema.getRecordTable(tableFactory, repoTable.getName());
                 Result result = recordTable.get(get);
                 if (result != null && !result.isEmpty()) {

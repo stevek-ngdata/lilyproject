@@ -41,9 +41,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -94,7 +94,7 @@ public class IndexerConfBuilder {
 
     private IndexerConf conf;
 
-    private RepositoryManager repositoryManager;
+    private LRepository repository;
 
     private TypeManager typeManager;
 
@@ -104,22 +104,22 @@ public class IndexerConfBuilder {
         // prevents instantiation
     }
 
-    public static IndexerConf build(InputStream is, RepositoryManager repositoryManager) throws IndexerConfException {
+    public static IndexerConf build(InputStream is, LRepository repository) throws IndexerConfException {
         Document doc;
         try {
             doc = DocumentHelper.parse(is);
         } catch (Exception e) {
             throw new IndexerConfException("Error parsing supplied configuration.", e);
         }
-        return new IndexerConfBuilder().build(doc, repositoryManager);
+        return new IndexerConfBuilder().build(doc, repository);
     }
 
-    private IndexerConf build(Document doc, RepositoryManager repositoryManager) throws IndexerConfException {
+    private IndexerConf build(Document doc, LRepository repository) throws IndexerConfException {
         validate(doc);
         this.doc = doc;
-        this.repositoryManager = repositoryManager;
-        this.typeManager = repositoryManager.getTypeManager();
-        this.systemFields = SystemFields.getInstance(repositoryManager.getTypeManager(), repositoryManager.getIdGenerator());
+        this.repository = repository;
+        this.typeManager = repository.getTypeManager();
+        this.systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
         this.conf = new IndexerConf();
         this.conf.setSystemFields(systemFields);
 
@@ -250,7 +250,7 @@ public class IndexerConfBuilder {
             String fieldValueString = fieldAttr.substring(eqPos + 1);
             try {
                 fieldValue = FieldValueStringConverter.fromString(fieldValueString, fieldType.getValueType(),
-                        repositoryManager.getIdGenerator());
+                        repository.getIdGenerator());
             } catch (IllegalArgumentException e) {
                 throw new IndexerConfException("Invalid field value: " + fieldValueString);
             }
@@ -384,7 +384,7 @@ public class IndexerConfBuilder {
         supportedFields.addAll(systemFields.getAll());
         supportedFields.addAll(getAllRepositoryFields());
 
-        NameTemplate name = new NameTemplateParser(repositoryManager, systemFields)
+        NameTemplate name = new NameTemplateParser(repository, systemFields)
                 .parse(el, nameAttr, new FieldNameTemplateValidator(forwardVariantDimensions, supportedFields));
 
         return new IndexField(name, buildValue(el, valueExpr));
@@ -392,7 +392,7 @@ public class IndexerConfBuilder {
 
     private Set<QName> getAllRepositoryFields() throws RepositoryException, InterruptedException {
         final Set<QName> result = new HashSet<QName>();
-        for (FieldType fieldType : repositoryManager.getTypeManager().getFieldTypes()) {
+        for (FieldType fieldType : repository.getTypeManager().getFieldTypes()) {
             result.add(fieldType.getName());
         }
         return result;

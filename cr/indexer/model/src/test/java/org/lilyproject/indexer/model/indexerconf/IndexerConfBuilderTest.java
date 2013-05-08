@@ -22,7 +22,7 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.mockito.Mockito;
@@ -36,15 +36,15 @@ public class IndexerConfBuilderTest {
 
     private TypeManager typeManager;
     private IdGenerator idGenerator;
-    private RepositoryManager repositoryManager;
+    private LRepository repository;
 
     @Before
     public void setUp() {
         typeManager = mock(TypeManager.class, Mockito.RETURNS_DEEP_STUBS);
         idGenerator = new IdGeneratorImpl();
-        repositoryManager = mock(RepositoryManager.class);
-        when(repositoryManager.getTypeManager()).thenReturn(typeManager);
-        when(repositoryManager.getIdGenerator()).thenReturn(idGenerator);
+        repository = mock(LRepository.class);
+        when(repository.getTypeManager()).thenReturn(typeManager);
+        when(repository.getIdGenerator()).thenReturn(idGenerator);
     }
 
     private IndexerConf makeIndexerConf(String namespaces, List<String> includes, List<String> excludes) throws IndexerConfException {
@@ -69,7 +69,7 @@ public class IndexerConfBuilderTest {
 
         result.append("</recordFilter>\n</indexer>\n");
 
-        return IndexerConfBuilder.build(new ByteArrayInputStream(result.toString().getBytes()), repositoryManager);
+        return IndexerConfBuilder.build(new ByteArrayInputStream(result.toString().getBytes()), repository);
     }
 
     @Test

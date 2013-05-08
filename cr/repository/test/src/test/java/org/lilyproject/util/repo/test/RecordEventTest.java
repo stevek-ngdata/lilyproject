@@ -36,7 +36,6 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.RecordEvent;
 
 public class RecordEventTest {
@@ -58,7 +57,7 @@ public class RecordEventTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
         typeManager = repoSetup.getTypeManager();
         idGenerator = repository.getIdGenerator();
 
@@ -146,7 +145,6 @@ public class RecordEventTest {
                 processEvent(event);
             }
         }
-        
         
         public void processEvent(SepEvent event) {
             if (event.getPayload() == null) {

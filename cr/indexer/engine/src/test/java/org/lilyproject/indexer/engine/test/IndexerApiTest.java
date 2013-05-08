@@ -35,12 +35,12 @@ import org.lilyproject.indexer.engine.SolrClientException;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
@@ -61,8 +61,8 @@ public class IndexerApiTest {
 
     private IndexerConf INDEXER_CONF;
     private SolrTestingUtility SOLR_TEST_UTIL;
-    private Repository repository;
-    private RepositoryManager repositoryManager;
+    private LRepository repository;
+    private LTable table;
     private TypeManager typeManager;
     private ClassicSolrShardManager solrShardManager;
 
@@ -85,15 +85,15 @@ public class IndexerApiTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repositoryManager = repoSetup.getRepositoryManager();
-        repository = repositoryManager.getRepository(Table.RECORD.name);
-        typeManager = repoSetup.getTypeManager();
+        repository = repoSetup.getRepositoryManager().getDefaultRepository();
+        table = repository.getDefaultTable();
+        typeManager = repository.getTypeManager();
 
         setupSchema();
 
         solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
 
-        indexerApi = new IndexerApiImpl(repositoryManager, indexerRegistry);
+        indexerApi = new IndexerApiImpl(repoSetup.getRepositoryManager(), indexerRegistry);
     }
 
     @After
@@ -106,10 +106,11 @@ public class IndexerApiTest {
     }
 
     public void changeIndexUpdater(String confName) throws Exception {
-        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repoSetup.getRepositoryManager());
+        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
+                repoSetup.getRepositoryManager().getDefaultRepository());
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
         Indexer indexer =
-                new Indexer("test", INDEXER_CONF, repositoryManager, solrShardManager, indexLocker, new IndexerMetrics("test"),
+                new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker, new IndexerMetrics("test"),
                         null);
         indexerRegistry.register(indexer);
     }
@@ -118,7 +119,7 @@ public class IndexerApiTest {
     public void explicitIndexing() throws Exception {
         changeIndexUpdater("indexerconf_synchronous.xml");
 
-        final Record record = repository.recordBuilder()
+        final Record record = table.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId("index-explicitly"))
                 .recordType(matchingRecordType.getName())
                 .field(new QName(NS, "nv_field1"), "value")
@@ -139,7 +140,7 @@ public class IndexerApiTest {
     public void explicitIndexingWrongRecordType() throws Exception {
         changeIndexUpdater("indexerconf_synchronous.xml");
 
-        final Record record = repository.recordBuilder()
+        final Record record = table.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId("wrong-type"))
                 .recordType(otherRecordType.getName())
                 .field(new QName(NS, "nv_field1"), "value")
@@ -160,7 +161,7 @@ public class IndexerApiTest {
     public void explicitIndexingWrongIndex() throws Exception {
         changeIndexUpdater("indexerconf_synchronous.xml");
 
-        final Record record = repository.recordBuilder()
+        final Record record = table.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId("wrong-index"))
                 .recordType(matchingRecordType.getName())
                 .field(new QName(NS, "nv_field1"), "value")

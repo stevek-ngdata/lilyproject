@@ -66,7 +66,7 @@ public class IndexerModelImplTest {
 
         ArgumentCaptor<Long> timestampCaptor = ArgumentCaptor.forClass(Long.class);
         verify(indexDefinition).setSubscriptionTimestamp(timestampCaptor.capture());
-        assertTrue(Math.abs(timestampCaptor.getValue() - System.currentTimeMillis()) < 1000);
+        assertTrue(Math.abs(timestampCaptor.getValue() - System.currentTimeMillis()) < 5000);
     }
 
     // Check that the current timestamp is not set on an index definition when it is added

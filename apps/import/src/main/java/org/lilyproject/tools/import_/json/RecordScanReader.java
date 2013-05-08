@@ -21,10 +21,10 @@ import java.util.List;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.tools.import_.json.filters.RecordFilterJsonConverters;
 import org.lilyproject.util.json.JsonUtil;
@@ -33,13 +33,13 @@ public class RecordScanReader implements EntityReader<RecordScan> {
     public static final RecordScanReader INSTANCE = new RecordScanReader();
 
     @Override
-    public RecordScan fromJson(JsonNode node, RepositoryManager repositoryManager)
+    public RecordScan fromJson(JsonNode node, LRepository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
-        return fromJson(node, null, repositoryManager);
+        return fromJson(node, null, repository);
     }
 
     @Override
-    public RecordScan fromJson(JsonNode nodeNode, Namespaces namespaces, RepositoryManager repositoryManager)
+    public RecordScan fromJson(JsonNode nodeNode, Namespaces namespaces, LRepository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         if (nodeNode == null || nodeNode.isNull()) {
@@ -58,12 +58,12 @@ public class RecordScanReader implements EntityReader<RecordScan> {
 
         String startRecordId = JsonUtil.getString(node, "startRecordId", null);
         if (startRecordId != null) {
-            scan.setStartRecordId(repositoryManager.getIdGenerator().fromString(startRecordId));
+            scan.setStartRecordId(repository.getIdGenerator().fromString(startRecordId));
         }
 
         String stopRecordId = JsonUtil.getString(node, "stopRecordId", null);
         if (stopRecordId != null) {
-            scan.setStopRecordId(repositoryManager.getIdGenerator().fromString(stopRecordId));
+            scan.setStopRecordId(repository.getIdGenerator().fromString(stopRecordId));
         }
 
         byte[] rawStartRecordId = JsonUtil.getBinary(node, "rawStartRecordId", null);
@@ -78,7 +78,7 @@ public class RecordScanReader implements EntityReader<RecordScan> {
 
         ObjectNode filter = JsonUtil.getObject(node, "recordFilter", null);
         if (filter != null) {
-            scan.setRecordFilter(RecordFilterJsonConverters.INSTANCE.fromJson(filter, namespaces, repositoryManager,
+            scan.setRecordFilter(RecordFilterJsonConverters.INSTANCE.fromJson(filter, namespaces, repository,
                     RecordFilterJsonConverters.INSTANCE));
         }
 
@@ -111,8 +111,8 @@ public class RecordScanReader implements EntityReader<RecordScan> {
     }
 
     @Override
-    public RecordScan fromJson(JsonNode node, Namespaces namespaces, RepositoryManager repositoryManager,
+    public RecordScan fromJson(JsonNode node, Namespaces namespaces, LRepository repository,
             LinkTransformer linkTransformer) throws JsonFormatException, RepositoryException, InterruptedException {
-        return fromJson(node, namespaces, repositoryManager);
+        return fromJson(node, namespaces, repository);
     }
 }

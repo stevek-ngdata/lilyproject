@@ -48,7 +48,7 @@ public class LilyHBaseSchemaTest  {
 
         recordTable = mock(HTableInterface.class);
         HTableDescriptor recordTableDescriptor = new HTableDescriptor(Bytes.toBytes(RECORD_TABLE_NAME));
-        recordTableDescriptor.setValue(LilyHBaseSchema.IS_RECORD_TABLE_PROPERTY, LilyHBaseSchema.IS_RECORD_TABLE_VALUE);
+        recordTableDescriptor.setValue(LilyHBaseSchema.TABLE_TYPE_PROPERTY, LilyHBaseSchema.TABLE_TYPE_RECORD);
         when(recordTable.getTableDescriptor()).thenReturn(recordTableDescriptor);
 
         nonRecordTable = mock(HTableInterface.class);
@@ -61,14 +61,14 @@ public class LilyHBaseSchemaTest  {
     @Test
     public void testIsRecordTableDescriptor_True() {
         HTableDescriptor tableDescriptor = new HTableDescriptor(Bytes.toBytes("myrecordtable"));
-        tableDescriptor.setValue(LilyHBaseSchema.IS_RECORD_TABLE_PROPERTY, LilyHBaseSchema.IS_RECORD_TABLE_VALUE);
+        tableDescriptor.setValue(LilyHBaseSchema.TABLE_TYPE_PROPERTY, LilyHBaseSchema.TABLE_TYPE_RECORD);
         assertTrue(LilyHBaseSchema.isRecordTableDescriptor(tableDescriptor));
     }
 
     @Test
     public void testIsRecordTableDescriptor_False_WrongValue() {
         HTableDescriptor tableDescriptor = new HTableDescriptor(Bytes.toBytes("myrecordtable"));
-        tableDescriptor.setValue(LilyHBaseSchema.IS_RECORD_TABLE_PROPERTY, Bytes.toBytes("no"));
+        tableDescriptor.setValue(LilyHBaseSchema.TABLE_TYPE_PROPERTY, Bytes.toBytes("no"));
         assertFalse(LilyHBaseSchema.isRecordTableDescriptor(tableDescriptor));
     }
 

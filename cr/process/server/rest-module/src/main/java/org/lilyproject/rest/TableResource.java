@@ -30,24 +30,18 @@ import java.util.List;
 
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.repository.api.RepositoryTableManager;
-import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
-import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.lilyproject.repository.api.TableCreateDescriptor;
+import org.lilyproject.repository.api.TableManager;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryResource;
+import org.lilyproject.util.hbase.TableConfig;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("table")
-public class TableResource {
-
-    private RepositoryTableManager tableManager;
-
-    @Autowired
-    public void setTableManager(RepositoryTableManager tableManager) {
-        this.tableManager = tableManager;
-    }
+@GenerateRepositoryResource
+public class TableResource extends BaseRepositoryResource {
 
     /**
      * Get all record table names.
@@ -56,7 +50,7 @@ public class TableResource {
     @Produces("application/json")
     public List<RepositoryTable> get(@Context UriInfo uriInfo) {
         try {
-            return tableManager.getTables();
+            return getRepository(uriInfo).getTableManager().getTables();
         } catch (Exception e) {
             throw new ResourceException("Error getting repository tables", e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
@@ -64,8 +58,9 @@ public class TableResource {
 
     @DELETE
     @Path("{name}")
-    public Response dropTable(@PathParam("name") String tableName) {
+    public Response dropTable(@PathParam("name") String tableName, @Context UriInfo uriInfo) {
         try {
+            TableManager tableManager = getRepository(uriInfo).getTableManager();
             if (!tableManager.tableExists(tableName)) {
                 throw new ResourceException("Table '" + tableName + "' not found", NOT_FOUND.getStatusCode());
             }
@@ -83,7 +78,7 @@ public class TableResource {
     // TODO Allow providing split information
     @POST
     @Consumes("application/json")
-    public Response createTable(ObjectNode descriptorJson) {
+    public Response createTable(ObjectNode descriptorJson, @Context UriInfo uriInfo) {
         try {
             if (!descriptorJson.has("name")) {
                 throw new ResourceException("Name must be included in POST body", BAD_REQUEST.getStatusCode());
@@ -95,15 +90,15 @@ public class TableResource {
                 keyPrefix = descriptorJson.get("keyPrefix").asText();
             }
             if (descriptorJson.has("splitKeys")) {
-                descriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys(tableName, keyPrefix, descriptorJson.get("splitKeys").asText());
-            } else
-
-            if (descriptorJson.has("numRegions")) {
-               descriptor = TableCreateDescriptorImpl.createInstance(tableName, keyPrefix, descriptorJson.get("numRegions").asInt());
+                byte[][] splitKeys = TableConfig.parseSplitKeys(null, descriptorJson.get("splitKeys").asText(), keyPrefix);
+                descriptor = new TableCreateDescriptor(tableName, splitKeys);
+            } else if (descriptorJson.has("numRegions")) {
+                byte[][] splitKeys = TableConfig.parseSplitKeys(descriptorJson.get("numRegions").asInt(), null, keyPrefix);
+               descriptor = new TableCreateDescriptor(tableName, splitKeys);
             } else {
-                descriptor = TableCreateDescriptorImpl.createInstance(tableName);
+                descriptor = new TableCreateDescriptor(tableName);
             }
-            tableManager.createTable(descriptor);
+            getRepository(uriInfo).getTableManager().createTable(descriptor);
             return Response.ok().build();
         } catch (Exception e) {
             throw new ResourceException("Error creating table", e, INTERNAL_SERVER_ERROR.getStatusCode());

@@ -51,6 +51,10 @@
       <artifactId>lily-zk-util</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-repo-util</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
     </dependency>

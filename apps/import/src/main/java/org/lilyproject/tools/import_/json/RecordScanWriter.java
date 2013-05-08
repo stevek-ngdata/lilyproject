@@ -17,10 +17,10 @@ package org.lilyproject.tools.import_.json;
 
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.tools.import_.json.filters.RecordFilterJsonConverters;
 import org.lilyproject.util.json.JsonFormat;
 
@@ -28,12 +28,12 @@ public class RecordScanWriter implements EntityWriter<RecordScan> {
     public static final RecordScanWriter INSTANCE = new RecordScanWriter();
 
     @Override
-    public ObjectNode toJson(RecordScan entity, WriteOptions options, RepositoryManager repositoryManager)
+    public ObjectNode toJson(RecordScan entity, WriteOptions options, LRepository repository)
             throws RepositoryException, InterruptedException {
         Namespaces namespaces = new NamespacesImpl(options != null ? options.getUseNamespacePrefixes() :
                         NamespacesImpl.DEFAULT_USE_PREFIXES);
 
-        ObjectNode node = toJson(entity, options, namespaces, repositoryManager);
+        ObjectNode node = toJson(entity, options, namespaces, repository);
 
         if (namespaces.usePrefixes()) {
             node.put("namespaces", NamespacesConverter.toJson(namespaces));
@@ -43,7 +43,7 @@ public class RecordScanWriter implements EntityWriter<RecordScan> {
     }
 
     @Override
-    public ObjectNode toJson(RecordScan scan, WriteOptions options, Namespaces namespaces, RepositoryManager repositoryManager)
+    public ObjectNode toJson(RecordScan scan, WriteOptions options, Namespaces namespaces, LRepository repository)
             throws RepositoryException, InterruptedException {
 
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();
@@ -66,7 +66,7 @@ public class RecordScanWriter implements EntityWriter<RecordScan> {
 
         if (scan.getRecordFilter() != null) {
             node.put("recordFilter", RecordFilterJsonConverters.INSTANCE.toJson(scan.getRecordFilter(),
-                    namespaces, repositoryManager, RecordFilterJsonConverters.INSTANCE));
+                    namespaces, repository, RecordFilterJsonConverters.INSTANCE));
         }
 
         if (scan.getReturnFields() != null) {

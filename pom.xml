@@ -122,6 +122,7 @@
     <module>tools/print-host</module>
     <module>tools/archetype</module>
     <module>tools/generate-split-keys</module>
+    <module>tools/rest-resources-generator</module>
 
     <module>apps/import</module>
     <module>apps/tester</module>
@@ -431,6 +432,11 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
+        <artifactId>lily-rest-resources-generator</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-module</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>
@@ -442,6 +448,11 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-module</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-repository-master-module</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -578,6 +589,16 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-sep</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-repository-model</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-repository-master</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -896,7 +917,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>13.0.1</version>
+        <version>14.0.1</version>
       </dependency>
       <dependency>
         <groupId>com.gotometrics.orderly</groupId>

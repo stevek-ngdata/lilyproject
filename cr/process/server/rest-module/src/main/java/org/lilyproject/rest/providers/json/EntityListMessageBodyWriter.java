@@ -31,14 +31,14 @@ import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.rest.BaseRepositoryResource;
 import org.lilyproject.rest.EntityList;
-import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.tools.import_.json.EntityWriter;
 import org.lilyproject.util.json.JsonFormat;
 
 @Provider
-public class EntityListMessageBodyWriter extends RepositoryEnabled implements MessageBodyWriter<EntityList> {
+public class EntityListMessageBodyWriter extends BaseRepositoryResource implements MessageBodyWriter<EntityList> {
 
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -78,7 +78,9 @@ public class EntityListMessageBodyWriter extends RepositoryEnabled implements Me
 
             EntityWriter writer = getEntityWriter(genericType);
             for (Object entity : entityList.getEntities()) {
-                resultsNode.add(writer.toJson(entity, entityList.getWriteOptions(), repositoryMgr));
+                // Multiple repositories: ok to use public repo since only non-repository-specific things are needed
+                resultsNode.add(writer.toJson(entity, entityList.getWriteOptions(),
+                        repositoryMgr.getDefaultRepository()));
             }
 
             JsonFormat.serialize(listNode, new CloseShieldOutputStream(entityStream));

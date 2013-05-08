@@ -24,10 +24,12 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.repo.RepoAndTableUtil;
 
 /**
  * A MapReduce InputFormat for Lily based on Lily scanners.
@@ -45,8 +47,15 @@ public class LilyScanInputFormat extends AbstractLilyScanInputFormat<RecordIdWri
             throw new IOException("Error setting up LilyClient", e);
         }
 
+        LRepository repository = null;
+        try {
+            repository = lilyClient.getRepository(repositoryName);
+        } catch (RepositoryException e) {
+            throw new IOException("Error getting Lily repository object", e);
+        }
+
         // Build RecordScan
-        RecordScan scan = getScan(lilyClient);
+        RecordScan scan = getScan(repository);
 
         // Change the start/stop record IDs on the scan to the current split
         TableSplit split = (TableSplit)inputSplit;
@@ -55,7 +64,9 @@ public class LilyScanInputFormat extends AbstractLilyScanInputFormat<RecordIdWri
 
         RecordScanner scanner = null;
         try {
-            scanner = lilyClient.getRepository(Bytes.toString(split.getTableName())).getScanner(scan);
+            String hbaseTableName = Bytes.toString(split.getTableName());
+            String repositoryTableName = RepoAndTableUtil.extractLilyTableName(repositoryName, hbaseTableName);
+            scanner = lilyClient.getRepository(repositoryName).getTable(repositoryTableName).getScanner(scan);
         } catch (RepositoryException e) {
             Closer.close(lilyClient);
             throw new IOException("Error setting up RecordScanner", e);

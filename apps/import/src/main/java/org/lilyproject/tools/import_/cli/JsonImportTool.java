@@ -19,12 +19,16 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
 
+import org.lilyproject.util.repo.RepoAndTableUtil;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
@@ -34,6 +38,7 @@ public class JsonImportTool extends BaseZkCliTool {
     private Option workersOption;
     private Option quietOption;
     private Option tableOption;
+    private Option repositoryOption;
     private LilyClient lilyClient;
 
     @Override
@@ -51,6 +56,7 @@ public class JsonImportTool extends BaseZkCliTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
@@ -79,8 +85,16 @@ public class JsonImportTool extends BaseZkCliTool {
                 .hasArg()
                 .withDescription("Repository table to import to, defaults to record table")
                 .withLongOpt("table")
-                .create("t");
+                .create();
         options.add(tableOption);
+
+        repositoryOption = OptionBuilder
+                .withArgName("repository")
+                .hasArg()
+                .withDescription("Repository name, if not specified default repository is used")
+                .withLongOpt("repository")
+                .create();
+        options.add(repositoryOption);
 
         return options;
     }
@@ -94,7 +108,8 @@ public class JsonImportTool extends BaseZkCliTool {
 
         int workers = OptionUtil.getIntOption(cmd, workersOption, 1);
 
-        String table = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
+        String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
+        String repositoryName = OptionUtil.getStringOption(cmd, repositoryOption, RepoAndTableUtil.DEFAULT_REPOSITORY);
 
         if (cmd.getArgList().size() < 1) {
             System.out.println("No import file specified!");
@@ -107,13 +122,15 @@ public class JsonImportTool extends BaseZkCliTool {
 
         for (String arg : (List<String>)cmd.getArgList()) {
             System.out.println("----------------------------------------------------------------------");
-            System.out.println("Importing " + arg + " to " + table + " table");
+            System.out.println("Importing " + arg + " to " + tableName + " table of repository " + repositoryName);
             InputStream is = new FileInputStream(arg);
             try {
+                LRepository repository = lilyClient.getRepository(repositoryName);
+                LTable table = repository.getTable(tableName);
                 if (cmd.hasOption(quietOption.getOpt())) {
-                    JsonImport.load(lilyClient.getRepository(table), new DefaultImportListener(System.out, EntityType.RECORD), is, schemaOnly, workers);
+                    JsonImport.load(table, repository, new DefaultImportListener(System.out, EntityType.RECORD), is, schemaOnly, workers);
                 } else {
-                    JsonImport.load(lilyClient.getRepository(table), is, schemaOnly, workers);
+                    JsonImport.load(table, repository, new DefaultImportListener(), is, schemaOnly, workers);
                 }
             } finally {
                 Closer.close(is);

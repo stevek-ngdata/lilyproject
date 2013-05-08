@@ -55,6 +55,7 @@ import org.lilyproject.mapreduce.IdRecordWritable;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.mapreduce.RecordIdWritable;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
@@ -84,8 +85,12 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
                     getIntProp("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", null, jobConf);
             zk = ZkUtil.connect(zkConnectString, zkSessionTimeout);
 
+            // TODO multiple repositories
+            LRepository repository = lilyClient.getDefaultRepository();
+
             byte[] indexerConfBytes = Base64.decode(jobConf.get("org.lilyproject.indexer.batchbuild.indexerconf"));
-            IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes), lilyClient);
+            IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes),
+                    repository);
 
             String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
 
@@ -100,8 +105,8 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
             final DerefMap derefMap = indexerConf.containsDerefExpressions() ?
                     DerefMapHbaseImpl.create(indexName, LilyClient.getHBaseConfiguration(zk), null,
-                            lilyClient.getIdGenerator()) : null;
-            indexer = new Indexer(indexName, indexerConf, lilyClient, solrShardMgr, indexLocker,
+                            repository.getIdGenerator()) : null;
+            indexer = new Indexer(indexName, indexerConf, repository, solrShardMgr, indexLocker,
                     new IndexerMetrics(indexName), derefMap);
 
             int workers = getIntProp("org.lilyproject.indexer.batchbuild.threads", 5, jobConf);

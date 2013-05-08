@@ -27,26 +27,29 @@ import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.testclientfw.Words;
 import org.lilyproject.util.json.JsonUtil;
 
 public class TestFieldType {
     private static final Random random = new Random();
-    private final Repository repository;
+    private final LTable table;
+    private final LRepository repository;
 
     FieldType fieldType;
     private String linkedRecordTypeName;
     private String linkedRecordSource;
     private final JsonNode properties;
 
-    public TestFieldType(FieldType fieldType, Repository repository, JsonNode properties) {
+    public TestFieldType(FieldType fieldType, LTable table, LRepository repository, JsonNode properties) {
         this.fieldType = fieldType;
+        this.table = table;
         this.repository = repository;
         this.properties = properties;
         if (properties != null) {
@@ -248,7 +251,7 @@ public class TestFieldType {
         String recordTypeName = valueTypeName.substring(valueTypeName.indexOf("<") + 1, valueTypeName.length()-1);
         TestActionContext context = testAction.getContext();
         TestRecordType testRecordType = context.recordTypes.get(QName.fromString(recordTypeName));
-        Record record = context.repository.newRecord();
+        Record record = context.repository.getRecordFactory().newRecord();
         record.setRecordType(testRecordType.getRecordType().getName());
         List<TestFieldType> testFieldTypes = testRecordType.getFieldTypes();
         for (TestFieldType testFieldType : testFieldTypes) {
@@ -315,7 +318,7 @@ public class TestFieldType {
         random.nextBytes(bytes);
         Blob blob = new Blob("tester", (long)bytes.length, "test"+size);
         try {
-            OutputStream outputStream = repository.getOutputStream(blob);
+            OutputStream outputStream = table.getOutputStream(blob);
             outputStream.write(bytes);
             outputStream.close();
 //            System.out.println("created blob of size "+size+" in "+ (System.currentTimeMillis()-start) +" ms");

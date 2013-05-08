@@ -22,7 +22,7 @@ public class TableConfigTest {
 
     @Test
     public void testBinarySplitKeyParsing01() {
-        final byte[][] splitKeys = new TableConfig(1, "\\x01", new byte[]{}).getSplitKeys();
+        final byte[][] splitKeys = TableConfig.parseSplitKeys(1, "\\x01", "");
         Assert.assertEquals(1, splitKeys.length);
         Assert.assertEquals(1, splitKeys[0].length);
         Assert.assertEquals(0x1, splitKeys[0][0]);
@@ -30,7 +30,7 @@ public class TableConfigTest {
 
     @Test
     public void testBinarySplitKeyParsing10() {
-        final byte[][] splitKeys = new TableConfig(1, "\\x10", new byte[]{}).getSplitKeys();
+        final byte[][] splitKeys = TableConfig.parseSplitKeys(1, "\\x10", "");
         Assert.assertEquals(1, splitKeys.length);
         Assert.assertEquals(1, splitKeys[0].length);
         Assert.assertEquals(0x10, splitKeys[0][0]);
@@ -38,7 +38,7 @@ public class TableConfigTest {
 
     @Test
     public void testBinarySplitKeyParsing1010() {
-        final byte[][] splitKeys = new TableConfig(1, "\\x10\\x10", new byte[]{}).getSplitKeys();
+        final byte[][] splitKeys = TableConfig.parseSplitKeys(1, "\\x10\\x10", "");
         Assert.assertEquals(1, splitKeys.length);
         Assert.assertEquals(2, splitKeys[0].length);
         Assert.assertEquals(0x10, splitKeys[0][0]);
@@ -47,7 +47,7 @@ public class TableConfigTest {
 
     @Test
     public void testBinarySplitKeyParsing0F() {
-        final byte[][] splitKeys = new TableConfig(1, "\\x0F", new byte[]{}).getSplitKeys();
+        final byte[][] splitKeys = TableConfig.parseSplitKeys(1, "\\x0F", "");
         Assert.assertEquals(1, splitKeys.length);
         Assert.assertEquals(1, splitKeys[0].length);
         Assert.assertEquals(0xF, splitKeys[0][0]);
@@ -55,7 +55,7 @@ public class TableConfigTest {
 
     @Test
     public void testBinarySplitKeyParsingF0() {
-        final byte[][] splitKeys = new TableConfig(1, "\\xF0", new byte[]{}).getSplitKeys();
+        final byte[][] splitKeys = TableConfig.parseSplitKeys(1, "\\xF0", "");
         Assert.assertEquals(1, splitKeys.length);
         Assert.assertEquals(1, splitKeys[0].length);
         Assert.assertEquals(0xF0, readUnsigned(splitKeys[0][0]));
@@ -63,7 +63,7 @@ public class TableConfigTest {
 
     @Test
     public void testBinarySplitKeyParsingF0AB() {
-        final byte[][] splitKeys = new TableConfig(1, "\\xF0\\xAB", new byte[]{}).getSplitKeys();
+        final byte[][] splitKeys = TableConfig.parseSplitKeys(1, "\\xF0\\xAB", "");
         Assert.assertEquals(1, splitKeys.length);
         Assert.assertEquals(2, splitKeys[0].length);
         Assert.assertEquals(0xF0, readUnsigned(splitKeys[0][0]));

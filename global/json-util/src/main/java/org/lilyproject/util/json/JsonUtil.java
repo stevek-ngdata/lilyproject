@@ -199,4 +199,14 @@ public class JsonUtil {
         }
         return elements;
     }
+
+    public static <T extends Enum<T>> T getEnum(JsonNode node, String prop, Class<T> enumClass) {
+        String value = getString(node, prop);
+        try {
+            return Enum.valueOf(enumClass, value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new JsonFormatException("Unrecognized value for enum " + enumClass.getSimpleName()
+                    + ": '" + value + "'.");
+        }
+    }
 }

@@ -181,26 +181,33 @@ public class CleanupUtil {
                     continue;
                 }
 
-                HTable htable = new HTable(conf, table.getName());
+                if (Bytes.equals(table.getValue(LilyHBaseSchema.TABLE_TYPE_PROPERTY), LilyHBaseSchema.TABLE_TYPE_RECORD)
+                        && !table.getNameAsString().equals(LilyHBaseSchema.Table.RECORD.name)) {
+                    // Drop all record tables that are not the default table of the default repository
+                    admin.disableTable(table.getName());
+                    admin.deleteTable(table.getName());
+                } else {
+                    HTable htable = new HTable(conf, table.getName());
 
-                if (timestampReusingTables.containsKey(table.getNameAsString())) {
-                    insertTimestampTableTestRecord(table.getNameAsString(), htable,
-                            timestampReusingTables.get(table.getNameAsString()));
-                    exploitTimestampTables.add(table.getNameAsString());
-                }
+                    if (timestampReusingTables.containsKey(table.getNameAsString())) {
+                        insertTimestampTableTestRecord(table.getNameAsString(), htable,
+                                timestampReusingTables.get(table.getNameAsString()));
+                        exploitTimestampTables.add(table.getNameAsString());
+                    }
 
-                int totalCount = clearTable(htable);
+                    int totalCount = clearTable(htable);
 
-                if (truncateReport.length() > 0) {
-                    truncateReport.append(", ");
-                }
-                truncateReport.append(table.getNameAsString()).append(" (").append(totalCount).append(")");
+                    if (truncateReport.length() > 0) {
+                        truncateReport.append(", ");
+                    }
+                    truncateReport.append(table.getNameAsString()).append(" (").append(totalCount).append(")");
 
-                htable.close();
+                    htable.close();
 
-                if (timestampReusingTables.containsKey(table.getNameAsString())) {
-                    admin.flush(table.getNameAsString());
-                    admin.majorCompact(table.getName());
+                    if (timestampReusingTables.containsKey(table.getNameAsString())) {
+                        admin.flush(table.getNameAsString());
+                        admin.majorCompact(table.getName());
+                    }
                 }
             }
 
@@ -320,14 +327,22 @@ public class CleanupUtil {
         fs.delete(blobRootPath, true);
     }
 
-    public void cleanHBaseReplicas() throws Exception {
+    /**
+     * Removes nay HBase replication peers. This method does not wait for the actual related processes to stop,
+     * for this {@link ReplicationPeerUtil#waitOnReplicationPeerStopped(String)} can be used on the list of
+     * returned peer id's.
+     */
+    public List<String> cleanHBaseReplicas() throws Exception {
         ReplicationAdmin repliAdmin = new ReplicationAdmin(conf);
+        List<String> removedPeers = new ArrayList<String>();
         try {
             for (String peerId : repliAdmin.listPeers().keySet()) {
                 repliAdmin.removePeer(peerId);
+                removedPeers.add(peerId);
             }
         } finally {
             Closer.close(repliAdmin);
         }
+        return removedPeers;
     }
 }

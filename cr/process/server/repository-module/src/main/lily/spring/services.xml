@@ -59,6 +59,10 @@
       id="pluginRegistry"
       service="org.lilyproject.plugin.PluginRegistry"/>
 
+  <lily:import-service
+      id="repositoryModel"
+      service="org.lilyproject.repository.model.api.RepositoryModel"/>
+
   <lily:export-service
       ref="repositoryManager"
       service="org.lilyproject.repository.api.RepositoryManager"/>
@@ -71,13 +75,15 @@
       ref="idGenerator"
       service="org.lilyproject.repository.api.IdGenerator"/>
 
-  <lily:export-service
-      ref="repositoryTableManager"
-      service="org.lilyproject.repository.api.RepositoryTableManager"/>
-
   <bean id="hbaseConf"
         factory-bean="hadoopConfFactory"
         factory-method="getHBaseConf"/>
+
+  <!-- Ensure the creation of the record table -->
+  <bean id="recordTableSetup"
+        class="org.lilyproject.server.modules.repository.RecordTableSetup">
+    <constructor-arg ref="hbaseTableFactory"/>
+  </bean>
 
   <bean id="idGenerator" class="org.lilyproject.repository.impl.id.IdGeneratorImpl"/>
 
@@ -88,14 +94,7 @@
     <constructor-arg ref="hbaseTableFactory"/>
   </bean>
 
-  <bean id="repositoryTableManager" class="org.lilyproject.repository.impl.RepositoryTableManagerImpl">
-    <constructor-arg ref="hbaseConf"/>
-    <constructor-arg ref="hbaseTableFactory"/>
-  </bean>
-
   <bean id="recordFactory" class="org.lilyproject.repository.impl.RecordFactoryImpl">
-    <constructor-arg ref="typeManager"/>
-    <constructor-arg ref="idGenerator"/>
   </bean>
 
   <bean id="blobManager" factory-bean="blobManagerSetup" factory-method="getBlobManager"/>
@@ -117,7 +116,7 @@
   <bean id="blobIncubatorMonitorSetup" class="org.lilyproject.server.modules.repository.BlobIncubatorMonitorSetup">
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="hbaseTableFactory"/>
-    <constructor-arg ref="repositoryTableManager"/>
+    <constructor-arg value="#{repositoryManager.getDefaultRepository().getTableManager()}"/>
     <constructor-arg ref="blobManager"/>
     <constructor-arg ref="typeManager"/>
     <constructor-arg>
@@ -135,6 +134,8 @@
     <constructor-arg ref="recordFactory"/>
     <constructor-arg ref="hbaseTableFactory"/>
     <constructor-arg ref="blobManager"/>
+    <constructor-arg ref="hbaseConf"/>
+    <constructor-arg ref="repositoryModel"/>
   </bean>
 
   <bean id="recordUpdateHookActivator" class="org.lilyproject.server.modules.repository.RecordUpdateHookActivator">
@@ -152,18 +153,15 @@
     </constructor-arg>
   </bean>
 
-  <!-- Ensure the creation of the record table -->
-  <bean id="recordTableSetup"
-        class="org.lilyproject.server.modules.repository.RecordTableSetup">
-    <constructor-arg ref="hbaseTableFactory"/>
-  </bean>
-
-
   <bean id="repositoryManager"
         class="org.lilyproject.server.modules.repository.DecoratingRepositoryManager">
     <constructor-arg ref="rawRepositoryManager"/>
     <constructor-arg ref="recordUpdateHookActivator"/>
     <constructor-arg ref="repositoryDecoratorActivator"/>
+    <constructor-arg ref="repositoryModel"/>
+    <constructor-arg ref="recordFactory"/>
+    <constructor-arg ref="typeManager"/>
+    <constructor-arg ref="idGenerator"/>
   </bean>
 
   <bean id="mbeanExporter" class="org.springframework.jmx.export.MBeanExporter">
@@ -182,6 +180,12 @@
   <bean class="org.lilyproject.server.modules.repository.PrematureRepositoryManagerActivator">
     <constructor-arg ref="prematureRepositoryManager"/>
     <constructor-arg ref="rawRepositoryManager"/>
+  </bean>
+
+  <bean class="org.lilyproject.repository.impl.CoreRepositoryMasterHook">
+    <constructor-arg ref="hbaseTableFactory"/>
+    <constructor-arg ref="hbaseConf"/>
+    <constructor-arg ref="pluginRegistry"/>
   </bean>
 
 </beans>

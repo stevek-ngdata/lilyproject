@@ -36,6 +36,7 @@ import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RepositoryException;
@@ -86,10 +87,12 @@ public class RecordDecoder {
 
     private TypeManager typeManager;
     private IdGenerator idGenerator;
+    private RecordFactory recordFactory;
 
-    public RecordDecoder(TypeManager typeManager, IdGenerator idGenerator) {
+    public RecordDecoder(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory) {
         this.typeManager = typeManager;
         this.idGenerator = idGenerator;
+        this.recordFactory = recordFactory;
     }
 
     /**
@@ -107,7 +110,7 @@ public class RecordDecoder {
      */
     public Record decodeRecord(RecordId recordId, Long requestedVersion, ReadContext readContext,
                                Result result, FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
-        Record record = newRecord(recordId);
+        Record record = recordFactory.newRecord(recordId);
         record.setVersion(requestedVersion);
 
         // If the version is null, this means the record has no version an thus only contains non-versioned fields (if any)
@@ -195,7 +198,7 @@ public class RecordDecoder {
         Map<Long, Record> records = new HashMap<Long, Record>(requestedVersions.size());
         Map<Long, Set<Scope>> scopes = new HashMap<Long, Set<Scope>>(requestedVersions.size());
         for (Long requestedVersion : requestedVersions) {
-            Record record = newRecord(recordId);
+            Record record = recordFactory.newRecord(recordId);
             record.setVersion(requestedVersion);
             records.put(requestedVersion, record);
             scopes.put(requestedVersion, EnumSet.noneOf(Scope.class));
@@ -265,14 +268,6 @@ public class RecordDecoder {
         }
 
         return new ArrayList<Record>(records.values());
-    }
-
-    public Record newRecord() {
-        return new RecordImpl();
-    }
-
-    public Record newRecord(RecordId recordId) {
-        return new RecordImpl(recordId);
     }
 
     private static class ExtractedField {

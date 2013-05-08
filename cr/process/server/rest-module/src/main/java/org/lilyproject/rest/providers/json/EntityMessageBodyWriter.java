@@ -28,14 +28,14 @@ import java.lang.reflect.Type;
 
 import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.rest.BaseRepositoryResource;
 import org.lilyproject.rest.Entity;
-import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.tools.import_.json.EntityWriter;
 import org.lilyproject.util.json.JsonFormat;
 
 @Provider
-public class EntityMessageBodyWriter extends RepositoryEnabled implements MessageBodyWriter<Entity> {
+public class EntityMessageBodyWriter extends BaseRepositoryResource implements MessageBodyWriter<Entity> {
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type.equals(Entity.class) && mediaType.equals(MediaType.APPLICATION_JSON_TYPE);
@@ -52,7 +52,9 @@ public class EntityMessageBodyWriter extends RepositoryEnabled implements Messag
             throws IOException, WebApplicationException {
         try {
             EntityWriter writer = EntityRegistry.findWriter(object.getEntity().getClass());
-            ObjectNode json = writer.toJson(object.getEntity(), object.getWriteOptions(), repositoryMgr);
+            // Multiple repositories: ok to use public repo since only non-repository-specific things are needed
+            ObjectNode json = writer.toJson(object.getEntity(), object.getWriteOptions(),
+                    repositoryMgr.getDefaultRepository());
             JsonFormat.serialize(json, new CloseShieldOutputStream(entityStream));
         } catch (Throwable e) {
             // We catch every throwable, since otherwise no one does it and we will not have any trace

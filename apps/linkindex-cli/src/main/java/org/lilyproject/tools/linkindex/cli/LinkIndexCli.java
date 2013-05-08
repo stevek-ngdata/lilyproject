@@ -29,9 +29,9 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.linkindex.FieldedLink;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
@@ -63,6 +63,7 @@ public class LinkIndexCli extends BaseZkCliTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
@@ -109,7 +110,7 @@ public class LinkIndexCli extends BaseZkCliTool {
         }
 
         lilyClient = new LilyClient(zkConnectionString, 60000);
-        Repository repository = lilyClient.getRepository();
+        LRepository repository = lilyClient.getDefaultRepository();
         typeManager = repository.getTypeManager();
 
         Configuration hbaseConf = HBaseConfiguration.create();
@@ -117,7 +118,7 @@ public class LinkIndexCli extends BaseZkCliTool {
 
         IndexManager indexManager = new IndexManager(hbaseConf, new HBaseTableFactoryImpl(hbaseConf));
 
-        LinkIndex linkIndex = new LinkIndex(indexManager, repository.getRepositoryManager());
+        LinkIndex linkIndex = new LinkIndex(indexManager, lilyClient);
 
         //
         // Determine the index to query
@@ -151,7 +152,7 @@ public class LinkIndexCli extends BaseZkCliTool {
         SchemaId vtagId = null;
         if (cmd.hasOption(vtagOption.getOpt())) {
             String vtagParam = cmd.getOptionValue(vtagOption.getOpt());
-            vtagId = repository.getTypeManager().getFieldTypeByName(new QName("org.lilyproject.vtag", vtagParam)).getId();
+            vtagId = typeManager.getFieldTypeByName(new QName("org.lilyproject.vtag", vtagParam)).getId();
         }
 
         //
@@ -165,7 +166,7 @@ public class LinkIndexCli extends BaseZkCliTool {
             }
 
             String fieldParam = cmd.getOptionValue(fieldOption.getOpt());
-            FieldType field = repository.getTypeManager().getFieldTypeByName(QName.fromString(fieldParam));
+            FieldType field = typeManager.getFieldTypeByName(QName.fromString(fieldParam));
             fieldId = field.getId();
 
             if (!field.getValueType().getDeepestValueType().getBaseName().equals("LINK")) {

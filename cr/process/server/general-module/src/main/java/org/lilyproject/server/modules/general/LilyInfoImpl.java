@@ -32,6 +32,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class LilyInfoImpl implements LilyInfo {
     private boolean indexerMaster;
+    private boolean repositoryMaster;
 
     private final ZooKeeperItf zk;
     private final Watcher watcher = new RepositoryNodesWatcher();
@@ -96,5 +97,15 @@ public class LilyInfoImpl implements LilyInfo {
     @Override
     public void setIndexerMaster(boolean indexerMaster) {
         this.indexerMaster = indexerMaster;
+    }
+
+    @Override
+    public void setRepositoryMaster(boolean repositoryMaster) {
+        this.repositoryMaster = repositoryMaster;
+    }
+
+    @Override
+    public boolean isRepositoryMaster() {
+        return repositoryMaster;
     }
 }

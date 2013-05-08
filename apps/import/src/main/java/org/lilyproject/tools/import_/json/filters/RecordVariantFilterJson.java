@@ -21,8 +21,8 @@ import java.util.Map;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.api.filter.RecordVariantFilter;
 import org.lilyproject.tools.import_.json.JsonFormatException;
@@ -37,7 +37,7 @@ public class RecordVariantFilterJson implements RecordFilterJsonConverter<Record
     }
 
     @Override
-    public ObjectNode toJson(RecordVariantFilter filter, Namespaces namespaces, RepositoryManager repositoryManager,
+    public ObjectNode toJson(RecordVariantFilter filter, Namespaces namespaces, LRepository repository,
                              RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
 
@@ -56,7 +56,7 @@ public class RecordVariantFilterJson implements RecordFilterJsonConverter<Record
     }
 
     @Override
-    public RecordVariantFilter fromJson(JsonNode node, Namespaces namespaces, RepositoryManager repositoryManager,
+    public RecordVariantFilter fromJson(JsonNode node, Namespaces namespaces, LRepository repository,
                                         RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
@@ -77,6 +77,6 @@ public class RecordVariantFilterJson implements RecordFilterJsonConverter<Record
             final Map.Entry<String, JsonNode> next = fields.next();
             variantProperties.put(next.getKey(), next.getValue().getTextValue());
         }
-        return new RecordVariantFilter(repositoryManager.getIdGenerator().fromString(recordId), variantProperties);
+        return new RecordVariantFilter(repository.getIdGenerator().fromString(recordId), variantProperties);
     }
 }

@@ -27,8 +27,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 public class LilyHBaseSchema {
     private static final HColumnDescriptor DATA_CF;
 
-    static final byte[] IS_RECORD_TABLE_PROPERTY = Bytes.toBytes("isLilyRecordTable");
-    static final byte[] IS_RECORD_TABLE_VALUE = Bytes.toBytes(true);
+    public static final byte[] TABLE_TYPE_PROPERTY = Bytes.toBytes("lilyTableType");
+    public static final byte[] TABLE_TYPE_RECORD = Bytes.toBytes("record");
 
     static {
         DATA_CF = new HColumnDescriptor(RecordCf.DATA.bytes,
@@ -68,13 +68,13 @@ public class LilyHBaseSchema {
 
         HTableDescriptor recordTableDescriptor = new HTableDescriptor(tableName);
         recordTableDescriptor.addFamily(DATA_CF);
-        recordTableDescriptor.setValue(IS_RECORD_TABLE_PROPERTY, IS_RECORD_TABLE_VALUE);
+        recordTableDescriptor.setValue(TABLE_TYPE_PROPERTY, TABLE_TYPE_RECORD);
         return recordTableDescriptor;
     }
 
     public static boolean isRecordTableDescriptor(HTableDescriptor htableDescriptor) {
-        byte[] value = htableDescriptor.getValue(IS_RECORD_TABLE_PROPERTY);
-        return value != null && Bytes.equals(value, IS_RECORD_TABLE_VALUE);
+        byte[] value = htableDescriptor.getValue(TABLE_TYPE_PROPERTY);
+        return value != null && Bytes.equals(value, TABLE_TYPE_RECORD);
     }
 
     public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName) throws IOException, InterruptedException {

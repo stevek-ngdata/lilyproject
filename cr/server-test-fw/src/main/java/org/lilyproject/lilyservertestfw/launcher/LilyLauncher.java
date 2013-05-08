@@ -41,6 +41,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.hadooptestfw.CleanupUtil;
 import org.lilyproject.hadooptestfw.JavaLoggingToLog4jRedirector;
+import org.lilyproject.hadooptestfw.ReplicationPeerUtil;
 import org.lilyproject.lilyservertestfw.TemplateDir;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.Version;
@@ -87,6 +88,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
@@ -331,7 +333,10 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             cleanupUtil.cleanZooKeeper();
 
             // Clear replication stat
-            cleanupUtil.cleanHBaseReplicas();
+            List<String> peerIds = cleanupUtil.cleanHBaseReplicas();
+            for (String peerId : peerIds) {
+                new ReplicationPeerUtil().waitOnReplicationPeerStopped(peerId);
+            }
 
             // Clear Blobs on hdfs blobstore
             String dfsUri = "hdfs://localhost:8020/lily/blobs";

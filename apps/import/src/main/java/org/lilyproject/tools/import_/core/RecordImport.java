@@ -17,11 +17,11 @@ package org.lilyproject.tools.import_.core;
 
 import java.util.List;
 
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordExistsException;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 
 //
@@ -35,13 +35,13 @@ public class RecordImport {
     private RecordImport() {
     }
 
-    public static ImportResult<Record> importRecord(Record newRecord, ImportMode impMode, Repository repository)
+    public static ImportResult<Record> importRecord(Record newRecord, ImportMode impMode, LTable table)
             throws RepositoryException, InterruptedException {
-        return importRecord(newRecord, impMode, null, repository);
+        return importRecord(newRecord, impMode, null, table);
     }
 
     public static ImportResult<Record> importRecord(Record newRecord, ImportMode impMode,
-            List<MutationCondition> conditions, Repository repository)
+            List<MutationCondition> conditions, LTable table)
             throws RepositoryException, InterruptedException {
 
         // If the user specified both record type name and version, we assume he wants to use that version, otherwise
@@ -57,7 +57,7 @@ public class RecordImport {
                     return ImportResult.cannotUpdateDoesNotExist();
                 }
                 try {
-                    Record updatedRecord = repository.update(newRecord, false, useLatestRecordType, conditions);
+                    Record updatedRecord = table.update(newRecord, false, useLatestRecordType, conditions);
 
                     switch (updatedRecord.getResponseStatus()) {
                         case UP_TO_DATE:
@@ -81,7 +81,7 @@ public class RecordImport {
                     return ImportResult.cannotUpdateDoesNotExist();
                 }
 
-                Record updatedRecord = repository.createOrUpdate(newRecord, useLatestRecordType);
+                Record updatedRecord = table.createOrUpdate(newRecord, useLatestRecordType);
 
                 switch (updatedRecord.getResponseStatus()) {
                     case UP_TO_DATE:
@@ -99,7 +99,7 @@ public class RecordImport {
                 break;
             case CREATE:
                 try {
-                    Record createdRecord = repository.create(newRecord);
+                    Record createdRecord = table.create(newRecord);
                     result = ImportResult.created(createdRecord);
                 } catch (RecordExistsException e) {
                     result = ImportResult.cannotCreateExists();

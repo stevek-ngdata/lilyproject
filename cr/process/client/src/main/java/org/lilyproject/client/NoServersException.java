@@ -18,7 +18,7 @@ package org.lilyproject.client;
 /**
  * This exception occurs when there are no Lily servers available.
  */
-public class NoServersException extends Exception {
+public class NoServersException extends RuntimeException {
     public NoServersException() {
         super();
     }

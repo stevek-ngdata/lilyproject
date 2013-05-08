@@ -29,10 +29,16 @@ import com.google.common.cache.Cache;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryAndTableResource;
+import org.lilyproject.tools.restresourcegenerator.GenerateTableResource;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path("scan")
-public class RecordScanCollectionResource extends RepositoryEnabled {
+@GenerateTableResource
+@GenerateRepositoryResource
+@GenerateRepositoryAndTableResource
+public class RecordScanCollectionResource extends BaseRepositoryResource {
     @Autowired
     private Cache<String, RecordScanner> recordScannerMap;
 
@@ -43,7 +49,7 @@ public class RecordScanCollectionResource extends RepositoryEnabled {
     public Response post(RecordScan scan, @Context UriInfo uriInfo) {
         String scanId = String.valueOf(rand.nextLong());
         try {
-            recordScannerMap.put(scanId, getRepository(uriInfo).getScanner(scan));
+            recordScannerMap.put(scanId, getTable(uriInfo).getScanner(scan));
         } catch (RepositoryException e) {
            throw new ResourceException(e, Status.BAD_REQUEST.getStatusCode());
         } catch (InterruptedException e) {

@@ -21,9 +21,9 @@ import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
-import org.lilyproject.repository.api.RepositoryTableManager;
-import org.lilyproject.repository.api.RepositoryTableManager.TableCreateDescriptor;
-import org.lilyproject.repository.impl.TableCreateDescriptorImpl;
+import org.lilyproject.repository.api.TableCreateDescriptor;
+import org.lilyproject.repository.api.TableManager;
+import org.lilyproject.util.hbase.TableConfig;
 
 /**
  * Command-line utility for creating new record tables in Lily.
@@ -104,23 +104,25 @@ public class CreateTableCli extends BaseTableCliTool {
         }
 
         if (splitKeys != null) {
-            createDescriptor = TableCreateDescriptorImpl.createInstanceWithSplitKeys(tableName, splitKeyPrefix, splitKeys);
+            byte[][] parsedSplitKeys = TableConfig.parseSplitKeys(null, splitKeys, splitKeyPrefix);
+            createDescriptor = new TableCreateDescriptor(tableName, parsedSplitKeys);
         } else if (regionCount != -1) {
-            createDescriptor = TableCreateDescriptorImpl.createInstance(tableName, splitKeyPrefix, regionCount);
+            byte[][] parsedSplitKeys = TableConfig.parseSplitKeys(regionCount, null, splitKeyPrefix);
+            createDescriptor = new TableCreateDescriptor(tableName, parsedSplitKeys);
         } else {
-            createDescriptor = TableCreateDescriptorImpl.createInstance(tableName);
+            createDescriptor = new TableCreateDescriptor(tableName);
         }
         return 0;
     }
 
     @Override
-    protected int execute(RepositoryTableManager tableManager) throws InterruptedException, IOException {
+    protected int execute(TableManager tableManager) throws InterruptedException, IOException {
         byte[][] splitKeys = createDescriptor.getSplitKeys();
         int numRegions = splitKeys != null ? splitKeys.length + 1 : 1;
         System.out.printf("Creating table '%s' with %d region%s...\n", createDescriptor.getName(), numRegions,
                 numRegions == 1 ? "" : "s");
         tableManager.createTable(createDescriptor);
-        System.out.printf("Table '%s' created\n", createDescriptor.getName());
+        System.out.printf("Table '%s' in repository '%s' created\n", createDescriptor.getName(), repositoryName);
         return 0;
     }
 

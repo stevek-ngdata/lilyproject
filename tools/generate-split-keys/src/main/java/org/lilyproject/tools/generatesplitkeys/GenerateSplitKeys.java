@@ -52,6 +52,7 @@ public class GenerateSplitKeys extends BaseCliTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

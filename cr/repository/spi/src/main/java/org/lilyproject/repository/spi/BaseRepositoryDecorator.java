@@ -23,21 +23,22 @@ import java.util.Set;
 
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobAccess;
-import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdRecordScanner;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 
@@ -50,6 +51,26 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     @Override
     public void setDelegate(Repository repository) {
         this.delegate = repository;
+    }
+
+    @Override
+    public RecordFactory getRecordFactory() {
+        return delegate.getRecordFactory();
+    }
+
+    @Override
+    public TableManager getTableManager() {
+        return delegate.getTableManager();
+    }
+
+    @Override
+    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
+        return delegate.getTable(tableName);
+    }
+
+    @Override
+    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
+        return delegate.getDefaultTable();
     }
 
     @Override
@@ -192,11 +213,6 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess) {
-        delegate.registerBlobStoreAccess(blobStoreAccess);
-    }
-
-    @Override
     public OutputStream getOutputStream(Blob blob) throws RepositoryException, InterruptedException {
         return delegate.getOutputStream(blob);
     }
@@ -274,12 +290,17 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public RepositoryManager getRepositoryManager() {
-        return delegate.getRepositoryManager();
+    public String getStorageTableName() {
+        return delegate.getStorageTableName();
     }
 
     @Override
     public String getTableName() {
         return delegate.getTableName();
+    }
+
+    @Override
+    public String getRepositoryName() {
+        return delegate.getRepositoryName();
     }
 }

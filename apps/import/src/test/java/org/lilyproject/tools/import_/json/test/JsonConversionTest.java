@@ -33,15 +33,15 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Metadata;
 import org.lilyproject.repository.api.MetadataBuilder;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -60,7 +60,6 @@ import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.tools.import_.json.RecordScanWriter;
 import org.lilyproject.tools.import_.json.RecordWriter;
 import org.lilyproject.tools.import_.json.WriteOptions;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 
@@ -73,8 +72,8 @@ import static org.junit.Assert.fail;
 
 public class JsonConversionTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
-    private static RepositoryManager repositoryManager;
-    private static Repository repository;
+    private static LRepository repository;
+    private static LTable table;
     private RecordScanWriter writer;
     private RecordScanReader reader;
 
@@ -83,8 +82,8 @@ public class JsonConversionTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repositoryManager = repoSetup.getRepositoryManager();
-        repository = repoSetup.getRepositoryManager().getRepository(Table.RECORD.name);
+        repository = repoSetup.getRepositoryManager().getDefaultRepository();
+        table = repository.getDefaultTable();
 
         TypeManager typeManager = repository.getTypeManager();
         typeManager.createFieldType("STRING", new QName("ns", "stringField"), Scope.NON_VERSIONED);
@@ -121,21 +120,21 @@ public class JsonConversionTest {
      */
     @Test
     public void testNamespaceContexts() throws Exception {
-        JsonImport.load(repository, getClass().getResourceAsStream("nscontexttest.json"), false);
+        JsonImport.load(table, repository, getClass().getResourceAsStream("nscontexttest.json"));
 
-        Record record1 = repository.read(repository.getIdGenerator().fromString("USER.record1"));
+        Record record1 = table.read(repository.getIdGenerator().fromString("USER.record1"));
         assertEquals("value1", record1.getField(new QName("import1", "f1")));
         assertEquals(new Integer(55), record1.getField(new QName("import2", "f2")));
     }
 
     private byte[] scanToBytes(RecordScan scan) throws RepositoryException, InterruptedException, IOException {
         return JsonFormat.serializeAsBytes(
-                writer.toJson(scan, new WriteOptions(), new NamespacesImpl(false), repositoryManager));
+                writer.toJson(scan, new WriteOptions(), new NamespacesImpl(false), repository));
     }
 
     private RecordScan scanFromBytes(byte[] data) throws IOException, RepositoryException, JsonFormatException,
             InterruptedException {
-        return reader.fromJson(JsonFormat.deserializeNonStd(data), new NamespacesImpl(false), repositoryManager);
+        return reader.fromJson(JsonFormat.deserializeNonStd(data), new NamespacesImpl(false), repository);
     }
 
     @Test
@@ -390,7 +389,7 @@ public class JsonConversionTest {
 
         // Test serialization with namespace prefixes
         byte[] dataWithPrefixes = JsonFormat.serializeAsBytes(
-                writer.toJson(scan, new WriteOptions(), repositoryManager));
+                writer.toJson(scan, new WriteOptions(), repository));
 
         JsonNode nodeWithPrefixes = new ObjectMapper().readTree(dataWithPrefixes);
         assertNotNull(nodeWithPrefixes.get("namespaces"));
@@ -399,10 +398,10 @@ public class JsonConversionTest {
 
     @Test
     public void testRecordAttributes() throws Exception {
-        Record record = repository.newRecord();
+        Record record = repository.getRecordFactory().newRecord();
         record.getAttributes().put("one", "onevalue");
 
-        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repositoryManager);
+        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repository);
         ObjectNode attributes = (ObjectNode) recordNode.get("attributes");
         for (String key : record.getAttributes().keySet()) {
             Assert.assertEquals(record.getAttributes().get(key), attributes.get(key).asText());
@@ -410,7 +409,7 @@ public class JsonConversionTest {
 
         attributes.put("write", "something new");
 
-        record = RecordReader.INSTANCE.fromJson(recordNode, repositoryManager);
+        record = RecordReader.INSTANCE.fromJson(recordNode, repository);
         Iterator<Entry<String, JsonNode>> it = attributes.getFields();
         while (it.hasNext()) {
             Entry<String,JsonNode> attr = it.next();
@@ -420,7 +419,7 @@ public class JsonConversionTest {
 
     @Test
     public void testMetadata() throws Exception {
-        Record record = repository.newRecord();
+        Record record = repository.getRecordFactory().newRecord();
         record.setMetadata(new QName("ns", "field1"),
                 new MetadataBuilder()
                         .value("stringfield", "string")
@@ -437,7 +436,7 @@ public class JsonConversionTest {
                         .value("stringfield", "another_string")
                         .build());
 
-        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repositoryManager);
+        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repository);
 
         // go through ser/deser
         String recordJson = JsonFormat.serializeAsString(recordNode);
@@ -480,7 +479,7 @@ public class JsonConversionTest {
         assertEquals("another_string", metadataNode.get(prefix + "$field2").get("stringfield").getTextValue());
 
         // Now parse json again to API objects
-        record = RecordReader.INSTANCE.fromJson(recordNode, repositoryManager);
+        record = RecordReader.INSTANCE.fromJson(recordNode, repository);
         assertEquals(2, record.getMetadataMap().size());
 
         Metadata metadata = record.getMetadata(new QName("ns", "field1"));
@@ -499,7 +498,7 @@ public class JsonConversionTest {
 
     @Test
     public void testMetadataToDelete() throws Exception {
-        Record record = repository.newRecord();
+        Record record = repository.getRecordFactory().newRecord();
         record.setMetadata(new QName("ns", "field1"),
                 new MetadataBuilder()
                         .value("mfield1", "value1")
@@ -514,7 +513,7 @@ public class JsonConversionTest {
 
         WriteOptions options = new WriteOptions();
         options.setUseNamespacePrefixes(false);
-        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, options, repositoryManager);
+        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, options, repository);
 
         // Go through ser/deser
         String recordJson = JsonFormat.serializeAsString(recordNode);
@@ -527,7 +526,7 @@ public class JsonConversionTest {
         assertEquals(1, recordNode.get("metadataToDelete").get("{ns}field2").size());
 
         // Now parse json again to API objects
-        record = RecordReader.INSTANCE.fromJson(recordNode, repositoryManager);
+        record = RecordReader.INSTANCE.fromJson(recordNode, repository);
         assertEquals(2, record.getMetadataMap().size());
 
         Metadata metadata = record.getMetadata(new QName("ns", "field1"));

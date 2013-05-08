@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.ServiceLoader;
 
 import com.google.common.base.Preconditions;
@@ -41,22 +40,24 @@ import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobAccess;
 import org.lilyproject.repository.api.BlobException;
 import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdRecordScanner;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeException;
@@ -67,18 +68,22 @@ import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Pair;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public abstract class BaseRepository implements Repository {
-    protected final RepositoryManager repositoryManager;
+    protected final AbstractRepositoryManager repositoryManager;
     protected final TypeManager typeManager;
     protected final IdGenerator idGenerator;
     protected final BlobManager blobManager;
+    protected final RecordFactory recordFactory;
     protected final RecordDecoder recdec;
     protected final HTableInterface recordTable;
-    private final String tableName;
+    protected final RepoTableKey repoTableKey;
+    protected final TableManager tableManager;
     protected RepositoryMetrics metrics;
+
     /**
      * Not all rows in the HBase record table are real records, this filter excludes non-valid
      * record rows.
@@ -95,31 +100,49 @@ public abstract class BaseRepository implements Repository {
         REAL_RECORDS_FILTER.setFilterIfMissing(true);
     }
 
-    protected BaseRepository(RepositoryManager repositoryManager, BlobManager blobManager,
-                             HTableInterface recordTable, RepositoryMetrics metrics) {
+    protected BaseRepository(RepoTableKey repoTableKey, AbstractRepositoryManager repositoryManager,
+            BlobManager blobManager, HTableInterface recordTable, RepositoryMetrics metrics,
+            TableManager tableManager, RecordFactory recordFactory) {
 
         Preconditions.checkNotNull(repositoryManager, "repositoryManager cannot be null");
         Preconditions.checkNotNull(blobManager, "blobManager cannot be null");
         Preconditions.checkNotNull(recordTable, "recordTable cannot be null");
 
+        this.repoTableKey = repoTableKey;
         this.repositoryManager = repositoryManager;
         this.typeManager = repositoryManager.getTypeManager();
         this.blobManager = blobManager;
         this.idGenerator = repositoryManager.getIdGenerator();
         this.recordTable = recordTable;
-        this.tableName = Bytes.toString(recordTable.getTableName());
-        this.recdec = new RecordDecoder(typeManager, idGenerator);
+        this.recdec = new RecordDecoder(typeManager, idGenerator, new RecordFactoryImpl());
         this.metrics = metrics;
+        this.tableManager = tableManager;
+        this.recordFactory = recordFactory;
+    }
+
+    @Override
+    public TableManager getTableManager() {
+        return tableManager;
+    }
+
+    @Override
+    public RecordFactory getRecordFactory() {
+        return recordFactory;
+    }
+
+    @Override
+    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
+        return repositoryManager.getRepository(repoTableKey.getRepositoryName(), tableName);
+    }
+
+    @Override
+    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
+        return getTable(LilyHBaseSchema.Table.RECORD.name);
     }
 
     @Override
     public TypeManager getTypeManager() {
         return typeManager;
-    }
-
-    @Override
-    public void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess) {
-        blobManager.register(blobStoreAccess);
     }
 
     @Override
@@ -228,7 +251,7 @@ public abstract class BaseRepository implements Repository {
 
         // add user's filter
         if (scan.getRecordFilter() != null) {
-            Filter filter = filterFactory.createHBaseFilter(scan.getRecordFilter(), repositoryManager, filterFactory);
+            Filter filter = filterFactory.createHBaseFilter(scan.getRecordFilter(), this, filterFactory);
             filterList.addFilter(filter);
         }
 
@@ -281,10 +304,10 @@ public abstract class BaseRepository implements Repository {
 
     private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {
         @Override
-        public Filter createHBaseFilter(RecordFilter filter, RepositoryManager repositoryManager, HBaseRecordFilterFactory factory)
+        public Filter createHBaseFilter(RecordFilter filter, LRepository repository, HBaseRecordFilterFactory factory)
                 throws RepositoryException, InterruptedException {
             for (HBaseRecordFilterFactory filterFactory : FILTER_FACTORIES) {
-                Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repositoryManager, factory);
+                Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repository, factory);
                 if (hbaseFilter != null) {
                     return hbaseFilter;
                 }
@@ -613,22 +636,26 @@ public abstract class BaseRepository implements Repository {
 
     @Override
     public Record newRecord() throws RecordException {
-        return repositoryManager.getRecordFactory().newRecord();
+        return recordFactory.newRecord();
     }
 
     @Override
     public Record newRecord(RecordId recordId) throws RecordException {
-        return repositoryManager.getRecordFactory().newRecord(recordId);
-    }
-
-    @Override
-    public RepositoryManager getRepositoryManager() {
-        return repositoryManager;
+        return recordFactory.newRecord(recordId);
     }
 
     @Override
     public String getTableName() {
-        return tableName;
+        return repoTableKey.getTableName();
     }
 
+    @Override
+    public String getStorageTableName() {
+        return repoTableKey.toHBaseTableName();
+    }
+
+    @Override
+    public String getRepositoryName() {
+        return repoTableKey.getRepositoryName();
+    }
 }

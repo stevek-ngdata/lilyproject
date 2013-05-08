@@ -69,11 +69,12 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordExistsException;
+import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.ResponseStatus;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -108,9 +109,11 @@ public class HBaseRepository extends BaseRepository {
 
     private static final Object METADATA_ONLY_UPDATE = new Object();
 
-    public HBaseRepository(RepositoryManager repositoryManager, HTableInterface hbaseTable,
-            BlobManager blobManager) throws IOException, InterruptedException {
-        super(repositoryManager, blobManager, hbaseTable, new RepositoryMetrics("hbaserepository"));
+    public HBaseRepository(RepoTableKey ttk, AbstractRepositoryManager repositoryManager, HTableInterface hbaseTable,
+            BlobManager blobManager, TableManager tableManager, RecordFactory recordFactory)
+            throws IOException, InterruptedException {
+        super(ttk, repositoryManager, blobManager, hbaseTable, new RepositoryMetrics("hbaserepository"),
+                tableManager, recordFactory);
     }
 
     @Override
@@ -1349,7 +1352,7 @@ public class HBaseRepository extends BaseRepository {
 
     @Override
     public RecordBuilder recordBuilder() throws RecordException {
-        return new RecordBuilderImpl(this);
+        return new RecordBuilderImpl(this, getIdGenerator());
     }
     
     /**

@@ -32,6 +32,7 @@ import org.apache.avro.ipc.Server;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.execution.ExecutionHandler;
 import org.lilyproject.indexer.Indexer;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.concurrent.WaitPolicy;
@@ -55,8 +56,9 @@ public class AvroServer {
     }
 
     @PostConstruct
-    public void start() throws IOException {
-        AvroLilyImpl avroLily = new AvroLilyImpl(repositoryManager, repositoryManager.getTypeManager(), indexer);
+    public void start() throws IOException, RepositoryException, InterruptedException {
+        AvroLilyImpl avroLily = new AvroLilyImpl(repositoryManager,
+                repositoryManager.getDefaultRepository().getTypeManager(), indexer);
         Responder responder = new LilySpecificResponder(AvroLily.class, avroLily);
 
         ThreadFactory threadFactory = new CustomThreadFactory("avro-exechandler", new ThreadGroup("AvroExecHandler"));

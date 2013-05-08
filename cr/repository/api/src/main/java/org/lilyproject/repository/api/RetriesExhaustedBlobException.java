@@ -20,6 +20,8 @@ import java.util.Map;
 
 /**
  * An IO exception happened during a blob operation, the operation was retried but eventually still failed.
+ *
+ * @deprecated replaced with {@link RetriesExhaustedException}.
  */
 public class RetriesExhaustedBlobException extends BlobException {
     private String operation;

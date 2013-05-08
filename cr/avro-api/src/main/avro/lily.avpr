@@ -87,6 +87,16 @@
     },
 
     {
+      "name": "AvroIOException",
+      "type": "error",
+      "fields": [
+        {"name": "message", "type": ["null", "string"]},
+        {"name": "exceptionClass", "type": ["null", "string"]},
+        {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
+      ]
+    },
+
+    {
       "name": "AvroGenericException",
       "type": "error",
       "fields": [
@@ -172,6 +182,15 @@
         {"name": "fieldTypes", "type": {"type": "array", "items": "AvroFieldType"}},
         {"name": "recordTypes", "type": {"type": "array", "items": "AvroRecordType"}}
       ]
+    },
+
+    {
+      "name": "AvroTableCreateDescriptor",
+      "type": "record",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "splitKeys", "type": ["null", {"type": "array", "items": "bytes"}]}
+      ]
     }
   ],
 
@@ -182,6 +201,7 @@
     "create": {
       "request": [
         {"name": "record", "type": "bytes"}, 
+        {"name": "repository", "type": "string"},
         {"name": "table", "type": "string"}],
       "response": "bytes",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
@@ -190,6 +210,7 @@
     "update": {
       "request": [
         {"name": "record", "type": "bytes"},
+        {"name": "repository", "type": "string"},
         {"name": "table", "type": "string"},
         {"name": "updateVersion", "type": "boolean"},
         {"name": "useLatestRecordType", "type": "boolean"},
@@ -201,6 +222,7 @@
     "createOrUpdate": {
       "request": [
         {"name": "record", "type": "bytes"},
+        {"name": "repository", "type": "string"},
         {"name": "table", "type": "string"},
         {"name": "useLatestRecordType", "type": "boolean"}
       ],
@@ -211,6 +233,7 @@
     "delete": {
       "request": [
         {"name": "recordId", "type": "bytes"},
+        {"name": "repository", "type": "string"},
         {"name": "table", "type": "string"},
         {"name": "conditions", "type": [{"type": "array", "items": "AvroMutationCondition"}, "null"]},
         {"name": "attributes", "type": [{"type": "map", "values": "string"}, "null"]}
@@ -222,6 +245,7 @@
     "getVariants": {
       "request": [
         {"name": "recordId", "type": "bytes"},
+        {"name": "repository", "type": "string"},
         {"name": "table", "type": "string"}],
       "response": {"type": "array", "items": "string"},
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
@@ -360,19 +384,62 @@
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
 
+    // table management
+
+    "createTable": {
+      "request": [
+        {"name": "repository", "type": "string"},
+        {"name": "tableCreateDescriptor", "type": "AvroTableCreateDescriptor"}
+      ],
+      "response": ["null"],
+      "errors":["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+    },
+
+    "dropTable": {
+      "request": [
+        {"name": "repository", "type": "string"},
+        {"name": "name", "type": "string"}
+      ],
+      "response": ["null"],
+      "errors":["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+    },
+
+    "getTables": {
+      "request": [
+        {"name": "repository", "type": "string"}
+      ],
+      "response": {"type": "array", "items": "string"},
+      "errors":["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+    },
+
+    "tableExists": {
+      "request": [
+        {"name": "repository", "type": "string"},
+        {"name": "name", "type": "string"}
+      ],
+      "response": "boolean",
+      "errors":["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException", "AvroIOException"]
+    },
+
     // indexer api functionality
 
     "index": {
-      "request": [{"name": "table", "type": "string"}, 
-                  {"name": "recordId", "type": "bytes"}],
+      "request": [
+        {"name": "repository", "type": "string"},
+        {"name": "table", "type": "string"},
+        {"name": "recordId", "type": "bytes"}
+      ],
       "response": ["null"],
       "errors": ["AvroIndexerException", "AvroGenericException", "AvroInterruptedException"]
     },
 
     "indexOn": {
-      "request": [{"name": "table", "type": "string"},
-                  {"name": "recordId", "type": "bytes"},
-                  {"name": "indexes", "type": {"type": "array", "items": "string"}}],
+      "request": [
+        {"name": "repository", "type": "string"},
+        {"name": "table", "type": "string"},
+        {"name": "recordId", "type": "bytes"},
+        {"name": "indexes", "type": {"type": "array", "items": "string"}}
+      ],
       "response": ["null"],
       "errors": ["AvroIndexerException", "AvroGenericException", "AvroInterruptedException"]
     }

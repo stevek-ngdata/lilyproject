@@ -55,10 +55,6 @@
       id="indexer"
       service="org.lilyproject.indexer.Indexer"/>
 
-  <lily:import-service
-      id="repositoryTableManager"
-      service="org.lilyproject.repository.api.RepositoryTableManager"/>
-
   <lily:import-service id="indexerModel" service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
   <bean id="linkTransformer" class="org.lilyproject.tools.import_.json.DefaultLinkTransformer"/>

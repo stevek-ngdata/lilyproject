@@ -22,7 +22,6 @@ import java.util.regex.PatternSyntaxException;
 
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.util.hbase.ColumnFamilyConfig;
 import org.lilyproject.util.hbase.TableConfig;
@@ -46,14 +45,14 @@ public class TableConfigBuilder {
             }
 
             Integer regionCount = table.getChild("splits").getChild("regionCount").getValueAsInteger(-1);
-            String splitKeys = table.getChild("splits").getChild("splitKeys").getValue(null);
+            String splitKeysAsString = table.getChild("splits").getChild("splitKeys").getValue(null);
             String splitKeyPrefix = table.getChild("splits").getChild("splitKeyPrefix").getValue(null);
-            byte[] splitKeyPrefixBytes = splitKeyPrefix != null ? Bytes.toBytesBinary(splitKeyPrefix) : null;
+            byte[][] splitKeys = TableConfig.parseSplitKeys(regionCount, splitKeysAsString, splitKeyPrefix);
 
             Long maxFileSize = table.getChild("maxFileSize").getValueAsLong(null);
             Long memStoreFlushSize = table.getChild("memStoreFlushSize").getValueAsLong(null);
 
-            TableConfig config = new TableConfig(regionCount, splitKeys, splitKeyPrefixBytes);
+            TableConfig config = new TableConfig(splitKeys);
             config.setMaxFileSize(maxFileSize);
             config.setMemStoreFlushSize(memStoreFlushSize);
 

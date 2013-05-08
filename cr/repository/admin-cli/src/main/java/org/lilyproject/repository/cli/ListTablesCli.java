@@ -18,7 +18,7 @@ package org.lilyproject.repository.cli;
 import java.util.List;
 
 import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.repository.api.RepositoryTableManager;
+import org.lilyproject.repository.api.TableManager;
 
 /**
  * Command-line utility for listing all record tables (i.e. tables holding {@code Record}s) in Lily.
@@ -32,8 +32,9 @@ public class ListTablesCli extends BaseTableCliTool {
 
 
     @Override
-    protected int execute(RepositoryTableManager tableManager) throws Exception {
+    protected int execute(TableManager tableManager) throws Exception {
         List<RepositoryTable> tables = tableManager.getTables();
+        System.out.printf("Listing tables in repository '%s'\n", repositoryName);
         if (tables.isEmpty()) {
             System.out.println("No repository tables found");
         } else {

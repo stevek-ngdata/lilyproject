@@ -17,15 +17,15 @@ package org.lilyproject.repository.impl.filter;
 
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.api.filter.RecordFilterList;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 
 public class HBaseRecordFilterList implements HBaseRecordFilterFactory {
     @Override
-    public Filter createHBaseFilter(RecordFilter uncastFilter, RepositoryManager repositoryManager, HBaseRecordFilterFactory factory)
+    public Filter createHBaseFilter(RecordFilter uncastFilter, LRepository repository, HBaseRecordFilterFactory factory)
             throws RepositoryException, InterruptedException {
 
         if (!(uncastFilter instanceof RecordFilterList)) {
@@ -40,7 +40,7 @@ public class HBaseRecordFilterList implements HBaseRecordFilterFactory {
         FilterList hbaseFilter = new FilterList(hbaseOp);
 
         for (RecordFilter subFilter : filter.getFilters()) {
-            hbaseFilter.addFilter(factory.createHBaseFilter(subFilter, repositoryManager, factory));
+            hbaseFilter.addFilter(factory.createHBaseFilter(subFilter, repository, factory));
         }
 
         return hbaseFilter;

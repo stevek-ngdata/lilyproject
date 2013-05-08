@@ -18,12 +18,16 @@ package org.lilyproject.tools.scanner.cli;
 import java.io.File;
 import java.util.List;
 
+import org.lilyproject.util.repo.RepoAndTableUtil;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
@@ -38,13 +42,10 @@ public class ScannerCli extends BaseZkCliTool {
     private Option stopOption;
     private Option recordTypeOption;
     private Option tableOption;
+    private Option repositoryOption;
 
-    /**
-     * @param args
-     */
     public static void main(String[] args) {
         new ScannerCli().start(args);
-
     }
 
     @Override
@@ -58,6 +59,7 @@ public class ScannerCli extends BaseZkCliTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
@@ -67,45 +69,58 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Limit printing to a number of records")
                 .withLongOpt("limit")
                 .create("l");
+
         countOption = OptionBuilder
                 .withDescription("Count the number of records")
                 .withLongOpt("count")
                 .create("c");
+
         printOption = OptionBuilder
                 .withDescription("Print records to the command line")
                 .withLongOpt("print")
                 .create("p");
+
         configOption = OptionBuilder
                 .hasArg()
                 .withArgName("file")
                 .withDescription("Configure the record scanner using a json file")
                 .withLongOpt("config")
                 .create();
+
         startOption = OptionBuilder
                 .hasArg()
                 .withArgName("id")
                 .withDescription("Scan records starting at the record with the given ID")
                 .withLongOpt("start")
                 .create();
+
         stopOption = OptionBuilder
                 .hasArg()
                 .withArgName("id")
                 .withDescription("Scan records stopping at the record with the given ID")
                 .withLongOpt("stop")
                 .create();
+
         recordTypeOption = OptionBuilder
                 .hasArg()
                 .withArgName("{namespace}recordTypeName")
                 .withDescription("Filter records by record type name")
                 .withLongOpt("record-type")
                 .create("r");
+
         tableOption = OptionBuilder
                 .hasArg()
                 .withArgName("table")
                 .withDescription("Repository table to scan (defaults to record)")
                 .withLongOpt("table")
-                .create("t");
+                .create();
 
+        repositoryOption = OptionBuilder
+                .hasArg()
+                .withArgName("repository")
+                .withDescription("Repository name (defaults to 'default')")
+                .withLongOpt("repository")
+                .create();
 
         options.add(printOption);
         options.add(limitOption);
@@ -115,6 +130,7 @@ public class ScannerCli extends BaseZkCliTool {
         options.add(stopOption);
         options.add(recordTypeOption);
         options.add(tableOption);
+        options.add(repositoryOption);
 
         return options;
     }
@@ -136,13 +152,16 @@ public class ScannerCli extends BaseZkCliTool {
         String recordTypeFilter = cmd.hasOption(recordTypeOption.getOpt()) ? cmd.getOptionValue(recordTypeOption.getOpt()) : null;
         File configFile = cmd.hasOption(configOption.getLongOpt()) ? new File (cmd.getOptionValue(configOption.getLongOpt())) : null;
         long limit = cmd.hasOption(limitOption.getLongOpt()) ? Long.parseLong(cmd.getOptionValue(limitOption.getLongOpt())) : -1;
-        String table = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
+        String repositoryName = OptionUtil.getStringOption(cmd, repositoryOption, RepoAndTableUtil.DEFAULT_REPOSITORY);
+        String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
+        LRepository repository = lilyClient.getRepository(repositoryName);
+        LTable table = repository.getTable(tableName);
         if (cmd.hasOption(countOption.getOpt())) {
-            RecordScanTool.count(lilyClient.getRepository(table), startId, stopId,recordTypeFilter, configFile);
+            RecordScanTool.count(repository, table, startId, stopId,recordTypeFilter, configFile);
         } else if (cmd.hasOption(printOption.getOpt())) {
-            RecordScanTool.print(lilyClient.getRepository(table), startId, stopId, limit, recordTypeFilter, configFile);
+            RecordScanTool.print(repository, table, startId, stopId, limit, recordTypeFilter, configFile);
         }
 
         return 0;

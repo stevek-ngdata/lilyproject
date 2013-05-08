@@ -91,6 +91,7 @@ public class Tester extends BaseRepositoryTestTool {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
@@ -171,7 +172,7 @@ public class Tester extends BaseRepositoryTestTool {
             ImportException, InterruptedException, SecurityException, IllegalArgumentException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException {
 
-        jsonImport = new JsonImport(repository, new DefaultImportListener());
+        jsonImport = new JsonImport(table, repository, new DefaultImportListener());
         JsonParser jp = JsonFormat.JSON_FACTORY_NON_STD.createJsonParser(is);
 
         JsonToken current;
@@ -258,12 +259,12 @@ public class Tester extends BaseRepositoryTestTool {
         JsonNode propertiesNode = fieldTypeNode.get("properties");
         if (times == 0) {
             FieldType importFieldType = jsonImport.importFieldType(fieldTypeNode);
-            fieldTypes.put(importFieldType.getName(), new TestFieldType(importFieldType, repository, propertiesNode));
+            fieldTypes.put(importFieldType.getName(), new TestFieldType(importFieldType, table, repository, propertiesNode));
         } else {
             List<FieldType> importFieldTypes = jsonImport.importFieldTypes(fieldTypeNode, times);
             for (FieldType importFieldType : importFieldTypes) {
                 fieldTypes.put(importFieldType.getName(),
-                        new TestFieldType(importFieldType, repository, propertiesNode));
+                        new TestFieldType(importFieldType, table, repository, propertiesNode));
             }
         }
     }
@@ -319,7 +320,7 @@ public class Tester extends BaseRepositoryTestTool {
         for (int i = 0; i < workers; i++) {
             new RecordSpaces(recordSpacesConfig);
             TestActionContext testActionContext = new TestActionContext(recordTypes, fieldTypes,
-                    jsonImport.getNamespaces(), workersRecordSpaces.get(i), repository, metrics, errorStream,
+                    jsonImport.getNamespaces(), workersRecordSpaces.get(i), table, repository, metrics, errorStream,
                     roundRobinPrefixGenerator);
             TestAction testAction = testActionFactory.getTestAction(actionNode, testActionContext);
             workersTestActions[i].add(testAction);
@@ -334,7 +335,7 @@ public class Tester extends BaseRepositoryTestTool {
     private void createSchema(JsonNode configNode) throws IOException, RepositoryException, ImportConflictException,
             ImportException, JsonFormatException, NoServersException, InterruptedException, KeeperException {
 
-        JsonImport jsonImport = new JsonImport(repository, new DefaultImportListener());
+        JsonImport jsonImport = new JsonImport(table, repository, new DefaultImportListener());
 
         // Namespaces
         ObjectNode namespacesNode = JsonUtil.getObject(configNode, "namespaces", null);
@@ -350,7 +351,7 @@ public class Tester extends BaseRepositoryTestTool {
                 JsonNode propertiesNode = fieldTypeNode.get("properties");
 
                 fieldTypes.put(importFieldType.getName(),
-                        new TestFieldType(importFieldType, repository, propertiesNode));
+                        new TestFieldType(importFieldType, table, repository, propertiesNode));
             }
         }
 

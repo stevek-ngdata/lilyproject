@@ -20,6 +20,8 @@ import java.util.Map;
 
 /**
  * An IO exception happened during a record operation, the operation was retried but eventually still failed.
+ *
+ * @deprecated replaced with {@link RetriesExhaustedException}.
  */
 public class RetriesExhaustedRecordException extends RecordException {
     private String operation;

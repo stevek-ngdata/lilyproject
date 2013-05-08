@@ -22,9 +22,9 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.api.filter.RecordTypeFilter;
@@ -36,7 +36,7 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
 
     @Override
-    public Filter createHBaseFilter(RecordFilter uncastFilter, RepositoryManager repositoryManager, HBaseRecordFilterFactory factory)
+    public Filter createHBaseFilter(RecordFilter uncastFilter, LRepository repository, HBaseRecordFilterFactory factory)
             throws RepositoryException, InterruptedException {
 
         if (!(uncastFilter instanceof RecordTypeFilter)) {
@@ -51,7 +51,7 @@ public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
             throw new IllegalArgumentException("A RecordTypeFilter should at least specify the record type name.");
         }
 
-        RecordType recordType = repositoryManager.getTypeManager().getRecordTypeByName(filter.getRecordType(), null);
+        RecordType recordType = repository.getTypeManager().getRecordTypeByName(filter.getRecordType(), null);
 
         RecordTypeFilter.Operator operator =
                 filter.getOperator() != null ? filter.getOperator() : RecordTypeFilter.Operator.EQUALS;
@@ -78,7 +78,7 @@ public class HBaseRecordTypeFilter implements HBaseRecordFilterFactory {
 
                 break;
             case INSTANCE_OF:
-                Set<SchemaId> subtypes = repositoryManager.getTypeManager().findSubtypes(recordType.getId());
+                Set<SchemaId> subtypes = repository.getTypeManager().findSubtypes(recordType.getId());
                 FilterList list = new FilterList(FilterList.Operator.MUST_PASS_ONE);
                 list.addFilter(createRecordTypeFilter(recordType.getId()));
                 for (SchemaId subType : subtypes) {

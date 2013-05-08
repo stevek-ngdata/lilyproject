@@ -24,10 +24,11 @@ import java.util.Set;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -89,10 +90,10 @@ public class VersionTag {
     /**
      * Get an IdRecord of the given vtag version, based on a recordId.
      */
-    public static IdRecord getIdRecord(RecordId recordId, SchemaId vtagId, Repository repository)
+    public static IdRecord getIdRecord(RecordId recordId, SchemaId vtagId, LTable table, LRepository repository)
             throws RepositoryException, InterruptedException {
 
-        VTaggedRecord vtRecord = new VTaggedRecord(recordId, null, repository);
+        VTaggedRecord vtRecord = new VTaggedRecord(recordId, null, table, repository);
         return vtRecord.getIdRecord(vtagId);
     }
 
@@ -100,21 +101,21 @@ public class VersionTag {
      * Get an IdRecord of the given vtag version, based on a existing IdRecord. The existing IdRecord should be the
      * last (when it was read) and should have been read with all fields!
      */
-    public static IdRecord getIdRecord(IdRecord idRecord, SchemaId vtagId, Repository repository)
+    public static IdRecord getIdRecord(IdRecord idRecord, SchemaId vtagId, LTable table, LRepository repository)
             throws RepositoryException, InterruptedException {
 
-        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repository);
+        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, table, repository);
         return vtRecord.getIdRecord(vtagId);
     }
 
     /**
      * Returns null if the vtag does not exist or is not defined for the record.
      */
-    public static Record getRecord(RecordId recordId, String vtag, List<QName> fields, Repository repository)
-            throws RepositoryException, InterruptedException {
+    public static Record getRecord(RecordId recordId, String vtag, List<QName> fields,
+            LTable table, LRepository repository) throws RepositoryException, InterruptedException {
 
         QName vtagName = new QName(NAMESPACE, vtag);
-        Record record = repository.read(recordId);
+        Record record = table.read(recordId);
 
         long version;
         if (vtag.equals("last")) {
@@ -132,7 +133,7 @@ public class VersionTag {
                 reduceToNonVersioned(record, fields != null ? new HashSet<QName>(fields) : null,
                         repository.getTypeManager());
             } else {
-                record = repository.read(recordId, version, fields);
+                record = table.read(recordId, version, fields);
             }
 
             return record;

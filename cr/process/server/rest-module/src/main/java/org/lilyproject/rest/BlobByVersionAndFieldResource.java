@@ -27,27 +27,34 @@ import javax.ws.rs.core.UriInfo;
 import org.lilyproject.repository.api.BlobAccess;
 import org.lilyproject.repository.api.BlobNotFoundException;
 import org.lilyproject.repository.api.FieldNotFoundException;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryAndTableResource;
+import org.lilyproject.tools.restresourcegenerator.GenerateTableResource;
+import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryResource;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("record/{id}/version/{version:\\d+}/field/{fieldName}/data")
-public class BlobByVersionAndFieldResource extends RepositoryEnabled {
+@GenerateTableResource
+@GenerateRepositoryResource
+@GenerateRepositoryAndTableResource
+public class BlobByVersionAndFieldResource extends BaseRepositoryResource {
 
     @GET
     @Produces("*/*")
     public Response get(@PathParam("id") String id, @PathParam("version") String version,
             @PathParam("fieldName") String fieldName, @Context UriInfo uriInfo) {
-        return getBlob(id, version, fieldName, uriInfo, getRepository(uriInfo));
+        return getBlob(id, version, fieldName, uriInfo, getTable(uriInfo), getRepository(uriInfo));
     }
 
 
     protected static Response getBlob(String id, String version, String fieldName, UriInfo uriInfo,
-            final Repository repository) {
+            LTable table, LRepository repository) {
         final RecordId recordId = repository.getIdGenerator().fromString(id);
 
         final QName fieldQName = ResourceClassUtil.parseQName(fieldName, uriInfo.getQueryParameters());
@@ -60,7 +67,7 @@ public class BlobByVersionAndFieldResource extends RepositoryEnabled {
         }
 
         try {
-            final BlobAccess blobAccess = repository.getBlob(recordId, versionNr, fieldQName, indexes);
+            final BlobAccess blobAccess = table.getBlob(recordId, versionNr, fieldQName, indexes);
             return Response.ok(blobAccess, MediaType.valueOf(blobAccess.getBlob().getMediaType())).build();
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());

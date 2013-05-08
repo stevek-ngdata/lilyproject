@@ -52,7 +52,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
 
         long before = System.nanoTime();
         try {
-            Record readRecord = testActionContext.repository.read(testRecord.getRecordId());
+            Record readRecord = testActionContext.table.read(testRecord.getRecordId());
             long after = System.nanoTime();
             report(true, (int) (after - before), "R", null);
 
@@ -99,7 +99,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
             readBlobs(readRecord, fieldName, subValue, valueType.getNestedValueType(), indexes);
         } else {
             Blob blob = (Blob) value;
-            InputStream inputStream = testActionContext.repository.getInputStream(readRecord, fieldName, indexes);
+            InputStream inputStream = testActionContext.table.getInputStream(readRecord, fieldName, indexes);
             readBlobBytes(blob, inputStream);
         }
     }
