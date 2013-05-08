@@ -1352,7 +1352,7 @@ public class HBaseRepository extends BaseRepository {
 
     @Override
     public RecordBuilder recordBuilder() throws RecordException {
-        return new RecordBuilderImpl(this);
+        return new RecordBuilderImpl(this, getIdGenerator());
     }
     
     /**
