@@ -452,6 +452,11 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
+        <artifactId>lily-repository-master-module</artifactId>
+        <version>2.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-integration-module</artifactId>
         <version>2.2-SNAPSHOT</version>
       </dependency>
