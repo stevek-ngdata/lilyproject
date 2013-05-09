@@ -71,10 +71,12 @@ public class DefaultImportListener implements ImportListener {
     }
 
     @Override
-    public void updated(EntityType entityType, String entityName, String entityId, long version) {
+    public void updated(EntityType entityType, String entityName, String entityId, Long version) {
         if (entityType == EntityType.RECORD || entityType == EntityType.RECORD_TYPE) {
             if (!checkSuppressed(entityType)) {
-                out.println(String.format("%1$s updated: %2$s (version %3$s)", toText(entityType), id(entityName, entityId), version));
+                String versionMsg = version == null ? "non-versioned" : "version " + version;
+                out.println(String.format("%1$s updated: %2$s (%3$s)",
+                        toText(entityType), id(entityName, entityId), versionMsg));
             }
         } else {
             if (!checkSuppressed(entityType)) {

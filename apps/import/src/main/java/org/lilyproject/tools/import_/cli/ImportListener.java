@@ -27,7 +27,7 @@ public interface ImportListener {
 
     void existsAndEqual(EntityType entityType, String entityName, String entityId);
 
-    void updated(EntityType entityType, String entityName, String entityId, long version);
+    void updated(EntityType entityType, String entityName, String entityId, Long version);
 
     void created(EntityType entityType, String entityName, String entityId);
 }

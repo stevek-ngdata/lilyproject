@@ -42,7 +42,7 @@ public class SynchronizedImportListener implements ImportListener {
     }
 
     @Override
-    public synchronized void updated(EntityType entityType, String entityName, String entityId, long version) {
+    public synchronized void updated(EntityType entityType, String entityName, String entityId, Long version) {
         delegate.updated(entityType, entityName, entityId, version);
     }
 
