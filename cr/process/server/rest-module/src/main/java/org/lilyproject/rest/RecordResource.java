@@ -59,8 +59,10 @@ public class RecordResource extends BaseRepositoryResource {
     @GET
     @Produces("application/json")
     public Entity<Record> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
-        LRepository repository = getRepository(uriInfo);
-        LTable table = getTable(uriInfo);
+        return get(id, uriInfo, getRepository(uriInfo), getTable(uriInfo));
+    }
+
+    public Entity<Record> get(String id, UriInfo uriInfo, LRepository repository, LTable table) {
         RecordId recordId = repository.getIdGenerator().fromString(id);
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
         try {
@@ -78,6 +80,10 @@ public class RecordResource extends BaseRepositoryResource {
     public Response put(@PathParam("id") String id, Record record, @Context UriInfo uriInfo) {
         LRepository repository = getRepository(uriInfo);
         LTable table = getTable(uriInfo);
+        return put(id, record, uriInfo, repository, table);
+    }
+
+    public Response put(String id, Record record, UriInfo uriInfo, LRepository repository, LTable table) {
         RecordId recordId = repository.getIdGenerator().fromString(id);
 
         if (record.getId() != null && !record.getId().equals(recordId)) {
@@ -122,6 +128,10 @@ public class RecordResource extends BaseRepositoryResource {
     public Response post(@PathParam("id") String id, PostAction<Record> postAction, @Context UriInfo uriInfo) {
         LRepository repository = getRepository(uriInfo);
         LTable table = getTable(uriInfo);
+        return post(id, postAction, uriInfo, repository, table);
+    }
+
+    public Response post(String id, PostAction<Record> postAction, UriInfo uriInfo, LRepository repository, LTable table) {
         if (postAction.getAction().equals("update")) {
             RecordId recordId = repository.getIdGenerator().fromString(id);
             Record record = postAction.getEntity();
@@ -183,6 +193,10 @@ public class RecordResource extends BaseRepositoryResource {
     public Response delete(@PathParam("id") String id, @Context UriInfo uriInfo) {
         LRepository repository = getRepository(uriInfo);
         LTable table = getTable(uriInfo);
+        return delete(id, repository, table);
+    }
+
+    public Response delete(String id, LRepository repository, LTable table) {
         RecordId recordId = repository.getIdGenerator().fromString(id);
         try {
             table.delete(recordId);

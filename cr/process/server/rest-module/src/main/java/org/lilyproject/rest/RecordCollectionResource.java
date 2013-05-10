@@ -24,6 +24,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.tools.restresourcegenerator.GenerateTableResource;
 import org.lilyproject.tools.restresourcegenerator.GenerateRepositoryAndTableResource;
@@ -42,6 +43,10 @@ public class RecordCollectionResource extends BaseRepositoryResource {
     @Consumes("application/json")
     @Produces("application/json")
     public Response post(PostAction<Record> postAction, @Context UriInfo uriInfo) {
+        return post(postAction, uriInfo, getTable(uriInfo));
+    }
+
+    public Response post(PostAction<Record> postAction, UriInfo uriInfo, LTable table) {
         if (!postAction.getAction().equals("create")) {
             throw new ResourceException("Unsupported POST action: " + postAction.getAction(), BAD_REQUEST.getStatusCode());
         }
@@ -50,7 +55,7 @@ public class RecordCollectionResource extends BaseRepositoryResource {
 
         try {
             // TODO record we respond with should be full record or be limited to user-specified field list
-            record = getTable(uriInfo).create(record);
+            record = table.create(record);
             URI uri = uriInfo.getBaseUriBuilder().path(RecordResource.class).build(record.getId());
             return Response.created(uri).entity(Entity.create(record, uriInfo)).build();
         } catch (Exception e) {
