@@ -121,4 +121,10 @@ public class TestHelper {
         setupConsoleLogging("WARN", debugCategories);
         setupOtherDefaults();
     }
+
+    public static void setLogLevel(String level, String... categories) {
+        for (String category : categories) {
+            Logger.getLogger(category).setLevel(Level.toLevel(level));
+        }
+    }
 }
