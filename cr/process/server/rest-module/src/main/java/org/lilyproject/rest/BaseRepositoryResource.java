@@ -43,7 +43,8 @@ public class BaseRepositoryResource {
     protected LRepository getRepository(UriInfo uriInfo) {
         try {
             RepositoryEnabled repositoryEnabledAnnotation = getClass().getAnnotation(RepositoryEnabled.class);
-            if (repositoryEnabledAnnotation != null) {
+            if (repositoryEnabledAnnotation != null &&
+                    uriInfo.getPathParameters().containsKey(repositoryEnabledAnnotation.repositoryName())) {
                 return repositoryMgr.getRepository(uriInfo.getPathParameters().getFirst(repositoryEnabledAnnotation.repositoryName()));
             } else {
                 return repositoryMgr.getDefaultRepository();
