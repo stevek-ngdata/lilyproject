@@ -61,6 +61,18 @@
               <basename>lily-drop-table</basename>
               <mainClass>org.lilyproject.repository.cli.DropTableCli</mainClass>
             </script>
+            <script>
+              <basename>lily-add-repository</basename>
+              <mainClass>org.lilyproject.repository.cli.AddRepositoryCli</mainClass>
+            </script>
+            <script>
+              <basename>lily-list-repositories</basename>
+              <mainClass>org.lilyproject.repository.cli.ListRepositoriesCli</mainClass>
+            </script>
+            <script>
+              <basename>lily-delete-repository</basename>
+              <mainClass>org.lilyproject.repository.cli.DeleteRepositoryCli</mainClass>
+            </script>
           </scripts>
         </configuration>
         <executions>
