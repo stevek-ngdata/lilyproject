@@ -48,11 +48,18 @@ public class LilyRuntimeProjectDependencyResolver extends AbstractMojo {
     protected String confDirectory;
 
     /**
-     * Location of a wiring.xml file on the classpath.
+     * Location of a wiring.xml file on the classpath. This can contain ant-style wildcards.
      *
      * @parameter
      */
     protected String wiringXmlResource;
+
+    /**
+     * Locations of a wiring.xml file on the classpath. This can contain ant-style wildcards.
+     *
+     * @parameter
+     */
+    protected String[] wiringXmlResources;
 
     /**
      * Location of the module-source-locations.properties file.
@@ -134,9 +141,9 @@ public class LilyRuntimeProjectDependencyResolver extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if ((confDirectory == null && wiringXmlResource == null)
-                || (confDirectory != null && wiringXmlResource != null)) {
-            throw new MojoExecutionException("Either confDirectory or wiringXmlResource should be specified.");
+        if ((confDirectory == null && wiringXmlResources == null)
+                || (confDirectory != null && wiringXmlResources != null)) {
+            throw new MojoExecutionException("Either confDirectory or wiringXmlResources should be specified.");
         }
 
         if (moduleSourceLocations != null) {
@@ -161,10 +168,16 @@ public class LilyRuntimeProjectDependencyResolver extends AbstractMojo {
         ModuleArtifacts moduleArts;
         if (confDirectory != null) {
             moduleArts = cp.getModuleArtifactsFromLilyRuntimeConfig(new File(confDirectory), remoteRepositories);
-        } else {
-            moduleArts = cp.getModuleArtifactsFromLilyRuntimeConfig(dependencyArtifacts, wiringXmlResource,
+        } else if (wiringXmlResource != null) {
+            moduleArts = cp.getModuleArtifactsFromLilyRuntimeConfig(dependencyArtifacts, new String[] { wiringXmlResource },
                     mavenProjectBuilder, remoteRepositories);
+        } else if (wiringXmlResources != null) {
+            moduleArts = cp.getModuleArtifactsFromLilyRuntimeConfig(dependencyArtifacts, wiringXmlResources,
+                    mavenProjectBuilder, remoteRepositories);
+        } else {
+            throw new RuntimeException("Please configure one of: confDirectory, wiringXmlResource, wiringXmlResources.");
         }
+
 
         List allRemoteRepos = new ArrayList();
         allRemoteRepos.addAll(remoteRepositories);

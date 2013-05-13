@@ -24,7 +24,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,6 +42,7 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectBuilder;
 import org.lilyproject.util.Version;
+import org.springframework.util.AntPathMatcher;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -99,47 +102,63 @@ public class LilyRuntimeProjectClasspath {
         }
     }
 
-    public ModuleArtifacts getModuleArtifactsFromLilyRuntimeConfig(Set<Artifact> dependencies, String wiringPath,
+    public ModuleArtifacts getModuleArtifactsFromLilyRuntimeConfig(Set<Artifact> dependencies, String[] wiringPathPatterns,
                                                                    MavenProjectBuilder mavenProjectBuilder, List remoteRepos)
             throws MojoExecutionException {
+
+        ModuleArtifacts result = new ModuleArtifacts();
+        result.artifacts = new HashSet<Artifact>();
+        result.remoteRepositories = new ArrayList();
+
+        boolean foundAtLeastOneWiring = false;
 
         try {
             // Search in the jars of all the direct dependencies of the project for the wiring file
             // (not sure if this won't be too slow? it's just to avoid the user having to specify the artifact)
-            log.info("Searching " + dependencies.size() + " dependencies for " + wiringPath);
+            log.info("Searching " + dependencies.size() + " dependencies for " + wiringPathPatterns.length + " path patterns.");
+
             for (Artifact artifact : dependencies) {
                 if ("jar".equals(artifact.getType())) {
                     resolver.resolve(artifact, remoteRepos, localRepository);
 
+                    AntPathMatcher matcher = new AntPathMatcher();
                     ZipFile zipFile;
                     zipFile = new ZipFile(artifact.getFile());
                     try {
-                        ZipEntry zipEntry = zipFile.getEntry(wiringPath);
-                        if (zipEntry != null) {
-                            log.info("Reading " + wiringPath + " from " + artifact.getFile());
-                            Set<Artifact> moduleArtifacts = getModuleArtifactsFromLilyRuntimeConfig(
-                                    zipFile.getInputStream(zipEntry), wiringPath, remoteRepos);
+                        Enumeration<? extends ZipEntry> entryEnum = zipFile.entries();
+                        while (entryEnum.hasMoreElements()) {
+                            ZipEntry zipEntry = entryEnum.nextElement();
+                            for (String pattern : wiringPathPatterns) {
+                                if (matcher.match(pattern, zipEntry.getName())) {
+                                    foundAtLeastOneWiring = true;
+                                    log.info("Reading " + zipEntry.getName() + " from " + artifact.getFile());
+                                    Set<Artifact> moduleArtifacts = getModuleArtifactsFromLilyRuntimeConfig(
+                                            zipFile.getInputStream(zipEntry), zipEntry.getName(), remoteRepos);
 
-                            MavenProject wiringSourceProject = mavenProjectBuilder.buildFromRepository(artifact,
-                                    remoteRepos, localRepository);
-                            List repositories = wiringSourceProject.getRemoteArtifactRepositories();
+                                    MavenProject wiringSourceProject = mavenProjectBuilder.buildFromRepository(artifact,
+                                            remoteRepos, localRepository);
+                                    List repositories = wiringSourceProject.getRemoteArtifactRepositories();
 
-                            ModuleArtifacts result = new ModuleArtifacts();
-                            result.artifacts = moduleArtifacts;
-                            result.remoteRepositories = repositories;
-
-                            return result;
+                                    result.artifacts.addAll(moduleArtifacts);
+                                    result.remoteRepositories.addAll(repositories);
+                                }
+                            }
                         }
                     } finally {
                         zipFile.close();
                     }
                 }
             }
+
         } catch (Exception e) {
             throw new MojoExecutionException("Error searching/reading wiring.xml file from dependency jars.", e);
         }
 
-        throw new MojoExecutionException("The wiring.xml was not found in the dependency jars at path " + wiringPath);
+        if (!foundAtLeastOneWiring) {
+            throw new MojoExecutionException("No wiring xml's were found.");
+        }
+
+        return result;
     }
 
     public Set<Artifact> getModuleArtifactsFromLilyRuntimeConfig(InputStream wiringStream, String path, List remoteRepos)
