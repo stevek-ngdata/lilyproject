@@ -36,7 +36,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
         repoSetup.setupRepository();
 
         idGenerator = repoSetup.getIdGenerator();
-        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultRepository().getDefaultTable();
         typeManager = repoSetup.getTypeManager();
 
         setupTypes();

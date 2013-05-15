@@ -32,7 +32,7 @@ public class BlobStoreTest extends AbstractBlobStoreTest {
         repoSetup.setupCore();
         repoSetup.setupRepository();
 
-        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultRepository().getDefaultTable();
         typeManager = repoSetup.getTypeManager();
         blobManager = repoSetup.getBlobManager();
 

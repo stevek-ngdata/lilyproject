@@ -32,7 +32,7 @@ public class RemoteBlobStoreTest extends AbstractBlobStoreTest {
         repoSetup.setupRepository();
         repoSetup.setupRemoteAccess();
 
-        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultRepository().getDefaultTable();
         typeManager = repoSetup.getTypeManager();
         blobManager = repoSetup.getBlobManager();
 

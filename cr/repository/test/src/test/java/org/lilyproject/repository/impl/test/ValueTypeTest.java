@@ -83,7 +83,7 @@ public class ValueTypeTest {
         repoSetup.setupRepository();
 
         typeManager = repoSetup.getTypeManager();
-        repository = (Repository)repoSetup.getRepositoryManager().getDefaultTable();
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultRepository().getDefaultTable();
         idGenerator = repoSetup.getIdGenerator();
     }
 

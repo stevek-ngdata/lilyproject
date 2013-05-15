@@ -211,8 +211,8 @@ public class IndexerTest {
         repository = repositoryManager.getDefaultRepository();
         repository.getTableManager().createTable(ALTERNATE_TABLE);
 
-        defaultTable = (Repository)repositoryManager.getDefaultTable();
-        alternateTable = (Repository)repositoryManager.getTable(ALTERNATE_TABLE);
+        defaultTable = (Repository)repository.getDefaultTable();
+        alternateTable = (Repository)repository.getTable(ALTERNATE_TABLE);
         indexUpdaterRepository = new TrackingRepository(repoSetup.getRepositoryManager().getDefaultRepository());
 
 
@@ -3366,16 +3366,6 @@ public class IndexerTest {
         @Override
         public LRepository getRepository(String repositoryName) throws InterruptedException, RepositoryException {
             return repository;
-        }
-
-        @Override
-        public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-            return repository.getTable(tableName);
-        }
-
-        @Override
-        public LTable getDefaultTable() throws InterruptedException, RepositoryException {
-            return repository.getDefaultTable();
         }
 
         @Override

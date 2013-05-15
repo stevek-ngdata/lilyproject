@@ -62,18 +62,6 @@ public class PrematureRepositoryManagerImpl implements PrematureRepositoryManage
     }
 
     @Override
-    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-        waitOnRepoManager();
-        return delegate.getTable(tableName);
-    }
-
-    @Override
-    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
-        waitOnRepoManager();
-        return delegate.getDefaultTable();
-    }
-
-    @Override
     public void close() throws IOException {
         synchronized (delegateAvailable) {
             if (delegate != null) {

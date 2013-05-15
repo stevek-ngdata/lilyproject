@@ -47,21 +47,4 @@ public interface RepositoryManager extends Closeable {
      */
     LRepository getRepository(String repositoryName) throws InterruptedException, RepositoryException;
 
-    /**
-     * Get the specified table from the default repository.
-     *
-     * <p>This is a shortcut for calling getDefaultRepository().getTable(tableName).</p>
-     *
-     * <p><b>It is strongly recommended to get a specific {@link LRepository} instance and then
-     * work from there, so that your code can easily be applied to different repositories.</b></p>
-     */
-    LTable getTable(String tableName) throws InterruptedException, RepositoryException;
-
-    /**
-     * Get the default table ("record") from the default repository.
-     *
-     * <p><b>It is strongly recommended to get a specific {@link LRepository} instance and then
-     * work from there, so that your code can easily be applied to different repositories.</b></p>
-     */
-    LTable getDefaultTable() throws InterruptedException, RepositoryException;
 }

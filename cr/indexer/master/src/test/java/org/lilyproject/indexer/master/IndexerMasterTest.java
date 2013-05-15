@@ -73,7 +73,7 @@ public class IndexerMasterTest {
 
     @Before
     public void setUp() throws Exception {
-        repository = (Repository)repoSetup.getRepositoryManager().getTable(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getDefaultRepository().getTable(Table.RECORD.name);
         hBaseAdmin = new HBaseAdmin(repoSetup.getHadoopConf());
 
         final IndexerModelImpl model = new IndexerModelImpl(repoSetup.getZk());

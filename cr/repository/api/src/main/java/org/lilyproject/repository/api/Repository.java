@@ -35,9 +35,9 @@ import java.io.IOException;
  *
  * <p>A Repository object represents one specific table within one specific named repository. It is obtained by:</p>
  *
- * <li>calling on {@link RepositoryManager#getRepository(String)} or related methods</li>
- * <li>casting the result of calling {@link RepositoryManager#getTable(String)} or {@link Repository#getTable(String)}
- * to Repository.</li>
+ * <li>casting the result of calling on {@link RepositoryManager#getRepository(String)} or related methods
+ * to Repository (this will then use the default 'record' table)</li>
+ * <li>casting the result of calling {@link LRepository#getTable(String)} to Repository.</li>
  *
  * <p>For backwards compatibility, Repository extends from LTable. The methods of LTable will in this
  * case be executed against the table for which this repository has been retrieved: either the

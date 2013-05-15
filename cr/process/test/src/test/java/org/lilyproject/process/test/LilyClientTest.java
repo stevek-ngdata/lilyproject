@@ -16,17 +16,14 @@
 package org.lilyproject.process.test;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.zookeeper.KeeperException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.client.NoServersException;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
@@ -37,16 +34,12 @@ import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-import org.lilyproject.util.zookeeper.ZkConnectException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class LilyClientTest {
@@ -191,12 +184,5 @@ public class LilyClientTest {
         LilyClient client = lilyProxy.getLilyServerProxy().getClient();
         Set<String> hosts = client.getLilyHostnames();
         assertEquals(1, hosts.size());
-    }
-
-    @Test
-    public void testLilyClientAsRepositoryManager() throws IOException, InterruptedException, KeeperException, ZkConnectException, NoServersException, RepositoryException {
-        RepositoryManager repositoryManager = lilyProxy.getLilyServerProxy().getClient();
-        assertNotNull(repositoryManager.getDefaultRepository());
-        assertNotNull(repositoryManager.getTable(Table.RECORD.name));
     }
 }

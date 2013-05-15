@@ -32,7 +32,7 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
         repoSetup.setupRemoteAccess();
 
         idGenerator = repoSetup.getIdGenerator();
-        repository = (Repository)repoSetup.getRemoteRepositoryManager().getDefaultTable();
+        repository = (Repository)repoSetup.getRemoteRepositoryManager().getDefaultRepository().getDefaultTable();
         typeManager = repoSetup.getRemoteTypeManager();
 
         setupTypes();

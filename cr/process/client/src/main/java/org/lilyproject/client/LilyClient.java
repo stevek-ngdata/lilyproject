@@ -316,16 +316,6 @@ public class LilyClient implements Closeable, RepositoryManager {
     }
 
     @Override
-    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-        return repositoryManager.getTable(tableName);
-    }
-
-    @Override
-    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
-        return repositoryManager.getDefaultTable();
-    }
-
-    @Override
     public LRepository getDefaultRepository() throws InterruptedException, RepositoryException {
         return repositoryManager.getDefaultRepository();
     }

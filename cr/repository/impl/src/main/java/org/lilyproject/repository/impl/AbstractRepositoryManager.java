@@ -98,16 +98,6 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     }
 
     @Override
-    public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
-        return getDefaultRepository().getTable(tableName);
-    }
-
-    @Override
-    public LTable getDefaultTable() throws InterruptedException, RepositoryException {
-        return getDefaultRepository().getDefaultTable();
-    }
-
-    @Override
     public synchronized void close() throws IOException {
         for (Repository repository : repositoryCache.values()) {
             Closer.close(repository);
