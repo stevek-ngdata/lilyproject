@@ -50,7 +50,7 @@
   <context:property-placeholder location="classpath:/lily-webui-config-defaults.properties,file:${user.home}/.lily-overrides.properties"
       ignore-resource-not-found="true"/>
 
-  <mvc:resources mapping="static/**" location="${lily-webui.resource.location}/static"/>
+  <mvc:resources mapping="/static/**" location="${lily-webui.resource.location}/static/"/>
   <mvc:resources mapping="/favicon.ico" location="${lily-webui.resource.location}/static/images/favicon.ico"/>
 
   <bean id="freemarkerConfig" class="org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer">

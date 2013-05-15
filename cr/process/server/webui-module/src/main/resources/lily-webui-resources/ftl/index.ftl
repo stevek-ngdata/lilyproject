@@ -5,7 +5,7 @@
   </head>
   <body>
     <p>
-      <img src="/lily-webui-resources/images/lily-long-logo.png" alt="Lily logo"/>
+      <img src="/static/images/lily-long-logo.png" alt="Lily logo"/>
     </p>    
 
     <p>See the <a href="http://docs.ngdata.com/lily-docs-current/">Lily documentation</a> for information on how to use the REST-interface.</p>
