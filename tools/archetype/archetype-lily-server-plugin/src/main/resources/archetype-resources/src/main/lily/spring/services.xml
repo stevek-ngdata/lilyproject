@@ -16,7 +16,7 @@
       id="pluginRegistry"
       service="org.lilyproject.plugin.PluginRegistry"/>
 
-  <bean id="decorator" class="${package}.SampleRepositoryDecorator">
+  <bean id="decorator" class="${package}.SampleRepositoryDecoratorFactory">
     <constructor-arg ref="pluginRegistry"/>
   </bean>
 
