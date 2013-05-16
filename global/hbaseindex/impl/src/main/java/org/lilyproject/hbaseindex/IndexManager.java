@@ -18,6 +18,8 @@ package org.lilyproject.hbaseindex;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -56,14 +58,33 @@ public class IndexManager {
         this.hbaseConf = hbaseConf;
         this.tableFactory = tableFactory != null ? tableFactory : new HBaseTableFactoryImpl(hbaseConf);
     }
+    
+    /**
+     * Creates a new index in the default repository.
+     *
+     * @param indexDef definition of the index to be created
+     * @throws InterruptedException
+     * @throws IOException
+     * 
+     * @throws IndexExistsException   if an index with the same name already exists
+     * @throws IndexNotFoundException very unlikely to occur here
+     * @deprecated Use the version of this method where a repository name is supplied
+     */
+    @Deprecated
+    public synchronized Index getIndex(IndexDefinition indexDef) throws IOException, InterruptedException, IndexNotFoundException {
+        return getIndex(RepoAndTableUtil.DEFAULT_REPOSITORY, indexDef);
+    }
 
     /**
      * Creates a new index.
      *
+     * @param repositoryName name of the owning repository
+     * @param indexDef definition of the index to be created
+     * 
      * @throws IndexExistsException   if an index with the same name already exists
      * @throws IndexNotFoundException very unlikely to occur here
      */
-    public synchronized Index getIndex(IndexDefinition indexDef) throws IOException, InterruptedException,
+    public synchronized Index getIndex(String repositoryName, IndexDefinition indexDef) throws IOException, InterruptedException,
             IndexNotFoundException {
 
         if (indexDef.getFields().size() == 0) {
@@ -82,6 +103,8 @@ public class IndexManager {
 
         // Store definition of index in a custom attribute on the table
         tableDescr.setValue(INDEX_META_KEY, jsonData);
+        
+        RepoAndTableUtil.setRepositoryOwnership(tableDescr, repositoryName);
 
         HTableInterface table = tableFactory.getTable(tableDescr);
 
