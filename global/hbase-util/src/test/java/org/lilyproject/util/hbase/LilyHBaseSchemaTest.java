@@ -109,7 +109,7 @@ public class LilyHBaseSchemaTest  {
     public void testCreateRecordTableDescriptor() {
         HTableDescriptor descriptor = LilyHBaseSchema.createRecordTableDescriptor("myrepo", "myrecordtable");
         assertEquals(1, descriptor.getColumnFamilies().length);
-        assertEquals("myrecordtable", descriptor.getNameAsString());
+        assertEquals("myrepo__myrecordtable", descriptor.getNameAsString());
         assertTrue(LilyHBaseSchema.isRecordTableDescriptor(descriptor));
         assertEquals("myrepo", RepoAndTableUtil.getOwningRepository(descriptor));
 
