@@ -35,12 +35,12 @@ public class SampleRecordUpdateHook implements RecordUpdateHook {
     @Override
     public void beforeCreate(Record newRecord, Repository repository, FieldTypes fieldTypes, RecordEvent recordEvent)
             throws RepositoryException, InterruptedException {
-        System.out.println("Record update hook is called for record: " + record.getId());
+        System.out.println("Record update hook is called for record: " + newRecord.getId());
     }
 
     @Override
     public void beforeDelete(Record originalRecord, Repository repository, FieldTypes fieldTypes,
             RecordEvent recordEvent) throws RepositoryException, InterruptedException {
-        System.out.println("Record update hook is called for record: " + record.getId());
+        System.out.println("Record update hook is called for record: " + originalRecord.getId());
     }
 }
