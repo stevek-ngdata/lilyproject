@@ -499,7 +499,7 @@ public abstract class BaseRepository implements Repository {
             result = recordTable.get(get);
 
             if (result == null || result.isEmpty()) {
-                throw new RecordNotFoundException(recordId);
+                throw new RecordNotFoundException(recordId, this, this);
             }
 
         } catch (IOException e) {

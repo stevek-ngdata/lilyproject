@@ -20,25 +20,33 @@ import java.util.Map;
 
 public class RecordNotFoundException extends RecordException {
 
-    private String recordId;
+    private final String recordId;
+    private final String tableName;
+    private final String repositoryName;
 
     public RecordNotFoundException(String message, Map<String, String> state) {
         this.recordId = state.get("recordId");
+        this.tableName = state.get("tableName");;
+        this.repositoryName = state.get("repositoryName");;
+    }
+
+    public RecordNotFoundException(RecordId recordId, LTable table, LRepository repository) {
+        this.recordId = recordId != null ? recordId.toString() : null;
+        this.tableName = table != null ? table.getTableName() : null;
+        this.repositoryName = repository != null ? repository.getRepositoryName() : null;
     }
 
     @Override
     public Map<String, String> getState() {
         Map<String, String> state = new HashMap<String, String>();
         state.put("recordId", recordId);
+        state.put("tableName", tableName);
+        state.put("repositoryName", repositoryName);
         return state;
-    }
-
-    public RecordNotFoundException(RecordId recordId) {
-        this.recordId = recordId != null ? recordId.toString() : null;
     }
 
     @Override
     public String getMessage() {
-        return "Record '" + recordId + "' not found.";
+        return "Record '" + recordId + "' not found in table "+ tableName+ " from repository "+ repositoryName + ".";
     }
 }
