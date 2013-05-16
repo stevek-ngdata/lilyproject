@@ -1,7 +1,8 @@
  +-----------------------------------------------------------------------+
- | IMPORTANT WARNING: when you stop launch-test-lily, all data stored in |
- |                    it will be lost. This includes everything stored   |
- |                    in HDFS, HBase and ZooKeeper.                      |
+ | IMPORTANT WARNING: when you stop launch-test-lily and                 |
+ |                    launch-test-lily has not been started with -d <dir>|
+ |                    all data stored in it will be lost. This includes  |
+ |                    everything stored in HDFS, HBase and ZooKeeper.    |
  +-----------------------------------------------------------------------+
 
 launch-test-lily is intended for running small-scale tests or doing small demos.

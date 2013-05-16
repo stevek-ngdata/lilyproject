@@ -151,25 +151,12 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
 
         boolean prepareMode = cmd.hasOption(prepareOption.getOpt());
 
-        if (prepareMode) {
-            System.out.println("----------------------------------------------------------");
-            System.out.println("Running in prepare mode.");
-            System.out.println("Will start up, stop, and then snapshot the data directory.");
-            System.out.println("Please be patient.");
-            System.out.println("----------------------------------------------------------");
-
-            // If there would be an old template dir, drop it
-            TemplateDir.deleteTemplateDir();
-        }
-
         //
-        // Figure out what to start (in prepare mode: always everything)
+        // Figure out what to start
         //
-        if (!prepareMode) {
-            enableHadoop = cmd.hasOption(enableHadoopOption.getOpt());
-            enableSolr = cmd.hasOption(enableSolrOption.getOpt());
-            enableLily = cmd.hasOption(enableLilyOption.getOpt());
-        }
+        enableHadoop = cmd.hasOption(enableHadoopOption.getOpt());
+        enableSolr = cmd.hasOption(enableSolrOption.getOpt());
+        enableLily = cmd.hasOption(enableLilyOption.getOpt());
 
         // When running prepare mode, or if none of the services are explicitly enabled,
         // we default to starting them all. Otherwise we only start those that are enabled.
@@ -177,6 +164,18 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             enableHadoop = true;
             enableSolr = true;
             enableLily = true;
+        }
+
+        if (prepareMode) {
+            // (in prepare mode: always start everything)
+            System.out.println("-------------------------------------------------------------");
+            System.out.println("Running in prepare mode (ignoring --hadoop, --lily, --solr).");
+            System.out.println("Will start up, stop, and then snapshot the data directory.");
+            System.out.println("Please be patient.");
+            System.out.println("-------------------------------------------------------------");
+
+            // If there would be an old template dir, drop it
+            TemplateDir.deleteTemplateDir();
         }
 
         if (enableHadoop) {
