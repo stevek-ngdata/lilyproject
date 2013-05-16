@@ -43,6 +43,10 @@ import java.io.IOException;
  * case be executed against the table for which this repository has been retrieved: either the
  * default table called "record" or another table in case this Repository instance was cast from
  * a call on {@link Repository#getTable(String)}.
+ *
+ * <p>While Repository extends from Closeable, you don't need to call close on it. When using LilyClient,
+ * Repositories are closed as part of closing LilyClient, and when embedded in the lily-server process,
+ * the lifecycle is also managed automatically.</p>
  */
 public interface Repository extends LTable, LRepository, Closeable {
 

@@ -26,7 +26,7 @@ public interface RecordUpdateHook {
      * This hook is called before a record is updated but after the record has been locked for updating
      * and the original record state has been read.
      *
-     * <p>Compared to a {@link RepositoryDecorator}, you would use it when you would decorate the update
+     * <p>Compared to a {@link RepositoryDecoratorFactory}, you would use it when you would decorate the update
      * method and would find that you need to read the original record. Since the repository implementation
      * reads the previous record state anyway, we can avoid this double HBase-involving work. In addition,
      * since the record is locked, you can be sure the record state won't change anymore between the read

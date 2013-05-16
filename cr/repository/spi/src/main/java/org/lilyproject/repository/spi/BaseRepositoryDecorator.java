@@ -43,16 +43,14 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 
 /**
- * Base class for implementing your RepositoryDecorator, avoids having to delegate all methods.
+ * Base class for implementing a repository decorator, avoids having to delegate all methods.
  */
-public class BaseRepositoryDecorator implements RepositoryDecorator {
+public class BaseRepositoryDecorator implements Repository {
     protected Repository delegate;
 
-    @Override
-    public void setDelegate(Repository repository) {
-        this.delegate = repository;
+    public BaseRepositoryDecorator(Repository delegate) {
+        this.delegate = delegate;
     }
-
     @Override
     public RecordFactory getRecordFactory() {
         return delegate.getRecordFactory();
@@ -279,9 +277,12 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
         return delegate.getScannerWithIds(scan);
     }
 
+    /**
+     * Close should not delegate, the framework will take care of closing each decorator in the chain.
+     */
     @Override
     public void close() throws IOException {
-        delegate.close();
+        // don't do anything
     }
 
     @Override

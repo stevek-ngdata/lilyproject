@@ -3411,8 +3411,7 @@ public class IndexerTest {
         public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
             if (!tableCache.containsKey(tableName)) {
                 Repository repository = (Repository)delegate.getTable(tableName);
-                TrackingTable trackingTable = new TrackingTable(this);
-                trackingTable.setDelegate(repository);
+                TrackingTable trackingTable = new TrackingTable(repository, this);
                 tableCache.put(tableName, trackingTable);
             }
             return tableCache.get(tableName);
@@ -3434,7 +3433,8 @@ public class IndexerTest {
         private int readCount;
         private TrackingRepository trackingRepository;
 
-        public TrackingTable(TrackingRepository trackingRepository) {
+        public TrackingTable(Repository delegate, TrackingRepository trackingRepository) {
+            super(delegate);
             this.trackingRepository = trackingRepository;
         }
 

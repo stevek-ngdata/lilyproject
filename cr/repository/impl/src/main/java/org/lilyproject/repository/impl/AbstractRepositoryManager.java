@@ -100,11 +100,17 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
 
     @Override
     public synchronized void close() throws IOException {
-        for (Repository repository : repositoryCache.values()) {
-            Closer.close(repository);
+        if (shouldCloseRepositories()) {
+            for (Repository repository : repositoryCache.values()) {
+                Closer.close(repository);
+            }
         }
         repositoryCache.clear();
         Closer.close(typeManager);
+    }
+
+    protected boolean shouldCloseRepositories() {
+        return true;
     }
 
 }

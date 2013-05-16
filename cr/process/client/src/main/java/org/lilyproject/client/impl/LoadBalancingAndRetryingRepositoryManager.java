@@ -77,7 +77,7 @@ public class LoadBalancingAndRetryingRepositoryManager extends AbstractRepositor
          * @param repositoryManager the one which gives load-balancing-and-retrying repositories
          */
         public LBAwareRepository(Repository delegate, AbstractRepositoryManager repositoryManager, String repositoryName) {
-            setDelegate(delegate);
+            super(delegate);
             this.repositoryManager = repositoryManager;
             this.repositoryName = repositoryName;
         }

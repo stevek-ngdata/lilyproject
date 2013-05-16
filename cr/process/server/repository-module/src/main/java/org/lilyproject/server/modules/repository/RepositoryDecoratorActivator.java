@@ -28,15 +28,15 @@ import org.lilyproject.plugin.PluginHandle;
 import org.lilyproject.plugin.PluginRegistry;
 import org.lilyproject.plugin.PluginUser;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.spi.RepositoryDecorator;
+import org.lilyproject.repository.spi.RepositoryDecoratorFactory;
 import org.lilyproject.runtime.conf.Conf;
 
 /**
  * Applies all the RepositoryDecorators to a Repository.
  */
-public class RepositoryDecoratorActivator implements PluginUser<RepositoryDecorator> {
+public class RepositoryDecoratorActivator implements PluginUser<RepositoryDecoratorFactory> {
     private PluginRegistry pluginRegistry;
-    private Map<String, RepositoryDecorator> decorators = new HashMap<String, RepositoryDecorator>();
+    private Map<String, RepositoryDecoratorFactory> decorators = new HashMap<String, RepositoryDecoratorFactory>();
     private List<String> configuredDecorators = new ArrayList<String>();
     private Log log = LogFactory.getLog(getClass());
 
@@ -50,49 +50,46 @@ public class RepositoryDecoratorActivator implements PluginUser<RepositoryDecora
 
     @PostConstruct
     public void init() {
-        pluginRegistry.setPluginUser(RepositoryDecorator.class, this);
+        pluginRegistry.setPluginUser(RepositoryDecoratorFactory.class, this);
     }
 
     @PreDestroy
     public void destroy() {
-        pluginRegistry.unsetPluginUser(RepositoryDecorator.class, this);
+        pluginRegistry.unsetPluginUser(RepositoryDecoratorFactory.class, this);
     }
 
     @Override
-    public void pluginAdded(PluginHandle<RepositoryDecorator> pluginHandle) {
+    public void pluginAdded(PluginHandle<RepositoryDecoratorFactory> pluginHandle) {
         decorators.put(pluginHandle.getName(), pluginHandle.getPlugin());
     }
 
     @Override
-    public void pluginRemoved(PluginHandle<RepositoryDecorator> pluginHandle) {
+    public void pluginRemoved(PluginHandle<RepositoryDecoratorFactory> pluginHandle) {
     }
 
-    public Repository getDecoratedRepository(Repository repository) {
+    public RepositoryDecoratorChain getDecoratedRepository(Repository repository) {
         // We don't use all the registered decorator plugins, but only those the user
         // activated through the configuration, and in the order specified in the
         // configuration
-        List<RepositoryDecorator> decorators = new ArrayList<RepositoryDecorator>(configuredDecorators.size());
-        for (String name : configuredDecorators) {
-            RepositoryDecorator decorator = this.decorators.get(name);
-            if (decorator == null) {
-                throw new RuntimeException("No repository decorator registered with the name '" + name + "'");
-            }
-            decorators.add(decorator);
-        }
 
         log.info("The active repository decorators are: " + configuredDecorators);
 
-        //
-        // Now connect the decorators
-        //
-        Repository next = repository;
+        RepositoryDecoratorChain chain = new RepositoryDecoratorChain();
 
-        for (int i = decorators.size() - 1; i >= 0; i--) {
-            decorators.get(i).setDelegate(next);
-            next = decorators.get(i);
+        Repository nextInChain = repository;
+        chain.addEntryAtStart(RepositoryDecoratorChain.UNDECORATED_REPOSITORY_KEY, nextInChain);
+
+        for (int i = configuredDecorators.size() - 1; i >=0; i--) {
+            String decoratorName = configuredDecorators.get(i);
+            RepositoryDecoratorFactory factory = decorators.get(decoratorName);
+            if (factory == null) {
+                throw new RuntimeException("No repository decorator registered with the name '" + decoratorName + "'");
+            }
+            nextInChain = factory.createInstance(nextInChain);
+            chain.addEntryAtStart(decoratorName, nextInChain);
         }
 
-        return decorators.size() == 0 ? repository : decorators.get(0);
+        return chain;
     }
 
 }

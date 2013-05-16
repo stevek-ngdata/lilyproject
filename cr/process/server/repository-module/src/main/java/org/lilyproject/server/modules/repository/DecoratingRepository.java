@@ -33,7 +33,7 @@ public class DecoratingRepository extends BaseRepositoryDecorator {
     private String repositoryName;
 
     public DecoratingRepository(Repository delegate, String repositoryName, DecoratingRepositoryManager decoratingRepositoryManager) {
-        setDelegate(delegate);
+        super(delegate);
         this.decoratingRepositoryManager = decoratingRepositoryManager;
         this.repositoryName = repositoryName;
     }

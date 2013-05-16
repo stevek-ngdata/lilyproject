@@ -15,6 +15,7 @@
  */
 package org.lilyproject.server.modules.repository;
 
+import com.google.common.collect.Maps;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
@@ -25,12 +26,17 @@ import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.RepoTableKey;
 import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.util.io.Closer;
+
+import java.io.IOException;
+import java.util.Map;
 
 public class DecoratingRepositoryManager extends AbstractRepositoryManager {
 
     private HBaseRepositoryManager wrappedRepositoryManager;
     private RecordUpdateHookActivator recordUpdateHookActivator;
     private RepositoryDecoratorActivator repositoryDecoratorActivator;
+    private final Map<RepoTableKey, RepositoryDecoratorChain> decoratoredRepositoryCache = Maps.newHashMap();
 
     public DecoratingRepositoryManager(HBaseRepositoryManager repositoryManager,
             RecordUpdateHookActivator recordUpdateHookActivator,
@@ -46,10 +52,45 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
     @Override
     protected Repository createRepository(RepoTableKey key)
             throws InterruptedException, RepositoryException {
+
+        if (decoratoredRepositoryCache.containsKey(key)) {
+            throw new RuntimeException("Unexpected: createRepository is called twice for " + key);
+        }
+
         HBaseRepository repository = (HBaseRepository)wrappedRepositoryManager.getRepository(
                 key.getRepositoryName()).getTable(key.getTableName());
+
         recordUpdateHookActivator.activateUpdateHooks(repository);
-        return new DecoratingRepository(repositoryDecoratorActivator.getDecoratedRepository(repository),
-                key.getRepositoryName(), this);
+
+        RepositoryDecoratorChain chain = repositoryDecoratorActivator.getDecoratedRepository(repository);
+        decoratoredRepositoryCache.put(key, chain);
+
+        return new DecoratingRepository(chain.getFullyDecoratoredRepository(), key.getRepositoryName(), this);
+    }
+
+    /**
+     * @return null if it doesn't exist
+     */
+    public RepositoryDecoratorChain getRepositoryDecoratorChain(String repositoryName, String tableName) {
+        return decoratoredRepositoryCache.get(new RepoTableKey(repositoryName, tableName));
+    }
+
+    @Override
+    public synchronized void close() throws IOException {
+        // We close each of the repository-decorators in the chain individually, since each of them might
+        // have state/resources that they need to clean up, and we don't want to rely on the decorators
+        // themselves forwarding the close call.
+        for (RepositoryDecoratorChain chain : decoratoredRepositoryCache.values()) {
+            for (RepositoryDecoratorChain.Entry entry : chain.getEntries()) {
+                Closer.close(entry.repository);
+            }
+        }
+        decoratoredRepositoryCache.clear();
+    }
+
+    @Override
+    protected boolean shouldCloseRepositories() {
+        // we close the repositories ourselves in our close()
+        return false;
     }
 }
