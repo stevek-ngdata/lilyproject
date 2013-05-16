@@ -45,6 +45,6 @@ public class DecoratingRepository extends BaseRepositoryDecorator {
 
     @Override
     public LTable getDefaultTable() throws InterruptedException, RepositoryException {
-        return decoratingRepositoryManager.getRepository(RepoAndTableUtil.DEFAULT_REPOSITORY, LilyHBaseSchema.Table.RECORD.name);
+        return decoratingRepositoryManager.getRepository(getRepositoryName(), LilyHBaseSchema.Table.RECORD.name);
     }
 }
