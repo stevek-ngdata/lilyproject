@@ -36,6 +36,11 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
     private HBaseRepositoryManager wrappedRepositoryManager;
     private RecordUpdateHookActivator recordUpdateHookActivator;
     private RepositoryDecoratorActivator repositoryDecoratorActivator;
+
+    // Note that this cache never shrinks, which is not a problem from sizing point of view (there won't be
+    // that many repositories and tables), but it also means that when a repository or table is deleted,
+    // their decorators won't be immediately cleaned up, which could be a problem if they hold resources
+    // related to the deleted stuff, or in case they run async processes or so.
     private final Map<RepoTableKey, RepositoryDecoratorChain> decoratoredRepositoryCache = Maps.newHashMap();
 
     public DecoratingRepositoryManager(HBaseRepositoryManager repositoryManager,
