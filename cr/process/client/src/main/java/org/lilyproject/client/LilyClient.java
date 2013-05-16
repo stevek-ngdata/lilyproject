@@ -29,8 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import org.lilyproject.repository.model.api.RepositoryModel;
-import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

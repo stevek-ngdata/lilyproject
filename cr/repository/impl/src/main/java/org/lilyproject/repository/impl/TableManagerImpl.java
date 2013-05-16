@@ -18,6 +18,8 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.util.List;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -26,7 +28,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.TableCreateDescriptor;
 import org.lilyproject.repository.api.TableManager;
-import org.lilyproject.util.repo.RepoAndTableUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -57,8 +58,7 @@ public class TableManagerImpl implements TableManager {
         if (tableExists(descriptor.getName())) {
             throw new IllegalArgumentException(String.format("Table '%s' already exists", descriptor.getName()));
         }
-        String hbaseTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, descriptor.getName());
-        LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, descriptor.getSplitKeys());
+        LilyHBaseSchema.getRecordTable(tableFactory, repositoryName, descriptor.getName(), descriptor.getSplitKeys());
         return new RepositoryTableImpl(repositoryName, descriptor.getName());
     }
 
@@ -117,7 +117,7 @@ public class TableManagerImpl implements TableManager {
     }
 
     private String getHBaseTableName(String tableName) {
-        return new RepoTableKey(repositoryName, tableName).toHBaseTableName();
+        return RepoAndTableUtil.getHBaseTableName(repositoryName, tableName);
     }
 
 }

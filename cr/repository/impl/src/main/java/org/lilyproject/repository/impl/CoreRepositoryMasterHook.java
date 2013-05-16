@@ -21,12 +21,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.lilyproject.plugin.PluginRegistry;
 import org.lilyproject.repository.master.RepositoryMasterHook;
-import org.lilyproject.util.repo.RepoAndTableUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+
+import org.apache.hadoop.hbase.HTableDescriptor;
+
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 /**
  * A RepositoryMasterHook responsible for performing core repository actions when a repository is added or removed.
@@ -63,8 +66,7 @@ public class CoreRepositoryMasterHook implements RepositoryMasterHook {
     public void postCreate(String repositoryName) throws Exception {
         log.info("Performing repository post-creation actions for repository " + repositoryName);
 
-        String hbaseTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, LilyHBaseSchema.Table.RECORD.name);
-        LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, false);
+        LilyHBaseSchema.getRecordTable(tableFactory, repositoryName, LilyHBaseSchema.Table.RECORD.name, false);
     }
 
     @Override
@@ -72,11 +74,17 @@ public class CoreRepositoryMasterHook implements RepositoryMasterHook {
         log.info("Performing repository pre-delete actions for repository " + repositoryName);
 
         HBaseAdmin hbaseAdmin = new HBaseAdmin(hbaseConf);
+
         try {
-            String recordTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, "record");
-            log.info("Disabling and deleting table " + recordTableName);
-            hbaseAdmin.disableTable(recordTableName);
-            hbaseAdmin.deleteTable(recordTableName);
+            for (HTableDescriptor tableDescriptor : hbaseAdmin.listTables()) {
+                if (repositoryName.equals(RepoAndTableUtil.getOwningRepository(tableDescriptor))) {
+                    String tableName = tableDescriptor.getNameAsString();
+                    log.info("Disabling and deleting table " + tableName);
+                    hbaseAdmin.disableTable(tableName);
+                    hbaseAdmin.deleteTable(tableName);
+                }
+            }
+
         } finally {
             hbaseAdmin.close();
         }

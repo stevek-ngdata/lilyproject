@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.util.repo;
+package org.lilyproject.util.hbase;
 
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.hbase.HTableDescriptor;
+
+/**
+ * Utility that handles the mapping between repository/table names and HBase storage table names.
+ */
 public class RepoAndTableUtil {
     public static final String DEFAULT_REPOSITORY = "default";
 
@@ -29,6 +34,8 @@ public class RepoAndTableUtil {
     private static final Pattern VALID_NAME_CHARS = Pattern.compile(VALID_NAME_PATTERN);
     public static final String VALID_NAME_EXPLANATION = "A valid name should follow the regex " + VALID_NAME_PATTERN
             + " and not contain " + REPOSITORY_TABLE_SEPARATOR + ".";
+
+    static final String OWNING_REPOSITORY_KEY = "lilyOwningRepository";
 
     /**
      * Checks if a table is owned by a certain repository. Assumes the passed table name is a record table name,
@@ -88,5 +95,31 @@ public class RepoAndTableUtil {
             String table = hbaseTableName.substring(pos + REPOSITORY_TABLE_SEPARATOR.length());
             return new String[] { repository, table };
         }
+    }
+    
+    /**
+     * Mark a table descriptor as being owned by a repository. This method is intended to be used before the
+     * table defined by the descriptor is created.
+     * 
+     * @param tableDescriptor descriptor of a table to be created
+     * @param repositoryName name of the repository to which the table will belong
+     */
+    public static void setRepositoryOwnership(HTableDescriptor tableDescriptor, String repositoryName) {
+        String existingValue = tableDescriptor.getValue(OWNING_REPOSITORY_KEY);
+        if (existingValue != null && !existingValue.equals(repositoryName)) {
+            throw new IllegalStateException("Table descriptor already belongs to repository '"
+                                            + existingValue + "', can't set owning repository to " + repositoryName);
+        }
+        tableDescriptor.setValue(OWNING_REPOSITORY_KEY, repositoryName);
+    }
+    
+    /**
+     * Get the name of the owning repository for a table descriptor.
+     * 
+     * @param tableDescriptor descriptor for which the owning repository is to be retrieved
+     * @return the owning repository
+     */
+    public static String getOwningRepository(HTableDescriptor tableDescriptor) {
+        return tableDescriptor.getValue(OWNING_REPOSITORY_KEY);
     }
 }

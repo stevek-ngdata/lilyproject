@@ -650,11 +650,6 @@ public abstract class BaseRepository implements Repository {
     }
 
     @Override
-    public String getStorageTableName() {
-        return repoTableKey.toHBaseTableName();
-    }
-
-    @Override
     public String getRepositoryName() {
         return repoTableKey.getRepositoryName();
     }

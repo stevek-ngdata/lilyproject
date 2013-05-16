@@ -27,6 +27,4 @@ public interface RepositoryTable {
 
     String getRepositoryName();
 
-    String getStorageName();
-
 }

@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
@@ -154,7 +157,8 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
         // key is lily table name, value is hbase table name (= the name including the repository name prefix)
         Map<String, String> allRepoTables = Maps.newHashMap();
         for (RepositoryTable repoTable : tableManager.getTables()) {
-            allRepoTables.put(repoTable.getName(), repoTable.getStorageName());
+            allRepoTables.put(repoTable.getName(),
+                    RepoAndTableUtil.getHBaseTableName(repoTable.getRepositoryName(), repoTable.getName()));
         }
 
         List<String> tablesToInclude = Lists.newArrayList();

@@ -60,15 +60,17 @@ public class LilyHBaseSchema {
     }
 
     @VisibleForTesting
-    static HTableDescriptor createRecordTableDescriptor(String tableName) {
+    static HTableDescriptor createRecordTableDescriptor(String repositoryName, String tableName) {
 
         if (tableName.contains(".") || tableName.contains(":")) {
             throw new IllegalArgumentException("Repository table name cannot contain periods or colons");
         }
 
-        HTableDescriptor recordTableDescriptor = new HTableDescriptor(tableName);
+        String hbaseTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, tableName);
+        HTableDescriptor recordTableDescriptor = new HTableDescriptor(hbaseTableName);
         recordTableDescriptor.addFamily(DATA_CF);
         recordTableDescriptor.setValue(TABLE_TYPE_PROPERTY, TABLE_TYPE_RECORD);
+        RepoAndTableUtil.setRepositoryOwnership(recordTableDescriptor, repositoryName);
         return recordTableDescriptor;
     }
 
@@ -77,20 +79,20 @@ public class LilyHBaseSchema {
         return value != null && Bytes.equals(value, TABLE_TYPE_RECORD);
     }
 
-    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName) throws IOException, InterruptedException {
-        HTableInterface recordTable = tableFactory.getTable(createRecordTableDescriptor(tableName));
+    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String repositoryName, String tableName) throws IOException, InterruptedException {
+        HTableInterface recordTable = tableFactory.getTable(createRecordTableDescriptor(repositoryName, tableName));
         verifyIsRecordTable(recordTable.getTableDescriptor());
         return recordTable;
     }
 
-    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName, byte[][] splitKeys) throws IOException, InterruptedException {
-        HTableInterface recordTable = tableFactory.getTable(createRecordTableDescriptor(tableName), splitKeys);
+    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String repositoryName, String tableName, byte[][] splitKeys) throws IOException, InterruptedException {
+        HTableInterface recordTable = tableFactory.getTable(createRecordTableDescriptor(repositoryName, tableName), splitKeys);
         verifyIsRecordTable(recordTable.getTableDescriptor());
         return recordTable;
     }
 
-    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String tableName, boolean clientMode) throws IOException, InterruptedException {
-        HTableInterface recordTable = tableFactory.getTable(createRecordTableDescriptor(tableName), !clientMode);
+    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, String repositoryName, String tableName, boolean clientMode) throws IOException, InterruptedException {
+        HTableInterface recordTable = tableFactory.getTable(createRecordTableDescriptor(repositoryName, tableName), !clientMode);
         verifyIsRecordTable(recordTable.getTableDescriptor());
         return recordTable;
     }

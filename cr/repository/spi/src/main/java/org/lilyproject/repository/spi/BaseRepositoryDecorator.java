@@ -290,11 +290,6 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public String getStorageTableName() {
-        return delegate.getStorageTableName();
-    }
-
-    @Override
     public String getTableName() {
         return delegate.getTableName();
     }

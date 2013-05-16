@@ -82,7 +82,7 @@ public class LilyHBaseSchemaTest  {
     public void testGetRecordTable() throws IOException, InterruptedException {
         when(tableFactory.getTable(any(HTableDescriptor.class))).thenReturn(recordTable);
 
-        HTableInterface recordTable = LilyHBaseSchema.getRecordTable(tableFactory, RECORD_TABLE_NAME);
+        HTableInterface recordTable = LilyHBaseSchema.getRecordTable(tableFactory, RepoAndTableUtil.DEFAULT_REPOSITORY, RECORD_TABLE_NAME);
 
         assertNotNull(recordTable);
     }
@@ -90,27 +90,28 @@ public class LilyHBaseSchemaTest  {
     @Test(expected=IllegalArgumentException.class)
     public void testGetRecordTable_NotRecordTable() throws IOException, InterruptedException {
         when(tableFactory.getTable(any(HTableDescriptor.class))).thenReturn(nonRecordTable);
-        LilyHBaseSchema.getRecordTable(tableFactory, NON_RECORD_TABLE_NAME);
+        LilyHBaseSchema.getRecordTable(tableFactory, RepoAndTableUtil.DEFAULT_REPOSITORY, NON_RECORD_TABLE_NAME);
     }
 
     @Test(expected=IllegalArgumentException.class)
     public void testGetRecordTable_WithSplits_NotRecordTable() throws IOException, InterruptedException {
         when(tableFactory.getTable(any(HTableDescriptor.class), any(byte[][].class))).thenReturn(nonRecordTable);
-        LilyHBaseSchema.getRecordTable(tableFactory, NON_RECORD_TABLE_NAME, new byte[][]{});
+        LilyHBaseSchema.getRecordTable(tableFactory, RepoAndTableUtil.DEFAULT_REPOSITORY, NON_RECORD_TABLE_NAME, new byte[][]{});
     }
 
     @Test(expected=IllegalArgumentException.class)
     public void testGetRecordTable_ClientMode_NotRecordTable() throws IOException, InterruptedException {
         when(tableFactory.getTable(any(HTableDescriptor.class), anyBoolean())).thenReturn(nonRecordTable);
-        LilyHBaseSchema.getRecordTable(tableFactory, NON_RECORD_TABLE_NAME, true);
+        LilyHBaseSchema.getRecordTable(tableFactory, RepoAndTableUtil.DEFAULT_REPOSITORY, NON_RECORD_TABLE_NAME, true);
     }
 
     @Test
     public void testCreateRecordTableDescriptor() {
-        HTableDescriptor descriptor = LilyHBaseSchema.createRecordTableDescriptor("myrecordtable");
+        HTableDescriptor descriptor = LilyHBaseSchema.createRecordTableDescriptor("myrepo", "myrecordtable");
         assertEquals(1, descriptor.getColumnFamilies().length);
         assertEquals("myrecordtable", descriptor.getNameAsString());
         assertTrue(LilyHBaseSchema.isRecordTableDescriptor(descriptor));
+        assertEquals("myrepo", RepoAndTableUtil.getOwningRepository(descriptor));
 
     }
 
@@ -118,14 +119,14 @@ public class LilyHBaseSchemaTest  {
     public void testCreateRecordTableDescriptor_WithDotInName() {
         // A dot isn't allowed in a repository table name because it can get in the
         // way of parsing absolute link fields that include a table name
-        LilyHBaseSchema.createRecordTableDescriptor("my.recordtable");
+        LilyHBaseSchema.createRecordTableDescriptor("myrepo", "my.recordtable");
     }
 
     @Test(expected=IllegalArgumentException.class)
     public void testCreateRecordTableDescriptor_WithColonInName() {
         // A colon isn't allowed in a repository table name because it can get in the
         // way of parsing absolute link fields that include a table name
-        LilyHBaseSchema.createRecordTableDescriptor("my:recordtable");
+        LilyHBaseSchema.createRecordTableDescriptor("myrepo", "my:recordtable");
     }
 
 }

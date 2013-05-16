@@ -15,8 +15,9 @@
  */
 package org.lilyproject.repository.impl;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import com.google.common.base.Preconditions;
-import org.lilyproject.util.repo.RepoAndTableUtil;
 
 /**
  * An object that can be used anywhere the combination of repository name and table name is needed.
@@ -39,10 +40,6 @@ public class RepoTableKey {
 
     public String getTableName() {
         return tableName;
-    }
-
-    public String toHBaseTableName() {
-        return RepoAndTableUtil.getHBaseTableName(repositoryName, tableName);
     }
 
     @Override

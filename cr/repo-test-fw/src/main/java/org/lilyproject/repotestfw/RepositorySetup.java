@@ -22,8 +22,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import org.lilyproject.repository.master.RepositoryMaster;
-import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import com.ngdata.sep.EventListener;
 import com.ngdata.sep.SepModel;

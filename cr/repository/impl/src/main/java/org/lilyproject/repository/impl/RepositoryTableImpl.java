@@ -15,8 +15,9 @@
  */
 package org.lilyproject.repository.impl;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.util.repo.RepoAndTableUtil;
 
 public class RepositoryTableImpl implements RepositoryTable {
 
@@ -38,8 +39,4 @@ public class RepositoryTableImpl implements RepositoryTable {
         return repositoryName;
     }
 
-    @Override
-    public String getStorageName() {
-        return RepoAndTableUtil.getHBaseTableName(repositoryName, name);
-    }
 }

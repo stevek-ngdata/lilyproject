@@ -22,7 +22,8 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Set;
 
-import org.lilyproject.util.repo.RepoAndTableUtil;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;

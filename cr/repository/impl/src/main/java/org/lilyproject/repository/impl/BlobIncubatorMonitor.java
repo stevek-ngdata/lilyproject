@@ -287,7 +287,7 @@ public class BlobIncubatorMonitor {
             get.setFilter(filter);
 
             for (RepositoryTable repoTable : tableManager.getTables()) {
-                HTableInterface recordTable = LilyHBaseSchema.getRecordTable(tableFactory, repoTable.getName());
+                HTableInterface recordTable = LilyHBaseSchema.getRecordTable(tableFactory, repoTable.getRepositoryName(), repoTable.getRepositoryName());
                 Result result = recordTable.get(get);
                 if (result != null && !result.isEmpty()) {
                     return result;

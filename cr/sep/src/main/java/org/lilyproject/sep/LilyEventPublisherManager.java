@@ -18,12 +18,13 @@ package org.lilyproject.sep;
 import java.io.IOException;
 import java.util.Map;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import com.google.common.collect.Maps;
 import com.ngdata.sep.EventPublisher;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.repo.RepoAndTableUtil;
 
 public class LilyEventPublisherManager {
 
@@ -39,13 +40,13 @@ public class LilyEventPublisherManager {
             throws IOException, InterruptedException {
         String hbaseTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, tableName);
         if (!eventPublishers.containsKey(hbaseTableName)) {
-            eventPublishers.put(hbaseTableName, createEventPublisher(hbaseTableName));
+            eventPublishers.put(hbaseTableName, createEventPublisher(repositoryName, hbaseTableName));
         }
         return eventPublishers.get(hbaseTableName);
     }
 
-    private EventPublisher createEventPublisher(String tableName) throws IOException, InterruptedException {
-        HTableInterface recordTable = LilyHBaseSchema.getRecordTable(tableFactory, tableName);
+    private EventPublisher createEventPublisher(String repositoryName, String tableName) throws IOException, InterruptedException {
+        HTableInterface recordTable = LilyHBaseSchema.getRecordTable(tableFactory, repositoryName, tableName);
         return new LilyHBaseEventPublisher(recordTable);
     }
 }

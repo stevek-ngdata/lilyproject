@@ -19,7 +19,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
 
-import org.lilyproject.util.repo.RepoAndTableUtil;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;

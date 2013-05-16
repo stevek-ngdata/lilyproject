@@ -24,10 +24,11 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.RepositoryUnavailableException;
-import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 /**
  * Base class for SEP {@link EventListener}s that process events from Lily record tables.

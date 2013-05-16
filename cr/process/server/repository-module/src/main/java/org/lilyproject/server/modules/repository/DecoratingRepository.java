@@ -15,13 +15,14 @@
  */
 package org.lilyproject.server.modules.repository;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
-import org.lilyproject.util.repo.RepoAndTableUtil;
 
 /**
  * A Repository which calls back to the DecoratingRepositoryManager when it needs repository objects,

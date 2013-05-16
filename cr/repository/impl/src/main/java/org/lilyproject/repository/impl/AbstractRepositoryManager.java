@@ -18,8 +18,9 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.util.Map;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import org.lilyproject.repository.api.RepositoryUnavailableException;
-import org.lilyproject.util.repo.RepoAndTableUtil;
 
 import com.google.common.collect.Maps;
 import org.lilyproject.repository.api.IdGenerator;

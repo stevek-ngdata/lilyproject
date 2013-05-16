@@ -17,6 +17,8 @@ package org.lilyproject.server.modules.repository;
 
 import java.io.IOException;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
@@ -27,6 +29,6 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 public class RecordTableSetup {
 
     public RecordTableSetup(HBaseTableFactory tableFactory) throws IOException, InterruptedException {
-        LilyHBaseSchema.getRecordTable(tableFactory, Table.RECORD.name, false);
+        LilyHBaseSchema.getRecordTable(tableFactory, RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name, false);
     }
 }

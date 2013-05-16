@@ -50,7 +50,7 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
     protected Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException {
         TableManager tableManager = new TableManagerImpl(key.getRepositoryName(), hbaseConf, hbaseTableFactory);
         try {
-            HTableInterface htable = LilyHBaseSchema.getRecordTable(hbaseTableFactory, key.toHBaseTableName(), true);
+            HTableInterface htable = LilyHBaseSchema.getRecordTable(hbaseTableFactory, key.getRepositoryName(), key.getTableName(), true);
             return new HBaseRepository(key, this, htable, blobManager, tableManager, getRecordFactory());
         } catch (org.apache.hadoop.hbase.TableNotFoundException e) {
             throw new TableNotFoundException(key.getRepositoryName(), key.getTableName());

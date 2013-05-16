@@ -21,7 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.lilyproject.util.repo.RepoAndTableUtil;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;

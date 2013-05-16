@@ -52,11 +52,10 @@ public class RemoteRepositoryManager extends AbstractRepositoryManager implement
 
     @Override
     protected Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException {
-        String hbaseTableName = key.toHBaseTableName();
         try {
             TableManager tableManager = new RemoteTableManager(key.getRepositoryName(), transceiver, avroConverter);
             Repository repo = new RemoteRepository(key, transceiver, avroConverter, this, blobManager,
-                    LilyHBaseSchema.getRecordTable(tableFactory, hbaseTableName, true), tableManager, getRecordFactory());
+                    LilyHBaseSchema.getRecordTable(tableFactory, key.getRepositoryName(), key.getTableName(), true), tableManager, getRecordFactory());
             if ("true".equals(System.getProperty("lilyclient.trace"))) {
                 repo = TracingRepository.wrap(repo);
             }

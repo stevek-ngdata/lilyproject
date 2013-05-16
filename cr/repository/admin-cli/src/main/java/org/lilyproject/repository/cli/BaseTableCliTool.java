@@ -25,7 +25,8 @@ import org.lilyproject.util.Version;
 
 import java.util.List;
 
-import org.lilyproject.util.repo.RepoAndTableUtil;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 
 public abstract class BaseTableCliTool extends BaseZkCliTool {
     private Option repositoryOpt;

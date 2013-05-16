@@ -17,6 +17,8 @@ package org.lilyproject.mapreduce;
 
 import java.io.IOException;
 
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.hbase.mapreduce.TableSplit;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -29,7 +31,6 @@ import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.repo.RepoAndTableUtil;
 
 /**
  * A MapReduce InputFormat for Lily based on Lily scanners.
