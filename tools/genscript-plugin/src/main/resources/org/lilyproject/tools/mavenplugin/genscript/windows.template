@@ -2,28 +2,29 @@
 
 rem You can use the following environment variables to customize the startup
 rem
-rem LILY_CONF_DIR
+rem **APPNAME**_CONF_DIR
 rem    If set, additional environment properties will be sourced
-rem    from %LILY_CONF_DIR%/lily-env.bat
+rem    from %**APPNAME**_CONF_DIR%/**APPNAME_LC**-env.bat
 rem
-rem LILY_CLI_CLASSPATH
+rem **APPNAME**_CLI_CLASSPATH
 rem    additional entries to be added to the classpath
 rem
-rem LILY_JAVA_OPTIONS
+rem **APPNAME**_JAVA_OPTIONS
 rem    additional options to be passed to the java executable
 rem
-rem LILY_MAVEN_REPO
+rem **APPNAME**_MAVEN_REPO
 rem    additional directory path(s) (comma-separated) to Maven-style
 rem    repositories where jar artifacts should be searched
+rem    (for applications based on the Lily Runtime)
 rem
 
 :: ----- Verify and Set Required Environment Variables -------------------------
 
-if "%LILY_CONF_DIR%"=="" goto noLilyConfDir
-if exist %LILY_CONF_DIR%\lily-env.bat (
-  %LILY_CONF_DIR%\lily-env.bat
+if "%**APPNAME**_CONF_DIR%"=="" goto noAppConfDir
+if exist %**APPNAME**_CONF_DIR%\**APPNAME_LC**-env.bat (
+  %**APPNAME**_CONF_DIR%\**APPNAME_LC**-env.bat
 )
-:noLilyConfDir
+:noAppConfDir
 
 :: ----- Verify and Set Required Environment Variables -------------------------
 
@@ -34,34 +35,37 @@ goto end
 
 :: ----- Find out home dir of this script --------------------------------------
 
-if not "%LILY_HOME%"=="" goto gotLilyHome
+if not "%**APPNAME**_HOME%"=="" goto gotAppHome
 rem %~dp0 is expanded pathname of the current script under NT
-set LILY_HOME=%~dp0..
-:gotLilyHome
+set **APPNAME**_HOME=%~dp0..
+:gotAppHome
 
 :: ----- Run -------------------------------------------------------------------
 
+rem This stuff about Maven repositories is only for applications that are based on
+rem the Lily Runtime, but won't hurt in other contexts.
+
 rem The repository suitable for bootstrapping Lily Runtime
-set LAUNCHER_M2_REPO=%LILY_HOME%\lib
+set LAUNCHER_M2_REPO=%**APPNAME**_HOME%\lib
 
 rem The repository(ies) to be used by Lily Runtime for loading the application
-set M2_REPO=%LILY_HOME%\lib
-if "%LILY_MAVEN_REPO%"=="" goto noExtraRepoPath
-set M2_REPO=%M2_REPO%,%LILY_MAVEN_REPO%
+set M2_REPO=%**APPNAME**_HOME%\lib
+if "%**APPNAME**_MAVEN_REPO%"=="" goto noExtraRepoPath
+set M2_REPO=%M2_REPO%,%**APPNAME**_MAVEN_REPO%
 :noExtraRepoPath
 
-set CLASSPATH="$$$CLASSPATH_PREFIX$$$$$$CLASSPATH$$$"
+set CLASSPATH="**CLASSPATH_PREFIX****CLASSPATH**"
 
-rem Only add LILY_CLI_CLASSPATH when it is not empty, to avoid adding the working dir to
+rem Only add **APPNAME**_CLI_CLASSPATH when it is not empty, to avoid adding the working dir to
 rem the classpath by accident.
-if "%LILY_CLI_CLASSPATH%"=="" goto noExtraClassPath
-set CLASSPATH=%CLASSPATH%;%LILY_CLI_CLASSPATH%
+if "%**APPNAME**_CLI_CLASSPATH%"=="" goto noExtraClassPath
+set CLASSPATH=%CLASSPATH%;%**APPNAME**_CLI_CLASSPATH%
 :noExtraClassPath
 
-set LILY_OPTIONS=%LILY_JAVA_OPTIONS%
-$$$BEFORE_JAVA_HOOK$$$
+set **APPNAME**_OPTIONS=%**APPNAME**_JAVA_OPTIONS%
+**BEFORE_JAVA_HOOK**
 
-"%JAVA_HOME%/bin/java" -classpath "%CLASSPATH%" %LILY_OPTIONS% $$$DEFAULT_JVM_ARGS$$$ $$$MAINCLASS$$$ $$$DEFAULT_CLI_ARGS$$$ %*
+"%JAVA_HOME%/bin/java" -classpath "%CLASSPATH%" %**APPNAME**_OPTIONS% **DEFAULT_JVM_ARGS** **MAINCLASS** **DEFAULT_CLI_ARGS** %*
 goto end
 
 :end

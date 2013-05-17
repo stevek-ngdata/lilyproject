@@ -47,6 +47,15 @@ import org.apache.maven.settings.Settings;
 public class GenScriptMojo extends AbstractMojo {
 
     /**
+     * A short name of the application without special characters. Casing does not matter, it will be
+     * uppercased or lowercased depending on the context.
+     *
+     * @parameter
+     * @required
+     */
+    private String applicationName;
+
+    /**
      * @parameter
      */
     private List<Script> scripts;
@@ -222,13 +231,15 @@ public class GenScriptMojo extends AbstractMojo {
 
         String classPathPrefix = getParameter(this.classPathPrefix, platform, mode, "");
 
-        String separator = "$$$";
+        String separator = "**";
         result = result.replaceAll(Pattern.quote(separator.concat("CLASSPATH").concat(separator)), Matcher.quoteReplacement(classPath)).
             replaceAll(Pattern.quote(separator.concat("CLASSPATH_PREFIX").concat(separator)), Matcher.quoteReplacement(classPathPrefix)).
             replaceAll(Pattern.quote(separator.concat("MAINCLASS").concat(separator)), Matcher.quoteReplacement(mainClass)).
             replaceAll(Pattern.quote(separator.concat("DEFAULT_CLI_ARGS").concat(separator)), Matcher.quoteReplacement(defaultCliArgs)).
             replaceAll(Pattern.quote(separator.concat("DEFAULT_JVM_ARGS").concat(separator)), Matcher.quoteReplacement(defaultJvmArgs)).
-            replaceAll(Pattern.quote(separator.concat("BEFORE_JAVA_HOOK").concat(separator)), Matcher.quoteReplacement(beforeJavaHook));
+            replaceAll(Pattern.quote(separator.concat("BEFORE_JAVA_HOOK").concat(separator)), Matcher.quoteReplacement(beforeJavaHook)).
+            replaceAll(Pattern.quote(separator.concat("APPNAME").concat(separator)), Matcher.quoteReplacement(applicationName.toUpperCase())).
+            replaceAll(Pattern.quote(separator.concat("APPNAME_LC").concat(separator)), Matcher.quoteReplacement(applicationName.toLowerCase()));
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
         writer.write(result);
@@ -249,7 +260,7 @@ public class GenScriptMojo extends AbstractMojo {
         // the current working directory to be added to the classpath unintentionally
         StringBuilder result = new StringBuilder();
         ArtifactRepositoryLayout layout = m2layout;
-        String basePath = isDevelopment ? settings.getLocalRepository() : platform.envPrefix.concat("LILY_HOME").concat(platform.envSuffix).concat(platform.fileSeparator).concat("lib");
+        String basePath = isDevelopment ? settings.getLocalRepository() : platform.envPrefix.concat(applicationName.toUpperCase()).concat("_HOME").concat(platform.envSuffix).concat(platform.fileSeparator).concat("lib");
 
         for (Artifact artifact: getClassPath()) {
             if (result.length() > 0) {

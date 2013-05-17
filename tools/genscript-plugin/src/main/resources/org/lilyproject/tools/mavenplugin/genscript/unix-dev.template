@@ -3,10 +3,10 @@
 #
 # Configuration variables
 #
-# LILY_CLI_CLASSPATH
+# **APPNAME**_CLI_CLASSPATH
 #    additional entries to be added to the classpath
 #
-# LILY_JAVA_OPTIONS
+# **APPNAME**_JAVA_OPTIONS
 #    additional options to be passed to the java executable
 #
 
@@ -15,17 +15,17 @@ if [ -z "$JAVA_HOME" ] ; then
   exit 1
 fi
 
-CLASSPATH="$$$CLASSPATH_PREFIX$$$$$$CLASSPATH$$$"
+CLASSPATH="**CLASSPATH_PREFIX****CLASSPATH**"
 
-# Only add LILY_CLI_CLASSPATH when it is not empty, to avoid adding the working dir to
+# Only add **APPNAME**_CLI_CLASSPATH when it is not empty, to avoid adding the working dir to
 # the classpath by accident.
-if [ ! -z "$LILY_CLI_CLASSPATH" ] ; then
-  CLASSPATH=$CLASSPATH:$LILY_CLI_CLASSPATH
+if [ ! -z "$**APPNAME**_CLI_CLASSPATH" ] ; then
+  CLASSPATH=$CLASSPATH:$**APPNAME**_CLI_CLASSPATH
 fi
 
 export CLASSPATH
 
-LILY_OPTIONS=$LILY_JAVA_OPTIONS
-$$$BEFORE_JAVA_HOOK$$$
+**APPNAME**_OPTIONS=$**APPNAME**_JAVA_OPTIONS
+**BEFORE_JAVA_HOOK**
 
-"$JAVA_HOME/bin/java" $LILY_OPTIONS $$$DEFAULT_JVM_ARGS$$$ $$$MAINCLASS$$$ $$$DEFAULT_CLI_ARGS$$$ "$@"
+"$JAVA_HOME/bin/java" $**APPNAME**_OPTIONS **DEFAULT_JVM_ARGS** **MAINCLASS** **DEFAULT_CLI_ARGS** "$@"

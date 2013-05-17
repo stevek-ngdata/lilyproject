@@ -1166,6 +1166,9 @@
           <groupId>org.lilyproject</groupId>
           <artifactId>lily-genscript-plugin</artifactId>
           <version>${project.version}</version>
+          <configuration>
+            <applicationName>lily</applicationName>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.lilyproject</groupId>
