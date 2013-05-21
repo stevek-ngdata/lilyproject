@@ -305,6 +305,20 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
+
+    <!-- Upgrade tool -->
+    <file>
+      <source>${basedir}/../tools/upgrade/target/dist-scripts/lily-upgrade-from-2.0</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../tools/upgrade/target/dist-scripts/lily-upgrade-from-2.0.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+
+
  
     <!-- Record row visualizer tool -->
     <file>

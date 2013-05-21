@@ -1,0 +1,2 @@
+Performs upgrade of the HBase storage format from Lily 2.0 to Lily 2.2.
+
