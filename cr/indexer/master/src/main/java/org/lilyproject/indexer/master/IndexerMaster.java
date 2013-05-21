@@ -276,7 +276,7 @@ public class IndexerMaster {
                 // Read current situation of record and assure it is still actual
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 if (needsSubscriptionIdUnassigned(index)) {
-                    sepModel.removeSubscription(index.getQueueSubscriptionId());
+                    sepModel.removeSubscriptionSilent(index.getQueueSubscriptionId());
                     log.info("Deleted queue subscription for index " + indexName);
                     index.setQueueSubscriptionId(null);
                     indexerModel.updateIndexInternal(index);
@@ -386,7 +386,7 @@ public class IndexerMaster {
 
                 String queueSubscriptionId = index.getQueueSubscriptionId();
                 if (queueSubscriptionId != null) {
-                    sepModel.removeSubscription(index.getQueueSubscriptionId());
+                    sepModel.removeSubscriptionSilent(index.getQueueSubscriptionId());
                     // We leave the subscription ID in the index definition FYI
                 }
 
