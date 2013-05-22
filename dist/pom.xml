@@ -91,6 +91,7 @@
             <artifact>org.lilyproject:lily-archetype-basic:${project.version}</artifact>
             <artifact>org.lilyproject:lily-archetype-lily-server-plugin:${project.version}</artifact>
             <artifact>org.lilyproject:lily-runtime-plugin:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-upgrade:${project.version}</artifact>
           </artifacts>
         </configuration>
       </plugin>
