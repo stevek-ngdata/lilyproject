@@ -17,7 +17,9 @@ package org.lilyproject.tools.import_.cli;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -26,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
+import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.LRepository;
@@ -52,6 +55,8 @@ import org.lilyproject.tools.import_.json.RecordTypeReader;
 import org.lilyproject.tools.import_.json.UnmodifiableNamespaces;
 import org.lilyproject.util.concurrent.WaitPolicy;
 import org.lilyproject.util.json.JsonFormat;
+
+import static org.lilyproject.util.json.JsonUtil.getArray;
 
 public class JsonImport {
     private Namespaces namespaces = new NamespacesImpl();
@@ -185,7 +190,7 @@ public class JsonImport {
                     if (current == JsonToken.START_ARRAY) {
                         startExecutor();
                         while (jp.nextToken() != JsonToken.END_ARRAY && !errorHappened) {
-                            pushTask(new FieldTypeImportTask(jp.readValueAsTree()));
+                            pushTask(new FieldTypeImportTask(parseFieldType(jp.readValueAsTree())));
                         }
                         waitTasksFinished();
                     } else {
@@ -194,11 +199,30 @@ public class JsonImport {
                     }
                 } else if (fieldName.equals("recordTypes")) {
                     if (current == JsonToken.START_ARRAY) {
-                        startExecutor();
+                        Map<QName, FieldType> inlineDeclaredFieldTypes = new HashMap<QName, FieldType>();
+                        List<RecordTypeImportTask> rtImportTasks = new ArrayList<RecordTypeImportTask>();
+
                         while (jp.nextToken() != JsonToken.END_ARRAY && !errorHappened) {
-                            pushTask(new RecordTypeImportTask(jp.readValueAsTree()));
+                            JsonNode rtJson = jp.readValueAsTree();
+                            extractFieldTypesFromRecordType(rtJson, inlineDeclaredFieldTypes);
+                            rtImportTasks.add(new RecordTypeImportTask(rtJson));
                         }
-                        waitTasksFinished();
+
+                        if (inlineDeclaredFieldTypes.size() > 0) {
+                            startExecutor();
+                            for (FieldType fieldType : inlineDeclaredFieldTypes.values()) {
+                                if (errorHappened)
+                                    break;
+                                pushTask(new FieldTypeImportTask(fieldType));
+                            }
+                            waitTasksFinished();
+                        }
+
+                        if (rtImportTasks.size() > 0) {
+                            startExecutor();
+                            pushTasks(rtImportTasks);
+                            waitTasksFinished();
+                        }
                     } else {
                         System.out.println("Error: recordTypes property should be an array. Skipping.");
                         jp.skipChildren();
@@ -239,8 +263,8 @@ public class JsonImport {
         return namespaces;
     }
 
-    public FieldType importFieldType(JsonNode node) throws RepositoryException, ImportConflictException,
-            ImportException, JsonFormatException, InterruptedException {
+    public FieldType parseFieldType(JsonNode node) throws RepositoryException, ImportException, JsonFormatException,
+            InterruptedException {
 
         if (!node.isObject()) {
             throw new ImportException("Field type should be specified as object node.");
@@ -251,6 +275,18 @@ public class JsonImport {
         if (fieldType.getName() == null) {
             throw new ImportException("Missing name property on field type.");
         }
+
+        return fieldType;
+    }
+
+    public FieldType importFieldType(JsonNode node) throws RepositoryException, ImportConflictException,
+            ImportException, JsonFormatException, InterruptedException {
+        return importFieldType(parseFieldType(node));
+    }
+
+    public FieldType importFieldType(FieldType fieldType) throws RepositoryException, ImportConflictException,
+            ImportException, JsonFormatException, InterruptedException {
+
 
         ImportResult<FieldType> result = FieldTypeImport.importFieldType(fieldType, ImportMode.CREATE_OR_UPDATE,
                 IdentificationMode.NAME, fieldType.getName(), typeManager);
@@ -357,6 +393,33 @@ public class JsonImport {
         return newRecordType;
     }
 
+    /**
+     * Extracts field types declared inline in a record type. An inline definition is recognized by the
+     * presence of a valueType attribute on the field. Found field types are added to the passed map after
+     * checking for conflicting definitions.
+     */
+    private void extractFieldTypesFromRecordType(JsonNode node, Map<QName, FieldType> fieldTypes)
+            throws RepositoryException, InterruptedException, JsonFormatException, ImportException {
+        if (node.has("fields")) {
+            ArrayNode fields = getArray(node, "fields");
+            for (int i = 0; i < fields.size(); i++) {
+                JsonNode field = fields.get(i);
+                if (field.has("valueType")) {
+                    FieldType fieldType = parseFieldType(field);
+                    if (fieldTypes.containsKey(fieldType.getName())) {
+                        FieldType prevFieldType = fieldTypes.get(fieldType.getName());
+                        if (!fieldType.equals(prevFieldType)) {
+                            throw new ImportException("Found conflicting definitions of a field type in two record"
+                                    + " types, field types: " + fieldType + " and " + prevFieldType);
+                        }
+                    } else {
+                        fieldTypes.put(fieldType.getName(), fieldType);
+                    }
+                }
+            }
+        }
+    }
+
     private Record importRecord(JsonNode node) throws RepositoryException, ImportException, JsonFormatException,
             InterruptedException {
 
@@ -424,17 +487,26 @@ public class JsonImport {
         executor.submit(runnable);
     }
 
-    private class FieldTypeImportTask implements Runnable {
-        private JsonNode json;
+    private void pushTasks(List<? extends Runnable> runnables) {
+        for (Runnable runnable : runnables) {
+            if (errorHappened) {
+                break;
+            }
+            executor.submit(runnable);
+        }
+    }
 
-        public FieldTypeImportTask(JsonNode json) {
-            this.json = json;
+    private class FieldTypeImportTask implements Runnable {
+        private FieldType fieldType;
+
+        public FieldTypeImportTask(FieldType fieldType) {
+            this.fieldType = fieldType;
         }
 
         @Override
         public void run() {
             try {
-                importFieldType(json);
+                importFieldType(fieldType);
             } catch (Throwable t) {
                 handleImportError(t);
             }
