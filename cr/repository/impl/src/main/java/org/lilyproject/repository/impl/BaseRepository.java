@@ -422,9 +422,11 @@ public abstract class BaseRepository implements Repository {
     }
 
     /**
-     * Returns both the record and its occ (optimistic concurrency control) version.
+     * Returns both the record and its occ (optimistic concurrency control) version bytes.
+     * <p>
+     * Note, the occ bytes can be null if the record being read is from a version of Lily before OCC was used.
      */
-    protected Pair<Record, Long> readWithOcc(RecordId recordId, Long requestedVersion, List<FieldType> fields,
+    protected Pair<Record, byte[]> readWithOcc(RecordId recordId, Long requestedVersion, List<FieldType> fields,
             FieldTypes fieldTypes) throws RepositoryException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
@@ -443,8 +445,8 @@ public abstract class BaseRepository implements Repository {
                 }
             }
 
-            Long occ = Bytes.toLong(result.getValue(RecordCf.DATA.bytes, RecordColumn.OCC.bytes));
-            return new Pair<Record, Long>(recdec.decodeRecord(recordId, requestedVersion, null, result, fieldTypes), occ);
+            byte[] occBytes = result.getValue(RecordCf.DATA.bytes, RecordColumn.OCC.bytes);
+            return new Pair<Record, byte[]>(recdec.decodeRecord(recordId, requestedVersion, null, result, fieldTypes), occBytes);
         } finally {
             if (metrics != null) {
                 metrics.report(Action.READ, System.currentTimeMillis() - before);

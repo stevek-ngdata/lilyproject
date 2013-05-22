@@ -108,7 +108,7 @@ public class HBaseRepository extends BaseRepository {
     private final Log log = LogFactory.getLog(getClass());
 
     private static final Object METADATA_ONLY_UPDATE = new Object();
-
+    
     public HBaseRepository(RepoTableKey ttk, AbstractRepositoryManager repositoryManager, HTableInterface hbaseTable,
             BlobManager blobManager, TableManager tableManager, RecordFactory recordFactory)
             throws IOException, InterruptedException {
@@ -204,7 +204,7 @@ public class HBaseRepository extends BaseRepository {
                 FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
 
                 long version = 1L;
-                long oldOcc = -1L;
+                byte[] oldOccBytes = null;
                 long newOcc = 1L;
                 // If the record existed it would have been deleted.
                 // The version numbering continues from where it has been deleted.
@@ -220,8 +220,8 @@ public class HBaseRepository extends BaseRepository {
                         throw new RecordExistsException(recordId);
                     }
 
-                    oldOcc = Bytes.toLong(result.getValue(RecordCf.DATA.bytes, RecordColumn.OCC.bytes));
-                    newOcc = oldOcc + 1;
+                    oldOccBytes = result.getValue(RecordCf.DATA.bytes, RecordColumn.OCC.bytes);
+                    newOcc = Bytes.toLong(nextOcc(oldOccBytes));
 
                     byte[] oldVersion = result.getValue(RecordCf.DATA.bytes, RecordColumn.VERSION.bytes);
                     if (oldVersion != null) {
@@ -270,7 +270,7 @@ public class HBaseRepository extends BaseRepository {
 
                 put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
                 boolean success = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
-                        oldOcc == -1 ? null : Bytes.toBytes(oldOcc), put);
+                        oldOccBytes, put);
                 if (!success) {
                     throw new RecordExistsException(recordId);
                 }
@@ -405,11 +405,10 @@ public class HBaseRepository extends BaseRepository {
         RecordId recordId = record.getId();
 
         try {
-            Pair<Record, Long> recordAndOcc = readWithOcc(record.getId(), null, null, fieldTypes);
+            Pair<Record, byte[]> recordAndOcc = readWithOcc(record.getId(), null, null, fieldTypes);
             Record originalRecord = new UnmodifiableRecord(recordAndOcc.getV1());
 
-            long oldOcc = recordAndOcc.getV2();
-            long newOcc = oldOcc + 1;
+            byte[] oldOccBytes = recordAndOcc.getV2();
 
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.UPDATE);
@@ -446,9 +445,9 @@ public class HBaseRepository extends BaseRepository {
                 reserveBlobs(record.getId(), referencedBlobs);
 
                 put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
-                put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
+                put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, nextOcc(oldOccBytes));
                 boolean occSuccess = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
-                        Bytes.toBytes(oldOcc), put);
+                        oldOccBytes, put);
                 if (!occSuccess) {
                     throw new ConcurrentRecordUpdateException(recordId);
                 }
@@ -887,11 +886,10 @@ public class HBaseRepository extends BaseRepository {
             Map<QName, Object> fields = getFieldsToUpdate(record);
             fields = filterMutableFields(fields, fieldTypes);
 
-            Pair<Record, Long> recordAndOcc = readWithOcc(recordId, version, null, fieldTypes);
+            Pair<Record, byte[]> recordAndOcc = readWithOcc(recordId, version, null, fieldTypes);
             Record originalRecord = new UnmodifiableRecord(recordAndOcc.getV1());
 
-            long oldOcc = recordAndOcc.getV2();
-            long newOcc = oldOcc + 1;
+            byte[] oldOccBytes = recordAndOcc.getV2();
 
             Map<QName, Object> originalFields = filterMutableFields(originalRecord.getFields(), fieldTypes);
 
@@ -995,9 +993,9 @@ public class HBaseRepository extends BaseRepository {
                 reserveBlobs(record.getId(), referencedBlobs);
 
                 put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, 1L, recordEvent.toJsonBytes());
-                put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
+                put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, nextOcc(oldOccBytes));
                 boolean occSuccess = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
-                        Bytes.toBytes(oldOcc), put);
+                        oldOccBytes, put);
                 if (!occSuccess) {
                     throw new ConcurrentRecordUpdateException(recordId);
                 }
@@ -1080,12 +1078,11 @@ public class HBaseRepository extends BaseRepository {
             // We need to read the original record in order to put the delete marker in the non-versioned fields.
             // Throw RecordNotFoundException if there is no record to be deleted
             FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-            Pair<Record, Long> recordAndOcc = readWithOcc(recordId, null, null, fieldTypes);
+            Pair<Record, byte[]> recordAndOcc = readWithOcc(recordId, null, null, fieldTypes);
             recordAndOcc.getV1().setAttributes(attributes);
             Record originalRecord = new UnmodifiableRecord(recordAndOcc.getV1());
 
-            long oldOcc = recordAndOcc.getV2();
-            long newOcc = oldOcc + 1;
+            byte[] oldOcc = recordAndOcc.getV2();
 
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.DELETE);
@@ -1123,9 +1120,9 @@ public class HBaseRepository extends BaseRepository {
             }
 
             put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
-            put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, Bytes.toBytes(newOcc));
+            put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, nextOcc(oldOcc));
             boolean occSuccess = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
-                    Bytes.toBytes(oldOcc), put);
+                    oldOcc, put);
             if (!occSuccess) {
                 throw new ConcurrentRecordUpdateException(recordId);
             }
@@ -1146,6 +1143,24 @@ public class HBaseRepository extends BaseRepository {
         }
 
         return null;
+    }
+    
+    /**
+     * Get the next OCC (Optimistic Concurrency Control) value, or an initialized occ value if the current
+     * value is null.
+     *
+     * The handling of null values is needed for working with repositories that were created before the OCC
+     * was in place.
+     * 
+     * @param occValue current occ value
+     */
+    protected static byte[] nextOcc(byte[] occValue) {
+        if (occValue == null) {
+            return Bytes.toBytes(1L);
+        }
+        byte[] newOcc = new byte[occValue.length];
+        System.arraycopy(occValue, 0, newOcc, 0, occValue.length);
+        return Bytes.incrementBytes(newOcc, 1L);
     }
 
     // Clear all data of the recordId until the latest record version (included)
