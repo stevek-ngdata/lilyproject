@@ -143,12 +143,23 @@ public class FieldTypeImpl implements FieldType, Cloneable {
         } else if (!valueType.equals(other.valueType)) {
             return false;
         }
+        if (scope == null) {
+            if (other.scope != null) {
+                return false;
+            }
+        } else if (!scope.equals(other.scope)) {
+            return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
-        return "FieldTypeImpl [id=" + id + ", name=" + name
-                        + ", valueType=" + valueType + "]";
+        return "FieldTypeImpl [" +
+                "id=" + id +
+                ", valueType=" + (valueType != null ? valueType.getName() : "null") +
+                ", name=" + name +
+                ", scope=" + scope +
+                ']';
     }
 }
