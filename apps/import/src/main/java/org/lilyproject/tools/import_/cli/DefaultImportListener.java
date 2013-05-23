@@ -67,7 +67,6 @@ public class DefaultImportListener implements ImportListener {
         if (!checkSuppressed(entityType)) {
             out.println(String.format("%1$s already exists and is equal: %2$s", toText(entityType), id(entityName, entityId)));
         }
-
     }
 
     @Override
@@ -82,6 +81,14 @@ public class DefaultImportListener implements ImportListener {
             if (!checkSuppressed(entityType)) {
                 out.println(String.format("%1$s updated: %2$s", toText(entityType), id(entityName, entityId)));
             }
+        }
+    }
+
+    @Override
+    public void allowedFailure(EntityType entityType, String entityName, String entityId, String reason) {
+        if (!checkSuppressed(entityType)) {
+            out.println(String.format("%1$s operation failed: %2$s: %3$s", toText(entityType), id(entityName, entityId),
+                    reason));
         }
     }
 

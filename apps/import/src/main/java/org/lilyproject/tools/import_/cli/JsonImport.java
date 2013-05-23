@@ -35,6 +35,7 @@ import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
@@ -57,6 +58,8 @@ import org.lilyproject.util.concurrent.WaitPolicy;
 import org.lilyproject.util.json.JsonFormat;
 
 import static org.lilyproject.util.json.JsonUtil.getArray;
+import static org.lilyproject.util.json.JsonUtil.getBoolean;
+import static org.lilyproject.util.json.JsonUtil.getString;
 
 public class JsonImport {
     private Namespaces namespaces = new NamespacesImpl();
@@ -429,12 +432,29 @@ public class JsonImport {
 
         Record record = RecordReader.INSTANCE.fromJson(node, namespaces, repository);
 
-        // Create-or-update requires client to specify the ID
-        if (record.getId() == null) {
+        ImportMode mode = ImportMode.CREATE_OR_UPDATE;
+        String modeName = getString(node, "mode", null);
+        if (modeName != null) {
+            try {
+                mode = ImportMode.valueOf(modeName.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new ImportException(String.format("Illegal value for import mode: %s", modeName));
+            }
+        }
+
+        if (mode == ImportMode.UPDATE && record.getId() == null) {
+            throw new ImportException(String.format("Import mode %s is specified but the record has no id.",
+                    ImportMode.UPDATE));
+        }
+
+        if (mode == ImportMode.CREATE_OR_UPDATE && record.getId() == null) {
+            // Create-or-update requires client to specify the ID
             record.setId(repository.getIdGenerator().newRecordId());
         }
 
-        ImportResult<Record> result = RecordImport.importRecord(record, ImportMode.CREATE_OR_UPDATE, table);
+        RecordId inputRecordId = record.getId();
+
+        ImportResult<Record> result = RecordImport.importRecord(record, mode, table);
         record = result.getEntity();
 
         switch (result.getResultType()) {
@@ -447,6 +467,24 @@ public class JsonImport {
             case UPDATED:
                 importListener.updated(EntityType.RECORD, null, record.getId().toString(), record.getVersion());
                 break;
+            case CANNOT_CREATE_EXISTS:
+                boolean failIfExists = getBoolean(node, "failIfExists", true);
+                if (!failIfExists) {
+                    importListener.allowedFailure(EntityType.RECORD, null, String.valueOf(inputRecordId),
+                            "cannot create, record exists");
+                    break;
+                } else {
+                    throw new ImportException("Cannot create record, it already exists: " + inputRecordId);
+                }
+            case CANNOT_UPDATE_DOES_NOT_EXIST:
+                boolean failIfNotExists = getBoolean(node, "failIfNotExists", true);
+                if (!failIfNotExists) {
+                    importListener.allowedFailure(EntityType.RECORD, null, String.valueOf(inputRecordId),
+                            "cannot update, record does not exist");
+                    break;
+                } else {
+                    throw new ImportException("Cannot update record, it does not exist: " + inputRecordId);
+                }
             default:
                 throw new ImportException("Unexpected import result type for record: " + result.getResultType());
         }

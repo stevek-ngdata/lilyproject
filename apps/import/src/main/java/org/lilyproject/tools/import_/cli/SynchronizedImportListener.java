@@ -50,4 +50,9 @@ public class SynchronizedImportListener implements ImportListener {
     public synchronized void created(EntityType entityType, String entityName, String entityId) {
         delegate.created(entityType, entityName, entityId);
     }
+
+    @Override
+    public synchronized void allowedFailure(EntityType entityType, String entityName, String entityId, String reason) {
+        delegate.allowedFailure(entityType, entityName, entityId, reason);
+    }
 }

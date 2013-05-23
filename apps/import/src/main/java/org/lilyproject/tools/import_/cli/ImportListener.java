@@ -30,4 +30,6 @@ public interface ImportListener {
     void updated(EntityType entityType, String entityName, String entityId, Long version);
 
     void created(EntityType entityType, String entityName, String entityId);
+
+    void allowedFailure(EntityType entityType, String entityName, String entityId, String reason);
 }
