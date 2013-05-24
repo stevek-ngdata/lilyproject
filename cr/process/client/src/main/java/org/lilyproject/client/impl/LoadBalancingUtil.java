@@ -29,16 +29,16 @@ public class LoadBalancingUtil {
      */
     public static <T> T getLoadBalancedInstance(LBInstanceProvider<T> provider, Class<T> delegateType,
             String repositoryName, String tableName) {
-        InvocationHandler ih = new LBIndexerInvocationHandler<T>(provider, repositoryName, tableName);
+        InvocationHandler ih = new LoadBalancingInvocationHandler<T>(provider, repositoryName, tableName);
         return (T)Proxy.newProxyInstance(LoadBalancingUtil.class.getClassLoader(), new Class[]{delegateType}, ih);
     }
 
-    private static final class LBIndexerInvocationHandler<T> implements InvocationHandler {
+    private static final class LoadBalancingInvocationHandler<T> implements InvocationHandler {
         private final LBInstanceProvider<T> provider;
         private final String repositoryName;
         private final String tableName;
 
-        private LBIndexerInvocationHandler(LBInstanceProvider<T> provider, String repositoryName, String tableName) {
+        private LoadBalancingInvocationHandler(LBInstanceProvider<T> provider, String repositoryName, String tableName) {
             this.provider = provider;
             this.repositoryName = repositoryName;
             this.tableName = tableName;
