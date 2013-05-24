@@ -93,7 +93,9 @@
         <artifactId>lily-runtime-plugin</artifactId>
         <version>${version.lily}</version>
         <configuration>
-          <wiringXmlResource>org/lilyproject/lilyservertestfw/conf/runtime/wiring.xml</wiringXmlResource>
+          <wiringXmlResources>
+            <wiringXmlResource>org/lilyproject/lilyservertestfw/conf/runtime/wiring.xml</wiringXmlResource>
+          </wiringXmlResources>
         </configuration>
         <executions>
           <execution>
