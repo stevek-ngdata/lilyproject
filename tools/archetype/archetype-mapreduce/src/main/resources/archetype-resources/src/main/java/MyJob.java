@@ -10,7 +10,7 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.util.io.Closer;
 
@@ -61,7 +61,7 @@ public class MyJob {
         // Need LilyClient here just to be able to serialize the RecordScan.
         // This is a bit lame, will improve in the future.
         LilyClient lilyClient = new LilyClient(zkConnectString, 30000);
-        Repository repository = lilyClient.getRepository();
+        LRepository repository = lilyClient.getDefaultRepository();
 
         // Utility method will configure everything related to LilyInputFormat
         LilyMapReduceUtil.initMapperJob(scan, zkConnectString, repository, job);

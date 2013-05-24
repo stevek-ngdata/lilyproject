@@ -28,7 +28,7 @@ public class LilySample {
         //
         System.out.println("Importing schema");
         InputStream is = LilySample.class.getResourceAsStream("schema.json");
-        JsonImport.load(repository, is, false);
+        JsonImport.loadSchema(repository, is);
         is.close();
         System.out.println("Schema successfully imported");
 

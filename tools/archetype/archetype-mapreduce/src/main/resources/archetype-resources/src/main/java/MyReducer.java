@@ -16,13 +16,17 @@ import java.io.IOException;
  */
 public class MyReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
     private LilyClient lilyClient;
-    private Repository repository;
+    private LRepository repository;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         super.setup(context);
         this.lilyClient = LilyMapReduceUtil.getLilyClient(context.getConfiguration());
-        this.repository = lilyClient.getRepository();
+        try {
+            this.repository = lilyClient.getDefaultRepository();
+        } catch (RepositoryException e) {
+            throw new RuntimeException("Failed to get repository", e);
+        }
     }
 
     @Override
@@ -45,10 +49,11 @@ public class MyReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
             // If there is already a record for this word, it will be overwritten.
             // The word is used a record id, we assume it only contains allowed characters.
             RecordId recordId = repository.getIdGenerator().newRecordId(key.toString());
-            Record record = repository.newRecord(recordId);
+            LTable table = repository.getDefaultTable();
+            Record record = table.newRecord(recordId);
             record.setRecordType(new QName("mrsample", "Summary"));
             record.setField(new QName("mrsample", "wordcount"), sum);
-            repository.createOrUpdate(record);
+            table.createOrUpdate(record);
         } catch (InterruptedException e) {
             throw e;
         } catch (Exception e) {
