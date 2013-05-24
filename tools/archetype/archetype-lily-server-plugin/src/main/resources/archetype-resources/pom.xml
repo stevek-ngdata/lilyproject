@@ -51,6 +51,7 @@
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-runtime-genclassloader-plugin</artifactId>
+        <version>${version.lily}</version>
         <executions>
           <execution>
             <phase>compile</phase>
