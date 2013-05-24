@@ -16,7 +16,8 @@ public class LilySample {
         // Instantiate Lily client
         //
         LilyClient lilyClient = new LilyClient(System.getProperty("zkConn", "localhost:2181"), 20000);
-        Repository repository = lilyClient.getRepository();
+        LRepository repository = lilyClient.getDefaultRepository();
+        LTable table = repository.getDefaultTable();
 
         //
         // Create a schema
@@ -35,13 +36,13 @@ public class LilySample {
         // Create a record
         //
         System.out.println("Creating a record");
-        Record record = repository.newRecord();
+        Record record = table.newRecord();
         record.setId(repository.getIdGenerator().newRecordId());
         record.setRecordType(q("Type1"));
         record.setField(q("field1"), "value1");
         // We use the createOrUpdate method as that one can automatically recover
         // from connection errors (idempotent behavior, like PUT in HTTP).
-        repository.createOrUpdate(record);
+        table.createOrUpdate(record);
         System.out.println("Record created: " + record.getId());
     }
 
