@@ -1,0 +1,5 @@
+# this is a comment line
+{id: "USER.jsonline1", type: "{ns}rt", fields: {"{ns}stringField": "hello1", "{ns}longField": 3}}
+# below is a blank line, import should not fail on it
+
+{namespaces: {"ns": "n"}, id: "USER.jsonline2", type: "n$rt", fields: {"n$stringField": "hello2", "n$longField": 3}}

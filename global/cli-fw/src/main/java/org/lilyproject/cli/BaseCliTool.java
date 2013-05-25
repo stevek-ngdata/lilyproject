@@ -61,6 +61,10 @@ public abstract class BaseCliTool {
         try {
             System.out.println();
             result = runBase(args);
+        } catch (CliException e) {
+            System.err.println();
+            System.err.println(e.getMessage());
+            System.exit(e.getExitCode());
         } catch (Throwable t) {
             reportThrowable(t);
         } finally {

@@ -5,5 +5,13 @@ lily-import -z server1:2181,server2:2181 file1.json file2.json
 The input JSON format is described in the Lily documentation:
 http://docs.ngdata.com/lily-docs-current/435-lily.html
 
+Valid arguments for --format are:
+
+  * json: (default) the file as a whole is one json object and can contain
+          schema and records.
+
+  * json_lines: each input line contains a json object describing a record,
+                this format does not support defining a schema.
+
 You can significantly speed up the import by using multiple threads:
 lily-import -w 20 ...

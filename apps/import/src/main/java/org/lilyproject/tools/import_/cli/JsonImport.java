@@ -15,7 +15,9 @@
  */
 package org.lilyproject.tools.import_.cli;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +27,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
@@ -39,7 +42,6 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.tools.import_.core.FieldTypeImport;
 import org.lilyproject.tools.import_.core.IdentificationMode;
 import org.lilyproject.tools.import_.core.ImportMode;
@@ -55,6 +57,7 @@ import org.lilyproject.tools.import_.json.RecordReader;
 import org.lilyproject.tools.import_.json.RecordTypeReader;
 import org.lilyproject.tools.import_.json.UnmodifiableNamespaces;
 import org.lilyproject.util.concurrent.WaitPolicy;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 
 import static org.lilyproject.util.json.JsonUtil.getArray;
@@ -65,7 +68,6 @@ public class JsonImport {
     private Namespaces namespaces = new NamespacesImpl();
     private LRepository repository;
     private LTable table;
-    private TypeManager typeManager;
     private ImportListener importListener;
     private int threadCount;
     private ThreadPoolExecutor executor;
@@ -116,6 +118,16 @@ public class JsonImport {
     }
 
     /**
+     * Imports an alternative input format where each line in the input contains a full json
+     * object describing a Lily record. This format does not support schemas.
+     */
+    public static void loadJsonLines(LTable table, LRepository repository, ImportListener importListener,
+            InputStream is, int threadCount)
+            throws Exception {
+        new JsonImport(table, repository, importListener, threadCount).loadJsonLines(is);
+    }
+
+    /**
      * @deprecated  use one of the variants taking LRepository and/or LTable as argument
      */
     public static void load(Repository repository, InputStream is, boolean schemaOnly, int threadCount) throws Exception {
@@ -156,7 +168,6 @@ public class JsonImport {
         this.importListener = new SynchronizedImportListener(importListener);
         this.table = table;
         this.repository = repository;
-        this.typeManager = repository.getTypeManager();
         this.threadCount = threadCount;
     }
 
@@ -245,10 +256,39 @@ public class JsonImport {
                     } else {
                         jp.skipChildren();
                     }
+                } else {
+                    System.out.println("Encountered unexpected field: " + fieldName);
+                    System.out.println("Maybe you want to use '--format json_lines'?");
+                    jp.skipChildren();
                 }
             }
         } finally {
             waitTasksFinished();
+        }
+
+        if (errorHappened) {
+            throw new ImportException("Errors happened during import.");
+        }
+    }
+
+    private void loadJsonLines(InputStream is) throws Exception {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+        try {
+            startExecutor();
+
+            String line;
+            while ((line = reader.readLine()) != null && !errorHappened) {
+                // skip comment lines and whitespace lines
+                if (line.startsWith("#") || StringUtils.isBlank(line)) {
+                    continue;
+                }
+                JsonNode node = JsonFormat.deserializeNonStd(line);
+                pushTask(new RecordImportTask(node));
+            }
+
+        } finally {
+            waitTasksFinished();
+            Closer.close(reader);
         }
 
         if (errorHappened) {
@@ -292,7 +332,7 @@ public class JsonImport {
 
 
         ImportResult<FieldType> result = FieldTypeImport.importFieldType(fieldType, ImportMode.CREATE_OR_UPDATE,
-                IdentificationMode.NAME, fieldType.getName(), typeManager);
+                IdentificationMode.NAME, fieldType.getName(), repository.getTypeManager());
         FieldType newFieldType = result.getEntity();
 
         switch (result.getResultType()) {
@@ -332,7 +372,7 @@ public class JsonImport {
             FieldType ftToCreate = fieldType.clone();
             ftToCreate.setName(new QName(fieldType.getName().getNamespace(), fieldType.getName().getName() + i));
             ImportResult<FieldType> result = FieldTypeImport.importFieldType(ftToCreate, ImportMode.CREATE_OR_UPDATE,
-                    IdentificationMode.NAME, ftToCreate.getName(), typeManager);
+                    IdentificationMode.NAME, ftToCreate.getName(), repository.getTypeManager());
             FieldType newFieldType = result.getEntity();
 
             switch (result.getResultType()) {
@@ -376,7 +416,7 @@ public class JsonImport {
         }
 
         ImportResult<RecordType> result = RecordTypeImport.importRecordType(recordType, ImportMode.CREATE_OR_UPDATE,
-                IdentificationMode.NAME, recordType.getName(), true, typeManager);
+                IdentificationMode.NAME, recordType.getName(), true, repository.getTypeManager());
         RecordType newRecordType = result.getEntity();
 
         switch (result.getResultType()) {

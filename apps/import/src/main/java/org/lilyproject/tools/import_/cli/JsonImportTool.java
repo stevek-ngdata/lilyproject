@@ -40,6 +40,7 @@ public class JsonImportTool extends BaseZkCliTool {
     private Option quietOption;
     private Option tableOption;
     private Option repositoryOption;
+    private Option fileFormatOption;
     private LilyClient lilyClient;
 
     @Override
@@ -97,6 +98,14 @@ public class JsonImportTool extends BaseZkCliTool {
                 .create();
         options.add(repositoryOption);
 
+        fileFormatOption = OptionBuilder
+                .withArgName("format")
+                .hasArg()
+                .withDescription("Input file format (see explanation at bottom)")
+                .withLongOpt("format")
+                .create();
+        options.add(fileFormatOption);
+
         return options;
     }
 
@@ -111,6 +120,7 @@ public class JsonImportTool extends BaseZkCliTool {
 
         String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
         String repositoryName = OptionUtil.getStringOption(cmd, repositoryOption, RepoAndTableUtil.DEFAULT_REPOSITORY);
+        ImportFileFormat fileFormat = OptionUtil.getEnum(cmd, fileFormatOption, ImportFileFormat.JSON, ImportFileFormat.class);
 
         if (cmd.getArgList().size() < 1) {
             System.out.println("No import file specified!");
@@ -128,10 +138,22 @@ public class JsonImportTool extends BaseZkCliTool {
             try {
                 LRepository repository = lilyClient.getRepository(repositoryName);
                 LTable table = repository.getTable(tableName);
+                ImportListener importListener;
                 if (cmd.hasOption(quietOption.getOpt())) {
-                    JsonImport.load(table, repository, new DefaultImportListener(System.out, EntityType.RECORD), is, schemaOnly, workers);
+                    importListener = new DefaultImportListener(System.out, EntityType.RECORD);
                 } else {
-                    JsonImport.load(table, repository, new DefaultImportListener(), is, schemaOnly, workers);
+                    importListener = new DefaultImportListener();
+                }
+
+                switch (fileFormat) {
+                    case JSON:
+                        JsonImport.load(table, repository, importListener, is, schemaOnly, workers);
+                        break;
+                    case JSON_LINES:
+                        JsonImport.loadJsonLines(table, repository, importListener, is, workers);
+                        break;
+                    default:
+                        throw new RuntimeException("Unexpected import file format: " + fileFormat);
                 }
             } finally {
                 Closer.close(is);
@@ -147,5 +169,9 @@ public class JsonImportTool extends BaseZkCliTool {
     protected void cleanup() {
         Closer.close(lilyClient);
         super.cleanup();
+    }
+
+    public enum ImportFileFormat {
+        JSON, JSON_LINES
     }
 }

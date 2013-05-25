@@ -29,9 +29,8 @@ public class OptionUtil {
             try {
                 return Integer.parseInt(cmd.getOptionValue(opt));
             } catch (NumberFormatException e) {
-                System.out.println("Invalid value for option " + option.getLongOpt() + " : " +
+                throw new CliException("Invalid value for option " + option.getLongOpt() + ": " +
                         cmd.getOptionValue(opt));
-                System.exit(1);
             }
         }
         return defaultValue;
@@ -43,6 +42,18 @@ public class OptionUtil {
             return cmd.getOptionValue(opt);
         } else {
             return defaultValue;
+        }
+    }
+
+    public static <T extends Enum<T>> T getEnum(CommandLine cmd, Option option, T defaultValue, Class<T> enumClass) {
+        String value = getStringOption(cmd, option, null);
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            return Enum.valueOf(enumClass, value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new CliException("Invalid value for option " + option.getLongOpt() + ": " + value);
         }
     }
 }

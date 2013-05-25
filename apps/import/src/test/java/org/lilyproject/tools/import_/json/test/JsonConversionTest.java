@@ -52,6 +52,7 @@ import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repository.api.filter.RecordVariantFilter;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
+import org.lilyproject.tools.import_.cli.DefaultImportListener;
 import org.lilyproject.tools.import_.cli.JsonImport;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.NamespacesImpl;
@@ -537,5 +538,17 @@ public class JsonConversionTest {
         metadata = record.getMetadata(new QName("ns", "field2"));
         assertTrue(metadata.getFieldsToDelete().contains("mfield4"));
         assertEquals(1, metadata.getFieldsToDelete().size());
+    }
+
+    @Test
+    public void testLineBasedJsonImport() throws Exception {
+        JsonImport.loadJsonLines(table, repository, new DefaultImportListener(),
+                getClass().getResourceAsStream("json_line_input.txt"), 1);
+
+        Record record = table.read(repository.getIdGenerator().fromString("USER.jsonline1"));
+        assertEquals("hello1", record.getField(new QName("ns", "stringField")));
+
+        record = table.read(repository.getIdGenerator().fromString("USER.jsonline2"));
+        assertEquals("hello2", record.getField(new QName("ns", "stringField")));
     }
 }
