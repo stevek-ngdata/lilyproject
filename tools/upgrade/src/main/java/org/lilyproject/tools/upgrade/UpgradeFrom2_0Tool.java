@@ -75,7 +75,7 @@ public class UpgradeFrom2_0Tool extends BaseZkCliTool {
         conf.set("hbase.zookeeper.quorum", zkConnectionString);
 
         upgradeTables(conf);
-        
+
         return 0;
     }
 
@@ -84,23 +84,28 @@ public class UpgradeFrom2_0Tool extends BaseZkCliTool {
         HBaseAdmin admin = new HBaseAdmin(conf);
 
         try {
-        // Update the record table
-        admin.disableTable(LilyHBaseSchema.Table.RECORD.bytes);
-        HTableDescriptor recordTableDescriptor = new HTableDescriptor(
-                admin.getTableDescriptor(LilyHBaseSchema.Table.RECORD.bytes));
-        recordTableDescriptor.removeFamily(Bytes.toBytes("rowlog"));
-        HColumnDescriptor dataFamily = recordTableDescriptor.getFamily(LilyHBaseSchema.TypeCf.DATA.bytes);
-        dataFamily.setScope(1);
-        recordTableDescriptor.setValue(LilyHBaseSchema.TABLE_TYPE_PROPERTY, LilyHBaseSchema.TABLE_TYPE_RECORD);
-        recordTableDescriptor.setValue("lilyOwningRepository", "default");
-        admin.modifyTable(LilyHBaseSchema.Table.RECORD.bytes, recordTableDescriptor);
-        admin.enableTable(LilyHBaseSchema.Table.RECORD.bytes);
-        
-        // Get rid of the rowlog tables
-        admin.disableTable(Bytes.toBytes("rowlog-mq"));
-        admin.deleteTable(Bytes.toBytes("rowlog-mq"));
-        admin.disableTable(Bytes.toBytes("rowlog-wal"));
-        admin.deleteTable(Bytes.toBytes("rowlog-wal"));
+            // Update the record table
+            admin.disableTable(LilyHBaseSchema.Table.RECORD.bytes);
+            HTableDescriptor recordTableDescriptor = new HTableDescriptor(
+                    admin.getTableDescriptor(LilyHBaseSchema.Table.RECORD.bytes));
+            recordTableDescriptor.removeFamily(Bytes.toBytes("rowlog"));
+            HColumnDescriptor dataFamily = recordTableDescriptor.getFamily(LilyHBaseSchema.TypeCf.DATA.bytes);
+            dataFamily.setScope(1);
+            recordTableDescriptor.setValue(LilyHBaseSchema.TABLE_TYPE_PROPERTY, LilyHBaseSchema.TABLE_TYPE_RECORD);
+            recordTableDescriptor.setValue("lilyOwningRepository", "default");
+            admin.modifyTable(LilyHBaseSchema.Table.RECORD.bytes, recordTableDescriptor);
+            admin.enableTable(LilyHBaseSchema.Table.RECORD.bytes);
+
+            // Get rid of the rowlog tables
+            if (admin.tableExists(Bytes.toBytes("rowlog-mq"))) {
+                admin.disableTable(Bytes.toBytes("rowlog-mq"));
+                admin.deleteTable(Bytes.toBytes("rowlog-mq"));
+            }
+
+            if (admin.tableExists(Bytes.toBytes("rowlog-wal"))) {
+                admin.disableTable(Bytes.toBytes("rowlog-wal"));
+                admin.deleteTable(Bytes.toBytes("rowlog-wal"));
+            }
         } finally {
             admin.close();
         }
