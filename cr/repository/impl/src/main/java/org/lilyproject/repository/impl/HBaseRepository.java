@@ -108,7 +108,7 @@ public class HBaseRepository extends BaseRepository {
     private final Log log = LogFactory.getLog(getClass());
 
     private static final Object METADATA_ONLY_UPDATE = new Object();
-    
+
     public HBaseRepository(RepoTableKey ttk, AbstractRepositoryManager repositoryManager, HTableInterface hbaseTable,
             BlobManager blobManager, TableManager tableManager, RecordFactory recordFactory)
             throws IOException, InterruptedException {
@@ -251,7 +251,7 @@ public class HBaseRepository extends BaseRepository {
                 for (RecordUpdateHook hook : updateHooks) {
                     hook.beforeCreate(newRecord, this, fieldTypes, recordEvent);
                 }
-                
+
                 Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
                 Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
 
@@ -482,18 +482,20 @@ public class HBaseRepository extends BaseRepository {
                                            Set<BlobReference> unReferencedBlobs,
                                            boolean useLatestRecordType, FieldTypes fieldTypes)
             throws InterruptedException, RepositoryException {
-        QName recordTypeName = record.getRecordTypeName();
-        Long recordTypeVersion = null;
-        if (recordTypeName == null) {
-            recordTypeName = originalRecord.getRecordTypeName();
+        final QName newRecordTypeName;
+        final Long newRecordTypeVersion;
+        if (record.getRecordTypeName() == null) {
+            newRecordTypeName = originalRecord.getRecordTypeName();
+            newRecordTypeVersion = null;
         } else {
-            recordTypeVersion = useLatestRecordType ? null : record.getRecordTypeVersion();
+            newRecordTypeName = record.getRecordTypeName();
+            newRecordTypeVersion = useLatestRecordType ? null : record.getRecordTypeVersion();
         }
 
-        RecordType recordType = typeManager.getRecordTypeByName(recordTypeName, recordTypeVersion);
+        RecordType recordType = typeManager.getRecordTypeByName(newRecordTypeName, newRecordTypeVersion);
 
         // Check which fields have changed
-        Set<Scope> changedScopes = calculateChangedFields(record, originalRecord, recordType, version, put, recordEvent,
+        EnumSet<Scope> changedScopes = calculateChangedFields(record, originalRecord, recordType, version, put, recordEvent,
                 referencedBlobs, unReferencedBlobs, fieldTypes);
 
         // If no versioned fields have changed, keep the original version
@@ -503,29 +505,33 @@ public class HBaseRepository extends BaseRepository {
             version = originalRecord.getVersion();
         }
 
+        // The provided recordTypeVersion could have been null, so the latest version of the recordType was taken
+        // and we need to know which version that is
+        Long actualRecordTypeVersion = newRecordTypeVersion == null ? recordType.getVersion() : newRecordTypeVersion;
+        boolean recordTypeHasChanged = !newRecordTypeName.equals(originalRecord.getRecordTypeName())
+                || !actualRecordTypeVersion.equals(originalRecord.getRecordTypeVersion());
+
         boolean fieldsHaveChanged = !changedScopes.isEmpty();
-        if (fieldsHaveChanged) {
-            // The provided recordTypeVersion could have been null, so the latest version of the recordType was taken
-            // and we need to know which version that is
-            recordTypeVersion = recordType.getVersion();
-            if (!recordTypeName.equals(originalRecord.getRecordTypeName())
-                    || !recordTypeVersion.equals(originalRecord.getRecordTypeVersion())) {
+
+        boolean changed = needToApplyChanges(newRecordTypeVersion, useLatestRecordType, fieldsHaveChanged);
+
+        if (changed) {
+            if ((recordTypeHasChanged && fieldsHaveChanged) || (recordTypeHasChanged && !useLatestRecordType)) {
                 recordEvent.setRecordTypeChanged(true);
                 put.add(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_ID.bytes, 1L, recordType.getId().getBytes());
                 put.add(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_VERSION.bytes, 1L,
-                        Bytes.toBytes(recordTypeVersion));
+                        Bytes.toBytes(actualRecordTypeVersion));
+                changedScopes.add(Scope.NON_VERSIONED); // because the record type version changed
             }
             // Always set the record type on the record since the requested
             // record type could have been given without a version number
-            record.setRecordType(recordTypeName, recordTypeVersion);
+            record.setRecordType(newRecordTypeName, actualRecordTypeVersion);
             if (version != null) {
                 byte[] versionBytes = Bytes.toBytes(version);
                 put.add(RecordCf.DATA.bytes, RecordColumn.VERSION.bytes, 1L, versionBytes);
             }
             validateRecord(record, originalRecord, recordType, fieldTypes);
-
         }
-
         setRecordTypesAfterUpdate(record, originalRecord, changedScopes);
 
         // Always set the version on the record. If no fields were changed this
@@ -536,9 +542,22 @@ public class HBaseRepository extends BaseRepository {
             recordEvent.setVersionCreated(version);
         }
 
-        // Clear the list of deleted fields, as this is typically what the user will expect when using the
-        // record object for future updates.
-        return fieldsHaveChanged;
+        return changed;
+    }
+
+    private boolean needToApplyChanges(Long newRecordTypeVersion, boolean useLatestRecordType,
+            boolean fieldsHaveChanged) {
+        if (fieldsHaveChanged) {
+            // this is the most obvious case. It also results in record type changes to also be applied.
+            return true;
+        } else if (newRecordTypeVersion == null) {
+            // no field changes and no record type version set, we do nothing.
+            return false;
+        } else if (!useLatestRecordType) {
+            // no field changes and a record type version is set without requesting the "latest record type" to be used.
+            // This should trigger an actual update of the record type.
+            return true;
+        } else return false;
     }
 
     private void setRecordTypesAfterUpdate(Record record, Record originalRecord, Set<Scope> changedScopes) {
@@ -581,14 +600,14 @@ public class HBaseRepository extends BaseRepository {
     }
 
     // Calculates which fields have changed and updates the record types of the scopes that have changed fields
-    private Set<Scope> calculateChangedFields(Record record, Record originalRecord, RecordType recordType,
+    private EnumSet<Scope> calculateChangedFields(Record record, Record originalRecord, RecordType recordType,
                                               Long version, Put put, RecordEvent recordEvent,
                                               Set<BlobReference> referencedBlobs,
                                               Set<BlobReference> unReferencedBlobs, FieldTypes fieldTypes)
             throws InterruptedException, RepositoryException {
 
         Map<QName, Object> originalFields = originalRecord.getFields();
-        Set<Scope> changedScopes = EnumSet.noneOf(Scope.class);
+        EnumSet<Scope> changedScopes = EnumSet.noneOf(Scope.class);
 
         Map<QName, Object> fields = getFieldsToUpdate(record);
 
@@ -709,7 +728,7 @@ public class HBaseRepository extends BaseRepository {
         }
 
         FieldValueWriter fieldValueWriter = newFieldValueWriter(put, parentRecord);
-        
+
         for (Entry<QName, Object> field : fields.entrySet()) {
             QName fieldName = field.getKey();
             Object newValue = field.getValue();
@@ -757,8 +776,8 @@ public class HBaseRepository extends BaseRepository {
                     fieldValueWriter.addFieldValue(fieldType, newValue, metadata, 1L);
                 } else {
                     fieldValueWriter.addFieldValue(fieldType, newValue, metadata, version);
-                    
-                    
+
+
                     // If it is a mutable update and the next version of the field was the same as the one that is being updated,
                     // the original value needs to be copied to that next version (due to sparseness of the table).
                     if (originalNextFields != null && !fieldIsNewOrDeleted &&
@@ -855,7 +874,7 @@ public class HBaseRepository extends BaseRepository {
     }
 
 
-   
+
 
     public static void writeMetadataWithLengthSuffix(Metadata metadata, DataOutput output) {
         DataOutput tmp = new DataOutputImpl();
@@ -1144,14 +1163,14 @@ public class HBaseRepository extends BaseRepository {
 
         return null;
     }
-    
+
     /**
      * Get the next OCC (Optimistic Concurrency Control) value, or an initialized occ value if the current
      * value is null.
      *
      * The handling of null values is needed for working with repositories that were created before the OCC
      * was in place.
-     * 
+     *
      * @param occValue current occ value
      */
     protected static byte[] nextOcc(byte[] occValue) {
@@ -1369,9 +1388,10 @@ public class HBaseRepository extends BaseRepository {
     public RecordBuilder recordBuilder() throws RecordException {
         return new RecordBuilderImpl(this, getIdGenerator());
     }
-    
+
     /**
      * Instantiate a new {@link FieldValueWriter} linked to this instance.
+     *
      * @param put put to which field values are tot be written
      * @param parentRecord parent record of this record
      * @return new FieldValueWriter
@@ -1379,30 +1399,30 @@ public class HBaseRepository extends BaseRepository {
     public FieldValueWriter newFieldValueWriter(Put put, Record parentRecord) {
         return new FieldValueWriter(put, parentRecord);
     }
-    
+
     /**
      * Writes encoded record fields to a {@code Put} object.
      */
     public class FieldValueWriter {
-        
+
         private Put put;
         private Record parentRecord;
-        
+
         private FieldValueWriter(Put put, Record parentRecord) {
             this.put = put;
             this.parentRecord = parentRecord;
         }
-        
+
         public FieldValueWriter addFieldValue(FieldType fieldType, Object value, Metadata metadata) throws RepositoryException, InterruptedException {
             return addFieldValue(fieldType, value, metadata, 1L);
         }
-        
+
         public FieldValueWriter addFieldValue(FieldType fieldType, Object value, Metadata metadata, long version) throws RepositoryException, InterruptedException {
             byte[] encodedFieldValue = encodeFieldValue(parentRecord, fieldType, value, metadata);
             put.add(RecordCf.DATA.bytes, ((FieldTypeImpl)fieldType).getQualifier(), version, encodedFieldValue);
             return this;
         }
-        
+
         private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue, Metadata metadata)
                 throws RepositoryException, InterruptedException {
             if (isDeleteMarker(fieldValue)) {
@@ -1428,6 +1448,6 @@ public class HBaseRepository extends BaseRepository {
 
             return dataOutput.toByteArray();
         }
-        
+
     }
 }

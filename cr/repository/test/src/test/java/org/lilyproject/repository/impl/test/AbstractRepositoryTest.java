@@ -684,18 +684,64 @@ public abstract class AbstractRepositoryTest {
     }
 
     @Test
+    public void testUpdateWithNewRecordTypeVersionWithoutOtherChanges() throws Exception {
+        Record record = createDefaultRecord();
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(recordType1B.getName(), recordType1B.getVersion());
+
+        Record updatedRecord = repository.update(updateRecord);
+
+        // this should have done nothing
+        assertEquals(record, repository.read(record.getId()));
+    }
+
+    @Test
+    public void testUpdateWithNewRecordTypeVersionWithoutOtherChangesWithUseLatestRecordTypeFalse() throws Exception {
+        Record record = createDefaultRecord();
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(recordType1B.getName(), recordType1B.getVersion());
+
+        // update with a version set and with useLatestRecordType=false, this should actually set the version to the
+        // requested version (even though nothing else changed in the record)
+        Record updatedRecord = repository.update(updateRecord, false, false);
+
+        assertEquals(recordType1B.getName(), updatedRecord.getRecordTypeName());
+        assertEquals(recordType1B.getVersion(), updatedRecord.getRecordTypeVersion());
+        assertEquals(recordType1B.getName(), updatedRecord.getRecordTypeName(Scope.NON_VERSIONED));
+        assertEquals(recordType1B.getVersion(), updatedRecord.getRecordTypeVersion(Scope.NON_VERSIONED));
+        assertEquals(recordType1.getName(), updatedRecord.getRecordTypeName(Scope.VERSIONED));
+        assertEquals(recordType1.getVersion(), updatedRecord.getRecordTypeVersion(Scope.VERSIONED));
+        assertEquals(recordType1.getName(), updatedRecord.getRecordTypeName(Scope.VERSIONED_MUTABLE));
+        assertEquals(recordType1.getVersion(), updatedRecord.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
+
+        Record recordV1 = repository.read(record.getId(), Long.valueOf(1));
+        assertEquals(recordType1B.getName(), recordV1.getRecordTypeName());
+        assertEquals(recordType1B.getVersion(), recordV1.getRecordTypeVersion());
+        assertEquals(recordType1B.getName(), recordV1.getRecordTypeName(Scope.NON_VERSIONED));
+        assertEquals(recordType1B.getVersion(), recordV1.getRecordTypeVersion(Scope.NON_VERSIONED));
+        assertEquals(recordType1.getName(), recordV1.getRecordTypeName(Scope.VERSIONED));
+        assertEquals(recordType1.getVersion(), recordV1.getRecordTypeVersion(Scope.VERSIONED));
+        assertEquals(recordType1.getName(), recordV1.getRecordTypeName(Scope.VERSIONED_MUTABLE));
+        assertEquals(recordType1.getVersion(), recordV1.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
+    }
+
+    @Test
     public void testUpdateWithNewRecordTypeVersionOnlyOneFieldUpdated() throws Exception {
         Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(recordType1B.getName(), recordType1B.getVersion());
         updateRecord.setField(fieldType2.getName(), 789);
 
+        // changed a versioned field, so versioned and non versioned scope should be on the new record type version
         Record updatedRecord = repository.update(updateRecord);
         assertEquals(recordType1B.getName(), updatedRecord.getRecordTypeName());
         assertEquals(recordType1B.getVersion(), updatedRecord.getRecordTypeVersion());
         assertEquals(recordType1B.getName(), updatedRecord.getRecordTypeName(Scope.VERSIONED));
         assertEquals(recordType1B.getVersion(), updatedRecord.getRecordTypeVersion(Scope.VERSIONED));
+        assertEquals(recordType1B.getName(), updatedRecord.getRecordTypeName(Scope.NON_VERSIONED));
+        assertEquals(recordType1B.getVersion(), updatedRecord.getRecordTypeVersion(Scope.NON_VERSIONED));
 
+        // double check
         Record readRecord = repository.read(record.getId());
         assertEquals(recordType1B.getName(), updatedRecord.getRecordTypeName());
         assertEquals(recordType1B.getVersion(), updatedRecord.getRecordTypeVersion());
