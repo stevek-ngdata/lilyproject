@@ -141,16 +141,6 @@
       <!-- lily runtime -->
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-runtime-util</artifactId>
-        <version>2.2-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-runtime-template</artifactId>
-        <version>2.2-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
         <artifactId>lily-runtime</artifactId>
         <version>2.3-SNAPSHOT</version>
       </dependency> 
@@ -166,19 +156,9 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-deploy-repo</artifactId>
-        <version>2.2-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
         <artifactId>lily-runtime-testfw</artifactId>
         <version>2.3-SNAPSHOT</version>
         <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-runtime-xmlcore</artifactId>
-        <version>2.2-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
