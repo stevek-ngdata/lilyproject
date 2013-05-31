@@ -21,6 +21,7 @@ import java.util.Set;
 
 import org.joda.time.DateTime;
 import org.lilyproject.bytes.api.ByteArray;
+import org.lilyproject.util.ObjectUtils;
 
 /**
  * A set of free, typed key-value pairs.
@@ -147,5 +148,51 @@ public class Metadata implements Cloneable {
 
     public Set<String> getFieldsToDelete() {
         return fieldsToDelete;
+    }
+
+    /**
+     * Tests if this metadata will change the existing metadata on a field.
+     *
+     * <p>This is different from a normal equals, since it looks at the effect of the
+     * {@link #getFieldsToDelete() fields to delete}, rather than comparing the lists
+     * of fields to delete.</p>
+     *
+     * <p>This method can e.g. be used to set a metadata field only if there are already
+     * metadata changes, or to figure out if a record changed compared to a previous state.</p>
+     *
+     * @param oldMetadata the current metadata on a field. This can be null, in which case this
+     *                    method will always return true.
+     */
+    public boolean updates(Metadata oldMetadata) {
+        if (oldMetadata == null) {
+            return true;
+        }
+
+        // Metadata has not changed if:
+        //   - all KV's in the new metadata are also in the old metadata
+        //   - any deletes in the new metadata refer to fields that didn't exist in the old metadata
+
+        for (Map.Entry<String, Object> entry : this.getMap().entrySet()) {
+            Object oldValue = oldMetadata.getObject(entry.getKey());
+            if (!ObjectUtils.safeEquals(oldValue, entry.getValue())) {
+                return true;
+            }
+        }
+
+        for (String key : this.getFieldsToDelete()) {
+            if (oldMetadata.contains(key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return "Metadata{" +
+                "data=" + data +
+                ", fieldsToDelete=" + fieldsToDelete +
+                '}';
     }
 }

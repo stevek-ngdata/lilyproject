@@ -690,7 +690,7 @@ public class HBaseRepository extends BaseRepository {
             // If it's not a deleted field
             if (!isDeleteMarker(fields.get(entry.getKey()))) {
                 // If the metadata has changed
-                if (isChanged(entry.getValue(), originalFieldMetadata.get(entry.getKey()))) {
+                if (entry.getValue().updates(originalFieldMetadata.get(entry.getKey()))) {
                     boolean needMetadata;
 
                     // And the field itself didn't change
@@ -793,34 +793,6 @@ public class HBaseRepository extends BaseRepository {
             }
         }
         return changedScopes;
-    }
-
-    /**
-     * Determines if the new metadata has changed compared to the old metadata.
-     */
-    private boolean isChanged(Metadata newMetadata, Metadata oldMetadata) {
-        if (oldMetadata == null) {
-            return true;
-        }
-
-        // Metadata has not changed if:
-        //   - all KV's in the new metadata are also in the old metadata
-        //   - any deletes in the new metadata refer to fields that didn't exist in the old metadata
-
-        for (Entry<String, Object> entry : newMetadata.getMap().entrySet()) {
-            Object oldValue = oldMetadata.getObject(entry.getKey());
-            if (!ObjectUtils.safeEquals(oldValue, entry.getValue())) {
-                return true;
-            }
-        }
-
-        for (String key : newMetadata.getFieldsToDelete()) {
-            if (oldMetadata.contains(key)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
