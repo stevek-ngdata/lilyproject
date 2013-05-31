@@ -52,7 +52,7 @@ public class MetadataBuilder {
      * <pre>
      *    record.setMetadata(fieldName, new MetadataBuilder()
      *            .from(record.getMetadata(fieldName))
-     *            .value("lily.ts", lastModified)
+     *            .value("foo", "bar")
      *            .build());
      * </pre>
      */
