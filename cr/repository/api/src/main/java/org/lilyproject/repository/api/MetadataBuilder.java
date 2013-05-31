@@ -43,6 +43,32 @@ public class MetadataBuilder {
     private Map<String, Object> data = new HashMap<String, Object>();
     private Set<String> fieldsToDelete;
 
+    /**
+     * Copies all information from the provided metadata object, both fields and fields-to-delete.
+     *
+     * <p>The metadata can be null, in which case this method will silently do nothing. This allows
+     * for convenient modification of a field's metadata like this:</p>
+     *
+     * <pre>
+     *    record.setMetadata(fieldName, new MetadataBuilder()
+     *            .from(record.getMetadata(fieldName))
+     *            .value("lily.ts", lastModified)
+     *            .build());
+     * </pre>
+     */
+    public MetadataBuilder from(Metadata metadata) {
+        if (metadata == null)
+            return this;
+
+        for (Map.Entry<String, Object> entry : metadata.getMap().entrySet()) {
+            object(entry.getKey(), entry.getValue());
+        }
+        for (String field : metadata.getFieldsToDelete()) {
+            delete(field);
+        }
+        return this;
+    }
+
     public MetadataBuilder value(String key, String value) {
         if (value == null) {
             delete(key);
@@ -110,8 +136,12 @@ public class MetadataBuilder {
     }
 
     public MetadataBuilder value(String key, DateTime value) {
-        data.put(key, value);
-        removeFromFieldsToDelete(key);
+        if (value == null) {
+            delete(key);
+        } else {
+            data.put(key, value);
+            removeFromFieldsToDelete(key);
+        }
         return this;
     }
 
