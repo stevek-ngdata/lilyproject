@@ -146,8 +146,9 @@ public class PostActionMessageBodyReader extends BaseRepositoryResource implemen
             if (!valueNode.isNull()) {
                 FieldType fieldType = systemFields.isSystemField(fieldName) ? systemFields.get(fieldName) :
                         repository.getTypeManager().getFieldTypeByName(fieldName);
-                value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces,
-                    repositoryMgr.getDefaultRepository(), linkTransformer);
+                value = RecordReader.INSTANCE.readValue(
+                        new RecordReader.ValueHandle(valueNode, "value", fieldType.getValueType()),
+                        new RecordReader.ReadContext(repositoryMgr.getDefaultRepository(), namespaces,linkTransformer));
             }
 
             boolean allowMissing = JsonUtil.getBoolean(conditionNode, "allowMissing", false);

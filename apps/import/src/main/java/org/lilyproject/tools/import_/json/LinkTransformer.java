@@ -21,6 +21,8 @@ import org.lilyproject.repository.api.Link;
 /**
  * Transforms string representations of links that might not be valid in to valid Links
  *
+ * <p>Note to future man: it is now possible to do more powerful stuff by subclassing RecordReader, so
+ * we could eventually drop the LinkTransformer.</p>
  */
 public interface LinkTransformer {
     Link transform(String linkTextValue, LRepository repository);

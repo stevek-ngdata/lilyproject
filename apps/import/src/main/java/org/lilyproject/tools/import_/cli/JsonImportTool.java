@@ -19,6 +19,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
 
+import org.lilyproject.tools.import_.json.EmptyFieldIgnoringRecordReader;
+import org.lilyproject.tools.import_.json.RecordReader;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 
@@ -41,6 +43,7 @@ public class JsonImportTool extends BaseZkCliTool {
     private Option tableOption;
     private Option repositoryOption;
     private Option fileFormatOption;
+    private Option ignoreEmptyFieldsOption;
     private LilyClient lilyClient;
 
     @Override
@@ -106,6 +109,13 @@ public class JsonImportTool extends BaseZkCliTool {
                 .create();
         options.add(fileFormatOption);
 
+        ignoreEmptyFieldsOption = OptionBuilder
+                .withDescription("Ignores fields defined as empty strings, ignores zero-length lists, ignores nested" +
+                        " records containing no fields. When in root record, adds them as fields-to-delete.")
+                .withLongOpt("ignore-empty-fields")
+                .create();
+        options.add(ignoreEmptyFieldsOption);
+
         return options;
     }
 
@@ -128,6 +138,7 @@ public class JsonImportTool extends BaseZkCliTool {
         }
 
         boolean schemaOnly = cmd.hasOption(schemaOnlyOption.getOpt());
+        boolean ignoreEmptyFields = cmd.hasOption(ignoreEmptyFieldsOption.getLongOpt());
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
 
@@ -145,12 +156,21 @@ public class JsonImportTool extends BaseZkCliTool {
                     importListener = new DefaultImportListener();
                 }
 
+                JsonImport.ImportSettings settings = new JsonImport.ImportSettings();
+                settings.importListener = importListener;
+                settings.threadCount = workers;
+                settings.recordReader = ignoreEmptyFields ? EmptyFieldIgnoringRecordReader.INSTANCE : RecordReader.INSTANCE;
+
                 switch (fileFormat) {
                     case JSON:
-                        JsonImport.load(table, repository, importListener, is, schemaOnly, workers);
+                        if (schemaOnly) {
+                            JsonImport.loadSchema(repository, is, settings);
+                        } else {
+                            JsonImport.load(table, repository, is, settings);
+                        }
                         break;
                     case JSON_LINES:
-                        JsonImport.loadJsonLines(table, repository, importListener, is, workers);
+                        JsonImport.loadJsonLines(table, repository, is, settings);
                         break;
                     default:
                         throw new RuntimeException("Unexpected import file format: " + fileFormat);

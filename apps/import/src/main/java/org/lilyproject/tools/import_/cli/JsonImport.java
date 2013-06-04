@@ -70,78 +70,84 @@ public class JsonImport {
     private LTable table;
     private ImportListener importListener;
     private int threadCount;
+    private RecordReader recordReader;
     private ThreadPoolExecutor executor;
     private volatile boolean errorHappened = false;
 
-    /**
-     * Loads only the schema, ignores any records in the input.
-     */
-    public static void loadSchema(LRepository repository, InputStream is, int threadCount) throws Exception {
-        load(null, repository, new DefaultImportListener(), is, true, threadCount);
-    }
+    private static final int DEFAULT_THREAD_COUNT = 1;
 
-    public static void load(LTable table, LRepository repository, InputStream is, int threadCount) throws Exception {
-        load(table, repository, new DefaultImportListener(), is, false, threadCount);
-    }
+    public static class ImportSettings {
+        public int threadCount = DEFAULT_THREAD_COUNT;
+        public RecordReader recordReader = RecordReader.INSTANCE;
+        public ImportListener importListener = new DefaultImportListener();
 
-    /**
-     * Loads only the schema, ignores any records in the input.
-     */
-    public static void loadSchema(LRepository repository, InputStream is) throws Exception {
-        loadSchema(repository, new DefaultImportListener(), is);
-    }
+        public ImportSettings() {
+        }
 
-    public static void load(LTable table, LRepository repository, InputStream is) throws Exception {
-        load(table, repository, new DefaultImportListener(), is);
+        public ImportSettings(int threadCount, ImportListener importListener, RecordReader recordReader) {
+            this.threadCount = threadCount;
+            this.importListener = importListener;
+            this.recordReader = recordReader;
+        }
     }
 
     /**
-     * Loads only the schema, ignores any records in the input.
+     * The standard loading method: loads both schema and records from the default JSON format.
      */
-    public static void loadSchema(LRepository repository, ImportListener importListener, InputStream is)
+    public static void load(LTable table, LRepository repository, InputStream is, ImportSettings settings)
             throws Exception {
-        load(null, repository, importListener, is, true, 1);
-    }
-
-    public static void load(LTable table, LRepository repository, ImportListener importListener, InputStream is)
-            throws Exception {
-        load(table, repository, importListener, is, false, 1);
+        new JsonImport(table, repository, settings).load(is, false);
     }
 
     /**
-     *
-     * @param table can be null when schemaOnly is true
+     * Same as {@link #load(LTable, LRepository, InputStream, ImportSettings)}
+     * but using default settings.
      */
-    public static void load(LTable table, LRepository repository, ImportListener importListener, InputStream is,
-            boolean schemaOnly, int threadCount) throws Exception {
-        new JsonImport(table, repository, importListener, threadCount).load(is, schemaOnly);
+    public static void load(LTable table, LRepository repository, InputStream is)
+            throws Exception {
+        new JsonImport(table, repository, new ImportSettings()).load(is, false);
+    }
+
+    /**
+     * Loads only the schema, ignores any records in the input.
+     */
+    public static void loadSchema(LRepository repository, InputStream is, ImportSettings settings)
+            throws Exception {
+        new JsonImport(null, repository, settings).load(is, false);
+    }
+
+    /**
+     * Same as {@link #loadSchema(LRepository, InputStream, ImportSettings)}
+     * but using default settings.
+     */
+    public static void loadSchema(LRepository repository, InputStream is)
+            throws Exception {
+        new JsonImport(null, repository, new ImportSettings()).load(is, false);
     }
 
     /**
      * Imports an alternative input format where each line in the input contains a full json
      * object describing a Lily record. This format does not support schemas.
      */
-    public static void loadJsonLines(LTable table, LRepository repository, ImportListener importListener,
-            InputStream is, int threadCount)
+    public static void loadJsonLines(LTable table, LRepository repository, InputStream is, ImportSettings settings)
             throws Exception {
-        new JsonImport(table, repository, importListener, threadCount).loadJsonLines(is);
+        new JsonImport(table, repository, settings).loadJsonLines(is);
     }
 
     /**
      * @deprecated  use one of the variants taking LRepository and/or LTable as argument
      */
     public static void load(Repository repository, InputStream is, boolean schemaOnly, int threadCount) throws Exception {
-        load(repository, repository, new DefaultImportListener(), is, schemaOnly, threadCount);
+        ImportSettings settings = new ImportSettings();
+        settings.threadCount = threadCount;
+        new JsonImport(repository, repository, settings).load(is, schemaOnly);
     }
 
     /**
      * @deprecated  use one of the variants taking LRepository and/or LTable as argument
      */
     public static void load(Repository repository, InputStream is, boolean schemaOnly) throws Exception {
-        if (schemaOnly)
-            loadSchema(repository, new DefaultImportListener(), is);
-        else
-            load(repository, repository, new DefaultImportListener(), is);
+        new JsonImport(repository, repository, new ImportSettings()).load(is, schemaOnly);
     }
 
     /**
@@ -149,7 +155,9 @@ public class JsonImport {
      */
     public static void load(Repository repository, ImportListener importListener, InputStream is, boolean schemaOnly)
             throws Exception {
-        load(repository, repository, importListener, is, schemaOnly, 1);
+        ImportSettings settings = new ImportSettings();
+        settings.importListener = importListener;
+        new JsonImport(repository, repository, settings).load(is, schemaOnly);
     }
 
     /**
@@ -157,18 +165,22 @@ public class JsonImport {
      */
     public static void load(Repository repository, ImportListener importListener, InputStream is, boolean schemaOnly,
             int threadCount) throws Exception {
-        load(repository, repository, importListener, is, schemaOnly, threadCount);
+        ImportSettings settings = new ImportSettings();
+        settings.importListener = importListener;
+        settings.threadCount = threadCount;
+        new JsonImport(repository, repository, settings).load(is, schemaOnly);
     }
 
     public JsonImport(LTable table, LRepository repository, ImportListener importListener) {
-        this(table, repository, importListener, 1);
+        this(table, repository, new ImportSettings(1, importListener, RecordReader.INSTANCE));
     }
 
-    public JsonImport(LTable table, LRepository repository, ImportListener importListener, int threadCount) {
-        this.importListener = new SynchronizedImportListener(importListener);
+    public JsonImport(LTable table, LRepository repository, ImportSettings settings) {
+        this.importListener = new SynchronizedImportListener(settings.importListener);
         this.table = table;
         this.repository = repository;
-        this.threadCount = threadCount;
+        this.threadCount = settings.threadCount;
+        this.recordReader = settings.recordReader;
     }
 
     public void load(InputStream is, boolean schemaOnly) throws Exception {
@@ -470,7 +482,7 @@ public class JsonImport {
             throw new ImportException("Record should be specified as object node.");
         }
 
-        Record record = RecordReader.INSTANCE.fromJson(node, namespaces, repository);
+        Record record = recordReader.fromJson(node, namespaces, repository);
 
         ImportMode mode = ImportMode.CREATE_OR_UPDATE;
         String modeName = getString(node, "mode", null);

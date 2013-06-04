@@ -1,0 +1,51 @@
+{
+  namespaces: {
+    "ns": "ns"
+  },
+  fieldTypes: [
+  ],
+  recordTypes: [
+    {
+      name: "ns$Nested",
+      fields: [
+        {name: "ns$field1", valueType: "STRING", mandatory: false},
+        {name: "ns$field2", valueType: "STRING", mandatory: false}
+      ]
+    },
+    {
+      name: "ns$Root",
+      fields: [
+        {name: "ns$string", valueType: "STRING", mandatory: false},
+        {name: "ns$integer", valueType: "INTEGER", mandatory: false},
+        {name: "ns$stringlist", valueType: "LIST<STRING>", mandatory: false},
+        {name: "ns$nested1", valueType: "RECORD", mandatory: false},
+        {name: "ns$nested2", valueType: "RECORD", mandatory: false}
+      ]
+    }
+  ],
+  records: [
+    {
+      type: "ns$Root",
+      id: "USER.record1",
+      fields: {
+        "ns$string": "string",
+        "ns$integer": 55,
+        "ns$stringlist": ["foo", "bar"],
+        "ns$nested1": {
+          type: "ns$Nested",
+          fields: {
+            "ns$field1": "fieldvalue1",
+            "ns$field2": "fieldvalue2"
+          }
+        },
+        "ns$nested2": {
+          type: "ns$Nested",
+          fields: {
+            "ns$field1": "fieldvalue1",
+            "ns$field2": "fieldvalue2"
+          }
+        }
+      }
+    }
+  ]
+}

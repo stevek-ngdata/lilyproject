@@ -1,0 +1,34 @@
+{
+  namespaces: {
+    "ns": "ns"
+  },
+  fieldTypes: [
+  ],
+  recordTypes: [
+  ],
+  records: [
+    {
+      type: "ns$Root",
+      id: "USER.record1",
+      fields: {
+        "ns$string": "",
+        "ns$integer": "",
+        "ns$stringlist": ["", ""],
+        "ns$nested1": {
+          type: "ns$Nested",
+          fields: {
+            "ns$field1": "",
+            "ns$field2": ""
+          }
+        },
+        "ns$nested2": {
+          type: "ns$Nested",
+          fields: {
+            "ns$field1": "",
+            "ns$field2": "fieldvalue2"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -54,6 +54,7 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.tools.import_.cli.DefaultImportListener;
 import org.lilyproject.tools.import_.cli.JsonImport;
+import org.lilyproject.tools.import_.json.EmptyFieldIgnoringRecordReader;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.NamespacesImpl;
 import org.lilyproject.tools.import_.json.RecordReader;
@@ -66,10 +67,12 @@ import org.lilyproject.util.json.JsonFormat;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.lilyproject.tools.import_.cli.JsonImport.ImportSettings;
 
 public class JsonConversionTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -542,13 +545,45 @@ public class JsonConversionTest {
 
     @Test
     public void testLineBasedJsonImport() throws Exception {
-        JsonImport.loadJsonLines(table, repository, new DefaultImportListener(),
-                getClass().getResourceAsStream("json_line_input.txt"), 1);
+        JsonImport.loadJsonLines(table, repository,
+                getClass().getResourceAsStream("json_line_input.txt"), new ImportSettings());
 
         Record record = table.read(repository.getIdGenerator().fromString("USER.jsonline1"));
         assertEquals("hello1", record.getField(new QName("ns", "stringField")));
 
         record = table.read(repository.getIdGenerator().fromString("USER.jsonline2"));
         assertEquals("hello2", record.getField(new QName("ns", "stringField")));
+    }
+
+    @Test
+    public void testIgnoreEmptyFields() throws Exception {
+        ImportSettings settings = new ImportSettings();
+        settings.recordReader = EmptyFieldIgnoringRecordReader.INSTANCE;
+        JsonImport.load(table, repository, getClass().getResourceAsStream("emptyfieldsignore_1.json"), settings);
+
+        QName stringField = new QName("ns", "string");
+        QName integerField = new QName("ns", "integer");
+        QName stringlist = new QName("ns", "stringlist");
+        QName nested1 = new QName("ns", "nested1");
+        QName nested2 = new QName("ns", "nested2");
+
+        Record record = table.read(repository.getIdGenerator().fromString("USER.record1"));
+        assertTrue(record.hasField(stringField));
+        assertTrue(record.hasField(integerField));
+        assertTrue(record.hasField(stringlist));
+        assertTrue(record.hasField(nested1));
+        assertTrue(record.hasField(nested2));
+
+        JsonImport.load(table, repository, getClass().getResourceAsStream("emptyfieldsignore_2.json"), settings);
+
+        record = table.read(repository.getIdGenerator().fromString("USER.record1"));
+        assertFalse(record.hasField(stringField));
+        assertFalse(record.hasField(integerField));
+        assertFalse(record.hasField(stringlist));
+        assertFalse(record.hasField(nested1));
+        assertTrue(record.hasField(nested2));
+        Record nestedRecord = record.getField(nested2);
+        assertFalse(nestedRecord.hasField(new QName("ns", "field1")));
+        assertTrue(nestedRecord.hasField(new QName("ns", "field2")));
     }
 }

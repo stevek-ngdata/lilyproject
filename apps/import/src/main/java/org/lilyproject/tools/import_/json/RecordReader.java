@@ -16,6 +16,7 @@
 package org.lilyproject.tools.import_.json;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -31,9 +32,11 @@ import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.format.ISODateTimeFormat;
 import org.lilyproject.bytes.api.ByteArray;
+import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.MetadataBuilder;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -76,36 +79,21 @@ public class RecordReader implements EntityReader<Record> {
 
         namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 
-        Record record = repository.getRecordFactory().newRecord();
+        return readRootRecord(new ValueHandle(node, "(root object)", null),
+                new ReadContext(repository, namespaces, linkTransformer));
+    }
+
+    protected Record readRootRecord(ValueHandle handle, ReadContext context)
+            throws InterruptedException, RepositoryException, JsonFormatException {
+        LRepository repository = context.repository;
+        Namespaces namespaces = context.namespaces;
+        JsonNode node = handle.node;
+
+        Record record = readCommonRecordAspects(handle, context, true);
 
         String id = getString(node, "id", null);
         if (id != null) {
             record.setId(repository.getIdGenerator().fromString(id));
-        }
-
-        JsonNode typeNode = node.get("type");
-        if (typeNode != null) {
-            if (typeNode.isObject()) {
-                QName qname = QNameConverter.fromJson(JsonUtil.getString(typeNode, "name"), namespaces);
-                Long version = JsonUtil.getLong(typeNode, "version", null);
-                record.setRecordType(qname, version);
-            } else if (typeNode.isTextual()) {
-                record.setRecordType(QNameConverter.fromJson(typeNode.getTextValue(), namespaces));
-            }
-        }
-
-        ObjectNode fields = getObject(node, "fields", null);
-        if (fields != null) {
-            Iterator<Map.Entry<String, JsonNode>> it = fields.getFields();
-            while (it.hasNext()) {
-                Map.Entry<String, JsonNode> entry = it.next();
-
-                QName qname = QNameConverter.fromJson(entry.getKey(), namespaces);
-                FieldType fieldType = repository.getTypeManager().getFieldTypeByName(qname);
-                Object value = readValue(fields.get(entry.getKey()), fieldType.getValueType(), entry.getKey(),
-                        namespaces, repository, linkTransformer);
-                record.setField(qname, value);
-            }
         }
 
         ArrayNode fieldsToDelete = getArray(node, "fieldsToDelete", null);
@@ -167,132 +155,332 @@ public class RecordReader implements EntityReader<Record> {
         return record;
     }
 
-    private Object readList(JsonNode node, ValueType valueType, String prop, Namespaces namespaces,
-            LRepository repository, LinkTransformer linkTransformer)
+    protected Record readNestedRecord(ValueHandle handle, ReadContext context)
+            throws InterruptedException, RepositoryException, JsonFormatException {
+        return readCommonRecordAspects(handle, context, false);
+    }
+
+    /**
+     * Reads those aspects of a record that are shared between top-level and nested records.
+     */
+    protected Record readCommonRecordAspects(ValueHandle handle, ReadContext context, boolean topLevelRecord)
+            throws JsonFormatException, InterruptedException, RepositoryException {
+        LRepository repository = context.repository;
+        Namespaces namespaces = context.namespaces;
+
+        Record record = repository.getRecordFactory().newRecord();
+
+        JsonNode typeNode = handle.node.get("type");
+        if (typeNode != null) {
+            if (typeNode.isObject()) {
+                QName qname = QNameConverter.fromJson(JsonUtil.getString(typeNode, "name"), namespaces);
+                Long version = JsonUtil.getLong(typeNode, "version", null);
+                record.setRecordType(qname, version);
+            } else if (typeNode.isTextual()) {
+                record.setRecordType(QNameConverter.fromJson(typeNode.getTextValue(), namespaces));
+            }
+        }
+
+        ObjectNode fields = getObject(handle.node, "fields", null);
+        if (fields != null) {
+            Iterator<Map.Entry<String, JsonNode>> it = fields.getFields();
+            while (it.hasNext()) {
+                Map.Entry<String, JsonNode> entry = it.next();
+
+                QName qname = QNameConverter.fromJson(entry.getKey(), namespaces);
+                FieldType fieldType = repository.getTypeManager().getFieldTypeByName(qname);
+                ValueHandle subHandle = new ValueHandle(fields.get(entry.getKey()), "fields." + entry.getKey(),
+                        fieldType.getValueType());
+                Object value = readValue(subHandle, context);
+                if (value != null) {
+                    record.setField(qname, value);
+                } else if (value == null && deleteNullFields() && topLevelRecord) {
+                    record.delete(qname, true);
+                }
+            }
+        }
+
+        return record;
+    }
+
+    protected boolean deleteNullFields() {
+        return false;
+    }
+
+    protected List<Object> readList(ValueHandle handle, ReadContext context)
             throws JsonFormatException, RepositoryException, InterruptedException {
+        JsonNode node = handle.node;
         if (!node.isArray()) {
-            throw new JsonFormatException("List value should be specified as array in " + prop);
+            throw new JsonFormatException("List value should be specified as array in " + handle.prop);
         }
 
         List<Object> value = new ArrayList<Object>();
         for (int i = 0; i < node.size(); i++) {
-            value.add(readValue(node.get(i), valueType, prop, namespaces, repository, linkTransformer));
+            ValueHandle subHandle = new ValueHandle(node.get(i), handle.prop + "[" + i + "]",
+                    handle.valueType.getNestedValueType());
+            Object subValue = readValue(subHandle, context);
+            if (subValue != null) {
+                value.add(subValue);
+            }
         }
 
         return value;
     }
 
-    private Object readPath(JsonNode node, ValueType valueType, String prop, Namespaces namespaces,
-                                LRepository repository, LinkTransformer linkTransformer)
+    protected List<Object> readPath(ValueHandle handle, ReadContext context)
             throws JsonFormatException, RepositoryException, InterruptedException {
+
+        JsonNode node = handle.node;
 
         if (!node.isArray()) {
-            throw new JsonFormatException("Path value should be specified as an array in " + prop);
+            throw new JsonFormatException("Path value should be specified as an array in " + handle.prop);
         }
 
-        Object[] elements = new Object[node.size()];
+        List<Object> elements = new ArrayList<Object>(node.size());
         for (int i = 0; i < node.size(); i++) {
-            elements[i] = readValue(node.get(i), valueType, prop, namespaces, repository, linkTransformer);
+            ValueHandle subHandle = new ValueHandle(node.get(i), handle.prop,
+                    handle.valueType.getNestedValueType());
+            Object subValue = readValue(subHandle, context);
+            if (subValue != null) {
+                elements.add(subValue);
+            }
         }
 
-        return new HierarchyPath(elements);
+        return new HierarchyPath(elements.toArray(new Object[elements.size()]));
     }
 
-    public Object readValue(JsonNode node, ValueType valueType, String prop, Namespaces namespaces,
-                            LRepository repository, LinkTransformer linkTransformer)
+    protected String readString(ValueHandle handle, ReadContext context)
             throws JsonFormatException, RepositoryException, InterruptedException {
+        if (!handle.node.isTextual()) {
+            throw new JsonFormatException("Expected text value for property '" + handle.prop + "'");
+        }
+        return handle.node.getTextValue();
+    }
 
-        String name = valueType.getBaseName();
-
-        if (name.equals("LIST")) {
-            return readList(node, valueType.getNestedValueType(), prop, namespaces, repository, linkTransformer);
-        } else if (name.equals("PATH")) {
-            return readPath(node, valueType.getNestedValueType(), prop, namespaces, repository, linkTransformer);
-        } else if (name.equals("STRING")) {
-            if (!node.isTextual()) {
-                throw new JsonFormatException("Expected text value for property '" + prop + "'");
-            }
-
-            return node.getTextValue();
-        } else if (name.equals("INTEGER")) {
-            if (!node.isIntegralNumber()) {
-                throw new JsonFormatException("Expected int value for property '" + prop + "'");
-            }
-
-            return node.getIntValue();
-        } else if (name.equals("LONG")) {
-            if (!node.isIntegralNumber()) {
-                throw new JsonFormatException("Expected long value for property '" + prop + "'");
-            }
-
-            return node.getLongValue();
-        } else if (name.equals("DOUBLE")) {
-            if (!node.isNumber()) {
-                throw new JsonFormatException("Expected double value for property '" + prop + "'");
-            }
-
-            return node.getDoubleValue();
-        } else if (name.equals("DECIMAL")) {
-            if (!node.isNumber()) {
-                throw new JsonFormatException("Expected decimal value for property '" + prop + "'");
-            }
-
-            return node.getDecimalValue();
-        } else if (name.equals("URI")) {
-            if (!node.isTextual()) {
-                throw new JsonFormatException("Expected URI (string) value for property '" + prop + "'");
-            }
-
+    protected Integer readInteger(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (handle.node.isIntegralNumber()) {
+            return handle.node.getIntValue();
+        } else if (handle.node.isTextual()) {
             try {
-                return new URI(node.getTextValue());
-            } catch (URISyntaxException e) {
-                throw new JsonFormatException("Invalid URI in property '" + prop + "': " + node.getTextValue());
-            }
-        } else if (name.equals("BOOLEAN")) {
-            if (!node.isBoolean()) {
-                throw new JsonFormatException("Expected boolean value for property '" + prop + "'");
-            }
-
-            return node.getBooleanValue();
-        } else if (name.equals("LINK")) {
-            if (!node.isTextual()) {
-                throw new JsonFormatException("Expected text value for property '" + prop + "'");
-            }
-
-            return linkTransformer.transform(node.getTextValue(), repository);
-        } else if (name.equals("DATE")) {
-            if (!node.isTextual()) {
-                throw new JsonFormatException("Expected text value for property '" + prop + "'");
-            }
-
-            return new LocalDate(node.getTextValue());
-        } else if (name.equals("DATETIME")) {
-            if (!node.isTextual()) {
-                throw new JsonFormatException("Expected text value for property '" + prop + "'");
-            }
-
-            return new DateTime(node.getTextValue());
-        } else if (name.equals("BLOB")) {
-            if (!node.isObject()) {
-                throw new JsonFormatException("Expected object value for property '" + prop + "'");
-            }
-
-            ObjectNode blobNode = (ObjectNode)node;
-            return BlobConverter.fromJson(blobNode);
-        } else if (name.equals("RECORD")) {
-            return fromJson(node, namespaces, repository);
-
-        } else if (name.equals("BYTEARRAY")) {
-            if (!node.isTextual()) {
-                throw new JsonFormatException("Expected base64 encoded value for property '" + prop + "'");
-            }
-            try {
-                return new ByteArray(node.getBinaryValue());
-            } catch (IOException e) {
-                throw new JsonFormatException("Could not read base64 value for property '" + prop + "'", e);
+                return Integer.parseInt(handle.node.getTextValue());
+            } catch (NumberFormatException e) {
+                throw new JsonFormatException(String.format("Unparsable int value in property '%s': %s", handle.prop,
+                        handle.node.getTextValue()));
             }
         } else {
+            throw new JsonFormatException("Expected int value for property '" + handle.prop + "'");
+        }
+    }
+
+    protected Long readLong(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (handle.node.isIntegralNumber()) {
+            return handle.node.getLongValue();
+        } else if (handle.node.isTextual()) {
+            try {
+                return Long.parseLong(handle.node.getTextValue());
+            } catch (NumberFormatException e) {
+                throw new JsonFormatException(String.format("Unparsable long value in property '%s': %s", handle.prop,
+                        handle.node.getTextValue()));
+            }
+        } else {
+            throw new JsonFormatException("Expected long value for property '" + handle.prop + "'");
+        }
+    }
+
+    protected Double readDouble(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (handle.node.isNumber()) {
+            return handle.node.getDoubleValue();
+        } else if (handle.node.isTextual()) {
+            try {
+                return Double.parseDouble(handle.node.getTextValue());
+            } catch (NumberFormatException e) {
+                throw new JsonFormatException(String.format("Unparsable double value in property '%s': %s", handle.prop,
+                        handle.node.getTextValue()));
+            }
+        } else {
+            throw new JsonFormatException("Expected double value for property '" + handle.prop + "'");
+        }
+    }
+
+    protected BigDecimal readDecimal(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (handle.node.isNumber()) {
+            return handle.node.getDecimalValue();
+        } else if (handle.node.isTextual()) {
+            try {
+                return new BigDecimal(handle.node.getTextValue());
+            } catch (NumberFormatException e) {
+                throw new JsonFormatException(String.format("Unparsable decimal value in property '%s': %s", handle.prop,
+                        handle.node.getTextValue()));
+            }
+        } else {
+            throw new JsonFormatException("Expected decimal value for property '" + handle.prop + "'");
+        }
+    }
+
+    protected URI readUri(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (!handle.node.isTextual()) {
+            throw new JsonFormatException("Expected URI (string) value for property '" + handle.prop + "'");
+        }
+
+        try {
+            return new URI(handle.node.getTextValue());
+        } catch (URISyntaxException e) {
+            throw new JsonFormatException("Invalid URI in property '" + handle.prop + "': "
+                    + handle.node.getTextValue());
+        }
+    }
+
+    protected Boolean readBoolean(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (handle.node.isBoolean()) {
+            return handle.node.getBooleanValue();
+        } else if (handle.node.isTextual()) {
+            String text = handle.node.getTextValue();
+            // I think being strict in what to accept is more user friendly, rather than considering everything
+            // that is not recognized to be false
+            if (text.equalsIgnoreCase("true") || text.equalsIgnoreCase("t")) {
+                return Boolean.TRUE;
+            } else if (text.equalsIgnoreCase("false") || text.equalsIgnoreCase("f")) {
+                return Boolean.FALSE;
+            } else {
+                throw new JsonFormatException(String.format("Unparsable boolean value in property '%s': %s", handle.prop,
+                        handle.node.getTextValue()));
+            }
+        } else {
+            throw new JsonFormatException("Expected boolean value for property '" + handle.prop + "'");
+        }
+    }
+
+    protected Link readLink(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (!handle.node.isTextual()) {
+            throw new JsonFormatException("Expected text value for property '" + handle.prop + "'");
+        }
+
+        return context.linkTransformer.transform(handle.node.getTextValue(), context.repository);
+    }
+
+    protected LocalDate readDate(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (!handle.node.isTextual()) {
+            throw new JsonFormatException("Expected text value for property '" + handle.prop + "'");
+        }
+
+        return new LocalDate(handle.node.getTextValue());
+    }
+
+    protected DateTime readDateTime(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (!handle.node.isTextual()) {
+            throw new JsonFormatException("Expected text value for property '" + handle.prop + "'");
+        }
+
+        return new DateTime(handle.node.getTextValue());
+    }
+
+    protected Blob readBlob(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (!handle.node.isObject()) {
+            throw new JsonFormatException("Expected object value for property '" + handle.prop + "'");
+        }
+
+        ObjectNode blobNode = (ObjectNode)handle.node;
+        return BlobConverter.fromJson(blobNode);
+    }
+
+    protected ByteArray readByteArray(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        if (!handle.node.isTextual()) {
+            throw new JsonFormatException("Expected base64 encoded value for property '" + handle.prop + "'");
+        }
+        try {
+            return new ByteArray(handle.node.getBinaryValue());
+        } catch (IOException e) {
+            throw new JsonFormatException("Could not read base64 value for property '" + handle.prop + "'", e);
+        }
+    }
+
+    /**
+     * Reads/parses the JSON serialization of a value following a Lily {@link ValueType}. While typically this
+     * will be the value of a Lily field in a record, such values might also occur in other places (e.g. a
+     * scan filter or a mutation condition) and this method can also be called from there.
+     */
+    public Object readValue(ValueHandle handle, ReadContext context)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+
+        String name = handle.valueType.getBaseName();
+
+        if (name.equals("LIST")) {
+            return readList(handle, context);
+        } else if (name.equals("PATH")) {
+            return readPath(handle, context);
+        } else if (name.equals("STRING")) {
+            return readString(handle, context);
+        } else if (name.equals("INTEGER")) {
+            return readInteger(handle, context);
+        } else if (name.equals("LONG")) {
+            return readLong(handle, context);
+        } else if (name.equals("DOUBLE")) {
+            return readDouble(handle, context);
+        } else if (name.equals("DECIMAL")) {
+            return readDecimal(handle, context);
+        } else if (name.equals("URI")) {
+            return readUri(handle, context);
+        } else if (name.equals("BOOLEAN")) {
+            return readBoolean(handle, context);
+        } else if (name.equals("LINK")) {
+            return readLink(handle, context);
+        } else if (name.equals("DATE")) {
+            return readDate(handle, context);
+        } else if (name.equals("DATETIME")) {
+            return readDateTime(handle, context);
+        } else if (name.equals("BLOB")) {
+            return readBlob(handle, context);
+        } else if (name.equals("BYTEARRAY")) {
+            return readByteArray(handle, context);
+        } else if (name.equals("RECORD")) {
+            return readNestedRecord(handle, context);
+        } else {
             throw new JsonFormatException("Value type not supported: " + name);
+        }
+    }
+
+    /**
+     * Information on a value to parse: the JSON node containing the value, the property in which it occurs,
+     * and its Lily ValueType.
+     */
+    public static class ValueHandle {
+        /** Node representing the value to parse. */
+        JsonNode node;
+        /** JSON property name in which the value occurs, used in error messages. */
+        String prop;
+        /** Lily value type of the value to parse. */
+        ValueType valueType;
+
+        public ValueHandle(JsonNode node, String prop, ValueType valueType) {
+            this.node = node;
+            this.prop = prop;
+            this.valueType = valueType;
+        }
+    }
+
+    /**
+     * Global context accessible while parsing values.
+     */
+    public static class ReadContext {
+        LRepository repository;
+        LinkTransformer linkTransformer;
+        Namespaces namespaces;
+        
+        public ReadContext(LRepository repository, Namespaces namespaces, LinkTransformer linkTransformer) {
+            this.repository = repository;
+            this.namespaces = namespaces;
+            this.linkTransformer = linkTransformer;
         }
     }
 
@@ -342,7 +530,7 @@ public class RecordReader implements EntityReader<Record> {
                         throw new JsonFormatException("Invalid binary value for metadata field '"
                                 + name + "' of record field " + recordField);
                     }
-                } else if (type.equals("datetime")){
+                } else if (type.equals("datetime")) {
                     JsonNode datetimeValue = value.get("value");
                     if (!datetimeValue.isTextual()) {
                         throw new JsonFormatException("Invalid datetime value for metadata field '"
