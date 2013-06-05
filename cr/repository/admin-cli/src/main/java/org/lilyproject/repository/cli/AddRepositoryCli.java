@@ -17,10 +17,14 @@ package org.lilyproject.repository.cli;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.lilyproject.repository.model.api.RepositoryExistsException;
 
 import java.util.List;
 
 public class AddRepositoryCli extends BaseRepositoriesAdminCli {
+
+    protected Option failIfExistsOption;
 
     @Override
     protected String getCmdName() {
@@ -32,9 +36,17 @@ public class AddRepositoryCli extends BaseRepositoriesAdminCli {
     }
 
     @Override
+    @SuppressWarnings("static-access")
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
         options.add(nameOption);
+
+        failIfExistsOption = OptionBuilder
+                .withDescription("Fails if the repository already exists (process status code 1).")
+                .withLongOpt("fail-if-exists")
+                .create();
+        options.add(failIfExistsOption);
+
         return options;
     }
 
@@ -51,9 +63,21 @@ public class AddRepositoryCli extends BaseRepositoriesAdminCli {
             return 1;
         }
 
-        repositoryModel.create(repositoryName);
+        boolean existed = false;
+        try {
+            repositoryModel.create(repositoryName);
+        } catch (RepositoryExistsException e) {
+            existed = true;
+        }
 
-        System.out.println("Repository " + repositoryName + " created.");
+        if (existed) {
+            System.out.println("Repository " + repositoryName + " already exists.");
+            if (cmd.hasOption(failIfExistsOption.getLongOpt())) {
+                return 1;
+            }
+        } else {
+            System.out.println("Repository " + repositoryName + " created.");
+        }
         System.out.println();
         System.out.println("Waiting for repository to become active. This will only work when a Lily server is running.");
         System.out.println("You can safely interrupt this with ctrl+c");

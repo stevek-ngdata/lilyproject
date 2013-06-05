@@ -131,13 +131,14 @@ public class RepositoryModelImpl implements RepositoryModel {
     }
 
     @Override
-    public void delete(String repositoryName) throws InterruptedException, RepositoryModelException {
+    public void delete(String repositoryName)
+            throws InterruptedException, RepositoryModelException, RepositoryNotFoundException {
         disallowDefaultRepository(repositoryName);
         RepositoryDefinition repoDef = new RepositoryDefinition(repositoryName, RepositoryLifecycleState.DELETE_REQUESTED);
         try {
             storeRepository(repoDef);
         } catch (KeeperException.NoNodeException e) {
-            throw new RepositoryModelException("Can't delete-request repository, a repository with this name doesn't exist: "
+            throw new RepositoryNotFoundException("Can't delete-request repository, a repository with this name doesn't exist: "
                     + repoDef.getName());
         } catch (KeeperException e) {
             throw new RepositoryModelException(e);
@@ -159,7 +160,8 @@ public class RepositoryModelImpl implements RepositoryModel {
     }
 
     @Override
-    public void updateRepository(RepositoryDefinition repoDef) throws InterruptedException, RepositoryModelException, RepositoryNotFoundException {
+    public void updateRepository(RepositoryDefinition repoDef)
+            throws InterruptedException, RepositoryModelException,RepositoryNotFoundException {
         disallowDefaultRepository(repoDef.getName());
         try {
             storeRepository(repoDef);

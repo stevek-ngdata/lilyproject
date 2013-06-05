@@ -35,7 +35,7 @@ public interface RepositoryModel {
      * This allows cleanup operations to happen, once these are done the repository will be
      * fully deleted.</p>
      */
-    void delete(String repositoryName) throws InterruptedException, RepositoryModelException;
+    void delete(String repositoryName) throws InterruptedException, RepositoryModelException, RepositoryNotFoundException;
 
     /**
      * Deletes a repository.
