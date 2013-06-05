@@ -13,5 +13,20 @@ Valid arguments for --format are:
   * json_lines: each input line contains a json object describing a record,
                 this format does not support defining a schema.
 
+About ignore-empty-fields:
+  when this option is specified, if you have any fields that contain empty
+  strings as values, they will be removed from the input, thus effectively
+  being the same as if the fields were not present in the input. If you
+  have an empty string in an array, like ["a", "", "b"], it will also
+  remove it, thus changing the array to ["a", "b"]. If an array doesn't
+  contain any entries (anymore), the field is removed. When using nested
+  records, if the filtering would result in the record not having
+  any fields any more, the field containing the nested record will be
+  removed.
+About ignore-and-delete-empty-fields:
+  this does the same as ignore-empty-fields, but will also actively add empty
+  fields to the list of fields-to-delete. This distinction is important when
+  updating records that might have an existing value for such fields.
+
 You can significantly speed up the import by using multiple threads:
 lily-import -w 20 ...

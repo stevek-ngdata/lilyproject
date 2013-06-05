@@ -37,13 +37,8 @@ import java.util.List;
  * a field has a value or not. Instead, they can use a fixed json structure into which
  * they just need to fill in the blanks.</p>
  */
-public class EmptyFieldIgnoringRecordReader extends RecordReader {
-    public static final EmptyFieldIgnoringRecordReader INSTANCE = new EmptyFieldIgnoringRecordReader();
-
-    @Override
-    protected boolean deleteNullFields() {
-        return true;
-    }
+public class IgnoreEmptyFieldsRecordReader extends RecordReader {
+    public static final IgnoreEmptyFieldsRecordReader INSTANCE = new IgnoreEmptyFieldsRecordReader();
 
     @Override
     protected Record readNestedRecord(ValueHandle handle, ReadContext context)

@@ -19,7 +19,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
 
-import org.lilyproject.tools.import_.json.EmptyFieldIgnoringRecordReader;
+import org.lilyproject.tools.import_.json.IgnoreAndDeleteEmptyFieldsRecordReader;
+import org.lilyproject.tools.import_.json.IgnoreEmptyFieldsRecordReader;
 import org.lilyproject.tools.import_.json.RecordReader;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
 
@@ -44,6 +45,7 @@ public class JsonImportTool extends BaseZkCliTool {
     private Option repositoryOption;
     private Option fileFormatOption;
     private Option ignoreEmptyFieldsOption;
+    private Option ignoreAndDeleteEmptyFieldsOption;
     private LilyClient lilyClient;
 
     @Override
@@ -116,6 +118,13 @@ public class JsonImportTool extends BaseZkCliTool {
                 .create();
         options.add(ignoreEmptyFieldsOption);
 
+        ignoreAndDeleteEmptyFieldsOption = OptionBuilder
+                .withDescription("Does everything ignore-empty-fields does, and adds empty fields in the root record" +
+                        "to the list of fields-to-delete (only makes sense for updates).")
+                .withLongOpt("ignore-and-delete-empty-fields")
+                .create();
+        options.add(ignoreAndDeleteEmptyFieldsOption);
+
         return options;
     }
 
@@ -139,6 +148,7 @@ public class JsonImportTool extends BaseZkCliTool {
 
         boolean schemaOnly = cmd.hasOption(schemaOnlyOption.getOpt());
         boolean ignoreEmptyFields = cmd.hasOption(ignoreEmptyFieldsOption.getLongOpt());
+        boolean ignoreAndDeleteEmptyFields = cmd.hasOption(ignoreAndDeleteEmptyFieldsOption.getLongOpt());
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
 
@@ -159,7 +169,13 @@ public class JsonImportTool extends BaseZkCliTool {
                 JsonImport.ImportSettings settings = new JsonImport.ImportSettings();
                 settings.importListener = importListener;
                 settings.threadCount = workers;
-                settings.recordReader = ignoreEmptyFields ? EmptyFieldIgnoringRecordReader.INSTANCE : RecordReader.INSTANCE;
+                if (ignoreAndDeleteEmptyFields) {
+                    settings.recordReader= IgnoreAndDeleteEmptyFieldsRecordReader.INSTANCE;
+                } else if (ignoreEmptyFields) {
+                    settings.recordReader = IgnoreEmptyFieldsRecordReader.INSTANCE;
+                } else {
+                    settings.recordReader = RecordReader.INSTANCE;
+                }
 
                 switch (fileFormat) {
                     case JSON:

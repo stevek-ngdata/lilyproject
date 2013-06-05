@@ -203,6 +203,12 @@ public class RecordReader implements EntityReader<Record> {
         return record;
     }
 
+    /**
+     * Should fields in the root record, whose value is null, be added to the fields-to-delete?
+     * Subclasses can override this to trigger this behavior (in normal json import, fields
+     * will never be null, it is only by subclasses overriding the value-reading methods
+     * that values can become null).
+     */
     protected boolean deleteNullFields() {
         return false;
     }

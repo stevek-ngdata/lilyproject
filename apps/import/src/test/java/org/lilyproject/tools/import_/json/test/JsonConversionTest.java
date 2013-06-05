@@ -52,9 +52,8 @@ import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repository.api.filter.RecordVariantFilter;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.tools.import_.cli.DefaultImportListener;
 import org.lilyproject.tools.import_.cli.JsonImport;
-import org.lilyproject.tools.import_.json.EmptyFieldIgnoringRecordReader;
+import org.lilyproject.tools.import_.json.IgnoreAndDeleteEmptyFieldsRecordReader;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.NamespacesImpl;
 import org.lilyproject.tools.import_.json.RecordReader;
@@ -558,7 +557,7 @@ public class JsonConversionTest {
     @Test
     public void testIgnoreEmptyFields() throws Exception {
         ImportSettings settings = new ImportSettings();
-        settings.recordReader = EmptyFieldIgnoringRecordReader.INSTANCE;
+        settings.recordReader = IgnoreAndDeleteEmptyFieldsRecordReader.INSTANCE;
         JsonImport.load(table, repository, getClass().getResourceAsStream("emptyfieldsignore_1.json"), settings);
 
         QName stringField = new QName("ns", "string");
