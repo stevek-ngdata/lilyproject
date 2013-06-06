@@ -30,6 +30,8 @@ public class RepoAndTableUtil {
      */
     public static final String REPOSITORY_TABLE_SEPARATOR = "__";
 
+    // About these restrictions: HBase itself is very restrictive on table names. In addition, we don't allow dots
+    // and colons because these can cause issues parsing absolute link values.
     private static final String VALID_NAME_PATTERN = "[a-zA-Z_0-9-.]+";
     private static final Pattern VALID_NAME_CHARS = Pattern.compile(VALID_NAME_PATTERN);
     public static final String VALID_NAME_EXPLANATION = "A valid name should follow the regex " + VALID_NAME_PATTERN

@@ -62,6 +62,7 @@ public class LilyHBaseSchema {
     @VisibleForTesting
     static HTableDescriptor createRecordTableDescriptor(String repositoryName, String tableName) {
 
+        // We have checks on table name in TableManagerImpl -- probably this can go
         if (tableName.contains(".") || tableName.contains(":")) {
             throw new IllegalArgumentException("Repository table name cannot contain periods or colons");
         }
