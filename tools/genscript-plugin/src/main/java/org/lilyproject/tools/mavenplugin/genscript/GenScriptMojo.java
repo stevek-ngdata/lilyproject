@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
@@ -290,7 +291,7 @@ public class GenScriptMojo extends AbstractMojo {
 
     private String artifactPath(Artifact artifact, Platform platform) {
         // pathOf always creates a path with slashes, irrespective of the current platform
-        String artifactPath = m2layout.pathOf(artifact);
+        String artifactPath = pathOf(artifact);
         artifactPath = artifactPath.replaceAll("/", Matcher.quoteReplacement(platform.fileSeparator));
         return artifactPath;
     }
@@ -331,4 +332,40 @@ public class GenScriptMojo extends AbstractMojo {
         return defaultValue;
     }
 
+    private static final char PATH_SEPARATOR = '/';
+    private static final char GROUP_SEPARATOR = '.';
+    private static final char ARTIFACT_SEPARATOR = '-';
+
+    /**
+     * disclaimer: this method has been copied from the DefaultRepositoryLayout of the Maven
+     * source tree and is Apache licensed. It was changed to use getBaseVersion() instead
+     * of getVersion() on the artifact.
+     */
+    private static String pathOf(Artifact artifact) {
+        ArtifactHandler artifactHandler = artifact.getArtifactHandler();
+
+        StringBuilder path = new StringBuilder();
+
+        path.append(formatAsDirectory(artifact.getGroupId())).append(PATH_SEPARATOR);
+        path.append(artifact.getArtifactId()).append(PATH_SEPARATOR);
+        path.append(artifact.getBaseVersion()).append(PATH_SEPARATOR);
+        // Lily change: Here we call getBaseVersion() instead of getVersion() because otherwise for snapshot artifacts
+        // a timestamp suffix is included in the version (and our shell scripts & runtime classloader.xml's
+        // refer to the plain snapshot version)
+        path.append(artifact.getArtifactId()).append(ARTIFACT_SEPARATOR).append(artifact.getBaseVersion());
+
+        if (artifact.hasClassifier()) {
+            path.append(ARTIFACT_SEPARATOR).append(artifact.getClassifier());
+        }
+
+        if (artifactHandler.getExtension() != null && artifactHandler.getExtension().length() > 0) {
+            path.append(GROUP_SEPARATOR).append(artifactHandler.getExtension());
+        }
+
+        return path.toString();
+    }
+
+    private static String formatAsDirectory( String directory ) {
+        return directory.replace(GROUP_SEPARATOR, PATH_SEPARATOR);
+    }
 }
