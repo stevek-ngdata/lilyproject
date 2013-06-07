@@ -106,7 +106,7 @@ public class LinkValueType extends AbstractValueType implements ValueType {
 
     @Override
     public Class getType() {
-        return RecordId.class;
+        return Link.class;
     }
 
     @Override
