@@ -16,19 +16,17 @@
 package org.lilyproject.tools.import_.cli;
 
 import java.io.PrintStream;
+import java.util.EnumMap;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Sets;
+import org.joda.time.DateTime;
 
 public class DefaultImportListener implements ImportListener {
     private PrintStream out;
 
-    private LoadingCache<EntityType, AtomicInteger> counters;
+    private EnumMap<EntityType, AtomicInteger> counters;
 
     private Set<EntityType> suppressedTypes;
 
@@ -39,20 +37,27 @@ public class DefaultImportListener implements ImportListener {
     public DefaultImportListener(PrintStream out, EntityType... suppressedTypes) {
         this.out = out;
         this.suppressedTypes = Sets.newHashSet(suppressedTypes);
-        counters = CacheBuilder.newBuilder()
-                .build(new CacheLoader<EntityType, AtomicInteger>() {
-
-                    @Override
-                    public AtomicInteger load(EntityType key) throws Exception {
-                        return new AtomicInteger(0);
-                    }
-                });
+        counters = new EnumMap<EntityType, AtomicInteger>(EntityType.class);
+        for (EntityType type : EntityType.values()) {
+            counters.put(type, new AtomicInteger(0));
+        }
     }
 
     @Override
     public void exception(Throwable throwable) {
         out.println("Error during import:");
         throwable.printStackTrace(out);
+    }
+
+    @Override
+    public void recordImportException(Throwable throwable, String json, int lineNumber) {
+        out.println("Error importing record at line " + lineNumber + ", json: " + json);
+        throwable.printStackTrace();
+    }
+
+    @Override
+    public void tooManyRecordImportErrors(long count) {
+        out.println("Encountered " + count + " errors importing records, aborting.");
     }
 
     @Override
@@ -94,13 +99,15 @@ public class DefaultImportListener implements ImportListener {
 
     private boolean checkSuppressed(EntityType entityType) {
         if (suppressedTypes.contains(entityType)) {
-            try {
-                int count = counters.get(entityType).incrementAndGet();
-                if ((count % 1000) == 0) {
-                    out.print(".");
+            int count = counters.get(entityType).incrementAndGet();
+            if ((count % 1000) == 0) {
+                out.print(".");
+
+                if (entityType == EntityType.RECORD) {
+                    if ((count % 50000) == 0) {
+                        out.println(new DateTime() + " - records imported: " + count);
+                    }
                 }
-            } catch (ExecutionException e) {
-                System.err.println("Failed to update counter for " + entityType + " event");
             }
             return true;
         }

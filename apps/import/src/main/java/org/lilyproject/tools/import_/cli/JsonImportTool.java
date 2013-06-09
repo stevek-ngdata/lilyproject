@@ -46,6 +46,7 @@ public class JsonImportTool extends BaseZkCliTool {
     private Option fileFormatOption;
     private Option ignoreEmptyFieldsOption;
     private Option ignoreAndDeleteEmptyFieldsOption;
+    private Option maxErrorsOption;
     private LilyClient lilyClient;
 
     @Override
@@ -125,6 +126,14 @@ public class JsonImportTool extends BaseZkCliTool {
                 .create();
         options.add(ignoreAndDeleteEmptyFieldsOption);
 
+        maxErrorsOption = OptionBuilder
+                .withArgName("count")
+                .hasArg()
+                .withDescription("Give up the import after this amount of errors (only for records, not schema)")
+                .withLongOpt("max-errors")
+                .create();
+        options.add(maxErrorsOption);
+
         return options;
     }
 
@@ -149,6 +158,7 @@ public class JsonImportTool extends BaseZkCliTool {
         boolean schemaOnly = cmd.hasOption(schemaOnlyOption.getOpt());
         boolean ignoreEmptyFields = cmd.hasOption(ignoreEmptyFieldsOption.getLongOpt());
         boolean ignoreAndDeleteEmptyFields = cmd.hasOption(ignoreAndDeleteEmptyFieldsOption.getLongOpt());
+        int maxErrors = OptionUtil.getIntOption(cmd, maxErrorsOption, 1);
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
 
@@ -169,6 +179,7 @@ public class JsonImportTool extends BaseZkCliTool {
                 JsonImport.ImportSettings settings = new JsonImport.ImportSettings();
                 settings.importListener = importListener;
                 settings.threadCount = workers;
+                settings.maximumRecordErrors = maxErrors;
                 if (ignoreAndDeleteEmptyFields) {
                     settings.recordReader= IgnoreAndDeleteEmptyFieldsRecordReader.INSTANCE;
                 } else if (ignoreEmptyFields) {

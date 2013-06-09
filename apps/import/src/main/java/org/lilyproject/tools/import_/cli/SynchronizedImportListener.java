@@ -26,8 +26,18 @@ public class SynchronizedImportListener implements ImportListener {
     }
 
     @Override
-    public void exception(Throwable throwable) {
+    public synchronized void exception(Throwable throwable) {
         delegate.exception(throwable);
+    }
+
+    @Override
+    public synchronized void recordImportException(Throwable throwable, String json, int lineNumber) {
+        delegate.recordImportException(throwable, json, lineNumber);
+    }
+
+    @Override
+    public synchronized void tooManyRecordImportErrors(long count) {
+        delegate.tooManyRecordImportErrors(count);
     }
 
     @Override

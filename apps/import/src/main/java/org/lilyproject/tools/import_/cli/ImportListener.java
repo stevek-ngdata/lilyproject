@@ -22,6 +22,10 @@ public interface ImportListener {
      */
     void exception(Throwable throwable);
 
+    void recordImportException(Throwable throwable, String json, int lineNumber);
+
+    void tooManyRecordImportErrors(long count);
+
     void conflict(EntityType entityType, String entityName, String propName, Object oldValue, Object newValue)
             throws ImportConflictException;
 

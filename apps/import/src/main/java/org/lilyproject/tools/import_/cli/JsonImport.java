@@ -26,6 +26,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
@@ -72,7 +73,10 @@ public class JsonImport {
     private int threadCount;
     private RecordReader recordReader;
     private ThreadPoolExecutor executor;
-    private volatile boolean errorHappened = false;
+    private volatile boolean abortImport = false;
+    private boolean errorHappened = false;
+    private long maximumRecordErrors = 1;
+    private AtomicLong recordImportErrorCnt = new AtomicLong();
 
     private static final int DEFAULT_THREAD_COUNT = 1;
 
@@ -80,6 +84,8 @@ public class JsonImport {
         public int threadCount = DEFAULT_THREAD_COUNT;
         public RecordReader recordReader = RecordReader.INSTANCE;
         public ImportListener importListener = new DefaultImportListener();
+        /** After how many failures to import records do we give up? */
+        public long maximumRecordErrors = 1;
 
         public ImportSettings() {
         }
@@ -88,6 +94,14 @@ public class JsonImport {
             this.threadCount = threadCount;
             this.importListener = importListener;
             this.recordReader = recordReader;
+        }
+
+        public ImportSettings(int threadCount, ImportListener importListener, RecordReader recordReader,
+                long maximumRecordErrors) {
+            this.threadCount = threadCount;
+            this.importListener = importListener;
+            this.recordReader = recordReader;
+            this.maximumRecordErrors = maximumRecordErrors;
         }
     }
 
@@ -181,6 +195,7 @@ public class JsonImport {
         this.repository = repository;
         this.threadCount = settings.threadCount;
         this.recordReader = settings.recordReader;
+        this.maximumRecordErrors = settings.maximumRecordErrors;
     }
 
     public void load(InputStream is, boolean schemaOnly) throws Exception {
@@ -202,7 +217,7 @@ public class JsonImport {
                 return;
             }
 
-            while (jp.nextToken() != JsonToken.END_OBJECT && !errorHappened) {
+            while (jp.nextToken() != JsonToken.END_OBJECT && !abortImport) {
                 String fieldName = jp.getCurrentName();
                 current = jp.nextToken(); // move from field name to field value
                 if (fieldName.equals("namespaces")) {
@@ -215,7 +230,7 @@ public class JsonImport {
                 } else if (fieldName.equals("fieldTypes")) {
                     if (current == JsonToken.START_ARRAY) {
                         startExecutor();
-                        while (jp.nextToken() != JsonToken.END_ARRAY && !errorHappened) {
+                        while (jp.nextToken() != JsonToken.END_ARRAY && !abortImport) {
                             pushTask(new FieldTypeImportTask(parseFieldType(jp.readValueAsTree())));
                         }
                         waitTasksFinished();
@@ -228,7 +243,7 @@ public class JsonImport {
                         Map<QName, FieldType> inlineDeclaredFieldTypes = new HashMap<QName, FieldType>();
                         List<RecordTypeImportTask> rtImportTasks = new ArrayList<RecordTypeImportTask>();
 
-                        while (jp.nextToken() != JsonToken.END_ARRAY && !errorHappened) {
+                        while (jp.nextToken() != JsonToken.END_ARRAY && !abortImport) {
                             JsonNode rtJson = jp.readValueAsTree();
                             extractFieldTypesFromRecordType(rtJson, inlineDeclaredFieldTypes);
                             rtImportTasks.add(new RecordTypeImportTask(rtJson));
@@ -237,7 +252,7 @@ public class JsonImport {
                         if (inlineDeclaredFieldTypes.size() > 0) {
                             startExecutor();
                             for (FieldType fieldType : inlineDeclaredFieldTypes.values()) {
-                                if (errorHappened)
+                                if (abortImport)
                                     break;
                                 pushTask(new FieldTypeImportTask(fieldType));
                             }
@@ -257,8 +272,9 @@ public class JsonImport {
                     if (!schemaOnly) {
                         if (current == JsonToken.START_ARRAY) {
                             startExecutor();
-                            while (jp.nextToken() != JsonToken.END_ARRAY && !errorHappened) {
-                                pushTask(new RecordImportTask(jp.readValueAsTree()));
+                            while (jp.nextToken() != JsonToken.END_ARRAY && !abortImport) {
+                                int lineNr = jp.getCurrentLocation().getLineNr();
+                                pushTask(new RecordImportTask(jp.readValueAsTree(), lineNr));
                             }
                             waitTasksFinished();
                         } else {
@@ -288,14 +304,22 @@ public class JsonImport {
         try {
             startExecutor();
 
+            int lineNumber = 0;
             String line;
-            while ((line = reader.readLine()) != null && !errorHappened) {
+            while ((line = reader.readLine()) != null && !abortImport) {
+                lineNumber++;
                 // skip comment lines and whitespace lines
                 if (line.startsWith("#") || StringUtils.isBlank(line)) {
                     continue;
                 }
-                JsonNode node = JsonFormat.deserializeNonStd(line);
-                pushTask(new RecordImportTask(node));
+                JsonNode node;
+                try {
+                    node = JsonFormat.deserializeNonStd(line);
+                } catch (Exception e) {
+                    handleRecordImportError(e, line, lineNumber);
+                    continue;
+                }
+                pushTask(new RecordImportTask(node, lineNumber));
             }
 
         } finally {
@@ -544,19 +568,31 @@ public class JsonImport {
         return record;
     }
 
-    private void handleImportError(Throwable throwable) {
+    private synchronized void handleSchemaImportError(Throwable throwable) {
         // In case of an error, we want to stop the import asap. Since it's multi-threaded, it can
         // be that there are still a few operations done before it's done.
         // We don't do an immediate shutdown of the ExecutorService since we don't want to interrupt running threads,
         // they are allowed to finish what they are doing.
+        abortImport = true;
         errorHappened = true;
         executor.getQueue().clear();
         importListener.exception(throwable);
     }
 
+    private synchronized void handleRecordImportError(Throwable throwable, String json, int lineNumber) {
+        long currentErrors = recordImportErrorCnt.incrementAndGet();
+        importListener.recordImportException(throwable, json, lineNumber);
+        errorHappened = true;
+        if (!abortImport && currentErrors >= maximumRecordErrors) {
+            abortImport = true;
+            executor.getQueue().clear();
+            importListener.tooManyRecordImportErrors(currentErrors);
+        }
+    }
+
     private void startExecutor() {
         executor = new ThreadPoolExecutor(threadCount, threadCount, 10, TimeUnit.SECONDS,
-                new ArrayBlockingQueue<Runnable>(5));
+                new ArrayBlockingQueue<Runnable>(250));
         executor.setRejectedExecutionHandler(new WaitPolicy());
     }
 
@@ -579,7 +615,7 @@ public class JsonImport {
 
     private void pushTasks(List<? extends Runnable> runnables) {
         for (Runnable runnable : runnables) {
-            if (errorHappened) {
+            if (abortImport) {
                 break;
             }
             executor.submit(runnable);
@@ -598,7 +634,7 @@ public class JsonImport {
             try {
                 importFieldType(fieldType);
             } catch (Throwable t) {
-                handleImportError(t);
+                handleSchemaImportError(t);
             }
         }
     }
@@ -615,16 +651,19 @@ public class JsonImport {
             try {
                 importRecordType(json);
             } catch (Throwable t) {
-                handleImportError(t);
+                handleSchemaImportError(t);
             }
         }
     }
 
     private class RecordImportTask implements Runnable {
         private JsonNode json;
+        /** Line in the source file where the recod was read from. */
+        private int sourceLine;
 
-        RecordImportTask(JsonNode json) {
+        RecordImportTask(JsonNode json, int sourceLine) {
             this.json = json;
+            this.sourceLine = sourceLine;
         }
 
         @Override
@@ -632,7 +671,13 @@ public class JsonImport {
             try {
                 importRecord(json);
             } catch (Throwable t) {
-                handleImportError(t);
+                String jsonAsString;
+                try {
+                    jsonAsString = JsonFormat.serializeAsString(json);
+                } catch (Throwable t2) {
+                    jsonAsString = "(error serializing json)";
+                }
+                handleRecordImportError(t, jsonAsString, sourceLine);
             }
         }
     }
