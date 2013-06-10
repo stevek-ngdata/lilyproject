@@ -40,7 +40,7 @@ public class LilyEventPublisherManager {
             throws IOException, InterruptedException {
         String hbaseTableName = RepoAndTableUtil.getHBaseTableName(repositoryName, tableName);
         if (!eventPublishers.containsKey(hbaseTableName)) {
-            eventPublishers.put(hbaseTableName, createEventPublisher(repositoryName, hbaseTableName));
+            eventPublishers.put(hbaseTableName, createEventPublisher(repositoryName, tableName));
         }
         return eventPublishers.get(hbaseTableName);
     }
