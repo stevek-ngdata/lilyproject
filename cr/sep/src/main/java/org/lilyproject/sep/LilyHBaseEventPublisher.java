@@ -16,8 +16,10 @@
 package org.lilyproject.sep;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import com.ngdata.sep.impl.HBaseEventPublisher;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -41,7 +43,10 @@ public class LilyHBaseEventPublisher extends HBaseEventPublisher {
     public void publishEvent(byte[] row, byte[] payload) throws IOException {
         Put messagePut = new Put(row);
         messagePut.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, 1L, payload);
-        getPayloadTable().checkAndPut(row, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, FALSE_BYTES, messagePut);
+        boolean rowIsPut = getPayloadTable()
+                .checkAndPut(row, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, FALSE_BYTES, messagePut);
+        if (! rowIsPut)
+            LogFactory.getLog(getClass()).warn("Did not publish event as requested, row=" + Arrays.toString(row));
     }
 
 }
