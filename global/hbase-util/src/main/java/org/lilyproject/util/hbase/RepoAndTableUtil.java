@@ -52,6 +52,8 @@ public class RepoAndTableUtil {
     }
 
     public static String getHBaseTableName(String repositoryName, String tableName) {
+        if (! isValidTableName(tableName)) throw new IllegalArgumentException("Bad table name: " + tableName);
+        if (! isValidTableName(repositoryName)) throw new IllegalArgumentException("Bad repository name: " + repositoryName);
         if (repositoryName.equals(DEFAULT_REPOSITORY)) {
             // Tables within the default repository are not prefixed with the repository name, because of backwards
             // compatibility with the pre-multiple-repositories situation.

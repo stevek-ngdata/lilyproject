@@ -60,7 +60,17 @@ public class RepoAndTableUtilTest {
         
         assertEquals(repoName, tableDescriptor.getValue(RepoAndTableUtil.OWNING_REPOSITORY_KEY));
     }
-    
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBadTableName(){
+        RepoAndTableUtil.getHBaseTableName("myRepo", "invalid__table");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBadRepoName(){
+        RepoAndTableUtil.getHBaseTableName("myRepo__myRepo", "table");
+    }
+
     @Test(expected=IllegalStateException.class)
     public void testRepositoryOwnership_TableDescriptorAlreadyContainsOwner() {
         HTableDescriptor tableDescriptor = new HTableDescriptor("MyTable");
