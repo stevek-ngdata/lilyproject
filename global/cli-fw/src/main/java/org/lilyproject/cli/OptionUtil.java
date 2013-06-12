@@ -45,11 +45,29 @@ public class OptionUtil {
         }
     }
 
+    public static String getStringOption(CommandLine cmd, Option option) {
+        String opt = option.getOpt() == null ? option.getLongOpt() : option.getOpt();
+        if (cmd.hasOption(opt)) {
+            return cmd.getOptionValue(opt);
+        } else {
+            throw new CliException("Missing value for option " + opt);
+        }
+    }
+
     public static <T extends Enum<T>> T getEnum(CommandLine cmd, Option option, T defaultValue, Class<T> enumClass) {
         String value = getStringOption(cmd, option, null);
         if (value == null) {
             return defaultValue;
         }
+        try {
+            return Enum.valueOf(enumClass, value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new CliException("Invalid value for option " + option.getLongOpt() + ": " + value);
+        }
+    }
+
+    public static <T extends Enum<T>> T getEnum(CommandLine cmd, Option option, Class<T> enumClass) {
+        String value = getStringOption(cmd, option);
         try {
             return Enum.valueOf(enumClass, value.toUpperCase());
         } catch (IllegalArgumentException e) {
