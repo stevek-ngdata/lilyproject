@@ -295,7 +295,13 @@ public class JsonImport {
         }
 
         if (errorHappened) {
-            throw new ImportException("Errors happened during import.");
+            if (recordImportErrorCnt.get() > 0) {
+                throw new ImportException("Errors happened during import (record error count: "
+                        + recordImportErrorCnt.get() + ")");
+
+            } else {
+                throw new ImportException("Errors happened during import.");
+            }
         }
     }
 
@@ -328,7 +334,7 @@ public class JsonImport {
         }
 
         if (errorHappened) {
-            throw new ImportException("Errors happened during import.");
+            throw new ImportException(recordImportErrorCnt.get() + " errors happened during import.");
         }
     }
 
