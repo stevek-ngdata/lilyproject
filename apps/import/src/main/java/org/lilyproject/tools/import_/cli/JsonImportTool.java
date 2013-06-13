@@ -158,7 +158,7 @@ public class JsonImportTool extends BaseZkCliTool {
         boolean schemaOnly = cmd.hasOption(schemaOnlyOption.getOpt());
         boolean ignoreEmptyFields = cmd.hasOption(ignoreEmptyFieldsOption.getLongOpt());
         boolean ignoreAndDeleteEmptyFields = cmd.hasOption(ignoreAndDeleteEmptyFieldsOption.getLongOpt());
-        int maxErrors = OptionUtil.getIntOption(cmd, maxErrorsOption, 1);
+        long maxErrors = OptionUtil.getLongOption(cmd, maxErrorsOption, 1L);
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
 

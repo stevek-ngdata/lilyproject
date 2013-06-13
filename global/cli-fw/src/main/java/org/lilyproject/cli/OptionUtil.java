@@ -36,6 +36,19 @@ public class OptionUtil {
         return defaultValue;
     }
 
+    public static long getLongOption(CommandLine cmd, Option option, long defaultValue) {
+        String opt = option.getOpt() == null ? option.getLongOpt() : option.getOpt();
+        if (cmd.hasOption(opt)) {
+            try {
+                return Long.parseLong(cmd.getOptionValue(opt));
+            } catch (NumberFormatException e) {
+                throw new CliException("Invalid value for option " + option.getLongOpt() + ": " +
+                        cmd.getOptionValue(opt));
+            }
+        }
+        return defaultValue;
+    }
+
     public static String getStringOption(CommandLine cmd, Option option, String defaultValue) {
         String opt = option.getOpt() == null ? option.getLongOpt() : option.getOpt();
         if (cmd.hasOption(opt)) {
