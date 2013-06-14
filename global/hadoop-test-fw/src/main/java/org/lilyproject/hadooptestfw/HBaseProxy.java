@@ -442,6 +442,47 @@ public class HBaseProxy {
     }
 
     /**
+     * Iteratively wait until no more sep events were handled. Useful for testing sep processors that cause new sep
+     * events, which can cause even more sep events, and so on.
+     *
+     * See notes about {@link #waitOnReplicationPeerReady(String)} in the docs of {@link #waitOnReplication(long)}
+     *
+     * @param timeout
+     * @return
+     * @throws Exception
+     */
+    public boolean waitOnSepIdle(long timeout) throws Exception {
+        JmxLiaison jmxLiaison = new JmxLiaison();
+        jmxLiaison.connect(mode == HBaseProxy.Mode.EMBED);
+        Map<String, Long> currentTimeStamp = getLastSepTimestamps(jmxLiaison);
+        Map<String, Long> lastTimeStamp = null;
+        int count = 0;
+        long tryUntil = System.currentTimeMillis() + timeout;
+
+        while(! currentTimeStamp.equals(lastTimeStamp)){
+            if (System.currentTimeMillis() > tryUntil) return false;
+            log.debug("waiting for sep to idle, iteration " + count++);
+            waitOnReplication(timeout);
+            lastTimeStamp = currentTimeStamp;
+            currentTimeStamp = getLastSepTimestamps(jmxLiaison);
+        }
+        return true;
+    }
+
+    /**
+     * obtains a map of the replication ids to the last sep event timestamp
+     */
+    private Map<String, Long> getLastSepTimestamps(JmxLiaison jmxLiaison) throws Exception {
+        ObjectName replicationSources = new ObjectName("hadoop:service=SEP,name=*");
+        Set<ObjectName> mbeans = jmxLiaison.queryNames(replicationSources);
+        Map<String, Long> result = new HashMap<String, Long>(mbeans.size());
+        for (ObjectName mbean : mbeans) {
+            result.put(mbean.getKeyProperty("name"), (Long) jmxLiaison.getAttribute(mbean, "lastSepTimestamp"));
+        }
+        return result;
+    }
+
+    /**
      * After adding a new replication peer, this waits for the replication source in the region server to be started.
      */
     public void waitOnReplicationPeerReady(String peerId) throws Exception {
