@@ -466,7 +466,8 @@ public class JsonImport {
                 importListener.created(EntityType.RECORD_TYPE, newRecordType.getName().toString(), newRecordType.getId().toString());
                 break;
             case UPDATED:
-                importListener.updated(EntityType.RECORD_TYPE, null, newRecordType.getId().toString(), newRecordType.getVersion());
+                importListener.updated(EntityType.RECORD_TYPE, newRecordType.getName().toString(),
+                        newRecordType.getId().toString(), newRecordType.getVersion());
                 break;
             case UP_TO_DATE:
                 importListener.existsAndEqual(EntityType.RECORD_TYPE, recordType.getName().toString(), null);
