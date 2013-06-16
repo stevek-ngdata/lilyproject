@@ -78,6 +78,7 @@
           <confDirectory>${basedir}/../cr/process/server/conf</confDirectory>
           <artifacts>
             <artifact>org.lilyproject:lily-import:${project.version}</artifact>
+            <artifact>org.lilyproject:lily-bulk-import:${project.version}</artifact>
             <artifact>org.lilyproject:lily-mbox-import:${project.version}</artifact>
             <artifact>org.lilyproject:lily-tester:${project.version}</artifact>
             <artifact>org.lilyproject:lily-indexer-admin-cli:${project.version}</artifact>
