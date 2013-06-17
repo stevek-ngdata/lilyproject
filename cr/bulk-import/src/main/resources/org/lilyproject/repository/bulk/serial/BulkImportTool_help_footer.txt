@@ -7,10 +7,10 @@ content similar to the following:
 
     def map(inputLine, mappingContext):
         rec = mappingContext.newRecord()
-        rec.setRecordType(ctx.qn("{org.lilyproject}Person"))
+        rec.setRecordType(mappingContext.qn("{org.lilyproject}Person"))
         firstName, lastName = inputLine.split(",")
-        rec.setField("{org.lilyproject}FirstName", firstName)
-        rec.setField("{org.lilyproject}LastName", lastName)
+        rec.setField(mappingContext.qn("{org.lilyproject}FirstName"), firstName)
+        rec.setField(mappingContext.qn("{org.lilyproject}LastName"), lastName)
         mappingContext.writeRecord(rec)
 
 The tool can then be started as follows:
