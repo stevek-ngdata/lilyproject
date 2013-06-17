@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# The below is to search whatever is the current version of the MR job jar,
+# we also validate there is not more than one.
+
+jarpath_expr="/usr/lib/lily/lib/org/lilyproject/lily-bulk-import/2.4-SNAPSHOT/lily-bulk-import-*-job.jar"
+
+count=`ls -l $jarpath_expr | wc -l`
+
+if [ "$count" != "1" ]; then
+  echo "More than one MR job jar found."
+  echo ""
+  echo "These are the ones found:"
+  ls -l $jarpath_expr
+  exit 1
+fi
+
+jarpath=`ls $jarpath_expr`
+
+export HADOOP_USER_CLASSPATH_FIRST=true
+export HADOOP_CLASSPATH=`lily-mapreduce-classpath`
+hadoop jar $jarpath $@
