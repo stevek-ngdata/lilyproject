@@ -36,7 +36,6 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.lilyproject.repository.bulk.AbstractBulkImportCliTool;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.python.google.common.io.Files;
 
@@ -78,14 +77,17 @@ public class BulkImportTool extends AbstractBulkImportCliTool implements Tool {
         if (status != 0) {
             return status;
         }
+        
+        String tableName = Table.RECORD.name;
+        if (outputTable != null) {
+            tableName = outputTable;
+        }
 
         conf.set("hbase.zookeeper.quorum", zkConnectionString);
         conf.set(LilyJythonMapper.LILY_ZK_STRING, zkConnectionString);
         conf.set(LilyJythonMapper.MAPPER_CODE, Files.toString(new File(pythonMapperPath), Charsets.UTF_8));
         conf.set(LilyJythonMapper.MAPPER_SYMBOL_NAME, pythonSymbol);
-        if (outputTable != null) {
-            conf.set(LilyJythonMapper.TABLE_NAME, outputTable);
-        }
+        conf.set(LilyJythonMapper.TABLE_NAME, tableName);
 
         Job job = new Job(conf);
 
@@ -103,7 +105,7 @@ public class BulkImportTool extends AbstractBulkImportCliTool implements Tool {
         HFileOutputFormat.setOutputPath(job, tmpDir);
         conf.set(HFILE_PATH, tmpDir.toUri().toString());
 
-        HTable recordTable = new HTable(conf, LilyHBaseSchema.Table.RECORD.bytes);
+        HTable recordTable = new HTable(conf, tableName);
         HFileOutputFormat.configureIncrementalLoad(job, recordTable);
 
         if (!job.waitForCompletion(true)) {
@@ -120,7 +122,7 @@ public class BulkImportTool extends AbstractBulkImportCliTool implements Tool {
         }
         SchemaMetrics.configureGlobally(conf);
         status = ToolRunner.run(new LoadIncrementalHFiles(conf),
-                new String[] { conf.get(HFILE_PATH), Table.RECORD.name });
+                new String[] { conf.get(HFILE_PATH), conf.get(LilyJythonMapper.TABLE_NAME) });
         FileSystem.get(conf).delete(new Path(new URI(conf.get(HFILE_PATH))), true);
         System.exit(status);
     }

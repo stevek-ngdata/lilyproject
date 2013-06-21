@@ -61,8 +61,24 @@ public class LilyJythonMapper extends Mapper<LongWritable, Text, ImmutableBytesW
 
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        long preRecordsWritten = recordWriter.getNumRecords();
         recordWriter.setContext(context);
         lineMapper.mapLine(value.toString(), lineMappingContext);
+        long numWritten = recordWriter.getNumRecords() - preRecordsWritten;
+        updateCounters(context, numWritten);
+    }
+
+    private void updateCounters(Context context, long numWritten) {
+        if (numWritten > 0) {
+            if (numWritten == 1) {
+                context.getCounter(BulkImportCounters.INPUT_LINES_WITH_ONE_OUTPUT_RECORD).increment(1L);
+            } else {
+                context.getCounter(BulkImportCounters.INPUT_LINES_WITH_MULTIPLE_OUTPUT_RECORDS).increment(1L);
+            }
+            context.getCounter(BulkImportCounters.OUTPUT_LILY_RECORDS).increment(numWritten);
+        } else {
+            context.getCounter(BulkImportCounters.INPUT_LINES_WITH_NO_OUTPUT).increment(1L);
+        }
     }
 
     @Override
