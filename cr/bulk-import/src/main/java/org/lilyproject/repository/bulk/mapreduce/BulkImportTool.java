@@ -69,6 +69,10 @@ public class BulkImportTool extends AbstractBulkImportCliTool implements Tool {
     protected String getCmdName() {
         return "lily-bulk-import";
     }
+    
+    private String formatJobName() {
+        return String.format("%s: %s %s %s", getCmdName(), pythonMapperPath, pythonSymbol, inputPath);
+    }
 
     @Override
     public int run(CommandLine cmd) throws Exception {
@@ -101,6 +105,7 @@ public class BulkImportTool extends AbstractBulkImportCliTool implements Tool {
         job.setMapOutputValueClass(Put.class);
         job.setOutputKeyClass(ImmutableBytesWritable.class);
         job.setOutputValueClass(KeyValue.class);
+        job.setJobName(formatJobName());
         TextInputFormat.addInputPath(job, new Path(inputPath));
         HFileOutputFormat.setOutputPath(job, tmpDir);
         conf.set(HFILE_PATH, tmpDir.toUri().toString());
