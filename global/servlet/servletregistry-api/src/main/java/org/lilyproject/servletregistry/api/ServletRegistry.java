@@ -23,4 +23,7 @@ public interface ServletRegistry {
 
     List<ServletRegistryEntry> getEntries();
 
+    void addFilterEntry(ServletFilterRegistryEntry servletFilterEntry);
+
+    List<ServletFilterRegistryEntry> getFilterEntries();
 }

@@ -18,12 +18,17 @@ package org.lilyproject.container.jetty;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lilyproject.servletregistry.api.ServletFilterRegistryEntry;
 import org.lilyproject.servletregistry.api.ServletRegistry;
 import org.lilyproject.servletregistry.api.ServletRegistryEntry;
+import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.FilterHolder;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -51,6 +56,14 @@ public class CustomJettyLauncher {
             ServletHolder servletHolder = new ServletHolder(entry.getServletInstance(context.getServletContext()));
             for (String pattern: entry.getUrlPatterns()) {
                 context.addServlet(servletHolder, pattern);
+            }
+        }
+        for (ServletFilterRegistryEntry servletFilterEntry : servletRegistry.getFilterEntries()) {
+            FilterHolder filterHolder =
+                    new FilterHolder(servletFilterEntry.getServletFilterInstance(context.getServletContext()));
+            for (Map.Entry<String, Integer> patternEntry : servletFilterEntry.getUrlPatterns().entrySet()) {
+                int dispatch = patternEntry.getValue() != null ? patternEntry.getValue() : Handler.DEFAULT;
+                context.addFilter(filterHolder, patternEntry.getKey(), dispatch);
             }
         }
         server.start();

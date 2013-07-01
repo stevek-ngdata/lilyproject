@@ -15,16 +15,21 @@
  */
 package org.lilyproject.servletregistry.impl;
 
+import static java.lang.Integer.valueOf;
+
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import org.lilyproject.servletregistry.api.ServletFilterRegistryEntry;
 import org.lilyproject.servletregistry.api.ServletRegistry;
 import org.lilyproject.servletregistry.api.ServletRegistryEntry;
 
 public class ServletRegistryImpl implements ServletRegistry {
 
     private List<ServletRegistryEntry> entries = Lists.newArrayList();
+    private List<ServletFilterRegistryEntry> filters = Lists.newArrayList();
 
     @Override
     public void addEntry(ServletRegistryEntry entry) {
@@ -34,6 +39,23 @@ public class ServletRegistryImpl implements ServletRegistry {
     @Override
     public List<ServletRegistryEntry> getEntries() {
         return Collections.unmodifiableList(entries);
+    }
+
+    @Override
+    public void addFilterEntry(ServletFilterRegistryEntry servletFilterEntry) {
+        filters.add(servletFilterEntry);
+    }
+
+    @Override
+    public List<ServletFilterRegistryEntry> getFilterEntries() {
+        Collections.sort(filters, new Comparator<ServletFilterRegistryEntry>() {
+            @Override
+            public int compare(ServletFilterRegistryEntry e1,
+                               ServletFilterRegistryEntry e2) {
+                return valueOf(e1.getPriority()).compareTo(e2.getPriority());
+            }
+        });
+        return Collections.unmodifiableList(filters);
     }
 
 }
