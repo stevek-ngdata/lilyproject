@@ -31,6 +31,15 @@
       <name>mapred.job.tracker</name>
       <value>localhost:9001</value>
     </property>
+    <!-- For most jobs launched from within Lily, speculative execution isn't helpful -->
+    <property>
+      <name>mapred.map.tasks.speculative.execution</name>
+      <value>false</value>
+    </property>
+    <property>
+      <name>mapred.reduce.tasks.speculative.execution</name>
+      <value>false</value>
+    </property>
   </properties>
 
 </mapreduce>
