@@ -72,7 +72,11 @@ public class CustomJettyLauncher {
         addPlainConnector(connectors);
 
         server.setConnectors(toArray(connectors, Connector.class));
-        context = new Context(server, "/", Context.SESSIONS);
+        if (sessions()) {
+            context = new Context(server, "/", Context.SESSIONS);
+        } else {
+            context = new Context(server, "/", Context.NO_SESSIONS);
+        }
 
         for (ServletRegistryEntry entry: servletRegistry.getEntries()) {
             ServletHolder servletHolder = new ServletHolder(entry.getServletInstance(context.getServletContext()));
@@ -157,5 +161,9 @@ public class CustomJettyLauncher {
 
     private String keyPassword() {
         return confRegistry.getConfiguration("jetty").getChild("ssl").getChild("keyPassword").getValue(keystorePassword());
+    }
+
+    private boolean sessions(){
+        return confRegistry.getConfiguration("jetty").getChild("sessions").getValueAsBoolean(true);
     }
 }
