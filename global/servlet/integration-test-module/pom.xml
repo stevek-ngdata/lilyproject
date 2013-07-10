@@ -1,0 +1,53 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>servlet-integration-test-module</artifactId>
+
+  <parent>
+    <artifactId>lily-servlet</artifactId>
+    <groupId>org.lilyproject</groupId>
+    <version>2.4-SNAPSHOT</version>
+  </parent>
+
+  <name>Lily: Jetty Container Integration Test Helper Plugin</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-servletregistry-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-repository-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-pluginregistry-api</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>src/main/lily</directory>
+        <targetPath>LILY-INF</targetPath>
+      </resource>
+    </resources>
+
+    <plugins>
+      <plugin>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-genclassloader-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

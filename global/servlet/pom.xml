@@ -38,6 +38,8 @@
     <module>jetty-module</module>
     <module>jersey-helper</module>
     <module>spring-mvc-helper</module>
+    <module>integration-test-module</module>
+    <module>integration-test</module>
   </modules>
 
   <build>

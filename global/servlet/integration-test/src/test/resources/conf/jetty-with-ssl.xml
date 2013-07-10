@@ -1,0 +1,6 @@
+<jetty>
+  <sessions>false</sessions>
+  <ssl>
+      <startSSL>true</startSSL>
+  </ssl>
+</jetty>

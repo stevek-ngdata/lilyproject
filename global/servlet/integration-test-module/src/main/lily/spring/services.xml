@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:lily="http://lilyproject.org/runtime/1.0#springext"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                             http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+                             http://www.springframework.org/schema/context
+                             http://www.springframework.org/schema/context/spring-context-2.5.xsd
+                             http://lilyproject.org/runtime/1.0#springext http://www.lilyproject.org/schemas/runtime/springext.xsd">
+
+  <context:annotation-config/>
+
+  <lily:import-service id="servletRegistry" service="org.lilyproject.servletregistry.api.ServletRegistry"/>
+
+  <lily:module classLoader="moduleClassLoader" handle="module" conf="confRegistry"/>
+
+  <lily:import-service id="repositoryManager"
+                       service="org.lilyproject.repository.api.RepositoryManager"/>
+
+  <bean class="org.lilyproject.container.jetty.test.TestFilterRegisterBean">
+    <constructor-arg ref="servletRegistry" />
+    <constructor-arg>
+      <map>
+        <entry key="/*" value="0" />
+      </map>
+    </constructor-arg>
+    <constructor-arg ref="filter"/>
+  </bean>
+
+  <bean id="filter" class="org.lilyproject.container.jetty.test.TestFilter">
+
+  </bean>
+
+</beans>
