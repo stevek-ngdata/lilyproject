@@ -13,11 +13,11 @@
    height="744.09448"
    id="svg4011"
    version="1.1"
-   inkscape:version="0.48.3.1 r9886"
+   inkscape:version="0.48.4 r9939"
    sodipodi:docname="lily_repository_model.svg"
    inkscape:export-filename="/home/bruno/tmp/lily repository model.png"
-   inkscape:export-xdpi="64.300003"
-   inkscape:export-ydpi="64.300003">
+   inkscape:export-xdpi="63.993946"
+   inkscape:export-ydpi="63.993946">
   <defs
      id="defs4013">
     <marker
@@ -48,9 +48,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="444.74469"
-     inkscape:cy="360.09819"
+     inkscape:zoom="1"
+     inkscape:cx="532.75252"
+     inkscape:cy="545.195"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -67,7 +67,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -91,9 +91,9 @@
        style="fill:#ececec;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect5357"
        width="884"
-       height="196"
+       height="309.0574"
        x="90"
-       y="416.36218" />
+       y="303.30478" />
     <rect
        style="fill:#ffffff;stroke:#000000;stroke-width:0.97031915000000002;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        id="rect5318"
@@ -448,9 +448,10 @@
        sodipodi:nodetypes="cc" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 299,558.36218 41,0"
+       d="m 299.02945,558.36218 43.23923,0"
        id="path5349"
-       sodipodi:nodetypes="cc" />
+       sodipodi:nodetypes="cc"
+       inkscape:connector-curvature="0" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 594,509.36218 0,170"
@@ -486,12 +487,84 @@
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        x="370"
-       y="384.36218"
+       y="278.36218"
        id="text3047"><tspan
          sodipodi:role="line"
          id="tspan3049"
          x="370"
-         y="384.36218"
+         y="278.36218"
          style="font-size:28px">Lily repository model</tspan></text>
+    <rect
+       style="fill:#ffffff;stroke:#000000;stroke-width:1.17841744;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect5345-2"
+       width="150.21855"
+       height="58.821583"
+       x="769.11017"
+       y="451.6091" />
+    <text
+       id="text4035-4"
+       y="474.83115"
+       x="775.7406"
+       style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         style="font-size:16px"
+         y="474.83115"
+         x="775.7406"
+         id="tspan4037-5"
+         sodipodi:role="line">FIELD METADATA</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="774.98529"
+       y="493.896"
+       id="text4043-2"><tspan
+         sodipodi:role="line"
+         id="tspan4045-9"
+         x="774.98529"
+         y="493.896">free key-value pairs</tspan></text>
+    <rect
+       style="fill:#ffffff;stroke:#000000;stroke-width:1.0094533;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect5343-3"
+       width="203.37531"
+       height="72.309303"
+       x="105.15146"
+       y="323.44391" />
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="169.80307"
+       y="343.97409"
+       id="text4021-5"><tspan
+         sodipodi:role="line"
+         id="tspan4023-8"
+         x="169.80307"
+         y="343.97409"
+         style="font-size:16px">TABLE</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="116.75031"
+       y="364.06473"
+       id="text4025-4"><tspan
+         sodipodi:role="line"
+         x="116.75031"
+         y="364.06473"
+         id="tspan4033-9">A table is a list of records,</tspan><tspan
+         sodipodi:role="line"
+         x="116.75031"
+         y="381.56473"
+         id="tspan4110">possibly of different types</tspan></text>
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 203.3036,394.9736 0,40.32875"
+       id="path5347-3"
+       sodipodi:nodetypes="cc" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 663.33636,471.83795 105.92564,0"
+       id="path5349-4"
+       sodipodi:nodetypes="cc" />
   </g>
 </svg>
