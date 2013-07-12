@@ -41,6 +41,8 @@ import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.MutationCondition;
 import org.lilyproject.repository.api.QName;
@@ -73,7 +75,7 @@ import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 /**
- * The code in this class is used in the repository API tutorial (390-OTC). If this
+ * The code in this class is used in the repository API tutorial (390-lily). If this
  * code needs updating because of API changes, then the tutorial itself probably needs
  * to be updated too.
  */
@@ -85,7 +87,8 @@ public class TutorialTest {
 
     private static TypeManager typeManager;
     private static RepositoryManager repositoryManager;
-    private static Repository repository;
+    private static LRepository repository;
+    private static LTable table;
     private static Configuration configuration;
     private static ZooKeeperItf zooKeeper;
 
@@ -121,6 +124,7 @@ public class TutorialTest {
         }
 
         repository = (Repository)repositoryManager.getDefaultRepository().getDefaultTable();
+        table = repository.getDefaultTable();
     }
 
     @AfterClass
@@ -184,7 +188,7 @@ public class TutorialTest {
     @Test
     public void createRecord() throws Exception {
         // (1)
-        Record record = repository.newRecord();
+        Record record = table.newRecord();
 
         // (2)
         record.setRecordType(new QName(BNS, "Book"));
@@ -193,7 +197,7 @@ public class TutorialTest {
         record.setField(new QName(BNS, "title"), "Lily, the definitive guide, 3rd edition");
 
         // (4)
-        record = repository.create(record);
+        record = table.create(record);
 
         // (5)
         PrintUtil.print(record, repository);
@@ -202,11 +206,11 @@ public class TutorialTest {
     @Test
     public void createRecordUserSpecifiedId() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
-        Record record = repository.newRecord(id);
+        Record record = table.newRecord(id);
         record.setDefaultNamespace(BNS);
         record.setRecordType("Book");
         record.setField("title", "Lily, the definitive guide, 3rd edition");
-        record = repository.create(record);
+        record = table.create(record);
 
         PrintUtil.print(record, repository);
     }
@@ -214,12 +218,12 @@ public class TutorialTest {
     @Test
     public void updateRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
-        Record record = repository.newRecord(id);
+        Record record = table.newRecord(id);
         record.setDefaultNamespace(BNS);
         record.setField("title", "Lily, the definitive guide, third edition");
         record.setField("pages", Long.valueOf(912));
         record.setField("manager", "Manager M");
-        record = repository.update(record);
+        record = table.update(record);
 
         PrintUtil.print(record, repository);
     }
@@ -227,12 +231,12 @@ public class TutorialTest {
     @Test
     public void updateRecordViaRead() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
-        Record record = repository.read(id);
+        Record record = table.read(id);
         record.setDefaultNamespace(BNS);
         record.setField("released", new LocalDate());
         record.setField("authors", Arrays.asList("Author A", "Author B"));
         record.setField("review_status", "reviewed");
-        record = repository.update(record);
+        record = table.update(record);
 
         PrintUtil.print(record, repository);
     }
@@ -243,9 +247,9 @@ public class TutorialTest {
         conditions.add(new MutationCondition(new QName(BNS, "manager"), "Manager Z"));
 
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
-        Record record = repository.read(id);
+        Record record = table.read(id);
         record.setField(new QName(BNS, "manager"), "Manager P");
-        record = repository.update(record, conditions);
+        record = table.update(record, conditions);
 
         System.out.println(record.getResponseStatus());
     }
@@ -254,18 +258,17 @@ public class TutorialTest {
     public void readRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
 
-
         // (1)
-        Record record = repository.read(id);
+        Record record = table.read(id);
         String title = (String)record.getField(new QName(BNS, "title"));
         System.out.println(title);
 
         // (2)
-        record = repository.read(id, 1L);
+        record = table.read(id, 1L);
         System.out.println(record.getField(new QName(BNS, "title")));
 
         // (3)
-        record = repository.read(id, 1L, Arrays.asList(new QName(BNS, "title")));
+        record = table.read(id, 1L, new QName(BNS, "title"));
         System.out.println(record.getField(new QName(BNS, "title")));
     }
 
@@ -280,7 +283,7 @@ public class TutorialTest {
 
         // (1)
         Blob blob = new Blob("text/html", (long)descriptionData.length, "description.xml");
-        OutputStream os = repository.getOutputStream(blob);
+        OutputStream os = table.getOutputStream(blob);
         try {
             os.write(descriptionData);
         } finally {
@@ -289,16 +292,16 @@ public class TutorialTest {
 
         // (2)
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
-        Record record = repository.newRecord(id);
+        Record record = table.newRecord(id);
         record.setField(new QName(BNS, "description"), blob);
-        record = repository.update(record);
+        record = table.update(record);
 
         //
         // Read a blob
         //
         InputStream is = null;
         try {
-            is = repository.getInputStream(record, new QName(BNS, "description"));
+            is = table.getInputStream(record, new QName(BNS, "description"));
             System.out.println("Data read from blob is:");
             Reader reader = new InputStreamReader(is, "UTF-8");
             char[] buffer = new char[20];
@@ -328,20 +331,20 @@ public class TutorialTest {
         RecordId enId = idGenerator.newRecordId(masterId, variantProps);
 
         // (4)
-        Record enRecord = repository.newRecord(enId);
+        Record enRecord = table.newRecord(enId);
         enRecord.setRecordType(new QName(BNS, "Book"));
         enRecord.setField(new QName(BNS, "title"), "Car maintenance");
-        enRecord = repository.create(enRecord);
+        enRecord = table.create(enRecord);
 
         // (5)
         RecordId nlId = idGenerator.newRecordId(enRecord.getId().getMaster(), Collections.singletonMap("language", "nl"));
-        Record nlRecord = repository.newRecord(nlId);
+        Record nlRecord = table.newRecord(nlId);
         nlRecord.setRecordType(new QName(BNS, "Book"));
         nlRecord.setField(new QName(BNS, "title"), "Wagen onderhoud");
-        nlRecord = repository.create(nlRecord);
+        nlRecord = table.create(nlRecord);
 
         // (6)
-        Set<RecordId> variants = repository.getVariants(masterId);
+        Set<RecordId> variants = table.getVariants(masterId);
         for (RecordId variant : variants) {
             System.out.println(variant);
         }
@@ -350,22 +353,22 @@ public class TutorialTest {
     @Test
     public void linkField() throws Exception {
         // (1)
-        Record record1 = repository.newRecord();
+        Record record1 = table.newRecord();
         record1.setRecordType(new QName(BNS, "Book"));
         record1.setField(new QName(BNS, "title"), "Fishing 1");
-        record1 = repository.create(record1);
+        record1 = table.create(record1);
 
         // (2)
-        Record record2 = repository.newRecord();
+        Record record2 = table.newRecord();
         record2.setRecordType(new QName(BNS, "Book"));
         record2.setField(new QName(BNS, "title"), "Fishing 2");
         record2.setField(new QName(BNS, "sequel_to"), new Link(record1.getId()));
-        record2 = repository.create(record2);
+        record2 = table.create(record2);
 
         // (3)
         Link sequelToLink = (Link)record2.getField(new QName(BNS, "sequel_to"));
         RecordId sequelTo = sequelToLink.resolve(record2.getId(), repository.getIdGenerator());
-        Record linkedRecord = repository.read(sequelTo);
+        Record linkedRecord = table.read(sequelTo);
         System.out.println(linkedRecord.getField(new QName(BNS, "title")));
     }
 
@@ -393,23 +396,23 @@ public class TutorialTest {
         articleType = typeManager.createRecordType(articleType);
 
         // (3)
-        Record author1 = repository.newRecord();
+        Record author1 = table.newRecord();
         author1.setRecordType(authorType.getName());
         author1.setField(name.getName(), "Author X");
         author1.setField(name.getName(), "author_x@authors.com");
 
-        Record author2 = repository.newRecord();
+        Record author2 = table.newRecord();
         author2.setRecordType(new QName(ANS, "author"));
         author2.setField(name.getName(), "Author Y");
         author2.setField(name.getName(), "author_y@authors.com");
 
         // (4)
-        Record article = repository.newRecord();
+        Record article = table.newRecord();
         article.setRecordType(articleType.getName());
         article.setField(new QName(ANS, "title"), "Title of the article");
         article.setField(new QName(ANS, "authors"), Lists.newArrayList(author1, author2));
         article.setField(new QName(ANS, "body"), "Body text of the article");
-        article = repository.create(article);
+        article = table.create(article);
 
         PrintUtil.print(article, repository);
     }
