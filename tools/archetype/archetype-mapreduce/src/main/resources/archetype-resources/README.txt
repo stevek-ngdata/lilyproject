@@ -16,8 +16,6 @@ required dependencies in the lib subdir.
 
 To run this example:
 
- - check the jobtracker port in MyJob.java (check mapred-site.xml on your jobtracker host. Common values are 8021, 9001 and 8012.)
-
  - compile this project using "mvn install"
 
  - have a Lily stack running, e.g. using launch-test-lily
@@ -45,12 +43,22 @@ To run this example:
 
  - start the MapReduce job
 
-   /path/to/hadoop-2.0.0-mr1-cdh4.0.X/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar com.mycompany.MyJob [jobtrackerhost]
+   - when hadoop conf/*-site.xml is properly configured:
 
-   (this assumes JobTracker/Namenode/ZooKeeper is running on localhost,
-   see MyJob code to adjust)
+   /path/to/hadoop-2.0.0-mr1-cdh4.0.X/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar -z localhost
 
- - if the job has run correctly, you can run lily-scan-records to
+   - when using launch-test-lily:
+
+   /path/to/hadoop-2.0.0-mr1-cdh4.0.X/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar -jt localhost:9001 -fs localhost:8020 -z localhost
+
+   Note:
+    - the options -jt and -fs are generic hadoop options handled by ToolRunner
+    - when you don't configure hadoop, the MR job will also run, but it will
+      run in the local (embedded) jobtracker, i.e. not distributed.
+    - it knows what class to run because we configured the main class in
+      the jar manifest, see pom.xml
+
+ - if the job ran correctly, you can run lily-scan-records to
    check the output produced by the reducer:
 
    This will print out entries like the following:

@@ -1,11 +1,21 @@
 package ${package};
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.repository.api.QName;
@@ -19,26 +29,23 @@ import java.io.IOException;
 /**
  * Sets up and launches a Lily-based MapReduce job.
  */
-public class MyJob {
+public class MyJob extends Configured implements Tool {
+    private String zkConnectString;
+
     public static void main(String[] args) throws Exception {
-        String masterHost;
-        if (args.length == 0) {
-            System.out.println();
-            System.out.println("Assuming your JobTracker, Namenode and ZooKeeper run on localhost.");
-            System.out.println();
-            masterHost = "localhost";
-        } else {
-            masterHost = args[0];
+        // Let <code>ToolRunner</code> handle generic command-line options
+        int res = ToolRunner.run(new Configuration(), new MyJob(), args);
+        System.exit(res);
+    }
+
+    @Override
+    public int run(String[] args) throws Exception {
+        int result = parseArgs(args);
+        if (result != 0) {
+            return result;
         }
 
-        Configuration config = HBaseConfiguration.create();
-
-        // If you launch this using Hadoop tools and your -site.xml files are configured, then
-        // you can drop these settings here.
-        config.set("mapred.job.tracker", masterHost + ":9001");
-        config.set("fs.defaultFS", "hdfs://" + masterHost + ":8020");
-
-        String zkConnectString = masterHost;
+        Configuration config = getConf();
 
         Job job = new Job(config, "MyJob");
         job.setJarByClass(MyJob.class);
@@ -73,5 +80,38 @@ public class MyJob {
         if (!b) {
             throw new IOException("error executing job!");
         }
+
+        return 0;
+    }
+
+    @SuppressWarnings("static-access")
+    protected int parseArgs(String[] args) {
+        Options cliOptions = new Options();
+
+        Option zkOption = OptionBuilder
+                .isRequired()
+                .withArgName("connection-string")
+                .hasArg()
+                .withDescription("ZooKeeper connection string: hostname1:port,hostname2:port,...")
+                .withLongOpt("zookeeper")
+                .create("z");
+        cliOptions.addOption(zkOption);
+
+        CommandLineParser parser = new PosixParser();
+        CommandLine cmd;
+        try {
+            cmd = parser.parse(cliOptions, args);
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            System.out.println();
+
+            HelpFormatter help = new HelpFormatter();
+            help.printHelp(getClass().getSimpleName(), cliOptions, true);
+            return 1;
+        }
+
+        zkConnectString = cmd.getOptionValue(zkOption.getOpt());
+
+        return 0;
     }
 }

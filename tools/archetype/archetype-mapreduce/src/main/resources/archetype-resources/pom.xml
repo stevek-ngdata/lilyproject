@@ -33,6 +33,11 @@
           <descriptors>
             <descriptor>mrjob-assembly.xml</descriptor>
           </descriptors>
+          <archive>
+            <manifest>
+              <mainClass>${package}.MyJob</mainClass>
+            </manifest>
+          </archive>
         </configuration>
         <executions>
           <execution>
