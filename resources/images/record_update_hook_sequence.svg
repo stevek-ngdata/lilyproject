@@ -13,7 +13,7 @@
    height="1052.3622047"
    id="svg3023"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.4 r9939"
    sodipodi:docname="record_update_hook_sequence.svg"
    inkscape:export-filename="/home/bruno/tmp/record_update_hook_sequence.png"
    inkscape:export-xdpi="81.489998"
@@ -33,6 +33,20 @@
          d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
          transform="scale(1.1) rotate(180) translate(1,0)" />
     </marker>
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Lend-4"
+       style="overflow:visible">
+      <path
+         inkscape:connector-curvature="0"
+         id="path3875-3"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)" />
+    </marker>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -50,9 +64,9 @@
      showguides="true"
      inkscape:guide-bbox="true"
      inkscape:window-width="1920"
-     inkscape:window-height="1145"
-     inkscape:window-x="1680"
-     inkscape:window-y="1"
+     inkscape:window-height="1176"
+     inkscape:window-x="1920"
+     inkscape:window-y="24"
      inkscape:window-maximized="1">
     <sodipodi:guide
        orientation="0,1"
@@ -71,7 +85,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -136,17 +150,6 @@
          x="308.14285"
          y="60.219322"
          style="font-size:14px;fill:#ff0000">RecordUpdateHook</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="161"
-       y="122.93361"
-       id="text3819"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         id="tspan3821"
-         x="161"
-         y="122.93361">(1) lock row</tspan></text>
     <rect
        y="38.076466"
        x="459.71429"
@@ -193,8 +196,8 @@
     <path
        inkscape:connector-curvature="0"
        id="path3839"
-       d="m 378.14286,73.076463 0,185.000007"
-       style="fill:none;stroke:#ff0000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:8, 4;stroke-dashoffset:0" />
+       d="m 398.14286,73.076463 0,185.000007"
+       style="fill:none;stroke:#ff0000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:8, 4;stroke-dashoffset:0" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:8,4;stroke-dashoffset:0"
        d="m 492.14286,73.076463 0,185.000007"
@@ -226,57 +229,53 @@
          id="tspan4297"
          x="65.571426"
          y="97.076469">update</tspan></text>
-    <path
-       inkscape:connector-curvature="0"
-       id="path4299"
-       d="m 153.57144,128.50504 337.83042,0"
-       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)" />
     <text
        sodipodi:linespacing="125%"
        id="text4301"
-       y="146.93361"
+       y="126.93361"
        x="161"
        style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        xml:space="preserve"><tspan
-         y="146.93361"
+         y="126.93361"
          x="161"
          id="tspan4303"
-         sodipodi:role="line">(2) get field types snapshot</tspan></text>
+         sodipodi:role="line">(1) get field types snapshot</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
-       d="m 153.57144,152.50504 419.77244,0"
+       d="m 153.57144,132.50504 419.77244,0"
        id="path4305"
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        x="161"
-       y="168.93361"
+       y="148.93361"
        id="text4307"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan4309"
          x="161"
-         y="168.93361">(3) read current record state</tspan></text>
+         y="148.93361">(2) read current record state</tspan></text>
     <path
        inkscape:connector-curvature="0"
        id="path4311"
-       d="m 153.57144,174.50504 337.83042,0"
+       d="m 153.57144,154.50504 337.83042,0"
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)" />
     <text
        sodipodi:linespacing="125%"
        id="text4313"
-       y="190.93361"
+       y="170.93361"
        x="161"
        style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        xml:space="preserve"><tspan
-         y="190.93361"
+         y="170.93361"
          x="161"
          id="tspan4315"
-         sodipodi:role="line">(4) call record-update-hook(s)</tspan></text>
+         sodipodi:role="line">(3) call record-update-hook(s)</tspan></text>
     <g
        id="g4352"
-       style="fill:#ff0000">
+       style="fill:#ff0000"
+       transform="matrix(1.0827425,0,0,1,-12.706141,-20)">
       <path
          style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
          d="m 153.5625,196 0,1 223.125,0 0,-1 -223.125,0 z"
@@ -284,7 +283,7 @@
          inkscape:connector-curvature="0" />
       <path
          d="m 365.99258,192.06793 12.01847,4.4195 -12.01847,4.41949 c 1.92005,-2.60927 1.90899,-6.1792 0,-8.83899 z"
-         style="font-size:12px;fill-rule:evenodd;stroke-width:0.62500000000000000;stroke-linejoin:round;fill:#ff0000"
+         style="font-size:12px;fill:#ff0000;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
          id="path4358"
          inkscape:connector-curvature="0" />
     </g>
@@ -292,28 +291,44 @@
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        x="161"
-       y="212.93361"
+       y="192.93361"
        id="text4319"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan4321"
          x="161"
-         y="212.93361">remainder of update algoritm</tspan></text>
+         y="192.93361">remainder of update algoritm</tspan></text>
     <path
        inkscape:connector-curvature="0"
        id="path4323"
-       d="m 153.57144,218.50504 181.78432,0"
+       d="m 153.57144,198.50504 181.78432,0"
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)" />
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        x="335.71429"
-       y="222.79076"
+       y="202.79076"
        id="text4325"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan4327"
          x="335.71429"
-         y="222.79076">...</tspan></text>
+         y="202.79076">...</tspan></text>
+    <path
+       inkscape:connector-curvature="0"
+       id="path4311-1"
+       d="m 152.81364,229.95123 337.83042,0"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="158.20926"
+       y="224.12976"
+       id="text4307-1"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4309-2"
+         x="158.20926"
+         y="224.12976">update record if not changed since (2)</tspan></text>
   </g>
 </svg>
