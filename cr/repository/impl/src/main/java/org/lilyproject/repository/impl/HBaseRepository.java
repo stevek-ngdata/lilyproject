@@ -1402,11 +1402,29 @@ public class HBaseRepository extends BaseRepository {
             }
             ValueType valueType = fieldType.getValueType();
 
+            // fieldValue should never be null by the time we get here, but check anyway
+            if (fieldValue == null) {
+                throw new RepositoryException("Null field values are not allowed. Field: " + fieldType.getName());
+            }
+
+            if (!valueType.getType().isAssignableFrom(fieldValue.getClass())) {
+                throw new RepositoryException(String.format("Incorrect type of value provided for field %s. "
+                        + "Expected instance of %s but got %s.", fieldType.getName(), valueType.getType().getName(),
+                        fieldValue.getClass().getName()));
+            }
+
             DataOutput dataOutput = new DataOutputImpl();
             boolean hasMetadata = metadata != null && !metadata.getMap().isEmpty();
 
             dataOutput.writeByte(hasMetadata ? FieldFlags.METADATA_V1 : FieldFlags.DEFAULT);
-            valueType.write(fieldValue, dataOutput, new IdentityRecordStack(parentRecord));
+            try {
+                valueType.write(fieldValue, dataOutput, new IdentityRecordStack(parentRecord));
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (Exception e) {
+                // wrap the exception so that it is known what field causes the problem
+                throw new RepositoryException("Error serializing value for field " + fieldType.getName(), e);
+            }
 
             if (hasMetadata) {
                 if (fieldType.getScope() == Scope.VERSIONED_MUTABLE) {
