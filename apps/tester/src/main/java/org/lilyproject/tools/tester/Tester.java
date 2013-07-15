@@ -297,7 +297,7 @@ public class Tester extends BaseRepositoryTestTool {
                 }
             }
         }
-        testRecordType.setRecordType(jsonImport.importRecordType(recordType));
+        testRecordType.setRecordType(typeManager.createOrUpdateRecordType(recordType));
         recordTypes.put(recordType.getName(), testRecordType);
     }
 
@@ -370,7 +370,7 @@ public class Tester extends BaseRepositoryTestTool {
                     recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
                     testRecordType.addFieldType(fieldType);
                 }
-                testRecordType.setRecordType(jsonImport.importRecordType(recordType));
+                testRecordType.setRecordType(typeManager.createOrUpdateRecordType(recordType));
                 recordTypes.put(recordType.getName(), testRecordType);
             }
         }

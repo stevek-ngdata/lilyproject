@@ -80,6 +80,9 @@ public class JsonImport {
 
     private static final int DEFAULT_THREAD_COUNT = 1;
 
+    private static final String FAIL_IF_EXISTS = "failIfExists";
+    private static final String FAIL_IF_NOT_EXISTS = "failIfNotExists";
+
     public static class ImportSettings {
         public int threadCount = DEFAULT_THREAD_COUNT;
         public RecordReader recordReader = RecordReader.INSTANCE;
@@ -447,17 +450,14 @@ public class JsonImport {
         }
 
         RecordType recordType = RecordTypeReader.INSTANCE.fromJson(node, namespaces, repository);
-        return importRecordType(recordType);
-    }
-
-    public RecordType importRecordType(RecordType recordType) throws RepositoryException, ImportException,
-            JsonFormatException, InterruptedException {
 
         if (recordType.getName() == null) {
             throw new ImportException("Missing name property on record type.");
         }
 
-        ImportResult<RecordType> result = RecordTypeImport.importRecordType(recordType, ImportMode.CREATE_OR_UPDATE,
+        ImportMode mode = getImportMode(node, ImportMode.CREATE_OR_UPDATE);
+
+        ImportResult<RecordType> result = RecordTypeImport.importRecordType(recordType, mode,
                 IdentificationMode.NAME, recordType.getName(), true, repository.getTypeManager());
         RecordType newRecordType = result.getEntity();
 
@@ -472,6 +472,24 @@ public class JsonImport {
             case UP_TO_DATE:
                 importListener.existsAndEqual(EntityType.RECORD_TYPE, recordType.getName().toString(), null);
                 break;
+            case CANNOT_CREATE_EXISTS:
+                boolean failIfExists = getBoolean(node, FAIL_IF_EXISTS, true);
+                if (!failIfExists) {
+                    importListener.allowedFailure(EntityType.RECORD_TYPE, recordType.getName().toString(), null,
+                            "cannot create, record type exists");
+                    break;
+                } else {
+                    throw new ImportException("Cannot create record type, it already exists: " + recordType.getName());
+                }
+            case CANNOT_UPDATE_DOES_NOT_EXIST:
+                boolean failIfNotExists = getBoolean(node, FAIL_IF_NOT_EXISTS, true);
+                if (!failIfNotExists) {
+                    importListener.allowedFailure(EntityType.RECORD_TYPE, recordType.getName().toString(), null,
+                            "cannot update, record type does not exist");
+                    break;
+                } else {
+                    throw new ImportException("Cannot update record type, it does not exist: " + recordType.getName());
+                }
             default:
                 throw new ImportException("Unexpected import result type for record type: " + result.getResultType());
         }
@@ -506,6 +524,19 @@ public class JsonImport {
         }
     }
 
+    private ImportMode getImportMode(JsonNode node, ImportMode defaultMode) throws ImportException {
+        String modeName = getString(node, "mode", null);
+        if (modeName != null) {
+            try {
+                return ImportMode.valueOf(modeName.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new ImportException(String.format("Illegal value for import mode: %s", modeName));
+            }
+        } else {
+            return defaultMode;
+        }
+    }
+
     private Record importRecord(JsonNode node) throws RepositoryException, ImportException, JsonFormatException,
             InterruptedException {
 
@@ -515,15 +546,7 @@ public class JsonImport {
 
         Record record = recordReader.fromJson(node, namespaces, repository);
 
-        ImportMode mode = ImportMode.CREATE_OR_UPDATE;
-        String modeName = getString(node, "mode", null);
-        if (modeName != null) {
-            try {
-                mode = ImportMode.valueOf(modeName.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new ImportException(String.format("Illegal value for import mode: %s", modeName));
-            }
-        }
+        ImportMode mode = getImportMode(node, ImportMode.CREATE_OR_UPDATE);
 
         if (mode == ImportMode.UPDATE && record.getId() == null) {
             throw new ImportException(String.format("Import mode %s is specified but the record has no id.",
@@ -551,7 +574,7 @@ public class JsonImport {
                 importListener.updated(EntityType.RECORD, null, record.getId().toString(), record.getVersion());
                 break;
             case CANNOT_CREATE_EXISTS:
-                boolean failIfExists = getBoolean(node, "failIfExists", true);
+                boolean failIfExists = getBoolean(node, FAIL_IF_EXISTS, true);
                 if (!failIfExists) {
                     importListener.allowedFailure(EntityType.RECORD, null, String.valueOf(inputRecordId),
                             "cannot create, record exists");
@@ -560,7 +583,7 @@ public class JsonImport {
                     throw new ImportException("Cannot create record, it already exists: " + inputRecordId);
                 }
             case CANNOT_UPDATE_DOES_NOT_EXIST:
-                boolean failIfNotExists = getBoolean(node, "failIfNotExists", true);
+                boolean failIfNotExists = getBoolean(node, FAIL_IF_NOT_EXISTS, true);
                 if (!failIfNotExists) {
                     importListener.allowedFailure(EntityType.RECORD, null, String.valueOf(inputRecordId),
                             "cannot update, record does not exist");
