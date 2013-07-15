@@ -596,7 +596,7 @@ public class ValueTypeTest {
         try {
             Record createdRecord = repository.recordBuilder().recordType(new QName(ns, "rt2")).field(new QName(ns,"field2"), recordField).create();
             Assert.fail();
-        } catch (RecordException expected) {
+        } catch (RepositoryException expected) {
         }
     }
 
@@ -674,7 +674,7 @@ public class ValueTypeTest {
         try {
             repository.recordBuilder().recordType(new QName(ns, "rt2")).field(new QName(ns,"field2"), recordField).create();
             Assert.fail();
-        } catch (RecordException expected) {
+        } catch (RepositoryException expected) {
 
         }
     }
