@@ -127,7 +127,7 @@ public class JsonImport {
      */
     public static void loadSchema(LRepository repository, InputStream is, ImportSettings settings)
             throws Exception {
-        new JsonImport(null, repository, settings).load(is, false);
+        new JsonImport(null, repository, settings).load(is, true);
     }
 
     /**
@@ -136,7 +136,7 @@ public class JsonImport {
      */
     public static void loadSchema(LRepository repository, InputStream is)
             throws Exception {
-        new JsonImport(null, repository, new ImportSettings()).load(is, false);
+        new JsonImport(null, repository, new ImportSettings()).load(is, true);
     }
 
     /**
