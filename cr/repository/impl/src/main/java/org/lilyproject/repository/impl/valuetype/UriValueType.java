@@ -50,7 +50,7 @@ public class UriValueType extends AbstractValueType implements ValueType {
 
     @Override
     public Class getType() {
-        return Long.class;
+        return URI.class;
     }
 
     @Override
