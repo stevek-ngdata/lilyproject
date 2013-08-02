@@ -100,7 +100,7 @@ public class ClassLoadingLilyLauncher {
                 @Override
                 public URL apply(String input) {
                     try {
-                        return new URL(input);
+                        return new File(input).toURI().toURL();
                     } catch (MalformedURLException e) {
                         throw new RuntimeException("error parsing additional classpath", e);
                     }
