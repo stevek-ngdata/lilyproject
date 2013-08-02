@@ -30,6 +30,10 @@ import java.util.Map;
 
 import org.w3c.dom.Document;
 
+/**
+ * Run the LilyLauncher with a classloader configured based on a classloader.xml file. This is done to prevent
+ * unwieldy long classpath environment variables to be setup in the launcher scripts.
+ */
 public class ClassLoadingLilyLauncher {
     private File repositoryLocation;
 
