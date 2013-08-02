@@ -15,8 +15,6 @@
  */
 package org.lilyproject.lilyservertestfwloader;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -40,7 +41,13 @@ public class LauncherClasspathHelper {
     }
 
     public static ClassLoader getClassLoader(String configResource, File repositoryLocation) {
-        URL[] classPath = getClassPath(configResource, repositoryLocation);
+        return getClassLoader(configResource, repositoryLocation);
+    }
+
+    public static ClassLoader getClassLoader(String configResource, File repositoryLocation,
+                                             List<URL> additionalClasspathEntries) {
+        List<URL> classPath = getClassPath(configResource, repositoryLocation);
+        classPath.addAll(additionalClasspathEntries);
 
         // Set the classpath also in the system property java.class.path
         // When the MapReduce taskjvm.sh scripts are generated,
@@ -55,10 +62,10 @@ public class LauncherClasspathHelper {
         }
         System.setProperty("java.class.path", builder.toString());
 
-        return new URLClassLoader(classPath, LauncherClasspathHelper.class.getClassLoader());
+        return new URLClassLoader(classPath.toArray(new URL[classPath.size()]), LauncherClasspathHelper.class.getClassLoader());
     }
 
-    public static URL[] getClassPath(String configResource, File repositoryLocation) {
+    public static List<URL> getClassPath(String configResource, File repositoryLocation) {
         Document document;
         InputStream is = LauncherClasspathHelper.class.getClassLoader().getResourceAsStream(configResource);
         if (is == null) {
@@ -76,7 +83,7 @@ public class LauncherClasspathHelper {
         for (int i = 0; i < children.getLength(); i++) {
             Node node = children.item(i);
             if (node instanceof Element && node.getLocalName().equals("classpath")) {
-                classPathEl = (Element)node;
+                classPathEl = (Element) node;
                 break;
             }
         }
@@ -90,14 +97,14 @@ public class LauncherClasspathHelper {
             for (int i = 0; i < children.getLength(); i++) {
                 Node node = children.item(i);
                 if (node instanceof Element && node.getLocalName().equals("artifact")) {
-                    Element artifactEl = (Element)node;
+                    Element artifactEl = (Element) node;
                     URL artifactURL = getArtifactURL(artifactEl, repositoryLocation, lilyVersion);
                     if (artifactURL != null) {
                         artifactURLs.add(artifactURL);
                     }
                 }
             }
-            return artifactURLs.toArray(new URL[0]);
+            return artifactURLs;
         }
     }
 

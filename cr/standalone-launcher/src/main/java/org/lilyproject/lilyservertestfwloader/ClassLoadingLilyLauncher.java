@@ -15,19 +15,28 @@
  */
 package org.lilyproject.lilyservertestfwloader;
 
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
-import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
+import com.google.common.base.Function;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.w3c.dom.Document;
 
 /**
@@ -60,7 +69,8 @@ public class ClassLoadingLilyLauncher {
 
     public void run(String[] args) throws Throwable {
 
-        ClassLoader classLoader = LauncherClasspathHelper.getClassLoader("org/lilyproject/lilyservertestfwloader/classloader.xml", repositoryLocation);
+        ClassLoader classLoader = LauncherClasspathHelper.getClassLoader(
+                "org/lilyproject/lilyservertestfwloader/classloader.xml", repositoryLocation, buildAdditionalClassPath());
         Thread.currentThread().setContextClassLoader(classLoader);
 
         Method mainMethod;
@@ -72,11 +82,30 @@ public class ClassLoadingLilyLauncher {
         }
 
         try {
-            mainMethod.invoke(null, (Object)args);
+            mainMethod.invoke(null, (Object) args);
         } catch (IllegalAccessException e) {
             throw new RuntimeException("Error launching Lily launcher", e);
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
+        }
+    }
+
+    private List<URL> buildAdditionalClassPath() {
+        String additionalCp = System.getProperty("lily.testlauncher.additional.classpath");
+        if (additionalCp == null) {
+            return Collections.emptyList();
+        } else {
+            Iterable<String> strings = Splitter.on(":").trimResults().split(additionalCp);
+            return Lists.newArrayList(Iterables.transform(strings, new Function<String, URL>() {
+                @Override
+                public URL apply(String input) {
+                    try {
+                        return new URL(input);
+                    } catch (MalformedURLException e) {
+                        throw new RuntimeException("error parsing additional classpath", e);
+                    }
+                }
+            }));
         }
     }
 
