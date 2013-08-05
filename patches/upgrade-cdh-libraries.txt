@@ -49,12 +49,12 @@ Build & deploy
 --------------
 Build using:
 
-mvn -Dhadoop.profile=23 -DskipTests clean install
+mvn -Psecurity -Dhadoop.profile=23 -DskipTests clean install
 
 Deploy jars using:
 But first make sure you set up Maven repository access as described on the NGDATA dev-wiki.
 
-mvn deploy -Dhadoop.profile=23 -DskipTests -DaltDeploymentRepository=org.lilyproject.maven-deploy::default::scp://lilyproject.org/var/www/lilyproject.org/maven/maven2/deploy
+mvn deploy -Psecurity -Dhadoop.profile=23 -DskipTests -DaltDeploymentRepository=org.lilyproject.maven-deploy::default::scp://lilyproject.org/var/www/lilyproject.org/maven/maven2/deploy
 
 
 Change the Lily code to use the new libraries
