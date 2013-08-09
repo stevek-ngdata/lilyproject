@@ -389,9 +389,8 @@ public class AvroLilyImpl implements AvroLily {
     public Object index(String repositoryName, String table, ByteBuffer recordId)
             throws AvroInterruptedException, AvroIndexerException {
         try {
-            // TODO multiple repositories
             LRepository repository = repositoryManager.getRepository(repositoryName);
-            indexer.index(table, converter.convertAvroRecordId(recordId, repository));
+            indexer.index(repositoryName, table, converter.convertAvroRecordId(recordId, repository));
             return null;
         } catch (InterruptedException e) {
             throw converter.convert(e);
@@ -406,9 +405,9 @@ public class AvroLilyImpl implements AvroLily {
     public Object indexOn(String repositoryName, String table, ByteBuffer recordId, List<String> indexes)
             throws AvroInterruptedException, AvroIndexerException {
         try {
-            // TODO multiple repositories
             LRepository repository = repositoryManager.getRepository(repositoryName);
-            indexer.indexOn(table, converter.convertAvroRecordId(recordId, repository), new HashSet<String>(indexes));
+            indexer.indexOn(repositoryName, table,
+                    converter.convertAvroRecordId(recordId, repository), new HashSet<String>(indexes));
             return null;
         } catch (IndexerException e) {
             throw converter.convert(e);

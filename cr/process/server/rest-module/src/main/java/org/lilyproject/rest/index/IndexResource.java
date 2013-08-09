@@ -179,12 +179,13 @@ public class IndexResource extends TypeManagerEnabled {
     @POST
     @Path("{name}")
     public void indexOn(@QueryParam("action") String action, @QueryParam("table") String table,
-            @PathParam("name") String indexName, @QueryParam("id") String recordId) throws Exception {
+                        @QueryParam("repo") String repo, @PathParam("name") String indexName,
+                        @QueryParam("id") String recordId) throws Exception {
         if ("index".equals(action)) {
             if (table == null) {
                 table = Table.RECORD.name;
             }
-            indexer.indexOn(table, idGenerator.fromString(recordId),
+            indexer.indexOn(repo, table, idGenerator.fromString(recordId),
                     new HashSet<String>(Arrays.asList(indexName)));
         } else {
             throw new ResourceException("Unsupported POST action: " + action, BAD_REQUEST.getStatusCode());
@@ -197,16 +198,17 @@ public class IndexResource extends TypeManagerEnabled {
     @POST
     @Path("")
     public void index(@QueryParam("action") String action, @QueryParam("indexes") String commaSeparatedIndexNames,
-                      @QueryParam("table") String table, @QueryParam("id") String recordId) throws Exception {
+                      @QueryParam("repo") String repo, @QueryParam("table") String table,
+                      @QueryParam("id") String recordId) throws Exception {
         if ("index".equals(action)) {
             if (table == null) {
                 table = Table.RECORD.name;
             }
             final Set<String> indexNames = parse(commaSeparatedIndexNames);
             if (indexNames.isEmpty()) {
-                indexer.index(table, idGenerator.fromString(recordId));
+                indexer.index(repo, table, idGenerator.fromString(recordId));
             } else {
-                indexer.indexOn(table, idGenerator.fromString(recordId), indexNames);
+                indexer.indexOn(repo, table, idGenerator.fromString(recordId), indexNames);
             }
         } else {
             throw new ResourceException("Unsupported POST action: " + action, BAD_REQUEST.getStatusCode());

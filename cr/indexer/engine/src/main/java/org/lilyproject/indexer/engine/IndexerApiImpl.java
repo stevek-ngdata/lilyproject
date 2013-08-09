@@ -44,8 +44,8 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
     }
 
     @Override
-    public void index(String table, RecordId recordId) throws IndexerException, InterruptedException {
-        final IdRecord idRecord = tryReadRecord(table, recordId);
+    public void index(String repoName, String table, RecordId recordId) throws IndexerException, InterruptedException {
+        final IdRecord idRecord = tryReadRecord(repoName, table, recordId);
 
         if (indexerRegistry.getAllIndexers().isEmpty()) {
             log.warn("cannot index record [" + recordId + "] because there are no known indexes");
@@ -66,13 +66,14 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
     }
 
     @Override
-    public void indexOn(String table, RecordId recordId, Set<String> indexes) throws IndexerException, InterruptedException {
+    public void indexOn(String repoName, String table, RecordId recordId, Set<String> indexes)
+            throws IndexerException, InterruptedException {
         for (String indexName : indexes) {
             final org.lilyproject.indexer.engine.Indexer indexer = indexerRegistry.getIndexer(indexName);
             if (indexer == null) {
                 throw new IndexerException("index " + indexName + " could not be found");
             } else {
-                final IdRecord idRecord = tryReadRecord(table, recordId);
+                final IdRecord idRecord = tryReadRecord(repoName, table, recordId);
                 final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(table, idRecord);
                 if (indexCase != null) // it matches -> index
                 {
@@ -85,9 +86,9 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
         }
     }
 
-    private IdRecord tryReadRecord(String table, RecordId recordId) throws IndexerException, InterruptedException {
+    private IdRecord tryReadRecord(String repoName, String table, RecordId recordId) throws IndexerException, InterruptedException {
         try {
-            return repositoryManager.getDefaultRepository().getTable(table).readWithIds(recordId, null, null);
+            return repositoryManager.getRepository(repoName).getTable(table).readWithIds(recordId, null, null);
         } catch (RepositoryException e) {
             throw new IndexerException("failed to read from repository", e);
         }

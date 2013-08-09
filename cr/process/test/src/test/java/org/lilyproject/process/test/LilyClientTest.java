@@ -176,7 +176,7 @@ public class LilyClientTest {
         repository.create(record);
 
         // explicitly index the record (if this succeeds, the test succeeded to verify that we can access the indexer through lily-client)
-        client.getIndexer().index(Table.RECORD.name, record.getId());
+        client.getIndexer().index(repository.getRepositoryName(), Table.RECORD.name, record.getId());
     }
 
     @Test

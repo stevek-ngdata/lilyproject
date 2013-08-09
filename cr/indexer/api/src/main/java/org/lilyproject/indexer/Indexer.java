@@ -36,10 +36,11 @@ public interface Indexer {
      * <p>Synchronous indexing only indexes the specified record: it does not update information denormalized
      * into the index entries of other records.</p>
      *
-     * @param table name of the repository table where the record to be indexed resides
+     * @param repository name of the repository where the record to be indexed resides
+     * @param table name of the table where the record to be indexed resides
      * @param recordId identification of the record to index
      */
-    void index(String table, RecordId recordId) throws IndexerException, InterruptedException;
+    void index(String repository, String table, RecordId recordId) throws IndexerException, InterruptedException;
 
     /**
      * Synchronously trigger the indexing of the record identified by the given {@link
@@ -49,10 +50,12 @@ public interface Indexer {
      * will fail fast (throws an exception) and will not continue with other requested indexes. Note that clients can
      * retry the whole operation.
      *
+     * @param repository name of the repository where the record to be indexed resides
      * @param table name of the repository table where the record to be indexed resides
      * @param recordId identification of the record to index
      * @param indexes  names of the indexes on which to trigger indexing
      */
-    void indexOn(String table, RecordId recordId, Set<String> indexes) throws IndexerException, InterruptedException;
+    void indexOn(String repository, String table, RecordId recordId, Set<String> indexes)
+            throws IndexerException, InterruptedException;
 
 }

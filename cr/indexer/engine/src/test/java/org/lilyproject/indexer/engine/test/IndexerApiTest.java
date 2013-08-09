@@ -47,6 +47,7 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 import static org.junit.Assert.assertEquals;
 
@@ -129,7 +130,7 @@ public class IndexerApiTest {
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
-        indexerApi.index(Table.RECORD.name, record.getId());
+        indexerApi.index(RepoAndTableUtil.DEFAULT_REPOSITORY,Table.RECORD.name, record.getId());
 
         // now we triggered indexing
         commitIndex();
@@ -150,7 +151,7 @@ public class IndexerApiTest {
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
-        indexerApi.index(Table.RECORD.name, record.getId());
+        indexerApi.index(RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name, record.getId());
 
         // still nothing will be indexed, because the record type doesn't match
         commitIndex();
@@ -171,7 +172,8 @@ public class IndexerApiTest {
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
-        indexerApi.indexOn(Table.RECORD.name, record.getId(), Sets.newHashSet("this-index-does-not-exist"));
+        indexerApi.indexOn(RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name, record.getId(),
+                Sets.newHashSet("this-index-does-not-exist"));
     }
 
     private void setupSchema() throws RepositoryException, InterruptedException {
