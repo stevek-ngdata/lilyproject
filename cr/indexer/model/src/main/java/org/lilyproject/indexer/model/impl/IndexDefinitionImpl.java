@@ -49,6 +49,7 @@ public class IndexDefinitionImpl implements IndexDefinition {
     private String solrCollection;
     private boolean enableDerefMap;
     private long subscriptionTimestamp;
+    private String repositoryName;
 
     public IndexDefinitionImpl(String name) {
         this.name = name;
@@ -265,6 +266,17 @@ public class IndexDefinitionImpl implements IndexDefinition {
     @Override
     public long getSubscriptionTimestamp() {
         return subscriptionTimestamp;
+    }
+
+
+    @Override
+    public String getRepositoryName() {
+        return repositoryName;
+    }
+
+    @Override
+    public void setRepositoryName(String repositoryName) {
+        this.repositoryName = repositoryName;
     }
 
     @Override

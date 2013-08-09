@@ -156,4 +156,10 @@ public interface IndexDefinition {
      */
     long getSubscriptionTimestamp();
 
+    /**
+     * Name of the repository for this index.
+     */
+    String getRepositoryName();
+
+    void setRepositoryName(String repositoryName);
 }
