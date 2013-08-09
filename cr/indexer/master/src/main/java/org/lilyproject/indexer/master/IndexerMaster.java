@@ -62,6 +62,7 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.LeaderElection;
 import org.lilyproject.util.zookeeper.LeaderElectionCallback;
@@ -307,8 +308,10 @@ public class IndexerMaster {
                     Job job = null;
                     boolean jobStarted;
                     try {
-                        // TODO multiple repositories
-                        LRepository repository = repositoryManager.getDefaultRepository();
+                        String repoName = index.getRepositoryName() != null ? index.getRepositoryName() :
+                                RepoAndTableUtil.DEFAULT_REPOSITORY;
+                        LRepository repository = repositoryManager.getRepository(repoName);
+
                         job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
                                 repository, zkConnectString, zkSessionTimeout, solrClientConfig,
                                 batchIndexConfiguration, enableLocking, batchTables, tableFactory);

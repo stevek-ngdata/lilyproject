@@ -66,6 +66,7 @@ import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -183,7 +184,9 @@ public class IndexerWorker {
     private void addIndexUpdater(IndexDefinition index) {
         IndexUpdaterHandle handle = null;
         try {
-            LRepository repository = repositoryManager.getDefaultRepository();
+            String repoName = index.getRepositoryName() != null ? index.getRepositoryName() :
+                    RepoAndTableUtil.DEFAULT_REPOSITORY;
+            LRepository repository = repositoryManager.getRepository(repoName);
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
                      repository);
 
