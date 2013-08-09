@@ -178,7 +178,7 @@ public class IndexResource extends TypeManagerEnabled {
      */
     @POST
     @Path("{name}")
-    public void indexOn(@QueryParam("action") String action, @PathParam("table") String table,
+    public void indexOn(@QueryParam("action") String action, @QueryParam("table") String table,
             @PathParam("name") String indexName, @QueryParam("id") String recordId) throws Exception {
         if ("index".equals(action)) {
             if (table == null) {
