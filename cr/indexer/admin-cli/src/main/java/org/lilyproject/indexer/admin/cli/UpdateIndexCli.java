@@ -56,6 +56,7 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
         options.add(solrModeOption);
         options.add(enableDerefMapOption);
         options.add(batchIndexTablesOption);
+        options.add(repositoryNameOption);
 
         return options;
     }
@@ -184,6 +185,11 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
 
             if (enableDerefMap != null && enableDerefMap != index.isEnableDerefMap()) {
                 index.setEnableDerefMap(enableDerefMap);
+                changes = true;
+            }
+
+            if (repositoryName != null && !repositoryName.equals(index.getRepositoryName())){
+                index.setRepositoryName(repositoryName);
                 changes = true;
             }
 

@@ -74,6 +74,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected Option solrZkOption;
     protected Option solrModeOption;
     protected Option enableDerefMapOption;
+    protected Option repositoryNameOption;
 
     protected String indexName;
     protected Map<String, String> solrShards;
@@ -95,6 +96,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected String solrZk;
     protected SolrMode solrMode;
     protected Boolean enableDerefMap;
+    protected String repositoryName;
 
     protected enum SolrMode {
         CLASSIC, CLOUD
@@ -235,6 +237,13 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                         "only ever plan to populate your index through batch index building.")
                 .withLongOpt("enable-derefmap")
                 .create("edm");
+
+        repositoryNameOption = OptionBuilder
+                .withArgName("repository name")
+                .hasArg()
+                .withDescription("The lily repository name. If not specified, the default repository is assumed.")
+                .withLongOpt("repository")
+                .create("r");
     }
 
     @Override
@@ -515,6 +524,10 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
         printBatchConfiguration = cmd.hasOption(printBatchConfigurationOption.getOpt());
 
         printShardingConfiguration = cmd.hasOption(printShardingConfigurationOption.getOpt());
+
+        if (cmd.hasOption(repositoryNameOption.getOpt())) {
+            repositoryName = cmd.getOptionValue(repositoryNameOption.getOpt());
+        }
 
         return 0;
     }

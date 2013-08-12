@@ -94,6 +94,10 @@ public class IndexDefinitionConverter {
         if (node.has("solrCollection")) {
             index.setSolrCollection(node.get("solrCollection").getTextValue());
         }
+        if (node.has("repositoryName")) {
+            index.setRepositoryName(node.get("repositoryName").getTextValue());
+        }
+
 
         ActiveBatchBuildInfo activeBatchBuild = null;
         if (node.get("activeBatchBuild") != null) {
@@ -270,6 +274,9 @@ public class IndexDefinitionConverter {
             for (String batchTable : batchTables) {
                 batchTableNode.add(batchTable);
             }
+        }
+        if (index.getRepositoryName() != null){
+            node.put("repositoryName", index.getRepositoryName());
         }
 
         return node;

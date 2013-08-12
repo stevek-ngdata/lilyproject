@@ -20,6 +20,7 @@ import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 public class AddIndexCli extends BaseIndexerAdminCli {
     @Override
@@ -49,6 +50,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         options.add(solrZkOption);
         options.add(solrModeOption);
         options.add(enableDerefMapOption);
+        options.add(repositoryNameOption);
 
         return options;
     }
@@ -124,6 +126,12 @@ public class AddIndexCli extends BaseIndexerAdminCli {
             index.setEnableDerefMap(enableDerefMap);
         } else {
             index.setEnableDerefMap(true); // default true
+        }
+
+        if (repositoryName != null){
+            index.setRepositoryName(repositoryName);
+        } else {
+            index.setRepositoryName(RepoAndTableUtil.DEFAULT_REPOSITORY);
         }
 
         model.addIndex(index);
