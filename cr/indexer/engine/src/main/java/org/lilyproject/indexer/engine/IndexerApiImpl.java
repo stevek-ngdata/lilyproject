@@ -18,6 +18,7 @@ package org.lilyproject.indexer.engine;
 import java.io.IOException;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.IndexerException;
@@ -88,7 +89,11 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
 
     private IdRecord tryReadRecord(String repoName, String table, RecordId recordId) throws IndexerException, InterruptedException {
         try {
-            return repositoryManager.getRepository(repoName).getTable(table).readWithIds(recordId, null, null);
+            if (StringUtils.isNotEmpty(repoName)){
+                return repositoryManager.getRepository(repoName).getTable(table).readWithIds(recordId, null, null);
+            } else {
+                return repositoryManager.getDefaultRepository().getTable(table).readWithIds(recordId, null, null);
+            }
         } catch (RepositoryException e) {
             throw new IndexerException("failed to read from repository", e);
         }
