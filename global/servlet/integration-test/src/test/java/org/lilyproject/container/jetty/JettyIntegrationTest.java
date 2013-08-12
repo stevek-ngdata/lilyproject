@@ -1,12 +1,15 @@
 package org.lilyproject.container.jetty;
 
 import static java.lang.System.setProperty;
+import static java.util.Arrays.asList;
 import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.assertions.MapAssert.entry;
 
 import java.io.File;
 import java.io.IOException;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.jettison.json.JSONObject;
 import org.junit.AfterClass;
@@ -113,11 +116,15 @@ public class JettyIntegrationTest {
     }
 
     @Test
-    public void testResApiIsReady() throws Exception {
+    public void testRestApiPassesFilter() throws Exception {
         Client client = new Client();
-        JSONObject object = client.resource("http://localhost:12060/repository/schema/recordType").get(JSONObject.class);
+        ClientResponse response = client.resource("http://localhost:12060/repository/schema/recordType")
+                .header("X-NGDATA-TEST", "example-data").get(ClientResponse.class);
+        JSONObject object =  response.getEntity(JSONObject.class);
+
         assertThat(object).isNotNull();
         assertThat(object.keys()).contains("results");
+        assertThat(response.getHeaders()).includes(entry("X-NGDATA-TEST", asList("example-data")));
     }
 
     @Test
