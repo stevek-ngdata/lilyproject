@@ -102,6 +102,8 @@ public class CustomJettyLauncher {
     }
 
     private void addPlainConnector(List<Connector> connectors) {
+        if (startSSL() && ! allowUnencrypted()) return;
+
         SelectChannelConnector selectChannelConnector = new SelectChannelConnector();
         selectChannelConnector.setPort(httpPort());
         if (startSSL())
@@ -133,6 +135,11 @@ public class CustomJettyLauncher {
 
     private int httpPort() {
         return confRegistry.getConfiguration("jetty").getChild("httpPort").getValueAsInteger(12060);
+    }
+
+    private boolean allowUnencrypted() {
+        return confRegistry.getConfiguration("jetty").getChild("ssl").getChild("allowUnencrypted")
+                .getValueAsBoolean(true);
     }
 
     private boolean startSSL() {

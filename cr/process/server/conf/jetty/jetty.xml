@@ -14,6 +14,8 @@
     <!-- for a general introduction on configuration and certificate generation for jetty see
     http://wiki.eclipse.org/Jetty/Howto/Configure_SSL -->
     <startSSL>false</startSSL>
+    <!-- allow plain HTTP requests -->
+    <allowUnencrypted>true</allowUnencrypted>
 
     <!-- key store for our SSL certificate, you can also set this via a system property e.g. -Dlily.ssl.keystore=  -->
     <!--<keystore>/path/to/your/keystore</keystore>-->
