@@ -289,7 +289,8 @@ public class Indexer {
         }
 
         if (derefMap != null) {
-            derefMap.updateDependants(new AbsoluteRecordIdImpl(table, record.getId()), vtag, solrDocumentBuilder.getDependencies());
+            derefMap.updateDependants(new AbsoluteRecordIdImpl(repository.getRepositoryName(), table, record.getId()),
+                    vtag, solrDocumentBuilder.getDependencies());
         }
     }
 

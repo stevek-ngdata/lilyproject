@@ -26,9 +26,14 @@ public interface AbsoluteRecordId {
     RecordId getRecordId();
 
     /**
-     * Returns the name of the repository table used for storage.
+     * Returns the name of the lily table.
      */
     String getTable();
+
+    /**
+     * Returns the name of the repository.
+     */
+    String getRepository();
 
     /**
      * Returns the byte representation of this identifier.

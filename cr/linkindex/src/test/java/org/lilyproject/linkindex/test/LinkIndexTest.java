@@ -45,6 +45,7 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
 
@@ -147,39 +148,39 @@ public class LinkIndexTest {
         SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
 
         Set<FieldedLink> links1 = new HashSet<FieldedLink>();
-        links1.add(new FieldedLink(ids.newAbsoluteRecordId(TABLE_A, "id1"), field1));
-        links1.add(new FieldedLink(ids.newAbsoluteRecordId(TABLE_A, "id2"), field1));
+        links1.add(new FieldedLink(ids.newAbsoluteRecordId("default",TABLE_A, "id1"), field1));
+        links1.add(new FieldedLink(ids.newAbsoluteRecordId("default",TABLE_A, "id2"), field1));
 
         Set<FieldedLink> links2 = new HashSet<FieldedLink>();
-        links2.add(new FieldedLink(ids.newAbsoluteRecordId(TABLE_B, "id3"), field1));
-        links2.add(new FieldedLink(ids.newAbsoluteRecordId(TABLE_B, "id4"), field1));
+        links2.add(new FieldedLink(ids.newAbsoluteRecordId("default",TABLE_B, "id3"), field1));
+        links2.add(new FieldedLink(ids.newAbsoluteRecordId("default",TABLE_B, "id4"), field1));
 
-        linkIndex.updateLinks(ids.newAbsoluteRecordId(TABLE_A, "idA"), liveTag, links1);
-        linkIndex.updateLinks(ids.newAbsoluteRecordId(TABLE_B, "idB"), liveTag, links1);
-        linkIndex.updateLinks(ids.newAbsoluteRecordId(TABLE_C, "idC"), liveTag, links2);
+        linkIndex.updateLinks(ids.newAbsoluteRecordId("default",TABLE_A, "idA"), liveTag, links1);
+        linkIndex.updateLinks(ids.newAbsoluteRecordId("default",TABLE_B, "idB"), liveTag, links1);
+        linkIndex.updateLinks(ids.newAbsoluteRecordId("default",TABLE_C, "idC"), liveTag, links2);
 
         // Test forward link retrieval
-        Set<FieldedLink> links = linkIndex.getFieldedForwardLinks(ids.newAbsoluteRecordId(TABLE_A, "idA"), liveTag);
+        Set<FieldedLink> links = linkIndex.getFieldedForwardLinks(ids.newAbsoluteRecordId("default",TABLE_A, "idA"), liveTag);
         assertEquals(2, links.size());
         assertEquals(
                 Sets.newHashSet(
-                        new FieldedLink(ids.newAbsoluteRecordId(TABLE_A, "id1"), field1),
-                        new FieldedLink(ids.newAbsoluteRecordId(TABLE_A, "id2"), field1)),
+                        new FieldedLink(ids.newAbsoluteRecordId("default",TABLE_A, "id1"), field1),
+                        new FieldedLink(ids.newAbsoluteRecordId("default",TABLE_A, "id2"), field1)),
                 links);
 
         // Test backward link retrieval - non-absolute ids
-        Set<AbsoluteRecordId> referrers = linkIndex.getAbsoluteReferrers(ids.newAbsoluteRecordId(TABLE_A, "id1"), liveTag);
+        Set<AbsoluteRecordId> referrers = linkIndex.getAbsoluteReferrers(ids.newAbsoluteRecordId("default",TABLE_A, "id1"), liveTag);
         assertEquals(2, referrers.size());
         assertEquals(
                 Sets.newHashSet(
-                        ids.newAbsoluteRecordId(TABLE_A, "idA"),
-                        ids.newAbsoluteRecordId(TABLE_B, "idB")),
+                        ids.newAbsoluteRecordId("default", TABLE_A, "idA"),
+                        ids.newAbsoluteRecordId("default", TABLE_B, "idB")),
                 referrers);
 
         // Test backward link retrieval - absolute ids
-        Set<AbsoluteRecordId> absoluteReferrers = linkIndex.getAbsoluteReferrers(ids.newAbsoluteRecordId(TABLE_A, "id1"), liveTag);
-        assertTrue(absoluteReferrers.contains(ids.newAbsoluteRecordId(TABLE_A, "idA")));
-        assertTrue(absoluteReferrers.contains(ids.newAbsoluteRecordId(TABLE_B, "idB")));
+        Set<AbsoluteRecordId> absoluteReferrers = linkIndex.getAbsoluteReferrers(ids.newAbsoluteRecordId("default",TABLE_A, "id1"), liveTag);
+        assertTrue(absoluteReferrers.contains(ids.newAbsoluteRecordId("default",TABLE_A, "idA")));
+        assertTrue(absoluteReferrers.contains(ids.newAbsoluteRecordId("default",TABLE_B, "idB")));
         assertEquals(2, absoluteReferrers.size());
     }
 
@@ -386,6 +387,6 @@ public class LinkIndexTest {
     }
 
     private AbsoluteRecordId createAbsoluteId(RecordId recordId) {
-        return ids.newAbsoluteRecordId(Table.RECORD.name, recordId);
+        return ids.newAbsoluteRecordId(RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name, recordId);
     }
 }

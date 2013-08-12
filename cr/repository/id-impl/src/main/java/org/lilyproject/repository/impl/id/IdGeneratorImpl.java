@@ -95,13 +95,13 @@ public class IdGeneratorImpl implements IdGenerator {
     }
 
     @Override
-    public AbsoluteRecordId newAbsoluteRecordId(String tableName, RecordId recordId) {
-        return new AbsoluteRecordIdImpl(tableName, recordId);
+    public AbsoluteRecordId newAbsoluteRecordId(String repoName, String tableName, RecordId recordId) {
+        return new AbsoluteRecordIdImpl(repoName, tableName, recordId);
     }
 
     @Override
-    public AbsoluteRecordId newAbsoluteRecordId(String tableName, String userProvided) {
-        return newAbsoluteRecordId(tableName, newRecordId(userProvided));
+    public AbsoluteRecordId newAbsoluteRecordId(String repoName, String tableName, String userProvided) {
+        return newAbsoluteRecordId(repoName, tableName, newRecordId(userProvided));
     }
 
     @Override

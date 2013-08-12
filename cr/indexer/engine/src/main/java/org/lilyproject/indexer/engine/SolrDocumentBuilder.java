@@ -181,7 +181,8 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
         RecordContext ctx = contexts.peek();
         try {
             if (!ctx.dep.moreDimensionedVariants.isEmpty() || !ctx.dep.id.equals(recordId)) { // avoid adding unnecesary self-references
-                dependencies.get(DerefMapUtil.newEntry(new AbsoluteRecordIdImpl(table, ctx.dep.id), ctx.dep.moreDimensionedVariants)).add(field);
+                dependencies.get(DerefMapUtil.newEntry(
+                        new AbsoluteRecordIdImpl(repository.getRepositoryName(), table, ctx.dep.id), ctx.dep.moreDimensionedVariants)).add(field);
             }
         } catch (ExecutionException ee) {
             throw new RuntimeException("Failed to update dependencies");

@@ -189,7 +189,7 @@ public class IndexUpdater extends LilyEventListener {
 
                 // After this we can go to update denormalized data
                 if (derefMap != null) {
-                    updateDenormalizedData(recordEvent.getTableName(), recordId, null, null);
+                    updateDenormalizedData(repository.getRepositoryName(), recordEvent.getTableName(), recordId, null, null);
                 }
             } else { // CREATE or UPDATE
                 VTaggedRecord vtRecord;
@@ -260,7 +260,7 @@ public class IndexUpdater extends LilyEventListener {
                 }
 
                 if (derefMap != null) {
-                    updateDenormalizedData(recordEvent.getTableName(), recordId, eventHelper.getUpdatedFieldsByScope(),
+                    updateDenormalizedData(repository.getRepositoryName(), recordEvent.getTableName(), recordId, eventHelper.getUpdatedFieldsByScope(),
                             eventHelper.getModifiedVTags());
                 }
             }
@@ -416,7 +416,7 @@ public class IndexUpdater extends LilyEventListener {
         }
     }
 
-    private void updateDenormalizedData(String table, RecordId recordId, Map<Scope, Set<FieldType>> updatedFieldsByScope,
+    private void updateDenormalizedData(String repo, String table, RecordId recordId, Map<Scope, Set<FieldType>> updatedFieldsByScope,
                                         Set<SchemaId> changedVTagFields)
             throws RepositoryException, InterruptedException, LinkIndexException, IOException {
 
@@ -434,7 +434,7 @@ public class IndexUpdater extends LilyEventListener {
         for (SchemaId vtag : allVTags) {
             if ((changedVTagFields != null && changedVTagFields.contains(vtag)) || updatedFieldsByScope == null) {
                 // changed vtags or delete: reindex regardless of fields
-                AbsoluteRecordId absRecordId = new AbsoluteRecordIdImpl(table, recordId);
+                AbsoluteRecordId absRecordId = new AbsoluteRecordIdImpl(repo, table, recordId);
                 DependantRecordIdsIterator dependants = derefMap.findDependantsOf(absRecordId);
                 if (log.isDebugEnabled()) {
                     log.debug("changed vtag: dependants of " + recordId + ": " +
@@ -449,7 +449,7 @@ public class IndexUpdater extends LilyEventListener {
                 for (Scope scope : updatedFieldsByScope.keySet()) {
                     fields.addAll(toSchemaIds(updatedFieldsByScope.get(scope)));
                 }
-                AbsoluteRecordId absRecordId = new AbsoluteRecordIdImpl(table, recordId);
+                AbsoluteRecordId absRecordId = new AbsoluteRecordIdImpl(repo, table, recordId);
                 final DependantRecordIdsIterator dependants = derefMap.findDependantsOf(absRecordId, fields, vtag);
                 while (dependants.hasNext()) {
                     referrersAndVTags.put(dependants.next(), vtag);
@@ -481,8 +481,8 @@ public class IndexUpdater extends LilyEventListener {
             payload.setIndexRecordFilterData(filterData);
 
             try {
-                eventPublisherMgr.getEventPublisher(/* TODO multiple repositories */ RepoAndTableUtil.DEFAULT_REPOSITORY,
-                        referrer.getTable()).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
+                eventPublisherMgr.getEventPublisher(referrer.getRepository(),referrer.getTable()
+                        ).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.

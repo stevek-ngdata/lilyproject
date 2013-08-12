@@ -62,7 +62,7 @@ public class LilySepEvent extends SepEvent {
 
     public AbsoluteRecordId getAbsoluteRecordId() {
         if (absRecordId == null) {
-            absRecordId = idGenerator.newAbsoluteRecordId(getLilyTableName(), getRecordId());
+            absRecordId = idGenerator.newAbsoluteRecordId(getLilyRepositoryName(), getLilyTableName(), getRecordId());
         }
         return absRecordId;
     }

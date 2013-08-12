@@ -55,10 +55,11 @@ public class DerefMapSerializationUtilTest {
     @Test
     public void serializeEntriesForward() throws Exception {
         final Set<DependencyEntry> dependencies = new HashSet<DependencyEntry>();
-        dependencies.add(new DependencyEntry(new AbsoluteRecordIdImpl("tableA", ids.newRecordId("id1")), new HashSet<String>()));
+        dependencies.add(new DependencyEntry(new AbsoluteRecordIdImpl("default","tableA", ids.newRecordId("id1")),
+                new HashSet<String>()));
         dependencies
-                .add(new DependencyEntry(new AbsoluteRecordIdImpl("tableB", ids.newRecordId("id2", ImmutableMap.of("bar", "x"))), Sets.newHashSet(
-                        "foo")));
+                .add(new DependencyEntry(new AbsoluteRecordIdImpl("default","tableB", ids.newRecordId("id2",
+                        ImmutableMap.of("bar", "x"))), Sets.newHashSet("foo")));
 
         final Set<DependencyEntry> deserialized = serializationUtil.deserializeDependenciesForward(
                 serializationUtil.serializeDependenciesForward(dependencies));

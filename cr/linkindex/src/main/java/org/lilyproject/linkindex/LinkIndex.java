@@ -40,6 +40,7 @@ import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.io.Closer;
 
 /**
@@ -515,7 +516,8 @@ public class LinkIndex {
     }
 
     private AbsoluteRecordId getAbsoluteId(RecordId recordId) throws LinkIndexException, InterruptedException {
-        return getIdGenerator().newAbsoluteRecordId(Table.RECORD.name, recordId);
+        //FIXME: multi repository
+        return getIdGenerator().newAbsoluteRecordId(RepoAndTableUtil.DEFAULT_REPOSITORY,Table.RECORD.name, recordId);
     }
 
 }

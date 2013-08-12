@@ -38,6 +38,7 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.io.Closer;
 
 import static org.junit.Assert.assertEquals;
@@ -77,7 +78,7 @@ public class DerefMapBasicTest {
     }
 
     private static AbsoluteRecordId absId(RecordId recordId) {
-        return new AbsoluteRecordIdImpl(Table.RECORD.name, recordId);
+        return new AbsoluteRecordIdImpl(RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name, recordId);
     }
 
     @Test

@@ -54,6 +54,7 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.VersionTag;
@@ -418,6 +419,6 @@ public class BatchBuildTest {
     }
 
     private static AbsoluteRecordId absId(RecordId recordId) {
-        return repository.getIdGenerator().newAbsoluteRecordId(Table.RECORD.name, recordId);
+        return repository.getIdGenerator().newAbsoluteRecordId(RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name, recordId);
     }
 }

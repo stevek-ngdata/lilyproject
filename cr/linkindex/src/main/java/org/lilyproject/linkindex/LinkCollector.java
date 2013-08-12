@@ -23,6 +23,7 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 public class LinkCollector {
     private IdGenerator idGenerator;
@@ -33,7 +34,8 @@ public class LinkCollector {
     }
 
     public void addLink(RecordId target, SchemaId fieldTypeId) {
-        addLink(idGenerator.newAbsoluteRecordId(Table.RECORD.name, target), fieldTypeId);
+        //FIXME: multi repository
+        addLink(idGenerator.newAbsoluteRecordId(RepoAndTableUtil.DEFAULT_REPOSITORY ,Table.RECORD.name, target), fieldTypeId);
     }
 
     public void addLink(AbsoluteRecordId target, SchemaId fieldTypeId) {

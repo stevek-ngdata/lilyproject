@@ -36,12 +36,20 @@ public class AbsoluteRecordIdImpl implements AbsoluteRecordId {
 
     private final String table;
     private final RecordId recordId;
+    private final String repository;
 
-    public AbsoluteRecordIdImpl(String table, RecordId recordId) {
+    public AbsoluteRecordIdImpl(String repository, String table, RecordId recordId) {
+        ArgumentValidator.notNull(table, "repository");
         ArgumentValidator.notNull(table, "table");
         ArgumentValidator.notNull(recordId, "recordId");
         this.table = table;
         this.recordId = recordId;
+        this.repository = repository;
+    }
+
+    @Override
+    public String getRepository() {
+        return repository;
     }
 
     @Override
@@ -58,9 +66,12 @@ public class AbsoluteRecordIdImpl implements AbsoluteRecordId {
     public byte[] toBytes() {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutput dataOutput = new DataOutputStream(byteArrayOutputStream);
+        byte[] repoBytes = repository.getBytes();
         byte[] tableBytes = table.getBytes();
         byte[] recordIdBytes = recordId.toBytes();
         try {
+            dataOutput.writeInt(repoBytes.length);
+            dataOutput.write(repoBytes);
             dataOutput.writeInt(tableBytes.length);
             dataOutput.write(tableBytes);
             dataOutput.writeInt(recordIdBytes.length);
@@ -75,10 +86,13 @@ public class AbsoluteRecordIdImpl implements AbsoluteRecordId {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
         DataInput dataInput = new DataInputStream(byteArrayInputStream);
 
+        byte[] repoBytes;
         byte[] tableBytes;
         byte[] recordIdBytes;
 
         try {
+            repoBytes = new byte[dataInput.readInt()];
+            dataInput.readFully(repoBytes, 0, repoBytes.length);
             tableBytes = new byte[dataInput.readInt()];
             dataInput.readFully(tableBytes, 0, tableBytes.length);
             recordIdBytes = new byte[dataInput.readInt()];
@@ -87,7 +101,7 @@ public class AbsoluteRecordIdImpl implements AbsoluteRecordId {
             throw new RuntimeException("Error while deserializing AbsoluteRecordId", ioe);
         }
 
-        return new AbsoluteRecordIdImpl(new String(tableBytes), idGenerator.fromBytes(recordIdBytes));
+        return new AbsoluteRecordIdImpl(new String(repoBytes) ,new String(tableBytes), idGenerator.fromBytes(recordIdBytes));
 
     }
 

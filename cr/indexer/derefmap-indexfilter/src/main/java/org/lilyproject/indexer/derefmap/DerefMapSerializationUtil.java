@@ -96,7 +96,8 @@ final class DerefMapSerializationUtil {
             final DerefMapVariantPropertiesPattern variantPropertiesPattern =
                     deserializeVariantPropertiesPattern(dataInput);
 
-            result.add(new DependencyEntry(new AbsoluteRecordIdImpl(table,
+            //FIXME: multi-repository
+            result.add(new DependencyEntry(new AbsoluteRecordIdImpl("default",table,
                     idGenerator.newRecordId(idGenerator.fromBytes(masterBytes),
                             variantPropertiesPattern.getConcreteProperties())),
                     variantPropertiesPattern.getPatternProperties()));
