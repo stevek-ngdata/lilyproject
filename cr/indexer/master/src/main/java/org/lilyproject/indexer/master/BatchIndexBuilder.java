@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.iharder.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
@@ -65,6 +66,10 @@ public class BatchIndexBuilder {
         // Pass information about the index to be built
         //
         job.getConfiguration().set("org.lilyproject.indexer.batchbuild.indexname", index.getName());
+
+        if (! StringUtils.isEmpty(index.getRepositoryName()))
+            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.repoName", index.getRepositoryName());
+
         String indexerConfString = Base64.encodeBytes(index.getConfiguration(), Base64.GZIP);
         job.getConfiguration().set("org.lilyproject.indexer.batchbuild.indexerconf", indexerConfString);
 
