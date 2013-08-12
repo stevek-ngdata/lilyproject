@@ -1,4 +1,4 @@
-package com.ngdata.lilyenterprise.security;
+package org.lilyproject.container.jetty;
 
 import static java.lang.System.setProperty;
 import static org.fest.assertions.Assertions.assertThat;

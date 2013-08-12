@@ -10,20 +10,20 @@ import org.lilyproject.servletregistry.api.ServletRegistry;
 
 public class TestFilterRegisterBean {
 
-    public static final int SECURITY_FILTER_PRIO = 1000;
+    public static final int TEST_FILTER_PRIO = 1000;
 
     private ServletRegistry servletRegistry;
 
     private Map<String, Integer> urlPatterns;
 
-    private TestFilter securityFilter;
+    private TestFilter testFilter;
 
     public TestFilterRegisterBean(ServletRegistry servletRegistry,
                                   Map<String, Integer> urlPatterns,
                                   TestFilter filter) {
         this.servletRegistry = servletRegistry;
         this.urlPatterns = urlPatterns;
-        this.securityFilter = filter;
+        this.testFilter = filter;
     }
 
     @PostConstruct
@@ -36,12 +36,12 @@ public class TestFilterRegisterBean {
 
             @Override
             public Filter getServletFilterInstance(ServletContext context) {
-                return securityFilter;
+                return testFilter;
             }
 
             @Override
             public int getPriority() {
-                return SECURITY_FILTER_PRIO;
+                return TEST_FILTER_PRIO;
             }
         });
     }

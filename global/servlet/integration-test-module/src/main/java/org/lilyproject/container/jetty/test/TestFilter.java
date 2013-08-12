@@ -9,7 +9,7 @@ import javax.servlet.ServletResponse;
 import java.io.IOException;
 
 /**
- * Basic Filter that checks if user is authenticated, if not redirect to auth provider.
+ * Basic Filter as target for integration testing.
  */
 public class TestFilter implements Filter {
     @Override
