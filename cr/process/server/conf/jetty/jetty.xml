@@ -1,0 +1,33 @@
+<jetty>
+  <!-- note that sessions defaults to true for backwards compatibility reasons -->
+  <!-- it is recommended to disable sessions in a distributed deployment -->
+  <sessions>true</sessions>
+
+
+  <!-- Port to listen for HTTP trafic, defaults to 12060-->
+  <!--<httpPort>12060</httpPort>-->
+
+  <!-- Port to listen for SSL trafic, defaults to 12443 -->
+  <!--<httpsPort>12443</httpsPort>-->
+
+  <ssl>
+    <!-- for a general introduction on configuration and certificate generation for jetty see
+    http://wiki.eclipse.org/Jetty/Howto/Configure_SSL -->
+    <startSSL>false</startSSL>
+
+    <!-- key store for our SSL certificate, you can also set this via a system property e.g. -Dlily.ssl.keystore=  -->
+    <!--<keystore>/path/to/your/keystore</keystore>-->
+
+    <!-- password for keystore. By java convention, default is "changeit" -->
+    <!--<keystorePassword>changeit</keystorePassword>-->
+
+    <!-- key store for trusted certificates (the CA, ...) default = same as keystore -->
+    <!--<truststore>/path/to/your/truststore</truststore>-->
+
+    <!-- password for truststore. default = same as keystore -->
+    <!--<truststorePassword>changeit</truststorePassword>-->
+
+    <!-- password for SSL certificate itself -->
+    <!--<keyPassword></keyPassword>-->
+  </ssl>
+</jetty>
