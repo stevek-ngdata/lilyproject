@@ -178,6 +178,7 @@ public class IndexerTest {
     private static RecordType nvRecordType1;
     private static RecordType vRecordType1;
     private static RecordType lastRecordType;
+    private static String REPO_NAME = "IndexerTestRepo";
 
     private static Map<String, FieldType> fields = Maps.newHashMap();
     private final Map<String, Integer> matchResultCounts = Maps.newHashMap();
@@ -204,16 +205,16 @@ public class IndexerTest {
 
         repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
 
-        repoSetup.setupRepository();
+        repoSetup.setupRepository(REPO_NAME);
 
         prematureRepositoryManager.setRepositoryManager(repoSetup.getRepositoryManager());
         repositoryManager = repoSetup.getRepositoryManager();
-        repository = repositoryManager.getDefaultRepository();
+        repository = repositoryManager.getRepository(REPO_NAME);
         repository.getTableManager().createTable(ALTERNATE_TABLE);
 
         defaultTable = (Repository)repository.getDefaultTable();
         alternateTable = (Repository)repository.getTable(ALTERNATE_TABLE);
-        indexUpdaterRepository = new TrackingRepository(repoSetup.getRepositoryManager().getDefaultRepository());
+        indexUpdaterRepository = new TrackingRepository(repoSetup.getRepositoryManager().getRepository(REPO_NAME));
 
 
         typeManager = repository.getTypeManager();
@@ -258,7 +259,7 @@ public class IndexerTest {
         // which some test cases expect, and hence it won't be visible but will cause the remainder of the
         // code in this method not to be executed! (so keep this in mind for anything related to resource cleanup)
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
-                repoSetup.getRepositoryManager().getDefaultRepository());
+                repoSetup.getRepositoryManager().getRepository(REPO_NAME));
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
 
         Configuration hbaseConf = repoSetup.getHadoopConf();
@@ -282,7 +283,7 @@ public class IndexerTest {
         indexDef.setConfiguration(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream(confName)));
         indexDef.setSolrShards(Collections.singletonMap("shard1", "http://somewhere/"));
         indexDef.setQueueSubscriptionId("IndexUpdater_" + indexName);
-
+        indexDef.setRepositoryName(REPO_NAME);
         indexerModel.addIndex(indexDef);
 
         repoSetup.getSepModel().addSubscription(indexDef.getQueueSubscriptionId());
