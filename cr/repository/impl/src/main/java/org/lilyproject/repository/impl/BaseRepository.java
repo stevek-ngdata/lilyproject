@@ -71,6 +71,7 @@ import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 public abstract class BaseRepository implements Repository {
     protected final AbstractRepositoryManager repositoryManager;
@@ -132,6 +133,8 @@ public abstract class BaseRepository implements Repository {
 
     @Override
     public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
+        if (! RepoAndTableUtil.isValidTableName(tableName))
+            throw new IllegalArgumentException("Not a valid table name:" + tableName);
         return repositoryManager.getRepository(repoTableKey.getRepositoryName(), tableName);
     }
 
