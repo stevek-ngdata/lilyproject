@@ -273,7 +273,7 @@ public class IndexerTest {
                 htable.close();
             }
         }
-        derefMap = DerefMapHbaseImpl.create("test", hbaseConf, null, repository.getIdGenerator());
+        derefMap = DerefMapHbaseImpl.create("default","test", hbaseConf, null, repository.getIdGenerator());
         Indexer indexer = new Indexer(indexName, INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics(indexName), derefMap);
 

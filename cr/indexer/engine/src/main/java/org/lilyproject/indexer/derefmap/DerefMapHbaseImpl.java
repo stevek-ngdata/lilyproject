@@ -60,7 +60,7 @@ public class DerefMapHbaseImpl implements DerefMap {
      * org.apache.hadoop.conf.Configuration)} and {@link #create(String, Configuration, HBaseTableFactory,
      * IdGenerator)}
      */
-    private DerefMapHbaseImpl(final String indexName, final Configuration hbaseConfiguration,
+    private DerefMapHbaseImpl(final String owningRepoName, final String indexName, final Configuration hbaseConfiguration,
                               final HBaseTableFactory tableFactory, final IdGenerator idGenerator)
             throws IndexNotFoundException, IOException, InterruptedException {
 
@@ -76,14 +76,14 @@ public class DerefMapHbaseImpl implements DerefMap {
         // on the first byte, thus making it easier to configure table splitting based on the original input.
         forwardIndexDef.addVariableLengthByteField("dependant_recordid", 2);
         forwardIndexDef.addByteField("dependant_vtag", DerefMapSerializationUtil.SCHEMA_ID_BYTE_LENGTH);
-        forwardDerefIndex = indexManager.getIndex(forwardIndexDef);
+        forwardDerefIndex = indexManager.getIndex(owningRepoName, forwardIndexDef);
 
         IndexDefinition backwardIndexDef = new IndexDefinition(backwardIndexName(indexName));
         // Same remark as in the forward index.
         backwardIndexDef.addVariableLengthByteField("dependency_masterrecordid", 2);
         backwardIndexDef.addByteField("dependant_vtag", DerefMapSerializationUtil.SCHEMA_ID_BYTE_LENGTH);
         backwardIndexDef.addVariableLengthByteField("variant_properties_pattern");
-        backwardDerefIndex = indexManager.getIndex(backwardIndexDef);
+        backwardDerefIndex = indexManager.getIndex(owningRepoName, backwardIndexDef);
     }
 
     /**
@@ -97,10 +97,10 @@ public class DerefMapHbaseImpl implements DerefMap {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static DerefMap create(final String indexName, final Configuration hbaseConfiguration,
+    public static DerefMap create(final String owningRepoName, final String indexName, final Configuration hbaseConfiguration,
                                   final HBaseTableFactory tableFactory, final IdGenerator idGenerator)
             throws IndexNotFoundException, IOException, InterruptedException {
-        return new DerefMapHbaseImpl(indexName, hbaseConfiguration, tableFactory, idGenerator);
+        return new DerefMapHbaseImpl(owningRepoName, indexName, hbaseConfiguration, tableFactory, idGenerator);
     }
 
     /**

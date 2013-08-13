@@ -121,7 +121,8 @@ public class BatchIndexBuilder {
         IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
                 repository);
         if (indexerConf.containsDerefExpressions()) {
-            DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory, repository.getIdGenerator());
+            DerefMapHbaseImpl.create(repository.getRepositoryName(), index.getName(), hbaseConf,
+                    tableFactory, repository.getIdGenerator());
         }
 
         job.getConfiguration().set("hbase.zookeeper.quorum", hbaseConf.get("hbase.zookeeper.quorum"));

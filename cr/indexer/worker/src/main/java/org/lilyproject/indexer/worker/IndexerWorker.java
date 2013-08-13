@@ -198,7 +198,7 @@ public class IndexerWorker {
             // Create a deref map in case the indexer configuration contains deref fields and the index definition says
             // we should maintain a deref map.
             DerefMap derefMap = index.isEnableDerefMap() && indexerConf.containsDerefExpressions() ?
-                    DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory,
+                    DerefMapHbaseImpl.create(repository.getRepositoryName(), index.getName(), hbaseConf, tableFactory,
                             repository.getIdGenerator()) : null;
 
             // create and register the indexer
