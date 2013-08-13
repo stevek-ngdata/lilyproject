@@ -36,6 +36,9 @@ import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
+import org.lilyproject.repository.model.api.RepositoryDefinition;
+import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
@@ -53,6 +56,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class DerefMapBasicTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
+    public static final String REPO_NAME = "DerefMapBasicTestRepo";
 
     private static IdGenerator ids;
     private static DerefMapHbaseImpl derefMap;
@@ -65,11 +69,11 @@ public class DerefMapBasicTest {
 
         repoSetup.setupCore();
         repoSetup.setupRepository();
-
-        LRepository repository = repoSetup.getRepositoryManager().getDefaultRepository();
+        createRepository(REPO_NAME);
+        LRepository repository = repoSetup.getRepositoryManager().getRepository(REPO_NAME);
         ids = repository.getIdGenerator();
 
-        derefMap = (DerefMapHbaseImpl) DerefMapHbaseImpl.create("default","test", repoSetup.getHadoopConf(), null, ids);
+        derefMap = (DerefMapHbaseImpl) DerefMapHbaseImpl.create(REPO_NAME,"test", repoSetup.getHadoopConf(), null, ids);
     }
 
     @AfterClass
@@ -78,7 +82,7 @@ public class DerefMapBasicTest {
     }
 
     private static AbsoluteRecordId absId(RecordId recordId) {
-        return new AbsoluteRecordIdImpl(RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name, recordId);
+        return new AbsoluteRecordIdImpl(REPO_NAME, Table.RECORD.name, recordId);
     }
 
     @Test
@@ -565,5 +569,19 @@ public class DerefMapBasicTest {
     private String newIdPrefix() {
         return String.format("TEST%3d", nextIdPrefix++);
     }
+
+    private static void createRepository(String repositoryName){
+        try {
+            RepositoryModel model = new RepositoryModelImpl(repoSetup.getZk());
+            if (!model.repositoryExistsAndActive(repositoryName)) {
+                model.create(repositoryName);
+                model.waitUntilRepositoryInState(repositoryName, RepositoryDefinition.RepositoryLifecycleState.ACTIVE,
+                        100000);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
 
 }
