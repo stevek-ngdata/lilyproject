@@ -59,6 +59,7 @@ public class IndexerMasterTest {
     private static final QName AUTHOR_RECORD_TYPE = new QName("org.lilyproject.test", "Author");
     private static final QName BOOK_TO_AUTHOR_LINK = new QName("org.lilyproject.test", "authorLink");
     private static final QName NAME = new QName("org.lilyproject.test", "name");
+    private static final String REPO_NAME = "IndexerMasterTestRepo";
 
     private final static RepositorySetup repoSetup = new RepositorySetup();
     private LRepository repository;
@@ -68,12 +69,12 @@ public class IndexerMasterTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         repoSetup.setupCore();
-        repoSetup.setupRepository();
+        repoSetup.setupRepository(REPO_NAME);
     }
 
     @Before
     public void setUp() throws Exception {
-        repository = (Repository)repoSetup.getRepositoryManager().getDefaultRepository().getTable(Table.RECORD.name);
+        repository = (Repository)repoSetup.getRepositoryManager().getRepository(REPO_NAME).getTable(Table.RECORD.name);
         hBaseAdmin = new HBaseAdmin(repoSetup.getHadoopConf());
 
         final IndexerModelImpl model = new IndexerModelImpl(repoSetup.getZk());
@@ -188,6 +189,7 @@ public class IndexerMasterTest {
         indexDef.setConfiguration(
                 IOUtils.toByteArray(IndexerMasterTest.class.getResourceAsStream("test_indexer_conf.xml")));
         indexDef.setSolrShards(Collections.singletonMap("shard1", "http://somewhere/"));
+        indexDef.setRepositoryName(REPO_NAME);
         model.addIndex(indexDef);
         waitForIndexesInfoUpdate(1);
 
