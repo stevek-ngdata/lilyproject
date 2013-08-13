@@ -96,8 +96,8 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
                     repository);
 
             String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
-
-            table = Bytes.toString(((TableSplit)context.getInputSplit()).getTableName());
+            String hbaseTable = Bytes.toString(((TableSplit)context.getInputSplit()).getTableName());
+            table = RepoAndTableUtil.extractLilyTableName(repoName, hbaseTable);
 
             SolrShardManager solrShardMgr = getShardManager(jobConf);
 

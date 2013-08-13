@@ -52,9 +52,11 @@ import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.model.api.RepositoryDefinition;
+import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.VersionTag;
@@ -79,6 +81,8 @@ public class BatchBuildTest {
     private FieldType ft2;
     private RecordType rt1;
 
+    private final static String REPO_NAME = "batchtestrepo";
+
     private final static String INDEX_NAME = "batchtest";
     private static final String COUNTER_NUM_FAILED_RECORDS =
             "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
@@ -92,12 +96,12 @@ public class BatchBuildTest {
         IOUtils.closeQuietly(is);
 
         lilyProxy.start(solrSchema);
-
+        createRepository(REPO_NAME);
         solrProxy = lilyProxy.getSolrProxy();
         solrServer = solrProxy.getSolrServer();
         lilyServerProxy = lilyProxy.getLilyServerProxy();
         lilyClient = lilyServerProxy.getClient();
-        repository = lilyClient.getDefaultRepository();
+        repository = lilyClient.getRepository(REPO_NAME);
         table = repository.getDefaultTable();
 
         typeManager = repository.getTypeManager();
@@ -124,6 +128,7 @@ public class BatchBuildTest {
         index.setSolrShards(solrShards);
         index.setConfiguration(indexerConfiguration);
         index.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
+        index.setRepositoryName(REPO_NAME);
         model.addIndex(index);
     }
 
@@ -306,7 +311,7 @@ public class BatchBuildTest {
     @Test
     public void testClearDerefMap() throws Exception {
         DerefMap derefMap = DerefMapHbaseImpl
-                .create("default", INDEX_NAME, lilyProxy.getHBaseProxy().getConf(), null, repository.getIdGenerator());
+                .create(REPO_NAME, INDEX_NAME, lilyProxy.getHBaseProxy().getConf(), null, repository.getIdGenerator());
 
         Record linkedRecord = table.recordBuilder()
                 .id("deref-test-linkedrecord")
@@ -418,7 +423,22 @@ public class BatchBuildTest {
         }
     }
 
+
+    private static void createRepository(String repositoryName){
+        try {
+            RepositoryModel model = new RepositoryModelImpl(lilyProxy.getLilyServerProxy().getZooKeeper());
+            if (!model.repositoryExistsAndActive(repositoryName)) {
+                model.create(repositoryName);
+                model.waitUntilRepositoryInState(repositoryName, RepositoryDefinition.RepositoryLifecycleState.ACTIVE,
+                        100000);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+
     private static AbsoluteRecordId absId(RecordId recordId) {
-        return repository.getIdGenerator().newAbsoluteRecordId(RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name, recordId);
+        return repository.getIdGenerator().newAbsoluteRecordId(REPO_NAME, Table.RECORD.name, recordId);
     }
 }
