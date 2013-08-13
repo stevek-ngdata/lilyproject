@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.lilyproject.repository.model.api.RepositoryDefinition;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 import org.lilyproject.repository.master.RepositoryMaster;
@@ -161,11 +162,21 @@ public class RepositorySetup {
     }
 
     public void setupRepository() throws Exception {
+        setupRepository(RepoAndTableUtil.DEFAULT_REPOSITORY);
+    }
+
+    public void setupRepository(String repositoryName) throws Exception {
         if (repositoryManagerSetup) {
             return;
         }
 
         setupTypeManager();
+
+        if (!repositoryModel.repositoryExistsAndActive(repositoryName)) {
+            repositoryModel.create(repositoryName);
+            repositoryModel.waitUntilRepositoryInState(repositoryName, RepositoryDefinition.RepositoryLifecycleState
+                    .ACTIVE, 100000);
+        }
 
         blobStoreAccessFactory = createBlobAccess();
         blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
@@ -185,7 +196,7 @@ public class RepositorySetup {
         sepModel = new SepModelImpl(new ZooKeeperItfAdapter(zk), hadoopConf);
         eventPublisherManager = new LilyEventPublisherManager(hbaseTableFactory);
 
-        tableManager = new TableManagerImpl(/* TODO multiple repositories */ RepoAndTableUtil.DEFAULT_REPOSITORY, hadoopConf, hbaseTableFactory);
+        tableManager = new TableManagerImpl(repositoryName, hadoopConf, hbaseTableFactory);
         if (!tableManager.tableExists(Table.RECORD.name)) {
             tableManager.createTable(Table.RECORD.name);
         }

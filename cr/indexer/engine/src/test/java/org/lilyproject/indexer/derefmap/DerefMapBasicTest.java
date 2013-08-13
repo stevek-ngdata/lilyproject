@@ -68,8 +68,7 @@ public class DerefMapBasicTest {
         TestHelper.setupLogging("org.lilyproject.indexer");
 
         repoSetup.setupCore();
-        repoSetup.setupRepository();
-        createRepository(REPO_NAME);
+        repoSetup.setupRepository(REPO_NAME);
         LRepository repository = repoSetup.getRepositoryManager().getRepository(REPO_NAME);
         ids = repository.getIdGenerator();
 
@@ -568,19 +567,6 @@ public class DerefMapBasicTest {
 
     private String newIdPrefix() {
         return String.format("TEST%3d", nextIdPrefix++);
-    }
-
-    private static void createRepository(String repositoryName){
-        try {
-            RepositoryModel model = new RepositoryModelImpl(repoSetup.getZk());
-            if (!model.repositoryExistsAndActive(repositoryName)) {
-                model.create(repositoryName);
-                model.waitUntilRepositoryInState(repositoryName, RepositoryDefinition.RepositoryLifecycleState.ACTIVE,
-                        100000);
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
     }
 
 
