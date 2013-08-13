@@ -57,7 +57,7 @@ import static org.junit.Assert.assertEquals;
 public class IndexerApiTest {
 
     private final static RepositorySetup repoSetup = new RepositorySetup();
-
+    private final static String REPO_NAME = "testRepository";
     private static final String NS = "org.lilyproject.indexer.test";
 
     private IndexerConf INDEXER_CONF;
@@ -84,9 +84,9 @@ public class IndexerApiTest {
         SOLR_TEST_UTIL.start();
 
         repoSetup.setupCore();
-        repoSetup.setupRepository();
+        repoSetup.setupRepository(REPO_NAME);
 
-        repository = repoSetup.getRepositoryManager().getDefaultRepository();
+        repository = repoSetup.getRepositoryManager().getRepository(REPO_NAME);
         table = repository.getDefaultTable();
         typeManager = repository.getTypeManager();
 
@@ -108,7 +108,7 @@ public class IndexerApiTest {
 
     public void changeIndexUpdater(String confName) throws Exception {
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
-                repoSetup.getRepositoryManager().getDefaultRepository());
+                repository);
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
         Indexer indexer =
                 new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker, new IndexerMetrics("test"),
@@ -130,7 +130,7 @@ public class IndexerApiTest {
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
-        indexerApi.index(RepoAndTableUtil.DEFAULT_REPOSITORY,Table.RECORD.name, record.getId());
+        indexerApi.index(REPO_NAME,Table.RECORD.name, record.getId());
 
         // now we triggered indexing
         commitIndex();
@@ -151,7 +151,7 @@ public class IndexerApiTest {
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
-        indexerApi.index(RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name, record.getId());
+        indexerApi.index(REPO_NAME, Table.RECORD.name, record.getId());
 
         // still nothing will be indexed, because the record type doesn't match
         commitIndex();
@@ -172,7 +172,7 @@ public class IndexerApiTest {
         commitIndex();
         verifyResultCount("nv_field1:value", 0);
 
-        indexerApi.indexOn(RepoAndTableUtil.DEFAULT_REPOSITORY, Table.RECORD.name, record.getId(),
+        indexerApi.indexOn(REPO_NAME, Table.RECORD.name, record.getId(),
                 Sets.newHashSet("this-index-does-not-exist"));
     }
 
