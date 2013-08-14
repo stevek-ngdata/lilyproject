@@ -20,8 +20,8 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-indexer-batchbuild-test</artifactId>
-  <name>Lily: Indexer: Batch index (re)build Test</name>
+  <artifactId>lily-indexer-integrationtest</artifactId>
+  <name>Lily: Indexer: full stack integration tests</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>

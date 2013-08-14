@@ -46,7 +46,7 @@
     <module>worker</module>
     <module>master</module>
     <module>batchbuild</module>
-    <module>batchbuild-test</module>
+    <module>integrationtest</module>
   </modules>
 
   <build>
