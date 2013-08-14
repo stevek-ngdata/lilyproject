@@ -11,6 +11,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.MapSolrParams;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -22,7 +24,9 @@ import org.lilyproject.indexer.model.impl.IndexDefinitionImpl;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.model.api.RepositoryDefinition;
@@ -44,6 +48,7 @@ public class MultiRepositoryIntegrationTest {
     private static final String ns = "batchindex-test";
     private static QName fieldtype = new QName(ns, "field1");
     private static QName rectype = new QName(ns, "rt1");
+    private static QName linkField = new QName(ns, "linkField");;
 
     @BeforeClass
     public static void startLily() throws Exception{
@@ -83,7 +88,7 @@ public class MultiRepositoryIntegrationTest {
 
         TypeManager typeManager = primaryRepo.getTypeManager(); //FIXME: if typemanager ever gets split between repos
         FieldType ft1 = typeManager.createFieldType("STRING", fieldtype, Scope.NON_VERSIONED);
-        FieldType ft2 = typeManager.createFieldType("LINK", new QName(ns, "linkField"), Scope.NON_VERSIONED);
+        FieldType ft2 = typeManager.createFieldType("LINK", linkField, Scope.NON_VERSIONED);
         typeManager.recordTypeBuilder()
                 .defaultNamespace(ns)
                 .name(rectype)
@@ -111,40 +116,79 @@ public class MultiRepositoryIntegrationTest {
         Closer.close(lilyProxy);
     }
 
+    //junit 4.10 or (better yet) testng have facilities to specify the order of tests
+    //until then...
     @Test
-    public void testCreateOneRecordInEachRepo() throws Exception{
-        createRecord(primaryRepo, "test1", "test1name");
-        createRecord(secundaryRepo, "test2", "test2name");
-        SolrServer core1 = lilyProxy.getSolrProxy().getSolrServer(CORE1);
-        SolrServer core2 = lilyProxy.getSolrProxy().getSolrServer(CORE2);
-        assertEquals("One document per repository", 1, countDocsInRepo(core1));
-        assertEquals("One document per repository", 1, countDocsInRepo(core2));
+    public void testWrapper() throws Exception{
+        testCreateOneRecordInEachRepo();
+        testBatchReindexWorks();
+        testWithReferences();
     }
 
-    @Test
+
+    public void testCreateOneRecordInEachRepo() throws Exception{
+        createRecord(primaryRepo, "testId", "name1");
+        createRecord(secundaryRepo, "testId", "name2");
+        waitForSepAndCommitSolr();
+        assertEquals("One document per repository", 1, countDocsInRepo(CORE1));
+        assertEquals("One document per repository", 1, countDocsInRepo(CORE2));
+    }
+
+
     public void testBatchReindexWorks() throws Exception{
         wipeSolr(CORE1);
         wipeSolr(CORE2);
         lilyProxy.getLilyServerProxy().batchBuildIndex(PRIMARY_INDEX, MINS15);
         lilyProxy.getLilyServerProxy().batchBuildIndex(SECUNDARY_INDEX, MINS15);
         lilyProxy.getSolrProxy().commit();
-        SolrServer core1 = lilyProxy.getSolrProxy().getSolrServer(CORE1);
-        SolrServer core2 = lilyProxy.getSolrProxy().getSolrServer(CORE2);
-        assertEquals("One document per repository", 1, countDocsInRepo(core1));
-        assertEquals("One document per repository", 1, countDocsInRepo(core2));
+        assertEquals("One document per repository", 1, countDocsInRepo(CORE1));
+        assertEquals("One document per repository", 1, countDocsInRepo(CORE2));
+    }
 
+    public void testWithReferences() throws Exception{
+        createRecord(primaryRepo, "subRec", "name3");
+        createRecord(secundaryRepo, "subRec", "name4");
+        linkToOtherRecord(primaryRepo);
+        linkToOtherRecord(secundaryRepo);
+        waitForSepAndCommitSolr();
+        SolrDocumentList primaryDocs = getAllDocs(CORE1);
+        assertEquals(2, primaryDocs.getNumFound());
+        for (SolrDocument doc : primaryDocs) {
+            if (doc.getFieldValue("lily.id").equals("USER.testId")){
+                assertEquals("name3", doc.getFieldValue("derefField"));
+            }
+        }
+        SolrDocumentList secundaryDocs = getAllDocs(CORE2);
+        assertEquals(2, secundaryDocs.getNumFound());
+        for (SolrDocument doc : secundaryDocs) {
+            if (doc.getFieldValue("lily.id").equals("USER.testId")){
+                assertEquals("name4", doc.getFieldValue("derefField"));
+            }
+        }
+    }
+
+    private void linkToOtherRecord(LRepository repository) throws Exception {
+        RecordId id = lilyProxy.getLilyServerProxy().getClient().getDefaultRepository()
+                .getIdGenerator().fromString("USER.subRec");
+        repository.getDefaultTable().recordBuilder().id("testId").field(linkField, new Link(id)).update();
     }
 
     private void wipeSolr(String coreName) throws Exception{
         SolrServer server = lilyProxy.getSolrProxy().getSolrServer(coreName);
         server.deleteByQuery("*:*");
         server.commit();
-        assertEquals(0, countDocsInRepo(server));
+        assertEquals(0, countDocsInRepo(coreName));
     }
 
-    private long countDocsInRepo(SolrServer core1) throws SolrServerException {
-        QueryResponse queryResponse = core1.query(new MapSolrParams(of("q", "*:*")));
-        return queryResponse.getResults().getNumFound();
+    private long countDocsInRepo(String coreName) throws SolrServerException {
+        SolrDocumentList results = getAllDocs(coreName);
+        return results.getNumFound();
+    }
+
+    private SolrDocumentList getAllDocs(String coreName) throws SolrServerException {
+        SolrServer server = lilyProxy.getSolrProxy().getSolrServer(coreName);
+        QueryResponse queryResponse = server.query(new MapSolrParams(of("q", "*:*")));
+        return queryResponse.getResults();
     }
 
     private void createRecord(LRepository repo, String recId, String fieldData) throws Exception {
@@ -153,6 +197,9 @@ public class MultiRepositoryIntegrationTest {
                 .recordType(rectype)
                 .field(fieldtype, fieldData)
                 .create();
+    }
+
+    private void waitForSepAndCommitSolr() throws Exception {
         lilyProxy.waitSepEventsProcessed(300000);
         lilyProxy.getSolrProxy().commit();
     }
