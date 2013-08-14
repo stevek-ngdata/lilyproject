@@ -101,6 +101,7 @@ public class IndexUpdater extends LilyEventListener {
     private Indexer indexer;
     private IndexUpdaterMetrics metrics;
     private ClassLoader myContextClassLoader;
+    private final String repositoryName;
     private IndexLocker indexLocker;
     private LilyEventPublisherManager eventPublisherMgr;
     private String subscriptionId;
@@ -118,12 +119,14 @@ public class IndexUpdater extends LilyEventListener {
      *                       because the IndexUpdater generates events itself, which should only be sent to
      *                       this subscription.
      */
-    public IndexUpdater(Indexer indexer, RepositoryManager repositoryManager, IndexLocker indexLocker,
-            IndexUpdaterMetrics metrics, DerefMap derefMap, LilyEventPublisherManager eventPublisherMgr,
+    public IndexUpdater(Indexer indexer, RepositoryManager repositoryManager, String repositoryName,
+                        IndexLocker indexLocker, IndexUpdaterMetrics metrics, DerefMap derefMap,
+                        LilyEventPublisherManager eventPublisherMgr,
             String subscriptionId) {
         super(repositoryManager);
         this.indexer = indexer;
         this.repositoryManager = repositoryManager;
+        this.repositoryName = repositoryName;
         this.indexLocker = indexLocker;
         this.derefMap = derefMap;
         this.eventPublisherMgr = eventPublisherMgr;
@@ -142,6 +145,7 @@ public class IndexUpdater extends LilyEventListener {
     }
     
     public void processEvent(LilySepEvent event) {
+        if (!repositoryName.equals(event.getLilyRepositoryName())) return;
 
         long before = System.currentTimeMillis();
 

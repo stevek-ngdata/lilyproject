@@ -1,14 +1,22 @@
 package org.lilyproject.indexer.batchbuild.test;
 
+import static com.google.common.collect.ImmutableMap.of;
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.params.MapSolrParams;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.indexer.model.impl.IndexDefinitionImpl;
 import org.lilyproject.lilyservertestfw.LilyProxy;
@@ -26,6 +34,9 @@ public class MultiRepositoryIntegrationTest {
 
     public static final String CORE1 = "collection1";
     public static final String CORE2 = "collection2";
+    public static final String PRIMARY_INDEX = "primary";
+    public static final String SECUNDARY_INDEX = "secundary";
+    public static final long MINS15 = 15 * 60 * 1000;
     private static LilyProxy lilyProxy;
     private static WriteableIndexerModel indexerModel;
     private static LRepository primaryRepo;
@@ -36,6 +47,8 @@ public class MultiRepositoryIntegrationTest {
 
     @BeforeClass
     public static void startLily() throws Exception{
+        TestHelper.setupLogging("org.lilyproject");
+
         byte[] schemaBytes = getResource("solrschema.xml");
         byte[] configBytes = org.lilyproject.solrtestfw.SolrDefinition.defaultSolrConfig();
         lilyProxy = new LilyProxy();
@@ -45,8 +58,8 @@ public class MultiRepositoryIntegrationTest {
         ));
         startRepos();
         indexerModel = lilyProxy.getLilyServerProxy().getIndexerModel();
-        createIndex("primary", CORE1, primaryRepo);
-        createIndex("secundary", CORE2, secundaryRepo);
+        createIndex(PRIMARY_INDEX, CORE1, primaryRepo);
+        createIndex(SECUNDARY_INDEX, CORE2, secundaryRepo);
     }
 
     private static void createIndex(String name, String core, LRepository repository) throws Exception {
@@ -58,9 +71,9 @@ public class MultiRepositoryIntegrationTest {
         indexDef.setSolrShards(solrShards);
         indexDef.setRepositoryName(repository.getRepositoryName());
         indexerModel.addIndex(indexDef);
-        lilyProxy.getLilyServerProxy().waitOnIndexSubscriptionId(name, 300000);
+        lilyProxy.getLilyServerProxy().waitOnIndexSubscriptionId(name, MINS15);
         lilyProxy.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + name);
-        lilyProxy.getLilyServerProxy().waitOnIndexerRegistry(name, System.currentTimeMillis() + 300000);
+        lilyProxy.getLilyServerProxy().waitOnIndexerRegistry(name, System.currentTimeMillis() + MINS15);
     }
 
     private static void startRepos() throws Exception {
@@ -83,7 +96,7 @@ public class MultiRepositoryIntegrationTest {
         RepositoryModelImpl model = new RepositoryModelImpl(lilyProxy.getLilyServerProxy().getZooKeeper());
         if (!model.repositoryExistsAndActive(name)) {
             model.create(name);
-            model.waitUntilRepositoryInState(name, RepositoryDefinition.RepositoryLifecycleState.ACTIVE, 100000);
+            model.waitUntilRepositoryInState(name, RepositoryDefinition.RepositoryLifecycleState.ACTIVE, MINS15);
         }
         return lilyProxy.getLilyServerProxy().getClient().getRepository(name);
     }
@@ -99,24 +112,48 @@ public class MultiRepositoryIntegrationTest {
     }
 
     @Test
-    public void createRecordInDefaultRepository() throws Exception {
-        primaryRepo.getDefaultTable().recordBuilder()
-                .id("test1")
-                .recordType(rectype)
-                .field(fieldtype, "test1name")
-                .create();
-        lilyProxy.waitSepEventsProcessed(300000);
-        lilyProxy.getSolrProxy().commit(CORE1);
+    public void testCreateOneRecordInEachRepo() throws Exception{
+        createRecord(primaryRepo, "test1", "test1name");
+        createRecord(secundaryRepo, "test2", "test2name");
+        SolrServer core1 = lilyProxy.getSolrProxy().getSolrServer(CORE1);
+        SolrServer core2 = lilyProxy.getSolrProxy().getSolrServer(CORE2);
+        assertEquals("One document per repository", 1, countDocsInRepo(core1));
+        assertEquals("One document per repository", 1, countDocsInRepo(core2));
     }
 
     @Test
-    public void createRecordInAlternateRepository() throws Exception {
-        secundaryRepo.getDefaultTable().recordBuilder()
+    public void testBatchReindexWorks() throws Exception{
+        wipeSolr(CORE1);
+        wipeSolr(CORE2);
+        lilyProxy.getLilyServerProxy().batchBuildIndex(PRIMARY_INDEX, MINS15);
+        lilyProxy.getLilyServerProxy().batchBuildIndex(SECUNDARY_INDEX, MINS15);
+        lilyProxy.getSolrProxy().commit();
+        SolrServer core1 = lilyProxy.getSolrProxy().getSolrServer(CORE1);
+        SolrServer core2 = lilyProxy.getSolrProxy().getSolrServer(CORE2);
+        assertEquals("One document per repository", 1, countDocsInRepo(core1));
+        assertEquals("One document per repository", 1, countDocsInRepo(core2));
+
+    }
+
+    private void wipeSolr(String coreName) throws Exception{
+        SolrServer server = lilyProxy.getSolrProxy().getSolrServer(coreName);
+        server.deleteByQuery("*:*");
+        server.commit();
+        assertEquals(0, countDocsInRepo(server));
+    }
+
+    private long countDocsInRepo(SolrServer core1) throws SolrServerException {
+        QueryResponse queryResponse = core1.query(new MapSolrParams(of("q", "*:*")));
+        return queryResponse.getResults().getNumFound();
+    }
+
+    private void createRecord(LRepository repo, String recId, String fieldData) throws Exception {
+        repo.getDefaultTable().recordBuilder()
+                .id(recId)
                 .recordType(rectype)
-                .id("test2")
-                .field(fieldtype, "test2name")
+                .field(fieldtype, fieldData)
                 .create();
         lilyProxy.waitSepEventsProcessed(300000);
-        lilyProxy.getSolrProxy().commit(CORE2);
+        lilyProxy.getSolrProxy().commit();
     }
 }

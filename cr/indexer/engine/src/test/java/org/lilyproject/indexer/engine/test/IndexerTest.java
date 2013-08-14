@@ -291,7 +291,7 @@ public class IndexerTest {
         repoSetup.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + indexName);
 
         IndexUpdater indexUpdater = new IndexUpdater(indexer, new TrackingRepositoryManager(indexUpdaterRepository),
-                indexLocker, new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisherManager(),
+                REPO_NAME, indexLocker, new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisherManager(),
                 "IndexUpdater_" + indexName);
         repoSetup.startSepEventSlave("IndexUpdater_" + indexName,
                 new CompositeEventListener(repositoryManager, indexUpdater, messageVerifier, otherListener));
