@@ -42,6 +42,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+
 public class IndexRecordFilterHookTest {
 
     private Record oldRecord;
@@ -185,6 +187,56 @@ public class IndexRecordFilterHookTest {
                 Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
+    }
+
+    @Test
+    public void testCalculateIndexInclusion_RepoBasedExclusion() {
+        IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
+        IndexInfo inclusionA = createMockIndexInfo("includeA", true);
+        IndexInfo inclusionB = createMockIndexInfo("includeButNotInThisRepo", true);
+        when(inclusionB.getIndexDefinition().getRepositoryName()).thenReturn("someOtherRepo");
+        IndexInfo exclusion = createMockIndexInfo("exclude", false);
+
+        when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusionA, inclusionB, exclusion));
+
+        indexFilterHook.calculateIndexInclusion(RepoAndTableUtil.DEFAULT_REPOSITORY,
+                Table.RECORD.name, oldRecord, newRecord, indexFilterData);
+
+        verify(indexFilterData).setSubscriptionExclusions(ImmutableSet.of("includeButNotInThisRepo", "exclude"));
+    }
+
+    @Test
+    public void testCalculateIndexInclusion_ForNonDefaultRepository() {
+        IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
+        IndexInfo inclusionA = createMockIndexInfo("inclusionA", true);
+        IndexInfo exclusion = createMockIndexInfo("excludeA", false);
+        IndexInfo inclusionB = createMockIndexInfo("inclusionB", true);
+        when(inclusionB.getIndexDefinition().getRepositoryName()).thenReturn("someOtherRepo");
+
+        when(this.indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusionA, exclusion, inclusionB));
+
+        indexFilterHook.calculateIndexInclusion("someOtherRepo",
+                Table.RECORD.name, oldRecord, newRecord, indexFilterData);
+
+        verify(indexFilterData).setSubscriptionExclusions(ImmutableSet.of("inclusionA", "excludeA"));
+    }
+
+    @Test
+    public void testCalculateIndexInclusion_RepoBasedInclusion() {
+        IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
+        IndexInfo inclusionA = createMockIndexInfo("inclusionA", true);
+        IndexInfo exclusion = createMockIndexInfo("excludeA", false);
+        IndexInfo inclusionB = createMockIndexInfo("inclusionB", true);
+        ArrayList<IndexInfo> infos = Lists.newArrayList(inclusionA, exclusion, inclusionB);
+        for (IndexInfo info : infos) {
+            when(info.getIndexDefinition().getRepositoryName()).thenReturn("someOtherRepo");
+        }
+        when(this.indexesInfo.getIndexInfos()).thenReturn(infos);
+
+        indexFilterHook.calculateIndexInclusion("someOtherRepo",
+                Table.RECORD.name, oldRecord, newRecord, indexFilterData);
+
+        verify(indexFilterData).setSubscriptionInclusions(ImmutableSet.of("inclusionA","inclusionB"));
     }
 
     private IndexInfo createMockIndexInfo(String queueSubscriptionId, boolean include) {
