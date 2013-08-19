@@ -341,6 +341,11 @@ public class IndexerModelImpl implements WriteableIndexerModel {
             throw new IndexUpdateException("The last batch build info cannot be modified by users.");
         }
 
+        //note that changing the repository name is non-trivial, i.e. the ownership metadata from the derefmap tables needs to be changed.
+        if (!ObjectUtils.safeEquals(currentIndex.getRepositoryName(), index.getRepositoryName())) {
+            throw new IndexUpdateException("The repository name cannot be modified by users.");
+        }
+
         updateIndexInternal(index);
 
     }
