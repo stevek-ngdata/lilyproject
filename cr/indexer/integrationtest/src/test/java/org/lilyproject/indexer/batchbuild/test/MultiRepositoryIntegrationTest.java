@@ -74,7 +74,8 @@ public class MultiRepositoryIntegrationTest {
         Map<String, String> solrShards = new HashMap<String, String>();
         solrShards.put("shard1", "http://localhost:8983/solr" + "/" + core + "/");
         indexDef.setSolrShards(solrShards);
-        indexDef.setRepositoryName(repository.getRepositoryName());
+        if (! repository.getRepositoryName().equals("default"))
+            indexDef.setRepositoryName(repository.getRepositoryName()); //optional for default
         indexerModel.addIndex(indexDef);
         lilyProxy.getLilyServerProxy().waitOnIndexSubscriptionId(name, MINS15);
         lilyProxy.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + name);
