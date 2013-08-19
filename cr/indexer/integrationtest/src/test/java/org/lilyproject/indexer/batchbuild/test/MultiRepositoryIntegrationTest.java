@@ -132,6 +132,8 @@ public class MultiRepositoryIntegrationTest {
         waitForSepAndCommitSolr();
         assertEquals("One document per repository", 1, countDocsInRepo(CORE1));
         assertEquals("One document per repository", 1, countDocsInRepo(CORE2));
+        verifyFieldValue(getAllDocs(CORE1), "USER.testId", "name1");
+        verifyFieldValue(getAllDocs(CORE2), "USER.testId", "name2");
     }
 
 
@@ -143,6 +145,8 @@ public class MultiRepositoryIntegrationTest {
         lilyProxy.getSolrProxy().commit();
         assertEquals("One document per repository", 1, countDocsInRepo(CORE1));
         assertEquals("One document per repository", 1, countDocsInRepo(CORE2));
+        verifyFieldValue(getAllDocs(CORE1), "USER.testId", "name1");
+        verifyFieldValue(getAllDocs(CORE2), "USER.testId", "name2");
     }
 
     public void testWithReferences() throws Exception{
@@ -153,16 +157,24 @@ public class MultiRepositoryIntegrationTest {
         waitForSepAndCommitSolr();
         SolrDocumentList primaryDocs = getAllDocs(CORE1);
         assertEquals(2, primaryDocs.getNumFound());
-        for (SolrDocument doc : primaryDocs) {
-            if (doc.getFieldValue("lily.id").equals("USER.testId")){
-                assertEquals("name3", doc.getFieldValue("derefField"));
-            }
-        }
+        verifyDeref(primaryDocs, "USER.testId", "name3");
         SolrDocumentList secundaryDocs = getAllDocs(CORE2);
         assertEquals(2, secundaryDocs.getNumFound());
-        for (SolrDocument doc : secundaryDocs) {
-            if (doc.getFieldValue("lily.id").equals("USER.testId")){
-                assertEquals("name4", doc.getFieldValue("derefField"));
+        verifyDeref(secundaryDocs, "USER.testId", "name4");
+    }
+
+    private void verifyFieldValue(SolrDocumentList docs, String recordId, String fieldValue){
+        verifyDocumentValue(docs, recordId, "field1", fieldValue);
+    }
+
+    private void verifyDeref(SolrDocumentList docs, String parentRecordId, String derefFieldValue) {
+        verifyDocumentValue(docs, parentRecordId, "derefField", derefFieldValue);
+    }
+
+    private void verifyDocumentValue(SolrDocumentList docs, String recordId, String fieldName, String derefFieldValue) {
+        for (SolrDocument doc : docs) {
+            if (doc.getFieldValue("lily.id").equals(recordId)){
+                assertEquals(derefFieldValue, doc.getFieldValue(fieldName));
             }
         }
     }
