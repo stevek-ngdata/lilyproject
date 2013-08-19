@@ -131,6 +131,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         if (repositoryName != null){
             index.setRepositoryName(repositoryName);
         } else {
+            System.out.println("Repository not specified, defaulting to \"default\" repository.");
             index.setRepositoryName(RepoAndTableUtil.DEFAULT_REPOSITORY);
         }
 
