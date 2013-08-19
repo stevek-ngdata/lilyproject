@@ -18,6 +18,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.indexer.model.impl.IndexDefinitionImpl;
@@ -78,7 +79,8 @@ public class MultiRepositoryIntegrationTest {
             indexDef.setRepositoryName(repository.getRepositoryName()); //optional for default
         indexerModel.addIndex(indexDef);
         lilyProxy.getLilyServerProxy().waitOnIndexSubscriptionId(name, MINS15);
-        lilyProxy.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + name);
+        if (lilyProxy.getHBaseProxy().getMode() != HBaseProxy.Mode.CONNECT)
+            lilyProxy.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + name);
         lilyProxy.getLilyServerProxy().waitOnIndexerRegistry(name, System.currentTimeMillis() + MINS15);
     }
 
