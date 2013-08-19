@@ -28,6 +28,7 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
 import org.lilyproject.util.repo.RecordEvent.Type;
@@ -62,6 +63,7 @@ public class IndexRecordFilterHookTest {
 
         indexesInfo = mock(IndexesInfo.class);
         indexFilterHook = spy(new IndexRecordFilterHook(indexesInfo));
+        when(repository.getRepositoryName()).thenReturn(RepoAndTableUtil.DEFAULT_REPOSITORY);
     }
 
     @Test
@@ -78,7 +80,8 @@ public class IndexRecordFilterHookTest {
         IndexRecordFilterData idxFilterData = recordEvent.getIndexRecordFilterData();
         assertTrue(idxFilterData.getOldRecordExists());
         assertTrue(idxFilterData.getNewRecordExists());
-        verify(indexFilterHook).calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, idxFilterData);
+        verify(indexFilterHook).calculateIndexInclusion(RepoAndTableUtil.DEFAULT_REPOSITORY,
+                Table.RECORD.name, oldRecord, newRecord, idxFilterData);
     }
 
     @Test
@@ -95,7 +98,8 @@ public class IndexRecordFilterHookTest {
         IndexRecordFilterData idxFilterData = recordEvent.getIndexRecordFilterData();
         assertFalse(idxFilterData.getOldRecordExists());
         assertTrue(idxFilterData.getNewRecordExists());
-        verify(indexFilterHook).calculateIndexInclusion(Table.RECORD.name, null, newRecord, idxFilterData);
+        verify(indexFilterHook).calculateIndexInclusion(RepoAndTableUtil.DEFAULT_REPOSITORY,
+                Table.RECORD.name, null, newRecord, idxFilterData);
     }
 
     @Test
@@ -112,7 +116,8 @@ public class IndexRecordFilterHookTest {
         IndexRecordFilterData idxFilterData = recordEvent.getIndexRecordFilterData();
         assertTrue(idxFilterData.getOldRecordExists());
         assertFalse(idxFilterData.getNewRecordExists());
-        verify(indexFilterHook).calculateIndexInclusion(Table.RECORD.name, oldRecord, null, idxFilterData);
+        verify(indexFilterHook).calculateIndexInclusion(RepoAndTableUtil.DEFAULT_REPOSITORY,
+                Table.RECORD.name, oldRecord, null, idxFilterData);
     }
 
     @Test
@@ -124,7 +129,8 @@ public class IndexRecordFilterHookTest {
 
         when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusionA, inclusionB, exclusion));
 
-        indexFilterHook.calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, indexFilterData);
+        indexFilterHook.calculateIndexInclusion(RepoAndTableUtil.DEFAULT_REPOSITORY,
+                Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionInclusions(ImmutableSet.of("includeA", "includeB"));
     }
@@ -138,7 +144,8 @@ public class IndexRecordFilterHookTest {
 
         when(this.indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusion, exclusionA, exclusionB));
 
-        indexFilterHook.calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, indexFilterData);
+        indexFilterHook.calculateIndexInclusion(RepoAndTableUtil.DEFAULT_REPOSITORY,
+                Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionExclusions(ImmutableSet.of("excludeA", "excludeB"));
     }
@@ -150,7 +157,8 @@ public class IndexRecordFilterHookTest {
 
         when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusion));
 
-        indexFilterHook.calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, indexFilterData);
+        indexFilterHook.calculateIndexInclusion(RepoAndTableUtil.DEFAULT_REPOSITORY,
+                Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionInclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
     }
@@ -162,7 +170,8 @@ public class IndexRecordFilterHookTest {
 
         when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusion));
 
-        indexFilterHook.calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, indexFilterData);
+        indexFilterHook.calculateIndexInclusion(RepoAndTableUtil.DEFAULT_REPOSITORY,
+                Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
     }
@@ -172,7 +181,8 @@ public class IndexRecordFilterHookTest {
         IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
         when(indexesInfo.getIndexInfos()).thenReturn(Lists.<IndexInfo>newArrayList());
 
-        indexFilterHook.calculateIndexInclusion(Table.RECORD.name, oldRecord, newRecord, indexFilterData);
+        indexFilterHook.calculateIndexInclusion(RepoAndTableUtil.DEFAULT_REPOSITORY,
+                Table.RECORD.name, oldRecord, newRecord, indexFilterData);
 
         verify(indexFilterData).setSubscriptionExclusions(IndexRecordFilterData.ALL_INDEX_SUBSCRIPTIONS);
     }

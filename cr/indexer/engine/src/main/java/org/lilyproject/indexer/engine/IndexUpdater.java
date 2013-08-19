@@ -145,7 +145,10 @@ public class IndexUpdater extends LilyEventListener {
     }
     
     public void processEvent(LilySepEvent event) {
-        if (!repositoryName.equals(event.getLilyRepositoryName())) return;
+        if (!repositoryName.equals(event.getLilyRepositoryName())) {
+            log.warn("got sep event for record that should have been filtered by IndexEditFilter and IndexRecordFilterHook");
+            return;
+        }
 
         long before = System.currentTimeMillis();
 

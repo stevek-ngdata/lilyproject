@@ -34,6 +34,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
 
@@ -110,7 +111,8 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
                 }
             }
 
-            calculateIndexInclusion(recordEvent.getTableName(), originalRecord, record, idxSel);
+            calculateIndexInclusion(repository.getRepositoryName(), recordEvent.getTableName(), originalRecord, record,
+                    idxSel);
 
         }
     }
@@ -141,7 +143,8 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
                     addField(type, null, newValue, idxSel);
                 }
             }
-            calculateIndexInclusion(recordEvent.getTableName(), null, newRecord, idxSel);
+            calculateIndexInclusion(repository.getRepositoryName(), recordEvent.getTableName(), null, newRecord,
+                    idxSel);
         }
     }
 
@@ -170,7 +173,8 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
                     addField(type, oldValue, null, idxSel);
                 }
             }
-            calculateIndexInclusion(recordEvent.getTableName(), originalRecord, null, idxSel);
+            calculateIndexInclusion(repository.getRepositoryName(), recordEvent.getTableName(), originalRecord, null,
+                    idxSel);
         }
     }
 
@@ -201,13 +205,15 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
      * @param newRecord New version of the record, null if the record is being deleted
      * @param indexFilterData To be updated with index subscription inclusion/exclusion information
      */
-    void calculateIndexInclusion(String table, Record oldRecord, Record newRecord, IndexRecordFilterData indexFilterData) {
+    void calculateIndexInclusion(String repositoryName, String table,
+                                 Record oldRecord, Record newRecord, IndexRecordFilterData indexFilterData) {
 
         Set<String> applicableIndexes = Sets.newHashSet();
         Set<String> nonApplicableIndexes = Sets.newHashSet();
         for (IndexInfo indexInfo : indexesInfo.getIndexInfos()) {
             String queueSubscriptionId = indexInfo.getIndexDefinition().getQueueSubscriptionId();
-            if (indexIsApplicable(indexInfo.getIndexerConf().getRecordFilter(), table, oldRecord, newRecord)) {
+            if (indexMatchesRepository(repositoryName, indexInfo) &&
+                    indexIsApplicable(indexInfo.getIndexerConf().getRecordFilter(), table, oldRecord, newRecord)) {
                 applicableIndexes.add(queueSubscriptionId);
             } else {
                 nonApplicableIndexes.add(queueSubscriptionId);
@@ -223,6 +229,12 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
         } else {
             indexFilterData.setSubscriptionExclusions(nonApplicableIndexes);
         }
+    }
+
+    boolean indexMatchesRepository(String repositoryName, IndexInfo indexInfo){
+        String indexRepo = indexInfo.getIndexDefinition().getRepositoryName();
+        indexRepo = (indexRepo != null ? indexRepo : RepoAndTableUtil.DEFAULT_REPOSITORY);
+        return indexRepo.equals(repositoryName);
     }
 
     /**
