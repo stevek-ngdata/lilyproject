@@ -65,6 +65,11 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
 
         for (IndexDefinition index : indexes) {
             System.out.println(index.getName());
+
+            if (index.getRepositoryName() != null){
+                System.out.println("  + Repository: " + index.getRepositoryName());
+            }
+
             System.out.println("  + General state: " + index.getGeneralState());
             System.out.println("  + Update state: " + index.getUpdateState());
             System.out.println("  + Batch build state: " + index.getBatchBuildState());
