@@ -2,10 +2,14 @@ package org.lilyproject.indexer.batchbuild.test;
 
 
 import static org.junit.Assert.assertEquals;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.*;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -18,6 +22,9 @@ import org.junit.Test;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexGeneralState;
 import org.lilyproject.indexer.model.api.IndexUpdateException;
+import org.lilyproject.indexer.model.api.IndexerModelEvent;
+import org.lilyproject.indexer.model.api.IndexerModelEventType;
+import org.lilyproject.indexer.model.api.IndexerModelListener;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.LRepository;
@@ -89,9 +96,6 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
 
             deleteIndex("testBobbyTables");
 
-            waitForNoneOfTheseTablesExist(hBaseAdmin, "deref-backward-testBobbyTables",
-                    "deref-forward-testBobbyTables");
-
             testUtil.createIndex("testBobbyTables", "dummyCORE", secondNewRepo);
 
             checkOwner(hBaseAdmin, secondNewRepo.getRepositoryName(),
@@ -103,7 +107,19 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
         }
     }
 
-    public void deleteIndex(String indexName) throws Exception {
+    public void deleteIndex(final String indexName) throws Exception {
+        //set this up so we can wait for it later
+        final CountDownLatch latch = new CountDownLatch(1);
+        indexerModel.getIndexes(new IndexerModelListener() {
+            @Override
+            public void process(IndexerModelEvent event) {
+                if (indexName.equals(event.getIndexName()) && INDEX_REMOVED.equals(event.getType())){
+                    latch.countDown();
+                }
+            }
+        });
+
+        //request the delete
         String lock = indexerModel.lockIndex(indexName);
         try {
             IndexDefinition index = indexerModel.getMutableIndex(indexName);
@@ -112,6 +128,9 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
         } finally {
             indexerModel.unlockIndex(lock, true);
         }
+
+        //wait for delete to finish.
+        latch.await(MINS15, TimeUnit.MILLISECONDS);
     }
 
     public void waitForNoneOfTheseTablesExist(HBaseAdmin hBaseAdmin, String... tableNames) throws Exception {
