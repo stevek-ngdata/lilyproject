@@ -53,6 +53,13 @@ public interface WriteableIndexerModel extends IndexerModel {
     void updateIndexInternal(final IndexDefinition index) throws InterruptedException, KeeperException,
             IndexNotFoundException, IndexConcurrentModificationException, IndexValidityException;
 
+    /**
+     * Internal method, straight-on deletes an index from the model in Zk. If you want a graceful delete,
+     * update the index with the DELETE_REQUESTED flag as IndexGeneralState.
+     *
+     * @param indexName the index to delete
+     * @throws IndexModelException
+     */
     void deleteIndex(final String indexName) throws IndexModelException;
 
     /**
