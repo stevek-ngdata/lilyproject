@@ -2,12 +2,15 @@ package org.lilyproject.indexer.batchbuild.test;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static org.junit.Assert.assertEquals;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.CORE1;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.CORE2;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.MINS15;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.PRIMARY_INDEX;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.SECUNDARY_INDEX;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.fieldtype;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.linkField;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.rectype;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -17,107 +20,29 @@ import org.apache.solr.common.params.MapSolrParams;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.client.LilyClient;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.indexer.model.api.WriteableIndexerModel;
-import org.lilyproject.indexer.model.impl.IndexDefinitionImpl;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.Link;
-import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.model.api.RepositoryDefinition;
-import org.lilyproject.repository.model.impl.RepositoryModelImpl;
-import org.lilyproject.solrtestfw.SolrDefinition;
-import org.lilyproject.util.io.Closer;
+
+
 
 public class MultiRepositoryIntegrationTest {
 
-    public static final String CORE1 = "collection1";
-    public static final String CORE2 = "collection2";
-    public static final String PRIMARY_INDEX = "primary";
-    public static final String SECUNDARY_INDEX = "secundary";
-    public static final long MINS15 = 15 * 60 * 1000;
+    private static IndexerIntegrationTestUtil util;
     private static LilyProxy lilyProxy;
-    private static WriteableIndexerModel indexerModel;
-    private static LRepository primaryRepo;
-    private static LRepository secundaryRepo;
-    private static final String ns = "batchindex-test";
-    private static QName fieldtype = new QName(ns, "field1");
-    private static QName rectype = new QName(ns, "rt1");
-    private static QName linkField = new QName(ns, "linkField");;
 
     @BeforeClass
     public static void startLily() throws Exception{
-        TestHelper.setupLogging("org.lilyproject");
-
-        byte[] schemaBytes = getResource("solrschema.xml");
-        byte[] configBytes = org.lilyproject.solrtestfw.SolrDefinition.defaultSolrConfig();
         lilyProxy = new LilyProxy();
-        lilyProxy.start(new SolrDefinition(
-                new SolrDefinition.CoreDefinition(CORE1, schemaBytes, configBytes),
-                new SolrDefinition.CoreDefinition(CORE2, schemaBytes, configBytes)
-        ));
-        startRepos();
-        indexerModel = lilyProxy.getLilyServerProxy().getIndexerModel();
-        createIndex(PRIMARY_INDEX, CORE1, primaryRepo);
-        createIndex(SECUNDARY_INDEX, CORE2, secundaryRepo);
+        util = new IndexerIntegrationTestUtil(lilyProxy);
     }
-
-    private static void createIndex(String name, String core, LRepository repository) throws Exception {
-        byte[] indexConf = getResource("indexerconf.xml");
-        IndexDefinitionImpl indexDef = new IndexDefinitionImpl(name);
-        indexDef.setConfiguration(indexConf);
-        Map<String, String> solrShards = new HashMap<String, String>();
-        solrShards.put("shard1", "http://localhost:8983/solr" + "/" + core + "/");
-        indexDef.setSolrShards(solrShards);
-        if (! repository.getRepositoryName().equals("default"))
-            indexDef.setRepositoryName(repository.getRepositoryName()); //optional for default
-        indexerModel.addIndex(indexDef);
-        lilyProxy.getLilyServerProxy().waitOnIndexSubscriptionId(name, MINS15);
-        if (lilyProxy.getHBaseProxy().getMode() != HBaseProxy.Mode.CONNECT)
-            lilyProxy.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + name);
-        lilyProxy.getLilyServerProxy().waitOnIndexerRegistry(name, System.currentTimeMillis() + MINS15);
-    }
-
-    private static void startRepos() throws Exception {
-        LilyClient client = lilyProxy.getLilyServerProxy().getClient();
-        primaryRepo = client.getDefaultRepository();
-        secundaryRepo = getAlternateTestRespository("alternateRepo");
-
-        TypeManager typeManager = primaryRepo.getTypeManager(); //FIXME: if typemanager ever gets split between repos
-        FieldType ft1 = typeManager.createFieldType("STRING", fieldtype, Scope.NON_VERSIONED);
-        FieldType ft2 = typeManager.createFieldType("LINK", linkField, Scope.NON_VERSIONED);
-        typeManager.recordTypeBuilder()
-                .defaultNamespace(ns)
-                .name(rectype)
-                .fieldEntry().use(ft1).add()
-                .fieldEntry().use(ft2).add()
-                .create();
-    }
-
-    public static LRepository getAlternateTestRespository(String name) throws Exception {
-        RepositoryModelImpl model = new RepositoryModelImpl(lilyProxy.getLilyServerProxy().getZooKeeper());
-        if (!model.repositoryExistsAndActive(name)) {
-            model.create(name);
-            model.waitUntilRepositoryInState(name, RepositoryDefinition.RepositoryLifecycleState.ACTIVE, MINS15);
-        }
-        return lilyProxy.getLilyServerProxy().getClient().getRepository(name);
-    }
-
-    private static byte[] getResource(String name) throws IOException {
-        return IOUtils.toByteArray(MultiRepositoryIntegrationTest.class.getResourceAsStream(name));
-    }
-
 
     @AfterClass
-    public static void stop() {
-        Closer.close(lilyProxy);
+    public static void stopLily() throws Exception{
+        util.stop();
     }
+
 
     //junit 4.10 or (better yet) testng have facilities to specify the order of tests
     //until then...
@@ -130,8 +55,8 @@ public class MultiRepositoryIntegrationTest {
 
 
     public void testCreateOneRecordInEachRepo() throws Exception{
-        createRecord(primaryRepo, "testId", "name1");
-        createRecord(secundaryRepo, "testId", "name2");
+        createRecord(util.primaryRepo, "testId", "name1");
+        createRecord(util.secundaryRepo, "testId", "name2");
         waitForSepAndCommitSolr();
         assertEquals("One document per repository", 1, countDocsInRepo(CORE1));
         assertEquals("One document per repository", 1, countDocsInRepo(CORE2));
@@ -153,10 +78,10 @@ public class MultiRepositoryIntegrationTest {
     }
 
     public void testWithReferences() throws Exception{
-        createRecord(primaryRepo, "subRec", "name3");
-        createRecord(secundaryRepo, "subRec", "name4");
-        linkToOtherRecord(primaryRepo);
-        linkToOtherRecord(secundaryRepo);
+        createRecord(util.primaryRepo, "subRec", "name3");
+        createRecord(util.secundaryRepo, "subRec", "name4");
+        linkToOtherRecord(util.primaryRepo);
+        linkToOtherRecord(util.secundaryRepo);
         waitForSepAndCommitSolr();
         SolrDocumentList primaryDocs = getAllDocs(CORE1);
         assertEquals(2, primaryDocs.getNumFound());
