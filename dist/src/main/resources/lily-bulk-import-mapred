@@ -3,7 +3,7 @@
 # The below is to search whatever is the current version of the MR job jar,
 # we also validate there is not more than one.
 
-jarpath_expr="/usr/lib/lily/lib/org/lilyproject/lily-bulk-import/2.4-SNAPSHOT/lily-bulk-import-*-job.jar"
+jarpath_expr="/usr/lib/lily/lib/org/lilyproject/lily-bulk-import/*.*/lily-bulk-import-*-job.jar"
 
 count=`ls -l $jarpath_expr | wc -l`
 
