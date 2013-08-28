@@ -66,7 +66,7 @@ public interface IdGenerator {
      * @param tableName name of the repository table
      * @param recordId record id within the given repository table
      */
-    AbsoluteRecordId newAbsoluteRecordId(String repoName, String tableName, RecordId recordId);
+    AbsoluteRecordId newAbsoluteRecordId(String tableName, RecordId recordId);
 
     /**
      * Creates an {@code AbsoluteRecordId} that points to a specific record ina  specific repositoryy table,
@@ -75,7 +75,7 @@ public interface IdGenerator {
      * @param tableName name of the repository table
      * @param userProvided user-provided record id string
      */
-    AbsoluteRecordId newAbsoluteRecordId(String repoName, String tableName, String userProvided);
+    AbsoluteRecordId newAbsoluteRecordId(String tableName, String userProvided);
 
     /**
      * Creates a RecordId based on the provided byte array.

@@ -15,12 +15,12 @@
  */
 package org.lilyproject.repository.impl.id;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 import org.junit.Test;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.IdGenerator;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 public class AbsoluteRecordIdImplTest {
 
@@ -28,7 +28,7 @@ public class AbsoluteRecordIdImplTest {
 
     @Test
     public void testSerializationRoundTrip() {
-        AbsoluteRecordId id = new AbsoluteRecordIdImpl("myrepo","mytable", idGenerator.fromString("USER.myId"));
+        AbsoluteRecordId id = new AbsoluteRecordIdImpl("mytable", idGenerator.fromString("USER.myId"));
         byte[] bytes = id.toBytes();
         AbsoluteRecordId deserialized = AbsoluteRecordIdImpl.fromBytes(bytes, idGenerator);
 
@@ -37,10 +37,10 @@ public class AbsoluteRecordIdImplTest {
 
     @Test
     public void testEquals() {
-        AbsoluteRecordId idA1 = new AbsoluteRecordIdImpl("myrepo","mytable", idGenerator.fromString("USER.myId"));
-        AbsoluteRecordId idA2 = new AbsoluteRecordIdImpl("myrepo","mytable", idGenerator.fromString("USER.myId"));
-        AbsoluteRecordId idB = new AbsoluteRecordIdImpl("myrepo","othertable", idGenerator.fromString("USER.myId"));
-        AbsoluteRecordId idC = new AbsoluteRecordIdImpl("myrepo","mytable", idGenerator.fromString("USER.otherId"));
+        AbsoluteRecordId idA1 = new AbsoluteRecordIdImpl("mytable", idGenerator.fromString("USER.myId"));
+        AbsoluteRecordId idA2 = new AbsoluteRecordIdImpl("mytable", idGenerator.fromString("USER.myId"));
+        AbsoluteRecordId idB = new AbsoluteRecordIdImpl("othertable", idGenerator.fromString("USER.myId"));
+        AbsoluteRecordId idC = new AbsoluteRecordIdImpl("mytable", idGenerator.fromString("USER.otherId"));
 
         assertEquals(idA1, idA2);
         assertFalse(idA1.equals(idB));

@@ -15,6 +15,10 @@
  */
 package org.lilyproject.indexer.batchbuild.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -60,10 +64,6 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.VersionTag;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;
@@ -439,6 +439,6 @@ public class BatchBuildTest {
 
 
     private static AbsoluteRecordId absId(RecordId recordId) {
-        return repository.getIdGenerator().newAbsoluteRecordId(REPO_NAME, Table.RECORD.name, recordId);
+        return repository.getIdGenerator().newAbsoluteRecordId(Table.RECORD.name, recordId);
     }
 }

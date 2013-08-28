@@ -65,11 +65,8 @@ final class DerefMapSerializationUtil {
 
         for (DependencyEntry dependencyEntry : dependencies) {
             // we store the master record id, because that is how they are stored in the backward table
-            final byte[] masterRepoBytes = Bytes.toBytes(dependencyEntry.getDependency().getRepository());
             final byte[] masterTableBytes = Bytes.toBytes(dependencyEntry.getDependency().getTable());
             final byte[] masterBytes = dependencyEntry.getDependency().getRecordId().getMaster().toBytes();
-            dataOutput.writeInt(masterRepoBytes.length);
-            dataOutput.writeBytes(masterRepoBytes);
             dataOutput.writeInt(masterTableBytes.length);
             dataOutput.writeBytes(masterTableBytes);
             dataOutput.writeInt(masterBytes.length);
@@ -91,8 +88,6 @@ final class DerefMapSerializationUtil {
         final Set<DependencyEntry> result = new HashSet<DependencyEntry>(nDependencies);
 
         while (result.size() < nDependencies) {
-            final int repoLength = dataInput.readInt();
-            final String repo = Bytes.toString(dataInput.readBytes(repoLength));
             final int tableLength = dataInput.readInt();
             final String table = Bytes.toString(dataInput.readBytes(tableLength));
             final int masterBytesLength = dataInput.readInt();
@@ -101,7 +96,7 @@ final class DerefMapSerializationUtil {
             final DerefMapVariantPropertiesPattern variantPropertiesPattern =
                     deserializeVariantPropertiesPattern(dataInput);
 
-            result.add(new DependencyEntry(new AbsoluteRecordIdImpl(repo,table,
+            result.add(new DependencyEntry(new AbsoluteRecordIdImpl(table,
                     idGenerator.newRecordId(idGenerator.fromBytes(masterBytes),
                             variantPropertiesPattern.getConcreteProperties())),
                     variantPropertiesPattern.getPatternProperties()));

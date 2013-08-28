@@ -15,6 +15,10 @@
  */
 package org.lilyproject.indexer.derefmap;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,17 +40,9 @@ import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
-import org.lilyproject.repository.model.api.RepositoryDefinition;
-import org.lilyproject.repository.model.api.RepositoryModel;
-import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.io.Closer;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * This tests the functionality of the {@link DerefMapHbaseImpl}. Note there is also a DerefMapIndexTest which
@@ -81,7 +77,7 @@ public class DerefMapBasicTest {
     }
 
     private static AbsoluteRecordId absId(RecordId recordId) {
-        return new AbsoluteRecordIdImpl(REPO_NAME, Table.RECORD.name, recordId);
+        return new AbsoluteRecordIdImpl(Table.RECORD.name, recordId);
     }
 
     @Test

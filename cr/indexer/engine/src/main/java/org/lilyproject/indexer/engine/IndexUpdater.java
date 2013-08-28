@@ -15,14 +15,15 @@
  */
 package org.lilyproject.indexer.engine;
 
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
+
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.lilyproject.util.hbase.RepoAndTableUtil;
-
 
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
@@ -57,10 +58,6 @@ import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
-
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
 
 //
 // About the exception handling strategy
@@ -441,7 +438,7 @@ public class IndexUpdater extends LilyEventListener {
         for (SchemaId vtag : allVTags) {
             if ((changedVTagFields != null && changedVTagFields.contains(vtag)) || updatedFieldsByScope == null) {
                 // changed vtags or delete: reindex regardless of fields
-                AbsoluteRecordId absRecordId = new AbsoluteRecordIdImpl(repo, table, recordId);
+                AbsoluteRecordId absRecordId = new AbsoluteRecordIdImpl(table, recordId);
                 DependantRecordIdsIterator dependants = derefMap.findDependantsOf(absRecordId);
                 if (log.isDebugEnabled()) {
                     log.debug("changed vtag: dependants of " + recordId + ": " +
@@ -456,7 +453,7 @@ public class IndexUpdater extends LilyEventListener {
                 for (Scope scope : updatedFieldsByScope.keySet()) {
                     fields.addAll(toSchemaIds(updatedFieldsByScope.get(scope)));
                 }
-                AbsoluteRecordId absRecordId = new AbsoluteRecordIdImpl(repo, table, recordId);
+                AbsoluteRecordId absRecordId = new AbsoluteRecordIdImpl(table, recordId);
                 final DependantRecordIdsIterator dependants = derefMap.findDependantsOf(absRecordId, fields, vtag);
                 while (dependants.hasNext()) {
                     referrersAndVTags.put(dependants.next(), vtag);
@@ -488,7 +485,7 @@ public class IndexUpdater extends LilyEventListener {
             payload.setIndexRecordFilterData(filterData);
 
             try {
-                eventPublisherMgr.getEventPublisher(referrer.getRepository(),referrer.getTable()
+                eventPublisherMgr.getEventPublisher(repo, referrer.getTable()
                         ).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index

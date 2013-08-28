@@ -15,15 +15,15 @@
  */
 package org.lilyproject.sep;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.ngdata.sep.SepEvent;
 import org.apache.hadoop.hbase.KeyValue;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.util.repo.RecordEvent;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * A subclass of SepEvent providing some Lily specific information.
@@ -62,7 +62,7 @@ public class LilySepEvent extends SepEvent {
 
     public AbsoluteRecordId getAbsoluteRecordId() {
         if (absRecordId == null) {
-            absRecordId = idGenerator.newAbsoluteRecordId(getLilyRepositoryName(), getLilyTableName(), getRecordId());
+            absRecordId = idGenerator.newAbsoluteRecordId(getLilyTableName(), getRecordId());
         }
         return absRecordId;
     }

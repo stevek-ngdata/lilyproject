@@ -31,11 +31,6 @@ public interface AbsoluteRecordId {
     String getTable();
 
     /**
-     * Returns the name of the repository.
-     */
-    String getRepository();
-
-    /**
      * Returns the byte representation of this identifier.
      */
     byte[] toBytes();

@@ -15,6 +15,8 @@
  */
 package org.lilyproject.indexer.derefmap;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,8 +30,6 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -55,10 +55,10 @@ public class DerefMapSerializationUtilTest {
     @Test
     public void serializeEntriesForward() throws Exception {
         final Set<DependencyEntry> dependencies = new HashSet<DependencyEntry>();
-        dependencies.add(new DependencyEntry(new AbsoluteRecordIdImpl("default","tableA", ids.newRecordId("id1")),
+        dependencies.add(new DependencyEntry(new AbsoluteRecordIdImpl("tableA", ids.newRecordId("id1")),
                 new HashSet<String>()));
         dependencies
-                .add(new DependencyEntry(new AbsoluteRecordIdImpl("default","tableB", ids.newRecordId("id2",
+                .add(new DependencyEntry(new AbsoluteRecordIdImpl("tableB", ids.newRecordId("id2",
                         ImmutableMap.of("bar", "x"))), Sets.newHashSet("foo")));
 
         final Set<DependencyEntry> deserialized = serializationUtil.deserializeDependenciesForward(
