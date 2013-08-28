@@ -19,8 +19,13 @@ import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.lilyproject.cli.CliException;
 import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.repository.model.api.RepositoryNotFoundException;
+import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
+import org.lilyproject.util.io.Closer;
 
 public class AddIndexCli extends BaseIndexerAdminCli {
     @Override
@@ -128,7 +133,15 @@ public class AddIndexCli extends BaseIndexerAdminCli {
             index.setEnableDerefMap(true); // default true
         }
 
-        if (repositoryName != null){
+        if (repositoryName != null) {
+            RepositoryModel repositoryModel = new RepositoryModelImpl(zk);
+            try {
+                repositoryModel.getRepository(repositoryName);
+            } catch (RepositoryNotFoundException e) {
+                throw new CliException("Error: repository " + repositoryName + " does not exist.");
+            } finally {
+                Closer.close(repositoryModel);
+            }
             index.setRepositoryName(repositoryName);
         } else {
             System.out.println("Repository not specified, defaulting to \"default\" repository.");

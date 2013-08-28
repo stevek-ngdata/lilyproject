@@ -88,7 +88,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected List<String> batchIndexTables;
     protected List<String> defaultBatchIndexTables;
     protected WriteableIndexerModel model;
-    private ZooKeeperItf zk;
+    protected ZooKeeperItf zk;
     protected String outputFileName;
     protected boolean printBatchConfiguration;
     protected boolean printShardingConfiguration;
