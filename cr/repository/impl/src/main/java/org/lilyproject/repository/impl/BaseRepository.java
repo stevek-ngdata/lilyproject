@@ -134,7 +134,7 @@ public abstract class BaseRepository implements Repository {
     @Override
     public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
         if (! RepoAndTableUtil.isValidTableName(tableName))
-            throw new IllegalArgumentException("Not a valid table name:" + tableName);
+            throw new IllegalArgumentException("Not a valid table name: " + tableName);
         return repositoryManager.getRepository(repoTableKey.getRepositoryName(), tableName);
     }
 
