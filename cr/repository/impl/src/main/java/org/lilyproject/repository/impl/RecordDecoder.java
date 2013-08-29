@@ -147,11 +147,17 @@ public class RecordDecoder {
             Pair<SchemaId, Long> recordTypePair =  requestedVersion == null ? extractLatestRecordType(scope, result) :
                 extractVersionRecordType(scope, result, requestedVersion);
             if (recordTypePair != null) {
-                RecordType recordType =
-                        typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
-                record.setRecordType(scope, recordType.getName(), recordType.getVersion());
+                // We read the last version of the record type, though it might seem more logical to read
+                // the exact version stored in the record. However, this doesn't make any difference, since
+                // we just need the name of the record type, which is the same for all versions. The reason
+                // why reading the last version is preferred is because at the time of this writing, only
+                // the last version of record types is cached, and this makes an enormous difference in
+                // record read or scan speed.
+                QName recordTypeName =
+                        typeManager.getRecordTypeById(recordTypePair.getV1(), null).getName();
+                record.setRecordType(scope, recordTypeName, recordTypePair.getV2());
                 if (readContext != null) {
-                    readContext.setRecordTypeId(scope, recordType);
+                    readContext.setRecordTypeId(scope, recordTypePair.getV1());
                 }
             }
         }
@@ -182,8 +188,8 @@ public class RecordDecoder {
         }
 
         Map<Scope, SchemaId> recordTypeIds = new EnumMap<Scope, SchemaId>(Scope.class);
-        for (Map.Entry<Scope, RecordType> entry : readContext.getRecordTypes().entrySet()) {
-            recordTypeIds.put(entry.getKey(), entry.getValue().getId());
+        for (Map.Entry<Scope, SchemaId> entry : readContext.getRecordTypes().entrySet()) {
+            recordTypeIds.put(entry.getKey(), entry.getValue());
         }
 
         return new IdRecordImpl(record, idToQNameMapping, recordTypeIds);
@@ -360,17 +366,17 @@ public class RecordDecoder {
      */
     public static class ReadContext {
         private Map<SchemaId, FieldType> fieldTypes = new HashMap<SchemaId, FieldType>();
-        private Map<Scope, RecordType> recordTypes = new EnumMap<Scope, RecordType>(Scope.class);
+        private Map<Scope, SchemaId> recordTypes = new EnumMap<Scope, SchemaId>(Scope.class);
 
         public void addFieldType(FieldType fieldType) {
             fieldTypes.put(fieldType.getId(), fieldType);
         }
 
-        public void setRecordTypeId(Scope scope, RecordType recordType) {
-            recordTypes.put(scope, recordType);
+        public void setRecordTypeId(Scope scope, SchemaId recordTypeId) {
+            recordTypes.put(scope, recordTypeId);
         }
 
-        public Map<Scope, RecordType> getRecordTypes() {
+        public Map<Scope, SchemaId> getRecordTypes() {
             return recordTypes;
         }
 
