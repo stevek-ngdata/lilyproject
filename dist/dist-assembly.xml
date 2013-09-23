@@ -116,12 +116,12 @@
 
     <!-- Bulk import tool -->
     <file>
-      <source>${basedir}/../cr/bulk-import/target/lily-bulk-import</source>
+      <source>${basedir}/../cr/bulk-import/target/dist-scripts/lily-bulk-import</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/bulk-import/target/lily-bulk-import.bat</source>
+      <source>${basedir}/../cr/bulk-import/target/dist-scripts/lily-bulk-import.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
@@ -227,32 +227,32 @@
 
     <!-- Repository admin CLI -->
     <file>
-      <source>${basedir}/../cr/repository/admin-cli/target/lily-create-table</source>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-create-table</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/repository/admin-cli/target/lily-create-table.bat</source>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-create-table.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/repository/admin-cli/target/lily-drop-table</source>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-drop-table</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/repository/admin-cli/target/lily-drop-table.bat</source>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-drop-table.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/repository/admin-cli/target/lily-list-tables</source>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-list-tables</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../cr/repository/admin-cli/target/lily-list-tables.bat</source>
+      <source>${basedir}/../cr/repository/admin-cli/target/dist-scripts/lily-list-tables.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
