@@ -107,13 +107,8 @@ public class BulkIngester implements Closeable {
             TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
             RecordFactory recordFactory = new RecordFactoryImpl();
             
-            @SuppressWarnings("resource") // RepositoryManager gets closed in BulkIngester.close
             RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
                         recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager(), conf, repositoryModel);
-
-            // FIXME Blobs aren't really supported here (no BlobManager is created), but null is
-            // just passed in as the BlobManager so we'll probably get some mystery NPEs if Blobs
-            // are used. We should either support blobs, or at least forcefully disallow them
             HBaseRepository hbaseRepository;
             if (tableName != null) {
                 hbaseRepository = (HBaseRepository)repositoryManager.getDefaultRepository().getTable(tableName);
@@ -240,6 +235,17 @@ public class BulkIngester implements Closeable {
     public void close() throws IOException {
         flush();
         repositoryManager.close();
+    }
+    
+    
+    /**
+     * Returns the underlying repository manager. This allows performing any other kind of
+     * repository-based task within the context of a bulk import job.
+     * 
+     * @return the underlying RepositoryManager
+     */
+    public RepositoryManager getRepositoryManager() {
+        return repositoryManager;
     }
     
     
