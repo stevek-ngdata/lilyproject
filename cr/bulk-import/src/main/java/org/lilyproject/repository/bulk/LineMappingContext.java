@@ -78,6 +78,15 @@ public class LineMappingContext {
     public QName qn(String qualifiedName) {
         return QName.fromString(qualifiedName);
     }
+    
+    /**
+     * Get the underlying BulkIngester used for importing data.
+     * 
+     * @return the underlying bulk ingester
+     */
+    public BulkIngester getBulkIngester() {
+        return bulkIngester;
+    }
 
     public void writeRecord(Record record) throws IOException, InterruptedException {
         recordWriter.write(record);
