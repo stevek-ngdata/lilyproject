@@ -74,6 +74,15 @@
             <descriptor>dist-assembly.xml</descriptor>
           </descriptors>
         </configuration>
+        <executions>
+          <execution>
+            <id>assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
@@ -102,6 +111,17 @@
             <artifact>org.lilyproject:lily-upgrade:${project.version}</artifact>
           </artifacts>
         </configuration>
+        <executions>
+          <execution>
+            <id>populate-repositories</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>assemble-project-repository</goal>
+              <goal>assemble-runtime-repository</goal>
+              <goal>assemble-pom-repository</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
