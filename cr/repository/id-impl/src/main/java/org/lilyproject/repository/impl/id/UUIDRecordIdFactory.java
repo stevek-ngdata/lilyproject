@@ -32,7 +32,7 @@ public class UUIDRecordIdFactory implements RecordIdFactory {
                     dataInput.getPosition() + 16);
 
             DataInput variantInput = new DataInputImpl(((DataInputImpl) dataInput), dataInput.getPosition() + 16,
-                    dataInput.getSize());
+                    dataInput.getSize() - 17);
 
             return new DataInput[]{keyInput, variantInput};
         } else {
