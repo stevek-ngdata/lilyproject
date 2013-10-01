@@ -41,6 +41,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -64,8 +65,12 @@ public class MiniZooKeeperCluster {
 
     private boolean started;
 
-    private int defaultClientPort = 21818; // use non-standard port
-    private int clientPort = defaultClientPort;
+    /**
+     * The default port. If zero, we use a random port.
+     */
+    private int defaultClientPort = 0;
+
+    private int clientPort;
 
     private List<NIOServerCnxnFactory> standaloneServerFactoryList;
     private List<ZooKeeperServer> zooKeeperServers;
@@ -73,13 +78,17 @@ public class MiniZooKeeperCluster {
 
     private int activeZKServerIndex;
     private int tickTime = 0;
+
     private Configuration configuration;
 
     // Lily change
     private boolean clearData;
 
     // Lily change: added this constructor with clearData arg
-    /** Create mini ZooKeeper cluster with configuration (usually from test environment) */
+
+    /**
+     * Create mini ZooKeeper cluster with configuration (usually from test environment)
+     */
     public MiniZooKeeperCluster(Configuration configuration, boolean clearData) {
         this.started = false;
         this.configuration = configuration;
@@ -100,11 +109,24 @@ public class MiniZooKeeperCluster {
     }
 
     public void setDefaultClientPort(int clientPort) {
+        if (clientPort <= 0) {
+            throw new IllegalArgumentException("Invalid default ZK client port: "
+                    + clientPort);
+        }
         this.defaultClientPort = clientPort;
     }
 
-    public int getDefaultClientPort() {
-        return defaultClientPort;
+    /**
+     * Selects a ZK client port. Returns the default port if specified.
+     * Otherwise, returns a random port. The random port is selected from the
+     * range between 49152 to 65535. These ports cannot be registered with IANA
+     * and are intended for dynamic allocation (see http://bit.ly/dynports).
+     */
+    private int selectClientPort() {
+        if (defaultClientPort > 0) {
+            return defaultClientPort;
+        }
+        return 0xc000 + new Random().nextInt(0x3f00);
     }
 
     public void setTickTime(int tickTime) {
@@ -112,7 +134,7 @@ public class MiniZooKeeperCluster {
     }
 
     public int getBackupZooKeeperServerNum() {
-        return zooKeeperServers.size()-1;
+        return zooKeeperServers.size() - 1;
     }
 
     public int getZooKeeperServerNum() {
@@ -132,32 +154,27 @@ public class MiniZooKeeperCluster {
         FileTxnLog.setPreallocSize(8192 * 1024);
     }
 
-    public int startup(File baseDir) throws IOException,
-            InterruptedException {
-        return startup(baseDir,1);
+    public int startup(File baseDir) throws IOException, InterruptedException {
+        return startup(baseDir, 1);
     }
 
     /**
-     * @param baseDir
-     * @param numZooKeeperServers
      * @return ClientPort server bound to.
-     * @throws IOException
-     * @throws InterruptedException
      */
     public int startup(File baseDir, int numZooKeeperServers) throws IOException,
             InterruptedException {
-        if (numZooKeeperServers <= 0) {
+        if (numZooKeeperServers <= 0)
             return -1;
-        }
 
         setupTestEnv();
         shutdown();
 
+        int tentativePort = selectClientPort();
+
         // running all the ZK servers
         for (int i = 0; i < numZooKeeperServers; i++) {
-            File dir = new File(baseDir, "zookeeper_"+i).getAbsoluteFile();
+            File dir = new File(baseDir, "zookeeper_" + i).getAbsoluteFile();
             recreateDir(dir);
-            clientPort = defaultClientPort;
             int tickTimeToUse;
             if (this.tickTime > 0) {
                 tickTimeToUse = this.tickTime;
@@ -170,13 +187,14 @@ public class MiniZooKeeperCluster {
                 try {
                     standaloneServerFactory = new NIOServerCnxnFactory();
                     standaloneServerFactory.configure(
-                            new InetSocketAddress(clientPort),
+                            new InetSocketAddress(tentativePort),
                             configuration.getInt(HConstants.ZOOKEEPER_MAX_CLIENT_CNXNS,
                                     1000));
                 } catch (BindException e) {
-                    LOG.info("Failed binding ZK Server to client port: " + clientPort);
-                    //this port is already in use. try to use another
-                    clientPort++;
+                    LOG.debug("Failed binding ZK Server to client port: " +
+                            tentativePort);
+                    // This port is already in use, try to use another.
+                    tentativePort++;
                     continue;
                 }
                 break;
@@ -184,11 +202,12 @@ public class MiniZooKeeperCluster {
 
             // Start up this ZK server
             standaloneServerFactory.startup(server);
-            if (!waitForServerUp(clientPort, CONNECTION_TIMEOUT)) {
+            if (!waitForServerUp(tentativePort, CONNECTION_TIMEOUT)) {
                 throw new IOException("Waiting for startup of standalone server");
             }
 
-            clientPortList.add(clientPort);
+            // We have selected this port as a client port.
+            clientPortList.add(tentativePort);
             standaloneServerFactoryList.add(standaloneServerFactory);
             zooKeeperServers.add(server);
         }
@@ -243,14 +262,13 @@ public class MiniZooKeeperCluster {
         LOG.info("Shutdown MiniZK cluster with all ZK servers");
     }
 
-    /**@return clientPort return clientPort if there is another ZK backup can run
+    /**
+     * @return clientPort return clientPort if there is another ZK backup can run
      *         when killing the current active; return -1, if there is no backups.
-     * @throws IOException
-     * @throws InterruptedException
      */
     public int killCurrentActiveZooKeeperServer() throws IOException,
             InterruptedException {
-        if (!started || activeZKServerIndex < 0 ) {
+        if (!started || activeZKServerIndex < 0) {
             return -1;
         }
 
@@ -284,17 +302,15 @@ public class MiniZooKeeperCluster {
 
     /**
      * Kill one back up ZK servers
-     * @throws IOException
-     * @throws InterruptedException
      */
     public void killOneBackupZooKeeperServer() throws IOException,
             InterruptedException {
         if (!started || activeZKServerIndex < 0 ||
                 standaloneServerFactoryList.size() <= 1) {
-            return ;
+            return;
         }
 
-        int backupZKServerIndex = activeZKServerIndex+1;
+        int backupZKServerIndex = activeZKServerIndex + 1;
         // Shutdown the current active one
         NIOServerCnxnFactory standaloneServerFactory =
                 standaloneServerFactoryList.get(backupZKServerIndex);
@@ -382,8 +398,7 @@ public class MiniZooKeeperCluster {
         }
         return false;
     }
-    
-    // Lily change - added getter
+
     public int getClientPort() {
         return clientPort;
     }
