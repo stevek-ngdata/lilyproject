@@ -128,7 +128,10 @@ public class DataOutputImpl implements DataOutput {
 
     private void writeUTF(String string, boolean includeLength, boolean useVInt) {
         if (string == null) {
-            writeInt(-1);
+            if (useVInt)
+                writeVInt(-1);
+            else
+                writeInt(-1);
             return;
         }
 
