@@ -44,8 +44,21 @@ public class DataInputImpl implements DataInput {
     private static final long HALF_MASK = 0x3FFL;
 
     private final byte[] source; // The underlying byte[]
+
+    /**
+     * Absolute position in the underlying byte[] to start reading.
+     */
     private int startPosition;
-    private int pos; // Position of the next value to be read
+
+    /**
+     * Relative position of the next value to be read. This position is relative to the start position, hence it is always in
+     * the range from 0 to size-1.
+     */
+    private int pos;
+
+    /**
+     * Relative size of the data input (i.e. not the size of the underlying byte[]).
+     */
     private int size;
 
     // Character array build while reading a string.
@@ -75,7 +88,7 @@ public class DataInputImpl implements DataInput {
         this.source = source;
         this.startPosition = startPosition;
         this.size = size;
-        this.pos = startPosition;
+        this.pos = 0;
     }
 
     /**
@@ -84,26 +97,21 @@ public class DataInputImpl implements DataInput {
      *
      * @param startPosition position within the source, relative to the startPosition of the given dataInput
      * @param size          the size of the DataInput
-     *                      The source is a sub-array of the underlying byte[] from which the data will be read,
-     *                      limited between startPosition en startPosition+length
-     *                      It should have been created using {@link DataOutputImpl}.
      */
-    public DataInputImpl(DataInputImpl dataInput, int startPosition, int size) {
-        this.source = dataInput.source;
-        this.pos = dataInput.startPosition + startPosition;
-        this.size = size;
+    public DataInputImpl(DataInputImpl source, int startPosition, int size) {
+        this(source.source, source.startPosition + startPosition, size);
     }
 
 
     @Override
     public byte readByte() {
-        return source[pos++];
+        return source[startPosition + pos++];
     }
 
     @Override
     public byte[] readBytes(int length) {
         byte[] result = new byte[length];
-        System.arraycopy(source, pos, result, 0, length);
+        System.arraycopy(source, startPosition + pos, result, 0, length);
         pos += length;
         return result;
     }
@@ -131,8 +139,8 @@ public class DataInputImpl implements DataInput {
         if (utflen == 0) {
             return new String();
         }
-        int count = pos;
-        int endPos = pos + utflen;
+        int count = startPosition + pos;
+        int endPos = startPosition + pos + utflen;
         // Resize the chararr if it is not large enough.
         if (chararr.length < utflen) {
             chararr = new char[utflen * 2];
@@ -192,7 +200,7 @@ public class DataInputImpl implements DataInput {
 
     @Override
     public boolean readBoolean() {
-        return (source[pos++] != 0);
+        return (source[startPosition + pos++] != 0);
     }
 
     @Override
@@ -261,6 +269,11 @@ public class DataInputImpl implements DataInput {
     }
 
     @Override
+    public int getStartPosition() {
+        return startPosition;
+    }
+
+    @Override
     public void setPosition(int position) {
         this.pos = position;
     }
@@ -281,10 +294,20 @@ public class DataInputImpl implements DataInput {
     @Override
     public int indexOf(byte value) {
         for (int i = pos; i < size; i++) {
-            if (source[i] == value) {
+            if (source[startPosition + i] == value) {
                 return i;
             }
         }
         return -1;
+    }
+
+    /**
+     * @return A copy of the "chunk" of the underlying byte[] that this data input considers
+     *         (without taking current position into account)
+     */
+    public byte[] asArray() {
+        byte[] result = new byte[size];
+        System.arraycopy(source, startPosition, result, 0, size);
+        return result;
     }
 }

@@ -30,9 +30,10 @@ public class UserRecordIdFactory implements RecordIdFactory {
         if (sepPos == -1) {
             return new DataInput[]{dataInput, null};
         } else {
-            DataInput keyInput = new DataInputImpl(((DataInputImpl) dataInput), dataInput.getPosition(), sepPos);
-
-            DataInput variantInput = new DataInputImpl(((DataInputImpl) dataInput), sepPos + 1, dataInput.getSize());
+            DataInput keyInput =
+                    new DataInputImpl(((DataInputImpl) dataInput), dataInput.getPosition(), sepPos - dataInput.getPosition());
+            DataInput variantInput =
+                    new DataInputImpl(((DataInputImpl) dataInput), sepPos + 1, dataInput.getSize() - (sepPos + 1));
 
             return new DataInput[]{keyInput, variantInput};
         }
@@ -44,7 +45,7 @@ public class UserRecordIdFactory implements RecordIdFactory {
             throw new IllegalArgumentException("The NULL character is not allowed in USER record id's.");
         }
 
-        String id = dataInput.readUTF(dataInput.getSize() - dataInput.getPosition());
+        String id = dataInput.readUTF(dataInput.getSize() - dataInput.getPosition()); // read the remainder of the data input
         return new UserRecordId(id, idGenerator);
     }
 

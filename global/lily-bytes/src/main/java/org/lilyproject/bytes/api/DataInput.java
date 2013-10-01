@@ -19,6 +19,10 @@ package org.lilyproject.bytes.api;
  * <code>DataInput</code> reads primitive types from a byte[] which has been encoded using the {@link DataOutput}
  *
  * <p>Every read call reads the next value from the underlying byte[].
+ *
+ * <p>The underlying byte[] can be larger than the part that the <code>DataInput</code> "views". All methods are relative to
+ * the view of the <code>DataInput</code>, except methods that refer to the "start position", which is the absolute position
+ * in the underlying byte[].
  */
 public interface DataInput {
 
@@ -96,9 +100,15 @@ public interface DataInput {
     long readVLong();
 
     /**
-     * Returns the position in the <code>DataInput</code> from where the next value will be read.
+     * Returns the current position in the <code>DataInput</code> from where the next value will be read. The position is relative
+     * to the "view" of the <code>DataInput</code> on the underlying byte[].
      */
     int getPosition();
+
+    /**
+     * Returns the absolute start position of the <code>DataInput</code> view on the underlying byte[].
+     */
+    int getStartPosition();
 
     /**
      * Sets the position in the <code>DataInput</code> from where to read the next value.
