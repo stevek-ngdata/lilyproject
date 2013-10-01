@@ -111,7 +111,6 @@ import org.apache.hadoop.hbase.util.JVMClusterUtil.MasterThread;
 import org.apache.hadoop.hbase.util.RegionSplitter;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.util.Writables;
-import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.hadoop.hbase.zookeeper.ZKAssign;
 import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
@@ -125,6 +124,9 @@ import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooKeeper;
 import org.lilyproject.hadooptestfw.HBaseTestingUtilityFactory;
+
+//Lily change: comment out import in order to use our own fork
+//import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 
 /**
  * Facility for testing HBase. Replacement for
