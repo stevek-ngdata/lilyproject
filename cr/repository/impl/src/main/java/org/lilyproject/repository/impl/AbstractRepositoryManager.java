@@ -17,7 +17,11 @@ package org.lilyproject.repository.impl;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 import org.lilyproject.repository.api.RepositoryUnavailableException;
@@ -25,7 +29,6 @@ import org.lilyproject.repository.api.RepositoryUnavailableException;
 import com.google.common.collect.Maps;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.LRepository;
-import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
@@ -45,6 +48,11 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     private final IdGenerator idGenerator;
     private final RecordFactory recordFactory;
     private final RepositoryModel repositoryModel;
+
+    // Permission rule for NGDATA's hbase-authorization framework that ensures system columns are always
+    // accessible by the Lily Data Repository.
+    protected static final Set<String> DEFAULT_PERMISSIONS = ImmutableSet.of("rw:column:binprefix:"
+            + Bytes.toStringBinary(new byte[] {LilyHBaseSchema.RecordColumn.SYSTEM_PREFIX}));
 
 
     public AbstractRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,

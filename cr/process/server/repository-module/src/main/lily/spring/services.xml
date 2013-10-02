@@ -136,6 +136,7 @@
     <constructor-arg ref="blobManager"/>
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="repositoryModel"/>
+    <constructor-arg><bean class="org.lilyproject.repository.impl.DRAuthorizationContextProvider"/></constructor-arg>
   </bean>
 
   <bean id="recordUpdateHookActivator" class="org.lilyproject.server.modules.repository.RecordUpdateHookActivator">

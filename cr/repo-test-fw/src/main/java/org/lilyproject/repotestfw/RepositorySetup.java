@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.lilyproject.repository.impl.DRAuthorizationContextProvider;
 import org.lilyproject.repository.model.api.RepositoryDefinition;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
 
@@ -183,7 +184,7 @@ public class RepositorySetup {
         RecordFactory recordFactory = new RecordFactoryImpl();
 
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory,
-                blobManager, hadoopConf, repositoryModel) {
+                blobManager, hadoopConf, repositoryModel, new DRAuthorizationContextProvider()) {
             @Override
             protected Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException {
                 HBaseRepository repository = (HBaseRepository)super.createRepository(key);
