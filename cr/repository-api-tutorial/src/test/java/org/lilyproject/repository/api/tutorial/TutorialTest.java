@@ -139,7 +139,7 @@ public class TutorialTest {
     }
 
     /**
-     * This is a "driver" method to run all the tests, because (unfortunately) there are dependencies between the tests.
+     * This is a "driver" method to run all the tests, because there are dependencies between the tests.
      */
     @Test
     public void test() throws Exception {
