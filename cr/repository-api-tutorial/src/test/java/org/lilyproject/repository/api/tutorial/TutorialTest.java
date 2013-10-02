@@ -58,6 +58,7 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.BlobStoreAccessConfig;
 import org.lilyproject.repository.impl.DFSBlobStoreAccess;
+import org.lilyproject.repository.impl.DRAuthorizationContextProvider;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
@@ -117,7 +118,8 @@ public class TutorialTest {
                 new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
-                new RecordFactoryImpl(), hbaseTableFactory, blobManager, configuration, repositoryModel);
+                new RecordFactoryImpl(), hbaseTableFactory, blobManager, configuration, repositoryModel,
+                new DRAuthorizationContextProvider());
 
         TableManager repoTableManager =
                 new TableManagerImpl(/* TODO multiple repositories */ "default", configuration, hbaseTableFactory);
