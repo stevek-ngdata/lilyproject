@@ -38,7 +38,7 @@
     <version.slf4j>1.6.1</version.slf4j>
     <version.jaxrs>1.1.1</version.jaxrs>
 
-    <version.avro>1.7.1-813-1154</version.avro>
+    <version.avro>1.7.4</version.avro>
 
     <!-- Align jetty versions -->
     <version.jetty>6.1.26.cloudera.2</version.jetty>
