@@ -20,13 +20,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-build-tools</artifactId>
-  <version>3.0-SNAPSHOT</version>
+  <version>3.0-authz-SNAPSHOT</version>
   <name>Build Tools</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.0-authz-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 </project>
