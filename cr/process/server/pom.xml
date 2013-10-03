@@ -28,7 +28,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-process</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.0-authz-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -163,7 +163,7 @@ fi
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-runtime-plugin</artifactId>
-        <version>3.0-SNAPSHOT</version>
+        <version>3.0-authz-SNAPSHOT</version>
         <inherited>false</inherited>
         <executions>
           <execution>
