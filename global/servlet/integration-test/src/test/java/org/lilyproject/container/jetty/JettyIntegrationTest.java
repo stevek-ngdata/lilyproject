@@ -15,7 +15,6 @@ import org.codehaus.jettison.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.container.jetty.CustomJettyLauncher;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.servletregistry.api.ServletRegistry;
@@ -67,6 +66,7 @@ public class JettyIntegrationTest {
         FileUtils.copyInputStreamToFile(resource.getInputStream(), keystore);
         System.setProperty(CustomJettyLauncher.LILY_SSL_KEYSTORE, keystore.getAbsolutePath());
         System.setProperty("javax.net.ssl.trustStore", keystore.getAbsolutePath());
+        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
     }
 
     protected static File setupConfDirectory(File tmpDir) throws Exception{
