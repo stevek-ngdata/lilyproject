@@ -33,28 +33,32 @@ import org.lilyproject.bytes.impl.DataOutputImpl;
 public class TestDataInputOutput extends TestCase {
     private Random random = new Random(System.currentTimeMillis());
 
-    /** start and end are BOTH inclusive */
+    /**
+     * start and end are BOTH inclusive
+     */
     public int nextInt(int start, int end) {
-      return start + random.nextInt(end-start+1);
+        return start + random.nextInt(end - start + 1);
     }
 
-    /** Returns random string, including full unicode range. */
+    /**
+     * Returns random string, including full unicode range.
+     */
     public String randomUnicodeString() {
-      return randomUnicodeString(20);
+        return randomUnicodeString(20);
     }
 
     /**
      * Returns a random string up to a certain length.
      */
     public String randomUnicodeString(int maxLength) {
-      final int end = random.nextInt(maxLength);
-      if (end == 0) {
-        // allow 0 length
-        return "";
-      }
-      final char[] buffer = new char[end];
-      randomFixedLengthUnicodeString(buffer, 0, buffer.length);
-      return new String(buffer, 0, end);
+        final int end = random.nextInt(maxLength);
+        if (end == 0) {
+            // allow 0 length
+            return "";
+        }
+        final char[] buffer = new char[end];
+        randomFixedLengthUnicodeString(buffer, 0, buffer.length);
+        return new String(buffer, 0, end);
     }
 
     /**
@@ -62,26 +66,26 @@ public class TestDataInputOutput extends TestCase {
      * unit sequence.
      */
     public void randomFixedLengthUnicodeString(char[] chars, int offset, int length) {
-      int i = offset;
-      final int end = offset + length;
-      while(i < end) {
-        final int t = random.nextInt(5);
-        if (0 == t && i < length - 1) {
-          // Make a surrogate pair
-          // High surrogate
-          chars[i++] = (char) nextInt(0xd800, 0xdbff);
-          // Low surrogate
-          chars[i++] = (char) nextInt(0xdc00, 0xdfff);
-        } else if (t <= 1) {
-          chars[i++] = (char) random.nextInt(0x80);
-        } else if (2 == t) {
-          chars[i++] = (char) nextInt(0x80, 0x800);
-        } else if (3 == t) {
-          chars[i++] = (char) nextInt(0x800, 0xd7ff);
-        } else if (4 == t) {
-          chars[i++] = (char) nextInt(0xe000, 0xffff);
+        int i = offset;
+        final int end = offset + length;
+        while (i < end) {
+            final int t = random.nextInt(5);
+            if (0 == t && i < length - 1) {
+                // Make a surrogate pair
+                // High surrogate
+                chars[i++] = (char) nextInt(0xd800, 0xdbff);
+                // Low surrogate
+                chars[i++] = (char) nextInt(0xdc00, 0xdfff);
+            } else if (t <= 1) {
+                chars[i++] = (char) random.nextInt(0x80);
+            } else if (2 == t) {
+                chars[i++] = (char) nextInt(0x80, 0x800);
+            } else if (3 == t) {
+                chars[i++] = (char) nextInt(0x800, 0xd7ff);
+            } else if (4 == t) {
+                chars[i++] = (char) nextInt(0xe000, 0xffff);
+            }
         }
-      }
     }
 
     public void testRandomString() {
@@ -135,7 +139,8 @@ public class TestDataInputOutput extends TestCase {
 
     public void testHyphen() {
         DataOutputImpl dataOutputImpl = new DataOutputImpl();
-        String string = "Mary Shelley (30 August 1797 – 1 February 1851) was a British novelist"; // Note, the hyphen is not just a minus sign
+        String string =
+                "Mary Shelley (30 August 1797 – 1 February 1851) was a British novelist"; // Note, the hyphen is not just a minus sign
         dataOutputImpl.writeUTF(string);
         byte[] data = dataOutputImpl.toByteArray();
         DataInputImpl dataInputImpl = new DataInputImpl(data);
@@ -169,7 +174,7 @@ public class TestDataInputOutput extends TestCase {
         dataOutput.writeInt(i);
         long l = random.nextLong();
         dataOutput.writeLong(l);
-        short s = (short)4;
+        short s = (short) 4;
         dataOutput.writeShort(s);
         String string = randomUnicodeString();
         dataOutput.writeUTF(string);
@@ -190,4 +195,12 @@ public class TestDataInputOutput extends TestCase {
         Assert.assertEquals(Math.abs(i), dataInput.readVInt());
         Assert.assertEquals(Math.abs(l), dataInput.readVLong());
     }
+
+    public void testIndexOf() {
+        byte[] source = {0x09, 0x08, 0x07, 0x06, 0x00, 0x05, 0x04, 0x03, 0x02, 0x01};
+        Assert.assertEquals(4, new DataInputImpl(source, 0, 10).indexOf((byte) 0x00));
+        Assert.assertEquals(2, new DataInputImpl(source, 2, 8).indexOf((byte) 0x00));
+        Assert.assertEquals(-1, new DataInputImpl(source, 7, 3).indexOf((byte) 0x00));
+    }
+
 }

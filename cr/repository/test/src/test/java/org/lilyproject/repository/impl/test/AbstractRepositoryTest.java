@@ -15,6 +15,14 @@
  */
 package org.lilyproject.repository.impl.test;
 
+import static org.easymock.EasyMock.createControl;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,14 +85,6 @@ import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repository.api.filter.RecordVariantFilter;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.Pair;
-
-import static org.easymock.EasyMock.createControl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public abstract class AbstractRepositoryTest {
 
@@ -1943,7 +1943,7 @@ public abstract class AbstractRepositoryTest {
                         try {
                             iteration++;
                             Record record = repository.read(recordId);
-                            int oldValue = (Integer)record.getField(fieldType4.getName());
+                            int oldValue = (Integer) record.getField(fieldType4.getName());
                             record.setField(fieldType4.getName(), new Integer(oldValue + 1));
                             MutationCondition cond = new MutationCondition(fieldType4.getName(), oldValue, false);
                             record = repository.update(record, Lists.newArrayList(cond));
@@ -1952,7 +1952,7 @@ public abstract class AbstractRepositoryTest {
                                 if (iteration > 20) {
                                     System.out.println("cas failed, will retry, iteration " + iteration);
                                 }
-                                Thread.sleep((int)(Math.random() * 50));
+                                Thread.sleep((int) (Math.random() * 50));
                             } else if (record.getResponseStatus() == ResponseStatus.UPDATED) {
                                 // success
                                 return null;
@@ -1963,7 +1963,7 @@ public abstract class AbstractRepositoryTest {
                             if (iteration > 20) {
                                 System.out.println("concurrent update, will retry, iteration " + iteration);
                             }
-                            Thread.sleep((int)(Math.random() * 50));
+                            Thread.sleep((int) (Math.random() * 50));
                         }
                     }
                 }
@@ -2868,7 +2868,6 @@ public abstract class AbstractRepositoryTest {
 
     /**
      * Tests if record type is set when different settings of returnFields is used.
-     * @throws Exception
      */
     @Test
     public void testScanWithReturnFieldsRecordType() throws Exception {
@@ -3056,8 +3055,16 @@ public abstract class AbstractRepositoryTest {
     }
 
     @Test
-    public void testVariantScansWithKeys() throws Exception {
-        final RecordId master = idGenerator.newRecordId("VariantScanWithKeysTest");
+    public void testVariantScansWithKeysUSER() throws Exception {
+        doTestVariantScansWithKeys(idGenerator.newRecordId("VariantScanWithKeysTest"));
+    }
+
+    @Test
+    public void testVariantScansWithKeysUUID() throws Exception {
+        doTestVariantScansWithKeys(idGenerator.newRecordId());
+    }
+
+    private void doTestVariantScansWithKeys(RecordId master) throws Exception {
         final RecordId variant = idGenerator.newRecordId(master, ImmutableMap.of("key1", "value1", "key2", "value2"));
         final RecordId variantWithOtherValues =
                 idGenerator.newRecordId(master, ImmutableMap.of("key1", "other-value-1", "key2", "other-value-2"));
@@ -3403,7 +3410,7 @@ public abstract class AbstractRepositoryTest {
         record.setMetadata(fieldType2.getName(), new MetadataBuilder()
                 .value("field1", "value1a")
                 .value("field3", "value3").build()); // note that we leave field2 unchanged, this tests the merging
-                                                     // of old and new metadata
+        // of old and new metadata
         record = repository.update(record);
 
         // validate state of returned record object
@@ -3594,7 +3601,7 @@ public abstract class AbstractRepositoryTest {
 
     @Test
     public void testMetadataNotSupportedOnBlobFields() throws Exception {
-        String[] types = new String[] {"BLOB", "LIST<BLOB>", "LIST<PATH<BLOB>>"};
+        String[] types = new String[]{"BLOB", "LIST<BLOB>", "LIST<PATH<BLOB>>"};
 
         for (int i = 0; i < types.length; i++) {
             FieldType blobField = typeManager

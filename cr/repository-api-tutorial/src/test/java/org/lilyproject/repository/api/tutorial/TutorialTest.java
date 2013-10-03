@@ -51,8 +51,8 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.BlobManagerImpl;
@@ -62,8 +62,8 @@ import org.lilyproject.repository.impl.DRAuthorizationContextProvider;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.RecordFactoryImpl;
-import org.lilyproject.repository.impl.TableManagerImpl;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilyproject.repository.impl.TableManagerImpl;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.model.api.RepositoryModel;
 import org.lilyproject.repository.model.impl.RepositoryModelImpl;
@@ -114,18 +114,20 @@ public class TutorialTest {
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         List<BlobStoreAccess> blobStoreAccesses = Collections.<BlobStoreAccess>singletonList(dfsBlobStoreAccess);
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
+        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory =
+                new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
                 new RecordFactoryImpl(), hbaseTableFactory, blobManager, configuration, repositoryModel,
                 new DRAuthorizationContextProvider());
 
-        TableManager repoTableManager = new TableManagerImpl(/* TODO multiple repositories */ "default", configuration, hbaseTableFactory);
+        TableManager repoTableManager =
+                new TableManagerImpl(/* TODO multiple repositories */ "default", configuration, hbaseTableFactory);
         if (!repoTableManager.tableExists(Table.RECORD.name)) {
             repoTableManager.createTable(Table.RECORD.name);
         }
 
-        repository = (Repository)repositoryManager.getDefaultRepository().getDefaultTable();
+        repository = (Repository) repositoryManager.getDefaultRepository().getDefaultTable();
         table = repository.getDefaultTable();
     }
 
@@ -138,7 +140,25 @@ public class TutorialTest {
         HBASE_PROXY.stop();
     }
 
+    /**
+     * This is a "driver" method to run all the tests, because there are dependencies between the tests.
+     */
     @Test
+    public void test() throws Exception {
+        createRecordType();
+        updateRecordType();
+        createRecord();
+        createRecordUserSpecifiedId();
+        updateRecord();
+        updateRecordViaRead();
+        updateRecordConditionally();
+        readRecord();
+        blob();
+        variantRecord();
+        linkField();
+        complexFields();
+    }
+
     public void createRecordType() throws Exception {
         // (1)
         ValueType stringValueType = typeManager.getValueType("STRING");
@@ -160,7 +180,6 @@ public class TutorialTest {
         PrintUtil.print(book, repository);
     }
 
-    @Test
     public void updateRecordType() throws Exception {
         FieldType description = typeManager.createFieldType("BLOB", new QName(BNS, "description"), Scope.VERSIONED);
         FieldType authors = typeManager.createFieldType("LIST<STRING>", new QName(BNS, "authors"), Scope.VERSIONED);
@@ -187,7 +206,6 @@ public class TutorialTest {
         PrintUtil.print(book, repository);
     }
 
-    @Test
     public void createRecord() throws Exception {
         // (1)
         Record record = table.newRecord();
@@ -205,7 +223,6 @@ public class TutorialTest {
         PrintUtil.print(record, repository);
     }
 
-    @Test
     public void createRecordUserSpecifiedId() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = table.newRecord(id);
@@ -217,7 +234,6 @@ public class TutorialTest {
         PrintUtil.print(record, repository);
     }
 
-    @Test
     public void updateRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = table.newRecord(id);
@@ -230,7 +246,6 @@ public class TutorialTest {
         PrintUtil.print(record, repository);
     }
 
-    @Test
     public void updateRecordViaRead() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = table.read(id);
@@ -243,7 +258,6 @@ public class TutorialTest {
         PrintUtil.print(record, repository);
     }
 
-    @Test
     public void updateRecordConditionally() throws Exception {
         List<MutationCondition> conditions = new ArrayList<MutationCondition>();
         conditions.add(new MutationCondition(new QName(BNS, "manager"), "Manager Z"));
@@ -256,13 +270,12 @@ public class TutorialTest {
         System.out.println(record.getResponseStatus());
     }
 
-    @Test
     public void readRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
 
         // (1)
         Record record = table.read(id);
-        String title = (String)record.getField(new QName(BNS, "title"));
+        String title = (String) record.getField(new QName(BNS, "title"));
         System.out.println(title);
 
         // (2)
@@ -274,7 +287,6 @@ public class TutorialTest {
         System.out.println(record.getField(new QName(BNS, "title")));
     }
 
-    @Test
     public void blob() throws Exception {
         //
         // Write a blob
@@ -284,7 +296,7 @@ public class TutorialTest {
         byte[] descriptionData = description.getBytes("UTF-8");
 
         // (1)
-        Blob blob = new Blob("text/html", (long)descriptionData.length, "description.xml");
+        Blob blob = new Blob("text/html", (long) descriptionData.length, "description.xml");
         OutputStream os = table.getOutputStream(blob);
         try {
             os.write(descriptionData);
@@ -319,7 +331,6 @@ public class TutorialTest {
         }
     }
 
-    @Test
     public void variantRecord() throws Exception {
         // (1)
         IdGenerator idGenerator = repository.getIdGenerator();
@@ -352,7 +363,6 @@ public class TutorialTest {
         }
     }
 
-    @Test
     public void linkField() throws Exception {
         // (1)
         Record record1 = table.newRecord();
@@ -368,13 +378,12 @@ public class TutorialTest {
         record2 = table.create(record2);
 
         // (3)
-        Link sequelToLink = (Link)record2.getField(new QName(BNS, "sequel_to"));
+        Link sequelToLink = (Link) record2.getField(new QName(BNS, "sequel_to"));
         RecordId sequelTo = sequelToLink.resolve(record2.getId(), repository.getIdGenerator());
         Record linkedRecord = table.read(sequelTo);
         System.out.println(linkedRecord.getField(new QName(BNS, "title")));
     }
 
-    @Test
     public void complexFields() throws Exception {
         // (1)
         FieldType name = typeManager.createFieldType("STRING", new QName(ANS, "name"), Scope.NON_VERSIONED);

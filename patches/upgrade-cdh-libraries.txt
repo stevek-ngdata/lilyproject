@@ -26,13 +26,15 @@ git commit -m "original sources"
 
 Apply existing patches
 ----------------------
-Apply same patches as in lily/patches/hbase-previous.patch.txt
+Apply same patches as in lily/patches/$previousversion.patch.txt
 
-patch -p0 < lily/patches/hbase-previous.patch.txt
+patch -p0 < lily/patches/$previousversion.patch.txt
+
+verify failures (pom.xml is expected).
 
 Change version number
 ---------------------
-In the root pom change the version to 0.90.4-cdh3u3-lily
+In the root pom of hbase change the version to $hbaseversion-$cdhversion-lily
 
 Make diff
 ---------
@@ -61,9 +63,9 @@ Change the Lily code to use the new libraries
 =============================================
 
 Adjust the versions in the root pom
-- hbase: 0.90.4-cdh3u3-lily
-- hadoop: 0.20.2-cdh3u3
-- zookeeper: 3.3.4
+- hbase: $hbaseversion-$cdhversion-lily
+- hadoop: check what is in this cdh version
+- zookeeper: check what is in this cdh version
 
 Build Lily and add any proposed exclusions to global/hbase-client/pom.xml,
 or add them to the allowed artifacts in HBaseExclusionsMojo.java 
@@ -76,7 +78,6 @@ These classes include:
 - org.lilyproject.hadooptestfw.fork.HBaseTestingUtility.java
 - org.lilyproject.hadooptestfw.fork.MiniMRCluster.java
 - org.lilyproject.hadooptestfw.fork.MiniZooKeeperCluster.java
-- org.lilyproject.util.hbase.HTablePool.java
 - org.lilyproject.sep.impl.fork.ForkedReplicationSource
 
 The following diff-commands can be used to quickly check if there are any changes on the original classes:
@@ -88,5 +89,4 @@ NEW_HADOOP_DIR=./hadoop-0.20.2-cdh3u4
 
 diff -u $OLD_HBASE_DIR/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java $NEW_HBASE_DIR/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java
 diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java
-diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java
 diff -u $OLD_HADOOP_DIR/src/hadoop-mapreduce-project/src/test/mapred/org/apache/hadoop/mapred/MiniMRCluster.java $NEW_HADOOP_DIR/src/hadoop-mapreduce-project/src/test/mapred/org/apache/hadoop/mapred/MiniMRCluster.java
