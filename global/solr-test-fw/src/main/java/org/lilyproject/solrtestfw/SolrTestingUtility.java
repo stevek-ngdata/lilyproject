@@ -29,7 +29,7 @@ import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 public class SolrTestingUtility {
-    private final int solrPort = 8983;
+    private int solrPort = 8983;
     private Server server;
     private SolrDefinition solrDef;
     private String autoCommitSetting;
@@ -85,12 +85,16 @@ public class SolrTestingUtility {
         return solrHomeDir;
     }
 
+    public void setSolrPort(int solrPort) {
+        this.solrPort = solrPort;
+    }
+
     public void start() throws Exception {
         if (solrDef == null || solrDef.getCores().size() == 0) {
             solrDef = new SolrDefinition(SolrDefinition.defaultSolrSchema(), SolrDefinition.defaultSolrConfig());
         }
 
-        SolrHomeDirSetup.write(solrHomeDir, solrDef, autoCommitSetting);
+        SolrHomeDirSetup.write(solrHomeDir, solrDef, autoCommitSetting, solrPort);
 
         setSystemProperties();
 
