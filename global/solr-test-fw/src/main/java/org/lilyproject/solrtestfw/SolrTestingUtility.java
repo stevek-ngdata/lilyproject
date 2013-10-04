@@ -144,8 +144,12 @@ public class SolrTestingUtility {
         return server;
     }
 
-    public String getUri() {
+    public String getDefaultUri() {
         return "http://localhost:" + solrPort + "/solr/" + SolrDefinition.DEFAULT_CORE_NAME;
+    }
+
+    public String getBaseUri() {
+        return "http://localhost:" + solrPort + "/solr";
     }
 
     public Server getServer() {

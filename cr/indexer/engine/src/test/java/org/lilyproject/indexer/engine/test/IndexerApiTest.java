@@ -15,6 +15,8 @@
  */
 package org.lilyproject.indexer.engine.test;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -47,8 +49,6 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -91,7 +91,7 @@ public class IndexerApiTest {
 
         setupSchema();
 
-        solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
+        solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getDefaultUri());
 
         indexerApi = new IndexerApiImpl(repoSetup.getRepositoryManager(), indexerRegistry);
     }
