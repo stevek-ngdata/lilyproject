@@ -182,8 +182,7 @@ public class SolrTestingUtility {
             // around always having the default 'core0' core around, and OTOH SolrCloud doens't
             // support having cores not associated with a collection, so until we review this
             // more thoroughly, we keep this in place
-            System.setProperty("bootstrap_confdir", solrHomeDir.getAbsolutePath() + "/core0/conf");
-            System.setProperty("collection.configName", "lily_dynamic");
+            System.setProperty("bootstrap_conf","true");
         }
     }
 
