@@ -15,7 +15,6 @@
  */
 package org.lilyproject.lilyservertestfw;
 
-import javax.management.ObjectName;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +24,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import javax.management.ObjectName;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -52,14 +53,16 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 public class LilyServerProxy {
     public static final String LILY_CONF_DIR = "lily.conf.dir";
     public static final String LILY_CONF_CUSTOMDIR = "lily.conf.customdir";
-    private static final String COUNTER_NUM_FAILED_RECORDS = "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
+    private static final String COUNTER_NUM_FAILED_RECORDS =
+            "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
 
     private final Log log = LogFactory.getLog(getClass());
 
     private Mode mode;
     private HBaseProxy hbaseProxy;
 
-    public enum Mode { EMBED, CONNECT }
+    public enum Mode {EMBED, CONNECT}
+
     private static String LILY_MODE_PROP_NAME = "lily.lilyserverproxy.mode";
 
     private LilyServerTestUtility lilyServerTestUtility;
@@ -81,15 +84,16 @@ public class LilyServerProxy {
 
     /**
      * LilyServerProxy starts a proxy for lily which either :
-     *   - connects to an already running lily (using launch-test-lily) (CONNECT mode)
-     *   - starts a new LilyServerTestUtility (EMBED mode)
+     * - connects to an already running lily (using launch-test-lily) (CONNECT mode)
+     * - starts a new LilyServerTestUtility (EMBED mode)
      *
      * <p>In the EMBED mode the default configuration files used are the files present
-     *    in the resource "org/lilyproject/lilyservertestfw/conf/".
-     *    These files are copied into the resource at build-time from "cr/process/server/conf".
+     * in the resource "org/lilyproject/lilyservertestfw/conf/".
+     * These files are copied into the resource at build-time from "cr/process/server/conf".
      * <br>On top of these default configuration files, custom configuration files can be used.
-     *     The path to these custom configuration files should be put in the system property
-     *     "lily.conf.customdir".
+     * The path to these custom configuration files should be put in the system property
+     * "lily.conf.customdir".
+     *
      * @param mode the mode (CONNECT or EMBED) in which to start the proxy.
      */
     public LilyServerProxy(Mode mode, boolean clearData, HBaseProxy hbaseProxy) throws IOException {
@@ -187,7 +191,7 @@ public class LilyServerProxy {
             switch (mode) {
                 case EMBED:
                     JavaServiceManager serviceMgr = lilyServerTestUtility.getRuntime().getJavaServiceManager();
-                    zooKeeper = (ZooKeeperItf)serviceMgr.getService(ZooKeeperItf.class);
+                    zooKeeper = (ZooKeeperItf) serviceMgr.getService(ZooKeeperItf.class);
                     break;
                 case CONNECT:
                     zooKeeper = ZkUtil.connect("localhost:2181", 30000);
@@ -204,7 +208,7 @@ public class LilyServerProxy {
             switch (mode) {
                 case EMBED:
                     JavaServiceManager serviceMgr = lilyServerTestUtility.getRuntime().getJavaServiceManager();
-                    indexerModel = (WriteableIndexerModel)serviceMgr.getService(WriteableIndexerModel.class);
+                    indexerModel = (WriteableIndexerModel) serviceMgr.getService(WriteableIndexerModel.class);
                     break;
                 case CONNECT:
                     indexerModel = new IndexerModelImpl(getZooKeeper());
@@ -231,20 +235,21 @@ public class LilyServerProxy {
      * <p>Note that when the SEP events are processed, the data has been put in solr but this
      * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
      *
-     * @param indexName name of the index
-     * @param coreName name of the Solr core to which to index (when null, indexes to default core)
-     * @param indexerConf path to the resource containing the index configuration
-     * @param timeout maximum time to spent waiting, an exception is thrown when the required conditions
-     *                have not been reached within this timeout
-     * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the
-     *                            subscriptionId of the new index
-     * @param waitForSep boolean indicating the call has to wait until the SEP for the new index started.
-     *        This can only be true if the waitForIndexerModel is true as well.
+     * @param indexName              name of the index
+     * @param coreName               name of the Solr core to which to index (when null, indexes to default core)
+     * @param indexerConf            path to the resource containing the index configuration
+     * @param timeout                maximum time to spent waiting, an exception is thrown when the required conditions
+     *                               have not been reached within this timeout
+     * @param waitForIndexerModel    boolean indicating the call has to wait until the indexerModel knows the
+     *                               subscriptionId of the new index
+     * @param waitForSep             boolean indicating the call has to wait until the SEP for the new index started.
+     *                               This can only be true if the waitForIndexerModel is true as well.
      * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
      *                               the index, this is important for synchronous indexing.
      */
     public void addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout,
-            boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
+                                     boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry)
+            throws Exception {
         InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         is.close();
@@ -253,22 +258,8 @@ public class LilyServerProxy {
     }
 
     /**
-     * Calls {@link #addIndexFromResource(String, String, String, long, boolean, boolean, boolean)} with
-     * the default core name.
-     */
-    public void addIndexFromResource(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel,
-            boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
-        addIndexFromResource(indexName, (String)null, indexerConf, timeout, waitForIndexerModel, waitForSep,
-                waitForIndexerRegistry);
-    }
-
-    /**
      * Shortcut method with waitForIndexerModel and waitForSep put to true
      */
-    public void addIndexFromResource(String indexName, String indexerConf, long timeout) throws Exception {
-        addIndexFromResource(indexName, indexerConf, timeout, true, true, true);
-    }
-
     public void addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout) throws Exception {
         addIndexFromResource(indexName, coreName, indexerConf, timeout, true, true, true);
     }
@@ -289,20 +280,20 @@ public class LilyServerProxy {
      * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
      * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
      *
-     * @param indexName name of the index
-     * @param coreName name of the Solr core to which to index (when null, indexes to default core)
-     * @param indexerConfiguration byte array containing the index configuration
-     * @param timeout maximum time to spent waiting, an exception is thrown when the required conditions
-     *                have not been reached within this timeout
-     * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the
-     *                            subscriptionId of the new index
-     * @param waitForSep boolean indicating the call has to wait until the SEP for the new index started.
-     *        This can only be true if the waitForIndexerModel is true as well.
+     * @param indexName              name of the index
+     * @param coreName               name of the Solr core to which to index (when null, indexes to default core)
+     * @param indexerConfiguration   byte array containing the index configuration
+     * @param timeout                maximum time to spent waiting, an exception is thrown when the required conditions
+     *                               have not been reached within this timeout
+     * @param waitForIndexerModel    boolean indicating the call has to wait until the indexerModel knows the
+     *                               subscriptionId of the new index
+     * @param waitForSep             boolean indicating the call has to wait until the SEP for the new index started.
+     *                               This can only be true if the waitForIndexerModel is true as well.
      * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
      *                               the index, this is important for synchronous indexing.
      */
     public void addIndex(String indexName, String coreName, byte[] indexerConfiguration, long timeout,
-            boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
+                         boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
         long tryUntil = System.currentTimeMillis() + timeout;
         WriteableIndexerModel indexerModel = getIndexerModel();
         IndexDefinition index = indexerModel.newIndex(indexName);
@@ -371,7 +362,7 @@ public class LilyServerProxy {
             jmxLiaison.connect(mode == Mode.EMBED);
 
             while (System.currentTimeMillis() < tryUntil) {
-                Set<String> subscriptionIds = (Set<String>)jmxLiaison.getAttribute(indexerObjectName, "IndexNames");
+                Set<String> subscriptionIds = (Set<String>) jmxLiaison.getAttribute(indexerObjectName, "IndexNames");
                 if (subscriptionIds.contains(indexName)) {
                     return;
                 }
@@ -395,10 +386,10 @@ public class LilyServerProxy {
      * specified timeout, false is returned. If the index build was not successful, an exception is thrown.
      *
      * @param batchConf the batch index conf for this particular invocation of the batch build
-     * @param timeOut maximum time to wait for the batch index to finish. You can put this rather high: the method
-     *                will return as soon as the batch indexing is finished, it is only in case something goes
-     *                wrong that this timeout will prevent endless hanging. An exception is thrown in case
-     *                the batch indexing did not finish within this timeout.
+     * @param timeOut   maximum time to wait for the batch index to finish. You can put this rather high: the method
+     *                  will return as soon as the batch indexing is finished, it is only in case something goes
+     *                  wrong that this timeout will prevent endless hanging. An exception is thrown in case
+     *                  the batch indexing did not finish within this timeout.
      */
     public void batchBuildIndex(String indexName, byte[] batchConf, long timeOut) throws Exception {
         WriteableIndexerModel model = getIndexerModel();
@@ -432,8 +423,8 @@ public class LilyServerProxy {
                     } else {
                         System.out.println(definition.getLastBatchBuildInfo().getTrackingUrl());
                         throw new Exception("Batch index build did not finish successfully: success flag = " +
-                            successFlag + ", amount failed records = " + amountFailed + ", job state = " +
-                            definition.getLastBatchBuildInfo().getJobState());
+                                successFlag + ", amount failed records = " + amountFailed + ", job state = " +
+                                definition.getLastBatchBuildInfo().getJobState());
                     }
                 }
             }
