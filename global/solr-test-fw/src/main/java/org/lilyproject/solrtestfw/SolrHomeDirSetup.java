@@ -16,7 +16,6 @@
 package org.lilyproject.solrtestfw;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.regex.Pattern;
@@ -28,9 +27,9 @@ public class SolrHomeDirSetup {
     private final File solrHomeDir;
     private final SolrDefinition solrDef;
     private final String autoCommitSetting;
-    private static final String[] SW_LANGS = new String[] {"ar","bg","ca","cz","da","de","el","en","es","eu","fa","fi",
-        "fr","ga","gl","hi","hu","hy","id","it","ja","lv","nl","no","pt","ro","ru","sv","th","tr"};
-    private static final String[] CONTRACT_LANGS = new String[] {"ca","fr","ga","it"};
+    private static final String[] SW_LANGS = new String[]{"ar", "bg", "ca", "cz", "da", "de", "el", "en", "es", "eu", "fa", "fi",
+            "fr", "ga", "gl", "hi", "hu", "hy", "id", "it", "ja", "lv", "nl", "no", "pt", "ro", "ru", "sv", "th", "tr"};
+    private static final String[] CONTRACT_LANGS = new String[]{"ca", "fr", "ga", "it"};
 
     private SolrHomeDirSetup(File solrHomeDir, SolrDefinition solrDef, String autoCommitSetting) {
         this.solrHomeDir = solrHomeDir;
@@ -60,19 +59,19 @@ public class SolrHomeDirSetup {
         writeCoresConf();
     }
 
-    private void writeCoresConf() throws FileNotFoundException {
-        File coresFile = new File(solrHomeDir, "solr.xml");
-        PrintWriter writer = new PrintWriter(coresFile);
-        writer.println("<solr persistent='true'>");
-        writer.println(" <cores adminPath='/admin/cores' defaultCoreName='" + SolrDefinition.DEFAULT_CORE_NAME + "'>");
-        for (SolrDefinition.CoreDefinition core : solrDef.getCores()) {
-            writer.println("  <core name='" + core.getName() + "' instanceDir='" + core.getName() + "'>");
-            writer.println("    <property name='solr.data.dir' value='${solr.solr.home}/" + core.getName() + "/data'/>");
-            writer.println("  </core>");
+    private void writeCoresConf() throws IOException {
+        // minimal solr.xml
+        PrintWriter writer = new PrintWriter(new File(solrHomeDir, "solr.xml"));
+        try {
+            writer.println("<solr></solr>");
+        } finally {
+            writer.close();
         }
-        writer.println(" </cores>");
-        writer.println("</solr>");
-        writer.close();
+
+        // for each core: write an empty core.properties in a solr home subdir with the core name
+        for (SolrDefinition.CoreDefinition core : solrDef.getCores()) {
+            new File(new File(solrHomeDir, core.getName()), "core.properties").createNewFile();
+        }
     }
 
     private void copyDefaultConfigToSolrHome(File solrConfDir) throws IOException {
@@ -80,10 +79,10 @@ public class SolrHomeDirSetup {
         createEmptyFile(new File(solrConfDir, "stopwords.txt"));
         createEmptyFile(new File(solrConfDir, "protwords.txt"));
         for (String lang : SW_LANGS) {
-            createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "stopwords_" + lang  + ".txt"));
+            createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "stopwords_" + lang + ".txt"));
         }
         for (String lang : CONTRACT_LANGS) {
-            createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "contractions_" + lang  + ".txt"));
+            createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "contractions_" + lang + ".txt"));
         }
         createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "hyphenations_ga.txt"));
         createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "stoptags_ja.txt"));

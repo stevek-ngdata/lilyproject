@@ -15,6 +15,8 @@
  */
 package org.lilyproject.solrtestfw.test;
 
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -22,8 +24,6 @@ import java.net.URL;
 import org.junit.Test;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrProxy;
-
-import static org.junit.Assert.fail;
 
 public class SolrProxyTest {
     @Test
@@ -82,8 +82,6 @@ public class SolrProxyTest {
         testSolrCore("first", 200);
         testSolrCore("second", 200);
 
-        testDefaultSolrCore(200);
-
         solr.stop();
     }
 
@@ -96,18 +94,9 @@ public class SolrProxyTest {
         }
     }
 
-    private void testDefaultSolrCore(int expectedStatus) throws IOException {
-        String urlString = "http://localhost:8983/solr/select?q=*:*";
-        HttpURLConnection conn = performRequest(urlString);
-        if (conn.getResponseCode() != expectedStatus) {
-            fail("Testing default core: expected status " + expectedStatus +
-                    " but got: " + conn.getResponseCode() + ": " + conn.getResponseMessage());
-        }
-    }
-
     private HttpURLConnection performRequest(String urlString) throws IOException {
         URL url = new URL(urlString);
-        HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.connect();
         conn.disconnect();
         return conn;
