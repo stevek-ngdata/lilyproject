@@ -44,19 +44,20 @@ import org.lilyproject.repository.api.RecordTypeNotFoundException;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.solrtestfw.SolrDefinition;
 
 /**
  * This test has as goal to test that data is kept when a data dir is given and the clear flag is put to false.
  * Example usage:
- *   mvn -DargLine="-Dlily.lilyproxy.dir=/home/lilyuser/tmp/test1 -Dlily.lilyproxy.mode=embed -Dlily.lilyproxy.clear=false" \
- *                 test -Dtest=KeepDataTest
+ * mvn -DargLine="-Dlily.lilyproxy.dir=/home/lilyuser/tmp/test1 -Dlily.lilyproxy.mode=embed -Dlily.lilyproxy.clear=false" \
+ * test -Dtest=KeepDataTest
  *
  * FIXME: this seems like something which should go into /integration-tests, iiuc the current test relies on manual
  * inspection of the results.
  */
 public class KeepDataTest {
     private static final QName RECORDTYPE1 = new QName("org.lilyproject.lilytestutility", "TestRecordType");
-    private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility","name");
+    private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility", "name");
     private static Repository repository;
     private static LilyProxy lilyProxy;
 
@@ -89,7 +90,7 @@ public class KeepDataTest {
 
         try {
             fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),
-                FIELD1, Scope.NON_VERSIONED));
+                    FIELD1, Scope.NON_VERSIONED));
         } catch (FieldTypeExistsException e) {
             System.out.println("[KeepDataTest] Field Type already exists: " + FIELD1);
         }
@@ -107,14 +108,14 @@ public class KeepDataTest {
 
         // Add index
         String indexName = "testIndex";
-        lilyProxy.getLilyServerProxy().addIndexFromResource(indexName,
+        lilyProxy.getLilyServerProxy().addIndexFromResource(indexName, SolrDefinition.DEFAULT_CORE_NAME,
                 "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml", 60000L);
 
         // Create an extra record
         RecordId recordId = null;
         int i = 0;
         try {
-            while(true) {
+            while (true) {
                 recordId = repository.getIdGenerator().newRecordId("MyRecord" + i++);
                 Record read = repository.read(recordId);
                 System.out.println("[KeepDataTest] Record already exists: " + recordId);
@@ -127,7 +128,7 @@ public class KeepDataTest {
             record = repository.create(record);
         }
         Record record = repository.read(recordId);
-        Assert.assertEquals("name1", (String)record.getField(FIELD1));
+        Assert.assertEquals("name1", (String) record.getField(FIELD1));
 
         // Wait for messages to be processed
         Assert.assertTrue("Processing events took too long", lilyProxy.waitSepEventsProcessed(60000L));
@@ -147,7 +148,7 @@ public class KeepDataTest {
     private List<RecordId> querySolr(String name) throws SolrServerException {
         SolrServer solr = lilyProxy.getSolrProxy().getSolrServer();
         SolrQuery solrQuery = new SolrQuery();
-        solrQuery.set("df","name");
+        solrQuery.set("df", "name");
         solrQuery.setQuery(name);
         solrQuery.set("fl", "lily.id");
 
