@@ -66,7 +66,7 @@ public class SolrTestingUtility {
     }
 
     public String getAutoCommitSetting() {
-      return autoCommitSetting;
+        return autoCommitSetting;
     }
 
     public void setAutoCommitSetting(String autoCommitSetting) {
@@ -127,7 +127,7 @@ public class SolrTestingUtility {
         server.start();
     }
 
-    private Server createServer() throws Exception{
+    private Server createServer() throws Exception {
         if (this.useSolrCloud) {
             // create path on zookeeper for solr cloud
             ZooKeeperItf zk = ZkUtil.connect("localhost:2181", 10000);
@@ -145,7 +145,7 @@ public class SolrTestingUtility {
     }
 
     public String getUri() {
-        return "http://localhost:" + solrPort + "/solr";
+        return "http://localhost:" + solrPort + "/solr/" + SolrDefinition.DEFAULT_CORE_NAME;
     }
 
     public Server getServer() {
@@ -182,7 +182,7 @@ public class SolrTestingUtility {
             // around always having the default 'core0' core around, and OTOH SolrCloud doens't
             // support having cores not associated with a collection, so until we review this
             // more thoroughly, we keep this in place
-            System.setProperty("bootstrap_conf","true");
+            System.setProperty("bootstrap_conf", "true");
         }
     }
 
