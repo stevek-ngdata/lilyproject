@@ -15,6 +15,7 @@
  */
 package org.lilyproject.solrtestfw;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.http.client.HttpClient;
@@ -258,7 +257,7 @@ public class SolrProxy {
 
         // Write new cores
         // TODO support autoCommitSetting?
-        SolrHomeDirSetup.write(solrHomeDir, solrDef, null);
+        SolrHomeDirSetup.write(solrHomeDir, solrDef, null, 8983);
 
         // Create cores
         for (SolrDefinition.CoreDefinition core : solrDef.getCores()) {

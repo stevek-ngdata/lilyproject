@@ -24,6 +24,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.input.NullInputStream;
 
 public class SolrHomeDirSetup {
+    private final int solrPort;
     private final File solrHomeDir;
     private final SolrDefinition solrDef;
     private final String autoCommitSetting;
@@ -31,14 +32,15 @@ public class SolrHomeDirSetup {
             "fr", "ga", "gl", "hi", "hu", "hy", "id", "it", "ja", "lv", "nl", "no", "pt", "ro", "ru", "sv", "th", "tr"};
     private static final String[] CONTRACT_LANGS = new String[]{"ca", "fr", "ga", "it"};
 
-    private SolrHomeDirSetup(File solrHomeDir, SolrDefinition solrDef, String autoCommitSetting) {
+    private SolrHomeDirSetup(File solrHomeDir, SolrDefinition solrDef, String autoCommitSetting, int solrPort) {
         this.solrHomeDir = solrHomeDir;
         this.solrDef = solrDef;
         this.autoCommitSetting = autoCommitSetting;
+        this.solrPort = solrPort;
     }
 
-    public static void write(File solrHomeDir, SolrDefinition solrDef, String autoCommitSetting) throws IOException {
-        new SolrHomeDirSetup(solrHomeDir, solrDef, autoCommitSetting).writeCoreDirs();
+    public static void write(File solrHomeDir, SolrDefinition solrDef, String autoCommitSetting, int solrPort) throws IOException {
+        new SolrHomeDirSetup(solrHomeDir, solrDef, autoCommitSetting, solrPort).writeCoreDirs();
     }
 
     private void writeCoreDirs() throws IOException {
@@ -63,7 +65,12 @@ public class SolrHomeDirSetup {
         // minimal solr.xml
         PrintWriter writer = new PrintWriter(new File(solrHomeDir, "solr.xml"));
         try {
-            writer.println("<solr></solr>");
+            writer.println("<solr>");
+            writer.println("<solrcloud>");
+            writer.println("<str name=\"hostContext\">/solr</str>");
+            writer.println("<int name=\"hostPort\">"+solrPort+"</int>");
+            writer.println("</solrcloud>");
+            writer.println("</solr>");
         } finally {
             writer.close();
         }
