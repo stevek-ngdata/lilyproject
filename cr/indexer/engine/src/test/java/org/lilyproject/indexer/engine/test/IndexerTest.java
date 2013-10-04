@@ -212,8 +212,8 @@ public class IndexerTest {
         repository = repositoryManager.getRepository(REPO_NAME);
         repository.getTableManager().createTable(ALTERNATE_TABLE);
 
-        defaultTable = (Repository)repository.getDefaultTable();
-        alternateTable = (Repository)repository.getTable(ALTERNATE_TABLE);
+        defaultTable = (Repository) repository.getDefaultTable();
+        alternateTable = (Repository) repository.getTable(ALTERNATE_TABLE);
         indexUpdaterRepository = new TrackingRepository(repoSetup.getRepositoryManager().getRepository(REPO_NAME));
 
 
@@ -226,7 +226,7 @@ public class IndexerTest {
         // Field types should exist before the indexer conf is loaded
         setupSchema();
 
-        solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
+        solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getDefaultUri());
     }
 
     @AfterClass
@@ -274,7 +274,7 @@ public class IndexerTest {
                 htable.close();
             }
         }
-        derefMap = DerefMapHbaseImpl.create("default","test", hbaseConf, null, repository.getIdGenerator());
+        derefMap = DerefMapHbaseImpl.create("default", "test", hbaseConf, null, repository.getIdGenerator());
         Indexer indexer = new Indexer(indexName, INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics(indexName), derefMap);
 
@@ -824,41 +824,41 @@ public class IndexerTest {
     // Test the behaviour of using the "lily.mq" attribute when indexing
     @Test
     public void testIndexer_AddAndUpdate_DisabledIndexing() throws Exception {
-       changeIndexUpdater("indexerconf1.xml");
+        changeIndexUpdater("indexerconf1.xml");
 
-       // Create a record that should be indexed
-       Record recordToIndex = defaultTable.newRecord();
-       recordToIndex.setRecordType(nvRecordType1.getName());
-       recordToIndex.setField(nvfield1.getName(), "mango");
-       recordToIndex.setField(nvTag.getName(), 0L);
-       recordToIndex = defaultTable.create(recordToIndex);
+        // Create a record that should be indexed
+        Record recordToIndex = defaultTable.newRecord();
+        recordToIndex.setRecordType(nvRecordType1.getName());
+        recordToIndex.setField(nvfield1.getName(), "mango");
+        recordToIndex.setField(nvTag.getName(), 0L);
+        recordToIndex = defaultTable.create(recordToIndex);
 
 
-       // Create a record that shouldn't be indexed (due to the "lily.mq" attribute
-       Record recordToNotIndex = defaultTable.newRecord();
-       recordToNotIndex.setRecordType(nvRecordType1.getName());
-       recordToNotIndex.setField(nvfield1.getName(), "mango");
-       recordToNotIndex.setField(nvTag.getName(), 0L);
+        // Create a record that shouldn't be indexed (due to the "lily.mq" attribute
+        Record recordToNotIndex = defaultTable.newRecord();
+        recordToNotIndex.setRecordType(nvRecordType1.getName());
+        recordToNotIndex.setField(nvfield1.getName(), "mango");
+        recordToNotIndex.setField(nvTag.getName(), 0L);
 
-       // Mark this record to not be indexed
-       recordToNotIndex.getAttributes().put("lily.mq", "false");
-       recordToNotIndex = defaultTable.create(recordToNotIndex);
+        // Mark this record to not be indexed
+        recordToNotIndex.getAttributes().put("lily.mq", "false");
+        recordToNotIndex = defaultTable.create(recordToNotIndex);
 
-       commitIndex();
-       verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 1);
-       verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 0);
-       verifyResultCount("nv_field1:mango", 1);
+        commitIndex();
+        verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 1);
+        verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 0);
+        verifyResultCount("nv_field1:mango", 1);
 
-       // Now we'll update the recordToIndex, first without indexing, and then with it
+        // Now we'll update the recordToIndex, first without indexing, and then with it
 
-       recordToIndex.setField(nvfield1.getName(), "orange");
-       recordToIndex.getAttributes().put("lily.mq", "false");
+        recordToIndex.setField(nvfield1.getName(), "orange");
+        recordToIndex.getAttributes().put("lily.mq", "false");
 
-       recordToIndex = defaultTable.update(recordToIndex);
-       commitIndex();
+        recordToIndex = defaultTable.update(recordToIndex);
+        commitIndex();
 
-       verifyResultCount("nv_field1:orange", 0);
-       verifyResultCount("nv_field1:mango", 1);
+        verifyResultCount("nv_field1:orange", 0);
+        verifyResultCount("nv_field1:mango", 1);
 
 
     }
@@ -866,42 +866,42 @@ public class IndexerTest {
     // Test the behaviour of using the "lily.mq" attribute when indexing
     @Test
     public void testIndexer_Delete_DisabledIndexing() throws Exception {
-       changeIndexUpdater("indexerconf1.xml");
+        changeIndexUpdater("indexerconf1.xml");
 
-       // Create a record that should be indexed
-       Record recordToIndex = defaultTable.newRecord();
-       recordToIndex.setRecordType(nvRecordType1.getName());
-       recordToIndex.setField(nvfield1.getName(), "papaya");
-       recordToIndex.setField(nvTag.getName(), 0L);
-       recordToIndex = defaultTable.create(recordToIndex);
-
-
-       // Create a record that shouldn't be indexed (due to the "lily.mq" attribute
-       Record recordToNotIndex = defaultTable.newRecord();
-       recordToNotIndex.setRecordType(nvRecordType1.getName());
-       recordToNotIndex.setField(nvfield1.getName(), "papaya");
-       recordToNotIndex.setField(nvTag.getName(), 0L);
-       recordToNotIndex = defaultTable.create(recordToNotIndex);
-
-       commitIndex();
-
-       // Sanity check
-       verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 1);
-       verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 1);
-       verifyResultCount("nv_field1:papaya", 2);
+        // Create a record that should be indexed
+        Record recordToIndex = defaultTable.newRecord();
+        recordToIndex.setRecordType(nvRecordType1.getName());
+        recordToIndex.setField(nvfield1.getName(), "papaya");
+        recordToIndex.setField(nvTag.getName(), 0L);
+        recordToIndex = defaultTable.create(recordToIndex);
 
 
-       // Now delete both records, but disable indexing on one of them
-       recordToNotIndex.getAttributes().put("lily.mq", "false");
+        // Create a record that shouldn't be indexed (due to the "lily.mq" attribute
+        Record recordToNotIndex = defaultTable.newRecord();
+        recordToNotIndex.setRecordType(nvRecordType1.getName());
+        recordToNotIndex.setField(nvfield1.getName(), "papaya");
+        recordToNotIndex.setField(nvTag.getName(), 0L);
+        recordToNotIndex = defaultTable.create(recordToNotIndex);
 
-       defaultTable.delete(recordToIndex);
-       defaultTable.delete(recordToNotIndex);
-       commitIndex();
+        commitIndex();
 
-       // And check that the index has only been updated for the record that should be indexed
-       verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 0);
-       verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 1);
-       verifyResultCount("nv_field1:papaya", 1);
+        // Sanity check
+        verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 1);
+        verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 1);
+        verifyResultCount("nv_field1:papaya", 2);
+
+
+        // Now delete both records, but disable indexing on one of them
+        recordToNotIndex.getAttributes().put("lily.mq", "false");
+
+        defaultTable.delete(recordToIndex);
+        defaultTable.delete(recordToNotIndex);
+        commitIndex();
+
+        // And check that the index has only been updated for the record that should be indexed
+        verifyResultCount("lily.id:" + recordToIndex.getId().toString(), 0);
+        verifyResultCount("lily.id:" + recordToNotIndex.getId().toString(), 1);
+        verifyResultCount("nv_field1:papaya", 1);
     }
 
     @Test
@@ -964,7 +964,7 @@ public class IndexerTest {
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglenonstandardpear", 1);
 
-        record1.setField(nvfield1.getName(),  "derefsinglenonstandardapple");
+        record1.setField(nvfield1.getName(), "derefsinglenonstandardapple");
         expectEvent(UPDATE, ALTERNATE_TABLE, record1.getId(), nvfield1.getId());
         alternateTable.update(record1);
 
@@ -1000,7 +1000,7 @@ public class IndexerTest {
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglenonstandardnolinkpear", 1);
 
-        record1.setField(nvfield1.getName(),  "derefsinglenonstandardnolinkapple");
+        record1.setField(nvfield1.getName(), "derefsinglenonstandardnolinkapple");
         expectEvent(UPDATE, ALTERNATE_TABLE, record1.getId(), nvfield1.getId());
         alternateTable.update(record1);
 
@@ -2440,7 +2440,8 @@ public class IndexerTest {
             // Test
             //
             RecordId recordId = idGenerator.newRecordId();
-            expectEvent(CREATE, Table.RECORD.name, recordId, nestedListsField.getId(), recordField.getId(), recordListField.getId());
+            expectEvent(CREATE, Table.RECORD.name, recordId, nestedListsField.getId(), recordField.getId(),
+                    recordListField.getId());
 
             defaultTable
                     .recordBuilder()
@@ -2919,7 +2920,7 @@ public class IndexerTest {
         // reset current read count
         indexUpdaterRepository.reset();
 
-        TrackingTable indexUpdaterTable = (TrackingTable)indexUpdaterRepository.getTable(Table.RECORD.name);
+        TrackingTable indexUpdaterTable = (TrackingTable) indexUpdaterRepository.getTable(Table.RECORD.name);
 
         Record record = defaultTable.newRecord();
         record.setRecordType(vRecordType1.getName());
@@ -3266,7 +3267,8 @@ public class IndexerTest {
                 }
 
                 if (expectedEvents.isEmpty()) {
-                    System.err.println("No events are expected, but we just got event " + recordEvent.toJson() + " on " + recordId);
+                    System.err
+                            .println("No events are expected, but we just got event " + recordEvent.toJson() + " on " + recordId);
                     failures++;
                     return;
                 }
@@ -3337,7 +3339,7 @@ public class IndexerTest {
     private static class CompositeEventListener extends LilyEventListener {
         private List<LilyEventListener> eventListeners;
 
-        CompositeEventListener(RepositoryManager repositoryManager, LilyEventListener...eventListeners) {
+        CompositeEventListener(RepositoryManager repositoryManager, LilyEventListener... eventListeners) {
             super(repositoryManager);
             this.eventListeners = Lists.newArrayList(eventListeners);
         }
@@ -3411,7 +3413,7 @@ public class IndexerTest {
         @Override
         public LTable getTable(String tableName) throws InterruptedException, RepositoryException {
             if (!tableCache.containsKey(tableName)) {
-                Repository repository = (Repository)delegate.getTable(tableName);
+                Repository repository = (Repository) delegate.getTable(tableName);
                 TrackingTable trackingTable = new TrackingTable(repository, this);
                 tableCache.put(tableName, trackingTable);
             }
