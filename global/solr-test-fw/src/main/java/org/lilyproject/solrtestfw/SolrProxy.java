@@ -47,7 +47,8 @@ import org.xml.sax.SAXException;
 public class SolrProxy {
     private Mode mode;
 
-    public enum Mode { EMBED, CONNECT }
+    public enum Mode {EMBED, CONNECT}
+
     public static String SOLR_MODE_PROP_NAME = "lily.solrproxy.mode";
 
     private SolrTestingUtility solrTestingUtility;
@@ -78,17 +79,17 @@ public class SolrProxy {
 
     /**
      * Creates a new SolrProxy
-     * @param mode either EMBED or CONNECT
-     * @param clearData it true, clears the data directories upon shutdown
+     *
+     * @param mode            either EMBED or CONNECT
+     * @param clearData       it true, clears the data directories upon shutdown
      * @param enableSolrCloud if true starts solr in cloud mode
-     * @throws IOException
      */
     public SolrProxy(Mode mode, boolean clearData, boolean enableSolrCloud) throws IOException {
         this.clearData = clearData;
         this.enableSolrCloud = enableSolrCloud;
 
         if (mode == null) {
-          String solrModeProp = System.getProperty(SOLR_MODE_PROP_NAME);
+            String solrModeProp = System.getProperty(SOLR_MODE_PROP_NAME);
             if (solrModeProp == null || solrModeProp.equals("") || solrModeProp.equals("embed")) {
                 this.mode = Mode.EMBED;
             } else if (solrModeProp.equals("connect")) {
@@ -144,7 +145,7 @@ public class SolrProxy {
                 solrTestingUtility = new SolrTestingUtility(testHome, clearData, enableSolrCloud);
                 solrTestingUtility.setSolrDefinition(solrDef);
                 solrTestingUtility.start();
-                this.uri = solrTestingUtility.getUri();
+                this.uri = solrTestingUtility.getBaseUri();
                 initSolrServers(solrDef);
                 break;
             case CONNECT:
@@ -203,10 +204,6 @@ public class SolrProxy {
         solrServers.get(coreName).commit();
     }
 
-    public String getUri() {
-        return uri;
-    }
-
     public String getUri(String coreName) {
         return uri + "/" + coreName + "/";
     }
@@ -260,14 +257,14 @@ public class SolrProxy {
 
         // Write new cores
         // TODO support autoCommitSetting?
-        SolrHomeDirSetup.write(solrHomeDir, solrDef, null);
+        SolrHomeDirSetup.write(solrHomeDir, solrDef, null, 8983);
 
         // Create cores
         for (SolrDefinition.CoreDefinition core : solrDef.getCores()) {
             // Solr doesn't support UNLOAD'ing and later re-CREATE of the default core
             if (!core.getName().equals(SolrDefinition.DEFAULT_CORE_NAME)) {
                 performCoreAction("CREATE", core.getName(), "&name=" + core.getName() + "&instanceDir="
-                    + URLEncoder.encode(new File(solrHomeDir, core.getName()).getAbsolutePath(), "UTF-8"));
+                        + URLEncoder.encode(new File(solrHomeDir, core.getName()).getAbsolutePath(), "UTF-8"));
             }
         }
 
@@ -306,7 +303,7 @@ public class SolrProxy {
 
     private static Document readCoreStatus() throws IOException, SAXException, ParserConfigurationException {
         URL coreStatusURL = new URL("http://localhost:8983/solr/admin/cores?action=STATUS");
-        HttpURLConnection coreStatusConn = (HttpURLConnection)coreStatusURL.openConnection();
+        HttpURLConnection coreStatusConn = (HttpURLConnection) coreStatusURL.openConnection();
         coreStatusConn.connect();
         if (coreStatusConn.getResponseCode() != 200) {
             throw new RuntimeException("Fetch Solr core status: expected status 200 but got: " +
@@ -323,7 +320,7 @@ public class SolrProxy {
         moreParams = moreParams == null ? "" : moreParams;
         String url = "http://localhost:8983/solr/admin/cores?action=" + action + "&core=" + coreName + moreParams;
         URL coreActionURL = new URL(url);
-        HttpURLConnection conn = (HttpURLConnection)coreActionURL.openConnection();
+        HttpURLConnection conn = (HttpURLConnection) coreActionURL.openConnection();
         conn.connect();
         int response = conn.getResponseCode();
         conn.disconnect();

@@ -29,7 +29,7 @@ import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 public class SolrTestingUtility {
-    private final int solrPort = 8983;
+    private int solrPort = 8983;
     private Server server;
     private SolrDefinition solrDef;
     private String autoCommitSetting;
@@ -66,7 +66,7 @@ public class SolrTestingUtility {
     }
 
     public String getAutoCommitSetting() {
-      return autoCommitSetting;
+        return autoCommitSetting;
     }
 
     public void setAutoCommitSetting(String autoCommitSetting) {
@@ -85,12 +85,16 @@ public class SolrTestingUtility {
         return solrHomeDir;
     }
 
+    public void setSolrPort(int solrPort) {
+        this.solrPort = solrPort;
+    }
+
     public void start() throws Exception {
         if (solrDef == null || solrDef.getCores().size() == 0) {
             solrDef = new SolrDefinition(SolrDefinition.defaultSolrSchema(), SolrDefinition.defaultSolrConfig());
         }
 
-        SolrHomeDirSetup.write(solrHomeDir, solrDef, autoCommitSetting);
+        SolrHomeDirSetup.write(solrHomeDir, solrDef, autoCommitSetting, solrPort);
 
         setSystemProperties();
 
@@ -127,7 +131,7 @@ public class SolrTestingUtility {
         server.start();
     }
 
-    private Server createServer() throws Exception{
+    private Server createServer() throws Exception {
         if (this.useSolrCloud) {
             // create path on zookeeper for solr cloud
             ZooKeeperItf zk = ZkUtil.connect("localhost:2181", 10000);
@@ -144,7 +148,11 @@ public class SolrTestingUtility {
         return server;
     }
 
-    public String getUri() {
+    public String getDefaultUri() {
+        return "http://localhost:" + solrPort + "/solr/" + SolrDefinition.DEFAULT_CORE_NAME;
+    }
+
+    public String getBaseUri() {
         return "http://localhost:" + solrPort + "/solr";
     }
 
@@ -182,8 +190,7 @@ public class SolrTestingUtility {
             // around always having the default 'core0' core around, and OTOH SolrCloud doens't
             // support having cores not associated with a collection, so until we review this
             // more thoroughly, we keep this in place
-            System.setProperty("bootstrap_confdir", solrHomeDir.getAbsolutePath() + "/core0/conf");
-            System.setProperty("collection.configName", "lily_dynamic");
+            System.setProperty("bootstrap_conf", "true");
         }
     }
 

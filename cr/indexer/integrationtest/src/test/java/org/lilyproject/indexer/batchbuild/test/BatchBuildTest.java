@@ -124,7 +124,7 @@ public class BatchBuildTest {
 
         IndexDefinition index = model.newIndex(INDEX_NAME);
         Map<String, String> solrShards = new HashMap<String, String>();
-        solrShards.put("shard1", "http://localhost:8983/solr");
+        solrShards.put("shard1", "http://localhost:8983/solr/core0");
         index.setSolrShards(solrShards);
         index.setConfiguration(indexerConfiguration);
         index.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
@@ -170,8 +170,6 @@ public class BatchBuildTest {
 
     /**
      * Test if the default batch index conf setting works
-     *
-     * @throws Exception
      */
     @Test
     public void testDefaultBatchIndexConf() throws Exception {
@@ -210,8 +208,6 @@ public class BatchBuildTest {
 
     /**
      * Test setting a custom batch index conf.
-     *
-     * @throws Exception
      */
     @Test
     public void testCustomBatchIndexConf() throws Exception {
@@ -289,8 +285,6 @@ public class BatchBuildTest {
 
     /**
      * This test should cause a failure when adding a custom batchindex conf without setting a buildrequest
-     *
-     * @throws Exception
      */
     @Test(expected = org.lilyproject.indexer.model.api.IndexValidityException.class)
     public void testCustomBatchIndexConf_NoBuild() throws Exception {
@@ -424,7 +418,7 @@ public class BatchBuildTest {
     }
 
 
-    private static void createRepository(String repositoryName){
+    private static void createRepository(String repositoryName) {
         try {
             RepositoryModel model = new RepositoryModelImpl(lilyProxy.getLilyServerProxy().getZooKeeper());
             if (!model.repositoryExistsAndActive(repositoryName)) {

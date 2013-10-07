@@ -43,11 +43,12 @@ import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.solrtestfw.SolrDefinition;
 
 
 public class LilyProxyTest {
     private static final QName RECORDTYPE1 = new QName("org.lilyproject.lilytestutility", "TestRecordType");
-    private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility","name");
+    private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility", "name");
     private static LilyProxy lilyProxy;
     private static LilyClient lilyClient;
     private Repository repository;
@@ -79,7 +80,7 @@ public class LilyProxyTest {
 
         // Add index
         String indexName = "testIndex";
-        lilyProxy.getLilyServerProxy().addIndexFromResource(indexName,
+        lilyProxy.getLilyServerProxy().addIndexFromResource(indexName, SolrDefinition.DEFAULT_CORE_NAME,
                 "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml", 60000L);
 
         // Create record
@@ -88,7 +89,7 @@ public class LilyProxyTest {
         record.setField(FIELD1, "name1");
         record = repository.create(record);
         record = repository.read(record.getId());
-        Assert.assertEquals("name1", (String)record.getField(FIELD1));
+        Assert.assertEquals("name1", (String) record.getField(FIELD1));
 
         // Wait for messages to be processed
         Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepEventsProcessed(10000L));
@@ -98,8 +99,8 @@ public class LilyProxyTest {
 
         Assert.assertTrue(recordIds.contains(record.getId()));
 
-        System.out.println("Original record:" +record.getId().toString());
-        System.out.println("Queried record:" +recordIds.get(0).toString());
+        System.out.println("Original record:" + record.getId().toString());
+        System.out.println("Queried record:" + recordIds.get(0).toString());
 
         //
         // Batch index build scenario
@@ -147,8 +148,8 @@ public class LilyProxyTest {
     private List<RecordId> querySolr(String name) throws SolrServerException {
         SolrServer solr = lilyProxy.getSolrProxy().getSolrServer();
         SolrQuery solrQuery = new SolrQuery();
-      //set default search field (no longer supported in schema.xml
-        solrQuery.set("df","name");
+        //set default search field (no longer supported in schema.xml
+        solrQuery.set("df", "name");
         solrQuery.setQuery(name);
         solrQuery.set("fl", "lily.id");
         QueryResponse response = solr.query(solrQuery);

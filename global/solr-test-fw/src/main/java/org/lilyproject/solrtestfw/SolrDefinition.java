@@ -25,8 +25,7 @@ import org.apache.commons.io.IOUtils;
  * Defines a Solr setup: the schemas, the cores, etc. Always contains at least one core.
  *
  * <p>There is always one core called core0, even if you don't use it. This is because of technical reasons:
- * it is impossible to remove / change the default core. The core0 core is also the default Solr core,
- * thus when using Solr URL's without core name in them, requests will go to the core0 core.</p>
+ * it is impossible to remove / change the default core.</p>
  */
 public class SolrDefinition {
     private List<CoreDefinition> cores = new ArrayList<CoreDefinition>();
