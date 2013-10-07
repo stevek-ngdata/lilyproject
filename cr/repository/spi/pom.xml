@@ -50,9 +50,8 @@
     </dependency>
 
     <dependency>
-      <groupId>com.ngdata.lily.security</groupId>
+      <groupId>org.lilyproject</groupId>
       <artifactId>lily-hbase-authz-public-client</artifactId>
-      <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
 
