@@ -114,6 +114,7 @@
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
     <module>global/servlet</module>
+    <module>global/hbase-authz-public-client</module>
 
     <module>tools/lily-runtime-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
