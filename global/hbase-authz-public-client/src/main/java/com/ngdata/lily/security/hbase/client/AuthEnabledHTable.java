@@ -17,6 +17,7 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.ipc.CoprocessorProtocol;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -42,27 +43,33 @@ public class AuthEnabledHTable implements HTableInterface {
     private HTableInterface delegate;
     private AuthorizationContextProvider authzCtxProvider;
     private byte[] extraPermissions;
+    private byte[] appName;
+    private byte[] rowPermissionTypes;
     private boolean failWhenNotAuthenticated;
 
     private final String ERROR_MSG = "Method not supported with authentication";
-
-    public AuthEnabledHTable(AuthorizationContextProvider authzCtxProvider, HTableInterface delegate) {
-        this(authzCtxProvider, true, null, delegate);
-    }
 
     /**
      *
      * @param failWhenNotAuthenticated throw an exception if there is no authorization context (= authenticated
      *                                 user) available, i.o.w. refuse to do requests that will not be subject to
      *                                 authorization filtering.
+     * @param appName application name, identifies the permissions that should be active for this application.
+     *                Permissions start with "appName:...".
+     * @param rowPermissionTypes the kinds of row permissions that should be active
      * @param extraPermissions extra permissions which will be passed upon each request and which extend the
-     *                         permissions of the user. See {@link PermissionUtil#addPermissions}. This overwrites
+     *                         permissions of the user. See {@link HBaseAuthzUtil#EXTRA_PERMISSION_ATT}. This overwrites
      *                         any per-request permissions which might already have been set.
      */
     public AuthEnabledHTable(AuthorizationContextProvider authzCtxProvider, boolean failWhenNotAuthenticated,
-            @Nullable Set<String> extraPermissions, HTableInterface delegate) {
+            String appName,
+            Set<String> rowPermissionTypes,
+            @Nullable Set<String> extraPermissions,
+            HTableInterface delegate) {
         this.authzCtxProvider = authzCtxProvider;
-        this.extraPermissions = extraPermissions != null ? PermissionUtil.serialize(extraPermissions) : null;
+        this.appName = Bytes.toBytes(appName);
+        this.rowPermissionTypes = HBaseAuthzUtil.serialize(rowPermissionTypes);
+        this.extraPermissions = extraPermissions != null ? HBaseAuthzUtil.serialize(extraPermissions) : null;
         this.failWhenNotAuthenticated = failWhenNotAuthenticated;
         this.delegate = delegate;
     }
@@ -87,8 +94,11 @@ public class AuthEnabledHTable implements HTableInterface {
         for (OperationWithAttributes op : ops) {
             op.setAttribute(AuthorizationContext.OPERATION_ATTRIBUTE, userAsBytes);
 
+            op.setAttribute(HBaseAuthzUtil.APP_NAME_ATT, appName);
+            op.setAttribute(HBaseAuthzUtil.ROW_PERMISSION_TYPES_ATT, rowPermissionTypes);
+
             if (extraPermissions != null) {
-                op.setAttribute(PermissionUtil.ATTRIBUTE, extraPermissions);
+                op.setAttribute(HBaseAuthzUtil.EXTRA_PERMISSION_ATT, extraPermissions);
             }
         }
     }
