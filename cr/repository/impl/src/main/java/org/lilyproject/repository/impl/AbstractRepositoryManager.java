@@ -49,11 +49,6 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     private final RecordFactory recordFactory;
     private final RepositoryModel repositoryModel;
 
-    // Permission rule for NGDATA's hbase-authorization framework that ensures system columns are always
-    // accessible by the Lily Data Repository.
-    protected static final Set<String> DEFAULT_PERMISSIONS = ImmutableSet.of("rw:column:binprefix:"
-            + Bytes.toStringBinary(new byte[] {LilyHBaseSchema.RecordColumn.SYSTEM_PREFIX}));
-
 
     public AbstractRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
             RepositoryModel repositoryModel) {
