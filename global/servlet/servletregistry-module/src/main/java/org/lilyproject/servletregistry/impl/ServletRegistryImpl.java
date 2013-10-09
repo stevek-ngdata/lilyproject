@@ -25,11 +25,13 @@ import com.google.common.collect.Lists;
 import org.lilyproject.servletregistry.api.ServletFilterRegistryEntry;
 import org.lilyproject.servletregistry.api.ServletRegistry;
 import org.lilyproject.servletregistry.api.ServletRegistryEntry;
+import org.lilyproject.servletregistry.api.ServletRequestListenerRegistryEntry;
 
 public class ServletRegistryImpl implements ServletRegistry {
 
     private List<ServletRegistryEntry> entries = Lists.newArrayList();
     private List<ServletFilterRegistryEntry> filters = Lists.newArrayList();
+    private List<ServletRequestListenerRegistryEntry> listeners = Lists.newArrayList();
 
     @Override
     public void addEntry(ServletRegistryEntry entry) {
@@ -58,4 +60,13 @@ public class ServletRegistryImpl implements ServletRegistry {
         return Collections.unmodifiableList(filters);
     }
 
+    @Override
+    public List<ServletRequestListenerRegistryEntry> getServletRequestListenerEntries() {
+        return listeners;
+    }
+
+    @Override
+    public void addServletRequestListenerEntry(ServletRequestListenerRegistryEntry servletRequestListenerRegistryEntry) {
+        listeners.add(servletRequestListenerRegistryEntry);
+    }
 }

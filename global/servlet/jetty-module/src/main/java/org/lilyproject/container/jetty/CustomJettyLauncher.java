@@ -19,7 +19,6 @@ import static com.google.common.collect.Iterables.toArray;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +30,7 @@ import org.lilyproject.runtime.rapi.ConfRegistry;
 import org.lilyproject.servletregistry.api.ServletFilterRegistryEntry;
 import org.lilyproject.servletregistry.api.ServletRegistry;
 import org.lilyproject.servletregistry.api.ServletRegistryEntry;
+import org.lilyproject.servletregistry.api.ServletRequestListenerRegistryEntry;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
@@ -91,6 +91,10 @@ public class CustomJettyLauncher {
                 int dispatch = patternEntry.getValue() != null ? patternEntry.getValue() : Handler.DEFAULT;
                 context.addFilter(filterHolder, patternEntry.getKey(), dispatch);
             }
+        }
+        for (ServletRequestListenerRegistryEntry requestListenerRegistryEntry:
+                servletRegistry.getServletRequestListenerEntries()){
+            context.addEventListener(requestListenerRegistryEntry.getListenerInstance());
         }
         server.start();
         return server;

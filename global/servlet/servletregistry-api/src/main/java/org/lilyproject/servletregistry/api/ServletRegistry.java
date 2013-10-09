@@ -26,4 +26,8 @@ public interface ServletRegistry {
     void addFilterEntry(ServletFilterRegistryEntry servletFilterEntry);
 
     List<ServletFilterRegistryEntry> getFilterEntries();
+
+    void addServletRequestListenerEntry(ServletRequestListenerRegistryEntry servletRequestListenerRegistryEntry);
+
+    List<ServletRequestListenerRegistryEntry> getServletRequestListenerEntries();
 }
