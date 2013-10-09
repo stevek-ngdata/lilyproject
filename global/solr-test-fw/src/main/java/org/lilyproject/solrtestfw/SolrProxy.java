@@ -15,7 +15,6 @@
  */
 package org.lilyproject.solrtestfw;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,10 +24,14 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.http.client.HttpClient;
@@ -240,36 +243,31 @@ public class SolrProxy {
                 "/response/lst[@name='status']/lst[1]/str[@name='instanceDir']", doc));
         File solrHomeDir = solrCore0Dir.getParentFile();
 
-        //
-        // Below we will remove the existing cores, write the new configuration (and delete existing data),
-        // and then finally create new cores. Solr doesn't seem to be happy with dynamically unloading and
-        // recreating the default core (and we want a default core for people working core-unaware), therefore
-        // there is always a core called core0 which is reload rather than unloaded.
-        //
-
-        // Remove existing cores
-        for (String coreName : getSolrCoreNames()) {
-            // Solr doesn't support UNLOAD'ing and later re-CREATE of the default core
-            if (!coreName.equals(SolrDefinition.DEFAULT_CORE_NAME)) {
-                performCoreAction("UNLOAD", coreName, null);
-            }
-        }
-
-        // Write new cores
-        // TODO support autoCommitSetting?
+        // write new configuration
         SolrHomeDirSetup.write(solrHomeDir, solrDef, null, 8983);
 
-        // Create cores
-        for (SolrDefinition.CoreDefinition core : solrDef.getCores()) {
-            // Solr doesn't support UNLOAD'ing and later re-CREATE of the default core
-            if (!core.getName().equals(SolrDefinition.DEFAULT_CORE_NAME)) {
-                performCoreAction("CREATE", core.getName(), "&name=" + core.getName() + "&instanceDir="
-                        + URLEncoder.encode(new File(solrHomeDir, core.getName()).getAbsolutePath(), "UTF-8"));
+        Set<String> existingCores = new HashSet<String>(getSolrCoreNames());
+        for (SolrDefinition.CoreDefinition coreDefinition : solrDef.getCores()) {
+            String name = coreDefinition.getName();
+            // new core?
+            if (!existingCores.contains(name)) {
+                // remove core.properties (no auto discovery for new cores)
+                new File(new File(solrHomeDir, name), "core.properties").delete();
+                // create via API
+                performCoreAction("CREATE", name, "&name=" + name + "&instanceDir="
+                        + URLEncoder.encode(new File(solrHomeDir, name).getAbsolutePath(), "UTF-8"));
+            } else {
+                // existing core -> reload
+                performCoreAction("RELOAD", name, null);
+                // keep track of the fact that we've done this core
+                existingCores.remove(name);
             }
         }
 
-        // Reload default core
-        performCoreAction("RELOAD", SolrDefinition.DEFAULT_CORE_NAME, null);
+        // delete all other existing cores that no longer exist in the new config
+        for (String existingCore : existingCores) {
+            performCoreAction("UNLOAD", existingCore, null);
+        }
 
         initSolrServers(solrDef);
     }
