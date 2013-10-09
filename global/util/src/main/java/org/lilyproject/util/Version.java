@@ -42,6 +42,11 @@ public class Version {
             Closer.close(is);
         }
 
+        if ("org.lilyproject".equals(groupId)){
+            String fallBackVersion = System.getProperty("lily.version");
+            if (fallBackVersion != null) return fallBackVersion;
+        }
+
         return "undetermined (please report this as bug)";
     }
 }
