@@ -518,10 +518,14 @@ public class HBaseRepository extends BaseRepository {
         if (changed) {
             if ((recordTypeHasChanged && fieldsHaveChanged) || (recordTypeHasChanged && !useLatestRecordType)) {
                 recordEvent.setRecordTypeChanged(true);
-                put.add(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_ID.bytes, 1L, recordType.getId().getBytes());
-                put.add(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_VERSION.bytes, 1L,
-                        Bytes.toBytes(actualRecordTypeVersion));
-                changedScopes.add(Scope.NON_VERSIONED); // because the record type version changed
+                // If NON_VERSIONED is in the changed scopes, the record type will already have been set as part
+                // of calculateChangedFields, and the result would be double key-values in the Put object
+                if (!changedScopes.contains(Scope.NON_VERSIONED)) {
+                    put.add(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_ID.bytes, 1L, recordType.getId().getBytes());
+                    put.add(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_VERSION.bytes, 1L,
+                            Bytes.toBytes(actualRecordTypeVersion));
+                    changedScopes.add(Scope.NON_VERSIONED); // because the record type version changed
+                }
             }
             // Always set the record type on the record since the requested
             // record type could have been given without a version number
