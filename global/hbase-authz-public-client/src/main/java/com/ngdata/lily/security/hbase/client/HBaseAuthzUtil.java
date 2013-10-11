@@ -33,9 +33,16 @@ public class HBaseAuthzUtil {
     public static final String EXTRA_PERMISSION_ATT = "lily.sec.perm";
 
     /**
-     * The security labels to be stored for new rows.
+     * HTableDescriptor key into which the column family is stored that contains the security labels.
+     * See also {@link #SECURITY_LABEL_QUALIFIER_KEY}.
      */
-    public static final String SECURITY_LABEL_ATT = "lily.sec.sl";
+    public static final byte[] SECURITY_LABEL_FAMILY_KEY = Bytes.toBytes("lily.sec.label.family");
+
+    /**
+     * HTableDescriptor key into which the qualifier is stored that contains the security labels.
+     * See also {@link #SECURITY_LABEL_FAMILY_KEY}.
+     */
+    public static final byte[] SECURITY_LABEL_QUALIFIER_KEY = Bytes.toBytes("lily.sec.label.qualifier");
 
     /**
      * @see {@link #APP_NAME_ATT}
@@ -56,13 +63,6 @@ public class HBaseAuthzUtil {
      */
     public static void setExtraPermissions(Set<String> permissions, OperationWithAttributes op) {
         op.setAttribute(EXTRA_PERMISSION_ATT, serialize(permissions));
-    }
-
-    /**
-     * @see {@link #SECURITY_LABEL_ATT}
-     */
-    public static void setSecurityLabels(Set<String> securityLabels, OperationWithAttributes op) {
-        op.setAttribute(SECURITY_LABEL_ATT, serialize(securityLabels));
     }
 
     public static byte[] serialize(Set<String> strings) {
