@@ -44,16 +44,23 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
     private AuthorizationContextProvider authzCtxProvider;
 
     /**
+     * For NGDATA's hbase authorization layer: unique name for the application, in order to
+     * identify the relevant set of permissions.
+     */
+    private static final String PERMISSION_APP_NAME = "hbase-dr";
+
+    /**
      * For NGDATA's hbase authorization layer: default permissions that ensure the system columns are
      * always visible by the Lily Data Repository.
      */
-    private static final Set<String> DEFAULT_PERMISSIONS = ImmutableSet.of("rw:column:binprefix:"
-            + Bytes.toStringBinary(new byte[]{LilyHBaseSchema.RecordColumn.SYSTEM_PREFIX}));
+    private static final Set<String> DEFAULT_PERMISSIONS = ImmutableSet.of(
+            PERMISSION_APP_NAME + ":rw:column_qualifier:binprefix:"
+                    + Bytes.toStringBinary(new byte[]{LilyHBaseSchema.RecordColumn.SYSTEM_PREFIX}));
 
     /**
      * For NGDATA's hbase authorization layer: the types of permissions for which access needs to be granted.
      */
-    private static final Set<String> ROW_PERMISSION_TYPES = ImmutableSet.of("labels", "dr.recordtype");
+    private static final Set<String> ROW_PERMISSION_TYPES = ImmutableSet.of("row_labels", "row_recordtype");
 
     public HBaseRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
             HBaseTableFactory hbaseTableFactory, BlobManager blobManager, Configuration hbaseConf,
@@ -70,7 +77,7 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
         TableManager tableManager = new TableManagerImpl(key.getRepositoryName(), hbaseConf, hbaseTableFactory);
         try {
             HTableInterface htable = LilyHBaseSchema.getRecordTable(hbaseTableFactory, key.getRepositoryName(), key.getTableName(), true);
-            htable = new AuthEnabledHTable(authzCtxProvider, false, "hbase-dr", ROW_PERMISSION_TYPES,
+            htable = new AuthEnabledHTable(authzCtxProvider, false, PERMISSION_APP_NAME, ROW_PERMISSION_TYPES,
                     DEFAULT_PERMISSIONS, htable);
             return new HBaseRepository(key, this, htable, blobManager, tableManager, getRecordFactory());
         } catch (org.apache.hadoop.hbase.TableNotFoundException e) {
