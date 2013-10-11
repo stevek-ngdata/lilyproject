@@ -1,3 +1,3 @@
 set -e
 
-mvn install
+mvn install -Pdist
