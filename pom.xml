@@ -38,7 +38,7 @@
     <version.slf4j>1.6.1</version.slf4j>
     <version.jaxrs>1.1.1</version.jaxrs>
 
-    <version.avro>1.7.4-813</version.avro>
+    <version.avro>1.7.4_813</version.avro>
 
     <!-- Align jetty versions -->
     <version.jetty>6.1.26.cloudera.2</version.jetty>
@@ -989,18 +989,6 @@
 
   <repositories>
     <repository>
-      <id>lilyproject</id>
-      <name>Lily Maven repository</name>
-      <url>http://lilyproject.org/maven/maven2/deploy/</url>
-    </repository>
-
-    <repository>
-      <id>lilyproject.snapshot</id>
-      <name>Lily Maven snapshot repository</name>
-      <url>http://lilyproject.org/maven/maven2/dev/</url>
-    </repository>
-
-    <repository>
       <id>default</id>
       <name>Maven Repository Switchboard</name>
       <layout>default</layout>
@@ -1019,6 +1007,23 @@
       </snapshots>
     </repository>
 
+    <repository>
+      <id>ngdata.oss-releases</id>
+      <name>NGDATA OSS Releases</name>
+      <url>http://mvnrepo.ngdata.com/content/repositories/oss-releases</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>ngdata.snapshots</id>
+      <name>NGDATA Snapshots</name>
+      <url>http://mvnrepo.ngdata.com/content/repositories/snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
   </repositories>
 
   <pluginRepositories>
@@ -1033,30 +1038,23 @@
     </pluginRepository>
 
     <pluginRepository>
-      <id>lilyproject-plugins</id>
-      <name>Lily plugin repository</name>
-      <url>http://lilyproject.org/maven/maven2/deploy/</url>
+      <id>ngdata.oss-releases</id>
+      <name>NGDATA OSS Releases</name>
+      <url>http://mvnrepo.ngdata.com/content/repositories/oss-releases</url>
     </pluginRepository>
-
-    <!--<pluginRepository>-->
-    <!--<name>oss.sonatype.org</name>-->
-    <!--<id>oss.sonatype.org</id>-->
-    <!--<url>http://oss.sonatype.org/content/groups/public</url>-->
-    <!--</pluginRepository>-->
-
   </pluginRepositories>
 
 
   <distributionManagement>
     <repository>
-      <id>org.lilyproject.maven-deploy</id>
-      <name>Lily deploy repository</name>
-      <url>scp://lilyproject.org/var/www/lilyproject.org/maven/maven2/deploy</url>
+      <id>ngdata.oss-releases</id>
+      <name>NGDATA OSS Releases</name>
+      <url>http://mvnrepo.ngdata.com/content/repositories/oss-releases</url>
     </repository>
     <snapshotRepository>
-      <id>org.lilyproject.maven-snapshot</id>
-      <name>Lily dev repository</name>
-      <url>scp://lilyproject.org/var/www/lilyproject.org/maven/maven2/dev</url>
+      <id>ngdata.snapshots</id>
+      <name>NGDATA Snapshots</name>
+      <url>http://mvnrepo.ngdata.com/content/repositories/snapshots</url>
     </snapshotRepository>
     <site>
       <id>org.lilyproject.website</id>
