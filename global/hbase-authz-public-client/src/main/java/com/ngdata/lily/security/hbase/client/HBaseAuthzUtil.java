@@ -19,7 +19,8 @@ public class HBaseAuthzUtil {
 
     /**
      * The list of active row permission types. For each of these permission types, the user should have a
-     * permission rule that grants access.
+     * permission rule that grants access. The value of the attribute should contain a CSV-separated list
+     * of permission types.
      */
     public static final String ROW_PERMISSION_TYPES_ATT = "lily.sec.rowpermtypes";
 
@@ -27,6 +28,9 @@ public class HBaseAuthzUtil {
      * Allows to add extra permissions on a per-request basis, independent from the permissions the user
      * has through its roles. This is useful if an application is dependent on the presence of e.g. some
      * system columns which should always be read or written, independent of the permissions of the user.
+     *
+     * <p>The value of the attribute should be encoded using {@link #serialize}, in contrast to some
+     * other parameters it is not a CSV string.</p>
      *
      * <p>This was added to support the system columns of Lily DR.</p>
      */
