@@ -46,6 +46,7 @@
     <module>worker</module>
     <module>master</module>
     <module>batchbuild</module>
+    <module>hbase-indexer-mapper</module>
     <module>integrationtest</module>
   </modules>
 

@@ -1,0 +1,17 @@
+{
+    "namespaces" : {
+        "org.lilyproject.indexer.hbase.mapper.test" : "ns1",
+        "org.lilyproject.indexer.hbase.mapper.test.2" : "ns2"
+    },
+    "fieldTypes" : [
+        {"name" : "ns1$astring", "valueType" : "STRING", "scope" : "non_versioned" }
+    ],
+    "recordTypes" : [
+        {
+            "name" : "ns1$rt1",
+             "fields" : [
+                { "name" : "ns1$astring", "mandatory" : false}
+             ]
+        }
+    ]
+}
