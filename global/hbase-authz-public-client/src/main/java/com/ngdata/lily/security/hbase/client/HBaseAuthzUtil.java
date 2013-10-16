@@ -37,16 +37,24 @@ public class HBaseAuthzUtil {
     public static final String EXTRA_PERMISSION_ATT = "lily.sec.perm";
 
     /**
-     * HTableDescriptor key into which the column family is stored that contains the security labels.
+     * HTableDescriptor key into which the column family is stored that contains the security label.
      * See also {@link #SECURITY_LABEL_QUALIFIER_KEY}.
      */
     public static final byte[] SECURITY_LABEL_FAMILY_KEY = Bytes.toBytes("lily.sec.label.family");
 
     /**
-     * HTableDescriptor key into which the qualifier is stored that contains the security labels.
+     * HTableDescriptor key into which the qualifier is stored that contains the security label.
      * See also {@link #SECURITY_LABEL_FAMILY_KEY}.
      */
     public static final byte[] SECURITY_LABEL_QUALIFIER_KEY = Bytes.toBytes("lily.sec.label.qualifier");
+
+    /**
+     * HTableDescriptor key into which the type of encoding which is used for serializing the security
+     * label is stored. This is optional.
+     *
+     * See also {@link #SECURITY_LABEL_FAMILY_KEY}.
+     */
+    public static final byte[] SECURITY_LABEL_ENCODING_TYPE_KEY = Bytes.toBytes("lily.sec.label.encoding");
 
     /**
      * @see {@link #APP_NAME_ATT}
