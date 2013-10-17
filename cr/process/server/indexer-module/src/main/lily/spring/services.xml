@@ -140,4 +140,9 @@
     <constructor-arg ref="indexerRegistry"/>
   </bean>
 
+  <bean id="hbase-indexer-daemon" class="org.lilyproject.indexer.hbase.mapper.HbaseIndexerDaemonWrapper"
+        destroy-method="destroy" init-method="run" >
+    <property name="hbaseConf" ref="hbaseConf"/>
+  </bean>
+
 </beans>

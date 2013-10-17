@@ -475,6 +475,11 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
+        <artifactId>lily-hbase-indexer-mapper</artifactId>
+        <version>3.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbase-client</artifactId>
         <version>3.0-SNAPSHOT</version>
       </dependency>
@@ -596,6 +601,11 @@
       <dependency>
         <groupId>com.ngdata</groupId>
         <artifactId>hbase-indexer-engine</artifactId>
+        <version>1.3-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ngdata</groupId>
+        <artifactId>hbase-indexer-server</artifactId>
         <version>1.3-SNAPSHOT</version>
       </dependency>
       <dependency>

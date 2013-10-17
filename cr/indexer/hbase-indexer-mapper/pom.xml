@@ -53,6 +53,10 @@
       <groupId>com.ngdata</groupId>
       <artifactId>hbase-indexer-engine</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.ngdata</groupId>
+      <artifactId>hbase-indexer-server</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.lilyproject</groupId>
@@ -77,7 +81,7 @@
         <artifactId>maven-assembly-plugin</artifactId>
         <version>2.4</version>
         <configuration>
-          <finalName>lily-hbase-indexer-mapper-${project.version}</finalName>
+          <finalName>lily-hive-${project.version}</finalName>
           <appendAssemblyId>false</appendAssemblyId>
           <descriptors>
             <descriptor>dist-assembly.xml</descriptor>
