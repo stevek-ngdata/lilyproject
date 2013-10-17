@@ -250,7 +250,7 @@ public class LilyResultToSolrMapper implements ResultToSolrMapper,Configurable {
         return solrInputDocument;
     }
 
-    protected String getIndexId(String table, RecordId recordId, SchemaId vtag) {
+    protected static String getIndexId(String table, RecordId recordId, SchemaId vtag) {
         return table + "-" + recordId + "-" + vtag.toString();
     }
 

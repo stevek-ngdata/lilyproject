@@ -15,12 +15,15 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
+import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZooKeeperImpl;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -37,8 +40,10 @@ public class LilyUniqueKeyFormatter implements UniqueKeyFormatter, Configurable{
 
     private RepositoryManager repositoryManager;
     private String repositoryName;
+    private String tableName;
     private LRepository repository;
     private TypeManager typeManager;
+    private SchemaId vtag;
 
     @Override
     public void configure(Map<String, String> params) {
@@ -46,6 +51,7 @@ public class LilyUniqueKeyFormatter implements UniqueKeyFormatter, Configurable{
             ZooKeeperItf zk = new ZooKeeperImpl(params.get("zookeeper"), 40000);
             repositoryManager = new LilyClient(zk);
             repositoryName = params.containsKey("repository") ? params.get("repository") : null;
+            tableName = params.containsKey("table") ? params.get("table") : LilyHBaseSchema.Table.RECORD.name;
 
             init();
         } catch (IOException e) {
@@ -66,6 +72,8 @@ public class LilyUniqueKeyFormatter implements UniqueKeyFormatter, Configurable{
                 repositoryName : RepoAndTableUtil.DEFAULT_REPOSITORY);
         typeManager = repository.getTypeManager();
         idGenerator = repository.getIdGenerator();
+        tableName = tableName != null ? tableName : LilyHBaseSchema.Table.RECORD.name;
+        vtag = typeManager.getFieldTypeByName(VersionTag.LAST).getId();
     }
 
     @Override
@@ -75,7 +83,8 @@ public class LilyUniqueKeyFormatter implements UniqueKeyFormatter, Configurable{
 
     @Override
     public String formatRow(byte[] row) {
-        return idGenerator.fromBytes(row).toString();
+        RecordId recordId = idGenerator.fromBytes(row);
+        return LilyResultToSolrMapper.getIndexId(tableName, recordId, vtag);
     }
 
     @Override
@@ -111,7 +120,9 @@ public class LilyUniqueKeyFormatter implements UniqueKeyFormatter, Configurable{
 
     @Override
     public byte[] unformatRow(String keyString) {
-        return idGenerator.fromString(keyString).toBytes();
+        String recordIdString = keyString.substring(tableName.length() + 1,
+        keyString.length() - vtag.toString().length() - 1);
+        return idGenerator.fromString(recordIdString).toBytes();
     }
 
     @Override
@@ -160,5 +171,9 @@ public class LilyUniqueKeyFormatter implements UniqueKeyFormatter, Configurable{
 
     protected void setRepositoryName(String repositoryName) {
         this.repositoryName = repositoryName;
+    }
+
+    protected void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 }

@@ -10,27 +10,33 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.FakeRepositoryManager;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.repo.VersionTag;
 
 import java.util.Arrays;
 
 public class LilyUniqueKeyFormatterTest {
     private LilyUniqueKeyFormatter keyFormatter;
     private RepositoryManager repositoryManager;
+    private TypeManager typeManager;
+    private SchemaId vtag;
     private FieldType fieldType;
     @Before
     public void setup() throws Exception{
         repositoryManager = FakeRepositoryManager.bootstrapRepositoryManager();
-        TypeManager typeManager = repositoryManager.getDefaultRepository().getTypeManager();
+        typeManager = repositoryManager.getDefaultRepository().getTypeManager();
         fieldType = typeManager.createFieldType("STRING", new QName("org.lilyproject.test.ns", "uniq"), Scope.NON_VERSIONED);
 
         keyFormatter = new LilyUniqueKeyFormatter();
         keyFormatter.setRepositoryManager(repositoryManager);
         keyFormatter.setRepositoryName("default");
         keyFormatter.init();
+
+        vtag = typeManager.getFieldTypeByName(VersionTag.LAST).getId();
 
     }
 
@@ -43,7 +49,7 @@ public class LilyUniqueKeyFormatterTest {
     @Test
     public void testFormatRow() throws Exception {
         RecordId recordId = repositoryManager.getDefaultRepository().getIdGenerator().newRecordId();
-        Assert.assertEquals(recordId.toString(), keyFormatter.formatRow(recordId.toBytes()));
+        Assert.assertEquals(createIndexId(recordId), keyFormatter.formatRow(recordId.toBytes()));
     }
 
     @Test
@@ -53,7 +59,7 @@ public class LilyUniqueKeyFormatterTest {
                 recordId.toBytes(),
                 LilyHBaseSchema.RecordCf.DATA.bytes,
                 Bytes.add(new byte[]{LilyHBaseSchema.RecordColumn.DATA_PREFIX}, fieldType.getId().getBytes()));
-        String expect = Joiner.on("|").join(recordId.toString(), LilyHBaseSchema.RecordCf.DATA.name,
+        String expect = Joiner.on("|").join(createIndexId(recordId), LilyHBaseSchema.RecordCf.DATA.name,
                 Bytes.toString(new byte[] {LilyHBaseSchema.RecordColumn.DATA_PREFIX} ) + fieldType.getName().toString());
         Assert.assertEquals(expect, keyFormatter.formatKeyValue(kv));
     }
@@ -80,5 +86,9 @@ public class LilyUniqueKeyFormatterTest {
                 Bytes.add(new byte[]{LilyHBaseSchema.RecordColumn.DATA_PREFIX}, fieldType.getId().getBytes()));
         String formatted = keyFormatter.formatKeyValue(kv);
         Assert.assertEquals(kv, keyFormatter.unformatKeyValue(formatted));
+    }
+
+    private String createIndexId (RecordId recordId) {
+        return LilyHBaseSchema.Table.RECORD.name + "-" + recordId.toString() + "-" + vtag.toString();
     }
 }
