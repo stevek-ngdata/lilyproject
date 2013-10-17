@@ -1000,41 +1000,10 @@
 
   <repositories>
     <repository>
-      <id>lilyproject</id>
-      <name>Lily Maven repository</name>
-      <url>http://lilyproject.org/maven/maven2/deploy/</url>
-    </repository>
-
-    <repository>
-      <id>lilyproject.snapshot</id>
-      <name>Lily Maven snapshot repository</name>
-      <url>http://lilyproject.org/maven/maven2/dev/</url>
-    </repository>
-
-    <repository>
       <id>default</id>
       <name>Maven Repository Switchboard</name>
       <layout>default</layout>
       <url>http://repo1.maven.org/maven2</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>repository.apache.org</id>
-      <name>Apache snapshot repository</name>
-      <url>https://repository.apache.org/content/groups/snapshots-group/</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-
-    <!-- The JBoss Nexus repository serves Netty -->
-    <repository>
-      <id>nexus-repository.jboss.org</id>
-      <name>JBoss Nexus Repository</name>
-      <url>http://repository.jboss.org/nexus/content/groups/public/</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
@@ -1050,16 +1019,12 @@
     </repository>
 
     <repository>
-      <!-- This repository is needed for the hadoop-test jar version 0.20.2-with-200-826. -->
-      <id>temp-hadoop</id>
-      <name>Hadoop 0.20.1/2 packaging, thrift, zk</name>
-      <url>http://people.apache.org/~rawson/repo/</url>
+      <id>ngdata.oss-releases</id>
+      <name>NGDATA OSS Releases</name>
+      <url>http://mvnrepo.ngdata.com/content/repositories/oss-releases</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
     </repository>
   </repositories>
 
@@ -1072,50 +1037,26 @@
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-      <releases>
-        <updatePolicy>never</updatePolicy>
-      </releases>
     </pluginRepository>
 
     <pluginRepository>
-      <id>lilyproject-plugins</id>
-      <name>Lily snapshot plugin repository</name>
-      <url>http://lilyproject.org/maven/maven2/deploy/</url>
+      <id>ngdata.oss-releases</id>
+      <name>NGDATA OSS Releases</name>
+      <url>http://mvnrepo.ngdata.com/content/repositories/oss-releases</url>
     </pluginRepository>
-
-    <pluginRepository>
-      <id>kauri-dev</id>
-      <url>http://lilyproject.org/maven/maven2/dev</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-    <pluginRepository>
-      <id>kauri-deploy</id>
-      <url>http://lilyproject.org/maven/maven2/deploy</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-    <pluginRepository>
-      <name>oss.sonatype.org</name>
-      <id>oss.sonatype.org</id>
-      <url>http://oss.sonatype.org/content/groups/public</url>
-    </pluginRepository>
-
   </pluginRepositories>
 
 
   <distributionManagement>
     <repository>
-      <id>org.lilyproject.maven-deploy</id>
-      <name>Lily deploy repository</name>
-      <url>scp://lilyproject.org/var/www/lilyproject.org/maven/maven2/deploy</url>
+      <id>ngdata.oss-releases</id>
+      <name>NGDATA OSS Releases</name>
+      <url>http://mvnrepo.ngdata.com/content/repositories/oss-releases</url>
     </repository>
     <snapshotRepository>
-      <id>org.lilyproject.maven-snapshot</id>
-      <name>Lily dev repository</name>
-      <url>scp://lilyproject.org/var/www/lilyproject.org/maven/maven2/dev</url>
+      <id>ngdata.snapshots</id>
+      <name>NGDATA Snapshots</name>
+      <url>http://mvnrepo.ngdata.com/content/repositories/snapshots</url>
     </snapshotRepository>
     <site>
       <id>org.lilyproject.website</id>
@@ -1151,6 +1092,9 @@
             <version>${project.version}</version>
           </dependency>
         </dependencies>
+      </plugin>
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
       </plugin>
       <!--
       <plugin>
