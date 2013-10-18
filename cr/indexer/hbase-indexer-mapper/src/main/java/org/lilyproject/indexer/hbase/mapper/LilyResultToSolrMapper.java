@@ -5,6 +5,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Sets;
 import com.ngdata.hbaseindexer.Configurable;
 import com.ngdata.hbaseindexer.parse.ResultToSolrMapper;
+import com.ngdata.hbaseindexer.parse.SolrUpdateWriter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
@@ -189,14 +190,13 @@ public class LilyResultToSolrMapper implements ResultToSolrMapper,Configurable {
     }
 
     @Override
-    public SolrInputDocument map(Result result) {
-        SolrInputDocument solrInputDocument = null;
+    public void map(Result result, SolrUpdateWriter solrUpdateWriter) {
         try {
             Record record = recordDecoder.decodeRecord(result);
 
             IndexCase indexCase = indexerConf.getIndexCase(table.getTableName(), record);
             if (indexCase == null) {
-                return solrInputDocument;
+                return ;
             }
 
             VTaggedRecord vtRecord = new VTaggedRecord(record.getId(), table, repository);
@@ -235,8 +235,9 @@ public class LilyResultToSolrMapper implements ResultToSolrMapper,Configurable {
 
                 processDependencies(table.getTableName(), idRecord, vtag, solrDocumentBuilder);
                 if (!solrDocumentBuilder.isEmptyDocument()) {
-                    // TODO support multi doc outputting
-                    solrInputDocument = solrDocumentBuilder.build();
+                    SolrInputDocument solrInputDocument = solrDocumentBuilder.build();
+                    solrInputDocument.removeField("lily.key");
+                    solrUpdateWriter.add(solrInputDocument);
                 }
             }
         } catch (InterruptedException e) {
@@ -246,8 +247,6 @@ public class LilyResultToSolrMapper implements ResultToSolrMapper,Configurable {
         } catch (IOException e) {
             log.warn(e);
         }
-        solrInputDocument.removeField("lily.key");
-        return solrInputDocument;
     }
 
     protected static String getIndexId(String table, RecordId recordId, SchemaId vtag) {
