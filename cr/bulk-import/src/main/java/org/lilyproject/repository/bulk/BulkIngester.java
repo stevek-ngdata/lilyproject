@@ -45,6 +45,7 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.impl.DRAuthorizationContextProvider;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseRepository.FieldValueWriter;
 import org.lilyproject.repository.impl.HBaseRepositoryManager;
@@ -108,7 +109,8 @@ public class BulkIngester implements Closeable {
             RecordFactory recordFactory = new RecordFactoryImpl();
             
             RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
-                        recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager(), conf, repositoryModel);
+                    recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager(), conf, repositoryModel,
+                    new DRAuthorizationContextProvider());
             HBaseRepository hbaseRepository;
             if (tableName != null) {
                 hbaseRepository = (HBaseRepository)repositoryManager.getDefaultRepository().getTable(tableName);

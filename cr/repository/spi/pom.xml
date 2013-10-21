@@ -48,6 +48,11 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-hbase-client</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-hbase-authz-public-client</artifactId>
+    </dependency>
   </dependencies>
 
 </project>

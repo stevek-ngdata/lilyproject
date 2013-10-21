@@ -113,6 +113,7 @@
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
     <module>global/servlet</module>
+    <module>global/hbase-authz-public-client</module>
 
     <module>tools/lily-runtime-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
@@ -506,6 +507,11 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-pluginregistry-impl</artifactId>
+        <version>3.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-hbase-authz-public-client</artifactId>
         <version>3.0-SNAPSHOT</version>
       </dependency>
       <dependency>
