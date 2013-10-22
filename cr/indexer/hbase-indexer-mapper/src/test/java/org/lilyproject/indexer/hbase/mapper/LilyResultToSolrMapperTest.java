@@ -1,6 +1,7 @@
 package org.lilyproject.indexer.hbase.mapper;
 
 import com.google.common.collect.Lists;
+import com.ngdata.hbaseindexer.parse.SolrUpdateWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
@@ -37,6 +38,7 @@ public class LilyResultToSolrMapperTest {
     private LilyResultToSolrMapper mapper;
     private RepositoryManager repositoryManager;
     private LRepository repository;
+    private FakeSolrUpdateWriter solrUpdateWriter;
     @Before
     public void setup () throws Exception{
         repositoryManager = FakeRepositoryManager.bootstrapRepositoryManager();
@@ -51,6 +53,8 @@ public class LilyResultToSolrMapperTest {
         mapper.setIndexName("theindex");
 
         mapper.init();
+
+        solrUpdateWriter = new FakeSolrUpdateWriter();
     }
 
     @Test
@@ -59,14 +63,16 @@ public class LilyResultToSolrMapperTest {
         Record record = table.recordBuilder()
                 .assignNewUuid()
                 .recordType(new QName(NS1, "rt1"))
-                .field(new QName(NS1, "astring"), "myvalue")
+                .field(new QName(NS1, "a_string"), "myvalue")
                 .create();
         
         Result result = encodeRecord(record);
         
-        SolrInputDocument doc = mapper.map(result);
-        Assert.assertTrue(doc.containsKey("astring"));
-        Assert.assertEquals("myvalue", doc.get("astring").getValue());
+        mapper.map(result, solrUpdateWriter);
+        Assert.assertFalse(solrUpdateWriter.documents.isEmpty());
+        SolrInputDocument doc = solrUpdateWriter.documents.get(0);
+        Assert.assertTrue(doc.containsKey("a_string"));
+        Assert.assertEquals("myvalue", doc.get("a_string").getValue());
     }
 
 
@@ -120,5 +126,13 @@ public class LilyResultToSolrMapperTest {
         // fields to delete, should we add these too?
 
         return new Result(kvs);
+    }
+
+    private static class FakeSolrUpdateWriter implements SolrUpdateWriter {
+        private List<SolrInputDocument> documents = Lists.newArrayList();
+        @Override
+        public void add(SolrInputDocument solrDocument) {
+            documents.add(solrDocument);
+        }
     }
 }

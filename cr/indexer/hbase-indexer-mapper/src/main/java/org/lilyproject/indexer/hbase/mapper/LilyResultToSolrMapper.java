@@ -31,6 +31,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.MappingNode;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
@@ -72,6 +73,7 @@ public class LilyResultToSolrMapper implements ResultToSolrMapper,Configurable {
     private RecordDecoder recordDecoder;
     private RepositoryManager repositoryManager;
     private LRepository repository;
+    private IdGenerator idGenerator;
     private LTable table;
     private IndexerConf indexerConf;
     private ValueEvaluator valueEvaluator;
@@ -109,6 +111,7 @@ public class LilyResultToSolrMapper implements ResultToSolrMapper,Configurable {
             IndexNotFoundException, UnsupportedEncodingException, IOException {
         repository = repositoryManager.getRepository(repositoryName != null ? repositoryName : RepoAndTableUtil.DEFAULT_REPOSITORY);
         table = repository.getTable(tableName != null ? tableName : LilyHBaseSchema.Table.RECORD.name);
+        idGenerator = repository.getIdGenerator();
 
         ByteArrayInputStream is = new ByteArrayInputStream(indexerConfString.getBytes("UTF-8"));
         indexerConf = IndexerConfBuilder.build(is, repository);
