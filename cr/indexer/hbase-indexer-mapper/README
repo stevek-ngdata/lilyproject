@@ -1,0 +1,25 @@
+Building
+--------
+
+$ mvn clean install
+
+Deploying
+---------
+
+$ tar xzf target/lily-hbase-indexer*.tar.gz -C $HBASE_INDEXER_HOME
+
+Using
+-----
+
+Start hbase indexer
+Either
+$ $HBASE_INDEXER_HOME/bin/hbase-indexer service
+
+Or use the test-lily. This has a hbase-indexer embedded
+$ $LILY_SRC/cr/standalone-launcher/target/launch-test-lily -solrcloud
+
+Migrate existing indexerconf to hbaseindexer conf
+$ $HBASE_INDEXER_HOME/bin/lilyindex-to-hbaseindex -z localhost -c indexer-conf.xml -n indexname > hbase-indexer-conf.xml
+
+Add the new index
+$ $HBASE_INDEXER_HOME/bin/hbase-indexer add-indexer -n indexname  -c hbase-indexer-conf.xml -cp solr.zk=localhost:2181/solr -cp solr.collection=core0
