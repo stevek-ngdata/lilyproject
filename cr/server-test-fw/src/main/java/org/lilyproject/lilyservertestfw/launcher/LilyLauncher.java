@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -52,6 +53,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private Option enableHadoopOption;
     private Option enableSolrOption;
     private Option enableLilyOption;
+    private Option enableHbaseIndexerOption;
     private Option dataDirOption;
     private Option prepareOption;
 
@@ -61,6 +63,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private final HadoopLauncherService hadoopService = new HadoopLauncherService();
     private final SolrLauncherService solrService = new SolrLauncherService();
     private final LilyLauncherService lilyService = new LilyLauncherService();
+    private final HbaseIndexerLauncherService hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
 
     private final List<LauncherService> allServices = new ArrayList<LauncherService>();
     private final List<LauncherService> enabledServices = new ArrayList<LauncherService>();
@@ -68,13 +71,15 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     boolean enableHadoop;
     boolean enableSolr;
     boolean enableLily;
+    boolean enableHbaseIndexer;
 
     private final Log log = LogFactory.getLog(getClass());
 
     public LilyLauncher() {
-        allServices.add(solrService);
         allServices.add(hadoopService);
+        allServices.add(solrService);
         allServices.add(lilyService);
+        allServices.add(hbaseIndexerLauncherService);
     }
 
     @Override
@@ -109,6 +114,11 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
                 .withLongOpt("lily")
                 .create("lily");
         options.add(enableLilyOption);
+
+        enableHbaseIndexerOption = OptionBuilder
+                .withDescription("Start the HBase Indexer Service")
+                .withLongOpt("hbase-indexer")
+                .create("indexer");
 
         dataDirOption = OptionBuilder
                 .withDescription("Directory where data should be stored, instead of a temporary directory. " +
@@ -157,13 +167,15 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         enableHadoop = cmd.hasOption(enableHadoopOption.getOpt());
         enableSolr = cmd.hasOption(enableSolrOption.getOpt());
         enableLily = cmd.hasOption(enableLilyOption.getOpt());
+        enableHbaseIndexer = cmd.hasOption(enableHbaseIndexerOption.getOpt());
 
         // When running prepare mode, or if none of the services are explicitly enabled,
         // we default to starting them all. Otherwise we only start those that are enabled.
-        if (!enableHadoop && !enableSolr && !enableLily) {
+        if (!enableHadoop && !enableSolr && !enableLily && !enableHbaseIndexer) {
             enableHadoop = true;
             enableSolr = true;
             enableLily = true;
+            enableHbaseIndexer = true;
         }
 
         if (prepareMode) {
@@ -186,6 +198,9 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         }
         if (enableLily) {
             enabledServices.add(lilyService);
+        }
+        if (enableHbaseIndexer) {
+            enabledServices.add(hbaseIndexerLauncherService);
         }
 
         //
@@ -279,11 +294,9 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
                 //
                 // Attempt to shutdown everything
                 //
-                lilyService.stop();
-
-                solrService.stop();
-
-                hadoopService.stop();
+                for (LauncherService service : Lists.reverse(enabledServices)) {
+                    service.stop();
+                }
 
                 //
                 // Cleanup temp data dir

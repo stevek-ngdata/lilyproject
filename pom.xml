@@ -43,7 +43,8 @@
     <!-- Align jetty versions -->
     <version.jetty>6.1.26.cloudera.2</version.jetty>
 
-    <version.sep>1.1</version.sep>
+    <version.hbase-indexer>1.3-SNAPSHOT</version.hbase-indexer>
+    <version.hbase-indexer.sep>1.3-hbase0.94-SNAPSHOT</version.hbase-indexer.sep>
 
     <!-- Tells maven plugins what file encoding to use -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -601,17 +602,22 @@
       <dependency>
         <groupId>com.ngdata</groupId>
         <artifactId>hbase-indexer-engine</artifactId>
-        <version>1.3-SNAPSHOT</version>
+        <version>${version.hbase-indexer}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ngdata</groupId>
+        <artifactId>hbase-indexer-model</artifactId>
+        <version>${version.hbase-indexer}</version>
       </dependency>
       <dependency>
         <groupId>com.ngdata</groupId>
         <artifactId>hbase-indexer-server</artifactId>
-        <version>1.3-SNAPSHOT</version>
+        <version>${version.hbase-indexer}</version>
       </dependency>
       <dependency>
         <groupId>com.ngdata</groupId>
         <artifactId>hbase-sep-api</artifactId>
-        <version>${version.sep}</version>
+        <version>${version.hbase-indexer}</version>
         <exclusions>
           <exclusion>
             <groupId>org.apache.zookeeper</groupId>
@@ -626,7 +632,7 @@
       <dependency>
         <groupId>com.ngdata</groupId>
         <artifactId>hbase-sep-impl</artifactId>
-        <version>${version.sep}</version>
+        <version>${version.hbase-indexer.sep}</version>
         <exclusions>
           <exclusion>
             <groupId>org.apache.hadoop</groupId>

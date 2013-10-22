@@ -49,7 +49,7 @@
 
     <dependency>
       <groupId>com.ngdata</groupId>
-      <artifactId>hbase-sep-api</artifactId>
+      <artifactId>hbase-sep-impl</artifactId>
     </dependency>
 
     <dependency>
