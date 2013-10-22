@@ -3,6 +3,6 @@
     <record matchNamespace="ns" matchName="*" vtags="last"/>
   </records>
   <fields>
-    <field name="astring" value="ns:astring"/>
+    <field name="a_string" value="ns:a_string"/>
   </fields>
 </indexer>
