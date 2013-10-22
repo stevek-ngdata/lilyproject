@@ -35,9 +35,12 @@ public class AetherRepositoryWriter {
 
         for (Artifact artifact : artifacts) {
             File src = artifact.getFile();
+            // set the version (which could be a resolved snapshot) to the base version (which in that case would be
+            // literally SNAPSHOT), because that is what lily runtime expects.
+            artifact = artifact.setVersion(artifact.getBaseVersion());
             File dest = new File(targetDirectory, m2layout.getPath(artifact).getPath());
             try {
-                System.out.println("Copying " + src);
+                System.out.println("Copying " + src + " to " + dest);
                 FileUtils.copyFile(src, dest);
             } catch (IOException e) {
                 throw new MojoExecutionException("Error copying file " + src + " to " + dest);
