@@ -81,6 +81,7 @@ public abstract class BaseRepository implements Repository {
     protected final RecordFactory recordFactory;
     protected final RecordDecoder recdec;
     protected final HTableInterface recordTable;
+    protected final HTableInterface nonAuthRecordTable;
     protected final RepoTableKey repoTableKey;
     protected final TableManager tableManager;
     protected RepositoryMetrics metrics;
@@ -102,8 +103,8 @@ public abstract class BaseRepository implements Repository {
     }
 
     protected BaseRepository(RepoTableKey repoTableKey, AbstractRepositoryManager repositoryManager,
-            BlobManager blobManager, HTableInterface recordTable, RepositoryMetrics metrics,
-            TableManager tableManager, RecordFactory recordFactory) {
+            BlobManager blobManager, HTableInterface recordTable, HTableInterface nonAuthRecordTable,
+            RepositoryMetrics metrics, TableManager tableManager, RecordFactory recordFactory) {
 
         Preconditions.checkNotNull(repositoryManager, "repositoryManager cannot be null");
         Preconditions.checkNotNull(blobManager, "blobManager cannot be null");
@@ -115,6 +116,7 @@ public abstract class BaseRepository implements Repository {
         this.blobManager = blobManager;
         this.idGenerator = repositoryManager.getIdGenerator();
         this.recordTable = recordTable;
+        this.nonAuthRecordTable = nonAuthRecordTable;
         this.recdec = new RecordDecoder(typeManager, idGenerator, new RecordFactoryImpl());
         this.metrics = metrics;
         this.tableManager = tableManager;
@@ -431,11 +433,16 @@ public abstract class BaseRepository implements Repository {
      */
     protected Pair<Record, byte[]> readWithOcc(RecordId recordId, Long requestedVersion, List<FieldType> fields,
             FieldTypes fieldTypes) throws RepositoryException, InterruptedException {
+        return readWithOcc(recordId, requestedVersion, fields, fieldTypes, false);
+    }
+
+    protected Pair<Record, byte[]> readWithOcc(RecordId recordId, Long requestedVersion, List<FieldType> fields,
+            FieldTypes fieldTypes, boolean disableAuth) throws RepositoryException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             ArgumentValidator.notNull(recordId, "recordId");
 
-            Result result = getRow(recordId, requestedVersion, 1, fields);
+            Result result = getRow(recordId, requestedVersion, 1, fields, disableAuth);
 
             Long latestVersion = recdec.getLatestVersion(result);
             if (requestedVersion == null) {
@@ -487,6 +494,11 @@ public abstract class BaseRepository implements Repository {
     // Retrieves the row from the table and check if it exists and has not been flagged as deleted
     protected Result getRow(RecordId recordId, Long version, int numberOfVersions, List<FieldType> fields)
             throws RecordException {
+        return getRow(recordId, version, numberOfVersions, fields, false);
+    }
+
+    protected Result getRow(RecordId recordId, Long version, int numberOfVersions, List<FieldType> fields,
+            boolean disableAuth) throws RecordException {
         Result result;
         Get get = new Get(recordId.toBytes());
         get.setFilter(REAL_RECORDS_FILTER);
@@ -501,7 +513,11 @@ public abstract class BaseRepository implements Repository {
             get.setMaxVersions(numberOfVersions);
 
             // Retrieve the data from the repository
-            result = recordTable.get(get);
+            if (disableAuth) {
+                result = nonAuthRecordTable.get(get);
+            } else {
+                result = recordTable.get(get);
+            }
 
             if (result == null || result.isEmpty()) {
                 throw new RecordNotFoundException(recordId, this, this);

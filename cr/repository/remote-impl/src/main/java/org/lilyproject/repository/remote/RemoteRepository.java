@@ -60,7 +60,7 @@ public class RemoteRepository extends BaseRepository {
             AbstractRepositoryManager repositoryManager, BlobManager blobManager, HTableInterface recordTable,
             TableManager tableManager, RecordFactory recordFactory)
             throws IOException, InterruptedException {
-        super(repoTableKey, repositoryManager, blobManager, recordTable, null, tableManager, recordFactory);
+        super(repoTableKey, repositoryManager, blobManager, recordTable, recordTable, null, tableManager, recordFactory);
         this.converter = converter;
         client = lilyTransceiver.getTransceiver();
         lilyProxy = lilyTransceiver.getLilyProxy();
