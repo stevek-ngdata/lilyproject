@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Set;
 
+import com.ngdata.lily.security.hbase.client.HBaseAuthzUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
@@ -85,6 +86,7 @@ import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.impl.hbase.ContainsValueComparator;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repository.impl.valuetype.BlobValueType;
+import org.lilyproject.repository.spi.AuthorizationContextHolder;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.ObjectUtils;
@@ -109,11 +111,11 @@ public class HBaseRepository extends BaseRepository {
 
     private static final Object METADATA_ONLY_UPDATE = new Object();
 
-    public HBaseRepository(RepoTableKey ttk, AbstractRepositoryManager repositoryManager, HTableInterface hbaseTable,
-            BlobManager blobManager, TableManager tableManager, RecordFactory recordFactory)
-            throws IOException, InterruptedException {
-        super(ttk, repositoryManager, blobManager, hbaseTable, new RepositoryMetrics("hbaserepository"),
-                tableManager, recordFactory);
+    public HBaseRepository(RepoTableKey ttk, AbstractRepositoryManager repositoryManager, HTableInterface recordTable,
+            HTableInterface nonAuthRecordTable, BlobManager blobManager, TableManager tableManager,
+            RecordFactory recordFactory) throws IOException, InterruptedException {
+        super(ttk, repositoryManager, blobManager, recordTable, nonAuthRecordTable,
+                new RepositoryMetrics("hbaserepository"), tableManager, recordFactory);
     }
 
     @Override
@@ -1073,9 +1075,25 @@ public class HBaseRepository extends BaseRepository {
             // We need to read the original record in order to put the delete marker in the non-versioned fields.
             // Throw RecordNotFoundException if there is no record to be deleted
             FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-            Pair<Record, byte[]> recordAndOcc = readWithOcc(recordId, null, null, fieldTypes);
+
+            // The existing record is read with authorization disabled, because when deleting a full record we
+            // must make sure we can delete all the fields in it.
+            Pair<Record, byte[]> recordAndOcc = readWithOcc(recordId, null, null, fieldTypes, true);
             recordAndOcc.getV1().setAttributes(attributes);
             Record originalRecord = new UnmodifiableRecord(recordAndOcc.getV1());
+
+            // If the record contains any field with scope != non-versioned, do not allow to delete it if
+            // authorization is active. This is because access to these fields will not be validated by the
+            // first Put call below, and hence the clearData afterwards might fail, leaving us with a half-deleted
+            // record.
+            if (AuthorizationContextHolder.getCurrentContext() != null) {
+                for (QName field : originalRecord.getFields().keySet()) {
+                    if (fieldTypes.getFieldType(field).getScope() != Scope.NON_VERSIONED) {
+                        throw new RepositoryException("Deleting records with versioned or versioned-mutable fields "
+                                + "is not supported when authorization is active.");
+                    }
+                }
+            }
 
             byte[] oldOcc = recordAndOcc.getV2();
 
@@ -1116,6 +1134,12 @@ public class HBaseRepository extends BaseRepository {
 
             put.add(RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
             put.add(RecordCf.DATA.bytes, RecordColumn.OCC.bytes, 1L, nextOcc(oldOcc));
+
+            // Hint towards the NGDATA HBase authorization coprocessor: for deletes, we need write access to all
+            // columns, since otherwise we could end up with half-deleted records. The default behavior for puts
+            // is to silently filter columns from the Put for which the user has no write permission.
+            put.setAttribute(HBaseAuthzUtil.FILTER_PUT_ATT, Bytes.toBytes("f"));
+
             boolean occSuccess = recordTable.checkAndPut(put.getRow(), RecordCf.DATA.bytes, RecordColumn.OCC.bytes,
                     oldOcc, put);
             if (!occSuccess) {
@@ -1126,12 +1150,10 @@ public class HBaseRepository extends BaseRepository {
             clearData(recordId, originalRecord, originalRecord.getVersion());
 
         } catch (IOException e) {
-            throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table",
-                    e);
+            throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table",
-                    e);
+            throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table", e);
         } finally {
             long after = System.currentTimeMillis();
             metrics.report(Action.DELETE, (after - before));
