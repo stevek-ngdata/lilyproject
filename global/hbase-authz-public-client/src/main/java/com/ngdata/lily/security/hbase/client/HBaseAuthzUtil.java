@@ -37,6 +37,15 @@ public class HBaseAuthzUtil {
     public static final String EXTRA_PERMISSION_ATT = "lily.sec.perm";
 
     /**
+     * When true (the default), Put's will be filtered to silently remove any columns to which the user doesn't
+     * have write permission. If you rather have an exception thrown instead, set this attribute to false.
+     *
+     * <p>The value of the attribute should be a 't' for true and a 'f' for false. Leave out the attribute
+     * for the default behavior (true).</p>
+     */
+    public static final String FILTER_PUT_ATT = "lily.sec.filterputs";
+
+    /**
      * HTableDescriptor key into which the column family is stored that contains the security label.
      * See also {@link #SECURITY_LABEL_QUALIFIER_KEY}.
      */
