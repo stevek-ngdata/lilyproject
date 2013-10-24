@@ -89,7 +89,6 @@ import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.repository.spi.AuthorizationContextHolder;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.util.ArgumentValidator;
-import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;

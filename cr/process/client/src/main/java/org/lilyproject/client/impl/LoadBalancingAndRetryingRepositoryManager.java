@@ -15,6 +15,7 @@
  */
 package org.lilyproject.client.impl;
 
+import com.ngdata.lily.security.hbase.client.AuthorizationContextProvider;
 import org.lilyproject.client.RetryConf;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.LTable;
@@ -42,8 +43,9 @@ public class LoadBalancingAndRetryingRepositoryManager extends AbstractRepositor
 
     public LoadBalancingAndRetryingRepositoryManager(LoadBalancingUtil.LBInstanceProvider<Repository> repositoryProvider,
             LoadBalancingUtil.LBInstanceProvider<TypeManager> typeManagerProvider, RetryConf retryConf, IdGenerator idGenerator,
-            RecordFactory recordFactory, RepositoryModel repositoryModel) {
-        super(createTypeManager(typeManagerProvider, retryConf), idGenerator, recordFactory, repositoryModel);
+            RecordFactory recordFactory, RepositoryModel repositoryModel, AuthorizationContextProvider authzCtxProvider) {
+        super(createTypeManager(typeManagerProvider, retryConf), idGenerator, recordFactory, repositoryModel,
+                authzCtxProvider);
         this.repositoryProvider = repositoryProvider;
         this.typeManagerProvider = typeManagerProvider;
         this.retryConf = retryConf;

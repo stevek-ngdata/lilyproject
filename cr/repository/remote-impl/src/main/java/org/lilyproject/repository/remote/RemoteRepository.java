@@ -58,9 +58,10 @@ public class RemoteRepository extends BaseRepository {
 
     public RemoteRepository(RepoTableKey repoTableKey, AvroLilyTransceiver lilyTransceiver, AvroConverter converter,
             AbstractRepositoryManager repositoryManager, BlobManager blobManager, HTableInterface recordTable,
-            TableManager tableManager, RecordFactory recordFactory)
+            HTableInterface nonAuthRecordTable, TableManager tableManager, RecordFactory recordFactory)
             throws IOException, InterruptedException {
-        super(repoTableKey, repositoryManager, blobManager, recordTable, recordTable, null, tableManager, recordFactory);
+        super(repoTableKey, repositoryManager, blobManager, recordTable, nonAuthRecordTable, null, tableManager,
+                recordFactory);
         this.converter = converter;
         client = lilyTransceiver.getTransceiver();
         lilyProxy = lilyTransceiver.getLilyProxy();

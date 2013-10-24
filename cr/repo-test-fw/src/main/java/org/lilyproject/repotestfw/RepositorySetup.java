@@ -249,7 +249,8 @@ public class RepositorySetup {
         RecordFactory recordFactory = new RecordFactoryImpl();
 
         remoteRepositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
-                new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory, repositoryModel);
+                new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory, repositoryModel,
+                new DRAuthorizationContextProvider());
 
         remoteBlobStoreAccessFactory = createBlobAccess();
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);

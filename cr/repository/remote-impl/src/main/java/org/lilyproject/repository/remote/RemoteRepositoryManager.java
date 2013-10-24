@@ -17,6 +17,8 @@ package org.lilyproject.repository.remote;
 
 import java.io.IOException;
 
+import com.ngdata.lily.security.hbase.client.AuthorizationContextProvider;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IdGenerator;
@@ -42,8 +44,9 @@ public class RemoteRepositoryManager extends AbstractRepositoryManager implement
 
     public RemoteRepositoryManager(RemoteTypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
             AvroLilyTransceiver transceiver, AvroConverter avroConverter, BlobManager blobManager,
-            HBaseTableFactory tableFactory, RepositoryModel repositoryModel) {
-        super(typeManager, idGenerator, recordFactory, repositoryModel);
+            HBaseTableFactory tableFactory, RepositoryModel repositoryModel,
+            AuthorizationContextProvider authzCtxProvider) {
+        super(typeManager, idGenerator, recordFactory, repositoryModel, authzCtxProvider);
         this.transceiver = transceiver;
         this.avroConverter = avroConverter;
         this.blobManager = blobManager;
@@ -54,8 +57,13 @@ public class RemoteRepositoryManager extends AbstractRepositoryManager implement
     protected Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException {
         try {
             TableManager tableManager = new RemoteTableManager(key.getRepositoryName(), transceiver, avroConverter);
+
+            HTableInterface nonAuthRecordTable = LilyHBaseSchema.getRecordTable(tableFactory, key.getRepositoryName(),
+                    key.getTableName(), true);
+            HTableInterface recordTable = wrapWithAuthorization(nonAuthRecordTable);
+
             Repository repo = new RemoteRepository(key, transceiver, avroConverter, this, blobManager,
-                    LilyHBaseSchema.getRecordTable(tableFactory, key.getRepositoryName(), key.getTableName(), true), tableManager, getRecordFactory());
+                    recordTable, nonAuthRecordTable, tableManager, getRecordFactory());
             if ("true".equals(System.getProperty("lilyclient.trace"))) {
                 repo = TracingRepository.wrap(repo);
             }
