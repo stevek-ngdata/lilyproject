@@ -16,6 +16,7 @@
 package org.lilyproject.server.modules.repository;
 
 import com.google.common.collect.Maps;
+import com.ngdata.lily.security.hbase.client.AuthorizationContextProvider;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordFactory;
 import org.lilyproject.repository.api.Repository;
@@ -47,8 +48,8 @@ public class DecoratingRepositoryManager extends AbstractRepositoryManager {
             RecordUpdateHookActivator recordUpdateHookActivator,
             RepositoryDecoratorActivator repositoryDecoratorActivator,
             RepositoryModel repositoryModel, RecordFactory recordFactory, TypeManager typeManager,
-            IdGenerator idGenerator) {
-        super(typeManager, idGenerator, recordFactory, repositoryModel);
+            IdGenerator idGenerator, AuthorizationContextProvider authzCtxProvider) {
+        super(typeManager, idGenerator, recordFactory, repositoryModel, authzCtxProvider);
         this.wrappedRepositoryManager = repositoryManager;
         this.recordUpdateHookActivator = recordUpdateHookActivator;
         this.repositoryDecoratorActivator = repositoryDecoratorActivator;
