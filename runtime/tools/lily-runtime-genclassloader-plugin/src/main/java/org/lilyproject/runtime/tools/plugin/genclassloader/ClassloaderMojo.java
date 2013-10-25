@@ -106,7 +106,7 @@ public class ClassloaderMojo extends AbstractMojo {
     /**
      * Filename to use.
      *
-     * @parameter expression="classloader.xml"
+     * @parameter default-value="classloader.xml"
      */
     private String targetFileName;
 
