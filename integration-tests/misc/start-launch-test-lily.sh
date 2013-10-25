@@ -14,12 +14,12 @@ if [ -n "$PORTCHECK" ]; then
   exit 1
 fi
 
-COMMAND=$1/../../cr/standalone-launcher/target/launch-test-lily
+COMMAND="$1/../../cr/standalone-launcher/target/launch-test-lily"
 
 OUTPUT=/tmp/start-launch-test-lily-output
 
 # Start it
-$COMMAND > $OUTPUT 2>&1 &
+"$COMMAND" > $OUTPUT 2>&1 &
 
 # Wait until its fully started
 echo Waiting for launch-test-lily to be started
