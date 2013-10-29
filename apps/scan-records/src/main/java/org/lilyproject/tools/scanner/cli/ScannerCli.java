@@ -16,8 +16,13 @@
 package org.lilyproject.tools.scanner.cli;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import com.google.common.base.Splitter;
+import com.ngdata.lily.security.hbase.client.AuthorizationContext;
+import org.lilyproject.repository.spi.AuthorizationContextHolder;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 
@@ -44,6 +49,7 @@ public class ScannerCli extends BaseZkCliTool {
     private Option recordTypeOption;
     private Option tableOption;
     private Option repositoryOption;
+    private Option rolesOption;
 
     public static void main(String[] args) {
         new ScannerCli().start(args);
@@ -70,16 +76,19 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Limit printing to a number of records")
                 .withLongOpt("limit")
                 .create("l");
+        options.add(limitOption);
 
         countOption = OptionBuilder
                 .withDescription("Count the number of records")
                 .withLongOpt("count")
                 .create("c");
+        options.add(countOption);
 
         printOption = OptionBuilder
                 .withDescription("Print records to the command line")
                 .withLongOpt("print")
                 .create("p");
+        options.add(printOption);
 
         configOption = OptionBuilder
                 .hasArg()
@@ -87,6 +96,7 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Configure the record scanner using a json file")
                 .withLongOpt("config")
                 .create();
+        options.add(configOption);
 
         startOption = OptionBuilder
                 .hasArg()
@@ -94,6 +104,7 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Scan records starting at the record with the given ID")
                 .withLongOpt("start")
                 .create();
+        options.add(startOption);
 
         stopOption = OptionBuilder
                 .hasArg()
@@ -101,6 +112,7 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Scan records stopping at the record with the given ID")
                 .withLongOpt("stop")
                 .create();
+        options.add(stopOption);
 
         recordTypeOption = OptionBuilder
                 .hasArg()
@@ -108,6 +120,7 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Filter records by record type name")
                 .withLongOpt("record-type")
                 .create("r");
+        options.add(recordTypeOption);
 
         tableOption = OptionBuilder
                 .hasArg()
@@ -115,6 +128,7 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Repository table to scan (defaults to record)")
                 .withLongOpt("table")
                 .create();
+        options.add(tableOption);
 
         repositoryOption = OptionBuilder
                 .hasArg()
@@ -122,16 +136,16 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Repository name (defaults to 'default')")
                 .withLongOpt("repository")
                 .create();
-
-        options.add(printOption);
-        options.add(limitOption);
-        options.add(countOption);
-        options.add(configOption);
-        options.add(startOption);
-        options.add(stopOption);
-        options.add(recordTypeOption);
-        options.add(tableOption);
         options.add(repositoryOption);
+
+        rolesOption = OptionBuilder
+                .withArgName("roles")
+                .hasArg()
+                .withDescription("Comma-separated list of active user roles (excluding tenant part). Only has "
+                        + "effect when the NGDATA hbase-authz coprocessor is installed.")
+                .withLongOpt("roles")
+                .create();
+        options.add(rolesOption);
 
         return options;
     }
@@ -155,6 +169,15 @@ public class ScannerCli extends BaseZkCliTool {
         long limit = cmd.hasOption(limitOption.getLongOpt()) ? Long.parseLong(cmd.getOptionValue(limitOption.getLongOpt())) : -1;
         String repositoryName = OptionUtil.getStringOption(cmd, repositoryOption, RepoAndTableUtil.DEFAULT_REPOSITORY);
         String tableName = OptionUtil.getStringOption(cmd, tableOption, Table.RECORD.name);
+
+        if (cmd.hasOption(rolesOption.getLongOpt())) {
+            Set<String> roles = new HashSet<String>();
+            Splitter splitter = Splitter.on(",").trimResults().omitEmptyStrings();
+            for (String role : splitter.split(cmd.getOptionValue(rolesOption.getLongOpt()))) {
+                roles.add(role);
+            }
+            AuthorizationContextHolder.setCurrentContext(new AuthorizationContext("lily-scan-records", repositoryName, roles));
+        }
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
         LRepository repository = lilyClient.getRepository(repositoryName);

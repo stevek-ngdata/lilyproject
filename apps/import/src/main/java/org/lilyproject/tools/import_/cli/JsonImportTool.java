@@ -17,8 +17,13 @@ package org.lilyproject.tools.import_.cli;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import com.google.common.base.Splitter;
+import com.ngdata.lily.security.hbase.client.AuthorizationContext;
+import org.lilyproject.repository.spi.AuthorizationContextHolder;
 import org.lilyproject.tools.import_.json.IgnoreAndDeleteEmptyFieldsRecordReader;
 import org.lilyproject.tools.import_.json.IgnoreEmptyFieldsRecordReader;
 import org.lilyproject.tools.import_.json.RecordReader;
@@ -47,6 +52,7 @@ public class JsonImportTool extends BaseZkCliTool {
     private Option ignoreEmptyFieldsOption;
     private Option ignoreAndDeleteEmptyFieldsOption;
     private Option maxErrorsOption;
+    private Option rolesOption;
     private LilyClient lilyClient;
 
     @Override
@@ -134,6 +140,15 @@ public class JsonImportTool extends BaseZkCliTool {
                 .create();
         options.add(maxErrorsOption);
 
+        rolesOption = OptionBuilder
+                .withArgName("roles")
+                .hasArg()
+                .withDescription("Comma-separated list of active user roles (excluding tenant part). Only has "
+                        + "effect when the NGDATA hbase-authz coprocessor is installed.")
+                .withLongOpt("roles")
+                .create();
+        options.add(rolesOption);
+
         return options;
     }
 
@@ -159,6 +174,15 @@ public class JsonImportTool extends BaseZkCliTool {
         boolean ignoreEmptyFields = cmd.hasOption(ignoreEmptyFieldsOption.getLongOpt());
         boolean ignoreAndDeleteEmptyFields = cmd.hasOption(ignoreAndDeleteEmptyFieldsOption.getLongOpt());
         long maxErrors = OptionUtil.getLongOption(cmd, maxErrorsOption, 1L);
+
+        if (cmd.hasOption(rolesOption.getLongOpt())) {
+            Set<String> roles = new HashSet<String>();
+            Splitter splitter = Splitter.on(",").trimResults().omitEmptyStrings();
+            for (String role : splitter.split(cmd.getOptionValue(rolesOption.getLongOpt()))) {
+                roles.add(role);
+            }
+            AuthorizationContextHolder.setCurrentContext(new AuthorizationContext("lily-import", repositoryName, roles));
+        }
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
 
