@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.ngdata.lily.security.hbase.client.AuthorizationContext;
 import org.apache.avro.AvroRemoteException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -66,6 +67,27 @@ public class AvroConverter {
         byte[] bytes = new byte[buffer.remaining()];
         buffer.get(bytes, 0, bytes.length);
         return bytes;
+    }
+
+    public AuthorizationContext convert(AvroAuthzContext authzContext) {
+        Set<String> roles = new HashSet<String>();
+        for (String role : authzContext.getRoles()) {
+            roles.add(role);
+        }
+
+        return new AuthorizationContext(authzContext.getName(), authzContext.getTenant(), roles);
+    }
+
+    public AvroAuthzContext convert(AuthorizationContext authzContext) {
+        if (authzContext == null)
+            return null;
+
+        List<String> roles = new ArrayList<String>(authzContext.getRoles().size());
+        for (String role : authzContext.getRoles()) {
+            roles.add(role);
+        }
+
+        return new AvroAuthzContext(authzContext.getName(), authzContext.getTenant(), roles);
     }
 
     public ByteBuffer convert(Record record, LRepository repository) throws AvroRepositoryException,

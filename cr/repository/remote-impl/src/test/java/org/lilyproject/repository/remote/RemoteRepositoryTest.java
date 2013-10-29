@@ -72,7 +72,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(recordId);
 
-        verify(avroLily).delete(encodedRecordId, repositoryName, Table.RECORD.name, null, null);
+        verify(avroLily).delete(null, encodedRecordId, repositoryName, Table.RECORD.name, null, null);
     }
 
     @Test
@@ -88,7 +88,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(recordId, mutationConditions);
 
-        verify(avroLily).delete(encodedRecordId, repositoryName, Table.RECORD.name, encodedMutationConditions, null);
+        verify(avroLily).delete(null, encodedRecordId, repositoryName, Table.RECORD.name, encodedMutationConditions, null);
     }
 
     @Test
@@ -106,7 +106,7 @@ public class RemoteRepositoryTest {
 
         remoteRepository.delete(record);
 
-        verify(avroLily).delete(encodedRecordId, repositoryName, Table.RECORD.name, null, attributes);
+        verify(avroLily).delete(null, encodedRecordId, repositoryName, Table.RECORD.name, null, attributes);
     }
 
 }
