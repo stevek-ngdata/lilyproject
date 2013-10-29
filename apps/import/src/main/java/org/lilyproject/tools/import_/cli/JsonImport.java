@@ -28,6 +28,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.ngdata.lily.security.hbase.client.AuthorizationContext;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
@@ -43,6 +44,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.spi.AuthorizationContextHolder;
 import org.lilyproject.tools.import_.core.FieldTypeImport;
 import org.lilyproject.tools.import_.core.IdentificationMode;
 import org.lilyproject.tools.import_.core.ImportMode;
@@ -652,7 +654,28 @@ public class JsonImport {
         }
     }
 
-    private class FieldTypeImportTask implements Runnable {
+    private abstract class AuthzEnabledTask implements Runnable {
+        private AuthorizationContext authzContext;
+
+        public AuthzEnabledTask() {
+            // Remember the authorization context of the current thread
+            this.authzContext = AuthorizationContextHolder.getCurrentContext();
+        }
+
+        @Override
+        public final void run() {
+            try {
+                AuthorizationContextHolder.setCurrentContext(authzContext);
+                runInt();
+            } finally {
+                AuthorizationContextHolder.clearContext();
+            }
+        }
+
+        protected abstract void runInt();
+    }
+
+    private class FieldTypeImportTask extends AuthzEnabledTask {
         private FieldType fieldType;
 
         public FieldTypeImportTask(FieldType fieldType) {
@@ -660,7 +683,7 @@ public class JsonImport {
         }
 
         @Override
-        public void run() {
+        protected void runInt() {
             try {
                 importFieldType(fieldType);
             } catch (Throwable t) {
@@ -669,7 +692,7 @@ public class JsonImport {
         }
     }
 
-    private class RecordTypeImportTask implements Runnable {
+    private class RecordTypeImportTask extends AuthzEnabledTask {
         private JsonNode json;
 
         RecordTypeImportTask(JsonNode json) {
@@ -677,7 +700,7 @@ public class JsonImport {
         }
 
         @Override
-        public void run() {
+        protected void runInt() {
             try {
                 importRecordType(json);
             } catch (Throwable t) {
@@ -686,7 +709,7 @@ public class JsonImport {
         }
     }
 
-    private class RecordImportTask implements Runnable {
+    private class RecordImportTask extends AuthzEnabledTask {
         private JsonNode json;
         /** Line in the source file where the recod was read from. */
         private int sourceLine;
@@ -697,7 +720,7 @@ public class JsonImport {
         }
 
         @Override
-        public void run() {
+        protected void runInt() {
             try {
                 importRecord(json);
             } catch (Throwable t) {
