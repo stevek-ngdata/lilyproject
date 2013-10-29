@@ -51,7 +51,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     private final IdGenerator idGenerator;
     private final RecordFactory recordFactory;
     private final RepositoryModel repositoryModel;
-    private final AuthorizationContextProvider authzCtxProvider;
+    private final AuthorizationContextProvider authzCtxProvider = new DRAuthorizationContextProvider();
 
     /**
      * For NGDATA's hbase authorization layer: unique name for the application, in order to
@@ -73,12 +73,11 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     private static final Set<String> ROW_PERMISSION_TYPES = ImmutableSet.of("row_labels", "row_recordtype");
 
     public AbstractRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
-            RepositoryModel repositoryModel, AuthorizationContextProvider authzCtxProvider) {
+            RepositoryModel repositoryModel) {
         this.typeManager = typeManager;
         this.idGenerator = idGenerator;
         this.recordFactory = recordFactory;
         this.repositoryModel = repositoryModel;
-        this.authzCtxProvider = authzCtxProvider;
     }
 
     protected HTableInterface wrapWithAuthorization(HTableInterface htable) {

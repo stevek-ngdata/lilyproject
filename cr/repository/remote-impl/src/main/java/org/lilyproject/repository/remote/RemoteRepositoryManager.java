@@ -17,7 +17,6 @@ package org.lilyproject.repository.remote;
 
 import java.io.IOException;
 
-import com.ngdata.lily.security.hbase.client.AuthorizationContextProvider;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.repository.api.BlobManager;
@@ -44,9 +43,8 @@ public class RemoteRepositoryManager extends AbstractRepositoryManager implement
 
     public RemoteRepositoryManager(RemoteTypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
             AvroLilyTransceiver transceiver, AvroConverter avroConverter, BlobManager blobManager,
-            HBaseTableFactory tableFactory, RepositoryModel repositoryModel,
-            AuthorizationContextProvider authzCtxProvider) {
-        super(typeManager, idGenerator, recordFactory, repositoryModel, authzCtxProvider);
+            HBaseTableFactory tableFactory, RepositoryModel repositoryModel) {
+        super(typeManager, idGenerator, recordFactory, repositoryModel);
         this.transceiver = transceiver;
         this.avroConverter = avroConverter;
         this.blobManager = blobManager;

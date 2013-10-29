@@ -29,8 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.ngdata.lily.security.hbase.client.AuthorizationContextProvider;
-import org.lilyproject.repository.impl.DRAuthorizationContextProvider;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 import org.lilyproject.repository.model.api.RepositoryModel;
@@ -99,7 +97,6 @@ public class LilyClient implements Closeable, RepositoryManager {
     private Set<String> serverAddresses = new HashSet<String>();
     private Set<String> lilyHosts = Collections.emptySet();
     private RetryConf retryConf = new RetryConf();
-    private AuthorizationContextProvider authorizationContextProvider;
     private static final String nodesPath = "/lily/repositoryNodes";
     private static final String hbaseConfigPath = "/lily/hbaseConfig";
     private static final String blobDfsUriPath = "/lily/blobStoresConfig/dfsUri";
@@ -123,26 +120,13 @@ public class LilyClient implements Closeable, RepositoryManager {
      */
     public LilyClient(String zookeeperConnectString, int sessionTimeout) throws IOException, InterruptedException,
             KeeperException, ZkConnectException, NoServersException, RepositoryException {
-        this(zookeeperConnectString, sessionTimeout, new DRAuthorizationContextProvider());
-    }
-
-    public LilyClient(String zookeeperConnectString, int sessionTimeout,
-            AuthorizationContextProvider authorizationContextProvider) throws IOException, InterruptedException,
-            KeeperException, ZkConnectException, NoServersException, RepositoryException {
-        this(ZkUtil.connect(zookeeperConnectString, sessionTimeout), authorizationContextProvider);
+        this(ZkUtil.connect(zookeeperConnectString, sessionTimeout));
         managedZk = true;
     }
 
     public LilyClient(ZooKeeperItf zk) throws IOException, InterruptedException, KeeperException, ZkConnectException,
             NoServersException, RepositoryException {
-        this(zk, new DRAuthorizationContextProvider());
-    }
-
-    public LilyClient(ZooKeeperItf zk, AuthorizationContextProvider authorizationContextProvider)
-            throws IOException, InterruptedException, KeeperException, ZkConnectException, NoServersException,
-            RepositoryException {
         this.zk = zk;
-        this.authorizationContextProvider = authorizationContextProvider;
         schemaCache = new RemoteSchemaCache(zk, this);
         init();
     }
@@ -185,7 +169,7 @@ public class LilyClient implements Closeable, RepositoryManager {
         RecordFactory recordFactory = new RecordFactoryImpl();
 
         repositoryManager = new LoadBalancingAndRetryingRepositoryManager(repositoryProvider, typeManagerProvider,
-                retryConf, idGenerator, recordFactory, repositoryModel, authorizationContextProvider);
+                retryConf, idGenerator, recordFactory, repositoryModel);
 
         schemaCache.start();
     }
@@ -328,7 +312,7 @@ public class LilyClient implements Closeable, RepositoryManager {
         RemoteTypeManager remoteTypeManager = new RemoteTypeManager(lilySocketAddr, avroConverter, idGenerator, zk, schemaCache);
         RecordFactory recordFactory = new RecordFactoryImpl();
         RepositoryManager repositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
-                transceiver, avroConverter, blobManager, tableFactory, repositoryModel, authorizationContextProvider);
+                transceiver, avroConverter, blobManager, tableFactory, repositoryModel);
         return repositoryManager;
     }
 
