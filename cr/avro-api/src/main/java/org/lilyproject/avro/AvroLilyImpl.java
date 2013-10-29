@@ -34,6 +34,7 @@ import org.lilyproject.repository.api.RepositoryTable;
 import org.lilyproject.repository.api.TableManager;
 import org.lilyproject.repository.api.TypeBucket;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.spi.AuthorizationContextHolder;
 
 public class AvroLilyImpl implements AvroLily {
 
@@ -53,9 +54,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public ByteBuffer create(ByteBuffer record, String repositoryName, String tableName)
+    public ByteBuffer create(AvroAuthzContext authzContext, ByteBuffer record, String repositoryName, String tableName)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
+            AuthorizationContextHolder.setCurrentContext(converter.convert(authzContext));
             LRepository repository = repositoryManager.getRepository(repositoryName);
             LTable table = repository.getTable(tableName);
             return converter.convert(table.create(converter.convertRecord(record, repository)), repository);
@@ -63,13 +65,17 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         } catch (InterruptedException e) {
             throw converter.convert(e);
+        } finally {
+            AuthorizationContextHolder.clearContext();
         }
     }
 
     @Override
-    public ByteBuffer createOrUpdate(ByteBuffer record, String repositoryName, String tableName, boolean useLatestRecordType)
+    public ByteBuffer createOrUpdate(AvroAuthzContext authzContext, ByteBuffer record, String repositoryName,
+            String tableName, boolean useLatestRecordType)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
+            AuthorizationContextHolder.setCurrentContext(converter.convert(authzContext));
             LRepository repository = repositoryManager.getRepository(repositoryName);
             LTable table = repository.getTable(tableName);
             return converter.convert(
@@ -78,13 +84,17 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         } catch (InterruptedException e) {
             throw converter.convert(e);
+        } finally {
+            AuthorizationContextHolder.clearContext();
         }
     }
 
     @Override
-    public ByteBuffer delete(ByteBuffer recordId, String repositoryName, String tableName, List<AvroMutationCondition> conditions,
-            Map<String,String> attributes) throws AvroRepositoryException, AvroInterruptedException {
+    public ByteBuffer delete(AvroAuthzContext authzContext, ByteBuffer recordId, String repositoryName,
+            String tableName, List<AvroMutationCondition> conditions, Map<String,String> attributes)
+            throws AvroRepositoryException, AvroInterruptedException {
         try {
+            AuthorizationContextHolder.setCurrentContext(converter.convert(authzContext));
             LRepository repository = repositoryManager.getRepository(repositoryName);
             LTable table = repository.getTable(tableName);
             RecordId decodedRecordId = converter.convertAvroRecordId(recordId, repository);
@@ -105,13 +115,17 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         } catch (InterruptedException e) {
             throw converter.convert(e);
+        } finally {
+            AuthorizationContextHolder.clearContext();
         }
     }
 
     @Override
-    public ByteBuffer update(ByteBuffer record, String repositoryName, String tableName, boolean updateVersion,
-            boolean useLatestRecordType, List<AvroMutationCondition> conditions) throws AvroRemoteException {
+    public ByteBuffer update(AvroAuthzContext authzContext, ByteBuffer record, String repositoryName, String tableName,
+            boolean updateVersion, boolean useLatestRecordType, List<AvroMutationCondition> conditions)
+            throws AvroRemoteException {
         try {
+            AuthorizationContextHolder.setCurrentContext(converter.convert(authzContext));
             LRepository repository = repositoryManager.getRepository(repositoryName);
             LTable table = repository.getTable(tableName);
             return converter.convert(table.update(converter.convertRecord(record, repository), updateVersion,
@@ -120,8 +134,30 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         } catch (InterruptedException e) {
             throw converter.convert(e);
+        } finally {
+            AuthorizationContextHolder.clearContext();
         }
     }
+
+    // TODO since this is a pure-read method, the client should do it directly rather than going
+    //      over to lily-server.
+    @Override
+    public List<String> getVariants(AvroAuthzContext authzContext, ByteBuffer recordId, String repositoryName,
+            String tableName) throws AvroRepositoryException, AvroInterruptedException {
+        try {
+            AuthorizationContextHolder.setCurrentContext(converter.convert(authzContext));
+            LRepository repository = repositoryManager.getRepository(repositoryName);
+            LTable table = repository.getTable(tableName);
+            return converter.convert(table.getVariants(converter.convertAvroRecordId(recordId, repository)));
+        } catch (RepositoryException e) {
+            throw converter.convert(e);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        } finally {
+            AuthorizationContextHolder.clearContext();
+        }
+    }
+
 
     @Override
     public AvroFieldType createFieldType(AvroFieldType avroFieldType)
@@ -314,19 +350,6 @@ public class AvroLilyImpl implements AvroLily {
         try {
             TypeBucket typeBucket = typeManager.getTypeBucketWithoutCache(bucketId);
             return converter.convertTypeBucket(typeBucket);
-        } catch (RepositoryException e) {
-            throw converter.convert(e);
-        } catch (InterruptedException e) {
-            throw converter.convert(e);
-        }
-    }
-
-    @Override
-    public List<String> getVariants(ByteBuffer recordId, String repositoryName, String tableName) throws AvroRepositoryException, AvroInterruptedException {
-        try {
-            LRepository repository = repositoryManager.getRepository(repositoryName);
-            LTable table = repository.getTable(tableName);
-            return converter.convert(table.getVariants(converter.convertAvroRecordId(recordId, repository)));
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {

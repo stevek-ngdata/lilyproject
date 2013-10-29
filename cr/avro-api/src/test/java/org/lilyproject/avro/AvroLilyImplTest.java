@@ -73,7 +73,7 @@ public class AvroLilyImplTest {
         Record toDelete = mock(Record.class);
         when(table.newRecord(recordId)).thenReturn(toDelete);
 
-        avroLilyImpl.delete(recordIdBytes, repositoryName, Table.RECORD.name, null, attributes);
+        avroLilyImpl.delete(null, recordIdBytes, repositoryName, Table.RECORD.name, null, attributes);
 
         verify(toDelete).setAttributes(attributes);
         verify(table).delete(toDelete);
@@ -90,7 +90,7 @@ public class AvroLilyImplTest {
         when(avroConverter.convertAvroRecordId(recordIdBytes, repository)).thenReturn(recordId);
         when(avroConverter.convertFromAvro(avroMutationConditions, repository)).thenReturn(mutationConditions);
 
-        avroLilyImpl.delete(recordIdBytes, repositoryName, Table.RECORD.name, avroMutationConditions, null);
+        avroLilyImpl.delete(null, recordIdBytes, repositoryName, Table.RECORD.name, avroMutationConditions, null);
 
         verify(table).delete(recordId, mutationConditions);
     }
@@ -108,7 +108,7 @@ public class AvroLilyImplTest {
         when(avroConverter.convertAvroRecordId(recordIdBytes, repository)).thenReturn(recordId);
         when(avroConverter.convertFromAvro(avroMutationConditions, repository)).thenReturn(mutationConditions);
 
-        avroLilyImpl.delete(recordIdBytes, repositoryName, Table.RECORD.name, avroMutationConditions, attributes);
+        avroLilyImpl.delete(null, recordIdBytes, repositoryName, Table.RECORD.name, avroMutationConditions, attributes);
     }
 
 }

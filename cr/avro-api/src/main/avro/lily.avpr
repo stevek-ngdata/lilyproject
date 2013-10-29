@@ -191,6 +191,16 @@
         {"name": "name", "type": "string"},
         {"name": "splitKeys", "type": ["null", {"type": "array", "items": "bytes"}]}
       ]
+    },
+
+    {
+      "name": "AvroAuthzContext",
+      "type": "record",
+      "fields": [
+        {"name": "name", "type": ["null", "string"]},
+        {"name": "tenant", "type": "string"},
+        {"name": "roles", "type": {"type": "array", "items": "string"}}
+      ]
     }
   ],
 
@@ -200,6 +210,7 @@
 
     "create": {
       "request": [
+        {"name": "AvroAuthzContext", "type": ["null", "AvroAuthzContext"]},
         {"name": "record", "type": "bytes"}, 
         {"name": "repository", "type": "string"},
         {"name": "table", "type": "string"}],
@@ -209,6 +220,7 @@
      
     "update": {
       "request": [
+        {"name": "AvroAuthzContext", "type": ["null", "AvroAuthzContext"]},
         {"name": "record", "type": "bytes"},
         {"name": "repository", "type": "string"},
         {"name": "table", "type": "string"},
@@ -221,6 +233,7 @@
 
     "createOrUpdate": {
       "request": [
+        {"name": "AvroAuthzContext", "type": ["null", "AvroAuthzContext"]},
         {"name": "record", "type": "bytes"},
         {"name": "repository", "type": "string"},
         {"name": "table", "type": "string"},
@@ -232,6 +245,7 @@
 
     "delete": {
       "request": [
+        {"name": "AvroAuthzContext", "type": ["null", "AvroAuthzContext"]},
         {"name": "recordId", "type": "bytes"},
         {"name": "repository", "type": "string"},
         {"name": "table", "type": "string"},
@@ -244,6 +258,7 @@
     
     "getVariants": {
       "request": [
+        {"name": "AvroAuthzContext", "type": ["null", "AvroAuthzContext"]},
         {"name": "recordId", "type": "bytes"},
         {"name": "repository", "type": "string"},
         {"name": "table", "type": "string"}],
