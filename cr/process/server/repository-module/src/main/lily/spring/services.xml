@@ -127,8 +127,6 @@
     </constructor-arg>
   </bean>
 
-  <bean id="authzCtxProvider" class="org.lilyproject.repository.impl.DRAuthorizationContextProvider"/>
-
   <bean id="rawRepositoryManager"
         class="org.lilyproject.repository.impl.HBaseRepositoryManager">
     <constructor-arg ref="typeManager"/>
@@ -138,7 +136,6 @@
     <constructor-arg ref="blobManager"/>
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="repositoryModel"/>
-    <constructor-arg ref="authzCtxProvider"/>
   </bean>
 
   <bean id="recordUpdateHookActivator" class="org.lilyproject.server.modules.repository.RecordUpdateHookActivator">
@@ -165,7 +162,6 @@
     <constructor-arg ref="recordFactory"/>
     <constructor-arg ref="typeManager"/>
     <constructor-arg ref="idGenerator"/>
-    <constructor-arg ref="authzCtxProvider"/>
   </bean>
 
   <bean id="mbeanExporter" class="org.springframework.jmx.export.MBeanExporter">

@@ -16,14 +16,9 @@
 package org.lilyproject.repository.impl;
 
 import java.io.IOException;
-import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
-import com.ngdata.lily.security.hbase.client.AuthEnabledHTable;
-import com.ngdata.lily.security.hbase.client.AuthorizationContextProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordFactory;
@@ -44,8 +39,8 @@ public class HBaseRepositoryManager extends AbstractRepositoryManager {
 
     public HBaseRepositoryManager(TypeManager typeManager, IdGenerator idGenerator, RecordFactory recordFactory,
             HBaseTableFactory hbaseTableFactory, BlobManager blobManager, Configuration hbaseConf,
-            RepositoryModel repositoryModel, AuthorizationContextProvider authzCtxProvider) {
-        super(typeManager, idGenerator, recordFactory, repositoryModel, authzCtxProvider);
+            RepositoryModel repositoryModel) {
+        super(typeManager, idGenerator, recordFactory, repositoryModel);
         this.hbaseTableFactory = hbaseTableFactory;
         this.blobManager = blobManager;
         this.hbaseConf = hbaseConf;

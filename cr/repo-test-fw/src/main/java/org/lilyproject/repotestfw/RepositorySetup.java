@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.lilyproject.repository.impl.DRAuthorizationContextProvider;
 import org.lilyproject.repository.model.api.RepositoryDefinition;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
 
@@ -184,7 +183,7 @@ public class RepositorySetup {
         RecordFactory recordFactory = new RecordFactoryImpl();
 
         repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator, recordFactory, hbaseTableFactory,
-                blobManager, hadoopConf, repositoryModel, new DRAuthorizationContextProvider()) {
+                blobManager, hadoopConf, repositoryModel) {
             @Override
             protected Repository createRepository(RepoTableKey key) throws InterruptedException, RepositoryException {
                 HBaseRepository repository = (HBaseRepository)super.createRepository(key);
@@ -249,8 +248,7 @@ public class RepositorySetup {
         RecordFactory recordFactory = new RecordFactoryImpl();
 
         remoteRepositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
-                new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory, repositoryModel,
-                new DRAuthorizationContextProvider());
+                new AvroLilyTransceiver(remoteAddr), avroConverter, blobManager, hbaseTableFactory, repositoryModel);
 
         remoteBlobStoreAccessFactory = createBlobAccess();
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);
