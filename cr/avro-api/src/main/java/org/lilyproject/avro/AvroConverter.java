@@ -69,6 +69,9 @@ public class AvroConverter {
     }
 
     public AuthorizationContext convert(AvroAuthzContext authzContext) {
+        if (authzContext == null)
+            return null;
+
         Set<String> roles = new HashSet<String>();
         for (String role : authzContext.getRoles()) {
             roles.add(role);
