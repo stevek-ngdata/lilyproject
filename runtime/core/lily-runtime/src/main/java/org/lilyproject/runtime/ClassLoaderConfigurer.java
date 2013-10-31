@@ -416,7 +416,7 @@ public class ClassLoaderConfigurer {
 
     public static int compareVersions(String version1, String version2) throws UncomparableVersionException {
         // We assume versions follow the pattern: major.minor.revision-suffix
-        Pattern pattern = Pattern.compile("(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:-(.*))?");
+        Pattern pattern = Pattern.compile("(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:(-|_)(.*))?");
 
         Matcher m1 = pattern.matcher(version1);
         Matcher m2 = pattern.matcher(version2);
