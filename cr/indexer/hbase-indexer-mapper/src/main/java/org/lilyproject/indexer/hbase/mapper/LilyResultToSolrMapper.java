@@ -21,6 +21,7 @@ import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.SolrDocumentBuilder;
 import org.lilyproject.indexer.engine.ValueEvaluator;
+import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
@@ -61,7 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class LilyResultToSolrMapper implements ResultToSolrMapper,Configurable {
+public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable {
     private final Log log = LogFactory.getLog(getClass());
 
     private String repositoryName;
@@ -82,11 +83,13 @@ public class LilyResultToSolrMapper implements ResultToSolrMapper,Configurable {
     @Override
     public void configure(Map<String, String> params) {
         try {
-            zooKeeperItf = new ZooKeeperImpl(params.get("zookeeper"), 40000);
-            setIndexName(params.get("name"));
-            setRepositoryName(params.containsKey("repository") ? params.get("repository") : null);
-            setTableName(params.containsKey("table") ? params.get("table") : null);
-            setIndexerConfString(params.get("indexerConf"));
+            zooKeeperItf = new ZooKeeperImpl(params.get(LResultToSolrMapper.ZOOKEEPER_KEY), 40000);
+            setIndexName(params.get(LResultToSolrMapper.INDEX_KEY));
+            setRepositoryName(params.containsKey(LResultToSolrMapper.REPO_KEY) ?
+                    params.get(LResultToSolrMapper.REPO_KEY) : null);
+            setTableName(params.containsKey(LResultToSolrMapper.TABLE_KEY) ?
+                    params.get(LResultToSolrMapper.TABLE_KEY) : null);
+            setIndexerConfString(params.get(LResultToSolrMapper.INDEXERCONF_KEY));
 
             setRepositoryManager(new LilyClient(zooKeeperItf));
             init();
@@ -250,6 +253,11 @@ public class LilyResultToSolrMapper implements ResultToSolrMapper,Configurable {
         } catch (IOException e) {
             log.warn(e);
         }
+    }
+
+    @Override
+    public LRepository getRepository() {
+        return this.repository;
     }
 
     protected static String getIndexId(String table, RecordId recordId, SchemaId vtag) {
