@@ -41,7 +41,7 @@
 
   <lily:import-service
       id="indexerModel"
-      service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
+      service="com.ngdata.hbaseindexer.model.api.WriteableIndexerModel"/>
 
   <lily:import-service
       id="pluginRegistry"

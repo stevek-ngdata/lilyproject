@@ -616,6 +616,11 @@
       </dependency>
       <dependency>
         <groupId>com.ngdata</groupId>
+        <artifactId>hbase-sep-impl-common</artifactId>
+        <version>${version.hbase-indexer}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ngdata</groupId>
         <artifactId>hbase-sep-api</artifactId>
         <version>${version.hbase-indexer}</version>
         <exclusions>

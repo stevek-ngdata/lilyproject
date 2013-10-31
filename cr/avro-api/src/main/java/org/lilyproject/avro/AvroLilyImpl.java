@@ -41,12 +41,10 @@ public class AvroLilyImpl implements AvroLily {
 
     private final RepositoryManager repositoryManager;
     private final TypeManager typeManager;
-    private final Indexer indexer;
     private AvroConverter converter;
 
-    public AvroLilyImpl(RepositoryManager repositoryManager, TypeManager typeManager, Indexer indexer) {
+    public AvroLilyImpl(RepositoryManager repositoryManager, TypeManager typeManager) {
         this.repositoryManager = repositoryManager;
-        this.indexer = indexer;
         this.typeManager = typeManager;
         this.converter = new AvroConverter();
     }
@@ -382,39 +380,6 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         } catch (InterruptedException e) {
             throw converter.convert(e);
-        }
-    }
-
-    @Override
-    public Object index(String repositoryName, String table, ByteBuffer recordId)
-            throws AvroInterruptedException, AvroIndexerException {
-        try {
-            LRepository repository = repositoryManager.getRepository(repositoryName);
-            indexer.index(repositoryName, table, converter.convertAvroRecordId(recordId, repository));
-            return null;
-        } catch (InterruptedException e) {
-            throw converter.convert(e);
-        } catch (IndexerException e) {
-            throw converter.convert(e);
-        } catch (RepositoryException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public Object indexOn(String repositoryName, String table, ByteBuffer recordId, List<String> indexes)
-            throws AvroInterruptedException, AvroIndexerException {
-        try {
-            LRepository repository = repositoryManager.getRepository(repositoryName);
-            indexer.indexOn(repositoryName, table,
-                    converter.convertAvroRecordId(recordId, repository), new HashSet<String>(indexes));
-            return null;
-        } catch (IndexerException e) {
-            throw converter.convert(e);
-        } catch (InterruptedException e) {
-            throw converter.convert(e);
-        } catch (RepositoryException e) {
-            throw new RuntimeException(e);
         }
     }
 

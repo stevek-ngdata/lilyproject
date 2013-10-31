@@ -18,6 +18,9 @@ package org.lilyproject.lilyservertestfw.test;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
+import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
+import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -33,7 +36,6 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
-import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
@@ -110,15 +112,18 @@ public class LilyProxyTest {
         } else {
             // Disable incremental index updating
             WriteableIndexerModel indexerModel = lilyProxy.getLilyServerProxy().getIndexerModel();
-            String lock = indexerModel.lockIndex(indexName);
+            String lock = indexerModel.lockIndexer(indexName);
             String subscriptionId;
             try {
-                IndexDefinition index = indexerModel.getMutableIndex(indexName);
-                subscriptionId = index.getQueueSubscriptionId();
-                index.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
-                indexerModel.updateIndex(index, lock);
+                IndexerDefinition index = indexerModel.getIndexer(indexName);
+                subscriptionId = index.getSubscriptionId();
+
+                indexerModel.updateIndexer(new IndexerDefinitionBuilder()
+                        .startFrom(index)
+                        .incrementalIndexingState(IndexerDefinition.IncrementalIndexingState.DO_NOT_SUBSCRIBE)
+                        .build(), lock);
             } finally {
-                indexerModel.unlockIndex(lock);
+                indexerModel.unlockIndexer(lock);
             }
 
             lilyProxy.getHBaseProxy().waitOnReplicationPeerStopped(subscriptionId);

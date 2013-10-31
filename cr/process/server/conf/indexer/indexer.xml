@@ -90,4 +90,7 @@
        If no nodes are given (default), all lily nodes are taken into account.
   -->
   <masterNodes></masterNodes>
+
+  <znodeParent>/ngdata/hbaseindexer</znodeParent>
+
 </indexer>

@@ -24,6 +24,9 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
+import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
+import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
@@ -41,7 +44,6 @@ import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.model.api.IndexBatchBuildState;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
-import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.LilyServerProxy;
 import org.lilyproject.repository.api.AbsoluteRecordId;
@@ -122,14 +124,18 @@ public class BatchBuildTest {
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         IOUtils.closeQuietly(is);
 
-        IndexDefinition index = model.newIndex(INDEX_NAME);
-        Map<String, String> solrShards = new HashMap<String, String>();
-        solrShards.put("shard1", "http://localhost:8983/solr/core0");
-        index.setSolrShards(solrShards);
-        index.setConfiguration(indexerConfiguration);
-        index.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
-        index.setRepositoryName(REPO_NAME);
-        model.addIndex(index);
+        IndexerDefinition index = new IndexerDefinitionBuilder()
+                .name(INDEX_NAME)
+                /*
+                Map<String, String> solrShards = new HashMap<String, String>();
+                solrShards.put("shard1", "http://localhost:8983/solr/core0");
+                index.setRepositoryName(REPO_NAME);
+                 */
+                .configuration(indexerConfiguration)
+                .incrementalIndexingState(IndexerDefinition.IncrementalIndexingState.DO_NOT_SUBSCRIBE)
+                .build();
+
+        model.addIndexer(index);
     }
 
     @AfterClass
@@ -200,7 +206,7 @@ public class BatchBuildTest {
         assertEquals(1, response.getResults().size());
         assertEquals("USER." + "batch-index-test2", response.getResults().get(0).getFieldValue("lily.id"));
         // check that  the last used batch index conf = default
-        IndexDefinition index = model.getMutableIndex(INDEX_NAME);
+        IndexerDefinition index = model.getIndexer(INDEX_NAME);
 
         assertEquals(JsonFormat.deserialize(defaultConf), JsonFormat.deserialize(
                 index.getLastBatchBuildInfo().getBatchIndexConfiguration()));
@@ -263,7 +269,7 @@ public class BatchBuildTest {
         assertEquals("USER." + assertId1, response.getResults().get(0).getFieldValue("lily.id"));
         // check that the last used batch index conf = default
         assertEquals(JsonFormat.deserialize(batchConf), JsonFormat.deserialize(
-                model.getMutableIndex(INDEX_NAME).getLastBatchBuildInfo().getBatchIndexConfiguration()));
+                model.getIndexer(INDEX_NAME).getLastBatchBuildInfo().getBatchIndexConfiguration()));
 
         // Set things up for run 3 where the default configuration should be used again
         recordToChange1.setField(ft1.getName(), "test3 index run3");
@@ -280,7 +286,7 @@ public class BatchBuildTest {
         assertEquals("USER." + assertId2, response.getResults().get(1).getFieldValue("lily.id"));
         // check that the last used batch index conf = default
         assertEquals(JsonFormat.deserialize(defaultConf), JsonFormat.deserialize(
-                model.getMutableIndex(INDEX_NAME).getLastBatchBuildInfo().getBatchIndexConfiguration()));
+                model.getIndexer(INDEX_NAME).getLastBatchBuildInfo().getBatchIndexConfiguration()));
     }
 
     /**
@@ -368,8 +374,8 @@ public class BatchBuildTest {
             long tryUntil = System.currentTimeMillis() + timeout;
             while (System.currentTimeMillis() < tryUntil) {
                 Thread.sleep(100);
-                IndexDefinition definition = model.getIndex(INDEX_NAME);
-                if (definition.getBatchBuildState() == IndexBatchBuildState.INACTIVE) {
+                IndexerDefinition definition = model.getIndexer(INDEX_NAME);
+                if (definition.getBatchIndexingState() == IndexerDefinition.BatchIndexingState.INACTIVE) {
                     Long amountFailed = definition.getLastBatchBuildInfo().getCounters()
                             .get(COUNTER_NUM_FAILED_RECORDS);
                     boolean successFlag = definition.getLastBatchBuildInfo().getSuccess();
@@ -397,23 +403,23 @@ public class BatchBuildTest {
     }
 
     private static void setBatchIndexConf(byte[] defaultConf, byte[] customConf, boolean buildNow) throws Exception {
-        String lock = model.lockIndex(INDEX_NAME);
+        String lock = model.lockIndexer(INDEX_NAME);
 
         try {
-            IndexDefinition index = model.getMutableIndex(INDEX_NAME);
+            IndexerDefinitionBuilder index = new IndexerDefinitionBuilder().startFrom(model.getIndexer(INDEX_NAME));
             if (defaultConf != null) {
-                index.setDefaultBatchIndexConfiguration(defaultConf);
+                index.defaultBatchIndexConfiguration(defaultConf);
             }
             if (customConf != null) {
-                index.setBatchIndexConfiguration(customConf);
+                index.batchIndexConfiguration(customConf);
             }
             if (buildNow) {
-                index.setBatchBuildState(IndexBatchBuildState.BUILD_REQUESTED);
+                index.batchIndexingState(IndexerDefinition.BatchIndexingState.BUILD_REQUESTED);
             }
 
-            model.updateIndex(index, lock);
+            model.updateIndexer(index.build(), lock);
         } finally {
-            model.unlockIndex(lock);
+            model.unlockIndexer(lock);
         }
     }
 

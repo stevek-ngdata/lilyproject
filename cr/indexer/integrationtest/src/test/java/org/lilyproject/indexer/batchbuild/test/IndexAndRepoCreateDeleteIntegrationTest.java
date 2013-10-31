@@ -1,17 +1,15 @@
 package org.lilyproject.indexer.batchbuild.test;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.*;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.collect.Sets;
+import com.ngdata.hbaseindexer.conf.IndexerConf;
+import com.ngdata.hbaseindexer.conf.XmlIndexerConfReader;
+import com.ngdata.hbaseindexer.conf.XmlIndexerConfWriter;
+import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
+import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
+import com.ngdata.hbaseindexer.model.api.IndexerModelEvent;
+import com.ngdata.hbaseindexer.model.api.IndexerModelListener;
+import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -19,16 +17,22 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.indexer.model.api.IndexDefinition;
-import org.lilyproject.indexer.model.api.IndexGeneralState;
 import org.lilyproject.indexer.model.api.IndexUpdateException;
-import org.lilyproject.indexer.model.api.IndexerModelEvent;
-import org.lilyproject.indexer.model.api.IndexerModelEventType;
-import org.lilyproject.indexer.model.api.IndexerModelListener;
-import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.model.impl.RepositoryModelImpl;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.MINS15;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
 
 public class IndexAndRepoCreateDeleteIntegrationTest {
 
@@ -74,13 +78,21 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
         LRepository secondNewRepo = testUtil.getAlternateTestRespository("repo2");
         testUtil.createIndex("testChRepo", "dummy", firstNewRepo);
 
-        String lock = indexerModel.lockIndex("testChRepo");
+        String lock = indexerModel.lockIndexer("testChRepo");
         try {
-            IndexDefinition index = indexerModel.getMutableIndex("testChRepo");
-            index.setRepositoryName(secondNewRepo.getRepositoryName());
-            indexerModel.updateIndex(index, lock);
+            IndexerDefinition index = indexerModel.getIndexer("testChRepo");
+
+            ByteArrayInputStream is = new ByteArrayInputStream(index.getConfiguration());
+            IndexerConf indexerConf = new XmlIndexerConfReader().read(is);
+            indexerConf.getGlobalParams().put("repository", secondNewRepo.getRepositoryName());
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            XmlIndexerConfWriter.writeConf(indexerConf, os);
+            indexerModel.updateIndexer(new IndexerDefinitionBuilder()
+                    .startFrom(index)
+                    .configuration(os.toByteArray())
+                    .build(), lock);
         } finally {
-            indexerModel.unlockIndex(lock, true);
+            indexerModel.unlockIndexer(lock, true);
             deleteIndex("testChRepo");
             model.delete("repo1");
             model.delete("repo2");
@@ -110,23 +122,24 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
     public void deleteIndex(final String indexName) throws Exception {
         //set this up so we can wait for it later
         final CountDownLatch latch = new CountDownLatch(1);
-        indexerModel.getIndexes(new IndexerModelListener() {
+        indexerModel.getIndexers(new IndexerModelListener() {
             @Override
             public void process(IndexerModelEvent event) {
-                if (indexName.equals(event.getIndexName()) && INDEX_REMOVED.equals(event.getType())){
+                if (indexName.equals(event.getIndexerName()) && INDEX_REMOVED.equals(event.getType())) {
                     latch.countDown();
                 }
             }
         });
 
         //request the delete
-        String lock = indexerModel.lockIndex(indexName);
+        String lock = indexerModel.lockIndexer(indexName);
         try {
-            IndexDefinition index = indexerModel.getMutableIndex(indexName);
-            index.setGeneralState(IndexGeneralState.DELETE_REQUESTED);
-            indexerModel.updateIndex(index, lock);
+            indexerModel.updateIndexer(new IndexerDefinitionBuilder()
+                    .startFrom(indexerModel.getIndexer(indexName))
+                    .lifecycleState(IndexerDefinition.LifecycleState.DELETE_REQUESTED)
+                    .build(), lock);
         } finally {
-            indexerModel.unlockIndex(lock, true);
+            indexerModel.unlockIndexer(lock, true);
         }
 
         //wait for delete to finish.

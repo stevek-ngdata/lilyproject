@@ -174,25 +174,6 @@ public class LilyClient implements Closeable, RepositoryManager {
         repositoryManager = new LoadBalancingAndRetryingRepositoryManager(repositoryProvider, typeManagerProvider,
                 retryConf, idGenerator, recordFactory, repositoryModel);
 
-        LoadBalancingUtil.LBInstanceProvider<Indexer> indexerProvider = new LoadBalancingUtil.LBInstanceProvider<Indexer>() {
-            @Override
-            public Indexer getInstance(String repositoryName, String tableName) throws InterruptedException {
-                try {
-                    return getPlainIndexer();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (KeeperException e) {
-                    throw new RuntimeException(e);
-                } catch (RepositoryException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-
-        this.retryingAndLBIndexer = RetryUtil.getRetryingInstance(
-                LoadBalancingUtil.getLoadBalancedInstance(indexerProvider, Indexer.class, null, null), Indexer.class,
-                retryConf);
-
         schemaCache.start();
     }
 
@@ -284,9 +265,6 @@ public class LilyClient implements Closeable, RepositoryManager {
         if (server.repoMgr == null) {
             server.repoMgr = constructRepositoryManager(server);
         }
-        if (server.indexer == null) {
-            constructIndexer(server);
-        }
 
         return server;
     }
@@ -319,21 +297,6 @@ public class LilyClient implements Closeable, RepositoryManager {
     @Override
     public LRepository getDefaultRepository() throws InterruptedException, RepositoryException {
         return repositoryManager.getDefaultRepository();
-    }
-
-    /**
-     * Returns an Indexer that uses one of the available Lily servers (randomly selected).
-     * This indexer instance will not automatically retry operations and to balance requests
-     * over multiple Lily servers, you need to recall this method regularly to retrieve other
-     * indexer instances. Most of the time, you will rather use {@link #getIndexer()}.
-     */
-    public Indexer getPlainIndexer() throws IOException, NoServersException, InterruptedException,
-            KeeperException, RepositoryException {
-        if (isClosed) {
-            throw new IllegalStateException("This LilyClient is closed.");
-        }
-
-        return getServerNode().indexer;
     }
 
     /**
@@ -430,12 +393,6 @@ public class LilyClient implements Closeable, RepositoryManager {
         return hbaseConnections.getExisting(getHBaseConfiguration(zk));
     }
 
-    private void constructIndexer(ServerNode server) throws IOException, InterruptedException, KeeperException,
-            RepositoryException {
-
-        server.indexer = new RemoteIndexer(parseAddressAndPort(server.lilyAddressAndPort), new AvroConverter());
-    }
-
     private InetSocketAddress parseAddressAndPort(String addressAndPort) {
         int colonPos = addressAndPort.indexOf(":");
         if (colonPos == -1) {
@@ -452,7 +409,6 @@ public class LilyClient implements Closeable, RepositoryManager {
     private class ServerNode {
         private String lilyAddressAndPort;
         private RepositoryManager repoMgr;
-        private Indexer indexer;
 
         ServerNode(String lilyAddressAndPort) {
             this.lilyAddressAndPort = lilyAddressAndPort;
@@ -460,7 +416,6 @@ public class LilyClient implements Closeable, RepositoryManager {
 
         public void close() {
             Closer.close(repoMgr);
-            Closer.close(indexer);
         }
     }
 

@@ -235,7 +235,7 @@ public class RepositorySetup {
 
     public void setupRemoteAccess() throws Exception {
         lilyServer = new NettyServer(
-                new LilySpecificResponder(AvroLily.class, new AvroLilyImpl(repositoryManager, typeManager, null)
+                new LilySpecificResponder(AvroLily.class, new AvroLilyImpl(repositoryManager, typeManager)
                         ), new InetSocketAddress(0));
         lilyServer.start();
 

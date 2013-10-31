@@ -47,10 +47,8 @@ public class AvroServer {
 
     private Server server;
 
-    public AvroServer(RepositoryManager repositoryManager,
-            Indexer indexer, int port, int maxServerThreads) {
+    public AvroServer(RepositoryManager repositoryManager, int port, int maxServerThreads) {
         this.repositoryManager = repositoryManager;
-        this.indexer = indexer;
         this.port = port;
         this.maxServerThreads = maxServerThreads;
     }
@@ -58,7 +56,7 @@ public class AvroServer {
     @PostConstruct
     public void start() throws IOException, RepositoryException, InterruptedException {
         AvroLilyImpl avroLily = new AvroLilyImpl(repositoryManager,
-                repositoryManager.getDefaultRepository().getTypeManager(), indexer);
+                repositoryManager.getDefaultRepository().getTypeManager());
         Responder responder = new LilySpecificResponder(AvroLily.class, avroLily);
 
         ThreadFactory threadFactory = new CustomThreadFactory("avro-exechandler", new ThreadGroup("AvroExecHandler"));

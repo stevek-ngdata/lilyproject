@@ -419,30 +419,6 @@
       ],
       "response": "boolean",
       "errors":["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException", "AvroIOException"]
-    },
-
-    // indexer api functionality
-
-    "index": {
-      "request": [
-        {"name": "repository", "type": "string"},
-        {"name": "table", "type": "string"},
-        {"name": "recordId", "type": "bytes"}
-      ],
-      "response": ["null"],
-      "errors": ["AvroIndexerException", "AvroGenericException", "AvroInterruptedException"]
-    },
-
-    "indexOn": {
-      "request": [
-        {"name": "repository", "type": "string"},
-        {"name": "table", "type": "string"},
-        {"name": "recordId", "type": "bytes"},
-        {"name": "indexes", "type": {"type": "array", "items": "string"}}
-      ],
-      "response": ["null"],
-      "errors": ["AvroIndexerException", "AvroGenericException", "AvroInterruptedException"]
     }
-
  }
 }

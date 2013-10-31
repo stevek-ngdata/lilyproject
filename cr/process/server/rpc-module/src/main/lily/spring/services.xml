@@ -48,10 +48,6 @@
       service="org.lilyproject.repository.api.TypeManager"/>
 
   <lily:import-service
-      id="indexer"
-      service="org.lilyproject.indexer.Indexer"/>
-
-  <lily:import-service
       id="zooKeeper"
       service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
 
@@ -65,7 +61,6 @@
 
   <bean id="avroServer" class="org.lilyproject.avro.AvroServer">
     <constructor-arg ref="repositoryManager"/>
-    <constructor-arg ref="indexer"/>
     <constructor-arg value="${rpc:port}"/>
     <constructor-arg value="${rpc:maxServerThreads}"/>
   </bean>

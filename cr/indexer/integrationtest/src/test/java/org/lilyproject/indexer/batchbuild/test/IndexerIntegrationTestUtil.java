@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
+import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
 import org.apache.commons.io.IOUtils;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.indexer.model.api.WriteableIndexerModel;
-import org.lilyproject.indexer.model.impl.IndexDefinitionImpl;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.LRepository;
@@ -66,14 +66,17 @@ class IndexerIntegrationTestUtil {
 
     void createIndex(String name, String core, LRepository repository) throws Exception {
         byte[] indexConf = getResource("indexerconf.xml");
-        IndexDefinitionImpl indexDef = new IndexDefinitionImpl(name);
-        indexDef.setConfiguration(indexConf);
-        Map<String, String> solrShards = new HashMap<String, String>();
+        indexerModel.addIndexer(new IndexerDefinitionBuilder()
+                .name(name)
+                .configuration(indexConf)
+                /*
+                 Map<String, String> solrShards = new HashMap<String, String>();
         solrShards.put("shard1", "http://localhost:8983/solr" + "/" + core + "/");
         indexDef.setSolrShards(solrShards);
         if (! repository.getRepositoryName().equals("default"))
             indexDef.setRepositoryName(repository.getRepositoryName()); //optional for default
-        indexerModel.addIndex(indexDef);
+                */
+                .build());
         lilyProxy.getLilyServerProxy().waitOnIndexSubscriptionId(name, MINS15);
         if (lilyProxy.getHBaseProxy().getMode() != HBaseProxy.Mode.CONNECT)
             lilyProxy.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + name);

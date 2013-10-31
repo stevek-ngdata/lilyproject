@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
 import org.lilyproject.indexer.model.util.IndexInfo;
 import org.lilyproject.indexer.model.util.IndexesInfo;
@@ -211,9 +212,9 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
         Set<String> applicableIndexes = Sets.newHashSet();
         Set<String> nonApplicableIndexes = Sets.newHashSet();
         for (IndexInfo indexInfo : indexesInfo.getIndexInfos()) {
-            String queueSubscriptionId = indexInfo.getIndexDefinition().getQueueSubscriptionId();
+            String queueSubscriptionId = indexInfo.getIndexDefinition().getSubscriptionId();
             if (indexMatchesRepository(repositoryName, indexInfo) &&
-                    indexIsApplicable(indexInfo.getIndexerConf().getRecordFilter(), table, oldRecord, newRecord)) {
+                    indexIsApplicable(indexInfo.getLilyIndexerConf().getRecordFilter(), table, oldRecord, newRecord)) {
                 applicableIndexes.add(queueSubscriptionId);
             } else {
                 nonApplicableIndexes.add(queueSubscriptionId);
@@ -232,7 +233,7 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
     }
 
     boolean indexMatchesRepository(String repositoryName, IndexInfo indexInfo){
-        String indexRepo = indexInfo.getIndexDefinition().getRepositoryName();
+        String indexRepo = indexInfo.getIndexerConf().getGlobalParams().get(LResultToSolrMapper.REPO_KEY);
         indexRepo = (indexRepo != null ? indexRepo : RepoAndTableUtil.DEFAULT_REPOSITORY);
         return indexRepo.equals(repositoryName);
     }

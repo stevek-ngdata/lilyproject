@@ -41,6 +41,12 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.ngdata.hbaseindexer.ConfKeys;
+import com.ngdata.hbaseindexer.HBaseIndexerConfiguration;
+import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
+import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
+import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
+import com.ngdata.hbaseindexer.model.impl.IndexerModelImpl;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -70,8 +76,6 @@ import org.lilyproject.indexer.engine.IndexerMetrics;
 import org.lilyproject.indexer.engine.SolrClientException;
 import org.lilyproject.indexer.integration.IndexRecordFilterHook;
 import org.lilyproject.indexer.model.api.IndexDefinition;
-import org.lilyproject.indexer.model.api.WriteableIndexerModel;
-import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.Follow;
 import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
@@ -112,6 +116,7 @@ import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.sep.LilyEventListener;
 import org.lilyproject.sep.LilySepEvent;
+import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.Pair;
@@ -197,10 +202,11 @@ public class IndexerTest {
 
         repoSetup.setupCore();
 
-        indexerModel = new IndexerModelImpl(repoSetup.getZk());
+        Configuration conf = HBaseIndexerConfiguration.create();
+        indexerModel = new IndexerModelImpl(new ZooKeeperItfAdapter(repoSetup.getZk()), conf.get(ConfKeys.ZK_ROOT_NODE));
         PrematureRepositoryManager prematureRepositoryManager = new PrematureRepositoryManagerImpl();
 
-        indexesInfo = new IndexesInfoImpl(indexerModel, prematureRepositoryManager);
+        //indexesInfo = new IndexesInfoImpl(indexerModel, prematureRepositoryManager);
         RecordUpdateHook hook = new IndexRecordFilterHook(indexesInfo);
 
         repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
@@ -279,21 +285,22 @@ public class IndexerTest {
                 new IndexerMetrics(indexName), derefMap);
 
         // The registration of the index into the IndexerModel is only needed for the IndexRecordFilterHook
-        IndexDefinition indexDef = indexerModel.newIndex(indexName);
-        indexDef.setConfiguration(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream(confName)));
-        indexDef.setSolrShards(Collections.singletonMap("shard1", "http://somewhere/"));
-        indexDef.setQueueSubscriptionId("IndexUpdater_" + indexName);
-        indexDef.setRepositoryName(REPO_NAME);
-        indexerModel.addIndex(indexDef);
+        IndexerDefinition indexDef = new IndexerDefinitionBuilder().name(indexName)
+                .configuration(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream(confName)))
+                //.solrShards(Collections.singletonMap("shard1", "http://somewhere/"))
+                .subscriptionId("IndexUpdater_" + indexName)
+                //indexDef.setRepositoryName(REPO_NAME)
+                .build();
+        indexerModel.addIndexer(indexDef);
 
-        repoSetup.getSepModel().addSubscription(indexDef.getQueueSubscriptionId());
+        repoSetup.getSepModel().addSubscription(indexDef.getSubscriptionId());
 
-        repoSetup.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + indexName);
+        repoSetup.getHBaseProxy().waitOnReplicationPeerReady("Indexer_" + indexName);
 
         IndexUpdater indexUpdater = new IndexUpdater(indexer, new TrackingRepositoryManager(indexUpdaterRepository),
                 REPO_NAME, indexLocker, new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisherManager(),
-                "IndexUpdater_" + indexName);
-        repoSetup.startSepEventSlave("IndexUpdater_" + indexName,
+                "Indexer_" + indexName);
+        repoSetup.startSepEventSlave("Indexer_" + indexName,
                 new CompositeEventListener(repositoryManager, indexUpdater, messageVerifier, otherListener));
 
         waitForIndexesInfoUpdate(1);
@@ -301,9 +308,9 @@ public class IndexerTest {
 
     private static void cleanupIndex(String indexName) throws Exception {
         if (indexerModel != null) {
-            if (indexerModel.hasIndex(indexName)) {
+            if (indexerModel.hasIndexer(indexName)) {
                 System.out.println("doing the cleanup of " + indexName);
-                indexerModel.deleteIndex(indexName);
+                indexerModel.deleteIndexerInternal(indexName);
                 repoSetup.getSepModel().removeSubscription("IndexUpdater_" + indexName);
                 repoSetup.getHBaseProxy().waitOnReplicationPeerStopped("IndexUpdater_" + indexName);
                 repoSetup.stopSepEventSlave();

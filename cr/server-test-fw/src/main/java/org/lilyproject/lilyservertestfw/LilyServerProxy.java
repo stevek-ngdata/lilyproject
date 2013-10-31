@@ -27,21 +27,27 @@ import java.util.Set;
 
 import javax.management.ObjectName;
 
+import com.ngdata.hbaseindexer.ConfKeys;
+import com.ngdata.hbaseindexer.HBaseIndexerConfiguration;
+import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
+import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
+import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
+import com.ngdata.hbaseindexer.model.impl.IndexerModelImpl;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.indexer.model.api.IndexBatchBuildState;
 import org.lilyproject.indexer.model.api.IndexDefinition;
-import org.lilyproject.indexer.model.api.WriteableIndexerModel;
-import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.runtime.module.javaservice.JavaServiceManager;
+import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.jmx.JmxLiaison;
@@ -211,7 +217,8 @@ public class LilyServerProxy {
                     indexerModel = (WriteableIndexerModel) serviceMgr.getService(WriteableIndexerModel.class);
                     break;
                 case CONNECT:
-                    indexerModel = new IndexerModelImpl(getZooKeeper());
+                    Configuration conf = HBaseIndexerConfiguration.create();
+                    indexerModel = new IndexerModelImpl(new ZooKeeperItfAdapter(getZooKeeper()), conf.get(ConfKeys.ZK_ROOT_NODE));
                     break;
                 default:
                     throw new RuntimeException("Unexpected mode: " + mode);
@@ -296,7 +303,9 @@ public class LilyServerProxy {
                          boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
         long tryUntil = System.currentTimeMillis() + timeout;
         WriteableIndexerModel indexerModel = getIndexerModel();
-        IndexDefinition index = indexerModel.newIndex(indexName);
+        IndexerDefinition index = new IndexerDefinitionBuilder()
+                .name(indexName)
+                /*
         Map<String, String> solrShards = new HashMap<String, String>();
         String solrUri = "http://localhost:8983/solr";
         if (coreName != null) {
@@ -304,8 +313,10 @@ public class LilyServerProxy {
         }
         solrShards.put("shard1", solrUri);
         index.setSolrShards(solrShards);
-        index.setConfiguration(indexerConfiguration);
-        indexerModel.addIndex(index);
+        */
+                .configuration(indexerConfiguration)
+                .build();
+        indexerModel.addIndexer(index);
 
         if (waitForIndexerModel) {
             // Wait for subscriptionId to be known by indexerModel
@@ -334,19 +345,19 @@ public class LilyServerProxy {
         String subscriptionId = null;
 
         // Wait for index to be known by indexerModel
-        while (!indexerModel.hasIndex(indexName) && System.currentTimeMillis() < tryUntil) {
+        while (!indexerModel.hasIndexer(indexName) && System.currentTimeMillis() < tryUntil) {
             Thread.sleep(10);
         }
-        if (!indexerModel.hasIndex(indexName)) {
+        if (!indexerModel.hasIndexer(indexName)) {
             log.info("Index '" + indexName + "' not known to indexerModel within " + timeout + "ms");
             return subscriptionId;
         }
 
-        IndexDefinition indexDefinition = indexerModel.getIndex(indexName);
-        subscriptionId = indexDefinition.getQueueSubscriptionId();
+        IndexerDefinition indexDefinition = indexerModel.getIndexer(indexName);
+        subscriptionId = indexDefinition.getSubscriptionId();
         while (subscriptionId == null && System.currentTimeMillis() < tryUntil) {
             Thread.sleep(10);
-            subscriptionId = indexerModel.getIndex(indexName).getQueueSubscriptionId();
+            subscriptionId = indexerModel.getIndexer(indexName).getSubscriptionId();
         }
         if (subscriptionId == null) {
             log.info("SubscriptionId for index '" + indexName + "' not known to indexerModel within " + timeout + "ms");
@@ -395,14 +406,16 @@ public class LilyServerProxy {
         WriteableIndexerModel model = getIndexerModel();
 
         try {
-            String lock = model.lockIndex(indexName);
+            String lock = model.lockIndexer(indexName);
             try {
-                IndexDefinition index = model.getMutableIndex(indexName);
-                index.setBatchBuildState(IndexBatchBuildState.BUILD_REQUESTED);
-                index.setBatchIndexConfiguration(batchConf);
-                model.updateIndex(index, lock);
+                IndexerDefinition index = model.getIndexer(indexName);
+                IndexerDefinitionBuilder builder = new IndexerDefinitionBuilder()
+                        .startFrom(index)
+                        .batchIndexingState(IndexerDefinition.BatchIndexingState.BUILD_REQUESTED)
+                        .batchIndexConfiguration(batchConf);
+                model.updateIndexer(builder.build(), lock);
             } finally {
-                model.unlockIndex(lock);
+                model.unlockIndexer(lock);
             }
         } catch (Exception e) {
             throw new Exception("Error launching batch index build.", e);
@@ -413,9 +426,9 @@ public class LilyServerProxy {
             long tryUntil = System.currentTimeMillis() + timeOut;
             while (System.currentTimeMillis() < tryUntil) {
                 Thread.sleep(100);
-                IndexDefinition definition = model.getIndex(indexName);
+                IndexerDefinition definition = model.getIndexer(indexName);
 
-                if (definition.getBatchBuildState() == IndexBatchBuildState.INACTIVE) {
+                if (definition.getBatchIndexingState() == IndexerDefinition.BatchIndexingState.INACTIVE) {
                     Long amountFailed = definition.getLastBatchBuildInfo().getCounters().get(COUNTER_NUM_FAILED_RECORDS);
                     boolean successFlag = definition.getLastBatchBuildInfo().getSuccess();
                     if (successFlag && (amountFailed == null || amountFailed == 0L)) {

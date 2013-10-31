@@ -37,15 +37,17 @@
 
   <modules>
     <module>api</module>
-    <module>remote-impl</module>
+    <!--module>remote-impl</module-->
     <module>engine</module>
     <module>derefmap-indexfilter</module>
     <module>sep-filter</module>
     <module>model</module>
+    <!--
     <module>admin-cli</module>
     <module>worker</module>
     <module>master</module>
     <module>batchbuild</module>
+    -->
     <module>hbase-indexer-mapper</module>
     <module>integrationtest</module>
   </modules>

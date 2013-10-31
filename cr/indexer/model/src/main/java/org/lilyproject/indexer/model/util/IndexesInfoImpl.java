@@ -15,6 +15,19 @@
  */
 package org.lilyproject.indexer.model.util;
 
+import com.ngdata.hbaseindexer.conf.IndexerConf;
+import com.ngdata.hbaseindexer.conf.XmlIndexerConfReader;
+import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
+import com.ngdata.hbaseindexer.model.api.IndexerModel;
+import com.ngdata.hbaseindexer.model.api.IndexerModelEvent;
+import com.ngdata.hbaseindexer.model.api.IndexerModelListener;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lilyproject.indexer.model.api.LResultToSolrMapper;
+import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RepositoryManager;
+
 import javax.annotation.PreDestroy;
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
@@ -26,20 +39,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.lilyproject.indexer.model.api.IndexDefinition;
-import org.lilyproject.indexer.model.api.IndexerModel;
-import org.lilyproject.indexer.model.api.IndexerModelEvent;
-import org.lilyproject.indexer.model.api.IndexerModelListener;
-import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
-import org.lilyproject.indexer.model.indexerconf.IndexerConf;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
-import org.lilyproject.repository.api.LRepository;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.RepositoryManager;
 
 /**
  * See {@link IndexesInfo}.
@@ -60,6 +59,8 @@ public class IndexesInfoImpl implements IndexesInfo {
     /** Has the initial load of the indexes been done? */
     private volatile boolean initialized = false;
 
+    private XmlIndexerConfReader reader = new XmlIndexerConfReader();
+
     public IndexesInfoImpl(IndexerModel indexerModel, RepositoryManager repositoryManager) {
         this.indexerModel = indexerModel;
         this.repositoryManager = repositoryManager;
@@ -75,32 +76,35 @@ public class IndexesInfoImpl implements IndexesInfo {
     private synchronized void refresh() {
         Map<String, IndexInfo> newIndexInfos = new HashMap<String, IndexInfo>();
 
-        Collection<IndexDefinition> indexDefs = indexerModel.getIndexes();
-        for (IndexDefinition indexDef : indexDefs) {
+        Collection<IndexerDefinition> indexDefs = indexerModel.getIndexers();
+        for (IndexerDefinition indexDef : indexDefs) {
             byte[] indexerConfXml = indexDef.getConfiguration();
             IndexerConf indexerConf = null;
 
             try {
-                LRepository repo = indexDef.getRepositoryName() != null ?
-                        repositoryManager.getRepository(indexDef.getRepositoryName()) :
-                        repositoryManager.getDefaultRepository();
+                indexerConf = this.reader.read(new ByteArrayInputStream(indexerConfXml));
+                // check if this is a lily hbase indexer mapper
+                if (!LResultToSolrMapper.class.isAssignableFrom(indexerConf.getMapperClass())) {
+                    continue;
+                }
 
-                indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfXml), repo);
+                // If parsing failed, we exclude the index
+                if (indexerConf != null) {
+                    newIndexInfos.put(indexDef.getName(), new IndexInfo(indexDef, indexerConf, repositoryManager));
+                }
             } catch (Throwable t) {
                 log.error("Error parsing indexer conf", t);
             }
 
-            // If parsing failed, we exclude the index
-            if (indexerConf != null) {
-                newIndexInfos.put(indexDef.getName(), new IndexInfo(indexDef, indexerConf));
-            }
+
         }
 
         // Pre-calculate some cross-index information
         Set<QName> recordFilterFieldDependencies = new HashSet<QName>();
         boolean recordFilterDependsOnRecordType = false;
         for (IndexInfo indexInfo : newIndexInfos.values()) {
-            IndexRecordFilter recordFilter = indexInfo.getIndexerConf().getRecordFilter();
+
+            IndexRecordFilter recordFilter = indexInfo.getLilyIndexerConf().getRecordFilter();
             recordFilterFieldDependencies.addAll(recordFilter.getFieldDependencies());
             if (!recordFilterDependsOnRecordType) {
                 recordFilterDependsOnRecordType = recordFilter.dependsOnRecordType();

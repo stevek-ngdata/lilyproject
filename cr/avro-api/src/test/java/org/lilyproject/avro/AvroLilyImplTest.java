@@ -57,9 +57,8 @@ public class AvroLilyImplTest {
         when(repository.getTable(Table.RECORD.name)).thenReturn(table);
         when(repositoryManager.getRepository(repositoryName)).thenReturn(repository);
         TypeManager typeManager = mock(TypeManager.class);
-        Indexer indexer = mock(Indexer.class);
         avroConverter = mock(AvroConverter.class);
-        avroLilyImpl = new AvroLilyImpl(repositoryManager, typeManager, indexer);
+        avroLilyImpl = new AvroLilyImpl(repositoryManager, typeManager);
         avroLilyImpl.setAvroConverter(avroConverter);
     }
 

@@ -57,7 +57,7 @@
 
   <lily:export-service
       ref="indexerModel"
-      service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
+      service="com.ngdata.hbaseindexer.model.api.WriteableIndexerModel"/>
 
   <lily:export-service
       ref="sepModel"
@@ -151,8 +151,9 @@
     </property>
   </bean>
 
-  <bean id="indexerModel" class="org.lilyproject.indexer.model.impl.IndexerModelImpl">
-    <constructor-arg ref="zooKeeper"/>
+  <bean id="indexerModel" class="com.ngdata.hbaseindexer.model.impl.IndexerModelImpl">
+    <constructor-arg ref="zooKeeperAdapter"/>
+    <constructor-arg value="${hbaseindexer:znodeParent}"/>
   </bean>
 
   <bean id="sepModel" class="com.ngdata.sep.impl.SepModelImpl">
