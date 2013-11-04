@@ -262,6 +262,9 @@ public class HBaseProxy {
             if (name.startsWith("lily.test.hbase.")) {
                 String hbasePropName = name.substring("lily.test.".length());
                 conf.set(hbasePropName, entry.getValue().toString());
+            } else if (name.startsWith("lily.test.hbase-site.")) {
+                String hbasePropName = name.substring("lily.test.hbase-site.".length());
+                conf.set(hbasePropName, entry.getValue().toString());
             }
         }
     }
