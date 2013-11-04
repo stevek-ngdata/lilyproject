@@ -29,7 +29,7 @@
   <properties conf:inheritKey="string(name)">
     <property>
       <name>mapred.job.tracker</name>
-      <value>localhost:9001</value>
+      <value>localhost:8021</value>
     </property>
     <!-- For most jobs launched from within Lily, speculative execution isn't helpful -->
     <property>

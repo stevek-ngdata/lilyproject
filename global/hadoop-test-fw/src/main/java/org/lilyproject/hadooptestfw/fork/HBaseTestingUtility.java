@@ -4,7 +4,7 @@
 //  This file was literally copied from HBase with the following changes applied:
 //   - Fix ZooKeeper client port to 2181
 //   - Fix Hadoop namenode port number to 8020
-//   - Fix jobtracker port number to 9001 + set task tracker hostname to localhost (useful for links in web ui to work)
+//   - Fix jobtracker port number to 8021 + set task tracker hostname to localhost (useful for links in web ui to work)
 //   - Add getMRCluster()
 //   - Allow to keep data from previous runs (optional) (doesn't format hdfs)
 //   - Use custom version of MiniZooKeeperCluster that allows to keep data
@@ -1476,7 +1476,7 @@ public class HBaseTestingUtility {
         // Lily change: fix port number + set host name (+ fix # of servers to 1) + use custom jobconf so that
         // hadoop dir properties get passed on.
         JobConf jobConf = new JobConf(conf);
-        mrCluster = new MiniMRCluster(9001, 0, 1,
+        mrCluster = new MiniMRCluster(8021, 0, 1,
                 FileSystem.get(conf).getUri().toString(), 1, null, new String[]{"localhost"}, null, jobConf);
         // End Lily change
 
