@@ -49,7 +49,7 @@ To run this example:
 
    - when using launch-test-lily:
 
-   /path/to/hadoop-2.0.0-mr1-cdh4.0.X/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar -jt localhost:9001 -fs localhost:8020 -z localhost
+   /path/to/hadoop-2.0.0-mr1-cdh4.0.X/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar -jt localhost:8021 -fs localhost:8020 -z localhost
 
    Note:
     - the options -jt and -fs are generic hadoop options handled by ToolRunner
