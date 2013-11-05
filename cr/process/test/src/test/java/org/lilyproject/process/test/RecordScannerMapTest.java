@@ -32,16 +32,15 @@ public class RecordScannerMapTest {
 
     @Before
     public void setup () {
-        cache = RecordScannerMapBuilder.createRecordScannerMap(10, TimeUnit.MILLISECONDS);
+        cache = RecordScannerMapBuilder.createRecordScannerMap(50, TimeUnit.MILLISECONDS);
     }
-
 
     @Test
     public void testRecordScannerMapExpiration() throws Exception{
         RecordScanner scanner = new DummyRecordScanner();
         String id = "TTT";
         cache.put(id, scanner);
-        Thread.currentThread().sleep(11);
+        Thread.sleep(100);
         RecordScanner returnScanner = cache.getIfPresent(id);
         Assert.assertNull(returnScanner);
 
@@ -52,12 +51,9 @@ public class RecordScannerMapTest {
         RecordScanner scanner = new DummyRecordScanner();
         String id = "QQQ";
         cache.put(id, scanner);
-        Thread.currentThread().sleep(5);
+        Thread.sleep(10);
         Assert.assertNotNull(cache.getIfPresent(id));
-        // should still be here after 1.3s
-        Thread.currentThread().sleep(8);
-        Assert.assertNotNull(cache.getIfPresent(id));
-        Thread.currentThread().sleep(11);
+        Thread.sleep(100);
         Assert.assertNull(cache.getIfPresent(id));
     }
 
