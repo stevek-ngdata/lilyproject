@@ -59,7 +59,7 @@ public class RepositoryModelTest {
         zkCluster.setDefaultClientPort(zkClientPort);
         zkCluster.startup(zkDir);
 
-        zk = ZkUtil.connect("localhost:" + zkClientPort, 5000);
+        zk = ZkUtil.connect("localhost:" + zkClientPort, 15000);
         repositoryModel = new RepositoryModelImpl(zk);
     }
 
@@ -118,8 +118,8 @@ public class RepositoryModelTest {
 
     @Test
     public void testTwoModelInstances() throws Exception {
-        ZooKeeperItf zk1 = ZkUtil.connect("localhost:" + zkClientPort, 5000);
-        ZooKeeperItf zk2 = ZkUtil.connect("localhost:" + zkClientPort, 5000);
+        ZooKeeperItf zk1 = ZkUtil.connect("localhost:" + zkClientPort, 15000);
+        ZooKeeperItf zk2 = ZkUtil.connect("localhost:" + zkClientPort, 15000);
         RepositoryModel repositoryModel1 = new RepositoryModelImpl(zk1);
         RepositoryModel repositoryModel2 = new RepositoryModelImpl(zk2);
 
