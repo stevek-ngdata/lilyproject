@@ -88,6 +88,7 @@
     <module>cr/linkindex</module>
     <module>cr/repo-util</module>
     <module>cr/repo-test-fw</module>
+    <module>cr/fake-repository</module>
     <module>cr/avro-api</module>
     <module>cr/process</module>
     <module>cr/repository-api-tutorial</module>
