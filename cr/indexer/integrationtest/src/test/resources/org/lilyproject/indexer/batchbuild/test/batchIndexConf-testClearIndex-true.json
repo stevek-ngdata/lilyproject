@@ -1,0 +1,10 @@
+{
+    "scan" : {
+        "returnFields" : { 
+            "type" : "ALL"
+        },
+        "caching" : 1024,
+        "cacheBlocks" : false
+    },
+    "clearIndex" : true
+}

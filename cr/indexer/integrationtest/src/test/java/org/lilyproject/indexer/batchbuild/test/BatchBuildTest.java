@@ -15,10 +15,6 @@
  */
 package org.lilyproject.indexer.batchbuild.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -33,6 +29,7 @@ import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.SolrInputDocument;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -66,6 +63,10 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.VersionTag;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;
@@ -163,7 +164,7 @@ public class BatchBuildTest {
         // First create some content
         //
         table.recordBuilder()
-                .id("batch-index-test")
+                .id(assertId)
                 .recordType(rt1.getName())
                 .field(ft1.getName(), "test1")
                 .create();
@@ -173,6 +174,50 @@ public class BatchBuildTest {
         QueryResponse response = solrServer.query(new SolrQuery("field1:test1*"));
         assertEquals(1, response.getResults().size());
         assertEquals("USER." + assertId, response.getResults().get(0).getFieldValue("lily.id"));
+    }
+
+    @Test
+    public void testClearIndex() throws Exception {
+        doTestClearIndex("clearIndex", true);
+    }
+
+    @Test
+    public void testNoClearIndex() throws Exception {
+        doTestClearIndex("dontClearIndex", false);
+    }
+
+    public void doTestClearIndex(String assertId, boolean clear) throws Exception {
+
+        byte[] defaultConf = getResourceAsByteArray(String.format("batchIndexConf-testClearIndex-%s.json", clear));
+        setBatchIndexConf(defaultConf, null, false);
+
+        SolrInputDocument extraDoc = new SolrInputDocument();
+        extraDoc.addField("field1", assertId + "extra");
+        extraDoc.addField("lily.id", "doesnotmatter");
+        extraDoc.addField("lily.key", "doesnotmatter2");
+        extraDoc.addField("lily.table", "record");
+        solrServer.add(extraDoc);
+        solrServer.commit();
+
+        //
+        // First create some content
+        //
+        table.recordBuilder()
+                .id(assertId)
+                .recordType(rt1.getName())
+                .field(ft1.getName(), assertId)
+                .create();
+
+        this.buildAndCommit();
+
+        QueryResponse response = solrServer.query(new SolrQuery("field1:" + assertId + "*"));
+        if (clear) {
+            assertEquals(1, response.getResults().size());
+            assertEquals("USER." + assertId, response.getResults().get(0).getFieldValue("lily.id"));
+        } else {
+            assertEquals(2, response.getResults().size());
+        }
+
     }
 
     /**
@@ -205,7 +250,7 @@ public class BatchBuildTest {
         // Check if 1 record and not 2 are in the index
         QueryResponse response = solrServer.query(new SolrQuery("field1:test2*"));
         assertEquals(1, response.getResults().size());
-        assertEquals("USER." + "batch-index-test2", response.getResults().get(0).getFieldValue("lily.id"));
+        assertEquals("USER." + assertId, response.getResults().get(0).getFieldValue("lily.id"));
         // check that  the last used batch index conf = default
         IndexerDefinition index = model.getIndexer(INDEX_NAME);
 
