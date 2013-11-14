@@ -41,6 +41,8 @@ import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.solr.client.solrj.impl.CloudSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.tika.io.IOUtils;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters;

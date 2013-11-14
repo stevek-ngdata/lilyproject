@@ -24,6 +24,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.apache.solr.client.solrj.impl.CloudSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.indexer.batchbuild.IndexingMapper;
@@ -97,13 +99,28 @@ public class BatchIndexBuilder {
         job.setNumReduceTasks(0);
         job.setOutputFormatClass(NullOutputFormat.class);
 
-
         JsonNode batchConfigurationNode =
                 JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration));
         RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(batchConfigurationNode.get("scan"), repository);
         recordScan.setReturnFields(ReturnFields.ALL);
         recordScan.setCacheBlocks(false);
         recordScan.setCaching(1024);
+
+        if (batchConfigurationNode.has("clearIndex") && batchConfigurationNode.get("clearIndex").getBooleanValue()) {
+            if (index.getSolrShards() == null) {
+                CloudSolrServer server = new CloudSolrServer(index.getZkConnectionString());
+                server.setDefaultCollection(index.getSolrCollection());
+                server.deleteByQuery("*:*");
+                server.commit();
+            } else {
+                // do a delete *:* on all shards
+                for (String shard: index.getSolrShards().values()) {
+                    HttpSolrServer server = new HttpSolrServer(shard);
+                    server.deleteByQuery("*:*");
+                    server.commit();
+                }
+            }
+        }
 
         if (batchConfigurationNode.has("clearDerefMap") &&
                 batchConfigurationNode.get("clearDerefMap").asBoolean(false)) {
