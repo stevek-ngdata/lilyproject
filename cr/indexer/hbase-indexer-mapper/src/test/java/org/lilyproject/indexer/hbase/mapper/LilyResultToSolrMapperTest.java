@@ -28,6 +28,8 @@ import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repotestfw.FakeRepositoryManager;
 import org.lilyproject.tools.import_.cli.JsonImport;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
+import org.lilyproject.util.repo.RecordEvent;
 
 import java.util.List;
 
@@ -80,6 +82,11 @@ public class LilyResultToSolrMapperTest {
         TypeManager typeManager = repositoryManager.getDefaultRepository().getTypeManager();
         List<KeyValue> kvs = Lists.newArrayList();
 
+        RecordEvent event = new RecordEvent();
+        event.setType(RecordEvent.Type.CREATE);
+        event.setTableName(LilyHBaseSchema.Table.RECORD.name);
+        event.setVersionCreated(record.getVersion());
+
         byte[] rowKey = record.getId().toBytes();
         byte[] family = LilyHBaseSchema.RecordCf.DATA.bytes;
 
@@ -118,12 +125,15 @@ public class LilyResultToSolrMapperTest {
                 HBaseRepository.writeMetadataWithLengthSuffix(metadata, output);
             }
 
+            event.addUpdatedField(fieldType.getId());
+
             kvs.add(new KeyValue(rowKey, family,
                     Bytes.add(new byte[]{LilyHBaseSchema.RecordColumn.DATA_PREFIX}, fieldType.getId().getBytes()),
                     output.toByteArray()));
         }
         
         // fields to delete, should we add these too?
+        kvs.add(new KeyValue(rowKey, family, LilyHBaseSchema.RecordColumn.PAYLOAD.bytes, event.toJsonBytes()));
 
         return new Result(kvs);
     }
@@ -133,6 +143,16 @@ public class LilyResultToSolrMapperTest {
         @Override
         public void add(SolrInputDocument solrDocument) {
             documents.add(solrDocument);
+        }
+
+        @Override
+        public void deleteById(String documentId) {
+            //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public void deleteByQuery(String query) {
+            //To change body of implemented methods use File | Settings | File Templates.
         }
     }
 }
