@@ -67,9 +67,21 @@ public class FakeLTable implements Repository {
             }
 
         }
+
         record = writeRecord(record);
         return record;
 
+    }
+    private Record merge(Record r1, Record r2) {
+        Record result = r2.clone();
+        if (r1.getRecordTypeName() != null) {
+            result.setRecordType(r1.getRecordTypeName());
+        }
+        // TODO merge meta map
+        for(Map.Entry<QName,Object> entry : r1.getFields().entrySet()) {
+            result.setField(entry.getKey(), entry.getValue());
+        }
+        return result;
     }
 
     private Record writeRecord(Record record) throws RepositoryException, InterruptedException{
@@ -78,7 +90,8 @@ public class FakeLTable implements Repository {
         ResponseStatus status = ResponseStatus.UP_TO_DATE;
         if (records.containsKey(record.getId())) {
             originalRecord = records.get(record.getId());
-            //TODO support incremental updates
+            record = merge(record, originalRecord);
+
             if (!originalRecord.equals(record)) {
                 status = ResponseStatus.UPDATED;
             }
