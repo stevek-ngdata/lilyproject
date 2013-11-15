@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<indexer
+    table="${REPOTABLE}"
+    mapper="org.lilyproject.indexer.hbase.mapper.LilyResultToSolrMapper"
+    unique-key-formatter="org.lilyproject.indexer.hbase.mapper.LilyUniqueKeyFormatter"
+    unique-key-field="lily.key"
+    >
+  <param name="zookeeper" value="${ZOOKEEPER}"/>
+  <param name="name" value="${INDEXNAME}"/>
+  <param name="repository" value="${REPOSITORY}"/>
+  <param name="table" value="${TABLE}"/>
+
+  <!-- an xml encoded version of what would have been found in the lily indexer conf -->
+  <param name="indexerConf" value="${CONF}"/>
+</indexer>
