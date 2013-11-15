@@ -58,6 +58,10 @@ public class LilyProxy {
         this(mode, null, null);
     }
 
+    public LilyProxy(Mode mode, File testHome, Boolean clearData) throws IOException{
+        this(mode, testHome, clearData, Boolean.FALSE);
+    }
+
     /**
      * Creates a new LilyProxy
      *
@@ -65,9 +69,10 @@ public class LilyProxy {
      * @param testHome  the directory in which to store data and logfiles. Can only be used in EMBED mode.
      * @param clearData if true, clear the data when stopping the LilyProxy.
      *                  Should be used together with the testHome parameter and can only be used in EMBED mode.
+     * @param enableSolrCloud if true, solr will be started in cloud mode
      * @throws IOException
      */
-    public LilyProxy(Mode mode, File testHome, Boolean clearData) throws IOException {
+    public LilyProxy(Mode mode, File testHome, Boolean clearData, Boolean enableSolrCloud) throws IOException {
         if (mode == null) {
             String modeProp = System.getProperty(MODE_PROP_NAME);
             if (modeProp == null || modeProp.equals("") || modeProp.equals("embed")) {
@@ -133,7 +138,7 @@ public class LilyProxy {
             hbaseProxy.setCleanStateOnConnect(false);
         }
         hbaseProxy.setEnableMapReduce(true);
-        solrProxy = new SolrProxy(solrMode, this.clearData);
+        solrProxy = new SolrProxy(solrMode, this.clearData, enableSolrCloud);
         lilyServerProxy = new LilyServerProxy(lilyServerMode, this.clearData, hbaseProxy);
     }
 
