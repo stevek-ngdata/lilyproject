@@ -38,6 +38,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.impl.CloudSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
@@ -178,7 +179,13 @@ public class SolrProxy {
     private void initSolrServers(SolrDefinition solrDef) throws MalformedURLException {
         solrServers.clear();
         for (SolrDefinition.CoreDefinition core : solrDef.getCores()) {
-            SolrServer solrServer = new HttpSolrServer(getUri(core.getName()), httpClient);
+            SolrServer solrServer = null;
+            if (enableSolrCloud) {
+                solrServer = new CloudSolrServer("localhost:2181/solr");
+                ((CloudSolrServer)solrServer).setDefaultCollection(core.getName());
+            } else {
+                solrServer = new HttpSolrServer(getUri(core.getName()), httpClient);
+            }
             solrServers.put(core.getName(), solrServer);
         }
     }
