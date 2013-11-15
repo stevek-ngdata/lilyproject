@@ -27,7 +27,7 @@ public class IndexerEditFilterProvider implements WALEditFilterProvider {
 
     @Override
     public WALEditFilter getWALEditFilter(String subscriptionId) {
-        if (subscriptionId.startsWith("IndexUpdater_")) {
+        if (subscriptionId.startsWith("Indexer_")) {
             return new IndexerEditFilter(subscriptionId);
         } else if ("LinkIndexUpdater".equals(subscriptionId)) {
             return new LinkIndexUpdaterEditFilter();
