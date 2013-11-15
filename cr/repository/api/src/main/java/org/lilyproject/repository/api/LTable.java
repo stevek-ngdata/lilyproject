@@ -320,7 +320,9 @@ public interface LTable {
      * If fieldNames are specified, the read is limited to include only this subset of fields.
      * Otherwise all fields are read.
      *
-     * <p>If the given list of fields is empty, all fields will be read.
+     * <p>If the given list of fields is empty, all fields will be read.</p>
+     * <p>When dealing with versionless records e.g. Records without any versioned fields then an empty list will be
+     * returned</p>
      */
     List<Record> readVersions(RecordId recordId, Long fromversion, Long toVersion, QName... fieldNames)
             throws RepositoryException, InterruptedException;
