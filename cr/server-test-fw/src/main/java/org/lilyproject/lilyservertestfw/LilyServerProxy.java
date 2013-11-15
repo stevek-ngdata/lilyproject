@@ -42,10 +42,11 @@ import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.indexer.model.api.IndexBatchBuildState;
-import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.model.api.RepositoryDefinition;
+import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.solrtestfw.SolrProxy;
@@ -271,11 +272,6 @@ public class LilyServerProxy {
         addIndexFromResource(indexName, coreName, indexerConf, timeout, true, true, true);
     }
 
-    public void validateIndexerconf(byte[] indexerConfiguration) throws Exception {
-        IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration),
-                getClient().getDefaultRepository());
-    }
-
     /**
      * Adds an index from in index configuration contained in a resource.
      *
@@ -451,5 +447,18 @@ public class LilyServerProxy {
 
     public LilyServerTestUtility getLilyServerTestingUtility() {
         return lilyServerTestUtility;
+    }
+
+    public void createRepository(String repositoryName) {
+        try {
+            RepositoryModel model = new RepositoryModelImpl(getZooKeeper());
+            if (!model.repositoryExistsAndActive(repositoryName)) {
+                model.create(repositoryName);
+                model.waitUntilRepositoryInState(repositoryName, RepositoryDefinition.RepositoryLifecycleState.ACTIVE,
+                        100000);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }
