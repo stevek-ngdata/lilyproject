@@ -37,7 +37,6 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -150,33 +149,6 @@ public class LilyClientTest {
         }
 
         assertEquals("Number of scanned records", 10, i);
-    }
-
-    @Test
-    public void testIndexerApi() throws Exception {
-        LilyClient client = lilyProxy.getLilyServerProxy().getClient();
-
-        final Repository repository = client.getRepository();
-
-        // Create a field type and record type
-        String NS = "org.lilyproject.client.test";
-        TypeManager typeManager = repository.getTypeManager();
-        FieldType fieldType = typeManager.newFieldType("STRING", new QName(NS, "indexfield"), Scope.VERSIONED);
-        fieldType = typeManager.createFieldType(fieldType);
-
-        RecordType recordType = typeManager.newRecordType(new QName(NS, "indexrt"));
-        recordType.addFieldTypeEntry(fieldType.getId(), true);
-        recordType = typeManager.createRecordType(recordType);
-
-        // Create a record
-        Record record = repository.newRecord();
-        record.setId(repository.getIdGenerator().newRecordId("indexrecord"));
-        record.setRecordType(recordType.getName());
-        record.setField(fieldType.getName(), "value");
-        repository.create(record);
-
-        // explicitly index the record (if this succeeds, the test succeeded to verify that we can access the indexer through lily-client)
-        client.getIndexer().index(repository.getRepositoryName(), Table.RECORD.name, record.getId());
     }
 
     @Test

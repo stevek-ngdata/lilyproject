@@ -52,8 +52,6 @@ import org.lilyproject.client.impl.LoadBalancingAndRetryingRepositoryManager;
 import org.lilyproject.client.impl.LoadBalancingUtil;
 import org.lilyproject.client.impl.RemoteSchemaCache;
 import org.lilyproject.client.impl.RetryUtil;
-import org.lilyproject.indexer.Indexer;
-import org.lilyproject.indexer.RemoteIndexer;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.IdGenerator;
@@ -110,7 +108,6 @@ public class LilyClient implements Closeable, RepositoryManager {
     private ZkWatcher watcher = new ZkWatcher();
 
     private RepositoryManager repositoryManager;
-    private Indexer retryingAndLBIndexer;
 
     private RemoteSchemaCache schemaCache;
     private HBaseConnections hbaseConnections = new HBaseConnections();
@@ -297,17 +294,6 @@ public class LilyClient implements Closeable, RepositoryManager {
     @Override
     public LRepository getDefaultRepository() throws InterruptedException, RepositoryException {
         return repositoryManager.getDefaultRepository();
-    }
-
-    /**
-     * Returns an indexer instance which will automatically balance requests over the available
-     * Lily servers, and will retry operations according to what is specified in {@link RetryConf}.
-     *
-     * <p>To see some information when the client goes into retry mode, enable INFO logging for
-     * the category org.lilyproject.client.
-     */
-    public Indexer getIndexer() {
-        return retryingAndLBIndexer;
     }
 
     public RetryConf getRetryConf() {
