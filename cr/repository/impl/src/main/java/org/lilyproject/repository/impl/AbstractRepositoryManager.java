@@ -64,7 +64,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
      * always visible by the Lily Data Repository.
      */
     private static final Set<String> DEFAULT_PERMISSIONS = ImmutableSet.of(
-            PERMISSION_APP_NAME + ":rw:column_qualifier:bin_starts_with:"
+            PERMISSION_APP_NAME + ":rw:column=qualifier:bin_starts_with:"
                     + Bytes.toStringBinary(new byte[]{LilyHBaseSchema.RecordColumn.SYSTEM_PREFIX}));
 
     /**
