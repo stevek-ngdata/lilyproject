@@ -421,6 +421,7 @@ public class RecordDecoder {
         return new Pair<SchemaId, Long>(recordTypeId, recordTypeVersion);
     }
 
+    // Fixme consider returning  Optional<Long>
     public Long getLatestVersion(Result result) {
         byte[] latestVersionBytes = getLatest(result, RecordCf.DATA.bytes, LilyHBaseSchema.RecordColumn.VERSION.bytes);
         return latestVersionBytes != null ? Bytes.toLong(latestVersionBytes) : null;
