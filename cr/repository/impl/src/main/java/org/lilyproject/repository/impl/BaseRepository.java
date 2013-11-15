@@ -589,13 +589,16 @@ public abstract class BaseRepository implements Repository {
         if (fromVersion < 1L) {
             fromVersion = 1L; // Put the fromVersion to a sensible value
         }
-        Long latestVersion = recdec.getLatestVersion(result);
-        if (latestVersion < toVersion) {
-            toVersion = latestVersion; // Limit the toVersion to the highest possible version
-        }
         List<Long> versionsToRead = new ArrayList<Long>();
-        for (long version = fromVersion; version <= toVersion; version++) {
-            versionsToRead.add(version);
+        Long latestVersion = recdec.getLatestVersion(result);
+        if (latestVersion != null) {
+            if (latestVersion < toVersion) {
+                toVersion = latestVersion; // Limit the toVersion to the highest possible version
+            }
+
+            for (long version = fromVersion; version <= toVersion; version++) {
+                versionsToRead.add(version);
+            }
         }
         return recdec.decodeRecords(recordId, versionsToRead, result, fieldTypes);
     }
