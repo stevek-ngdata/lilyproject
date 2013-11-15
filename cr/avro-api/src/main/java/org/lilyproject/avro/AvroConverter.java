@@ -31,7 +31,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.avro.repository.RecordAsBytesConverter;
 import org.lilyproject.bytes.impl.DataInputImpl;
-import org.lilyproject.indexer.IndexerException;
 import org.lilyproject.repository.api.CompareOp;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeEntry;
@@ -394,30 +393,6 @@ public class AvroConverter {
             RepositoryException repositoryException = new RepositoryException(avroException.getMessage$());
             restoreCauses(avroException.getRemoteCauses(), repositoryException);
             return repositoryException;
-        }
-    }
-
-    public AvroIndexerException convert(IndexerException exception) {
-        AvroIndexerException avroIndexerException = new AvroIndexerException();
-        avroIndexerException.setMessage$(exception.getMessage());
-        avroIndexerException.setRemoteCauses(buildCauses(exception));
-        avroIndexerException.setExceptionClass(exception.getClass().getName());
-        return avroIndexerException;
-    }
-
-    public IndexerException convert(AvroIndexerException avroException) {
-        try {
-            Class exceptionClass = Class.forName(avroException.getExceptionClass());
-            Constructor constructor = exceptionClass.getConstructor(String.class);
-            IndexerException indexerException = (IndexerException) constructor.newInstance(avroException.getMessage$());
-            restoreCauses(avroException.getRemoteCauses(), indexerException);
-            return indexerException;
-        } catch (Exception e) {
-            log.error("Failure while converting remote exception", e);
-
-            IndexerException indexerException = new IndexerException(avroException.getMessage$());
-            restoreCauses(avroException.getRemoteCauses(), indexerException);
-            return indexerException;
         }
     }
 

@@ -31,7 +31,6 @@ import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.execution.ExecutionHandler;
-import org.lilyproject.indexer.Indexer;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
@@ -39,7 +38,6 @@ import org.lilyproject.util.concurrent.WaitPolicy;
 
 public class AvroServer {
     private RepositoryManager repositoryManager;
-    private Indexer indexer;
     private int port;
     private int maxServerThreads;
     private ExecutionHandler executionHandler;

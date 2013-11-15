@@ -98,10 +98,11 @@ public class BatchBuildTest {
         IOUtils.closeQuietly(is);
 
         lilyProxy.start(solrSchema);
-        createRepository(REPO_NAME);
+
         solrProxy = lilyProxy.getSolrProxy();
         solrServer = solrProxy.getSolrServer();
         lilyServerProxy = lilyProxy.getLilyServerProxy();
+        lilyServerProxy.createRepository(REPO_NAME);
         lilyClient = lilyServerProxy.getClient();
         repository = lilyClient.getRepository(REPO_NAME);
         table = repository.getDefaultTable();
@@ -422,21 +423,6 @@ public class BatchBuildTest {
             model.unlockIndexer(lock);
         }
     }
-
-
-    private static void createRepository(String repositoryName) {
-        try {
-            RepositoryModel model = new RepositoryModelImpl(lilyProxy.getLilyServerProxy().getZooKeeper());
-            if (!model.repositoryExistsAndActive(repositoryName)) {
-                model.create(repositoryName);
-                model.waitUntilRepositoryInState(repositoryName, RepositoryDefinition.RepositoryLifecycleState.ACTIVE,
-                        100000);
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
 
     private static AbsoluteRecordId absId(RecordId recordId) {
         return repository.getIdGenerator().newAbsoluteRecordId(Table.RECORD.name, recordId);

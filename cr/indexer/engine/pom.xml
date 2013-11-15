@@ -157,6 +157,11 @@
       <artifactId>mockito-core</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.ngdata</groupId>
+      <artifactId>hbase-indexer-server</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>

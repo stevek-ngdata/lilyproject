@@ -24,7 +24,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
-import org.lilyproject.indexer.Indexer;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.MutationCondition;

@@ -24,8 +24,6 @@ import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.avro.AvroRemoteException;
-import org.lilyproject.indexer.Indexer;
-import org.lilyproject.indexer.IndexerException;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
 import org.lilyproject.repository.api.Record;

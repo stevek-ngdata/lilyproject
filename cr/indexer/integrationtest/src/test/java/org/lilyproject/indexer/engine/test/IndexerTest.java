@@ -30,10 +30,12 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -41,10 +43,15 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.ngdata.hbaseindexer.ConfKeys;
 import com.ngdata.hbaseindexer.HBaseIndexerConfiguration;
+import com.ngdata.hbaseindexer.SolrConnectionParams;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
+import com.ngdata.hbaseindexer.model.api.IndexerModelEvent;
+import com.ngdata.hbaseindexer.model.api.IndexerModelEventType;
+import com.ngdata.hbaseindexer.model.api.IndexerModelListener;
 import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
 import com.ngdata.hbaseindexer.model.impl.IndexerModelImpl;
 import org.apache.commons.io.IOUtils;
@@ -53,6 +60,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
@@ -68,6 +76,7 @@ import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.ClassicSolrShardManager;
+import org.lilyproject.indexer.engine.CloudSolrShardManager;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
 import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
@@ -89,6 +98,8 @@ import org.lilyproject.indexer.model.indexerconf.VariantFollow;
 import org.lilyproject.indexer.model.util.IndexInfo;
 import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.indexer.model.util.IndexesInfoImpl;
+import org.lilyproject.lilyservertestfw.LilyProxy;
+import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
@@ -117,10 +128,9 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.sep.LilyEventListener;
 import org.lilyproject.sep.LilySepEvent;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
-import org.lilyproject.solrtestfw.SolrDefinition;
-import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.repo.PrematureRepositoryManager;
 import org.lilyproject.util.repo.PrematureRepositoryManagerImpl;
 import org.lilyproject.util.repo.RecordEvent;
@@ -130,17 +140,16 @@ public class IndexerTest {
 
     public static final String ALTERNATE_TABLE = "alternate";
 
-    private final static RepositorySetup repoSetup = new RepositorySetup();
+    private static LilyProxy lilyProxy;
+
     private static IndexerConf INDEXER_CONF;
-    private static SolrTestingUtility SOLR_TEST_UTIL;
     private static RepositoryManager repositoryManager;
     private static LRepository repository;
     private static LTable defaultTable;
     private static LTable alternateTable;
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
-    private static ClassicSolrShardManager solrShardManager;
-    private static DerefMap derefMap;
+    private static Map<String,DerefMap> derefMap = Maps.newHashMap();
     private static WriteableIndexerModel indexerModel;
     private static IndexesInfo indexesInfo;
     private static TrackingRepository indexUpdaterRepository;
@@ -188,39 +197,39 @@ public class IndexerTest {
     private static Map<String, FieldType> fields = Maps.newHashMap();
     private final Map<String, Integer> matchResultCounts = Maps.newHashMap();
 
+    private final static TestListener listener = new TestListener();
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        lilyProxy = new LilyProxy(null, null, null, true);
+        lilyProxy.start(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml")));
 
-        SOLR_TEST_UTIL = new SolrTestingUtility();
-        SOLR_TEST_UTIL.setSolrDefinition(
-                new SolrDefinition(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml"))));
 
         TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.indexer.engine",
                 "org.lilyproject.indexer.engine.test.IndexerTest");
 
-        SOLR_TEST_UTIL.start();
-
-        repoSetup.setupCore();
+        HbaseIndexerLauncherService hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
+        hbaseIndexerLauncherService.setup(null, null, false);
+        hbaseIndexerLauncherService.start(null);
 
         Configuration conf = HBaseIndexerConfiguration.create();
-        indexerModel = new IndexerModelImpl(new ZooKeeperItfAdapter(repoSetup.getZk()), conf.get(ConfKeys.ZK_ROOT_NODE));
-        PrematureRepositoryManager prematureRepositoryManager = new PrematureRepositoryManagerImpl();
+        indexerModel = lilyProxy.getLilyServerProxy().getIndexerModel();
+        indexerModel.registerListener(listener);
 
-        //indexesInfo = new IndexesInfoImpl(indexerModel, prematureRepositoryManager);
-        RecordUpdateHook hook = new IndexRecordFilterHook(indexesInfo);
+        indexesInfo = (IndexesInfo)lilyProxy.getLilyServerProxy().getLilyServerTestingUtility().getRuntime()
+                .getModuleById("indexer-integration").getApplicationContext().getBean("indexesInfo");
 
-        repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
+        //repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
 
-        repoSetup.setupRepository(REPO_NAME);
+        lilyProxy.getLilyServerProxy().createRepository(REPO_NAME);
 
-        prematureRepositoryManager.setRepositoryManager(repoSetup.getRepositoryManager());
-        repositoryManager = repoSetup.getRepositoryManager();
+        repositoryManager = lilyProxy.getLilyServerProxy().getClient();
         repository = repositoryManager.getRepository(REPO_NAME);
         repository.getTableManager().createTable(ALTERNATE_TABLE);
 
         defaultTable = (Repository) repository.getDefaultTable();
         alternateTable = (Repository) repository.getTable(ALTERNATE_TABLE);
-        indexUpdaterRepository = new TrackingRepository(repoSetup.getRepositoryManager().getRepository(REPO_NAME));
+        indexUpdaterRepository = new TrackingRepository(repositoryManager.getRepository(REPO_NAME));
 
 
         typeManager = repository.getTypeManager();
@@ -232,88 +241,103 @@ public class IndexerTest {
         // Field types should exist before the indexer conf is loaded
         setupSchema();
 
-        solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getDefaultUri());
+        //solrShardManager = ClassicSolrShardManager.createForOneShard(SOLR_TEST_UTIL.getDefaultUri());
+
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         // cleanup the last created index (especially the SEP part), this is important when running tests in connect mode
         cleanupIndex("test" + idxChangeCnt);
-
-        repoSetup.stop();
-
+        lilyProxy.stop();
+          /*
         if (SOLR_TEST_UTIL != null) {
             SOLR_TEST_UTIL.stop();
-        }
+        }   */
     }
 
     // augmented each time we change the indexerconf, to give the indexes unique names
     private static int idxChangeCnt = 0;
 
     public static void changeIndexUpdater(String confName) throws Exception {
-        String prevIndexName = "test" + idxChangeCnt;
+        changeIndexUpdater(confName, Table.RECORD.name);
+    }
+
+    public static void changeIndexUpdater(String confName, String indexTableName) throws Exception {
+        String indexNamePrefix = "test_" + indexTableName;
+        String prevIndexName = indexNamePrefix + idxChangeCnt;
         idxChangeCnt++;
-        String indexName = "test" + idxChangeCnt;
+        String indexName = indexNamePrefix + idxChangeCnt;
 
         System.out.println("changeIndexUpdater invocation " + idxChangeCnt + " - " + confName);
 
         // First clean up stuff of old index, to be sure this also gets executed in case of invalid indexerconf
         cleanupIndex(prevIndexName);
-        waitForIndexesInfoUpdate(0);
+        derefMap.remove(prevIndexName);
+        waitForIndexesInfoUpdate(derefMap.size());
 
         // warning: the below line will throw an exception in case of invalid conf, which is an exception
         // which some test cases expect, and hence it won't be visible but will cause the remainder of the
         // code in this method not to be executed! (so keep this in mind for anything related to resource cleanup)
-        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
-                repoSetup.getRepositoryManager().getRepository(REPO_NAME));
-        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
+        INDEXER_CONF =  IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
+                repositoryManager.getRepository(REPO_NAME));
+        IndexLocker indexLocker = new IndexLocker(lilyProxy.getLilyServerProxy().getZooKeeper(), false);
 
-        Configuration hbaseConf = repoSetup.getHadoopConf();
-        if (derefMap != null) {
+        Configuration hbaseConf = lilyProxy.getHBaseProxy().getConf();
+        if (derefMap.containsKey(indexNamePrefix)) {
             // We don't call the following:
             //    DerefMapHbaseImpl.delete("test", hbaseConf);
             // because deleting / creating the tables during the test is very slow.
             // Instead we just delete all rows within the table.
-            for (String tableName : ImmutableList.of("deref-forward-test", "deref-backward-test")) {
+            for (String tableName : ImmutableList.of("deref-forward-" + indexNamePrefix, "deref-backward-" + indexNamePrefix )) {
                 HTable htable = new HTable(hbaseConf, tableName);
                 CleanupUtil.clearTable(htable);
                 htable.close();
             }
         }
-        derefMap = DerefMapHbaseImpl.create("default", "test", hbaseConf, null, repository.getIdGenerator());
-        Indexer indexer = new Indexer(indexName, INDEXER_CONF, repository, solrShardManager, indexLocker,
-                new IndexerMetrics(indexName), derefMap);
+        derefMap.put(indexNamePrefix,
+                DerefMapHbaseImpl.create("default", indexNamePrefix, hbaseConf, null, repository.getIdGenerator()));
 
         // The registration of the index into the IndexerModel is only needed for the IndexRecordFilterHook
+        Map<String,String> connectionParams = Maps.newHashMap();
+        connectionParams.put(SolrConnectionParams.ZOOKEEPER,"localhost:2181/solr");
+        connectionParams.put(SolrConnectionParams.COLLECTION,"core0");
         IndexerDefinition indexDef = new IndexerDefinitionBuilder().name(indexName)
-                .configuration(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream(confName)))
+                .connectionType("solr")
+                .connectionParams(connectionParams)
+                .configuration(IndexerConfWrapper.wrapConf(indexName,
+                        IOUtils.toString(IndexerTest.class.getResourceAsStream(confName)),
+                        repository.getRepositoryName(), indexTableName).getBytes(Charsets.UTF_8))
                 //.solrShards(Collections.singletonMap("shard1", "http://somewhere/"))
-                .subscriptionId("IndexUpdater_" + indexName)
+                //.subscriptionId("Indexer_" + indexName)
                 //indexDef.setRepositoryName(REPO_NAME)
                 .build();
         indexerModel.addIndexer(indexDef);
 
-        repoSetup.getSepModel().addSubscription(indexDef.getSubscriptionId());
+        //repoSetup.getSepModel().addSubscription(indexDef.getSubscriptionId());
+        listener.waitForEvents(2);
+        listener.verifyEvents(new IndexerModelEvent(IndexerModelEventType.INDEXER_ADDED, indexName),
+                new IndexerModelEvent(IndexerModelEventType.INDEXER_UPDATED, indexName));
 
-        repoSetup.getHBaseProxy().waitOnReplicationPeerReady("Indexer_" + indexName);
-
-        IndexUpdater indexUpdater = new IndexUpdater(indexer, new TrackingRepositoryManager(indexUpdaterRepository),
-                REPO_NAME, indexLocker, new IndexUpdaterMetrics(indexName), derefMap, repoSetup.getEventPublisherManager(),
-                "Indexer_" + indexName);
-        repoSetup.startSepEventSlave("Indexer_" + indexName,
-                new CompositeEventListener(repositoryManager, indexUpdater, messageVerifier, otherListener));
-
-        waitForIndexesInfoUpdate(1);
+        waitForIndexesInfoUpdate(derefMap.size());
+        lilyProxy.getHBaseProxy().waitOnReplicationPeerReady("Indexer_" + indexName);
     }
 
     private static void cleanupIndex(String indexName) throws Exception {
         if (indexerModel != null) {
             if (indexerModel.hasIndexer(indexName)) {
                 System.out.println("doing the cleanup of " + indexName);
-                indexerModel.deleteIndexerInternal(indexName);
-                repoSetup.getSepModel().removeSubscription("IndexUpdater_" + indexName);
-                repoSetup.getHBaseProxy().waitOnReplicationPeerStopped("IndexUpdater_" + indexName);
-                repoSetup.stopSepEventSlave();
+                String lock = indexerModel.lockIndexer(indexName);
+                IndexerDefinition def = indexerModel.getIndexer(indexName);
+                indexerModel.updateIndexer(new IndexerDefinitionBuilder()
+                        .startFrom(def)
+                        .lifecycleState(IndexerDefinition.LifecycleState.DELETE_REQUESTED).build(), lock);
+
+                listener.waitForEvents(2);
+                listener.verifyEvents(new IndexerModelEvent(IndexerModelEventType.INDEXER_DELETED, indexName),
+                        new IndexerModelEvent(IndexerModelEventType.INDEXER_UPDATED, indexName));
+                indexerModel.unlockIndexer(lock, true);
+                lilyProxy.getHBaseProxy().waitOnReplicationPeerStopped("Indexer_" + indexName);
             } else {
                 System.out.println("Not doing cleanup because index does not exist in indexer model, index name = " + indexName);
             }
@@ -949,7 +973,7 @@ public class IndexerTest {
 
     @Test
     public void testDereferencing_SingleNonstandardTable() throws Exception {
-        changeIndexUpdater("indexerconf1.xml");
+        changeIndexUpdater("indexerconf1.xml", alternateTable.getTableName());
 
         messageVerifier.init();
 
@@ -1021,7 +1045,9 @@ public class IndexerTest {
 
     @Test
     public void testDereferencing_MultipleTables() throws Exception {
-        changeIndexUpdater("indexerconf1.xml");
+        // create an indexer for each table
+        changeIndexUpdater("indexerconf1.xml", defaultTable.getTableName());
+        changeIndexUpdater("indexerconf1.xml", alternateTable.getTableName());
 
         messageVerifier.init();
 
@@ -3141,23 +3167,20 @@ public class IndexerTest {
 
     private void commitIndex() throws Exception {
         // wait for all events that exist at this point in time to be processed
-        repoSetup.waitForSepProcessing();
 
-        // The events that have been processed up to now might themselves have produced new events (reindex events)
-        // that now also need to be processed, therefore do another wait.
-        repoSetup.waitForSepProcessing();
+        lilyProxy.getHBaseProxy().waitOnSepIdle(10000);
 
-        solrShardManager.commit(true, true);
+        lilyProxy.getSolrProxy().commit();
     }
 
-    private QueryResponse getQueryResponse(String query) throws SolrClientException, InterruptedException {
+    private QueryResponse getQueryResponse(String query) throws SolrServerException, InterruptedException {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.set("q", query);
         solrQuery.set("rows", 5000);
-        return solrShardManager.query(solrQuery);
+        return lilyProxy.getSolrProxy().getSolrServer().query(solrQuery);
     }
 
-    private void verifyResultCount(String query, int count) throws SolrClientException, InterruptedException {
+    private void verifyResultCount(String query, int count) throws SolrServerException, InterruptedException {
         QueryResponse response = getQueryResponse(query);
         if (count != response.getResults().size()) {
             System.out.println("The query result contains a wrong number of documents, here is the result:");
@@ -3171,7 +3194,7 @@ public class IndexerTest {
     }
 
     private void verifyFieldValues(String query, String fieldName, String... expectedValues)
-            throws SolrClientException, InterruptedException {
+            throws SolrServerException, InterruptedException {
         QueryResponse response = getQueryResponse(query);
         if (1 != response.getResults().size()) {
             System.out.println("The query result contains a wrong number of documents, here is the result:");
@@ -3464,6 +3487,59 @@ public class IndexerTest {
             int result = readCount;
             readCount = 0;
             return result;
+        }
+    }
+
+    private static class TestListener implements IndexerModelListener {
+        private Set<IndexerModelEvent> events = new HashSet<IndexerModelEvent>();
+
+        @Override
+        public void process(IndexerModelEvent event) {
+            synchronized (this) {
+                events.add(event);
+                notifyAll();
+            }
+        }
+
+        public void waitForEvents(int count) throws InterruptedException {
+            long timeout = 1000;
+            long now = System.currentTimeMillis();
+            synchronized (this) {
+                while (events.size() < count && System.currentTimeMillis() - now < timeout) {
+                    wait(timeout);
+                }
+            }
+        }
+
+        public void verifyEvents(IndexerModelEvent... expectedEvents) {
+            if (events.size() != expectedEvents.length) {
+                if (events.size() > 0) {
+                    System.out.println("The events are:");
+                    for (IndexerModelEvent item : events) {
+                        System.out.println(item.getType() + " - " + item.getIndexerName());
+                    }
+                } else {
+                    System.out.println("There are no events.");
+                }
+
+                assertEquals("Expected number of events", expectedEvents.length, events.size());
+            }
+
+            Set<IndexerModelEvent> expectedEventsSet  = new HashSet<IndexerModelEvent>(Arrays.asList(expectedEvents));
+
+            for (IndexerModelEvent event : expectedEvents) {
+                if (!events.contains(event)) {
+                    fail("Expected event not present among events: " + event);
+                }
+            }
+
+            for (IndexerModelEvent event : events) {
+                if (!expectedEventsSet.contains(event)) {
+                    fail("Got an event which is not among the expected events: " + event);
+                }
+            }
+
+            events.clear();
         }
     }
 }
