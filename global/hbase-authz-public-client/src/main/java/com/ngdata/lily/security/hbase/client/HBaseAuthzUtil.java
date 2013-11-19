@@ -18,13 +18,6 @@ public class HBaseAuthzUtil {
     public static final String APP_NAME_ATT = "lily.sec.app";
 
     /**
-     * The list of active row permission types. For each of these permission types, the user should have a
-     * permission rule that grants access. The value of the attribute should contain a CSV-separated list
-     * of permission types.
-     */
-    public static final String ROW_PERMISSION_TYPES_ATT = "lily.sec.rowpermtypes";
-
-    /**
      * Allows to add extra permissions on a per-request basis, independent from the permissions the user
      * has through its roles. This is useful if an application is dependent on the presence of e.g. some
      * system columns which should always be read or written, independent of the permissions of the user.
@@ -70,13 +63,6 @@ public class HBaseAuthzUtil {
      */
     public static void setApplication(String appName, OperationWithAttributes op) {
         op.setAttribute(APP_NAME_ATT, Bytes.toBytes(appName));
-    }
-
-    /**
-     * @see {@link #ROW_PERMISSION_TYPES_ATT}
-     */
-    public static void setRowPermissionTypes(Set<String> rowPermissionTypes, OperationWithAttributes op) {
-        op.setAttribute(APP_NAME_ATT, serialize(rowPermissionTypes));
     }
 
     /**

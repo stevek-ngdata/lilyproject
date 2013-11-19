@@ -44,7 +44,6 @@ public class AuthEnabledHTable implements HTableInterface {
     private AuthorizationContextProvider authzCtxProvider;
     private byte[] extraPermissions;
     private byte[] appName;
-    private byte[] rowPermissionTypes;
     private boolean failWhenNotAuthenticated;
 
     private final String ERROR_MSG = "Method not supported with authentication";
@@ -56,19 +55,14 @@ public class AuthEnabledHTable implements HTableInterface {
      *                                 authorization filtering.
      * @param appName application name, identifies the permissions that should be active for this application.
      *                Permissions start with "appName:...".
-     * @param rowPermissionTypes the kinds of row permissions that should be active
      * @param extraPermissions extra permissions which will be passed upon each request and which extend the
      *                         permissions of the user. See {@link HBaseAuthzUtil#EXTRA_PERMISSION_ATT}. This overwrites
      *                         any per-request permissions which might already have been set.
      */
     public AuthEnabledHTable(AuthorizationContextProvider authzCtxProvider, boolean failWhenNotAuthenticated,
-            String appName,
-            Set<String> rowPermissionTypes,
-            @Nullable Set<String> extraPermissions,
-            HTableInterface delegate) {
+            String appName, @Nullable Set<String> extraPermissions, HTableInterface delegate) {
         this.authzCtxProvider = authzCtxProvider;
         this.appName = Bytes.toBytes(appName);
-        this.rowPermissionTypes = HBaseAuthzUtil.serialize(rowPermissionTypes);
         this.extraPermissions = extraPermissions != null ? HBaseAuthzUtil.serialize(extraPermissions) : null;
         this.failWhenNotAuthenticated = failWhenNotAuthenticated;
         this.delegate = delegate;
@@ -95,7 +89,6 @@ public class AuthEnabledHTable implements HTableInterface {
             op.setAttribute(AuthorizationContext.OPERATION_ATTRIBUTE, userAsBytes);
 
             op.setAttribute(HBaseAuthzUtil.APP_NAME_ATT, appName);
-            op.setAttribute(HBaseAuthzUtil.ROW_PERMISSION_TYPES_ATT, rowPermissionTypes);
 
             if (extraPermissions != null) {
                 op.setAttribute(HBaseAuthzUtil.EXTRA_PERMISSION_ATT, extraPermissions);
