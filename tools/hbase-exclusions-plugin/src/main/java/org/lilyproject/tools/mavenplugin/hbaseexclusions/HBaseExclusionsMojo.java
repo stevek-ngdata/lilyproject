@@ -40,7 +40,7 @@ import org.apache.maven.project.MavenProject;
  */
 public class HBaseExclusionsMojo  extends AbstractMojo {
     /**
-     * @parameter expression="${project}"
+     * @parameter default-value="${project}"
      * @readonly
      * @required
      */

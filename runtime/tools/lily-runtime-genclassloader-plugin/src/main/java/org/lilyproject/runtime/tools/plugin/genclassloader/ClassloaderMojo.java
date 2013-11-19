@@ -72,7 +72,7 @@ import org.xml.sax.helpers.AttributesImpl;
 public class ClassloaderMojo extends AbstractMojo {
 
     /**
-     * @parameter expression="${project}"
+     * @parameter default-value="${project}"
      * @required
      * @readonly
      */
@@ -87,19 +87,19 @@ public class ClassloaderMojo extends AbstractMojo {
     private MavenProjectHelper projectHelper;
 
     /**
-     * @parameter expression="src/main/lily"
+     * @parameter default-value="src/main/lily"
      */
     private String templateDirectory;
 
     /**
-     * @parameter expression="classloader-template.xml"
+     * @parameter default-value="classloader-template.xml"
      */
     private String templateFileName;
 
     /**
      * Where should the file end up?
      *
-     * @parameter expression="${project.build.directory}/classes/LILY-INF"
+     * @parameter default-value="${project.build.directory}/classes/LILY-INF"
      */
     private String targetDirectory;
 
@@ -123,7 +123,7 @@ public class ClassloaderMojo extends AbstractMojo {
      *
      * @since 2.0
      * @optional
-     * @parameter expression="${excludeTransitive}" default-value="false"
+     * @parameter property="excludeTransitive" default-value="false"
      */
     protected boolean excludeTransitive;
 
@@ -131,7 +131,7 @@ public class ClassloaderMojo extends AbstractMojo {
      * Comma Separated list of Types to include. Empty String indicates include everything (default).
      *
      * @since 2.0
-     * @parameter expression="${includeTypes}" default-value=""
+     * @parameter property="includeTypes" default-value=""
      * @optional
      */
     protected String includeTypes;
@@ -141,7 +141,7 @@ public class ClassloaderMojo extends AbstractMojo {
      * Ignored if includeTypes is used.
      *
      * @since 2.0
-     * @parameter expression="${excludeTypes}" default-value=""
+     * @parameter property="excludeTypes" default-value=""
      * @optional
      */
     protected String excludeTypes;
@@ -150,7 +150,7 @@ public class ClassloaderMojo extends AbstractMojo {
      * Scope to include. An Empty string indicates all scopes (default).
      *
      * @since 2.0
-     * @parameter expression="${includeScope}" default-value="runtime"
+     * @parameter property="includeScope" default-value="runtime"
      * @optional
      */
     protected String includeScope;
@@ -159,7 +159,7 @@ public class ClassloaderMojo extends AbstractMojo {
      * Scope to exclude. An Empty string indicates no scopes (default). Ignored if includeScope is used.
      *
      * @since 2.0
-     * @parameter expression="${excludeScope}" default-value="provided"
+     * @parameter property="excludeScope" default-value="provided"
      * @optional
      */
     protected String excludeScope;
@@ -168,7 +168,7 @@ public class ClassloaderMojo extends AbstractMojo {
      * Comma Separated list of Classifiers to include. Empty String indicates include everything (default).
      *
      * @since 2.0
-     * @parameter expression="${includeClassifiers}" default-value=""
+     * @parameter property="includeClassifiers" default-value=""
      * @optional
      */
     protected String includeClassifiers;
@@ -178,7 +178,7 @@ public class ClassloaderMojo extends AbstractMojo {
      * (default). Ignored if includeClassifiers is used.
      *
      * @since 2.0
-     * @parameter expression="${excludeClassifiers}" default-value=""
+     * @parameter property="excludeClassifiers" default-value=""
      * @optional
      */
     protected String excludeClassifiers;
@@ -188,7 +188,7 @@ public class ClassloaderMojo extends AbstractMojo {
      *
      * @since 2.0
      * @optional
-     * @parameter expression="${excludeArtifactIds}" default-value=""
+     * @parameter property="excludeArtifactIds" default-value=""
      */
     protected String excludeArtifactIds;
 
@@ -197,7 +197,7 @@ public class ClassloaderMojo extends AbstractMojo {
      *
      * @since 2.0
      * @optional
-     * @parameter expression="${includeArtifactIds}" default-value=""
+     * @parameter property="includeArtifactIds" default-value=""
      */
     protected String includeArtifactIds;
 
@@ -206,7 +206,7 @@ public class ClassloaderMojo extends AbstractMojo {
      *
      * @since 2.0
      * @optional
-     * @parameter expression="${excludeGroupIds}" default-value=""
+     * @parameter property="excludeGroupIds" default-value=""
      */
     protected String excludeGroupIds;
 
@@ -215,7 +215,7 @@ public class ClassloaderMojo extends AbstractMojo {
      *
      * @since 2.0
      * @optional
-     * @parameter expression="${includeGroupIds}" default-value=""
+     * @parameter property="includeGroupIds" default-value=""
      */
     protected String includeGroupIds;
 
