@@ -81,8 +81,7 @@ public abstract class AbstractRepositoryManager implements RepositoryManager {
     }
 
     protected HTableInterface wrapWithAuthorization(HTableInterface htable) {
-        return new AuthEnabledHTable(authzCtxProvider, false, PERMISSION_APP_NAME, ROW_PERMISSION_TYPES,
-                DEFAULT_PERMISSIONS, htable);
+        return new AuthEnabledHTable(authzCtxProvider, false, PERMISSION_APP_NAME, DEFAULT_PERMISSIONS, htable);
     }
 
     protected TypeManager getTypeManager() {
