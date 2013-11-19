@@ -69,28 +69,28 @@ public class LilyRuntimeProjectDependencyResolver extends AbstractMojo {
     protected String moduleSourceLocations;
 
     /**
-     * @parameter expression="${project.groupId}"
+     * @parameter default-value="${project.groupId}"
      * @required
      * @readonly
      */
     private String projectGroupId;
 
     /**
-     * @parameter expression="${project.artifactId}"
+     * @parameter default-value="${project.artifactId}"
      * @required
      * @readonly
      */
     private String projectArtifactId;
 
     /**
-     * @parameter expression="${project.version}"
+     * @parameter default-value="${project.version}"
      * @required
      * @readonly
      */
     private String projectVersion;
 
     /**
-     * @parameter expression="${project.dependencyArtifacts}"
+     * @parameter default-value="${project.dependencyArtifacts}"
      * @required
      * @readonly
      */
@@ -106,7 +106,7 @@ public class LilyRuntimeProjectDependencyResolver extends AbstractMojo {
     /**
      * Remote repositories used for the project.
      *
-     * @parameter expression="${project.remoteArtifactRepositories}"
+     * @parameter default-value="${project.remoteArtifactRepositories}"
      * @required
      * @readonly
      */
@@ -115,7 +115,7 @@ public class LilyRuntimeProjectDependencyResolver extends AbstractMojo {
     /**
      * Local Repository.
      *
-     * @parameter expression="${localRepository}"
+     * @parameter default-value="${localRepository}"
      * @required
      * @readonly
      */

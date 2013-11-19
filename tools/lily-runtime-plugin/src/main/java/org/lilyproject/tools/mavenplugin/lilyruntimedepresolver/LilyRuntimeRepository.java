@@ -37,7 +37,7 @@ public class LilyRuntimeRepository extends AbstractMojo {
     /**
      * Location of the conf directory.
      *
-     * @parameter expression="${basedir}/target/lilyruntime-repository"
+     * @parameter default-value="${basedir}/target/lilyruntime-repository"
      * @required
      */
     protected String targetDirectory;
@@ -52,7 +52,7 @@ public class LilyRuntimeRepository extends AbstractMojo {
     /**
      * Remote repositories used for the project.
      *
-     * @parameter expression="${project.remoteArtifactRepositories}"
+     * @parameter default-value="${project.remoteArtifactRepositories}"
      * @required
      * @readonly
      */
@@ -61,7 +61,7 @@ public class LilyRuntimeRepository extends AbstractMojo {
     /**
      * Local Repository.
      *
-     * @parameter expression="${localRepository}"
+     * @parameter default-value="${localRepository}"
      * @required
      * @readonly
      */
