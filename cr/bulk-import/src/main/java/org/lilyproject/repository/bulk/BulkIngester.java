@@ -68,7 +68,7 @@ import org.python.google.common.collect.Lists;
  * {@code KeyValue} object for alternative methods of writing (e.g. via MapReduce).
  */
 public class BulkIngester implements Closeable {
-    
+
     public static final int PUT_BUFFER_SIZE = 1000;
 
     private HBaseRepository hbaseRepo;
@@ -80,21 +80,21 @@ public class BulkIngester implements Closeable {
 
     /**
      * Factory method for creation of a {@code BulkIngester} that operates on the default repository table.
-     * 
+     *
      * @param zkConnString Connection string for ZooKeeper
-     * @param timeout ZooKeeper session timeout
+     * @param timeout      ZooKeeper session timeout
      * @return a new BulkIngester
      */
     public static BulkIngester newBulkIngester(String zkConnString, int timeout) {
         return newBulkIngester(zkConnString, timeout, null);
     }
-    
+
     /**
      * Factory method for creation of a {@code BulkIngester that operates on a non-default repository table.
-     * 
+     *
      * @param zkConnString connection string for ZooKeeper
-     * @param timeout ZooKeeper session timeout
-     * @param tableName name of the repository table to write to
+     * @param timeout      ZooKeeper session timeout
+     * @param tableName    name of the repository table to write to
      */
     public static BulkIngester newBulkIngester(String zkConnString, int timeout, String tableName) {
         try {
@@ -106,18 +106,19 @@ public class BulkIngester implements Closeable {
             IdGenerator idGenerator = new IdGeneratorImpl();
             TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
             RecordFactory recordFactory = new RecordFactoryImpl();
-            
+
             RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
                     recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager(), conf, repositoryModel);
             HBaseRepository hbaseRepository;
             if (tableName != null) {
-                hbaseRepository = (HBaseRepository)repositoryManager.getDefaultRepository().getTable(tableName);
+                hbaseRepository = (HBaseRepository) repositoryManager.getDefaultRepository().getTable(tableName);
             } else {
-                hbaseRepository = (HBaseRepository)repositoryManager.getDefaultRepository();
+                hbaseRepository = (HBaseRepository) repositoryManager.getDefaultRepository();
             }
-            
+
             return new BulkIngester(repositoryManager, hbaseRepository,
-                    LilyHBaseSchema.getRecordTable(hbaseTableFactory, hbaseRepository.getRepositoryName(), hbaseRepository.getTableName()),
+                    LilyHBaseSchema.getRecordTable(hbaseTableFactory, hbaseRepository.getRepositoryName(),
+                            hbaseRepository.getTableName()),
                     typeManager.getFieldTypesSnapshot());
         } catch (Exception e) {
             ExceptionUtil.handleInterrupt(e);
@@ -126,7 +127,7 @@ public class BulkIngester implements Closeable {
     }
 
     BulkIngester(RepositoryManager repositoryManager, HBaseRepository hbaseRepo, HTableInterface recordTable,
-            FieldTypes fieldTypes) {
+                 FieldTypes fieldTypes) {
         this.repositoryManager = repositoryManager;
         this.hbaseRepo = hbaseRepo;
         this.recordFactory = hbaseRepo.getRecordFactory();
@@ -137,7 +138,7 @@ public class BulkIngester implements Closeable {
     /**
      * Factory method for creation of Records, with the same semantics as
      * {@link Repository#newRecord()}.
-     * 
+     *
      * @return A newly-created record
      */
     public Record newRecord() {
@@ -146,7 +147,7 @@ public class BulkIngester implements Closeable {
 
     /**
      * Same as {@link Repository#getIdGenerator()}.
-     * 
+     *
      * @return The IdGenerator of the underlying repository
      */
     public IdGenerator getIdGenerator() {
@@ -160,9 +161,8 @@ public class BulkIngester implements Closeable {
      * <b>WARNING:</b>This method is not thread-safe.
      * <p>
      * Puts are first written to a buffer, which is flushed when it reaches {@link BulkIngester#PUT_BUFFER_SIZE}.
-     * 
+     *
      * @param record Record to be written
-     * @throws IOException
      */
     public void write(Record record) throws InterruptedException, RepositoryException, IOException {
         putBuffer.add(buildPut(record));
@@ -170,15 +170,13 @@ public class BulkIngester implements Closeable {
             flush();
         }
     }
-    
+
     /**
      * Flush buffered Puts to the Lily record table.
      * <p>
      * This method is not thread-safe.
-     * 
-     * @throws IOException
      */
-    public void flush() throws IOException{
+    public void flush() throws IOException {
         if (!putBuffer.isEmpty()) {
             recordTable.put(Lists.newArrayList(putBuffer));
             putBuffer.clear();
@@ -187,6 +185,7 @@ public class BulkIngester implements Closeable {
 
     /**
      * Build the {@code Put} that represents a record for inserting into HBase.
+     *
      * @param record The record to be translated into an HBase {@code Put}
      * @return Put which can be directly written to HBase
      */
@@ -196,10 +195,10 @@ public class BulkIngester implements Closeable {
         if (record.getId() == null) {
             record.setId(getIdGenerator().newRecordId());
         }
-        return hbaseRepo.buildPut(record, 1L, fieldTypes, recordEvent, Sets.<BlobReference> newHashSet(),
-                Sets.<BlobReference> newHashSet(), 1L);
+        return hbaseRepo.buildPut(record, 1L, fieldTypes, recordEvent, Sets.<BlobReference>newHashSet(),
+                Sets.<BlobReference>newHashSet(), 1L);
     }
-    
+
     /**
      * Build a {@code Put} to update a record. No metadata updates are performed, and any existing metadata on the
      * fields will be overwritten.
@@ -211,15 +210,15 @@ public class BulkIngester implements Closeable {
      * <p>
      * In other words, use this method at your own risk. Unless you are very certain about the context you are working
      * in, updates should go via the Lily API.
-     * 
-     * @param recordId identifier of the record to be updated
+     *
+     * @param recordId    identifier of the record to be updated
      * @param fieldValues map of field names and values to be updated on the record
      * @return Put containing all field updates
      */
     public Put buildRecordUpdate(RecordId recordId, Map<QName, Object> fieldValues) {
         Put put = new Put(recordId.toBytes());
         FieldValueWriter fieldValueWriter = hbaseRepo.newFieldValueWriter(put, null);
-        
+
         for (Entry<QName, Object> fieldEntry : fieldValues.entrySet()) {
             try {
                 fieldValueWriter.addFieldValue(fieldTypes.getFieldType(fieldEntry.getKey()), fieldEntry.getValue(), null);
@@ -227,28 +226,28 @@ public class BulkIngester implements Closeable {
                 throw new RuntimeException(e);
             }
         }
-        
+
         return put;
     }
-    
+
     @Override
     public void close() throws IOException {
         flush();
         repositoryManager.close();
     }
-    
-    
+
+
     /**
      * Returns the underlying repository manager. This allows performing any other kind of
      * repository-based task within the context of a bulk import job.
-     * 
+     *
      * @return the underlying RepositoryManager
      */
     public RepositoryManager getRepositoryManager() {
         return repositoryManager;
     }
-    
-    
+
+
     /**
      * BlobManager that ensures that blobs aren't supported in bulk import.
      * <p>
@@ -258,7 +257,7 @@ public class BulkIngester implements Closeable {
     private static class BlobsNotSupportedBlobManager implements BlobManager {
 
         private static final String NOT_SUPPORTED_MESSAGE = "Blobs are not supported for bulk imports";
-        
+
         @Override
         public void incubateBlob(byte[] blobKey) throws IOException {
             throw new UnsupportedOperationException(NOT_SUPPORTED_MESSAGE);
@@ -271,8 +270,8 @@ public class BulkIngester implements Closeable {
 
         @Override
         public void handleBlobReferences(RecordId recordId, Set<BlobReference> referencedBlobs,
-                Set<BlobReference> unReferencedBlobs) {
-            throw new UnsupportedOperationException(NOT_SUPPORTED_MESSAGE);
+                                         Set<BlobReference> unReferencedBlobs) {
+            // no op
         }
 
         @Override
@@ -295,8 +294,8 @@ public class BulkIngester implements Closeable {
         public void delete(byte[] blobKey) throws BlobException {
             throw new UnsupportedOperationException(NOT_SUPPORTED_MESSAGE);
         }
-        
-        
+
+
     }
 
 }
