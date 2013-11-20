@@ -21,8 +21,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 
-import org.python.core.PyException;
-
 import com.google.common.base.Charsets;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -35,6 +33,7 @@ import org.lilyproject.repository.bulk.LineMapper;
 import org.lilyproject.repository.bulk.LineMappingContext;
 import org.lilyproject.repository.bulk.RecordWriter;
 import org.lilyproject.repository.bulk.jython.JythonLineMapper;
+import org.python.core.PyException;
 import org.python.google.common.io.Files;
 
 /**
@@ -52,8 +51,9 @@ public class BulkImportTool extends AbstractBulkImportCliTool {
     @SuppressWarnings("static-access")
     @Override
     public List<Option> getOptions() {
-        dryRunOption = OptionBuilder.withDescription("Only print out the created records without writing them to Lily").withLongOpt(
-                "dryrun").create('d');
+        dryRunOption =
+                OptionBuilder.withDescription("Only print out the created records without writing them to Lily").withLongOpt(
+                        "dryrun").create('d');
 
         List<Option> options = super.getOptions();
         options.add(dryRunOption);
@@ -78,14 +78,15 @@ public class BulkImportTool extends AbstractBulkImportCliTool {
 
     @Override
     public int run(CommandLine cmd) throws Exception {
-        BulkIngester bulkIngester = BulkIngester.newBulkIngester(zkConnectionString, 30000, outputTable);
+        BulkIngester bulkIngester =
+                BulkIngester.newBulkIngester(zkConnectionString, 30000, outputRepository, outputTable, bulkMode);
 
         BufferedReader bufferedReader = new BufferedReader(new FileReader(inputPath));
         RecordWriter recordWriter;
         if (dryRun) {
             recordWriter = new DebugRecordWriter(System.out);
         } else {
-            recordWriter = new ThreadedRecordWriter(zkConnectionString, 10, outputTable);
+            recordWriter = new ThreadedRecordWriter(zkConnectionString, 10, outputRepository, outputTable, bulkMode);
         }
         long start = System.currentTimeMillis();
         int numLines = 0;
@@ -109,7 +110,8 @@ public class BulkImportTool extends AbstractBulkImportCliTool {
         }
         float duration = (System.currentTimeMillis() - start) / 1000f;
         if (!dryRun) {
-            System.out.printf("Imported %d lines as %d records in %.2f seconds\n", numLines, recordWriter.getNumRecords(), duration);
+            System.out.printf("Imported %d lines as %d records in %.2f seconds\n", numLines, recordWriter.getNumRecords(),
+                    duration);
         }
 
         return 0;

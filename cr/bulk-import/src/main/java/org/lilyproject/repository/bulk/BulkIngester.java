@@ -28,6 +28,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.zookeeper.KeeperException;
+import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobAccess;
 import org.lilyproject.repository.api.BlobException;
@@ -71,8 +73,14 @@ public class BulkIngester implements Closeable {
 
     public static final int PUT_BUFFER_SIZE = 1000;
 
+    /**
+     * Bulk mode is default. If not in bulk mode, the bulk ingester merely delegates all operations to lily client.
+     */
+    private boolean bulkMode = true;
+
+    private LilyClient lilyClient;
+
     private HBaseRepository hbaseRepo;
-    private RepositoryManager repositoryManager;
     private RecordFactory recordFactory;
     private HTableInterface recordTable;
     private FieldTypes fieldTypes;
@@ -86,53 +94,70 @@ public class BulkIngester implements Closeable {
      * @return a new BulkIngester
      */
     public static BulkIngester newBulkIngester(String zkConnString, int timeout) {
-        return newBulkIngester(zkConnString, timeout, null);
+        return newBulkIngester(zkConnString, timeout, null, null, true);
     }
 
     /**
-     * Factory method for creation of a {@code BulkIngester that operates on a non-default repository table.
+     * Factory method for creation of a {@code BulkIngester} that operates on a non-default repository table.
      *
      * @param zkConnString connection string for ZooKeeper
      * @param timeout      ZooKeeper session timeout
      * @param tableName    name of the repository table to write to
      */
-    public static BulkIngester newBulkIngester(String zkConnString, int timeout, String tableName) {
+    public static BulkIngester newBulkIngester(String zkConnString, int timeout, String repositoryName, String tableName,
+                                               boolean bulkMode) {
         try {
             ZooKeeperItf zk = ZkUtil.connect(zkConnString, timeout);
+
+            // we need a lily client for non bulk access
+            LilyClient lilyClient = new LilyClient(zk);
+
+            // we need an HBaseRepository for bulk access
             Configuration conf = HBaseConfiguration.create();
             conf.set("hbase.zookeeper.quorum", zkConnString);
             HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(conf);
-            RepositoryModel repositoryModel = new RepositoryModelImpl(zk);
-            IdGenerator idGenerator = new IdGeneratorImpl();
-            TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
-            RecordFactory recordFactory = new RecordFactoryImpl();
+            HBaseRepository hbaseRepository = createHBaseRepository(repositoryName, tableName, zk, conf, hbaseTableFactory);
 
-            RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
-                    recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager(), conf, repositoryModel);
-            HBaseRepository hbaseRepository;
-            if (tableName != null) {
-                hbaseRepository = (HBaseRepository) repositoryManager.getDefaultRepository().getTable(tableName);
-            } else {
-                hbaseRepository = (HBaseRepository) repositoryManager.getDefaultRepository();
-            }
-
-            return new BulkIngester(repositoryManager, hbaseRepository,
+            return new BulkIngester(
+                    lilyClient,
+                    hbaseRepository,
                     LilyHBaseSchema.getRecordTable(hbaseTableFactory, hbaseRepository.getRepositoryName(),
                             hbaseRepository.getTableName()),
-                    typeManager.getFieldTypesSnapshot());
+                    bulkMode);
+
         } catch (Exception e) {
             ExceptionUtil.handleInterrupt(e);
             throw new RuntimeException(e);
         }
     }
 
-    BulkIngester(RepositoryManager repositoryManager, HBaseRepository hbaseRepo, HTableInterface recordTable,
-                 FieldTypes fieldTypes) {
-        this.repositoryManager = repositoryManager;
+    private static HBaseRepository createHBaseRepository(String repositoryName, String tableName, ZooKeeperItf zk,
+                                                         Configuration conf, HBaseTableFactory hbaseTableFactory)
+            throws KeeperException, InterruptedException, IOException, RepositoryException {
+        RepositoryModel repositoryModel = new RepositoryModelImpl(zk);
+        IdGenerator idGenerator = new IdGeneratorImpl();
+        TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
+        RecordFactory recordFactory = new RecordFactoryImpl();
+
+        RepositoryManager repositoryManager = new HBaseRepositoryManager(typeManager, idGenerator,
+                recordFactory, hbaseTableFactory, new BlobsNotSupportedBlobManager(), conf, repositoryModel);
+        HBaseRepository hbaseRepository;
+        if (tableName != null) {
+            hbaseRepository = (HBaseRepository) repositoryManager.getRepository(repositoryName).getTable(tableName);
+        } else {
+            hbaseRepository = (HBaseRepository) repositoryManager.getRepository(repositoryName);
+        }
+        return hbaseRepository;
+    }
+
+    BulkIngester(LilyClient lilyClient, HBaseRepository hbaseRepo, HTableInterface recordTable, boolean bulkMode)
+            throws InterruptedException {
+        this.lilyClient = lilyClient;
         this.hbaseRepo = hbaseRepo;
         this.recordFactory = hbaseRepo.getRecordFactory();
         this.recordTable = recordTable;
-        this.fieldTypes = fieldTypes;
+        this.fieldTypes = hbaseRepo.getTypeManager().getFieldTypesSnapshot();
+        this.bulkMode = bulkMode;
     }
 
     /**
@@ -155,19 +180,25 @@ public class BulkIngester implements Closeable {
     }
 
     /**
-     * Write a single record directly to Lily, circumventing any indexing or other secondary actions
+     * When in bulk mode, write a single record directly to Lily, circumventing any indexing or other secondary actions
      * that are performed when using the standard Lily API.
      * <p>
      * <b>WARNING:</b>This method is not thread-safe.
      * <p>
      * Puts are first written to a buffer, which is flushed when it reaches {@link BulkIngester#PUT_BUFFER_SIZE}.
      *
+     * When not in bulk mode, this merely delegates to createOrUpdate on the lily hbase repository.
+     *
      * @param record Record to be written
      */
     public void write(Record record) throws InterruptedException, RepositoryException, IOException {
-        putBuffer.add(buildPut(record));
-        if (putBuffer.size() == PUT_BUFFER_SIZE) {
-            flush();
+        if (bulkMode) {
+            putBuffer.add(buildPut(record));
+            if (putBuffer.size() == PUT_BUFFER_SIZE) {
+                flush();
+            }
+        } else {
+            lilyClient.getRepository(hbaseRepo.getRepositoryName()).getTable(hbaseRepo.getTableName()).createOrUpdate(record);
         }
     }
 
@@ -233,7 +264,7 @@ public class BulkIngester implements Closeable {
     @Override
     public void close() throws IOException {
         flush();
-        repositoryManager.close();
+        lilyClient.close();
     }
 
 
@@ -244,7 +275,7 @@ public class BulkIngester implements Closeable {
      * @return the underlying RepositoryManager
      */
     public RepositoryManager getRepositoryManager() {
-        return repositoryManager;
+        return lilyClient;
     }
 
 

@@ -22,29 +22,47 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.util.Version;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 /**
  * Extension point that provides argument parsing for bulk importing.
  */
 public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
-    
+
     private Option pythonMapperPathArg;
     private Option pythonSymbolArg;
+    private Option repositoryArg;
     private Option outputTableArg;
+    private Option disableBulkOption;
 
-    /** Path to the Python mapping script. */
+    /**
+     * Path to the Python mapping script.
+     */
     protected String pythonMapperPath;
-    
-    /** Python symbol to be used for mapping. */
+
+    /**
+     * Python symbol to be used for mapping.
+     */
     protected String pythonSymbol;
-    
-    /** Input path for the bulk import process. */
+
+    /**
+     * Input path for the bulk import process.
+     */
     protected String inputPath;
-    
-    /** Repository table where output is to be written. */
+
+    /**
+     * Repository name where output is to be written.
+     */
+    protected String outputRepository;
+
+    /**
+     * Repository table where output is to be written.
+     */
     protected String outputTable;
-    
-    
+
+    protected boolean bulkMode;
+
     @SuppressWarnings("static-access")
     public AbstractBulkImportCliTool() {
 
@@ -59,43 +77,54 @@ public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
                 .withLongOpt("symbol")
                 .hasArg()
                 .create('s');
-        
+
+        repositoryArg = OptionBuilder
+                .withDescription("Repository name (defaults to default repository)")
+                .withLongOpt("repository")
+                .hasArg()
+                .create('r');
+
         outputTableArg = OptionBuilder
                 .withDescription("Repository table name (defaults to record)")
                 .withLongOpt("table")
                 .hasArg()
                 .create('t');
 
+        disableBulkOption = OptionBuilder
+                .withDescription("disable bulk mode")
+                .withLongOpt("no_bulk")
+                .create('n');
     }
-    
 
 
     @Override
     protected String getVersion() {
         return Version.readVersion("org.lilyproject", getCmdName());
     }
-    
+
     @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
         options.add(pythonMapperPathArg);
         options.add(pythonSymbolArg);
+        options.add(repositoryArg);
         options.add(outputTableArg);
+        options.add(disableBulkOption);
         return options;
     }
-    
+
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int status = super.processOptions(cmd);
         if (status != 0) {
             return status;
         }
-        
+
         if (cmd.getArgs().length == 0) {
             System.err.println("No input file given");
             return 1;
         }
-        
+
         inputPath = cmd.getArgs()[0];
 
         if (!cmd.hasOption(pythonMapperPathArg.getOpt())) {
@@ -111,12 +140,20 @@ public abstract class AbstractBulkImportCliTool extends BaseZkCliTool {
         } else {
             pythonSymbol = cmd.getOptionValue(pythonSymbolArg.getOpt());
         }
-        
+
         if (cmd.hasOption(outputTableArg.getOpt())) {
             outputTable = cmd.getOptionValue(outputTableArg.getOpt());
         }
-        
+        outputTable = outputTable == null ? LilyHBaseSchema.Table.RECORD.name : outputTable;
+
+        if (cmd.hasOption(repositoryArg.getOpt())) {
+            outputRepository = cmd.getOptionValue(repositoryArg.getOpt());
+        }
+        outputRepository = outputRepository == null ? RepoAndTableUtil.DEFAULT_REPOSITORY : outputRepository;
+
+        bulkMode = !cmd.hasOption(disableBulkOption.getOpt());
+
         return 0;
     }
-    
+
 }
