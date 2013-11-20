@@ -30,13 +30,14 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Before;
 import org.junit.Test;
+import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.BlobReference;
 import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.Type;
@@ -44,19 +45,22 @@ import org.lilyproject.util.repo.RecordEvent.Type;
 public class BulkIngesterTest {
 
     private HBaseRepository hbaseRepository;
-    private RepositoryManager repositoryManager;
+    private LilyClient lilyClient;
     private HTableInterface recordTable;
     private FieldTypes fieldTypes;
 
     private BulkIngester bulkIngester;
 
     @Before
-    public void setUp() {
+    public void setUp() throws InterruptedException {
         hbaseRepository = mock(HBaseRepository.class);
-        repositoryManager = mock(RepositoryManager.class);
+        lilyClient = mock(LilyClient.class);
         recordTable = mock(HTableInterface.class);
         fieldTypes = mock(FieldTypes.class);
-        bulkIngester = spy(new BulkIngester(repositoryManager, hbaseRepository, recordTable, fieldTypes));
+        TypeManager typeManager = mock(TypeManager.class);
+        when(hbaseRepository.getTypeManager()).thenReturn(typeManager);
+        when(typeManager.getFieldTypesSnapshot()).thenReturn(fieldTypes);
+        bulkIngester = spy(new BulkIngester(lilyClient, hbaseRepository, recordTable, true));
     }
 
     /**
@@ -66,7 +70,7 @@ public class BulkIngesterTest {
         RecordEvent expectedRecordEvent = new RecordEvent();
         expectedRecordEvent.setType(Type.CREATE);
         when(hbaseRepository.buildPut(record, 1L, fieldTypes, expectedRecordEvent,
-                        Sets.<BlobReference> newHashSet(), Sets.<BlobReference> newHashSet(), 1L)).thenReturn(put);
+                Sets.<BlobReference>newHashSet(), Sets.<BlobReference>newHashSet(), 1L)).thenReturn(put);
     }
 
     @Test

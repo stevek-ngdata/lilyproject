@@ -36,44 +36,48 @@ import org.lilyproject.util.exception.ExceptionUtil;
  * Import writer for bulk imports where the import runs as a single (multi-threaded) process writing directly to Lily.
  */
 public class ThreadedRecordWriter implements RecordWriter {
-    
+
     private Log log = LogFactory.getLog(getClass());
-    
+
     private String lilyZk;
-    private String repositoryTableName;
+    private String repositoryName;
+    private String tableName;
+    private boolean bulkMode;
     private ThreadPoolExecutor executor;
     private AtomicLong recordsWritten = new AtomicLong();
     private AtomicLong writeFailures = new AtomicLong();
     private ThreadLocal<BulkIngester> threadLocalBulkIngesters;
     private List<BulkIngester> bulkIngesters;
-    
-    
-    public ThreadedRecordWriter(String lilyZk, int numThreads, String repositoryTableName) {
+
+
+    public ThreadedRecordWriter(String lilyZk, int numThreads, String repositoryName, String tableName, boolean bulkMode) {
         this.lilyZk = lilyZk;
-        this.repositoryTableName = repositoryTableName;
+        this.repositoryName = repositoryName;
+        this.tableName = tableName;
+        this.bulkMode = bulkMode;
         executor = new ThreadPoolExecutor(numThreads, numThreads, 10, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<Runnable>(5));
         executor.setRejectedExecutionHandler(new WaitPolicy());
-        threadLocalBulkIngesters  = new ThreadLocal<BulkIngester>();
+        threadLocalBulkIngesters = new ThreadLocal<BulkIngester>();
         bulkIngesters = Collections.synchronizedList(Lists.<BulkIngester>newArrayList());
     }
-    
+
 
     @Override
     public void write(final Record record) throws IOException, InterruptedException {
-        executor.submit(new Runnable(){
+        executor.submit(new Runnable() {
             @Override
             public void run() {
-                
+
                 if (threadLocalBulkIngesters.get() == null) {
-                    BulkIngester bulkIngester = BulkIngester.newBulkIngester(lilyZk, 30000, repositoryTableName);
+                    BulkIngester bulkIngester = BulkIngester.newBulkIngester(lilyZk, 30000, repositoryName, tableName, bulkMode);
                     bulkIngesters.add(bulkIngester);
                     threadLocalBulkIngesters.set(bulkIngester);
                 }
-                
+
                 BulkIngester bulkIngester = threadLocalBulkIngesters.get();
-                
-                
+
+
                 try {
                     bulkIngester.write(record);
                     recordsWritten.incrementAndGet();
@@ -82,9 +86,10 @@ public class ThreadedRecordWriter implements RecordWriter {
                     log.error("Error writing record " + record, e);
                     writeFailures.incrementAndGet();
                 }
-            }});
+            }
+        });
     }
-    
+
     @Override
     public void close() {
         this.executor.shutdown();
@@ -110,7 +115,7 @@ public class ThreadedRecordWriter implements RecordWriter {
     public long getNumWriteFailures() {
         return writeFailures.longValue();
     }
-    
+
     @Override
     public long getNumRecords() {
         return recordsWritten.longValue();

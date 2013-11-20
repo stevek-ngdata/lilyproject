@@ -33,18 +33,36 @@ import org.lilyproject.repository.bulk.jython.JythonLineMapper;
  */
 public class LilyJythonMapper extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
 
-    /** Config key for the mapper symbol name. */
+    /**
+     * Config key for the mapper symbol name.
+     */
     public static final String MAPPER_SYMBOL_NAME = "lilyproject.jython.mapper.symbol";
 
-    /** Config key for the mapper Jython code. */
+    /**
+     * Config key for the mapper Jython code.
+     */
     public static final String MAPPER_CODE = "lilyproject.jython.mapper.code";
 
-    /** Config key for Lily ZooKeeper connection string. */
+    /**
+     * Config key for Lily ZooKeeper connection string.
+     */
     public static final String LILY_ZK_STRING = "lilyproject.zookeeper.connection";
-    
-    /** Config key for the name of the repository table to write to. */
+
+    /**
+     * Config key for the name of the repository table to write to.
+     */
     public static final String TABLE_NAME = "lilyproject.tablename";
-    
+
+    /**
+     * Config key for the name of the repository to write to.
+     */
+    public static final String REPOSITORY_NAME = "lilyproject.repositoryname";
+
+    /**
+     * Config key to configure bulk mode.
+     */
+    public static final String BULK_MODE = "lilyproject.bulk";
+
     private LineMapper lineMapper;
     private BulkIngester bulkIngester;
     private LineMappingContext lineMappingContext;
@@ -54,7 +72,8 @@ public class LilyJythonMapper extends Mapper<LongWritable, Text, ImmutableBytesW
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
         lineMapper = new JythonLineMapper(conf.get(MAPPER_CODE), conf.get(MAPPER_SYMBOL_NAME));
-        bulkIngester = BulkIngester.newBulkIngester(conf.get(LILY_ZK_STRING), 30000, conf.get(TABLE_NAME));
+        bulkIngester = BulkIngester.newBulkIngester(conf.get(LILY_ZK_STRING), 30000, conf.get(REPOSITORY_NAME),
+                conf.get(TABLE_NAME), Boolean.valueOf(conf.get(BULK_MODE)));
         recordWriter = new MapReduceRecordWriter(bulkIngester);
         lineMappingContext = new LineMappingContext(bulkIngester, recordWriter);
     }
