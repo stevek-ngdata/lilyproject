@@ -293,6 +293,7 @@ public class LilyServerProxy {
      */
     public void addIndex(String indexName, String coreName, byte[] indexerConfiguration, long timeout,
                          boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
+        WriteableIndexerModel indexerModel = getIndexerModel();
         IndexDefinition index = indexerModel.newIndex(indexName);
         Map<String, String> solrShards = new HashMap<String, String>();
         String solrUri = "http://localhost:8983/solr";
