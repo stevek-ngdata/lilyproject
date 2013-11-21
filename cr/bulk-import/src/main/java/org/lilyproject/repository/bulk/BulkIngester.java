@@ -59,6 +59,7 @@ import org.lilyproject.util.exception.ExceptionUtil;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.Type;
 import org.lilyproject.util.zookeeper.ZkUtil;
@@ -94,7 +95,8 @@ public class BulkIngester implements Closeable {
      * @return a new BulkIngester
      */
     public static BulkIngester newBulkIngester(String zkConnString, int timeout) {
-        return newBulkIngester(zkConnString, timeout, null, null, true);
+        return newBulkIngester(zkConnString, timeout, RepoAndTableUtil.DEFAULT_REPOSITORY, LilyHBaseSchema.Table.RECORD.name,
+                true);
     }
 
     /**
