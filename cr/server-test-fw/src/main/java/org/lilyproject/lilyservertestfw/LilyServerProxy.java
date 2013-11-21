@@ -15,6 +15,7 @@
  */
 package org.lilyproject.lilyservertestfw;
 
+import javax.management.ObjectName;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -24,8 +25,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import javax.management.ObjectName;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -294,8 +293,6 @@ public class LilyServerProxy {
      */
     public void addIndex(String indexName, String coreName, byte[] indexerConfiguration, long timeout,
                          boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
-        long tryUntil = System.currentTimeMillis() + timeout;
-        WriteableIndexerModel indexerModel = getIndexerModel();
         IndexDefinition index = indexerModel.newIndex(indexName);
         Map<String, String> solrShards = new HashMap<String, String>();
         String solrUri = "http://localhost:8983/solr";
@@ -305,8 +302,36 @@ public class LilyServerProxy {
         solrShards.put("shard1", solrUri);
         index.setSolrShards(solrShards);
         index.setConfiguration(indexerConfiguration);
-        indexerModel.addIndex(index);
+        addIndex(index, timeout, waitForIndexerModel, waitForSep, waitForIndexerRegistry);
+    }
 
+    /**
+     * Adds an index from in index configuration contained in a resource.
+     *
+     * <p>This method waits for the index subscription to be known by the SEP (or until a given timeout
+     * has passed), this assures that all repository operations from then on will be processed by the
+     * SEP listeners.
+     *
+     * <p>Note that when the SEP events are processed, the data has been put in solr but this
+     * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
+     * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
+     *
+     * @param index                  the index definition
+     * @param timeout                maximum time to spent waiting, an exception is thrown when the required conditions
+     *                               have not been reached within this timeout
+     * @param waitForIndexerModel    boolean indicating the call has to wait until the indexerModel knows the
+     *                               subscriptionId of the new index
+     * @param waitForSep             boolean indicating the call has to wait until the SEP for the new index started.
+     *                               This can only be true if the waitForIndexerModel is true as well.
+     * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
+     *                               the index, this is important for synchronous indexing.
+     */
+    public void addIndex(IndexDefinition index, long timeout, boolean waitForIndexerModel, boolean waitForSep,
+                         boolean waitForIndexerRegistry) throws Exception {
+        WriteableIndexerModel indexerModel = getIndexerModel();
+        indexerModel.addIndex(index);
+        String indexName = index.getName();
+        long tryUntil = System.currentTimeMillis() + timeout;
         if (waitForIndexerModel) {
             // Wait for subscriptionId to be known by indexerModel
             String subscriptionId = waitOnIndexSubscriptionId(indexName, tryUntil, timeout);
