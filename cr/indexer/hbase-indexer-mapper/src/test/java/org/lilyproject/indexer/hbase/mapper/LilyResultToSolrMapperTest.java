@@ -28,7 +28,6 @@ import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repotestfw.FakeRepositoryManager;
 import org.lilyproject.tools.import_.cli.JsonImport;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.repo.RecordEvent;
 
 import java.util.List;

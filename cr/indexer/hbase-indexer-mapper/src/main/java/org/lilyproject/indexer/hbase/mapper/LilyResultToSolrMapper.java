@@ -91,7 +91,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     private final Log log = LogFactory.getLog(getClass());
 
     private String repositoryName;
-    private String tableName;
     private String indexerConfString;
     private String indexName;
 
@@ -100,7 +99,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     private RepositoryManager repositoryManager;
     private LRepository repository;
     private IdGenerator idGenerator;
-    private LTable table;
     private IndexerConf indexerConf;
     private ValueEvaluator valueEvaluator;
     private DerefMap derefMap;
@@ -114,8 +112,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
             setIndexName(params.get(LResultToSolrMapper.INDEX_KEY));
             setRepositoryName(params.containsKey(LResultToSolrMapper.REPO_KEY) ?
                     params.get(LResultToSolrMapper.REPO_KEY) : null);
-            setTableName(params.containsKey(LResultToSolrMapper.TABLE_KEY) ?
-                    params.get(LResultToSolrMapper.TABLE_KEY) : null);
             setIndexerConfString(params.get(LResultToSolrMapper.INDEXERCONF_KEY));
 
             setRepositoryManager(new LilyClient(zooKeeperItf));
@@ -140,7 +136,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     protected void init () throws RepositoryException, InterruptedException, IndexerConfException,
             IndexNotFoundException, UnsupportedEncodingException, IOException {
         repository = repositoryManager.getRepository(repositoryName != null ? repositoryName : RepoAndTableUtil.DEFAULT_REPOSITORY);
-        table = repository.getTable(tableName != null ? tableName : LilyHBaseSchema.Table.RECORD.name);
         idGenerator = repository.getIdGenerator();
 
         ByteArrayInputStream is = new ByteArrayInputStream(indexerConfString.getBytes("UTF-8"));
@@ -242,13 +237,14 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                     .get(LilyHBaseSchema.RecordColumn.PAYLOAD.bytes), idGenerator);
 
             log.debug("Got event : " + event.toJson());
+            String tableName = event.getTableName();
+            LTable table = repository.getTable(tableName != null ? tableName : LilyHBaseSchema.Table.RECORD.name);
 
             if (event.getType().equals(INDEX)) {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("Record %1$s: reindex requested for these vtags: %2$s", record.getId(),
                             vtagSetToNameString(event.getVtagsToIndex())));
                 }
-                String tableName = event.getTableName();
                 RecordEventHelper eventHelper = new RecordEventHelper(event, null, repository.getTypeManager());
                 VTaggedRecord vtRecord = new VTaggedRecord(record.getId(), eventHelper, table, repository);
 
@@ -264,7 +260,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                 vtagsToIndex.retainAll(vtRecord.getVTags().keySet());
 
                 log.debug(vtagsToIndex.toString());
-                index(tableName, vtRecord, vtagsToIndex, solrUpdateWriter);
+                index(table, vtRecord, vtagsToIndex, solrUpdateWriter);
             } else if (event.getType().equals(DELETE)) {
                 solrUpdateWriter.deleteByQuery("lily.id:" + ClientUtils.escapeQueryChars(record.getId().toString()));
 
@@ -340,7 +336,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                         return;
                     }
 
-                    handleRecordCreateUpdate(vtRecord, solrUpdateWriter);
+                    handleRecordCreateUpdate(vtRecord, table, solrUpdateWriter);
                 }
 
                 if (derefMap != null) {
@@ -529,7 +525,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         }
     }
 
-    private void handleRecordCreateUpdate(VTaggedRecord vtRecord, SolrUpdateWriter solrUpdateWriter) throws Exception {
+    private void handleRecordCreateUpdate(VTaggedRecord vtRecord, LTable table, SolrUpdateWriter solrUpdateWriter) throws Exception {
 
         RecordEvent event = vtRecord.getRecordEvent();
         Map<Long, Set<SchemaId>> vtagsByVersion = vtRecord.getVTagsByVersion();
@@ -538,7 +534,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         //  The indexing of all versions is determined by the record type of the non-versioned scope.
         //  This makes that the indexing behavior of all versions is equal, and can be changed (the
         //  record type of the versioned scope is immutable).
-        IndexCase indexCase = indexerConf.getIndexCase(tableName, vtRecord.getRecord());
+        IndexCase indexCase = indexerConf.getIndexCase(table.getTableName(), vtRecord.getRecord());
 
         if (indexCase == null) {
             // The record should not be indexed
@@ -645,7 +641,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                         vtagsToIndex.add(vtag);
                     } else {
                         // The vtag does not exist anymore on the document, or does not need to be indexed: delete from index
-                        solrUpdateWriter.deleteById(LilyResultToSolrMapper.getIndexId(tableName,
+                        solrUpdateWriter.deleteById(LilyResultToSolrMapper.getIndexId(table.getTableName(),
                                 vtRecord.getId(), vtag));
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s: deleted from index for deleted vtag %2$s",
@@ -659,7 +655,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
             //
             // Index
             //
-            this.index(tableName, vtRecord, vtagsToIndex, solrUpdateWriter);
+            this.index(table, vtRecord, vtagsToIndex, solrUpdateWriter);
         }
     }
 
@@ -681,7 +677,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         return result;
     }
 
-    private void index(String tablename, VTaggedRecord vtRecord, Set<SchemaId> vtagsToIndex, SolrUpdateWriter solrUpdateWriter) throws Exception {
+    private void index(LTable table, VTaggedRecord vtRecord, Set<SchemaId> vtagsToIndex, SolrUpdateWriter solrUpdateWriter) throws Exception {
         IdRecord idRecord = vtRecord.getRecord();
         Map<Long, Set<SchemaId>> vtagsToIndexByVersion = getVtagsByVersion(vtagsToIndex, vtRecord.getVTags());
         for (Map.Entry<Long, Set<SchemaId>> entry : vtagsToIndexByVersion.entrySet()) {
@@ -699,7 +695,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                 // If the version does not exist, we pro-actively delete it, though the IndexUpdater should
                 // do this any way when it later receives a message about the delete.
                 for (SchemaId vtag : entry.getValue()) {
-                    solrUpdateWriter.deleteById(LilyResultToSolrMapper.getIndexId(tableName, vtRecord.getId(), vtag));
+                    solrUpdateWriter.deleteById(LilyResultToSolrMapper.getIndexId(table.getTableName(), vtRecord.getId(), vtag));
                 }
 
                 if (log.isDebugEnabled()) {
@@ -746,7 +742,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                         // because with deref-expressions we are never sure) that we did.
 
                         // There can be a previous entry in the index which we should try to delete
-                        solrUpdateWriter.deleteById(LilyResultToSolrMapper.getIndexId(tableName,
+                        solrUpdateWriter.deleteById(LilyResultToSolrMapper.getIndexId(table.getTableName(),
                                 vtRecord.getId(), vtag));
                         //metrics.deletesById.inc();
 
@@ -829,10 +825,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
 
     protected void setRepositoryName(String repositoryName) {
         this.repositoryName = repositoryName;
-    }
-
-    protected void setTableName(String tableName) {
-        this.tableName = tableName;
     }
 
     protected void setIndexName(String indexName) {

@@ -65,7 +65,6 @@ cat << EOF
 <indexer
 	table="${REPOTABLE}"
 	mapper="org.lilyproject.indexer.hbase.mapper.LilyResultToSolrMapper"
-	unique-key-formatter="org.lilyproject.indexer.hbase.mapper.LilyUniqueKeyFormatter"
     unique-key-field="lily.key"
 >
 	<param name="zookeeper" value="${ZOOKEEPER}"/>
