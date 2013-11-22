@@ -134,7 +134,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     }
 
     protected void init () throws RepositoryException, InterruptedException, IndexerConfException,
-            IndexNotFoundException, UnsupportedEncodingException, IOException {
+            IndexNotFoundException, IOException {
         repository = repositoryManager.getRepository(repositoryName != null ? repositoryName : RepoAndTableUtil.DEFAULT_REPOSITORY);
         idGenerator = repository.getIdGenerator();
 
@@ -160,7 +160,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                 return event.getType().equals(INDEX);
             }
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            log.error("Unable to decode record event", e);
         }
         return false;
     }
@@ -236,7 +236,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
             RecordEvent event = new RecordEvent(result.getFamilyMap(LilyHBaseSchema.RecordCf.DATA.bytes)
                     .get(LilyHBaseSchema.RecordColumn.PAYLOAD.bytes), idGenerator);
 
-            log.debug("Got event : " + event.toJson());
             String tableName = event.getTableName();
             LTable table = repository.getTable(tableName != null ? tableName : LilyHBaseSchema.Table.RECORD.name);
 
@@ -413,7 +412,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
             payload.setIndexRecordFilterData(filterData);
 
             try {
-                log.debug("Publishing :" + payload.toJson());
                 eventPublisherManager.getEventPublisher(repo, referrer.getTable()
                 ).publishEvent(referrer.getRecordId().toBytes(), payload.toJsonBytes());
             } catch (Exception e) {
