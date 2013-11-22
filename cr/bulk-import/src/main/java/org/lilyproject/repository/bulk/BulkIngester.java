@@ -87,6 +87,10 @@ public class BulkIngester implements Closeable {
     private FieldTypes fieldTypes;
     private List<Put> putBuffer = Lists.newArrayListWithCapacity(PUT_BUFFER_SIZE);
 
+    public boolean isBulkMode() {
+        return bulkMode;
+    }
+
     /**
      * Factory method for creation of a {@code BulkIngester} that operates on the default repository table.
      *
