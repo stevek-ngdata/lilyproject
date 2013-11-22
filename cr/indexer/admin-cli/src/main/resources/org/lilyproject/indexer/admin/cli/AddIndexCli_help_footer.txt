@@ -1,2 +1,0 @@
-For more information see the documentation about managing indexes:
-http://docs.ngdata.com/lily-docs-current/440-lily.html

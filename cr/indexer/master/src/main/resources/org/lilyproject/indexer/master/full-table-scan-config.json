@@ -1,8 +1,0 @@
-{
-    /* Record scanner configuration : full table scan*/
-	"scan" : {
-	    "returnFields" : { "type" : "ALL" },
-		"caching" : 1024,
-		"cacheBlocks" : false
-	}
-}
