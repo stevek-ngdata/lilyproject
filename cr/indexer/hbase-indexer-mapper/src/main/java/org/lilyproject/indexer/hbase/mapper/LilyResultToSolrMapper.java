@@ -154,6 +154,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     @Override
     public boolean containsRequiredData(Result result) {
         try {
+            // If we have a request to reindex then all the information we need should be in the payload
             if (result.containsColumn(LilyHBaseSchema.RecordCf.DATA.bytes, LilyHBaseSchema.RecordColumn.PAYLOAD.bytes)) {
                 RecordEvent event = new RecordEvent(result.getFamilyMap(LilyHBaseSchema.RecordCf.DATA.bytes)
                         .get(LilyHBaseSchema.RecordColumn.PAYLOAD.bytes), idGenerator);
@@ -162,6 +163,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         } catch (IOException e) {
             log.error("Unable to decode record event", e);
         }
+        // in other cases force a get for safe measure.
         return false;
     }
 
