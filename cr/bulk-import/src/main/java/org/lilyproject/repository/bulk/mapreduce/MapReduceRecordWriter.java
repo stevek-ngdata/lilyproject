@@ -33,37 +33,45 @@ public class MapReduceRecordWriter implements RecordWriter {
     private long recordsWritten;
     private ImmutableBytesWritable rowKey = new ImmutableBytesWritable();
     private BulkIngester bulkIngester;
-    private Mapper<?,?,ImmutableBytesWritable,Put>.Context context;
-    
+    private Mapper<?, ?, ImmutableBytesWritable, Put>.Context context;
+
     public MapReduceRecordWriter(BulkIngester bulkIngester) {
         this.bulkIngester = bulkIngester;
     }
 
-    public void setContext(Mapper<?,?,ImmutableBytesWritable,Put>.Context context) {
+    public void setContext(Mapper<?, ?, ImmutableBytesWritable, Put>.Context context) {
         this.context = context;
     }
 
     @Override
     public void write(Record record) throws IOException, InterruptedException {
-        Put put;
-        try {
-            put = bulkIngester.buildPut(record);
-            recordsWritten++;
-        } catch (RepositoryException e) {
-            throw new RuntimeException(e);
+        if (bulkIngester.isBulkMode()) {
+            Put put;
+            try {
+                put = bulkIngester.buildPut(record);
+                recordsWritten++;
+            } catch (RepositoryException e) {
+                throw new RuntimeException(e);
+            }
+            rowKey.set(record.getId().toBytes());
+            context.write(rowKey, put);
+        } else {
+            try {
+                bulkIngester.write(record);
+            } catch (RepositoryException e) {
+                throw new RuntimeException(e);
+            }
         }
-        rowKey.set(record.getId().toBytes());
-        context.write(rowKey, put);
     }
-    
+
     @Override
     public void close() {
         // No-op
     }
-    
+
     @Override
     public long getNumRecords() {
         return recordsWritten;
     }
-    
+
 }
