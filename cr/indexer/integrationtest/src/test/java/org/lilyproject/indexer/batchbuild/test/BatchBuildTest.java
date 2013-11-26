@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Charsets;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
 import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
@@ -38,11 +39,13 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.test.IndexerConfWrapper;
 import org.lilyproject.indexer.model.api.IndexBatchBuildState;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.LilyServerProxy;
+import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.LRepository;
@@ -90,9 +93,11 @@ public class BatchBuildTest {
     private static final String COUNTER_NUM_FAILED_RECORDS =
             "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
 
+    private static HbaseIndexerLauncherService hbaseIndexerLauncherService;
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        lilyProxy = new LilyProxy();
+        lilyProxy = new LilyProxy(null, null, null, true);
 
         InputStream is = BatchBuildTest.class.getResourceAsStream("solrschema.xml");
         byte[] solrSchema = IOUtils.toByteArray(is);
@@ -120,10 +125,14 @@ public class BatchBuildTest {
                 .fieldEntry().use(ft2).add()
                 .create();
 
+        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
+        hbaseIndexerLauncherService.setup(null, null, false);
+        hbaseIndexerLauncherService.start(null);
+
         model = lilyServerProxy.getIndexerModel();
 
         is = BatchBuildTest.class.getResourceAsStream("indexerconf.xml");
-        byte[] indexerConfiguration = IOUtils.toByteArray(is);
+        String indexerConfiguration = IOUtils.toString(is);
         IOUtils.closeQuietly(is);
 
         IndexerDefinition index = new IndexerDefinitionBuilder()
@@ -133,7 +142,8 @@ public class BatchBuildTest {
                 solrShards.put("shard1", "http://localhost:8983/solr/core0");
                 index.setRepositoryName(REPO_NAME);
                  */
-                .configuration(indexerConfiguration)
+                .configuration(IndexerConfWrapper.wrapConf(INDEX_NAME, indexerConfiguration, REPO_NAME,
+                        table.getTableName()).getBytes(Charsets.UTF_8))
                 .incrementalIndexingState(IndexerDefinition.IncrementalIndexingState.DO_NOT_SUBSCRIBE)
                 .build();
 
@@ -146,6 +156,8 @@ public class BatchBuildTest {
         Closer.close(solrServer);
         Closer.close(solrProxy);
         Closer.close(lilyServerProxy);
+
+        hbaseIndexerLauncherService.stop();
 
         lilyProxy.stop();
     }
@@ -342,6 +354,9 @@ public class BatchBuildTest {
     public void testCustomBatchIndexConf_NoBuild() throws Exception {
         setBatchIndexConf(getResourceAsByteArray("defaultBatchIndexConf-test2.json"),
                 getResourceAsByteArray("batchIndexConf-test3.json"), false);
+        //waitForIndexAndCommit(BUILD_TIMEOUT);
+        // remove when we can do this with hbase-indexer
+        buildAndCommit();
     }
 
     private byte[] getResourceAsByteArray(String name) throws IOException {
@@ -398,7 +413,9 @@ public class BatchBuildTest {
         }
 
         setBatchIndexConf(null, getResourceAsByteArray("batchIndexConf-testClearDerefmap-true.json"), true);
-        waitForIndexAndCommit(BUILD_TIMEOUT);
+        //waitForIndexAndCommit(BUILD_TIMEOUT);
+        // remove when we can do this with hbase-indexer
+        buildAndCommit();
 
         try {
             it = derefMap.findDependantsOf(absId(linkedRecord.getId()), ft1.getId(), vtag);

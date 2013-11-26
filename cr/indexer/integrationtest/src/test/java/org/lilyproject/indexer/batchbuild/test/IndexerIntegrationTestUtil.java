@@ -79,7 +79,7 @@ class IndexerIntegrationTestUtil {
                 .build());
         lilyProxy.getLilyServerProxy().waitOnIndexSubscriptionId(name, MINS15);
         if (lilyProxy.getHBaseProxy().getMode() != HBaseProxy.Mode.CONNECT)
-            lilyProxy.getHBaseProxy().waitOnReplicationPeerReady("IndexUpdater_" + name);
+            lilyProxy.getHBaseProxy().waitOnReplicationPeerReady("Indexer_" + name);
         lilyProxy.getLilyServerProxy().waitOnIndexerRegistry(name, System.currentTimeMillis() + MINS15);
     }
 

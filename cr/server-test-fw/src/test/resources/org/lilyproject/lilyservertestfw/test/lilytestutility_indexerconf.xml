@@ -16,13 +16,19 @@
  * limitations under the License.
  */
 -->
-<indexer xmlns:l="org.lilyproject.lilytestutility">
-  <records>
-    <record matchNamespace="l" matchName="TestRecordType" matchVariant="*" vtags="last"/>
-  </records>
+<indexer
+    table="record"
+    mapper="org.lilyproject.indexer.hbase.mapper.LilyResultToSolrMapper"
+    unique-key-field="lily.key"
+    >
+  <param name="zookeeper" value="localhost:2181"/>
+  <param name="name" value="testIndex"/>
+  <param name="repository" value="default"/>
+  <param name="table" value="record"/>
 
-  <fields>
-    <field name="name" value="l:name"/>
-  </fields>
-
+  <!-- an xml encoded version of what would have been found in the lily indexer conf -->
+  <param name="indexerConf" value="&lt;?xml version='1.0'?&gt;&lt;indexer xmlns:l='org.lilyproject.lilytestutility'&gt;
+    &lt;records&gt;    &lt;record matchNamespace='l' matchName='TestRecordType' matchVariant='*' vtags='last'/&gt;
+     &lt;/records&gt;  &lt;fields&gt;    &lt;field name='name' value='l:name'/&gt;  &lt;/fields&gt;&lt;/indexer&gt;"/>
 </indexer>
+

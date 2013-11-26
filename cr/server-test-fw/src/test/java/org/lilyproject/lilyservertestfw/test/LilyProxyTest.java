@@ -15,6 +15,7 @@
  */
 package org.lilyproject.lilyservertestfw.test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +38,7 @@ import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.lilyservertestfw.LilyProxy;
+import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -54,18 +56,24 @@ public class LilyProxyTest {
     private static LilyProxy lilyProxy;
     private static LilyClient lilyClient;
     private Repository repository;
+    private static HbaseIndexerLauncherService hbaseIndexerLauncherService;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        lilyProxy = new LilyProxy();
+        lilyProxy = new LilyProxy(null, null, null, true);
         byte[] schemaData = IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
-        lilyProxy.start(schemaData, null);
+        lilyProxy.start(schemaData);
         lilyClient = lilyProxy.getLilyServerProxy().getClient();
+
+        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
+        hbaseIndexerLauncherService.setup(null, null, false);
+        hbaseIndexerLauncherService.start(null);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+        hbaseIndexerLauncherService.stop();
         lilyProxy.stop();
     }
 
@@ -146,12 +154,13 @@ public class LilyProxyTest {
 
             // Now record should be in index
             recordIds = querySolr("name2");
-            Assert.assertFalse(recordIds.contains(record.getId()));
+            Assert.assertTrue(recordIds.contains(record.getId()));
         }
     }
 
-    private List<RecordId> querySolr(String name) throws SolrServerException {
+    private List<RecordId> querySolr(String name) throws SolrServerException, IOException {
         SolrServer solr = lilyProxy.getSolrProxy().getSolrServer();
+        solr.commit();
         SolrQuery solrQuery = new SolrQuery();
         //set default search field (no longer supported in schema.xml
         solrQuery.set("df", "name");

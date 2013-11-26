@@ -49,16 +49,7 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-solr-test-fw</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-solrj</artifactId>
-      <version>4.4.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-core</artifactId>
-      <version>4.4.0</version>
-    </dependency>
+
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>

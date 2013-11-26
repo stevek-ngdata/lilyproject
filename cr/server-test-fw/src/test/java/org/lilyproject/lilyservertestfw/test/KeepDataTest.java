@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
+import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeExistsException;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
@@ -60,19 +61,25 @@ public class KeepDataTest {
     private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility", "name");
     private static Repository repository;
     private static LilyProxy lilyProxy;
+    private static HbaseIndexerLauncherService hbaseIndexerLauncherService;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        lilyProxy = new LilyProxy();
+        lilyProxy = new LilyProxy(null, null, null, true);
         byte[] schemaData = IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
-        lilyProxy.start(schemaData, null);
+        lilyProxy.start(schemaData);
         LilyClient lilyClient = lilyProxy.getLilyServerProxy().getClient();
         repository = lilyClient.getRepository();
+
+        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
+        hbaseIndexerLauncherService.setup(null, null, false);
+        hbaseIndexerLauncherService.start(null);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+        hbaseIndexerLauncherService.stop();
         lilyProxy.stop();
     }
 
@@ -131,7 +138,8 @@ public class KeepDataTest {
         Assert.assertEquals("name1", (String) record.getField(FIELD1));
 
         // Wait for messages to be processed
-        Assert.assertTrue("Processing events took too long", lilyProxy.waitSepEventsProcessed(60000L));
+        Assert.assertTrue("Processing events took too long", lilyProxy.getHBaseProxy().waitOnSepIdle(60000L));
+        lilyProxy.getSolrProxy().commit();
 
         // Query Solr and assert all previously created records are indexed
         List<RecordId> recordIds = querySolr("name1");

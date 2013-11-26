@@ -109,6 +109,7 @@ public class IndexerTest {
     private static WriteableIndexerModel indexerModel;
     private static IndexesInfo indexesInfo;
     private static TrackingRepository indexUpdaterRepository;
+    private static HbaseIndexerLauncherService hbaseIndexerLauncherService;
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -164,7 +165,7 @@ public class IndexerTest {
         TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.indexer.engine",
                 "org.lilyproject.indexer.engine.test.IndexerTest", "com.ngdata.hbaseindexer");
 
-        HbaseIndexerLauncherService hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
+        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
         hbaseIndexerLauncherService.setup(null, null, false);
         hbaseIndexerLauncherService.start(null);
 
@@ -205,6 +206,7 @@ public class IndexerTest {
     public static void tearDownAfterClass() throws Exception {
         // cleanup the last created index (especially the SEP part), this is important when running tests in connect mode
         cleanupIndex("test" + idxChangeCnt);
+        hbaseIndexerLauncherService.stop();
         lilyProxy.stop();
           /*
         if (SOLR_TEST_UTIL != null) {

@@ -236,6 +236,13 @@
       <artifactId>hbase-sep-impl</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.ngdata</groupId>
+      <artifactId>hbase-indexer-mr</artifactId>
+    </dependency>
+
+
+
     <!--
       The following dependencies are here because otherwise Spring/Lily Runtime does not find their classes.
       This is because of the excludes that were added to the lily-client pom to make it lighter, combined
