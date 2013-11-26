@@ -72,11 +72,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.ngdata</groupId>
-      <artifactId>hbase-sep-impl</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-import</artifactId>
       <scope>test</scope>
