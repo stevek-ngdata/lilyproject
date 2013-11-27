@@ -5,6 +5,7 @@ import com.ngdata.hbaseindexer.Main;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.hadoop.conf.Configuration;
+import org.lilyproject.indexer.hbase.mapper.LilyIndexerLifecycleEventListener;
 
 import java.io.File;
 import java.util.List;
@@ -20,6 +21,7 @@ public class HbaseIndexerLauncherService implements LauncherService{
     public int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception {
         hbaseIndexerService = new Main();
         conf = HBaseIndexerConfiguration.create();
+        conf.set("hbaseindexer.lifecycle.listeners", LilyIndexerLifecycleEventListener.class.toString());
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

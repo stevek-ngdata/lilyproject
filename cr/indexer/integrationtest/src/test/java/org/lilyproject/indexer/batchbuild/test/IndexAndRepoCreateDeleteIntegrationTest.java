@@ -64,7 +64,6 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
     }
 
     @Test
-    @Ignore //FIXME this is broken
     public void testDeleteRepositoryRemovesTenantMaps() throws Exception {
         model.delete(testUtil.secundaryRepo.getRepositoryName());
         HTableDescriptor[] descriptors = hBaseAdmin.listTables();
@@ -113,7 +112,7 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
             deleteIndex("testBobbyTables");
 
             testUtil.createIndex("testBobbyTables", "dummyCORE", secondNewRepo);
-            lilyProxy.getLilyServerProxy().waitOnIndexerRegistry("testBobbyTables", 10000L);
+            lilyProxy.getHBaseProxy().waitOnSepIdle(10000L);
 
             checkOwner(hBaseAdmin, secondNewRepo.getRepositoryName(),
                     "deref-backward-testBobbyTables", "deref-forward-testBobbyTables");
