@@ -34,7 +34,7 @@ public class MultiRepositoryIntegrationTest {
 
     @BeforeClass
     public static void startLily() throws Exception{
-        lilyProxy = new LilyProxy();
+        lilyProxy = new LilyProxy(null, null, null, true);
         util = new IndexerIntegrationTestUtil(lilyProxy);
     }
 
@@ -140,7 +140,7 @@ public class MultiRepositoryIntegrationTest {
     }
 
     private void waitForSepAndCommitSolr() throws Exception {
-        lilyProxy.waitSepEventsProcessed(300000);
+        lilyProxy.getHBaseProxy().waitOnSepIdle(300000);
         lilyProxy.getSolrProxy().commit();
     }
 }

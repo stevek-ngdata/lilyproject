@@ -4,12 +4,17 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
+import com.ngdata.hbaseindexer.SolrConnectionParams;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
 import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
 import org.apache.commons.io.IOUtils;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.indexer.engine.test.IndexerConfWrapper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
+import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
@@ -37,6 +42,8 @@ class IndexerIntegrationTestUtil {
 
     private static WriteableIndexerModel indexerModel;
 
+    private static HbaseIndexerLauncherService hbaseIndexerLauncherService;
+
     IndexerIntegrationTestUtil(LilyProxy lilyProxy) throws Exception{
         this.lilyProxy = lilyProxy;
         startLily();
@@ -48,27 +55,40 @@ class IndexerIntegrationTestUtil {
     public void startLily() throws Exception{
         TestHelper.setupLogging("org.lilyproject");
 
-        byte[] schemaBytes = getResource("solrschema.xml");
+        byte[] schemaBytes = getResource("solrschema.xml").getBytes(Charsets.UTF_8);
         byte[] configBytes = org.lilyproject.solrtestfw.SolrDefinition.defaultSolrConfig();
 
         lilyProxy.start(new SolrDefinition(
                 new SolrDefinition.CoreDefinition(CORE1, schemaBytes, configBytes),
                 new SolrDefinition.CoreDefinition(CORE2, schemaBytes, configBytes)
         ));
+
+        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
+        hbaseIndexerLauncherService.setup(null, null, false);
+        hbaseIndexerLauncherService.start(null);
+
         configureLilySchema();
         indexerModel = lilyProxy.getLilyServerProxy().getIndexerModel();
         LRepository primaryRepo = lilyProxy.getLilyServerProxy().getClient().getDefaultRepository();
         LRepository secundaryRepo = getAlternateTestRespository("alternateRepo");
+
+
 
         createIndex(PRIMARY_INDEX, CORE1, primaryRepo);
         createIndex(SECUNDARY_INDEX, CORE2, secundaryRepo);
     }
 
     void createIndex(String name, String core, LRepository repository) throws Exception {
-        byte[] indexConf = getResource("indexerconf.xml");
+        String indexConf = IndexerConfWrapper.wrapConf(name, getResource("indexerconf.xml"),
+                repository.getRepositoryName(), repository.getDefaultTable().getTableName());
+        Map<String,String> connectionParams = Maps.newHashMap();
+        connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
+        connectionParams.put(SolrConnectionParams.COLLECTION, core);
         indexerModel.addIndexer(new IndexerDefinitionBuilder()
                 .name(name)
-                .configuration(indexConf)
+                .connectionType("solr")
+                .connectionParams(connectionParams)
+                .configuration(indexConf.getBytes(Charsets.UTF_8))
                 /*
                  Map<String, String> solrShards = new HashMap<String, String>();
         solrShards.put("shard1", "http://localhost:8983/solr" + "/" + core + "/");
@@ -105,11 +125,12 @@ class IndexerIntegrationTestUtil {
         return lilyProxy.getLilyServerProxy().getClient().getRepository(name);
     }
 
-    private byte[] getResource(String name) throws IOException {
-        return IOUtils.toByteArray(MultiRepositoryIntegrationTest.class.getResourceAsStream(name));
+    private String getResource(String name) throws IOException {
+        return IOUtils.toString(MultiRepositoryIntegrationTest.class.getResourceAsStream(name));
     }
 
     public void stop() {
+        hbaseIndexerLauncherService.stop();
         Closer.close(lilyProxy);
     }
 }
