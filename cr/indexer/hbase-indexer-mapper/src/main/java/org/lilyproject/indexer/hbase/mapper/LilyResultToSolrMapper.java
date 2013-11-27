@@ -65,6 +65,7 @@ import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
@@ -149,6 +150,13 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
             derefMap = DerefMapHbaseImpl.create(repository.getRepositoryName(), indexName,
                     LilyClient.getHBaseConfiguration(zooKeeperItf), null, repository.getIdGenerator());
         }
+    }
+
+    public void stop () {
+        Closer.close(eventPublisherManager);
+        Closer.close(repository);
+        Closer.close(repositoryManager);
+        Closer.close(zooKeeperItf);
     }
 
     @Override
