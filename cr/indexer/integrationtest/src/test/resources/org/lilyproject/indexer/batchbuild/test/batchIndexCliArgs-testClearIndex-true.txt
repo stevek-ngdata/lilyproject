@@ -1,0 +1,1 @@
+--hbase-indexer-zk localhost:2181 --hbase-indexer-name batchtest --go-live --reducers 1

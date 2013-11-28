@@ -22,7 +22,7 @@ public class HbaseIndexerLauncherService implements LauncherService{
         hbaseIndexerService = new Main();
         conf = HBaseIndexerConfiguration.create();
         conf.set("hbaseindexer.lifecycle.listeners", LilyIndexerLifecycleEventListener.class.toString());
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return 0;
     }
 
     @Override

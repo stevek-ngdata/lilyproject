@@ -15,12 +15,12 @@
  */
 package org.lilyproject.indexer.batchbuild.test;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.ngdata.hbaseindexer.SolrConnectionParams;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
 import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
@@ -34,15 +34,13 @@ import org.apache.solr.common.SolrInputDocument;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.test.IndexerConfWrapper;
-import org.lilyproject.indexer.model.api.IndexBatchBuildState;
-import org.lilyproject.indexer.model.api.IndexDefinition;
-import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.LilyServerProxy;
 import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
@@ -58,18 +56,16 @@ import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.model.api.RepositoryDefinition;
-import org.lilyproject.repository.model.api.RepositoryModel;
-import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.VersionTag;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+
+import static org.junit.Assert.*;
 
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;
@@ -135,8 +131,14 @@ public class BatchBuildTest {
         String indexerConfiguration = IOUtils.toString(is);
         IOUtils.closeQuietly(is);
 
+
+        Map<String,String> connectionParams = Maps.newHashMap();
+        connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
+        connectionParams.put(SolrConnectionParams.COLLECTION, "core0");
         IndexerDefinition index = new IndexerDefinitionBuilder()
                 .name(INDEX_NAME)
+                .connectionType("solr")
+                .connectionParams(connectionParams)
                 /*
                 Map<String, String> solrShards = new HashMap<String, String>();
                 solrShards.put("shard1", "http://localhost:8983/solr/core0");
@@ -200,7 +202,7 @@ public class BatchBuildTest {
 
     public void doTestClearIndex(String assertId, boolean clear) throws Exception {
 
-        byte[] defaultConf = getResourceAsByteArray(String.format("batchIndexConf-testClearIndex-%s.json", clear));
+        String[] defaultConf = getBatchCliArgs(String.format("batchIndexCliArgs-testClearIndex-%s.txt", clear));
         setBatchIndexConf(defaultConf, null, false);
 
         SolrInputDocument extraDoc = new SolrInputDocument();
@@ -232,12 +234,17 @@ public class BatchBuildTest {
 
     }
 
+    private String[] getBatchCliArgs(String name) throws IOException{
+        String argString = new String(getResourceAsByteArray(name), Charsets.UTF_8);
+        return Iterables.toArray(Splitter.on(" ").trimResults().omitEmptyStrings().split(argString), String.class);
+    }
+
     /**
      * Test if the default batch index conf setting works
      */
     @Test
     public void testDefaultBatchIndexConf() throws Exception {
-        byte[] defaultConf = getResourceAsByteArray("defaultBatchIndexConf-test2.json");
+        String[] defaultConf = getBatchCliArgs("defaultBatchIndexCliArgs-test2.txt");
         setBatchIndexConf(defaultConf, null, false);
 
         String assertId = "batch-index-test2";
@@ -266,8 +273,8 @@ public class BatchBuildTest {
         // check that  the last used batch index conf = default
         IndexerDefinition index = model.getIndexer(INDEX_NAME);
 
-        assertEquals(JsonFormat.deserialize(defaultConf), JsonFormat.deserialize(
-                index.getLastBatchBuildInfo().getBatchIndexConfiguration()));
+        assertTrue(Lists.newArrayList(index.getLastBatchBuildInfo().getBatchIndexCliArguments())
+                .containsAll(Lists.newArrayList(defaultConf)));
     }
 
     /**
@@ -275,7 +282,7 @@ public class BatchBuildTest {
      */
     @Test
     public void testCustomBatchIndexConf() throws Exception {
-        byte[] defaultConf = getResourceAsByteArray("defaultBatchIndexConf-test2.json");
+        String[] defaultConf = getBatchCliArgs("defaultBatchIndexCliArgs-test2.txt");
         setBatchIndexConf(defaultConf, null, false);
 
         String assertId1 = "batch-index-custom-test3";
@@ -316,7 +323,7 @@ public class BatchBuildTest {
         table.update(recordToChange1);
         table.update(recordToChange2);
 
-        byte[] batchConf = getResourceAsByteArray("batchIndexConf-test3.json");
+        String[] batchConf = getBatchCliArgs("batchIndexCliArgs-test3.txt");
         setBatchIndexConf(defaultConf, batchConf, true);
 
         waitForIndexAndCommit(BUILD_TIMEOUT);
@@ -326,8 +333,9 @@ public class BatchBuildTest {
         assertEquals(1, response.getResults().size());
         assertEquals("USER." + assertId1, response.getResults().get(0).getFieldValue("lily.id"));
         // check that the last used batch index conf = default
-        assertEquals(JsonFormat.deserialize(batchConf), JsonFormat.deserialize(
-                model.getIndexer(INDEX_NAME).getLastBatchBuildInfo().getBatchIndexConfiguration()));
+
+        assertTrue(Lists.newArrayList(model.getIndexer(INDEX_NAME).getLastBatchBuildInfo().getBatchIndexCliArguments())
+                .containsAll(Lists.newArrayList(batchConf)));
 
         // Set things up for run 3 where the default configuration should be used again
         recordToChange1.setField(ft1.getName(), "test3 index run3");
@@ -343,8 +351,8 @@ public class BatchBuildTest {
         assertEquals("USER." + assertId1, response.getResults().get(0).getFieldValue("lily.id"));
         assertEquals("USER." + assertId2, response.getResults().get(1).getFieldValue("lily.id"));
         // check that the last used batch index conf = default
-        assertEquals(JsonFormat.deserialize(defaultConf), JsonFormat.deserialize(
-                model.getIndexer(INDEX_NAME).getLastBatchBuildInfo().getBatchIndexConfiguration()));
+        assertTrue(Lists.newArrayList(model.getIndexer(INDEX_NAME).getLastBatchBuildInfo().getBatchIndexCliArguments())
+                .containsAll(Lists.newArrayList(defaultConf)));
     }
 
     /**
@@ -352,8 +360,8 @@ public class BatchBuildTest {
      */
     @Test(expected = org.lilyproject.indexer.model.api.IndexValidityException.class)
     public void testCustomBatchIndexConf_NoBuild() throws Exception {
-        setBatchIndexConf(getResourceAsByteArray("defaultBatchIndexConf-test2.json"),
-                getResourceAsByteArray("batchIndexConf-test3.json"), false);
+        setBatchIndexConf(getBatchCliArgs("defaultBatchIndexCliArgs-test2.txt"),
+                getBatchCliArgs("batchIndexCliArgs-test3.txt"), false);
         //waitForIndexAndCommit(BUILD_TIMEOUT);
         // remove when we can do this with hbase-indexer
         buildAndCommit();
@@ -370,6 +378,7 @@ public class BatchBuildTest {
     }
 
     @Test
+    @Ignore
     public void testClearDerefMap() throws Exception {
         DerefMap derefMap = DerefMapHbaseImpl
                 .create(REPO_NAME, INDEX_NAME, lilyProxy.getHBaseProxy().getConf(), null, repository.getIdGenerator());
@@ -398,7 +407,7 @@ public class BatchBuildTest {
             it.close();
         }
 
-        setBatchIndexConf(getResourceAsByteArray("batchIndexConf-testClearDerefmap-false.json"), null, false);
+        setBatchIndexConf(getBatchCliArgs("batchIndexCliArgs-testClearDerefmap-false.txt"), null, false);
 
         buildAndCommit();
 
@@ -412,7 +421,7 @@ public class BatchBuildTest {
             it.close();
         }
 
-        setBatchIndexConf(null, getResourceAsByteArray("batchIndexConf-testClearDerefmap-true.json"), true);
+        setBatchIndexConf(null, getBatchCliArgs("batchIndexCliArgs-testClearDerefmap-true.txt"), true);
         //waitForIndexAndCommit(BUILD_TIMEOUT);
         // remove when we can do this with hbase-indexer
         buildAndCommit();
@@ -439,16 +448,14 @@ public class BatchBuildTest {
                 Thread.sleep(100);
                 IndexerDefinition definition = model.getIndexer(INDEX_NAME);
                 if (definition.getBatchIndexingState() == IndexerDefinition.BatchIndexingState.INACTIVE) {
-                    Long amountFailed = definition.getLastBatchBuildInfo().getCounters()
-                            .get(COUNTER_NUM_FAILED_RECORDS);
-                    boolean successFlag = definition.getLastBatchBuildInfo().getSuccess();
+                    Long amountFailed = null;
+                    //amountFailed = definition.getLastBatchBuildInfo().getCounters().get(COUNTER_NUM_FAILED_RECORDS);
+                    boolean successFlag = definition.getLastBatchBuildInfo().isFinishedSuccessful();
                     indexSuccess = successFlag && (amountFailed == null || amountFailed == 0L);
                     if (!indexSuccess) {
                         fail("Batch index build did not finish successfully: success flag = " +
-                                successFlag + ", amount failed records = " + amountFailed + ", job state = " +
-                                definition.getLastBatchBuildInfo().getJobState() + ", job id = " +
-                                definition.getLastBatchBuildInfo().getJobId() + ", job url = " +
-                                definition.getLastBatchBuildInfo().getTrackingUrl());
+                                successFlag + ", amount failed records = " + amountFailed + ", job url = " +
+                                definition.getLastBatchBuildInfo().getMapReduceJobTrackingUrls());
                     } else {
                         break;
                     }
@@ -465,16 +472,16 @@ public class BatchBuildTest {
         }
     }
 
-    private static void setBatchIndexConf(byte[] defaultConf, byte[] customConf, boolean buildNow) throws Exception {
+    private static void setBatchIndexConf(String[] defaultConf, String[] customConf, boolean buildNow) throws Exception {
         String lock = model.lockIndexer(INDEX_NAME);
 
         try {
             IndexerDefinitionBuilder index = new IndexerDefinitionBuilder().startFrom(model.getIndexer(INDEX_NAME));
             if (defaultConf != null) {
-                index.defaultBatchIndexConfiguration(defaultConf);
+                index.defaultBatchIndexCliArguments(defaultConf);
             }
             if (customConf != null) {
-                index.batchIndexConfiguration(customConf);
+                index.batchIndexCliArguments(customConf);
             }
             if (buildNow) {
                 index.batchIndexingState(IndexerDefinition.BatchIndexingState.BUILD_REQUESTED);

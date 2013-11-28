@@ -1,0 +1,1 @@
+--hbase-start-row \x00batch-index --hbase-end-row \x00batch-indey
