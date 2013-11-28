@@ -34,24 +34,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-indexer-master</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-indexer-worker</artifactId>
-      <exclusions>
-        <exclusion>
-          <!-- Excluding Avro here so that it would only be in the classpath of the repository module.
-               Otherwise Avro can't find the repository implementation classes in the Lily Runtime. -->
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>avro</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-beans</artifactId>
     </dependency>

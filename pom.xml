@@ -83,12 +83,14 @@
     <module>build-tools</module>
     <module>runtime</module>
 
+    <module>global/hbase-authz-public-client</module>
+
     <module>cr/repository</module>
+    <module>cr/fake-repository</module>
     <module>cr/indexer</module>
     <module>cr/linkindex</module>
     <module>cr/repo-util</module>
     <module>cr/repo-test-fw</module>
-    <module>cr/fake-repository</module>
     <module>cr/avro-api</module>
     <module>cr/process</module>
     <module>cr/repository-api-tutorial</module>
@@ -115,7 +117,6 @@
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
     <module>global/servlet</module>
-    <module>global/hbase-authz-public-client</module>
 
     <module>tools/lily-runtime-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
@@ -397,11 +398,6 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-indexer-remote-impl</artifactId>
-        <version>3.0-authz-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
         <artifactId>lily-client</artifactId>
         <version>3.0-authz-SNAPSHOT</version>
       </dependency>
@@ -418,11 +414,6 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rest-resources-generator</artifactId>
-        <version>3.0-authz-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-indexer-module</artifactId>
         <version>3.0-authz-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -452,34 +443,13 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-indexer-master</artifactId>
-        <version>3.0-authz-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-indexer-worker</artifactId>
-        <version>3.0-authz-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-engine</artifactId>
         <version>3.0-authz-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-indexer-admin-cli</artifactId>
-        <version>3.0-authz-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-indexer-batchbuild</artifactId>
-        <classifier>mapreduce-job</classifier>
-        <version>3.0-authz-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbase-indexer-mapper</artifactId>
-        <version>3.0-SNAPSHOT</version>
+        <version>3.0-authz-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
@@ -524,6 +494,11 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-test-decorator</artifactId>
+        <version>3.0-authz-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-fake-repository</artifactId>
         <version>3.0-authz-SNAPSHOT</version>
       </dependency>
       <dependency>

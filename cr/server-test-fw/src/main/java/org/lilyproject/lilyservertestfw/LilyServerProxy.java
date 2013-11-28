@@ -15,18 +15,6 @@
  */
 package org.lilyproject.lilyservertestfw;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import javax.management.ObjectName;
-
 import com.ngdata.hbaseindexer.ConfKeys;
 import com.ngdata.hbaseindexer.HBaseIndexerConfiguration;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
@@ -42,7 +30,6 @@ import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.model.api.RepositoryDefinition;
 import org.lilyproject.repository.model.api.RepositoryModel;
@@ -57,11 +44,16 @@ import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
+import javax.management.ObjectName;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Set;
+
 public class LilyServerProxy {
-    public static final String LILY_CONF_DIR = "lily.conf.dir";
     public static final String LILY_CONF_CUSTOMDIR = "lily.conf.customdir";
-    private static final String COUNTER_NUM_FAILED_RECORDS =
-            "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
 
     private final Log log = LogFactory.getLog(getClass());
 
@@ -382,7 +374,7 @@ public class LilyServerProxy {
     }
 
     /**
-     * Calls {@link #batchBuildIndex(String, byte[], long) batchBuildIndex(indexName, null, timeOut)}.
+     * Calls {@link #batchBuildIndex(String, String[], long) batchBuildIndex(indexName, null, timeOut)}.
      */
     public void batchBuildIndex(String indexName, long timeOut) throws Exception {
         batchBuildIndex(indexName, null, timeOut);
@@ -392,13 +384,13 @@ public class LilyServerProxy {
      * Performs a batch index build of an index, waits for it to finish. If it does not finish within the
      * specified timeout, false is returned. If the index build was not successful, an exception is thrown.
      *
-     * @param batchConf the batch index conf for this particular invocation of the batch build
+     * @param batchCliArgs  the batch index arguments for this particular invocation of the batch build
      * @param timeOut   maximum time to wait for the batch index to finish. You can put this rather high: the method
      *                  will return as soon as the batch indexing is finished, it is only in case something goes
      *                  wrong that this timeout will prevent endless hanging. An exception is thrown in case
      *                  the batch indexing did not finish within this timeout.
      */
-    public void batchBuildIndex(String indexName, byte[] batchConf, long timeOut) throws Exception {
+    public void batchBuildIndex(String indexName, String[] batchCliArgs, long timeOut) throws Exception {
         WriteableIndexerModel model = getIndexerModel();
 
         try {
@@ -408,7 +400,7 @@ public class LilyServerProxy {
                 IndexerDefinitionBuilder builder = new IndexerDefinitionBuilder()
                         .startFrom(index)
                         .batchIndexingState(IndexerDefinition.BatchIndexingState.BUILD_REQUESTED)
-                        .batchIndexConfiguration(batchConf);
+                        .batchIndexCliArguments(batchCliArgs);
                 model.updateIndexer(builder.build(), lock);
             } finally {
                 model.unlockIndexer(lock);
@@ -425,15 +417,15 @@ public class LilyServerProxy {
                 IndexerDefinition definition = model.getIndexer(indexName);
 
                 if (definition.getBatchIndexingState() == IndexerDefinition.BatchIndexingState.INACTIVE) {
-                    Long amountFailed = definition.getLastBatchBuildInfo().getCounters().get(COUNTER_NUM_FAILED_RECORDS);
-                    boolean successFlag = definition.getLastBatchBuildInfo().getSuccess();
+                    Long amountFailed = null;
+                    //Long amountFailed = definition.getLastBatchBuildInfo().getCounters().get(COUNTER_NUM_FAILED_RECORDS);
+                    boolean successFlag = definition.getLastBatchBuildInfo().isFinishedSuccessful();
                     if (successFlag && (amountFailed == null || amountFailed == 0L)) {
                         return;
                     } else {
-                        System.out.println(definition.getLastBatchBuildInfo().getTrackingUrl());
+                        System.out.println(definition.getLastBatchBuildInfo().getMapReduceJobTrackingUrls());
                         throw new Exception("Batch index build did not finish successfully: success flag = " +
-                                successFlag + ", amount failed records = " + amountFailed + ", job state = " +
-                                definition.getLastBatchBuildInfo().getJobState());
+                                successFlag + ", amount failed records = " + amountFailed);
                     }
                 }
             }

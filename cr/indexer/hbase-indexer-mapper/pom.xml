@@ -68,7 +68,7 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repo-test-fw</artifactId>
+      <artifactId>lily-fake-repository</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

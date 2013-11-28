@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdentityRecordStack;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.LTable;
@@ -23,9 +24,10 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.fake.FakeRepositoryManager;
 import org.lilyproject.repository.impl.FieldFlags;
 import org.lilyproject.repository.impl.HBaseRepository;
-import org.lilyproject.repotestfw.FakeRepositoryManager;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.tools.import_.cli.JsonImport;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.repo.RecordEvent;
@@ -60,6 +62,8 @@ public class LilyResultToSolrMapperTest {
 
     @Test
     public void testMap() throws Exception {
+        IdGenerator idGenerator = new IdGeneratorImpl();
+        System.out.println(Bytes.toString(idGenerator.fromString("USER.batch-index-custom").toBytes()));
         LTable table = repository.getDefaultTable();
         Record record = table.recordBuilder()
                 .assignNewUuid()

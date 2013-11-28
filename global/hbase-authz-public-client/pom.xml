@@ -9,7 +9,7 @@
   <parent>
     <artifactId>lily</artifactId>
     <groupId>org.lilyproject</groupId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.0-authz-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
 
