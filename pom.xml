@@ -610,21 +610,93 @@
         <groupId>com.ngdata</groupId>
         <artifactId>hbase-indexer-engine</artifactId>
         <version>${version.hbase-indexer}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-solrj</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-cell</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.ngdata</groupId>
         <artifactId>hbase-indexer-model</artifactId>
         <version>${version.hbase-indexer}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-solrj</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-cell</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.ngdata</groupId>
         <artifactId>hbase-indexer-server</artifactId>
         <version>${version.hbase-indexer}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-solrj</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-cell</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.ngdata</groupId>
         <artifactId>hbase-indexer-mr</artifactId>
         <version>${version.hbase-indexer}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-solrj</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-cell</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.ngdata</groupId>
