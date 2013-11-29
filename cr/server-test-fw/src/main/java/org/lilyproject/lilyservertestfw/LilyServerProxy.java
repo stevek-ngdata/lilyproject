@@ -15,8 +15,10 @@
  */
 package org.lilyproject.lilyservertestfw;
 
+import com.google.common.collect.Maps;
 import com.ngdata.hbaseindexer.ConfKeys;
 import com.ngdata.hbaseindexer.HBaseIndexerConfiguration;
+import com.ngdata.hbaseindexer.SolrConnectionParams;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
 import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
@@ -50,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Map;
 import java.util.Set;
 
 public class LilyServerProxy {
@@ -291,8 +294,13 @@ public class LilyServerProxy {
                          boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
         long tryUntil = System.currentTimeMillis() + timeout;
         WriteableIndexerModel indexerModel = getIndexerModel();
+        Map<String,String> connectionParams = Maps.newHashMap();
+        connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
+        connectionParams.put(SolrConnectionParams.COLLECTION, coreName);
         IndexerDefinition index = new IndexerDefinitionBuilder()
                 .name(indexName)
+                .connectionType("solr")
+                .connectionParams(connectionParams)
                 /*
         Map<String, String> solrShards = new HashMap<String, String>();
         String solrUri = "http://localhost:8983/solr";
@@ -354,23 +362,7 @@ public class LilyServerProxy {
     }
 
     public void waitOnIndexerRegistry(String indexName, long tryUntil) throws Exception {
-        JmxLiaison jmxLiaison = new JmxLiaison();
-        ObjectName indexerObjectName = new ObjectName("Lily:name=Indexer");
-
-        try {
-            jmxLiaison.connect(mode == Mode.EMBED);
-
-            while (System.currentTimeMillis() < tryUntil) {
-                Set<String> subscriptionIds = (Set<String>) jmxLiaison.getAttribute(indexerObjectName, "IndexNames");
-                if (subscriptionIds.contains(indexName)) {
-                    return;
-                }
-                Thread.sleep(50);
-            }
-            throw new Exception("Timed out waiting for indexer to become known to IndexerRegistry: " + indexName);
-        } finally {
-            jmxLiaison.disconnect();
-        }
+        this.hbaseProxy.waitOnReplicationPeerReady("Indexer_" + indexName);
     }
 
     /**
