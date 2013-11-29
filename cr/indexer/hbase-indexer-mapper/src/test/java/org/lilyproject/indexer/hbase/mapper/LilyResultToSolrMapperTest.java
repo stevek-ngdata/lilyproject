@@ -94,7 +94,6 @@ public class LilyResultToSolrMapperTest {
         byte[] family = LilyHBaseSchema.RecordCf.DATA.bytes;
 
         kvs.add(new KeyValue(rowKey, family, LilyHBaseSchema.RecordColumn.VERSION.bytes, 1L, Bytes.toBytes(record.getVersion())));
-        // TODO deleted?
 
         kvs.add(new KeyValue(rowKey, family, LilyHBaseSchema.RecordColumn.NON_VERSIONED_RT_ID.bytes,
                 1L, typeManager.getRecordTypeByName(record.getRecordTypeName(Scope.NON_VERSIONED),
