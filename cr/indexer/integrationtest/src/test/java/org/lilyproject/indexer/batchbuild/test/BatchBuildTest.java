@@ -358,7 +358,7 @@ public class BatchBuildTest {
     /**
      * This test should cause a failure when adding a custom batchindex conf without setting a buildrequest
      */
-    @Test(expected = org.lilyproject.indexer.model.api.IndexValidityException.class)
+    @Test(expected = com.ngdata.hbaseindexer.model.api.IndexerValidityException.class)
     public void testCustomBatchIndexConf_NoBuild() throws Exception {
         setBatchIndexConf(getBatchCliArgs("defaultBatchIndexCliArgs-test2.txt"),
                 getBatchCliArgs("batchIndexCliArgs-test3.txt"), false);
