@@ -36,7 +36,6 @@
   </parent>
 
   <modules>
-    <module>api</module>
     <module>engine</module>
     <module>derefmap-indexfilter</module>
     <module>sep-filter</module>

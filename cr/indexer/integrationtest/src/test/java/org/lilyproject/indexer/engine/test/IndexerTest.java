@@ -53,7 +53,6 @@ import org.lilyproject.hadooptestfw.CleanupUtil;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
-import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.Follow;
 import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
@@ -238,7 +237,6 @@ public class IndexerTest {
         // code in this method not to be executed! (so keep this in mind for anything related to resource cleanup)
         INDEXER_CONF =  IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
                 repositoryManager.getRepository(REPO_NAME));
-        IndexLocker indexLocker = new IndexLocker(lilyProxy.getLilyServerProxy().getZooKeeper(), false);
 
         Configuration hbaseConf = lilyProxy.getHBaseProxy().getConf();
         if (derefMap != null) {

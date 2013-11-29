@@ -15,10 +15,6 @@
  */
 package org.lilyproject.lilyservertestfw.test;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
 import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
@@ -35,8 +31,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.indexer.model.api.IndexDefinition;
-import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.FieldType;
@@ -48,6 +42,10 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.solrtestfw.SolrDefinition;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class LilyProxyTest {

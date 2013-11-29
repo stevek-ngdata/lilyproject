@@ -10,6 +10,7 @@ import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
 import com.ngdata.hbaseindexer.model.api.IndexerModelEvent;
 import com.ngdata.hbaseindexer.model.api.IndexerModelEventType;
 import com.ngdata.hbaseindexer.model.api.IndexerModelListener;
+import com.ngdata.hbaseindexer.model.api.IndexerUpdateException;
 import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -19,7 +20,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.lilyproject.indexer.model.api.IndexUpdateException;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.model.impl.RepositoryModelImpl;
@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.MINS15;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
 
 public class IndexAndRepoCreateDeleteIntegrationTest {
 
@@ -74,7 +73,7 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
         deleteIndex("secundary");
     }
 
-    @Test(expected = IndexUpdateException.class)
+    @Test(expected = IndexerUpdateException.class)
     @Ignore //we no longer check on this
     public void testChangeRepositoryForIndex() throws Exception {
         LRepository firstNewRepo = testUtil.getAlternateTestRespository("repo1");

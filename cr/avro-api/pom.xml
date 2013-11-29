@@ -51,11 +51,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-indexer-api</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
