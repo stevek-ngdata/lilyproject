@@ -91,6 +91,7 @@
     <module>cr/linkindex</module>
     <module>cr/repo-util</module>
     <module>cr/repo-test-fw</module>
+    <module>cr/fake-repository</module>
     <module>cr/avro-api</module>
     <module>cr/process</module>
     <module>cr/repository-api-tutorial</module>
@@ -117,6 +118,7 @@
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
     <module>global/servlet</module>
+    <module>global/hbase-authz-public-client</module>
 
     <module>tools/lily-runtime-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
@@ -490,6 +492,11 @@
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbase-authz-public-client</artifactId>
         <version>3.0-authz-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-hbase-authz-public-client</artifactId>
+        <version>3.0-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
@@ -1171,6 +1178,10 @@
             <version>${project.version}</version>
           </dependency>
         </dependencies>
+      </plugin>
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.2.1</version>
       </plugin>
       <!--
       <plugin>
