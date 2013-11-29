@@ -22,13 +22,13 @@
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-pluginregistry-parent</artifactId>
   <packaging>pom</packaging>
-  <version>3.0-authz-SNAPSHOT</version>
+  <version>3.0-SNAPSHOT</version>
   <name>Lily: pluginregistry parent</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily</artifactId>
-    <version>3.0-authz-SNAPSHOT</version>
+    <version>3.0-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
 
