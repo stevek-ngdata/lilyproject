@@ -21,7 +21,7 @@ public class HbaseIndexerLauncherService implements LauncherService{
     public int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception {
         hbaseIndexerService = new Main();
         conf = HBaseIndexerConfiguration.create();
-        conf.set("hbaseindexer.lifecycle.listeners", LilyIndexerLifecycleEventListener.class.toString());
+        conf.set("hbaseindexer.lifecycle.listeners", LilyIndexerLifecycleEventListener.class.getName());
         return 0;
     }
 

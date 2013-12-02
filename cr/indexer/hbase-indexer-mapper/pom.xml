@@ -48,22 +48,36 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-indexer-engine</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-sep</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-model</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-hbaseindex-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-derefmap-indexfilter</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>com.ngdata</groupId>
       <artifactId>hbase-indexer-engine</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.ngdata</groupId>
-      <artifactId>hbase-indexer-server</artifactId>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-solrj</artifactId>
+      <version>${version.solr}</version>
     </dependency>
     <dependency>
-      <groupId>com.ngdata</groupId>
-      <artifactId>hbase-sep-impl</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ngdata</groupId>
-      <artifactId>hbase-sep-impl-common</artifactId>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-core</artifactId>
+      <scope>runtime</scope>
     </dependency>
 
     <dependency>
@@ -77,31 +91,61 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-core</artifactId>
-    </dependency>
-
   </dependencies>
 
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.4</version>
-        <configuration>
-          <finalName>lily-hbase-indexer-${project.version}</finalName>
-          <appendAssemblyId>false</appendAssemblyId>
-          <descriptors>
-            <descriptor>dist-assembly.xml</descriptor>
-          </descriptors>
-        </configuration>
+        <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
-            <id>make-assembly</id>
-            <phase>package</phase>
+            <id>create-hbase-indexer-mapper-classpath</id>
             <goals>
-              <goal>single</goal>
+              <goal>build-classpath</goal>
+            </goals>
+            <configuration>
+              <attach>true</attach>
+              <includeScope>runtime</includeScope>
+              <outputFile>${project.build.directory}/mapper-classpath.txt</outputFile>
+              <outputAbsoluteArtifactFilename>true</outputAbsoluteArtifactFilename>
+              <prependGroupId>true</prependGroupId>
+              <localRepoProperty>${LILY_HOME}/lib</localRepoProperty>
+              <excludeGroupIds>org.apache.solr,org.apache.hadoop,org.apache.hbase</excludeGroupIds>
+              <excludeArtifactIds>hbase-indexer-common,hbase-indexer-model,hbase-indexer-engine,hbase-sep-api,hbase-sep-impl</excludeArtifactIds>
+            </configuration>
+          </execution>
+          <execution>
+            <id>create-hbase-indexer-mapper-DEV-classpath</id>
+            <goals>
+              <goal>build-classpath</goal>
+            </goals>
+            <configuration>
+              <includeScope>runtime</includeScope>
+              <outputFile>${project.build.directory}/dev-classpath.txt</outputFile>
+              <outputAbsoluteArtifactFilename>true</outputAbsoluteArtifactFilename>
+              <prependGroupId>true</prependGroupId>
+              <excludeGroupIds>org.apache.solr,org.apache.hadoop,org.apache.hbase</excludeGroupIds>
+              <excludeArtifactIds>hbase-indexer-common,hbase-indexer-model,hbase-indexer-engine,hbase-sep-api,hbase-sep-impl</excludeArtifactIds>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.6</version>
+        <executions>
+          <execution>
+            <phase>process-resources</phase>
+            <configuration>
+              <target>
+                <replace file="${project.build.outputDirectory}/install-hbasemapper.sh" token="@@@MAPPER@@@"
+                         value="${project.build.directory}/${project.build.finalName}.jar"/>
+                <chmod file="${project.build.outputDirectory}/install-hbasemapper.sh" perm="755"/>
+                <chmod file="${project.build.outputDirectory}/lilyindex-to-hbaseindex.sh" perm="755"/>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
             </goals>
           </execution>
         </executions>

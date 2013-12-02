@@ -6,7 +6,7 @@ $ mvn clean install
 Deploying
 ---------
 
-$ tar xzf target/lily-hbase-indexer*.tar.gz -C $HBASE_INDEXER_HOME
+$ sh ./target/classes/install-hbasemapper.sh
 
 Using
 -----

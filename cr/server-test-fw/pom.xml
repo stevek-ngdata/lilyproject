@@ -193,6 +193,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.ngdata</groupId>
+      <artifactId>hbase-indexer-server</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
       <version>3.2.1.RELEASE</version>

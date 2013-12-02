@@ -33,11 +33,6 @@
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-zk-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
       <artifactId>lily-json-util</artifactId>
     </dependency>
 
@@ -62,18 +57,8 @@
     </dependency>
 
     <dependency>
-      <groupId>net.iharder</groupId>
-      <artifactId>base64</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
     </dependency>
 
     <dependency>
@@ -83,12 +68,6 @@
     <dependency>
       <groupId>com.ngdata</groupId>
       <artifactId>hbase-indexer-engine</artifactId>
-    </dependency>
-
-    <dependency>
-      <!-- Currently only here to get the logging deps in -->
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hadoop-test-fw</artifactId>
     </dependency>
 
     <dependency>
@@ -106,6 +85,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

@@ -2,7 +2,6 @@ package org.lilyproject.indexer.hbase.mapper;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
@@ -10,14 +9,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.ngdata.hbaseindexer.Configurable;
-import com.ngdata.hbaseindexer.parse.ResultToSolrMapper;
 import com.ngdata.hbaseindexer.parse.SolrUpdateWriter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.zookeeper.KeeperException;
@@ -33,16 +30,12 @@ import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
-import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
-import org.lilyproject.indexer.model.indexerconf.MappingNode;
 import org.lilyproject.indexer.model.util.IndexRecordFilterUtil;
-import org.lilyproject.linkindex.LinkIndexException;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.LRepository;
@@ -58,7 +51,6 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.repository.impl.RecordDecoder;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
-import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -75,18 +67,13 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
+import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable {
     private final Log log = LogFactory.getLog(getClass());
@@ -360,7 +347,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
 
     private void updateDenormalizedData(String repo, String table, RecordId recordId, Map<Scope, Set<FieldType>> updatedFieldsByScope,
                                         Set<SchemaId> changedVTagFields)
-            throws RepositoryException, InterruptedException, LinkIndexException, IOException {
+            throws RepositoryException, InterruptedException, IOException {
 
         Multimap<AbsoluteRecordId, SchemaId> referrersAndVTags = ArrayListMultimap.create();
 
@@ -789,6 +776,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         return builder.toString();
     }
 
+    /*
     private static class StaticFieldTypeFinder implements Predicate<MappingNode> {
         boolean foundRelevant = false;
         final FieldType fieldType;
@@ -807,6 +795,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
             return !foundRelevant;
         }
     }
+    */
 
     /**
      * Lookup name of field type, for use in debug logs. Beware, this might be slow.
