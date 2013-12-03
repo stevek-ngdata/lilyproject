@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<indexer xmlns:m="org.lilyproject.mail">
+<indexer xmlns:m="org.lilyproject.mail"
+  zookeeper="localhost:2181">
   <recordFilter>
     <includes>
       <include recordType="m:Part" vtags="last"/>

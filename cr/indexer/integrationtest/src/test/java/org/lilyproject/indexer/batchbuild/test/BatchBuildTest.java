@@ -45,6 +45,7 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
+import org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.LilyServerProxy;
 import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
@@ -144,6 +145,7 @@ public class BatchBuildTest {
                 solrShards.put("shard1", "http://localhost:8983/solr/core0");
                 index.setRepositoryName(REPO_NAME);
                  */
+                .indexerConfReader(LilyIndexerConfReader.class.getName())
                 .configuration(indexerConfiguration)
                 .incrementalIndexingState(IndexerDefinition.IncrementalIndexingState.DO_NOT_SUBSCRIBE)
                 .build();

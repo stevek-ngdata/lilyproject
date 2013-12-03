@@ -83,7 +83,7 @@ public class IndexesInfoImpl implements IndexesInfo {
             try {
                 // check if this is a lily index
                 // FIXME: check on class name in a non-dependency module
-                if (!indexDef.getIndexerConfReader().equals("org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader")) {
+                if (!"org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader".equals(indexDef.getIndexerConfReader())) {
                     continue;
                 }
                 // FIXME: This only works when the conf reader class happens to be vailable in this class

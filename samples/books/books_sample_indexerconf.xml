@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<indexer xmlns:b="org.lilyproject.bookssample">
+<indexer xmlns:b="org.lilyproject.bookssample"
+  zookeeper="localhost:2181">
   <recordFilter>
     <includes>
       <include recordType="b:Book" vtags="last"/>

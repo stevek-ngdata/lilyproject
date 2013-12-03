@@ -32,6 +32,7 @@ import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.model.api.RepositoryDefinition;
 import org.lilyproject.repository.model.api.RepositoryModel;
@@ -310,6 +311,7 @@ public class LilyServerProxy {
         solrShards.put("shard1", solrUri);
         index.setSolrShards(solrShards);
         */
+                .indexerConfReader(LilyIndexerConfReader.class.getName())
                 .configuration(indexerConfiguration)
                 .build();
         indexerModel.addIndexer(index);
