@@ -16,7 +16,9 @@
  * limitations under the License.
  */
 -->
-<indexer xmlns:ns="org.lilyproject.indexer.test" xmlns:ns2="org.lilyproject.indexer.test.2">
+<indexer xmlns:ns="org.lilyproject.indexer.test" xmlns:ns2="org.lilyproject.indexer.test.2"
+  repository="IndexerTestRepo"
+  zookeeper="localhost:2181">
 
   <records>
     <record matchNamespace="ns" matchName="NVRecordType1" matchVariant="*" vtags="live,nonversioned"/>

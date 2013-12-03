@@ -37,11 +37,11 @@ import org.lilyproject.util.repo.VTaggedRecord;
  *
  * <p>Fields and vtags are identified by ID in this object model.
  *
- * <p>The IndexerConf is constructed by the {@link IndexerConfBuilder}. Some essential
+ * <p>The IndexerConf is constructed by the {@link LilyIndexerConfBuilder}. Some essential
  * validation is done by that builder which would not be done in case of direct
  * construction.
  */
-public class IndexerConf {
+public class LilyIndexerConf {
     private IndexRecordFilter recordFilter;
     private IndexFields indexFields;
     private List<DynamicIndexField> dynamicFields = new ArrayList<DynamicIndexField>();

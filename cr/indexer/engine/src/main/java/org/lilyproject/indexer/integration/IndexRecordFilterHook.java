@@ -233,7 +233,7 @@ public class IndexRecordFilterHook implements RecordUpdateHook {
     }
 
     boolean indexMatchesRepository(String repositoryName, IndexInfo indexInfo){
-        String indexRepo = indexInfo.getIndexerConf().getGlobalParams().get(LResultToSolrMapper.REPO_KEY);
+        String indexRepo = indexInfo.getRepositoryName();
         indexRepo = (indexRepo != null ? indexRepo : RepoAndTableUtil.DEFAULT_REPOSITORY);
         return indexRepo.equals(repositoryName);
     }

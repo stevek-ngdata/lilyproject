@@ -23,6 +23,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.ByteStreams;
 import com.ngdata.hbaseindexer.HBaseIndexerConfiguration;
 import com.ngdata.hbaseindexer.SolrConnectionParams;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
@@ -53,13 +54,14 @@ import org.lilyproject.hadooptestfw.CleanupUtil;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
+import org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.Follow;
 import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexFields;
-import org.lilyproject.indexer.model.indexerconf.IndexerConf;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
+import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
+import org.lilyproject.indexer.model.indexerconf.LilyIndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.MappingNode;
 import org.lilyproject.indexer.model.indexerconf.VariantFollow;
@@ -97,7 +99,7 @@ public class IndexerTest {
 
     private static LilyProxy lilyProxy;
 
-    private static IndexerConf INDEXER_CONF;
+    private static LilyIndexerConf INDEXER_CONF;
     private static RepositoryManager repositoryManager;
     private static LRepository repository;
     private static LTable defaultTable;
@@ -235,7 +237,7 @@ public class IndexerTest {
         // warning: the below line will throw an exception in case of invalid conf, which is an exception
         // which some test cases expect, and hence it won't be visible but will cause the remainder of the
         // code in this method not to be executed! (so keep this in mind for anything related to resource cleanup)
-        INDEXER_CONF =  IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
+        INDEXER_CONF =  LilyIndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
                 repositoryManager.getRepository(REPO_NAME));
 
         Configuration hbaseConf = lilyProxy.getHBaseProxy().getConf();
@@ -259,9 +261,8 @@ public class IndexerTest {
         IndexerDefinition indexDef = new IndexerDefinitionBuilder().name(indexName)
                 .connectionType("solr")
                 .connectionParams(connectionParams)
-                .configuration(IndexerConfWrapper.wrapConf(indexName,
-                        IOUtils.toString(IndexerTest.class.getResourceAsStream(confName)),
-                        repository.getRepositoryName(), indexTableName).getBytes(Charsets.UTF_8))
+                .indexerConfReader(LilyIndexerConfReader.class.getName())
+                .configuration(ByteStreams.toByteArray(IndexerTest.class.getResourceAsStream(confName)))
                 //.solrShards(Collections.singletonMap("shard1", "http://somewhere/"))
                 //.subscriptionId("Indexer_" + indexName)
                 //indexDef.setRepositoryName(REPO_NAME)

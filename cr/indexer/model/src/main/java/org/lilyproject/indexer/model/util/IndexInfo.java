@@ -15,38 +15,48 @@
  */
 package org.lilyproject.indexer.model.util;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import com.ngdata.hbaseindexer.conf.IndexerConf;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import org.lilyproject.indexer.model.api.LResultToSolrMapper;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
+import org.lilyproject.indexer.model.indexerconf.LilyIndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
+import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.util.xml.DocumentHelper;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 public class IndexInfo {
     IndexerDefinition indexDefinition;
     IndexerConf indexerConf;
-    org.lilyproject.indexer.model.indexerconf.IndexerConf lilyIndexerConf;
+    LilyIndexerConf lilyIndexerConf;
+    String repositoryName;
 
     public IndexInfo(IndexerDefinition indexDefinition, IndexerConf indexerConf, RepositoryManager repositoryManager)
             throws IndexerConfException, RepositoryException, InterruptedException {
         this.indexDefinition = indexDefinition;
         this.indexerConf = indexerConf;
 
-        LRepository repository = indexerConf.getGlobalParams().containsKey(LResultToSolrMapper.REPO_KEY) ?
-                repositoryManager.getRepository(indexerConf.getGlobalParams().get(LResultToSolrMapper.REPO_KEY)) :
-                repositoryManager.getDefaultRepository();
+        byte[] confData = indexerConf.getGlobalConfig();
         try {
-            ByteArrayInputStream is = new ByteArrayInputStream(
-                    indexerConf.getGlobalParams().get(LResultToSolrMapper.INDEXERCONF_KEY).getBytes("UTF-8"));
-            this.lilyIndexerConf = IndexerConfBuilder.build(is, repository);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+            Document doc = DocumentHelper.parse(new ByteArrayInputStream(confData));
+            repositoryName = DocumentHelper.getAttribute(doc.getDocumentElement(), "repository", false);
+        } catch (Exception e) {
+            throw new AssertionError(e);
         }
+
+        LRepository repository = repositoryName == null ? repositoryManager.getDefaultRepository() : repositoryManager.getRepository(repositoryName);
+        repositoryName = repository.getRepositoryName();
+
+        this.lilyIndexerConf = LilyIndexerConfBuilder.build(new ByteArrayInputStream(confData), repository);
     }
 
     public IndexerDefinition getIndexDefinition() {
@@ -57,7 +67,11 @@ public class IndexInfo {
         return indexerConf;
     }
 
-    public org.lilyproject.indexer.model.indexerconf.IndexerConf getLilyIndexerConf() {
+    public LilyIndexerConf getLilyIndexerConf() {
         return lilyIndexerConf;
+    }
+
+    public String getRepositoryName() {
+        return repositoryName;
     }
 }

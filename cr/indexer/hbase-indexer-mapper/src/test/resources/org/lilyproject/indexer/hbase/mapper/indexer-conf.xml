@@ -1,4 +1,5 @@
-<indexer xmlns:ns="org.lilyproject.indexer.hbase.mapper.test" xmlns:ns2="org.lilyproject.indexer.hbase.mapper.test.2">
+<indexer xmlns:ns="org.lilyproject.indexer.hbase.mapper.test" xmlns:ns2="org.lilyproject.indexer.hbase.mapper.test.2"
+      zookeeper="localhost:2181/solr">
   <records>
     <record matchNamespace="ns" matchName="*" vtags="last"/>
   </records>

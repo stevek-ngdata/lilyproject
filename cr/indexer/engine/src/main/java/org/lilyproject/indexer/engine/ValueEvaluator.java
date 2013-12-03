@@ -40,14 +40,13 @@ import org.lilyproject.indexer.model.indexerconf.FollowCallback;
 import org.lilyproject.indexer.model.indexerconf.Formatter;
 import org.lilyproject.indexer.model.indexerconf.IndexUpdateBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexValue;
-import org.lilyproject.indexer.model.indexerconf.IndexerConf;
+import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
 import org.lilyproject.indexer.model.indexerconf.Value;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.SystemFields;
 
@@ -57,13 +56,13 @@ import org.lilyproject.util.repo.SystemFields;
 public class ValueEvaluator {
     private Log log = LogFactory.getLog(getClass());
 
-    private IndexerConf conf;
+    private LilyIndexerConf conf;
 
     private SystemFields systemFields;
 
     private Parser tikaParser = new AutoDetectParser();
 
-    public ValueEvaluator(IndexerConf conf) {
+    public ValueEvaluator(LilyIndexerConf conf) {
         this.conf = conf;
         this.systemFields = conf.getSystemFields();
     }

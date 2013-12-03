@@ -1,6 +1,7 @@
 package org.lilyproject.indexer.hbase.mapper;
 
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
 import com.ngdata.hbaseindexer.parse.SolrUpdateWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.hbase.KeyValue;
@@ -51,9 +52,8 @@ public class LilyResultToSolrMapperTest {
 
         mapper = new LilyResultToSolrMapper();
         mapper.setRepositoryManager(repositoryManager);
-        String indexerConf = IOUtils.toString(LilyResultToSolrMapperTest.class.getResourceAsStream("indexer-conf.xml"));
-        mapper.setIndexerConfString(indexerConf);
         mapper.setIndexName("theindex");
+        mapper.configure(ByteStreams.toByteArray(LilyResultToSolrMapperTest.class.getResourceAsStream("indexer-conf.xml")));
 
         mapper.init();
 

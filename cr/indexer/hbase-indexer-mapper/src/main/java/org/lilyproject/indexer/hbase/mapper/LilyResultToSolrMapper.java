@@ -1,7 +1,18 @@
 package org.lilyproject.indexer.hbase.mapper;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
@@ -15,9 +26,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
@@ -30,12 +41,15 @@ import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
-import org.lilyproject.indexer.model.indexerconf.IndexerConf;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
+import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
+import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
+import org.lilyproject.indexer.model.indexerconf.LilyIndexerConfBuilder;
+import org.lilyproject.indexer.model.indexerconf.MappingNode;
 import org.lilyproject.indexer.model.util.IndexRecordFilterUtil;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.LRepository;
@@ -51,6 +65,7 @@ import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.repository.impl.RecordDecoder;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -61,25 +76,21 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
-import org.lilyproject.util.zookeeper.ZkConnectException;
+import org.lilyproject.util.xml.DocumentHelper;
 import org.lilyproject.util.zookeeper.ZooKeeperImpl;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.lilyproject.util.repo.RecordEvent.Type.*;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
 
 public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable {
     private final Log log = LogFactory.getLog(getClass());
 
     private String repositoryName;
-    private String indexerConfString;
+    private byte[] indexerConfData;
     private String indexName;
 
     private ZooKeeperItf zooKeeperItf;
@@ -87,36 +98,42 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     private RepositoryManager repositoryManager;
     private LRepository repository;
     private IdGenerator idGenerator;
-    private IndexerConf indexerConf;
+    private LilyIndexerConf indexerConf;
     private ValueEvaluator valueEvaluator;
     private DerefMap derefMap;
     private LilyEventPublisherManager eventPublisherManager;
     private String subscriptionId;
 
     @Override
-    public void configure(Map<String, String> params) {
+    public void configure(byte[] params) {
         try {
-            zooKeeperItf = new ZooKeeperImpl(params.get(LResultToSolrMapper.ZOOKEEPER_KEY), 40000);
-            setIndexName(params.get(LResultToSolrMapper.INDEX_KEY));
-            setRepositoryName(params.containsKey(LResultToSolrMapper.REPO_KEY) ?
-                    params.get(LResultToSolrMapper.REPO_KEY) : null);
-            setIndexerConfString(params.get(LResultToSolrMapper.INDEXERCONF_KEY));
+
+            indexerConfData = params;
+
+            ByteArrayInputStream is = new ByteArrayInputStream(params);
+            Document doc = DocumentHelper.parse(is);
+
+            Element indexEl = doc.getDocumentElement();
+
+            String zkConnString = DocumentHelper.getAttribute(indexEl, ZOOKEEPER_KEY, true);
+            String repoName = DocumentHelper.getAttribute(indexEl, REPO_KEY, false);
+            if (repoName == null) {
+                repoName = RepoAndTableUtil.DEFAULT_REPOSITORY;
+            }
+            String tableName = DocumentHelper.getAttribute(indexEl, TABLE_KEY, false);
+            if (tableName == null) {
+                tableName = LilyHBaseSchema.Table.RECORD.name;
+            }
+            String indexName = DocumentHelper.getAttribute(indexEl, INDEX_KEY, false);
+
+            zooKeeperItf = new ZooKeeperImpl(zkConnString, 40000);
+            setIndexName(indexName);
+            setRepositoryName(repoName);
 
             setRepositoryManager(new LilyClient(zooKeeperItf));
             init();
-        } catch (IOException e) {
-            log.error(e);
-        } catch (InterruptedException e) {
-            log.error(e);
-        } catch (KeeperException e) {
-            log.error(e);
-        } catch (ZkConnectException e) {
-            log.error(e);
-        } catch (RepositoryException e) {
-            log.error(e);
-        } catch (IndexerConfException e) {
-            log.error(e);
-        } catch (IndexNotFoundException e) {
+
+        } catch (Exception e) {
             log.error(e);
         }
     }
@@ -126,8 +143,8 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         repository = repositoryManager.getRepository(repositoryName != null ? repositoryName : RepoAndTableUtil.DEFAULT_REPOSITORY);
         idGenerator = repository.getIdGenerator();
 
-        ByteArrayInputStream is = new ByteArrayInputStream(indexerConfString.getBytes("UTF-8"));
-        indexerConf = IndexerConfBuilder.build(is, repository);
+        ByteArrayInputStream is = new ByteArrayInputStream(indexerConfData);
+        indexerConf = LilyIndexerConfBuilder.build(is, repository);
 
         valueEvaluator = new ValueEvaluator(indexerConf);
         recordDecoder = new RecordDecoder(repository.getTypeManager(), repository.getIdGenerator(), repository.getRecordFactory());
@@ -164,8 +181,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
 
     @Override
     public boolean isRelevantKV(final KeyValue kv) {
-        return true;
-        /*
         if (!Arrays.equals(LilyHBaseSchema.RecordCf.DATA.bytes,kv.getFamily())) {
             return false;
         }
@@ -218,7 +233,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
 
 
         return false;
-        */
     }
 
     @Override
@@ -776,7 +790,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         return builder.toString();
     }
 
-    /*
     private static class StaticFieldTypeFinder implements Predicate<MappingNode> {
         boolean foundRelevant = false;
         final FieldType fieldType;
@@ -795,7 +808,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
             return !foundRelevant;
         }
     }
-    */
 
     /**
      * Lookup name of field type, for use in debug logs. Beware, this might be slow.
@@ -810,10 +822,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         } catch (Throwable t) {
             return "failed to load name";
         }
-    }
-
-    protected void setIndexerConfString(String indexerConfString) {
-        this.indexerConfString = indexerConfString;
     }
 
     protected void setRepositoryManager(RepositoryManager repositoryManager) {

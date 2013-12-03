@@ -47,7 +47,7 @@ public class IndexerConfBuilderTest {
         when(repository.getIdGenerator()).thenReturn(idGenerator);
     }
 
-    private IndexerConf makeIndexerConf(String namespaces, List<String> includes, List<String> excludes) throws IndexerConfException {
+    private LilyIndexerConf makeIndexerConf(String namespaces, List<String> includes, List<String> excludes) throws IndexerConfException {
         StringBuilder result = new StringBuilder();
         result.append("<indexer ").append(namespaces).append(">\n<recordFilter>\n");
 
@@ -69,30 +69,30 @@ public class IndexerConfBuilderTest {
 
         result.append("</recordFilter>\n</indexer>\n");
 
-        return IndexerConfBuilder.build(new ByteArrayInputStream(result.toString().getBytes()), repository);
+        return LilyIndexerConfBuilder.build(new ByteArrayInputStream(result.toString().getBytes()), repository);
     }
 
     @Test
     public void testExtractTableNames_SingleTable() {
-        assertEquals(Lists.newArrayList("mytable"), IndexerConfBuilder.extractTableNames("mytable"));
+        assertEquals(Lists.newArrayList("mytable"), LilyIndexerConfBuilder.extractTableNames("mytable"));
     }
 
     @Test
     public void testExtractTableNames_MultipleTables() {
         assertEquals(
                 Lists.newArrayList("table1", "table2", "table3"),
-                IndexerConfBuilder.extractTableNames(" table1 , table2, table3"));
+                LilyIndexerConfBuilder.extractTableNames(" table1 , table2, table3"));
 
     }
 
     @Test
     public void testExtractTableNames_Null() {
-        assertNull(IndexerConfBuilder.extractTableNames(null));
+        assertNull(LilyIndexerConfBuilder.extractTableNames(null));
     }
 
     @Test
     public void testExtractTableNames_NoneGiven() {
-        assertNull(IndexerConfBuilder.extractTableNames("  "));
+        assertNull(LilyIndexerConfBuilder.extractTableNames("  "));
     }
 
 }

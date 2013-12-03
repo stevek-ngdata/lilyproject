@@ -15,21 +15,7 @@
  */
 package org.lilyproject.indexer.model.util;
 
-import com.ngdata.hbaseindexer.conf.IndexerConf;
-import com.ngdata.hbaseindexer.conf.XmlIndexerConfReader;
-import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
-import com.ngdata.hbaseindexer.model.api.IndexerModel;
-import com.ngdata.hbaseindexer.model.api.IndexerModelEvent;
-import com.ngdata.hbaseindexer.model.api.IndexerModelListener;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.lilyproject.indexer.model.api.LResultToSolrMapper;
-import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.RepositoryManager;
-
 import javax.annotation.PreDestroy;
-import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +25,19 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import com.ngdata.hbaseindexer.conf.IndexerConf;
+import com.ngdata.hbaseindexer.conf.IndexerConfReader;
+import com.ngdata.hbaseindexer.conf.IndexerConfReaderUtil;
+import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
+import com.ngdata.hbaseindexer.model.api.IndexerModel;
+import com.ngdata.hbaseindexer.model.api.IndexerModelEvent;
+import com.ngdata.hbaseindexer.model.api.IndexerModelListener;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RepositoryManager;
 
 /**
  * See {@link IndexesInfo}.
@@ -59,7 +58,7 @@ public class IndexesInfoImpl implements IndexesInfo {
     /** Has the initial load of the indexes been done? */
     private volatile boolean initialized = false;
 
-    private XmlIndexerConfReader reader = new XmlIndexerConfReader();
+    private IndexerConfReader reader;
 
     public IndexesInfoImpl(IndexerModel indexerModel, RepositoryManager repositoryManager) {
         this.indexerModel = indexerModel;
@@ -82,16 +81,20 @@ public class IndexesInfoImpl implements IndexesInfo {
             IndexerConf indexerConf = null;
 
             try {
-                indexerConf = this.reader.read(new ByteArrayInputStream(indexerConfXml));
-                // check if this is a lily hbase indexer mapper
-                if (!LResultToSolrMapper.class.isAssignableFrom(indexerConf.getMapperClass())) {
+                // check if this is a lily index
+                // FIXME: check on class name in a non-dependency module
+                if (!indexDef.getIndexerConfReader().equals("org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader")) {
+                    continue;
+                }
+                // FIXME: This only works when the conf reader class happens to be vailable in this class
+                indexerConf = IndexerConfReaderUtil.getIndexerConf(indexDef.getIndexerConfReader(), indexerConfXml);
+
+                // If parsing failed, we exclude the index
+                if (indexerConf == null) {
                     continue;
                 }
 
-                // If parsing failed, we exclude the index
-                if (indexerConf != null) {
-                    newIndexInfos.put(indexDef.getName(), new IndexInfo(indexDef, indexerConf, repositoryManager));
-                }
+                newIndexInfos.put(indexDef.getName(), new IndexInfo(indexDef, indexerConf, repositoryManager));
             } catch (Throwable t) {
                 log.error("Error parsing indexer conf", t);
             }

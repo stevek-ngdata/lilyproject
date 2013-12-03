@@ -16,7 +16,9 @@
  * limitations under the License.
  */
 -->
-<indexer xmlns:ns="org.lilyproject.indexer.test.complexfieldsderef">
+<indexer xmlns:ns="org.lilyproject.indexer.test.complexfieldsderef"
+  repository="IndexerTestRepo"
+  zookeeper="localhost:2181">
 
   <records>
     <record matchNamespace="ns" matchName="RecordType" matchVariant="*" vtags="last"/>

@@ -16,7 +16,10 @@
  * limitations under the License.
  */
 -->
-<indexer>
+<indexer
+  repository="IndexerTestRepo"
+  zookeeper="localhost:2181">
+
 
   <records>
     <!-- A record tag without any match condition will match all records. -->

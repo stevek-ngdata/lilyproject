@@ -16,7 +16,9 @@
  * limitations under the License.
  */
 -->
-<indexer xmlns:bi="batchindex-test">
+<indexer xmlns:bi="batchindex-test"
+  repository="IndexerTestRepo"
+  zookeeper="localhost:2181">
 
   <records>
     <record matchNamespace="bi" matchName="*" vtags="last"/>    

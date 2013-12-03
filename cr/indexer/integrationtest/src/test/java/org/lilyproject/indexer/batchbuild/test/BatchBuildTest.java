@@ -15,11 +15,16 @@
  */
 package org.lilyproject.indexer.batchbuild.test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.ByteStreams;
 import com.ngdata.hbaseindexer.SolrConnectionParams;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
@@ -40,7 +45,6 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
-import org.lilyproject.indexer.engine.test.IndexerConfWrapper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.LilyServerProxy;
 import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
@@ -61,11 +65,9 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;
@@ -128,9 +130,7 @@ public class BatchBuildTest {
         model = lilyServerProxy.getIndexerModel();
 
         is = BatchBuildTest.class.getResourceAsStream("indexerconf.xml");
-        String indexerConfiguration = IOUtils.toString(is);
-        IOUtils.closeQuietly(is);
-
+        byte[] indexerConfiguration = ByteStreams.toByteArray(is);
 
         Map<String,String> connectionParams = Maps.newHashMap();
         connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
@@ -144,8 +144,7 @@ public class BatchBuildTest {
                 solrShards.put("shard1", "http://localhost:8983/solr/core0");
                 index.setRepositoryName(REPO_NAME);
                  */
-                .configuration(IndexerConfWrapper.wrapConf(INDEX_NAME, indexerConfiguration, REPO_NAME,
-                        table.getTableName()).getBytes(Charsets.UTF_8))
+                .configuration(indexerConfiguration)
                 .incrementalIndexingState(IndexerDefinition.IncrementalIndexingState.DO_NOT_SUBSCRIBE)
                 .build();
 

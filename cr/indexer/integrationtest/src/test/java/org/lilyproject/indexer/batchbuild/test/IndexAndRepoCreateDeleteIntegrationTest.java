@@ -1,10 +1,13 @@
 package org.lilyproject.indexer.batchbuild.test;
 
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.collect.Sets;
-import com.ngdata.hbaseindexer.conf.IndexerConf;
-import com.ngdata.hbaseindexer.conf.XmlIndexerConfReader;
-import com.ngdata.hbaseindexer.conf.XmlIndexerConfWriter;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
 import com.ngdata.hbaseindexer.model.api.IndexerModelEvent;
@@ -18,19 +21,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.model.impl.RepositoryModelImpl;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.MINS15;
@@ -73,6 +67,7 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
         deleteIndex("secundary");
     }
 
+    /*
     @Test(expected = IndexerUpdateException.class)
     @Ignore //we no longer check on this
     public void testChangeRepositoryForIndex() throws Exception {
@@ -100,6 +95,7 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
             model.delete("repo2");
         }
     }
+    */
 
     @Test
     public void testDropAndRecreateIndex() throws Exception {

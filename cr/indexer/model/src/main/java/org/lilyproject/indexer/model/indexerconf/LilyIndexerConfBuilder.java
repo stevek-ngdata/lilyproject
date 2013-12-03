@@ -63,7 +63,7 @@ import org.xml.sax.SAXParseException;
 // Terminology: the word "field" is usually used for a field from a repositoryManager record, while
 // the term "index field" is usually used for a field in the index, though sometimes these
 // are also just called field.
-public class IndexerConfBuilder {
+public class LilyIndexerConfBuilder {
     private static LocalXPathExpression INDEX_CASES =
             new LocalXPathExpression("/indexer/records/record");
 
@@ -92,7 +92,7 @@ public class IndexerConfBuilder {
 
     private Document doc;
 
-    private IndexerConf conf;
+    private LilyIndexerConf conf;
 
     private LRepository repository;
 
@@ -100,27 +100,27 @@ public class IndexerConfBuilder {
 
     private SystemFields systemFields;
 
-    private IndexerConfBuilder() {
+    private LilyIndexerConfBuilder() {
         // prevents instantiation
     }
 
-    public static IndexerConf build(InputStream is, LRepository repository) throws IndexerConfException {
+    public static LilyIndexerConf build(InputStream is, LRepository repository) throws IndexerConfException {
         Document doc;
         try {
             doc = DocumentHelper.parse(is);
         } catch (Exception e) {
             throw new IndexerConfException("Error parsing supplied configuration.", e);
         }
-        return new IndexerConfBuilder().build(doc, repository);
+        return new LilyIndexerConfBuilder().build(doc, repository);
     }
 
-    private IndexerConf build(Document doc, LRepository repository) throws IndexerConfException {
+    private LilyIndexerConf build(Document doc, LRepository repository) throws IndexerConfException {
         validate(doc);
         this.doc = doc;
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
         this.systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
-        this.conf = new IndexerConf();
+        this.conf = new LilyIndexerConf();
         this.conf.setSystemFields(systemFields);
 
         try {
@@ -817,7 +817,7 @@ public class IndexerConfBuilder {
 
         try {
             SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            URL url = IndexerConfBuilder.class.getClassLoader()
+            URL url = LilyIndexerConfBuilder.class.getClassLoader()
                     .getResource("org/lilyproject/indexer/model/indexerconf/indexerconf.xsd");
             Schema schema = factory.newSchema(url);
             Validator validator = schema.newValidator();
