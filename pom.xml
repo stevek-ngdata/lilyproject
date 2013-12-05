@@ -597,6 +597,10 @@
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-cell</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -619,6 +623,10 @@
           <exclusion>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-cell</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -643,6 +651,10 @@
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-cell</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -665,6 +677,10 @@
           <exclusion>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-cell</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
