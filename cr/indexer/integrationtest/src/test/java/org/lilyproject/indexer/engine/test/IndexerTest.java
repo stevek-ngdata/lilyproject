@@ -15,12 +15,30 @@
  */
 package org.lilyproject.indexer.engine.test;
 
-import com.google.common.base.Charsets;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
@@ -36,7 +54,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -50,26 +67,44 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.lilyproject.hadooptestfw.CleanupUtil;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.indexer.derefmap.DerefMap;
-import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.Follow;
 import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexFields;
+import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
 import org.lilyproject.indexer.model.indexerconf.LilyIndexerConfBuilder;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.MappingNode;
 import org.lilyproject.indexer.model.indexerconf.VariantFollow;
 import org.lilyproject.indexer.model.util.IndexInfo;
 import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordBuilder;
+import org.lilyproject.repository.api.RecordFactory;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TableManager;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
 import org.lilyproject.sep.LilyEventListener;
 import org.lilyproject.sep.LilySepEvent;
@@ -77,21 +112,6 @@ import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.junit.Assert.*;
-import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 public class IndexerTest {
 
@@ -106,7 +126,6 @@ public class IndexerTest {
     private static LTable alternateTable;
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
-    private static DerefMap derefMap;
     private static WriteableIndexerModel indexerModel;
     private static IndexesInfo indexesInfo;
     private static TrackingRepository indexUpdaterRepository;
@@ -241,18 +260,6 @@ public class IndexerTest {
                 repositoryManager.getRepository(REPO_NAME));
 
         Configuration hbaseConf = lilyProxy.getHBaseProxy().getConf();
-        if (derefMap != null) {
-            // We don't call the following:
-            //    DerefMapHbaseImpl.delete("test", hbaseConf);
-            // because deleting / creating the tables during the test is very slow.
-            // Instead we just delete all rows within the table.
-            for (String tableName : ImmutableList.of("deref-forward-" + indexNamePrefix, "deref-backward-" + indexNamePrefix )) {
-                HTable htable = new HTable(hbaseConf, tableName);
-                CleanupUtil.clearTable(htable);
-                htable.close();
-            }
-        }
-        derefMap = DerefMapHbaseImpl.create("default", indexNamePrefix, hbaseConf, null, repository.getIdGenerator());
 
         // The registration of the index into the IndexerModel is only needed for the IndexRecordFilterHook
         Map<String,String> connectionParams = Maps.newHashMap();

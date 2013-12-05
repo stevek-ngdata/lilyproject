@@ -1,5 +1,9 @@
 package org.lilyproject.indexer.hbase.mapper;
 
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -82,10 +86,6 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
-
 public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable {
     private final Log log = LogFactory.getLog(getClass());
 
@@ -105,12 +105,12 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     private String subscriptionId;
 
     @Override
-    public void configure(byte[] params) {
+    public void configure(byte[] configuration) {
         try {
 
-            indexerConfData = params;
+            indexerConfData = configuration;
 
-            ByteArrayInputStream is = new ByteArrayInputStream(params);
+            ByteArrayInputStream is = new ByteArrayInputStream(configuration);
             Document doc = DocumentHelper.parse(is);
 
             Element indexEl = doc.getDocumentElement();
