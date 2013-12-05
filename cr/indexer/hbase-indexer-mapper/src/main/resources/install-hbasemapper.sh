@@ -5,7 +5,11 @@ if [ -z "${HBASE_INDEXER_HOME}" ]; then
     exit 1;
 fi
 
-echo -n "export HBASE_INDEXER_CLASSPATH=\${HBASE_INDEXER_CLASSPATH}:@@@MAPPER@@@:" | cat - target/dev-classpath.txt >> ${HBASE_INDEXER_HOME}/conf/hbase-indexer-env.sh
+BASEDIR=$(dirname $0)/..
+ABS_BASEDIR=$(cd $BASEDIR; pwd)
+cd $ABS_BASEDIR
+
+echo -n "export HBASE_INDEXER_CLASSPATH=\${HBASE_INDEXER_CLASSPATH}:@@@MAPPER@@@:" | cat - dev-classpath.txt >> ${HBASE_INDEXER_HOME}/conf/hbase-indexer-env.sh
 
 xmlstarlet ed -L -S \
     -s /configuration[not\(property/name/text\(\)='hbaseindexer.lifecycle.listeners'\)] -t elem -n property -v "" \
