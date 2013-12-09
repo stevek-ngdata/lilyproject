@@ -16,6 +16,7 @@ import java.util.Set;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
@@ -48,7 +49,6 @@ import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
-import org.lilyproject.indexer.model.indexerconf.LilyIndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.MappingNode;
 import org.lilyproject.indexer.model.util.IndexRecordFilterUtil;
 import org.lilyproject.repository.api.AbsoluteRecordId;
@@ -80,17 +80,14 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
-import org.lilyproject.util.xml.DocumentHelper;
 import org.lilyproject.util.zookeeper.ZooKeeperImpl;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable {
+
     private final Log log = LogFactory.getLog(getClass());
 
     private String repositoryName;
-    private byte[] indexerConfData;
     private String indexName;
 
     private ZooKeeperItf zooKeeperItf;
@@ -98,39 +95,25 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     private RepositoryManager repositoryManager;
     private LRepository repository;
     private IdGenerator idGenerator;
-    private LilyIndexerConf indexerConf;
+    private LilyIndexerConf lilyIndexerConf;
     private ValueEvaluator valueEvaluator;
     private DerefMap derefMap;
     private LilyEventPublisherManager eventPublisherManager;
     private String subscriptionId;
 
+    public LilyResultToSolrMapper(String indexName, LilyIndexerConf lilyIndexerConf, RepositoryManager repositoryManager) {
+        setIndexName(indexName);
+        this.repositoryManager = repositoryManager;
+        this.lilyIndexerConf = lilyIndexerConf;
+    }
+
     @Override
-    public void configure(byte[] configuration) {
+
+    public void configure(Map<String, String> params) {
         try {
 
-            indexerConfData = configuration;
-
-            ByteArrayInputStream is = new ByteArrayInputStream(configuration);
-            Document doc = DocumentHelper.parse(is);
-
-            Element indexEl = doc.getDocumentElement();
-
-            String zkConnString = DocumentHelper.getAttribute(indexEl, ZOOKEEPER_KEY, true);
-            String repoName = DocumentHelper.getAttribute(indexEl, REPO_KEY, false);
-            if (repoName == null) {
-                repoName = RepoAndTableUtil.DEFAULT_REPOSITORY;
-            }
-            String tableName = DocumentHelper.getAttribute(indexEl, TABLE_KEY, false);
-            if (tableName == null) {
-                tableName = LilyHBaseSchema.Table.RECORD.name;
-            }
-            String indexName = DocumentHelper.getAttribute(indexEl, INDEX_KEY, false);
-
-            zooKeeperItf = new ZooKeeperImpl(zkConnString, 40000);
-            setIndexName(indexName);
-            setRepositoryName(repoName);
-
-            setRepositoryManager(new LilyClient(zooKeeperItf));
+            String repoParam = Optional.fromNullable(params.get(LResultToSolrMapper.REPO_KEY)).or(RepoAndTableUtil.DEFAULT_REPOSITORY);
+            setRepositoryName(repoParam);
             init();
 
         } catch (Exception e) {
@@ -143,12 +126,9 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         repository = repositoryManager.getRepository(repositoryName != null ? repositoryName : RepoAndTableUtil.DEFAULT_REPOSITORY);
         idGenerator = repository.getIdGenerator();
 
-        ByteArrayInputStream is = new ByteArrayInputStream(indexerConfData);
-        indexerConf = LilyIndexerConfBuilder.build(is, repository);
-
-        valueEvaluator = new ValueEvaluator(indexerConf);
+        valueEvaluator = new ValueEvaluator(lilyIndexerConf);
         recordDecoder = new RecordDecoder(repository.getTypeManager(), repository.getIdGenerator(), repository.getRecordFactory());
-        if (indexerConf.containsDerefExpressions()) {
+        if (lilyIndexerConf.containsDerefExpressions()) {
             HBaseTableFactory tableFactory = new HBaseTableFactoryImpl(LilyClient.getHBaseConfiguration(zooKeeperItf));
             eventPublisherManager = new LilyEventPublisherManager(tableFactory);
             derefMap = DerefMapHbaseImpl.create(repository.getRepositoryName(), indexName,
@@ -207,12 +187,12 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
             }
 
             StaticFieldTypeFinder finder = new StaticFieldTypeFinder(fieldType);
-            indexerConf.getIndexFields().visitAll(finder);
+            lilyIndexerConf.getIndexFields().visitAll(finder);
             if (finder.foundRelevant) {
                 return true;
             }
 
-            for (DynamicIndexField indexField : indexerConf.getDynamicFields()) {
+            for (DynamicIndexField indexField : lilyIndexerConf.getDynamicFields()) {
                 if (indexField.matches(fieldType).match) {
                     return true;
                 }
@@ -258,7 +238,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                 RecordEventHelper eventHelper = new RecordEventHelper(event, null, repository.getTypeManager());
                 VTaggedRecord vtRecord = new VTaggedRecord(record.getId(), eventHelper, table, repository);
 
-                IndexCase indexCase = indexerConf.getIndexCase(table.getTableName(), vtRecord.getRecord());
+                IndexCase indexCase = lilyIndexerConf.getIndexCase(table.getTableName(), vtRecord.getRecord());
                 Set<SchemaId> vtagsToIndex = event.getVtagsToIndex();
                 if (indexCase == null) {
                     return;
@@ -296,9 +276,9 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                                 repository);
                 Record oldRecord = oldAndNewRecords.getV1();
                 Record newRecord = oldAndNewRecords.getV2();
-                IndexCase caseOld = oldRecord != null ? indexerConf.getIndexCase(
+                IndexCase caseOld = oldRecord != null ? lilyIndexerConf.getIndexCase(
                         event.getTableName(), oldRecord) : null;
-                IndexCase caseNew = newRecord != null ? indexerConf.getIndexCase(
+                IndexCase caseNew = newRecord != null ? lilyIndexerConf.getIndexCase(
                         event.getTableName(), newRecord) : null;
 
                 if (oldRecord != null && newRecord != null) {
@@ -365,7 +345,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
 
         Multimap<AbsoluteRecordId, SchemaId> referrersAndVTags = ArrayListMultimap.create();
 
-        Set<SchemaId> allVTags = indexerConf.getVtags();
+        Set<SchemaId> allVTags = lilyIndexerConf.getVtags();
 
         if (log.isDebugEnabled()) {
             log.debug("Updating denormalized data for " + recordId + ", vtags: " + changedVTagFields);
@@ -543,7 +523,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         //  The indexing of all versions is determined by the record type of the non-versioned scope.
         //  This makes that the indexing behavior of all versions is equal, and can be changed (the
         //  record type of the versioned scope is immutable).
-        IndexCase indexCase = indexerConf.getIndexCase(table.getTableName(), vtRecord.getRecord());
+        IndexCase indexCase = lilyIndexerConf.getIndexCase(table.getTableName(), vtRecord.getRecord());
 
         if (indexCase == null) {
             // The record should not be indexed
@@ -591,7 +571,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                 //
                 // Handle changes to non-versioned fields
                 //
-                if (indexerConf.changesAffectIndex(vtRecord, Scope.NON_VERSIONED)) {
+                if (lilyIndexerConf.changesAffectIndex(vtRecord, Scope.NON_VERSIONED)) {
                     vtagsToIndex = Sets.intersection(indexCase.getVersionTags(), vtRecord.getVTags().keySet());
                     // After this we go to the treatment of changed vtag fields
                     if (log.isDebugEnabled()) {
@@ -614,8 +594,8 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                 // it would work as well if this code would not be here.
                 //
                 if (vtagsToIndex.isEmpty() && (event.getVersionCreated() != -1 || event.getVersionUpdated() != -1)) {
-                    if (indexerConf.changesAffectIndex(vtRecord, Scope.VERSIONED)
-                            || indexerConf.changesAffectIndex(vtRecord, Scope.VERSIONED_MUTABLE)) {
+                    if (lilyIndexerConf.changesAffectIndex(vtRecord, Scope.VERSIONED)
+                            || lilyIndexerConf.changesAffectIndex(vtRecord, Scope.VERSIONED_MUTABLE)) {
 
                         long version =
                                 event.getVersionCreated() != -1 ? event.getVersionCreated() : event.getVersionUpdated();
@@ -714,16 +694,16 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
                 }
             } else {
                 for (SchemaId vtag : entry.getValue()) {
-                    SolrDocumentBuilder solrDocumentBuilder = new SolrDocumentBuilder(repository, indexerConf.getRecordFilter(),
-                            indexerConf.getSystemFields(), valueEvaluator, table.getTableName(), version,
+                    SolrDocumentBuilder solrDocumentBuilder = new SolrDocumentBuilder(repository, lilyIndexerConf.getRecordFilter(),
+                            lilyIndexerConf.getSystemFields(), valueEvaluator, table.getTableName(), version,
                             getIndexId(table.getTableName(), vtRecord.getId(), vtag), vtag, entry.getKey());
 
-                    indexerConf.getIndexFields().collectIndexUpdate(solrDocumentBuilder);
+                    lilyIndexerConf.getIndexFields().collectIndexUpdate(solrDocumentBuilder);
 
-                    if (!indexerConf.getDynamicFields().isEmpty()) {
+                    if (!lilyIndexerConf.getDynamicFields().isEmpty()) {
                         for (Map.Entry<SchemaId, Object> field : idRecord.getFieldsById().entrySet()) {
                             FieldType fieldType = repository.getTypeManager().getFieldTypeById(field.getKey());
-                            for (DynamicIndexField dynField : indexerConf.getDynamicFields()) {
+                            for (DynamicIndexField dynField : lilyIndexerConf.getDynamicFields()) {
                                 DynamicIndexField.DynamicIndexFieldMatch match = dynField.matches(fieldType);
                                 if (match.match) {
                                     String fieldName = evalName(dynField, match, fieldType);

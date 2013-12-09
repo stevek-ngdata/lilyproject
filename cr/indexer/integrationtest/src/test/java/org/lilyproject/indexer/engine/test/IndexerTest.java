@@ -15,14 +15,6 @@
  */
 package org.lilyproject.indexer.engine.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,7 +60,10 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader;
+import org.lilyproject.indexer.derefmap.DerefMap;
+import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
+import org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory;
+import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.Follow;
 import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
@@ -112,6 +107,14 @@ import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
 
 public class IndexerTest {
 
@@ -183,7 +186,8 @@ public class IndexerTest {
 
 
         TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.indexer.engine",
-                "org.lilyproject.indexer.engine.test.IndexerTest", "com.ngdata.hbaseindexer");
+                "org.lilyproject.indexer.engine.test.IndexerTest", "com.ngdata.hbaseindexer",
+                "org.lilyproject.indexer.model.util");
 
         hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
         hbaseIndexerLauncherService.setup(null, null, false);
@@ -263,12 +267,15 @@ public class IndexerTest {
 
         // The registration of the index into the IndexerModel is only needed for the IndexRecordFilterHook
         Map<String,String> connectionParams = Maps.newHashMap();
-        connectionParams.put(SolrConnectionParams.ZOOKEEPER,"localhost:2181/solr");
-        connectionParams.put(SolrConnectionParams.COLLECTION,"core0");
+        connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
+        connectionParams.put(SolrConnectionParams.COLLECTION, "core0");
+        connectionParams.put(LResultToSolrMapper.ZOOKEEPER_KEY, "localhost:2181");
+        connectionParams.put(LResultToSolrMapper.REPO_KEY, REPO_NAME);
+        connectionParams.put(LResultToSolrMapper.TABLE_KEY, indexTableName);
         IndexerDefinition indexDef = new IndexerDefinitionBuilder().name(indexName)
                 .connectionType("solr")
                 .connectionParams(connectionParams)
-                .indexerConfReader(LilyIndexerConfReader.class.getName())
+                .indexerComponentFactory(LilyIndexerComponentFactory.class.getName())
                 .configuration(ByteStreams.toByteArray(IndexerTest.class.getResourceAsStream(confName)))
                 //.solrShards(Collections.singletonMap("shard1", "http://somewhere/"))
                 //.subscriptionId("Indexer_" + indexName)

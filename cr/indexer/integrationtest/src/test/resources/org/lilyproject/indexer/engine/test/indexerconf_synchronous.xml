@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 -->
-<indexer xmlns:ns="org.lilyproject.indexer.test"
-  repository="IndexerTestRepo"
-  zookeeper="localhost:2181">
+<indexer xmlns:ns="org.lilyproject.indexer.test">
 
   <records>
     <record matchNamespace="ns" matchName="RecordType1" matchVariant="*" vtags="last"/>

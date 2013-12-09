@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 -->
-<indexer xmlns:dyn1="org.lilyproject.indexer.test.dyn1" xmlns:dyn2="org.lilyproject.indexer.test.dyn2"
-  repository="IndexerTestRepo"
-  zookeeper="localhost:2181">
+<indexer xmlns:dyn1="org.lilyproject.indexer.test.dyn1" xmlns:dyn2="org.lilyproject.indexer.test.dyn2">
 
   <records>
     <record matchNamespace="dyn1" matchName="RecordType" matchVariant="*" vtags="last"/>

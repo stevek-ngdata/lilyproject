@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 -->
-<indexer xmlns:ns2="org.lilyproject.indexer.test.2"
-  repository="IndexerTestRepo"
-  zookeeper="localhost:2181">
+<indexer xmlns:ns2="org.lilyproject.indexer.test.2">
 
   <recordFilter>
     <includes>

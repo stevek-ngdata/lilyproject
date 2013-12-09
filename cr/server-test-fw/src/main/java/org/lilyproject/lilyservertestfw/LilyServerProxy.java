@@ -32,7 +32,7 @@ import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader;
+import org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.model.api.RepositoryDefinition;
 import org.lilyproject.repository.model.api.RepositoryModel;
@@ -41,20 +41,17 @@ import org.lilyproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import javax.management.ObjectName;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
-import java.util.Set;
 
 public class LilyServerProxy {
     public static final String LILY_CONF_CUSTOMDIR = "lily.conf.customdir";
@@ -302,16 +299,7 @@ public class LilyServerProxy {
                 .name(indexName)
                 .connectionType("solr")
                 .connectionParams(connectionParams)
-                /*
-        Map<String, String> solrShards = new HashMap<String, String>();
-        String solrUri = "http://localhost:8983/solr";
-        if (coreName != null) {
-            solrUri += "/" + coreName + "/";
-        }
-        solrShards.put("shard1", solrUri);
-        index.setSolrShards(solrShards);
-        */
-                .indexerConfReader(LilyIndexerConfReader.class.getName())
+                .indexerComponentFactory(LilyIndexerComponentFactory.class.getName())
                 .configuration(indexerConfiguration)
                 .build();
         indexerModel.addIndexer(index);

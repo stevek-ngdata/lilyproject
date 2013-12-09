@@ -16,6 +16,7 @@
 package org.lilyproject.indexer.model.util;
 
 import javax.annotation.PreDestroy;
+import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,9 +27,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.ngdata.hbaseindexer.conf.IndexerComponentFactory;
+import com.ngdata.hbaseindexer.conf.IndexerComponentFactoryUtil;
 import com.ngdata.hbaseindexer.conf.IndexerConf;
-import com.ngdata.hbaseindexer.conf.IndexerConfReader;
-import com.ngdata.hbaseindexer.conf.IndexerConfReaderUtil;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import com.ngdata.hbaseindexer.model.api.IndexerModel;
 import com.ngdata.hbaseindexer.model.api.IndexerModelEvent;
@@ -58,8 +59,6 @@ public class IndexesInfoImpl implements IndexesInfo {
     /** Has the initial load of the indexes been done? */
     private volatile boolean initialized = false;
 
-    private IndexerConfReader reader;
-
     public IndexesInfoImpl(IndexerModel indexerModel, RepositoryManager repositoryManager) {
         this.indexerModel = indexerModel;
         this.repositoryManager = repositoryManager;
@@ -83,11 +82,13 @@ public class IndexesInfoImpl implements IndexesInfo {
             try {
                 // check if this is a lily index
                 // FIXME: check on class name in a non-dependency module
-                if (!"org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader".equals(indexDef.getIndexerConfReader())) {
+                if (!"org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory".equals(indexDef.getIndexerComponentFactory())) {
                     continue;
                 }
-                // FIXME: This only works when the conf reader class happens to be vailable in this class
-                indexerConf = IndexerConfReaderUtil.getIndexerConf(indexDef.getIndexerConfReader(), indexerConfXml);
+
+                IndexerComponentFactory factory = IndexerComponentFactoryUtil.getComponentFactory(indexDef.getIndexerComponentFactory(), new ByteArrayInputStream(indexDef.getConfiguration()), indexDef.getConnectionParams());
+                factory.configure(new ByteArrayInputStream(indexerConfXml), indexDef.getConnectionParams());
+                indexerConf = factory.createIndexerConf();
 
                 // If parsing failed, we exclude the index
                 if (indexerConf == null) {
@@ -98,7 +99,6 @@ public class IndexesInfoImpl implements IndexesInfo {
             } catch (Throwable t) {
                 log.error("Error parsing indexer conf", t);
             }
-
 
         }
 

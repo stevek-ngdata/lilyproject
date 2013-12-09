@@ -15,24 +15,16 @@
  */
 package org.lilyproject.indexer.model.util;
 
-import javax.xml.parsers.ParserConfigurationException;
+import java.io.ByteArrayInputStream;
 
 import com.ngdata.hbaseindexer.conf.IndexerConf;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
-import org.lilyproject.indexer.model.api.LResultToSolrMapper;
-import org.lilyproject.indexer.model.indexerconf.LilyIndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
+import org.lilyproject.indexer.model.indexerconf.LilyIndexerConfBuilder;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.util.xml.DocumentHelper;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 public class IndexInfo {
     IndexerDefinition indexDefinition;
@@ -45,18 +37,10 @@ public class IndexInfo {
         this.indexDefinition = indexDefinition;
         this.indexerConf = indexerConf;
 
-        byte[] confData = indexerConf.getGlobalConfig();
-        try {
-            Document doc = DocumentHelper.parse(new ByteArrayInputStream(confData));
-            repositoryName = DocumentHelper.getAttribute(doc.getDocumentElement(), "repository", false);
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
-
         LRepository repository = repositoryName == null ? repositoryManager.getDefaultRepository() : repositoryManager.getRepository(repositoryName);
         repositoryName = repository.getRepositoryName();
 
-        this.lilyIndexerConf = LilyIndexerConfBuilder.build(new ByteArrayInputStream(confData), repository);
+        this.lilyIndexerConf = LilyIndexerConfBuilder.build(new ByteArrayInputStream(indexDefinition.getConfiguration()), repository);
     }
 
     public IndexerDefinition getIndexDefinition() {

@@ -10,7 +10,7 @@ import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
 import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.indexer.hbase.mapper.LilyIndexerConfReader;
+import org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.FieldType;
@@ -85,7 +85,7 @@ class IndexerIntegrationTestUtil {
                 .name(name)
                 .connectionType("solr")
                 .connectionParams(connectionParams)
-                .indexerConfReader(LilyIndexerConfReader.class.getName())
+                .indexerComponentFactory(LilyIndexerComponentFactory.class.getName())
                 .configuration(indexConf)
                 /*
                  Map<String, String> solrShards = new HashMap<String, String>();

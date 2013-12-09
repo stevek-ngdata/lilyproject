@@ -1,9 +1,8 @@
 package org.lilyproject.indexer.hbase.mapper;
 
 import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
+import com.ngdata.hbaseindexer.parse.ResultToSolrMapper;
 import com.ngdata.hbaseindexer.parse.SolrUpdateWriter;
-import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -13,6 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
+import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
+import org.lilyproject.indexer.model.indexerconf.LilyIndexerConfBuilder;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdentityRecordStack;
@@ -39,10 +40,11 @@ public class LilyResultToSolrMapperTest {
     private static final String NS1 = "org.lilyproject.indexer.hbase.mapper.test";
     private static final String NS2 = "org.lilyproject.indexer.hbase.mapper.test.2";
     
-    private LilyResultToSolrMapper mapper;
     private RepositoryManager repositoryManager;
     private LRepository repository;
     private FakeSolrUpdateWriter solrUpdateWriter;
+    private ResultToSolrMapper mapper;
+
     @Before
     public void setup () throws Exception{
         repositoryManager = FakeRepositoryManager.bootstrapRepositoryManager();
@@ -50,12 +52,8 @@ public class LilyResultToSolrMapperTest {
         
         JsonImport.loadSchema(repository, LilyResultToSolrMapperTest.class.getResourceAsStream("schema.json"));
 
-        mapper = new LilyResultToSolrMapper();
-        mapper.setRepositoryManager(repositoryManager);
-        mapper.setIndexName("theindex");
-        mapper.configure(ByteStreams.toByteArray(LilyResultToSolrMapperTest.class.getResourceAsStream("indexer-conf.xml")));
-
-        mapper.init();
+        LilyIndexerConf conf = LilyIndexerConfBuilder.build(LilyResultToSolrMapperTest.class.getResourceAsStream("indexer-conf.xml"), repository);
+        mapper = new LilyResultToSolrMapper("testindex", conf, repositoryManager);
 
         solrUpdateWriter = new FakeSolrUpdateWriter();
     }

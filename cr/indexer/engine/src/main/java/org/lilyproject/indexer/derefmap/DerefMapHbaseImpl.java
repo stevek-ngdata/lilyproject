@@ -235,7 +235,6 @@ public class DerefMapHbaseImpl implements DerefMap {
      * Find the set of record ids (and corresponding version tags) on which a given record (in a given version tag)
      * depends.
      *
-     * @param parentTable repository table where the record identified by recordId is stored
      * @param parentRecordId record id of the record to find dependencies for
      * @param vtag     vtag of the record to find dependencies for
      * @return the record ids and vtags on which the given record depends

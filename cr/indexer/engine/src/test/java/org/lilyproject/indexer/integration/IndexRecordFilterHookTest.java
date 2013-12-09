@@ -15,6 +15,8 @@
  */
 package org.lilyproject.indexer.integration;
 
+import java.util.ArrayList;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -34,7 +36,6 @@ import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
 import org.lilyproject.util.repo.RecordEvent.Type;
 import org.mockito.Mockito;
-import org.w3c.dom.Document;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -44,10 +45,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-
 public class IndexRecordFilterHookTest {
-    /*
     private Record oldRecord;
     private Record newRecord;
     private Repository repository;
@@ -196,7 +194,7 @@ public class IndexRecordFilterHookTest {
         IndexRecordFilterData indexFilterData = mock(IndexRecordFilterData.class);
         IndexInfo inclusionA = createMockIndexInfo("includeA", true);
         IndexInfo inclusionB = createMockIndexInfo("includeButNotInThisRepo", true);
-        when(inclusionB.getIndexerConf().getGlobalParams().get(LResultToSolrMapper.REPO_KEY)).thenReturn("someOtherRepo");
+        when(inclusionB.getRepositoryName()).thenReturn("someOtherRepo");
         IndexInfo exclusion = createMockIndexInfo("exclude", false);
 
         when(indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusionA, inclusionB, exclusion));
@@ -213,7 +211,7 @@ public class IndexRecordFilterHookTest {
         IndexInfo inclusionA = createMockIndexInfo("inclusionA", true);
         IndexInfo exclusion = createMockIndexInfo("excludeA", false);
         IndexInfo inclusionB = createMockIndexInfo("inclusionB", true);
-        when(inclusionB.getIndexerConf().getGlobalParams().get(LResultToSolrMapper.REPO_KEY)).thenReturn("someOtherRepo");
+        when(inclusionB.getRepositoryName()).thenReturn("someOtherRepo");
         when(this.indexesInfo.getIndexInfos()).thenReturn(Lists.newArrayList(inclusionA, exclusion, inclusionB));
 
         indexFilterHook.calculateIndexInclusion("someOtherRepo",
@@ -230,7 +228,7 @@ public class IndexRecordFilterHookTest {
         IndexInfo inclusionB = createMockIndexInfo("inclusionB", true);
         ArrayList<IndexInfo> infos = Lists.newArrayList(inclusionA, exclusion, inclusionB);
         for (IndexInfo info : infos) {
-            when(info.getIndexerConf().getGlobalParams().get(LResultToSolrMapper.REPO_KEY)).thenReturn("someOtherRepo");
+            when(info.getRepositoryName()).thenReturn("someOtherRepo");
         }
         when(this.indexesInfo.getIndexInfos()).thenReturn(infos);
 
@@ -247,8 +245,7 @@ public class IndexRecordFilterHookTest {
         when(indexInfo.getLilyIndexerConf().getRecordFilter()).thenReturn(indexRecordFilter);
         doReturn(include).when(indexFilterHook).indexIsApplicable(indexRecordFilter, Table.RECORD.name, oldRecord, newRecord);
         when(indexInfo.getIndexDefinition().getSubscriptionId()).thenReturn(queueSubscriptionId);
-        when(indexInfo.getIndexerConf().getGlobalParams().get(LResultToSolrMapper.REPO_KEY))
-                .thenReturn(RepoAndTableUtil.DEFAULT_REPOSITORY);
+        when(indexInfo.getRepositoryName()).thenReturn(RepoAndTableUtil.DEFAULT_REPOSITORY);
         return indexInfo;
     }
 
@@ -287,5 +284,4 @@ public class IndexRecordFilterHookTest {
 
         assertFalse(indexFilterHook.indexIsApplicable(indexRecordFilter, Table.RECORD.name,  null, newRecord));
     }
-    */
 }

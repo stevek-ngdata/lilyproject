@@ -16,10 +16,6 @@
         <xs:element minOccurs="0" ref="fields"/>
         <xs:element minOccurs="0" ref="dynamicFields"/>
       </xs:all>
-      <xs:attribute name="zookeeper" type="xs:string" use="optional"/>
-      <xs:attribute name="repository" type="xs:string" use="optional"/>
-      <xs:attribute name="table" type="xs:string" use="optional"/>
-      <xs:attribute name="unique-key-field" type="xs:string" use="optional"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="recordFilter">
