@@ -1,6 +1,7 @@
 package org.lilyproject.indexer.hbase.mapper;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.ngdata.hbaseindexer.parse.ResultToSolrMapper;
 import com.ngdata.hbaseindexer.parse.SolrUpdateWriter;
 import org.apache.hadoop.hbase.KeyValue;
@@ -43,7 +44,7 @@ public class LilyResultToSolrMapperTest {
     private RepositoryManager repositoryManager;
     private LRepository repository;
     private FakeSolrUpdateWriter solrUpdateWriter;
-    private ResultToSolrMapper mapper;
+    private LilyResultToSolrMapper mapper;
 
     @Before
     public void setup () throws Exception{
@@ -54,6 +55,7 @@ public class LilyResultToSolrMapperTest {
 
         LilyIndexerConf conf = LilyIndexerConfBuilder.build(LilyResultToSolrMapperTest.class.getResourceAsStream("indexer-conf.xml"), repository);
         mapper = new LilyResultToSolrMapper("testindex", conf, repositoryManager);
+        mapper.configure(Maps.<String, String>newHashMap());
 
         solrUpdateWriter = new FakeSolrUpdateWriter();
     }

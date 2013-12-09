@@ -1,10 +1,5 @@
 package org.lilyproject.indexer.hbase.mapper;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
-
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -83,6 +78,10 @@ import org.lilyproject.util.repo.VTaggedRecord;
 import org.lilyproject.util.zookeeper.ZooKeeperImpl;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
+
 public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable {
 
     private final Log log = LogFactory.getLog(getClass());
@@ -90,6 +89,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     private String repositoryName;
     private String indexName;
 
+    private String zkConnString;
     private ZooKeeperItf zooKeeperItf;
     private RecordDecoder recordDecoder;
     private RepositoryManager repositoryManager;
@@ -112,6 +112,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     public void configure(Map<String, String> params) {
         try {
 
+            zkConnString = params.get(LResultToSolrMapper.ZOOKEEPER_KEY);
             String repoParam = Optional.fromNullable(params.get(LResultToSolrMapper.REPO_KEY)).or(RepoAndTableUtil.DEFAULT_REPOSITORY);
             setRepositoryName(repoParam);
             init();
@@ -125,6 +126,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
             IndexNotFoundException, IOException {
         repository = repositoryManager.getRepository(repositoryName != null ? repositoryName : RepoAndTableUtil.DEFAULT_REPOSITORY);
         idGenerator = repository.getIdGenerator();
+        zooKeeperItf = new ZooKeeperImpl(zkConnString, 30000);
 
         valueEvaluator = new ValueEvaluator(lilyIndexerConf);
         recordDecoder = new RecordDecoder(repository.getTypeManager(), repository.getIdGenerator(), repository.getRecordFactory());
