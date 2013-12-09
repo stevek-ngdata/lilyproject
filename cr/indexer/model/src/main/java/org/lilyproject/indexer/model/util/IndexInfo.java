@@ -19,12 +19,14 @@ import java.io.ByteArrayInputStream;
 
 import com.ngdata.hbaseindexer.conf.IndexerConf;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
+import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
 import org.lilyproject.indexer.model.indexerconf.LilyIndexerConfBuilder;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.RepositoryManager;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 
 public class IndexInfo {
     IndexerDefinition indexDefinition;
@@ -37,8 +39,9 @@ public class IndexInfo {
         this.indexDefinition = indexDefinition;
         this.indexerConf = indexerConf;
 
+        String repoParam = indexDefinition.getConnectionParams().get(LResultToSolrMapper.REPO_KEY);
         LRepository repository = repositoryName == null ? repositoryManager.getDefaultRepository() : repositoryManager.getRepository(repositoryName);
-        repositoryName = repository.getRepositoryName();
+        repositoryName = repoParam == null ? RepoAndTableUtil.DEFAULT_REPOSITORY : repoParam;
 
         this.lilyIndexerConf = LilyIndexerConfBuilder.build(new ByteArrayInputStream(indexDefinition.getConfiguration()), repository);
     }
