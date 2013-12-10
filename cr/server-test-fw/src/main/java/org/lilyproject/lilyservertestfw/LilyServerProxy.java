@@ -15,6 +15,13 @@
  */
 package org.lilyproject.lilyservertestfw;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Map;
+
 import com.google.common.collect.Maps;
 import com.ngdata.hbaseindexer.ConfKeys;
 import com.ngdata.hbaseindexer.HBaseIndexerConfiguration;
@@ -33,6 +40,7 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory;
+import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.model.api.RepositoryDefinition;
 import org.lilyproject.repository.model.api.RepositoryModel;
@@ -45,13 +53,6 @@ import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Map;
 
 public class LilyServerProxy {
     public static final String LILY_CONF_CUSTOMDIR = "lily.conf.customdir";
@@ -295,6 +296,7 @@ public class LilyServerProxy {
         Map<String,String> connectionParams = Maps.newHashMap();
         connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
         connectionParams.put(SolrConnectionParams.COLLECTION, coreName);
+        connectionParams.put(LResultToSolrMapper.ZOOKEEPER_KEY, "localhost:2181");
         IndexerDefinition index = new IndexerDefinitionBuilder()
                 .name(indexName)
                 .connectionType("solr")

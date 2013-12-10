@@ -71,7 +71,11 @@ public class LilyIndexerComponentFactory implements IndexerComponentFactory {
         LRepository lRepository;
         try {
             lilyClient = new LilyClient(zookeeperConnectString, 30000);
-            lRepository = lilyClient.getRepository(repositoryName);
+            if (repositoryName == null) {
+                lRepository = lilyClient.getDefaultRepository();
+            } else {
+                lRepository = lilyClient.getRepository(repositoryName);
+            }
         } catch (RepositoryException e) {
             throw new AssertionError(e);
         } catch (InterruptedException e) {
@@ -103,7 +107,7 @@ public class LilyIndexerComponentFactory implements IndexerComponentFactory {
 
             String zkParam = params.get(LResultToSolrMapper.ZOOKEEPER_KEY);
             if (zkParam == null) {
-                throw new IndexerConfException("The required parameter " + LilyResultToSolrMapper.ZOOKEEPER_KEY + " is not set.");
+                throw new IndexerConfException("The required connection parameter " + LilyResultToSolrMapper.ZOOKEEPER_KEY + " is not set.");
             }
             String repoParam= Optional.fromNullable(params.get(LResultToSolrMapper.REPO_KEY)).or(RepoAndTableUtil.DEFAULT_REPOSITORY);
             String tableParam = Optional.fromNullable(params.get(LResultToSolrMapper.TABLE_KEY)).or(LilyHBaseSchema.Table.RECORD.name);
@@ -126,7 +130,7 @@ public class LilyIndexerComponentFactory implements IndexerComponentFactory {
 
             indexerConf = builder.build();
         } catch (Exception e) {
-            throw new IndexerConfException("Failed to parse Lily indexer configuration", e);
+            throw new IndexerConfException("Problems initializing the indexer components", e);
         }
     }
 

@@ -46,6 +46,7 @@ import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory;
+import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.LilyServerProxy;
 import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
@@ -136,6 +137,8 @@ public class BatchBuildTest {
         Map<String,String> connectionParams = Maps.newHashMap();
         connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
         connectionParams.put(SolrConnectionParams.COLLECTION, "core0");
+        connectionParams.put(LResultToSolrMapper.REPO_KEY, REPO_NAME);
+        connectionParams.put(LResultToSolrMapper.ZOOKEEPER_KEY, "localhost:2181");
         IndexerDefinition index = new IndexerDefinitionBuilder()
                 .name(INDEX_NAME)
                 .connectionType("solr")
