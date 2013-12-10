@@ -3,6 +3,6 @@
   <modules>
     <artifact id="servlet-filter-test" groupId="org.lilyproject"
               artifactId="servlet-integration-test-module"
-              version="3.0-SNAPSHOT"/>
+              version="2.6-hbaseindexer-SNAPSHOT"/>
   </modules>
 </wiring>
