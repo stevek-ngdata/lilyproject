@@ -90,7 +90,7 @@ public class LilyIndexerComponentFactory implements IndexerComponentFactory {
             mapper.configure(params);
             return mapper;
         } catch (org.lilyproject.indexer.model.indexerconf.IndexerConfException e) {
-            throw new AssertionError(e);
+            throw new IndexerConfException(e);
         }
     }
 

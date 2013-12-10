@@ -3473,7 +3473,7 @@ public class IndexerTest {
         }
 
         public void waitForEvents(int count) throws InterruptedException {
-            long timeout = 1000;
+            long timeout = 10000;
             long now = System.currentTimeMillis();
             synchronized (this) {
                 while (events.size() < count && System.currentTimeMillis() - now < timeout) {
@@ -3483,34 +3483,39 @@ public class IndexerTest {
         }
 
         public void verifyEvents(IndexerModelEvent... expectedEvents) {
-            if (events.size() != expectedEvents.length) {
-                if (events.size() > 0) {
-                    System.out.println("The events are:");
-                    for (IndexerModelEvent item : events) {
-                        System.out.println(item.getType() + " - " + item.getIndexerName());
+            System.out.println("Received events:" + events);
+            System.out.println("Expected events:" + Arrays.asList(expectedEvents));
+
+            try {
+                if (events.size() != expectedEvents.length) {
+                    if (events.size() > 0) {
+                        System.out.println("The events are:");
+                        for (IndexerModelEvent item : events) {
+                            System.out.println(item.getType() + " - " + item.getIndexerName());
+                        }
+                    } else {
+                        System.out.println("There are no events.");
                     }
-                } else {
-                    System.out.println("There are no events.");
+
+                    assertEquals("Expected number of events", expectedEvents.length, events.size());
                 }
 
-                assertEquals("Expected number of events", expectedEvents.length, events.size());
-            }
+                Set<IndexerModelEvent> expectedEventsSet  = new HashSet<IndexerModelEvent>(Arrays.asList(expectedEvents));
 
-            Set<IndexerModelEvent> expectedEventsSet  = new HashSet<IndexerModelEvent>(Arrays.asList(expectedEvents));
-
-            for (IndexerModelEvent event : expectedEvents) {
-                if (!events.contains(event)) {
-                    fail("Expected event not present among events: " + event);
+                for (IndexerModelEvent event : expectedEvents) {
+                    if (!events.contains(event)) {
+                        fail("Expected event not present among events: " + event);
+                    }
                 }
-            }
 
-            for (IndexerModelEvent event : events) {
-                if (!expectedEventsSet.contains(event)) {
-                    fail("Got an event which is not among the expected events: " + event);
+                for (IndexerModelEvent event : events) {
+                    if (!expectedEventsSet.contains(event)) {
+                        fail("Got an event which is not among the expected events: " + event);
+                    }
                 }
+            } finally {
+                events.clear();
             }
-
-            events.clear();
         }
     }
 }
