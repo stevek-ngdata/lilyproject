@@ -3477,7 +3477,7 @@ public class IndexerTest {
             long now = System.currentTimeMillis();
             synchronized (this) {
                 while (events.size() < count && System.currentTimeMillis() - now < timeout) {
-                    wait(timeout);
+                    wait(500);
                 }
             }
         }
