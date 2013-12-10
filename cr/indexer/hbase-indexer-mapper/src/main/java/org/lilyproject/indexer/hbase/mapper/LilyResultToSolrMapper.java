@@ -126,11 +126,11 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
             IndexNotFoundException, IOException {
         repository = repositoryManager.getRepository(repositoryName != null ? repositoryName : RepoAndTableUtil.DEFAULT_REPOSITORY);
         idGenerator = repository.getIdGenerator();
-        zooKeeperItf = new ZooKeeperImpl(zkConnString, 30000);
 
         valueEvaluator = new ValueEvaluator(lilyIndexerConf);
         recordDecoder = new RecordDecoder(repository.getTypeManager(), repository.getIdGenerator(), repository.getRecordFactory());
         if (lilyIndexerConf.containsDerefExpressions()) {
+            zooKeeperItf = new ZooKeeperImpl(zkConnString, 30000);
             HBaseTableFactory tableFactory = new HBaseTableFactoryImpl(LilyClient.getHBaseConfiguration(zooKeeperItf));
             eventPublisherManager = new LilyEventPublisherManager(tableFactory);
             derefMap = DerefMapHbaseImpl.create(repository.getRepositoryName(), indexName,
