@@ -141,7 +141,6 @@
                 <replace file="${project.build.outputDirectory}/install-hbasemapper.sh" token="@@@MAPPER@@@"
                          value="${project.build.directory}/${project.build.finalName}.jar"/>
                 <chmod file="${project.build.outputDirectory}/install-hbasemapper.sh" perm="755"/>
-                <chmod file="${project.build.outputDirectory}/lilyindex-to-hbaseindex.sh" perm="755"/>
               </target>
             </configuration>
             <goals>
