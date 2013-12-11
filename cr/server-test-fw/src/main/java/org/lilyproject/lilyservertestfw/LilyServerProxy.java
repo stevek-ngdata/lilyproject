@@ -249,21 +249,22 @@ public class LilyServerProxy {
      * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
      *                               the index, this is important for synchronous indexing.
      */
-    public void addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout,
+    public void addIndexFromResource(String repositoryName, String indexName, String coreName, String indexerConf, long timeout,
                                      boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry)
             throws Exception {
         InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         is.close();
-        addIndex(indexName, coreName, indexerConfiguration, timeout, waitForIndexerModel, waitForSep,
+        addIndex(repositoryName, indexName, coreName, indexerConfiguration, timeout, waitForIndexerModel, waitForSep,
                 waitForIndexerRegistry);
     }
 
     /**
      * Shortcut method with waitForIndexerModel and waitForSep put to true
      */
-    public void addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout) throws Exception {
-        addIndexFromResource(indexName, coreName, indexerConf, timeout, true, true, true);
+    public void addIndexFromResource(String repositoryName, String indexName, String coreName, String indexerConf, long timeout)
+            throws Exception {
+        addIndexFromResource(repositoryName, indexName, coreName, indexerConf, timeout, true, true, true);
     }
 
     /**
@@ -289,7 +290,7 @@ public class LilyServerProxy {
      * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
      *                               the index, this is important for synchronous indexing.
      */
-    public void addIndex(String indexName, String coreName, byte[] indexerConfiguration, long timeout,
+    public void addIndex(String repositoryName, String indexName, String coreName, byte[] indexerConfiguration, long timeout,
                          boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
         long tryUntil = System.currentTimeMillis() + timeout;
         WriteableIndexerModel indexerModel = getIndexerModel();
@@ -297,6 +298,7 @@ public class LilyServerProxy {
         connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
         connectionParams.put(SolrConnectionParams.COLLECTION, coreName);
         connectionParams.put(LResultToSolrMapper.ZOOKEEPER_KEY, "localhost:2181");
+        connectionParams.put(LResultToSolrMapper.REPO_KEY, repositoryName);
         IndexerDefinition index = new IndexerDefinitionBuilder()
                 .name(indexName)
                 .connectionType("solr")

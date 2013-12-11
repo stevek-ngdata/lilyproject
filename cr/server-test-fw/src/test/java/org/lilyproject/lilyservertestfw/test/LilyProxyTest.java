@@ -81,8 +81,9 @@ public class LilyProxyTest {
 
         // Add index
         String indexName = "testIndex";
-        lilyProxy.getLilyServerProxy().addIndexFromResource(indexName, SolrDefinition.DEFAULT_CORE_NAME,
-                "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml", 60000L);
+        lilyProxy.getLilyServerProxy().addIndexFromResource(repository.getRepositoryName(), indexName,
+                SolrDefinition.DEFAULT_CORE_NAME, "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml",
+                60000L);
 
         // Create record
         Record record = repository.newRecord();

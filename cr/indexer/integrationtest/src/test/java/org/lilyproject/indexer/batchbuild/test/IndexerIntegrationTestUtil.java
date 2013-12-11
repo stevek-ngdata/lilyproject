@@ -11,6 +11,7 @@ import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory;
+import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.LRepository;
@@ -73,6 +74,8 @@ class IndexerIntegrationTestUtil {
         Map<String, String> connectionParams = Maps.newHashMap();
         connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
         connectionParams.put(SolrConnectionParams.COLLECTION, core);
+        connectionParams.put(LResultToSolrMapper.REPO_KEY, repository.getRepositoryName());
+        connectionParams.put(LResultToSolrMapper.ZOOKEEPER_KEY, "localhost:2181");
         indexerModel.addIndexer(new IndexerDefinitionBuilder()
                 .name(name)
                 .connectionType("solr")
