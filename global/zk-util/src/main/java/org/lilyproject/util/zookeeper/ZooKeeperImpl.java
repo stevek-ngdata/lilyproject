@@ -56,16 +56,20 @@ public class ZooKeeperImpl implements ZooKeeperItf {
 
     private Log log = LogFactory.getLog(getClass());
 
-    protected ZooKeeperImpl() {
-
-    }
+    private final String connectString;
 
     protected void setDelegate(ZooKeeper delegate) {
         this.delegate = delegate;
     }
 
     public ZooKeeperImpl(String connectString, int sessionTimeout) throws IOException {
+        this.connectString = connectString;
         this.delegate = new ZooKeeper(connectString, sessionTimeout, new MyWatcher());
+    }
+
+    @Override
+    public String connectString() {
+        return connectString;
     }
 
     @Override
@@ -188,12 +192,14 @@ public class ZooKeeperImpl implements ZooKeeperItf {
     }
 
     @Override
-    public String create(String path, byte[] data, List<ACL> acl, CreateMode createMode) throws KeeperException, InterruptedException {
+    public String create(String path, byte[] data, List<ACL> acl, CreateMode createMode)
+            throws KeeperException, InterruptedException {
         return delegate.create(path, data, acl, createMode);
     }
 
     @Override
-    public void create(String path, byte[] data, List<ACL> acl, CreateMode createMode, AsyncCallback.StringCallback cb, Object ctx) {
+    public void create(String path, byte[] data, List<ACL> acl, CreateMode createMode, AsyncCallback.StringCallback cb,
+                       Object ctx) {
         delegate.create(path, data, acl, createMode, cb, ctx);
     }
 

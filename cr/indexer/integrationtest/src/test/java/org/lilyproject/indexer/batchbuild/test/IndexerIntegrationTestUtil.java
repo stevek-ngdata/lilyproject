@@ -12,7 +12,6 @@ import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.QName;
@@ -40,9 +39,7 @@ class IndexerIntegrationTestUtil {
 
     private static WriteableIndexerModel indexerModel;
 
-    private static HbaseIndexerLauncherService hbaseIndexerLauncherService;
-
-    IndexerIntegrationTestUtil(LilyProxy lilyProxy) throws Exception{
+    IndexerIntegrationTestUtil(LilyProxy lilyProxy) throws Exception {
         this.lilyProxy = lilyProxy;
         startLily();
         primaryRepo = lilyProxy.getLilyServerProxy().getClient().getDefaultRepository();
@@ -50,7 +47,7 @@ class IndexerIntegrationTestUtil {
     }
 
 
-    public void startLily() throws Exception{
+    public void startLily() throws Exception {
         TestHelper.setupLogging("org.lilyproject");
 
         byte[] schemaBytes = getResource("solrschema.xml");
@@ -61,15 +58,10 @@ class IndexerIntegrationTestUtil {
                 new SolrDefinition.CoreDefinition(CORE2, schemaBytes, configBytes)
         ));
 
-        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
-        hbaseIndexerLauncherService.setup(null, null, false);
-        hbaseIndexerLauncherService.start(null);
-
         configureLilySchema();
         indexerModel = lilyProxy.getLilyServerProxy().getIndexerModel();
         LRepository primaryRepo = lilyProxy.getLilyServerProxy().getClient().getDefaultRepository();
         LRepository secundaryRepo = getAlternateTestRespository("alternateRepo");
-
 
 
         createIndex(PRIMARY_INDEX, CORE1, primaryRepo);
@@ -78,7 +70,7 @@ class IndexerIntegrationTestUtil {
 
     void createIndex(String name, String core, LRepository repository) throws Exception {
         byte[] indexConf = getResource("indexerconf.xml");
-        Map<String,String> connectionParams = Maps.newHashMap();
+        Map<String, String> connectionParams = Maps.newHashMap();
         connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
         connectionParams.put(SolrConnectionParams.COLLECTION, core);
         indexerModel.addIndexer(new IndexerDefinitionBuilder()
@@ -128,7 +120,6 @@ class IndexerIntegrationTestUtil {
     }
 
     public void stop() {
-        hbaseIndexerLauncherService.stop();
         Closer.close(lilyProxy);
     }
 }

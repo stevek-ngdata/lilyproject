@@ -32,7 +32,6 @@ import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeExistsException;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
@@ -61,7 +60,6 @@ public class KeepDataTest {
     private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility", "name");
     private static Repository repository;
     private static LilyProxy lilyProxy;
-    private static HbaseIndexerLauncherService hbaseIndexerLauncherService;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -71,15 +69,10 @@ public class KeepDataTest {
         lilyProxy.start(schemaData);
         LilyClient lilyClient = lilyProxy.getLilyServerProxy().getClient();
         repository = lilyClient.getRepository();
-
-        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
-        hbaseIndexerLauncherService.setup(null, null, false);
-        hbaseIndexerLauncherService.start(null);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        hbaseIndexerLauncherService.stop();
         lilyProxy.stop();
     }
 

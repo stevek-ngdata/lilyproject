@@ -31,6 +31,8 @@ import org.apache.zookeeper.data.Stat;
  */
 public interface ZooKeeperItf extends Closeable {
 
+    String connectString();
+
     void waitForConnection() throws InterruptedException;
 
     /**
@@ -55,11 +57,11 @@ public interface ZooKeeperItf extends Closeable {
      * so it might be executed twice. Therefore:
      *
      * <ul>
-     *   <li>in case of a delete operation, be prepared to deal with a NoNode exception
-     *   <li>in case of a create operation, be prepared to deal with a NodeExists exception
-     *   <li>in case of creation of a sequential node, two nodes might have been created. If they are ephemeral,
-     *       you can use Stat.ephemeralOwner to find out the ones that belong to the current session. Otherwise,
-     *       embed the necessary identification into the name or data.
+     * <li>in case of a delete operation, be prepared to deal with a NoNode exception
+     * <li>in case of a create operation, be prepared to deal with a NodeExists exception
+     * <li>in case of creation of a sequential node, two nodes might have been created. If they are ephemeral,
+     * you can use Stat.ephemeralOwner to find out the ones that belong to the current session. Otherwise,
+     * embed the necessary identification into the name or data.
      * </ul>
      *
      * <p>Do not call this method from within a ZooKeeper watcher callback, as it might block for a longer

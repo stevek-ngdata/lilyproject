@@ -15,20 +15,22 @@
  */
 package org.lilyproject.lilyservertestfw;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.Collections;
+
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrProxy;
-import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
 
@@ -37,6 +39,7 @@ public class LilyProxy {
     private HBaseProxy hbaseProxy;
     private LilyServerProxy lilyServerProxy;
     private SolrProxy solrProxy;
+    private HbaseIndexerLauncherService hbaseIndexerLauncherService;
     private Mode mode;
     private File testHome;
     private boolean started = false;
@@ -140,6 +143,7 @@ public class LilyProxy {
         hbaseProxy.setEnableMapReduce(true);
         solrProxy = new SolrProxy(solrMode, this.clearData, enableSolrCloud);
         lilyServerProxy = new LilyServerProxy(lilyServerMode, this.clearData, hbaseProxy);
+        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
     }
 
     public Mode getMode() {
@@ -219,12 +223,14 @@ public class LilyProxy {
         hbaseProxy.start();
         solrProxy.start(solrDef);
         lilyServerProxy.start();
+        hbaseIndexerLauncherService.start(Collections.<String>emptyList());
     }
 
     public void stop() throws Exception {
         Closer.close(lilyServerProxy);
         Closer.close(solrProxy);
         Closer.close(hbaseProxy);
+        Closer.close(hbaseIndexerLauncherService);
 
         if (clearData && testHome != null) {
             try {

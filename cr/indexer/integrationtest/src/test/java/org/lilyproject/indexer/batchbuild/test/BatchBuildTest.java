@@ -15,6 +15,10 @@
  */
 package org.lilyproject.indexer.batchbuild.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -49,7 +53,6 @@ import org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory;
 import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.lilyservertestfw.LilyServerProxy;
-import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.AbsoluteRecordId;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.LRepository;
@@ -66,10 +69,6 @@ import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;
@@ -92,8 +91,6 @@ public class BatchBuildTest {
     private final static String INDEX_NAME = "batchtest";
     private static final String COUNTER_NUM_FAILED_RECORDS =
             "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
-
-    private static HbaseIndexerLauncherService hbaseIndexerLauncherService;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -125,16 +122,12 @@ public class BatchBuildTest {
                 .fieldEntry().use(ft2).add()
                 .create();
 
-        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
-        hbaseIndexerLauncherService.setup(null, null, false);
-        hbaseIndexerLauncherService.start(null);
-
         model = lilyServerProxy.getIndexerModel();
 
         is = BatchBuildTest.class.getResourceAsStream("indexerconf.xml");
         byte[] indexerConfiguration = ByteStreams.toByteArray(is);
 
-        Map<String,String> connectionParams = Maps.newHashMap();
+        Map<String, String> connectionParams = Maps.newHashMap();
         connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
         connectionParams.put(SolrConnectionParams.COLLECTION, "core0");
         connectionParams.put(LResultToSolrMapper.REPO_KEY, REPO_NAME);
@@ -162,8 +155,6 @@ public class BatchBuildTest {
         Closer.close(solrServer);
         Closer.close(solrProxy);
         Closer.close(lilyServerProxy);
-
-        hbaseIndexerLauncherService.stop();
 
         lilyProxy.stop();
     }
@@ -238,7 +229,7 @@ public class BatchBuildTest {
 
     }
 
-    private String[] getBatchCliArgs(String name) throws IOException{
+    private String[] getBatchCliArgs(String name) throws IOException {
         String argString = new String(getResourceAsByteArray(name), Charsets.UTF_8);
         return Iterables.toArray(Splitter.on(" ").trimResults().omitEmptyStrings().split(argString), String.class);
     }

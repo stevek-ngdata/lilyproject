@@ -15,6 +15,14 @@
  */
 package org.lilyproject.indexer.engine.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,8 +68,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.indexer.derefmap.DerefMap;
-import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory;
 import org.lilyproject.indexer.model.api.LResultToSolrMapper;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
@@ -77,7 +83,6 @@ import org.lilyproject.indexer.model.indexerconf.VariantFollow;
 import org.lilyproject.indexer.model.util.IndexInfo;
 import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
@@ -108,14 +113,6 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
-
 public class IndexerTest {
 
     public static final String ALTERNATE_TABLE = "alternate";
@@ -132,7 +129,6 @@ public class IndexerTest {
     private static WriteableIndexerModel indexerModel;
     private static IndexesInfo indexesInfo;
     private static TrackingRepository indexUpdaterRepository;
-    private static HbaseIndexerLauncherService hbaseIndexerLauncherService;
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -189,15 +185,11 @@ public class IndexerTest {
                 "org.lilyproject.indexer.engine.test.IndexerTest", "com.ngdata.hbaseindexer",
                 "org.lilyproject.indexer.model.util");
 
-        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
-        hbaseIndexerLauncherService.setup(null, null, false);
-        hbaseIndexerLauncherService.start(null);
-
         Configuration conf = HBaseIndexerConfiguration.create();
         indexerModel = lilyProxy.getLilyServerProxy().getIndexerModel();
         indexerModel.registerListener(listener);
 
-        indexesInfo = (IndexesInfo)lilyProxy.getLilyServerProxy().getLilyServerTestingUtility().getRuntime()
+        indexesInfo = (IndexesInfo) lilyProxy.getLilyServerProxy().getLilyServerTestingUtility().getRuntime()
                 .getModuleById("indexer-integration").getApplicationContext().getBean("indexesInfo");
 
         //repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
@@ -230,7 +222,6 @@ public class IndexerTest {
     public static void tearDownAfterClass() throws Exception {
         // cleanup the last created index (especially the SEP part), this is important when running tests in connect mode
         cleanupIndex("test" + idxChangeCnt);
-        hbaseIndexerLauncherService.stop();
         lilyProxy.stop();
           /*
         if (SOLR_TEST_UTIL != null) {
@@ -260,13 +251,13 @@ public class IndexerTest {
         // warning: the below line will throw an exception in case of invalid conf, which is an exception
         // which some test cases expect, and hence it won't be visible but will cause the remainder of the
         // code in this method not to be executed! (so keep this in mind for anything related to resource cleanup)
-        INDEXER_CONF =  LilyIndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
+        INDEXER_CONF = LilyIndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName),
                 repositoryManager.getRepository(REPO_NAME));
 
         Configuration hbaseConf = lilyProxy.getHBaseProxy().getConf();
 
         // The registration of the index into the IndexerModel is only needed for the IndexRecordFilterHook
-        Map<String,String> connectionParams = Maps.newHashMap();
+        Map<String, String> connectionParams = Maps.newHashMap();
         connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
         connectionParams.put(SolrConnectionParams.COLLECTION, "core0");
         connectionParams.put(LResultToSolrMapper.ZOOKEEPER_KEY, "localhost:2181");
@@ -277,9 +268,9 @@ public class IndexerTest {
                 .connectionParams(connectionParams)
                 .indexerComponentFactory(LilyIndexerComponentFactory.class.getName())
                 .configuration(ByteStreams.toByteArray(IndexerTest.class.getResourceAsStream(confName)))
-                //.solrShards(Collections.singletonMap("shard1", "http://somewhere/"))
-                //.subscriptionId("Indexer_" + indexName)
-                //indexDef.setRepositoryName(REPO_NAME)
+                        //.solrShards(Collections.singletonMap("shard1", "http://somewhere/"))
+                        //.subscriptionId("Indexer_" + indexName)
+                        //indexDef.setRepositoryName(REPO_NAME)
                 .build();
         indexerModel.addIndexer(indexDef);
 
@@ -3500,7 +3491,7 @@ public class IndexerTest {
                     assertEquals("Expected number of events", expectedEvents.length, events.size());
                 }
 
-                Set<IndexerModelEvent> expectedEventsSet  = new HashSet<IndexerModelEvent>(Arrays.asList(expectedEvents));
+                Set<IndexerModelEvent> expectedEventsSet = new HashSet<IndexerModelEvent>(Arrays.asList(expectedEvents));
 
                 for (IndexerModelEvent event : expectedEvents) {
                     if (!events.contains(event)) {

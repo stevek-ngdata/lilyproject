@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 -->
-<indexer>
-  <records>
+<indexer xmlns:l="org.lilyproject.lilytestutility">
+<records>
     <record matchNamespace='l' matchName='TestRecordType' matchVariant='*' vtags='last'/>
   </records>
 

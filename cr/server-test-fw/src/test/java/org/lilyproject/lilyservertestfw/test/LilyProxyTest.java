@@ -15,6 +15,10 @@
  */
 package org.lilyproject.lilyservertestfw.test;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
 import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
@@ -32,7 +36,6 @@ import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.lilyservertestfw.launcher.HbaseIndexerLauncherService;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -43,10 +46,6 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.solrtestfw.SolrDefinition;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 
 public class LilyProxyTest {
     private static final QName RECORDTYPE1 = new QName("org.lilyproject.lilytestutility", "TestRecordType");
@@ -54,7 +53,6 @@ public class LilyProxyTest {
     private static LilyProxy lilyProxy;
     private static LilyClient lilyClient;
     private Repository repository;
-    private static HbaseIndexerLauncherService hbaseIndexerLauncherService;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -63,15 +61,10 @@ public class LilyProxyTest {
         byte[] schemaData = IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
         lilyProxy.start(schemaData);
         lilyClient = lilyProxy.getLilyServerProxy().getClient();
-
-        hbaseIndexerLauncherService = new HbaseIndexerLauncherService();
-        hbaseIndexerLauncherService.setup(null, null, false);
-        hbaseIndexerLauncherService.start(null);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        hbaseIndexerLauncherService.stop();
         lilyProxy.stop();
     }
 
