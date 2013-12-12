@@ -21,6 +21,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.LRepository;
@@ -57,6 +58,7 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
     }
 
     @Test
+    @Ignore("Since Lily 2.6 this is no longer true because the derefmaps should be managed by hbase-indexer")
     public void testDeleteRepositoryRemovesTenantMaps() throws Exception {
         model.delete(testUtil.secundaryRepo.getRepositoryName());
         HTableDescriptor[] descriptors = hBaseAdmin.listTables();
