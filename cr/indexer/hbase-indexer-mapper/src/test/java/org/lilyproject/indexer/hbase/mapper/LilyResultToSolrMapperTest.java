@@ -54,7 +54,8 @@ public class LilyResultToSolrMapperTest {
         JsonImport.loadSchema(repository, LilyResultToSolrMapperTest.class.getResourceAsStream("schema.json"));
 
         LilyIndexerConf conf = LilyIndexerConfBuilder.build(LilyResultToSolrMapperTest.class.getResourceAsStream("indexer-conf.xml"), repository);
-        mapper = new LilyResultToSolrMapper("testindex", conf, repositoryManager);
+        // the zookeeper argument is only needed when there are deref expressions, hence it's ok to pass 'null'
+        mapper = new LilyResultToSolrMapper("testindex", conf, repositoryManager, null);
         mapper.configure(Maps.<String, String>newHashMap());
 
         solrUpdateWriter = new FakeSolrUpdateWriter();

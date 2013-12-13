@@ -75,7 +75,6 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
-import org.lilyproject.util.zookeeper.ZooKeeperImpl;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
@@ -89,7 +88,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     private String repositoryName;
     private String indexName;
 
-    private String zkConnString;
     private ZooKeeperItf zooKeeperItf;
     private RecordDecoder recordDecoder;
     private RepositoryManager repositoryManager;
@@ -101,18 +99,17 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     private LilyEventPublisherManager eventPublisherManager;
     private String subscriptionId;
 
-    public LilyResultToSolrMapper(String indexName, LilyIndexerConf lilyIndexerConf, RepositoryManager repositoryManager) {
+    public LilyResultToSolrMapper(String indexName, LilyIndexerConf lilyIndexerConf, RepositoryManager repositoryManager, ZooKeeperItf zooKeeperItf) {
         setIndexName(indexName);
         this.repositoryManager = repositoryManager;
         this.lilyIndexerConf = lilyIndexerConf;
+        this.zooKeeperItf = zooKeeperItf;
     }
 
     @Override
 
     public void configure(Map<String, String> params) {
         try {
-
-            zkConnString = params.get(LResultToSolrMapper.ZOOKEEPER_KEY);
             String repoParam = Optional.fromNullable(params.get(LResultToSolrMapper.REPO_KEY)).or(RepoAndTableUtil.DEFAULT_REPOSITORY);
             setRepositoryName(repoParam);
             init();
@@ -130,7 +127,6 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         valueEvaluator = new ValueEvaluator(lilyIndexerConf);
         recordDecoder = new RecordDecoder(repository.getTypeManager(), repository.getIdGenerator(), repository.getRecordFactory());
         if (lilyIndexerConf.containsDerefExpressions()) {
-            zooKeeperItf = new ZooKeeperImpl(zkConnString, 30000);
             HBaseTableFactory tableFactory = new HBaseTableFactoryImpl(LilyClient.getHBaseConfiguration(zooKeeperItf));
             eventPublisherManager = new LilyEventPublisherManager(tableFactory);
             derefMap = DerefMapHbaseImpl.create(repository.getRepositoryName(), indexName,

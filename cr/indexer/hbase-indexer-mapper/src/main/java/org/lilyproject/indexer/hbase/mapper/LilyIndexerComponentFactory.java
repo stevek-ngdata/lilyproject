@@ -36,7 +36,9 @@ import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.RepoAndTableUtil;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkConnectException;
+import org.lilyproject.util.zookeeper.ZooKeeperImpl;
 
 public class LilyIndexerComponentFactory implements IndexerComponentFactory {
 
@@ -67,33 +69,48 @@ public class LilyIndexerComponentFactory implements IndexerComponentFactory {
     public ResultToSolrMapper createMapper(String indexName) throws IndexerConfException {
         String zookeeperConnectString = params.get(LResultToSolrMapper.ZOOKEEPER_KEY);
         String repositoryName = params.get(LResultToSolrMapper.REPO_KEY);
-        LilyClient lilyClient;
+        ZooKeeperImpl zk = null;
+        LilyClient lilyClient = null;
         LRepository lRepository;
         try {
-            lilyClient = new LilyClient(zookeeperConnectString, 30000);
+            zk = new ZooKeeperImpl(zookeeperConnectString, 30000);
+            lilyClient = new LilyClient(zk);
             if (repositoryName == null) {
                 lRepository = lilyClient.getDefaultRepository();
             } else {
                 lRepository = lilyClient.getRepository(repositoryName);
             }
         } catch (RepositoryException e) {
+            Closer.close(lilyClient);
+            Closer.close(zk);
             throw new AssertionError(e);
         } catch (InterruptedException e) {
+            Closer.close(lilyClient);
+            Closer.close(zk);
             throw new AssertionError(e);
         } catch (IOException e) {
+            Closer.close(lilyClient);
+            Closer.close(zk);
             throw new AssertionError(e);
         } catch (KeeperException e) {
+            Closer.close(lilyClient);
+            Closer.close(zk);
             throw new AssertionError(e);
         } catch (ZkConnectException e) {
+            Closer.close(lilyClient);
+            Closer.close(zk);
             throw new AssertionError(e);
+        } finally {
         }
 
         try {
             LilyIndexerConf lilyIndexerConf = LilyIndexerConfBuilder.build(new ByteArrayInputStream(confData), lRepository);
-            LilyResultToSolrMapper mapper = new LilyResultToSolrMapper(indexName, lilyIndexerConf, lilyClient);
+            LilyResultToSolrMapper mapper = new LilyResultToSolrMapper(indexName, lilyIndexerConf, lilyClient, zk);
             mapper.configure(params);
             return mapper;
         } catch (org.lilyproject.indexer.model.indexerconf.IndexerConfException e) {
+            Closer.close(lilyClient);
+            Closer.close(zk);
             throw new IndexerConfException(e);
         }
     }
