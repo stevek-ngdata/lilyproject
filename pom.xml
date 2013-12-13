@@ -601,6 +601,10 @@
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -628,6 +632,10 @@
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -654,6 +662,10 @@
           <exclusion>
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
