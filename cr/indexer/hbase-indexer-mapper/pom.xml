@@ -133,6 +133,7 @@ project.runtimeArtifacts.each {
 
 def file = new File(project.build.directory, "lily-hbase-indexer-classpath")
 file.write("echo " + all.join(separator))
+file.setExecutable(true, false)
 ]]></source>
             </configuration>
           </execution>
@@ -166,6 +167,7 @@ project.runtimeArtifacts.each {
 
 def file = new File(project.build.directory, "lily-hbase-indexer-classpath-dev")
 file.write("echo " + all.join(separator))
+file.setExecutable(true, false)
 ]]></source>
             </configuration>
           </execution>
