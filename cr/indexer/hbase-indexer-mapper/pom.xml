@@ -96,24 +96,61 @@
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
+        <groupId>org.codehaus.groovy.maven</groupId>
+        <artifactId>gmaven-plugin</artifactId>
         <executions>
           <execution>
-            <id>create-hbase-indexer-mapper-classpath</id>
+            <phase>generate-resources</phase>
             <goals>
-              <goal>build-classpath</goal>
+              <goal>execute</goal>
             </goals>
             <configuration>
-              <attach>true</attach>
-              <includeScope>runtime</includeScope>
-              <outputFile>${project.build.directory}/mapper-classpath.txt</outputFile>
-              <outputAbsoluteArtifactFilename>true</outputAbsoluteArtifactFilename>
-              <prependGroupId>true</prependGroupId>
-              <localRepoProperty>${LILY_HOME}/lib</localRepoProperty>
-              <excludeGroupIds>org.apache.solr,org.apache.hadoop,org.apache.hbase</excludeGroupIds>
-              <excludeArtifactIds>hbase-indexer-common,hbase-indexer-model,hbase-indexer-engine,hbase-sep-api,hbase-sep-impl</excludeArtifactIds>
+              <source><![CDATA[
+import org.sonatype.aether.util.layout.MavenDefaultLayout;
+
+def m2layout = new MavenDefaultLayout();
+
+def libDir = "\${LILY_HOME}/lib";
+def separator = File.pathSeparator;
+
+def excludeGroupIds="org.apache.solr,org.apache.hadoop,org.apache.hbase".split(",");
+def excludeArtifactIds="hbase-indexer-common,hbase-indexer-model,hbase-indexer-engine,hbase-sep-api,hbase-sep-impl".split(",")
+
+def all = []
+project.runtimeArtifacts.each {
+    def artifact = org.apache.maven.RepositoryUtils.toArtifact(it);
+    if (it.groupId in excludeGroupIds) {
+      return;
+    }
+    if (it.artifactId in excludeArtifactIds) {
+      return;
+    }
+    all << new File(libDir, m2layout.getPath(artifact).getPath());
+}
+
+
+def file = new File(project.build.directory, "mapper-classpath.txt")
+file.write(all.join(separator))
+]]></source>
             </configuration>
           </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+             <groupId>org.sonatype.aether</groupId>
+             <artifactId>aether-util</artifactId>
+             <version>1.13.1</version>
+          </dependency>
+          <dependency>
+             <groupId>org.apache.maven</groupId>
+             <artifactId>maven-aether-provider</artifactId>
+             <version>${version.maven}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
           <execution>
             <id>create-hbase-indexer-mapper-DEV-classpath</id>
             <goals>
