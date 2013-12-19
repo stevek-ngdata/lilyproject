@@ -1132,7 +1132,7 @@
     <repository>
       <id>ngdata.snapshots</id>
       <name>NGDATA Snapshots</name>
-      <url>http://mvnrepo.ngdata.com/content/repositories/oss-snapshots</url>
+      <url>http://mvnrepo.ngdata.com/content/repositories/snapshots</url>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
