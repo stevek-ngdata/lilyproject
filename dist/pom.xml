@@ -102,7 +102,6 @@
                 <artifact>org.lilyproject:lily-mbox-import:${project.version}</artifact>
                 <artifact>org.lilyproject:lily-tester:${project.version}</artifact>
                 <artifact>org.lilyproject:lily-hbase-indexer-mapper:${project.version}</artifact>
-                <artifact>org.lilyproject:lily-hbase-indexer-mapper:jar:classpath:${project.version}</artifact>
                 <artifact>org.lilyproject:lily-repository-admin-cli:${project.version}</artifact>
                 <artifact>org.lilyproject:lily-server-test-fw:${project.version}</artifact>
                 <artifact>org.lilyproject:lily-standalone-launcher:${project.version}</artifact>
