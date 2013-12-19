@@ -16,8 +16,7 @@
  * limitations under the License.
  */
 -->
-<indexer xmlns:t="org.lilyproject.tools.tester"
-  zookeeper="localhost:2181">
+<indexer xmlns:t="org.lilyproject.tools.tester">
 
   <records>
     <record matchNamespace="t" matchName="A" matchVariant="*" vtags="last"/>

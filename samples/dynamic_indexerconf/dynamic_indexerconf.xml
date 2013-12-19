@@ -23,8 +23,7 @@
    | This is useful to start using the indexer without bothering to write a
    | custom indexerconf.
    -->
-<indexer
-  zookeeper="localhost:2181">
+<indexer>
 
   <records>
     <!-- A record tag without any match condition will match all records. -->
