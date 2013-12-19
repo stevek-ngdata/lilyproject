@@ -109,6 +109,7 @@
             <configuration>
               <source><![CDATA[
 import org.sonatype.aether.util.layout.MavenDefaultLayout;
+import static org.apache.maven.RepositoryUtils.toArtifact;
 
 def m2layout = new MavenDefaultLayout();
 
@@ -119,15 +120,17 @@ def excludeGroupIds="org.apache.solr,org.apache.hadoop,org.apache.hbase".split("
 def excludeArtifactIds="hbase-indexer-common,hbase-indexer-model,hbase-indexer-engine,hbase-sep-api,hbase-sep-impl".split(",")
 
 def all = []
+
+all << new File(libDir, m2layout.getPath(toArtifact(project.artifact)).getPath());
+
 project.runtimeArtifacts.each {
-    def artifact = org.apache.maven.RepositoryUtils.toArtifact(it);
     if (it.groupId in excludeGroupIds) {
       return;
     }
     if (it.artifactId in excludeArtifactIds) {
       return;
     }
-    all << new File(libDir, m2layout.getPath(artifact).getPath());
+    all << new File(libDir, m2layout.getPath(toArtifact(it)).getPath());
 }
 
 
@@ -146,6 +149,7 @@ file.setExecutable(true, false)
             <configuration>
               <source><![CDATA[
 import org.sonatype.aether.util.layout.MavenDefaultLayout;
+import static org.apache.maven.RepositoryUtils.toArtifact;
 
 def libDir = "\${LILY_HOME}/lib";
 def separator = File.pathSeparator;
@@ -154,6 +158,9 @@ def excludeGroupIds="org.apache.solr,org.apache.hadoop,org.apache.hbase".split("
 def excludeArtifactIds="hbase-indexer-common,hbase-indexer-model,hbase-indexer-engine,hbase-sep-api,hbase-sep-impl".split(",")
 
 def all = []
+
+all << session.localRepository.find(project.artifact).getFile();
+
 project.runtimeArtifacts.each {
     if (it.groupId in excludeGroupIds) {
       return;
