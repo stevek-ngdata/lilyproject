@@ -101,6 +101,7 @@
         <version>2.0</version>
         <executions>
           <execution>
+            <id>generate classpath tool</id>
             <phase>generate-resources</phase>
             <goals>
               <goal>execute</goal>
@@ -130,8 +131,41 @@ project.runtimeArtifacts.each {
 }
 
 
-def file = new File(project.build.directory, "mapper-classpath.txt")
-file.write(all.join(separator))
+def file = new File(project.build.directory, "lily-hbase-indexer-classpath")
+file.write("echo " + all.join(separator))
+]]></source>
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate dev-classpath tool</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <source><![CDATA[
+import org.sonatype.aether.util.layout.MavenDefaultLayout;
+
+def libDir = "\${LILY_HOME}/lib";
+def separator = File.pathSeparator;
+
+def excludeGroupIds="org.apache.solr,org.apache.hadoop,org.apache.hbase".split(",");
+def excludeArtifactIds="hbase-indexer-common,hbase-indexer-model,hbase-indexer-engine,hbase-sep-api,hbase-sep-impl".split(",")
+
+def all = []
+project.runtimeArtifacts.each {
+    if (it.groupId in excludeGroupIds) {
+      return;
+    }
+    if (it.artifactId in excludeArtifactIds) {
+      return;
+    }
+    all << it.getFile()
+}
+
+
+def file = new File(project.build.directory, "lily-hbase-indexer-classpath-dev")
+file.write("echo " + all.join(separator))
 ]]></source>
             </configuration>
           </execution>

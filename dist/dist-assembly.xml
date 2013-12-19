@@ -306,6 +306,13 @@
       <fileMode>0755</fileMode>
     </file>
 
+    <!-- lily-hbase-indexer-classpath -->
+    <file>
+      <source>${basedir}/../cr/indexer/hbase-indexer-mapper/target/lily-hbase-indexer-classpath</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+
   </files>
 
   <fileSets>
