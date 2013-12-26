@@ -41,4 +41,8 @@ public class HbaseIndexerLauncherService implements LauncherService {
         if (hbaseIndexerService != null)
             hbaseIndexerService.stopServices();
     }
+
+    public Main getHbaseIndexerService() {
+        return hbaseIndexerService;
+    }
 }

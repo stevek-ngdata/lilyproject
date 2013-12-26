@@ -25,6 +25,7 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import com.ngdata.hbaseindexer.Main;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.lilyproject.hadooptestfw.HBaseProxy;
@@ -309,5 +310,9 @@ public class LilyProxy {
             solrProxy.commit();
         }
         return success;
+    }
+
+    public Main getHBaseIndexerService() {
+        return hbaseIndexerLauncherService.getHbaseIndexerService();
     }
 }
