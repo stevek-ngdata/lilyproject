@@ -186,14 +186,14 @@ public class BulkIngester implements Closeable {
     }
 
     /**
-     * When in bulk mode, write a single record directly to Lily, circumventing any indexing or other secondary actions
+     * When in bulk mode, write a single record directly to HBase, circumventing any indexing or other secondary actions
      * that are performed when using the standard Lily API.
      * <p>
      * <b>WARNING:</b>This method is not thread-safe.
      * <p>
      * Puts are first written to a buffer, which is flushed when it reaches {@link BulkIngester#PUT_BUFFER_SIZE}.
      *
-     * When not in bulk mode, this merely delegates to createOrUpdate on the lily hbase repository.
+     * When not in bulk mode, this merely delegates to createOrUpdate on the Lily HBase repository.
      *
      * @param record Record to be written
      */
@@ -229,11 +229,14 @@ public class BulkIngester implements Closeable {
     public Put buildPut(Record record) throws InterruptedException, RepositoryException {
         RecordEvent recordEvent = new RecordEvent();
         recordEvent.setType(Type.CREATE);
+        recordEvent.setTableName(hbaseRepo.getTableName());
         if (record.getId() == null) {
             record.setId(getIdGenerator().newRecordId());
         }
-        return hbaseRepo.buildPut(record, 1L, fieldTypes, recordEvent, Sets.<BlobReference>newHashSet(),
+        Put put = hbaseRepo.buildPut(record, 1L, fieldTypes, recordEvent, Sets.<BlobReference>newHashSet(),
                 Sets.<BlobReference>newHashSet(), 1L);
+        put.add(LilyHBaseSchema.RecordCf.DATA.bytes, LilyHBaseSchema.RecordColumn.PAYLOAD.bytes, recordEvent.toJsonBytes());
+        return put;
     }
 
     /**
