@@ -135,7 +135,13 @@ project.runtimeArtifacts.each {
 
 
 def file = new File(project.build.directory, "lily-hbase-indexer-classpath")
-file.write("echo " + all.join(separator))
+file.write("CP=" + all.join(separator) + """
+for f in /usr/lib/hbase-indexer/lib/*.jar
+do
+        CP=\${CP}:\$f
+done
+echo \$CP
+""")
 file.setExecutable(true, false)
 ]]></source>
             </configuration>
