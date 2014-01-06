@@ -138,7 +138,7 @@ def file = new File(project.build.directory, "lily-hbase-indexer-classpath")
 file.write("""#!/bin/bash
 
 LILY_HOME=\${LILY_HOME:-/usr/lib/lily}
-""" + all.join(separator))
+echo """ + all.join(separator))
 file.setExecutable(true, false)
 ]]></source>
             </configuration>
