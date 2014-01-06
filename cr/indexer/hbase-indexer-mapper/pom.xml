@@ -138,13 +138,7 @@ def file = new File(project.build.directory, "lily-hbase-indexer-classpath")
 file.write("""#!/bin/bash
 
 LILY_HOME=\${LILY_HOME:-/usr/lib/lily}
-CP=""" + all.join(separator) + """
-for f in /usr/lib/hbase-indexer/lib/*.jar
-do
-        CP=\${CP}:\$f
-done
-echo \$CP
-""")
+""" + all.join(separator))
 file.setExecutable(true, false)
 ]]></source>
             </configuration>
