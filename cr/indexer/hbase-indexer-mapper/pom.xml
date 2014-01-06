@@ -135,7 +135,10 @@ project.runtimeArtifacts.each {
 
 
 def file = new File(project.build.directory, "lily-hbase-indexer-classpath")
-file.write("CP=" + all.join(separator) + """
+file.write("""#!/bin/bash
+
+LILY_HOME=${LILY_HOME:-/usr/lib/lily}
+CP=" + all.join(separator) + """
 for f in /usr/lib/hbase-indexer/lib/*.jar
 do
         CP=\${CP}:\$f
@@ -214,25 +217,6 @@ file.setExecutable(true, false)
               <excludeGroupIds>org.apache.solr,org.apache.hadoop,org.apache.hbase</excludeGroupIds>
               <excludeArtifactIds>hbase-indexer-common,hbase-indexer-model,hbase-indexer-engine,hbase-sep-api,hbase-sep-impl</excludeArtifactIds>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.6</version>
-        <executions>
-          <execution>
-            <phase>process-resources</phase>
-            <configuration>
-              <target>
-                <replace file="${project.build.outputDirectory}/install-hbasemapper.sh" token="@@@MAPPER@@@"
-                         value="${project.build.directory}/${project.build.finalName}.jar"/>
-                <chmod file="${project.build.outputDirectory}/install-hbasemapper.sh" perm="755"/>
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>
