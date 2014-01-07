@@ -16,8 +16,7 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
@@ -27,7 +26,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-indexer</artifactId>
-    <version>2.6-SNAPSHOT</version>
+    <version>2.6</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -121,9 +120,7 @@ def excludeArtifactIds="hbase-indexer-common,hbase-indexer-model,hbase-indexer-e
 
 def all = []
 
-all << new File(libDir, m2layout.getPath(toArtifact(project.artifact)).getPath());
-
-project.runtimeArtifacts.each {
+all << new File(libDir, m2layout.getPath(toArtifact(project.artifact)).getPath()); project.runtimeArtifacts.each {
     if (it.groupId in excludeGroupIds) {
       return;
     }
@@ -162,9 +159,7 @@ def excludeArtifactIds="hbase-indexer-common,hbase-indexer-model,hbase-indexer-e
 
 def all = []
 
-all << session.localRepository.find(project.artifact).getFile();
-
-project.runtimeArtifacts.each {
+all << session.localRepository.find(project.artifact).getFile(); project.runtimeArtifacts.each {
     if (it.groupId in excludeGroupIds) {
       return;
     }
