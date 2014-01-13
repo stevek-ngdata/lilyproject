@@ -228,47 +228,32 @@ public class LilyServerProxy {
     }
 
     /**
-     * Adds an index from in index configuration contained in a resource.
+     * Adds an index from index configuration contained in a resource, using settings that are common in development.
+     * wait for indexer model, sep and indexer registry.
      *
-     * <p>This method waits for the index subscription to be known by the SEP (or until a given timeout
-     * has passed), this assures that all repository operations from then on will be processed by the
-     * SEP listeners.
-     *
-     * <p>Note that when the SEP events are processed, the data has been put in solr but this
-     * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
-     *
-     * @param indexName              name of the index
-     * @param coreName               name of the Solr core to which to index (when null, indexes to default core)
-     * @param indexerConf            path to the resource containing the index configuration
-     * @param timeout                maximum time to spent waiting, an exception is thrown when the required conditions
-     *                               have not been reached within this timeout
-     * @param waitForIndexerModel    boolean indicating the call has to wait until the indexerModel knows the
-     *                               subscriptionId of the new index
-     * @param waitForSep             boolean indicating the call has to wait until the SEP for the new index started.
-     *                               This can only be true if the waitForIndexerModel is true as well.
-     * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
-     *                               the index, this is important for synchronous indexing.
+     * @see LilyServerProxy#addIndex(String, String, String, byte[], long, boolean, boolean, boolean)
      */
-    public void addIndexFromResource(String repositoryName, String indexName, String coreName, String indexerConf, long timeout,
+    public void addIndexFromResource(String repositoryName, String indexName, String collectionName, String indexerConf, long timeout,
                                      boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry)
             throws Exception {
         InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         is.close();
-        addIndex(repositoryName, indexName, coreName, indexerConfiguration, timeout, waitForIndexerModel, waitForSep,
+        addIndex(repositoryName, indexName, collectionName, indexerConfiguration, timeout, waitForIndexerModel, waitForSep,
                 waitForIndexerRegistry);
     }
 
     /**
-     * Shortcut method with waitForIndexerModel and waitForSep put to true
+     * @see LilyServerProxy#addIndex(IndexerDefinition, long, boolean, boolean, boolean)
+     * Adds an index from index configuration contained in a byte arrayj, using settings that are common in development.
      */
-    public void addIndexFromResource(String repositoryName, String indexName, String coreName, String indexerConf, long timeout)
+    public void addIndexFromResource(String repositoryName, String indexName, String collectionName, String indexerConf, long timeout)
             throws Exception {
-        addIndexFromResource(repositoryName, indexName, coreName, indexerConf, timeout, true, true, true);
+        addIndexFromResource(repositoryName, indexName, collectionName, indexerConf, timeout, true, true, true);
     }
 
     /**
-     * Adds an index from in index configuration contained in a resource.
+     * Adds an index from index configuration contained in a byte array.
      *
      * <p>This method waits for the index subscription to be known by the SEP (or until a given timeout
      * has passed), this assures that all repository operations from then on will be processed by the
@@ -279,7 +264,7 @@ public class LilyServerProxy {
      * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
      *
      * @param indexName              name of the index
-     * @param coreName               name of the Solr core to which to index (when null, indexes to default core)
+     * @param collectionName         name of the Solr collection to which to index (when null, indexes to default collection)
      * @param indexerConfiguration   byte array containing the index configuration
      * @param timeout                maximum time to spent waiting, an exception is thrown when the required conditions
      *                               have not been reached within this timeout
@@ -290,15 +275,15 @@ public class LilyServerProxy {
      * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
      *                               the index, this is important for synchronous indexing.
      */
-    public void addIndex(String repositoryName, String indexName, String coreName, byte[] indexerConfiguration, long timeout,
+    public void addIndex(String repositoryName, String indexName, String collectionName, byte[] indexerConfiguration, long timeout,
                          boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
-        long tryUntil = System.currentTimeMillis() + timeout;
-        WriteableIndexerModel indexerModel = getIndexerModel();
+
         Map<String,String> connectionParams = Maps.newHashMap();
         connectionParams.put(SolrConnectionParams.ZOOKEEPER, "localhost:2181/solr");
-        connectionParams.put(SolrConnectionParams.COLLECTION, coreName);
+        connectionParams.put(SolrConnectionParams.COLLECTION, collectionName);
         connectionParams.put(LResultToSolrMapper.ZOOKEEPER_KEY, "localhost:2181");
         connectionParams.put(LResultToSolrMapper.REPO_KEY, repositoryName);
+
         IndexerDefinition index = new IndexerDefinitionBuilder()
                 .name(indexName)
                 .connectionType("solr")
@@ -306,11 +291,41 @@ public class LilyServerProxy {
                 .indexerComponentFactory(LilyIndexerComponentFactory.class.getName())
                 .configuration(indexerConfiguration)
                 .build();
-        indexerModel.addIndexer(index);
+
+        addIndex(index, timeout, waitForIndexerModel, waitForSep, waitForIndexerRegistry);
+    }
+
+
+    /**
+     * Adds an index from index configuration contained in a byte array.
+     *
+     * <p>This method waits for the index subscription to be known by the SEP (or until a given timeout
+     * has passed), this assures that all repository operations from then on will be processed by the
+     * SEP listeners.
+     *
+     * <p>Note that when the SEP events are processed, the data has been put in solr but this
+     * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
+     * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
+     *
+     * @param indexerDefinition      Definition of the indexer
+     * @param timeout                maximum time to spent waiting, an exception is thrown when the required conditions
+     *                               have not been reached within this timeout
+     * @param waitForIndexerModel    boolean indicating the call has to wait until the indexerModel knows the
+     *                               subscriptionId of the new index
+     * @param waitForSep             boolean indicating the call has to wait until the SEP for the new index started.
+     *                               This can only be true if the waitForIndexerModel is true as well.
+     * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
+     *                               the index, this is important for synchronous indexing.
+     */
+    public void addIndex(IndexerDefinition indexerDefinition, long timeout,
+                         boolean waitForIndexerModel, boolean waitForSep, boolean waitForIndexerRegistry) throws Exception {
+        long tryUntil = System.currentTimeMillis() + timeout;
+        WriteableIndexerModel indexerModel = getIndexerModel();
+        indexerModel.addIndexer(indexerDefinition);
 
         if (waitForIndexerModel) {
             // Wait for subscriptionId to be known by indexerModel
-            String subscriptionId = waitOnIndexSubscriptionId(indexName, tryUntil, timeout);
+            String subscriptionId = waitOnIndexSubscriptionId(indexerDefinition.getName(), tryUntil, timeout);
             if (subscriptionId == null) {
                 throw new Exception("Timed out waiting for index subscription ID to be assigned.");
             }
@@ -321,11 +336,9 @@ public class LilyServerProxy {
         }
 
         if (waitForIndexerRegistry) {
-            waitOnIndexerRegistry(indexName, tryUntil);
+            waitOnIndexerRegistry(indexerDefinition.getName(), tryUntil);
         }
     }
-
-
     public String waitOnIndexSubscriptionId(String indexName, long timeout) throws Exception {
         return waitOnIndexSubscriptionId(indexName, System.currentTimeMillis() + timeout, timeout);
     }
