@@ -15,18 +15,19 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-runtime-launcher</artifactId>
   <packaging>jar</packaging>
-  <version>2.4.2-SNAPSHOT</version>
+  <version>2.4.1-SNAPSHOT</version>
 
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-runtime-parent</artifactId>
-    <version>2.4.2-SNAPSHOT</version>
+    <version>2.4.1-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
 
@@ -63,13 +64,14 @@
                     Copy the classloader XML file, for which we rely on the lily-runtime-cli project
                     to generate it for us.
                 -->
-                <property name="classLoaderXmlLocation" value="${basedir}/../lily-runtime-cli/target/classloader-for-use-by-launcher.xml" />
-                <available property="classLoaderXmlAvailable" file="${classLoaderXmlLocation}" />
-                <fail unless="classLoaderXmlAvailable" message="File not available: ${classLoaderXmlLocation}" />
+                <property name="classLoaderXmlLocation"
+                          value="${basedir}/../lily-runtime-cli/target/classloader-for-use-by-launcher.xml"/>
+                <available property="classLoaderXmlAvailable" file="${classLoaderXmlLocation}"/>
+                <fail unless="classLoaderXmlAvailable" message="File not available: ${classLoaderXmlLocation}"/>
 
-                <property name="targetDir" value="target/classes/org/lilyproject/runtime/launcher/" />
-                <mkdir dir="${targetDir}" />
-                <copy file="${classLoaderXmlLocation}" tofile="${targetDir}/classloader.xml" />
+                <property name="targetDir" value="target/classes/org/lilyproject/runtime/launcher/"/>
+                <mkdir dir="${targetDir}"/>
+                <copy file="${classLoaderXmlLocation}" tofile="${targetDir}/classloader.xml"/>
               </tasks>
             </configuration>
             <goals>
@@ -86,7 +88,7 @@
                    Copy the artifact to a version-less name, makes it easy to refer to in the
                    lily-runtime developer-mode launch script
                 -->
-                <copy file="target/${project.artifactId}-${project.version}.jar" tofile="target/${project.artifactId}.jar" />
+                <copy file="target/${project.artifactId}-${project.version}.jar" tofile="target/${project.artifactId}.jar"/>
               </tasks>
             </configuration>
             <goals>
