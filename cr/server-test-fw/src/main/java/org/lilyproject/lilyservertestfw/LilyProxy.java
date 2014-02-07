@@ -15,15 +15,14 @@
  */
 package org.lilyproject.lilyservertestfw;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.Collections;
-
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.Collections;
 
 import com.ngdata.hbaseindexer.Main;
 import org.apache.commons.io.FileUtils;
@@ -228,10 +227,10 @@ public class LilyProxy {
     }
 
     public void stop() throws Exception {
+        Closer.close(hbaseIndexerLauncherService);
         Closer.close(lilyServerProxy);
         Closer.close(solrProxy);
         Closer.close(hbaseProxy);
-        Closer.close(hbaseIndexerLauncherService);
 
         if (clearData && testHome != null) {
             try {
