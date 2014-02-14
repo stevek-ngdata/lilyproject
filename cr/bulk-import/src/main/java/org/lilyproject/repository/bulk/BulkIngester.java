@@ -230,6 +230,8 @@ public class BulkIngester implements Closeable {
         RecordEvent recordEvent = new RecordEvent();
         recordEvent.setType(Type.CREATE);
         recordEvent.setTableName(hbaseRepo.getTableName());
+        // set empty IndexRecordFilterData to omit the warnings in the IndexEditFilter
+        recordEvent.setIndexRecordFilterData(new RecordEvent.IndexRecordFilterData());
         if (record.getId() == null) {
             record.setId(getIdGenerator().newRecordId());
         }
