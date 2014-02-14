@@ -116,14 +116,17 @@ public class FakeLTable implements Repository {
         return record;
 
     }
-    private Record merge(Record r1, Record r2) {
-        Record result = r2.clone();
-        if (r1.getRecordTypeName() != null) {
-            result.setRecordType(r1.getRecordTypeName());
+    private Record merge(Record record, Record original) {
+        Record result = original.clone();
+        if (record.getRecordTypeName() != null) {
+            result.setRecordType(record.getRecordTypeName());
         }
         // TODO merge meta map
-        for(Map.Entry<QName,Object> entry : r1.getFields().entrySet()) {
-            result.setField(entry.getKey(), entry.getValue());
+        for(Map.Entry<QName,Object> entry : record.getFields().entrySet()) {
+                result.setField(entry.getKey(), entry.getValue());
+        }
+        for (QName toDelete : record.getFieldsToDelete()) {
+            result.getFields().remove(toDelete);
         }
         return result;
     }
@@ -149,9 +152,9 @@ public class FakeLTable implements Repository {
         validateRecord(record, originalRecord, getTypeManager().getRecordTypeByName(recordTypeName, null));
         Long version = record.getVersion() == null ? 0l : record.getVersion();
         record.setVersion(version + 1);
-        records.put(record.getId(), record);
+        records.put(record.getId(), record.cloneRecord());
         record.setResponseStatus(status);
-        return record.cloneRecord();
+        return record;
     }
 
 
