@@ -26,7 +26,36 @@ import java.util.Set;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobAccess;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.IdRecordScanner;
+import org.lilyproject.repository.api.InvalidRecordException;
+import org.lilyproject.repository.api.LRepository;
+import org.lilyproject.repository.api.LTable;
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordBuilder;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordExistsException;
+import org.lilyproject.repository.api.RecordFactory;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.RecordScanner;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TableManager;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.IdRecordImpl;
 import org.lilyproject.repository.impl.RecordBuilderImpl;
 import org.lilyproject.repository.impl.RecordImpl;
@@ -122,7 +151,7 @@ public class FakeLTable implements Repository {
         record.setVersion(version + 1);
         records.put(record.getId(), record);
         record.setResponseStatus(status);
-        return record;
+        return record.cloneRecord();
     }
 
 
