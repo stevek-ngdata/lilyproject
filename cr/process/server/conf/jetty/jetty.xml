@@ -1,4 +1,5 @@
-<jetty>
+<jetty xmlns:conf="http://lilyproject.org/configuration"
+       conf:inherit="deep">
   <!-- note that sessions defaults to true for backwards compatibility reasons -->
   <!-- it is recommended to disable sessions in a distributed deployment -->
   <sessions>true</sessions>
