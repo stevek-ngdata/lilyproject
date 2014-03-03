@@ -110,6 +110,7 @@ public class CustomJettyLauncher {
 
         SelectChannelConnector selectChannelConnector = new SelectChannelConnector();
         selectChannelConnector.setPort(httpPort());
+        selectChannelConnector.setForwarded(supportReverseProxy());
         if (startSSL())
             selectChannelConnector.setConfidentialPort(httpsPort());
         connectors.add(selectChannelConnector);
@@ -129,8 +130,16 @@ public class CustomJettyLauncher {
         sslConnector.setPassword(keystorePassword());
         sslConnector.setKeyPassword(keyPassword());
         sslConnector.setTrustPassword(truststorePassword());
-
+        sslConnector.setForwarded(supportReverseProxy());
         connectors.add(sslConnector);
+    }
+
+    /**
+     * Note: this is disabled by default because if we are not behind a proxy the client can send arbitrary values for
+     * the X-Forwarded-* headers and we would treat them as if they were set by a trusted reverse proxy.
+     */
+    private boolean supportReverseProxy(){
+        return confRegistry.getConfiguration("jetty").getChild("supportReverseProxy").getValueAsBoolean(false);
     }
 
     private int httpsPort() {
