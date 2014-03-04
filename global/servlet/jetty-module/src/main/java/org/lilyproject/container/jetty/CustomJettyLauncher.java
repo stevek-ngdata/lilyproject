@@ -19,6 +19,7 @@ import static com.google.common.collect.Iterables.toArray;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +32,11 @@ import org.lilyproject.servletregistry.api.ServletFilterRegistryEntry;
 import org.lilyproject.servletregistry.api.ServletRegistry;
 import org.lilyproject.servletregistry.api.ServletRegistryEntry;
 import org.lilyproject.servletregistry.api.ServletRequestListenerRegistryEntry;
+import org.mortbay.io.EndPoint;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.HttpFields;
+import org.mortbay.jetty.Request;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
@@ -108,7 +112,18 @@ public class CustomJettyLauncher {
     private void addPlainConnector(List<Connector> connectors) {
         if (startSSL() && ! allowUnencrypted()) return;
 
-        SelectChannelConnector selectChannelConnector = new SelectChannelConnector();
+        SelectChannelConnector selectChannelConnector = new SelectChannelConnector(){
+            //backport from jetty 8's url scheme forwarding support
+            @Override
+            protected void checkForwardedHeaders(EndPoint endpoint, Request request) throws IOException {
+                super.checkForwardedHeaders(endpoint, request);
+                HttpFields httpFields = request.getConnection().getRequestFields();
+                String forwardedProto = getLeftMostValue(httpFields.getStringField("X-Forwarded-Proto"));
+                if (forwardedProto != null) {
+                    request.setScheme(forwardedProto);
+                }
+            }
+        };
         selectChannelConnector.setPort(httpPort());
         selectChannelConnector.setForwarded(supportReverseProxy());
         if (startSSL())
@@ -119,7 +134,19 @@ public class CustomJettyLauncher {
     private void addSSLConnector(List<Connector> connectors) {
         if (!startSSL()) return;
 
-        SslSocketConnector sslConnector = new SslSocketConnector();
+        SslSocketConnector sslConnector = new SslSocketConnector(){
+            //backport from jetty 8's url scheme forwarding support
+            @Override
+            protected void checkForwardedHeaders(EndPoint endpoint, Request request) throws IOException {
+                super.checkForwardedHeaders(endpoint, request);
+                HttpFields httpFields = request.getConnection().getRequestFields();
+                String forwardedProto = getLeftMostValue(httpFields.getStringField("X-Forwarded-Proto"));
+                if (forwardedProto != null)
+                {
+                    request.setScheme(forwardedProto);
+                }
+            }
+        };
         sslConnector.setPort(httpsPort());
 
         if (StringUtils.hasText(keystore())){
