@@ -15,8 +15,6 @@
  */
 package org.lilyproject.repository.bulk.mapreduce;
 
-import java.io.IOException;
-
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -24,6 +22,8 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.bulk.BulkIngester;
 import org.lilyproject.repository.bulk.RecordWriter;
+
+import java.io.IOException;
 
 /**
  * RecordWriter for use within a MapReduce context where HFiles are being written directly.
@@ -58,6 +58,7 @@ public class MapReduceRecordWriter implements RecordWriter {
         } else {
             try {
                 bulkIngester.write(record);
+                recordsWritten++;
             } catch (RepositoryException e) {
                 throw new RuntimeException(e);
             }
