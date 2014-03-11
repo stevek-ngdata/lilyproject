@@ -64,6 +64,11 @@
       <version>${version.solr}</version>
       <type>war</type>
     </dependency>
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-core</artifactId>
+      <version>${version.solr}</version>
+    </dependency>
 
     <!-- This dependency is added to support the spacial feature in solr4
          For some reason it is not found in the war
