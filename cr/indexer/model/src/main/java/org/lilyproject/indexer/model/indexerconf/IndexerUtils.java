@@ -54,6 +54,7 @@ public class IndexerUtils {
         final ArrayList<Record> result = new ArrayList<Record>();
 
         final RecordScan scan = new RecordScan();
+        scan.setStartRecordId(newDep.id.getMaster());
         scan.setRecordFilter(new RecordVariantFilter(newDep.id.getMaster(), varProps));
         LRepository repository = indexUpdateBuilder.getRepository();
         LTable table = repository.getTable(indexUpdateBuilder.getTable());
