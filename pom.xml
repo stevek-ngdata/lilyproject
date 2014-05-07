@@ -128,6 +128,7 @@
     <module>tools/generate-split-keys</module>
     <module>tools/rest-resources-generator</module>
     <module>tools/upgrade</module>
+    <module>tools/keep-alive-check</module>
 
     <module>apps/import</module>
     <module>apps/tester</module>
