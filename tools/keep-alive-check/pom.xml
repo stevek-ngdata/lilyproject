@@ -1,0 +1,170 @@
+<?xml version="1.0"?>
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.lilyproject</groupId>
+  <artifactId>keep-alive-check</artifactId>
+  <version>2.4.3-SNAPSHOT</version>
+  <name>Keep Alive Check</name>
+
+  <parent>
+    <groupId>org.lilyproject</groupId>
+    <artifactId>lily</artifactId>
+    <version>2.4.2</version>
+    <relativePath>../..</relativePath>
+  </parent>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-client</artifactId>
+    </dependency>
+
+    <!-- The lily-import dependencies is necessary to import the json-described schema -->
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-import</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-cli-fw</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-server-test-fw</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.8.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2.1</version>
+        <configuration>
+          <mainClass>org.lilyproject.LilySample</mainClass>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.5</version>
+        <configuration>
+          <forkMode>always</forkMode>
+          <argLine>-Xmx256m ${argLine}</argLine>
+          <systemPropertyVariables>
+            <lily.lilyproxy.mode>${lily.lilyproxy.mode}</lily.lilyproxy.mode>
+            <lily.conf.customdir>${lily.conf.customdir}</lily.conf.customdir>
+            <lily.plugin.dir>${lily.plugin.dir}</lily.plugin.dir>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+
+      <!-- This plugin makes sure that all Lily runtime dependencies
+          are available in the local repository (required for lily-sever-test-fw) -->
+      <plugin>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-runtime-plugin</artifactId>
+        <configuration>
+          <wiringXmlResources>
+            <wiringXmlResource>org/lilyproject/lilyservertestfw/conf/runtime/wiring.xml</wiringXmlResource>
+          </wiringXmlResources>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>resolve-project-dependencies</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-genscript-plugin</artifactId>
+        <configuration>
+          <scripts>
+            <script>
+              <basename>lily-keep-alive-check</basename>
+              <mainClass>org.lilyproject.tools.KeepAliveCheck</mainClass>
+            </script>
+          </scripts>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>genscript</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>default</id>
+      <name>Maven Repository Switchboard</name>
+      <layout>default</layout>
+      <url>http://repo1.maven.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>lilyproject</id>
+      <name>Lily Maven repository</name>
+      <url>http://lilyproject.org/maven/maven2/deploy/</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>lilyproject-plugins</id>
+      <name>Lily Maven repository</name>
+      <url>http://lilyproject.org/maven/maven2/deploy/</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <profiles>
+    <profile>
+      <id>connect</id>
+      <properties>
+        <lily.lilyproxy.mode>connect</lily.lilyproxy.mode>
+      </properties>
+    </profile>
+  </profiles>
+
+</project>
