@@ -17,6 +17,8 @@ package org.lilyproject.avro;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
@@ -29,10 +31,20 @@ public class NettyTransceiverFactory {
     private NettyTransceiverFactory() {
     }
 
-    public static NettyTransceiver create(InetSocketAddress address) throws IOException {
+    public static NettyTransceiver create(InetSocketAddress address, boolean keepAlive) throws IOException {
+        Map<String, Object> options = new HashMap<String, Object>(3);
+        options.put(NettyTransceiver.NETTY_TCP_NODELAY_OPTION, NettyTransceiver.DEFAULT_TCP_NODELAY_VALUE);
+        options.put("keepAlive", keepAlive);
+        options.put(NettyTransceiver.NETTY_CONNECT_TIMEOUT_OPTION, NettyTransceiver.DEFAULT_CONNECTION_TIMEOUT_MILLIS);
+
         return new NettyTransceiver(address, new NioClientSocketChannelFactory(
                 Executors.newCachedThreadPool(new DaemonThreadFactory(new CustomThreadFactory("avro-client-boss"))),
-                Executors.newCachedThreadPool(new DaemonThreadFactory(new CustomThreadFactory("avro-client-worker")))));
+                Executors.newCachedThreadPool(new DaemonThreadFactory(new CustomThreadFactory("avro-client-worker")))),
+                options);
+    }
+
+    public static NettyTransceiver create(InetSocketAddress address) throws IOException {
+        return create(address, false);
     }
 
     private static class DaemonThreadFactory implements ThreadFactory {

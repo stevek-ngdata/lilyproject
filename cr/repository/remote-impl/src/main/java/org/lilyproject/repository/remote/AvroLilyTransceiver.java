@@ -33,7 +33,11 @@ public class AvroLilyTransceiver {
     private AvroLily lilyProxy;
 
     public AvroLilyTransceiver(InetSocketAddress address) throws IOException {
-        transceiver = NettyTransceiverFactory.create(address);
+        this(address, false);
+    }
+
+    public AvroLilyTransceiver(InetSocketAddress address, boolean keepAlive) throws IOException {
+        transceiver = NettyTransceiverFactory.create(address, keepAlive);
         lilyProxy = SpecificRequestor.getClient(AvroLily.class, transceiver);
     }
 

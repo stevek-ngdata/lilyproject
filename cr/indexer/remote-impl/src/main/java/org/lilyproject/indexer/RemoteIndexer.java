@@ -46,12 +46,16 @@ public class RemoteIndexer implements Indexer, Closeable {
     private final AvroConverter converter;
     private Transceiver client;
 
-    public RemoteIndexer(InetSocketAddress address, AvroConverter converter)
+    public RemoteIndexer(InetSocketAddress address, AvroConverter converter) throws IOException{
+        this(address, converter, false);
+    }
+
+    public RemoteIndexer(InetSocketAddress address, AvroConverter converter, boolean keepAlive)
             throws IOException {
 
         this.converter = converter;
 
-        this.client = NettyTransceiverFactory.create(address);
+        this.client = NettyTransceiverFactory.create(address, keepAlive);
         this.lilyProxy = SpecificRequestor.getClient(AvroLily.class, client);
     }
 

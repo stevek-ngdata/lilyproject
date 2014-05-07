@@ -63,6 +63,12 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     public RemoteTypeManager(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator,
                              ZooKeeperItf zooKeeper, SchemaCache schemaCache)
             throws IOException {
+        this(address, converter, idGenerator, zooKeeper, schemaCache, false);
+    }
+
+    public RemoteTypeManager(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator,
+                             ZooKeeperItf zooKeeper, SchemaCache schemaCache, boolean keepAlive)
+            throws IOException {
         super(zooKeeper);
         super.schemaCache = schemaCache;
         log = LogFactory.getLog(getClass());
@@ -70,7 +76,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         //TODO idGenerator should not be available or used in the remote implementation
         this.idGenerator = idGenerator;
         //client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
-        client = NettyTransceiverFactory.create(address);
+        client = NettyTransceiverFactory.create(address, keepAlive);
 
         lilyProxy = SpecificRequestor.getClient(AvroLily.class, client);
         registerDefaultValueTypes();

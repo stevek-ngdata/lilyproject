@@ -117,20 +117,32 @@ public class LilyClient implements Closeable, RepositoryManager {
     private RepositoryModel repositoryModel;
 
     private boolean isClosed = true;
+    private boolean keepAlive = false;
 
     /**
      * @throws NoServersException if the znode under which the repositories are published does not exist
      */
     public LilyClient(String zookeeperConnectString, int sessionTimeout) throws IOException, InterruptedException,
             KeeperException, ZkConnectException, NoServersException, RepositoryException {
-        this(ZkUtil.connect(zookeeperConnectString, sessionTimeout));
+        this(zookeeperConnectString, sessionTimeout, false);
+    }
+
+    public LilyClient(String zookeeperConnectString, int sessionTimeout, boolean keepAlive) throws IOException, InterruptedException,
+            KeeperException, ZkConnectException, NoServersException, RepositoryException {
+        this(ZkUtil.connect(zookeeperConnectString, sessionTimeout), keepAlive);
         managedZk = true;
     }
 
     public LilyClient(ZooKeeperItf zk) throws IOException, InterruptedException, KeeperException, ZkConnectException,
             NoServersException, RepositoryException {
+        this(zk, false);
+    }
+
+    public LilyClient(ZooKeeperItf zk, boolean keepAlive) throws IOException, InterruptedException, KeeperException, ZkConnectException,
+            NoServersException, RepositoryException {
         this.zk = zk;
         schemaCache = new RemoteSchemaCache(zk, this);
+        this.keepAlive = keepAlive;
         init();
     }
 
@@ -357,10 +369,10 @@ public class LilyClient implements Closeable, RepositoryManager {
         Configuration hbaseConf = getNewOrExistingConfiguration(zk);
         BlobManager blobManager = getBlobManager(zk, hbaseConf);
         InetSocketAddress lilySocketAddr = parseAddressAndPort(server.lilyAddressAndPort);
-        AvroLilyTransceiver transceiver = new AvroLilyTransceiver(lilySocketAddr);
+        AvroLilyTransceiver transceiver = new AvroLilyTransceiver(lilySocketAddr, keepAlive);
         HBaseTableFactoryImpl tableFactory = new HBaseTableFactoryImpl(hbaseConf);
         AvroConverter avroConverter = new AvroConverter();
-        RemoteTypeManager remoteTypeManager = new RemoteTypeManager(lilySocketAddr, avroConverter, idGenerator, zk, schemaCache);
+        RemoteTypeManager remoteTypeManager = new RemoteTypeManager(lilySocketAddr, avroConverter, idGenerator, zk, schemaCache, keepAlive);
         RecordFactory recordFactory = new RecordFactoryImpl();
         RepositoryManager repositoryManager = new RemoteRepositoryManager(remoteTypeManager, idGenerator, recordFactory,
                 transceiver, avroConverter, blobManager, tableFactory, repositoryModel);
@@ -433,7 +445,7 @@ public class LilyClient implements Closeable, RepositoryManager {
     private void constructIndexer(ServerNode server) throws IOException, InterruptedException, KeeperException,
             RepositoryException {
 
-        server.indexer = new RemoteIndexer(parseAddressAndPort(server.lilyAddressAndPort), new AvroConverter());
+        server.indexer = new RemoteIndexer(parseAddressAndPort(server.lilyAddressAndPort), new AvroConverter(), keepAlive);
     }
 
     private InetSocketAddress parseAddressAndPort(String addressAndPort) {
