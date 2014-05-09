@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class KeepAliveCheck extends BaseZkCliTool {
-    private final static String NAME = "keep-alive-check";
+    private final static String NAME = "lily-keepalive-check";
     private boolean keepAlive = false;
     private long timeout = 10000;
     private int numberOfAttempts = 3;
@@ -211,6 +211,6 @@ public class KeepAliveCheck extends BaseZkCliTool {
 
     @Override
     protected String getVersion() {
-        return org.lilyproject.util.Version.readVersion("org.lilyproject", "keep-alive-check");
+        return org.lilyproject.util.Version.readVersion("org.lilyproject", "lily-keepalive-check");
     }
 }
