@@ -6,14 +6,13 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>keep-alive-check</artifactId>
-  <version>2.4.3-SNAPSHOT</version>
-  <name>Keep Alive Check</name>
+  <artifactId>lily-keepalive-check</artifactId>
+  <name>Lily : Keep-Alive Check Tool</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily</artifactId>
-    <version>2.4.2</version>
+    <version>2.4.3-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
 
@@ -114,7 +113,7 @@
         <configuration>
           <scripts>
             <script>
-              <basename>lily-keep-alive-check</basename>
+              <basename>lily-keepalive-check</basename>
               <mainClass>org.lilyproject.tools.KeepAliveCheck</mainClass>
             </script>
           </scripts>
