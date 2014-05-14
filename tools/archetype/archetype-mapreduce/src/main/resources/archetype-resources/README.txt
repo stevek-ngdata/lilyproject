@@ -26,14 +26,13 @@ To run this example:
 
  - have the "hadoop" command available
 
-   For this you need to have hadoop installed, in the "MapReduce v1" variant.
+   For this you need to have hadoop installed.
    If you do this on one of the cluster nodes on which Lily is installed,
    this should already be fine.
 
-   If you do this from your workstation, you can download the "mr1" package
+   If you do this from your workstation, you can download the hadoop package
    from the Cloudera website, at:
-   https://ccp.cloudera.com/display/SUPPORT/CDH4+Downloadable+Tarballs
-   You need the "mr1-{version}" tar.gz, not the hadoop download.
+   http://archive-primary.cloudera.com/cdh4/cdh/4/hadoop-2.0.0-cdh4.4.0.tar.gz
    After downloading, just extract it, no further installation is needed.
 
  - set the classpath
@@ -45,11 +44,11 @@ To run this example:
 
    - when hadoop conf/*-site.xml is properly configured:
 
-   /path/to/hadoop-2.0.0-mr1-cdh4.0.X/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar -z localhost
+   /path/to/hadoop-2.0.0-cdh4.4.0/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar -z localhost
 
    - when using launch-test-lily:
 
-   /path/to/hadoop-2.0.0-mr1-cdh4.0.X/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar -jt localhost:9001 -fs localhost:8020 -z localhost
+   /path/to/hadoop-2.0.0-cdh4.4.0/bin/hadoop jar target/my-lily-mrjob-1.0-SNAPSHOT-mapreduce-job.jar -jt localhost:9001 -fs localhost:8020 -z localhost
 
    Note:
     - the options -jt and -fs are generic hadoop options handled by ToolRunner

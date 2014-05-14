@@ -75,7 +75,7 @@
     <repository>
       <id>lilyproject</id>
       <name>Lily Maven repository</name>
-      <url>http://lilyproject.org/maven/maven2/deploy/</url>
+      <url>http://mvnrepo.ngdata.com/content/repositories/oss-releases/</url>
     </repository>
   </repositories>
 

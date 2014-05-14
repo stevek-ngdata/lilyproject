@@ -101,7 +101,7 @@
     <repository>
       <id>lilyproject</id>
       <name>Lily Maven repository</name>
-      <url>http://lilyproject.org/maven/maven2/deploy/</url>
+      <url>http://mvnrepo.ngdata.com/content/repositories/oss-releases/</url>
     </repository>
   </repositories>
 
@@ -109,7 +109,7 @@
     <pluginRepository>
       <id>lilyproject-plugins</id>
       <name>Lily snapshot plugin repository</name>
-      <url>http://lilyproject.org/maven/maven2/deploy/</url>
+      <url>http://mvnrepo.ngdata.com/content/repositories/oss-releases/</url>
     </pluginRepository>
   </pluginRepositories>
 </project>
