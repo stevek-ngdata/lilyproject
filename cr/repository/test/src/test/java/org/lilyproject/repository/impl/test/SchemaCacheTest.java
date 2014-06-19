@@ -26,6 +26,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.FieldType;
@@ -189,6 +190,7 @@ public class SchemaCacheTest {
     }
 
     // This test is introduced to do some profiling
+    @Ignore
     @Test
     public void testManyTypes() throws Exception {
         String namespace = "testManyTypesSameCache";
