@@ -15,11 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
@@ -30,6 +25,11 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeException;
 import org.lilyproject.repository.api.TypeManager;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public interface SchemaCache {
 
@@ -43,7 +43,6 @@ public interface SchemaCache {
 
     /**
      * Stops the schema cache.
-     *
      */
     void close() throws IOException;
 
@@ -65,23 +64,16 @@ public interface SchemaCache {
 
     /**
      * Returns a {@link FieldTypes} snapshot object of the field types cache.
-     *
-     * @throws InterruptedException
      */
     FieldTypes getFieldTypesSnapshot() throws InterruptedException;
 
     /**
      * Returns a list of field types currently in the cache.
-     *
-     * @throws InterruptedException
-     * @throws TypeException
      */
     List<FieldType> getFieldTypes() throws TypeException, InterruptedException;
 
     /**
      * Returns a collection of record types currently in the cache.
-     *
-     * @throws InterruptedException
      */
     Collection<RecordType> getRecordTypes() throws InterruptedException;
 
@@ -89,25 +81,21 @@ public interface SchemaCache {
      * Returns the record type with the given name from the cache.
      *
      * @return the RecordType or null if not found
-     * @throws InterruptedException
      */
-    RecordType getRecordType(QName name) throws InterruptedException;
+    RecordType getRecordType(QName name, Long version) throws InterruptedException;
 
     /**
      * Returns the record type with the given id from the cache.
      *
      * @return the RecordType or null if not found
      */
-    RecordType getRecordType(SchemaId id);
+    RecordType getRecordType(SchemaId id, Long version);
 
     /**
      * Returns the field type with the given name from the cache.
      *
      * @return the FieldType
-     * @throws FieldTypeNotFoundException
-     *             when the field type is not known in the cache.
-     * @throws InterruptedException
-     * @throws TypeException
+     * @throws FieldTypeNotFoundException when the field type is not known in the cache.
      */
     FieldType getFieldType(QName name) throws FieldTypeNotFoundException, InterruptedException, TypeException;
 
@@ -128,10 +116,7 @@ public interface SchemaCache {
      * Returns the field type with the given id from the cache.
      *
      * @return the FieldType
-     * @throws FieldTypeNotFoundException
-     *             when the field type is not known in the cache.
-     * @throws InterruptedException
-     * @throws TypeException
+     * @throws FieldTypeNotFoundException when the field type is not known in the cache.
      */
     FieldType getFieldType(SchemaId id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
 

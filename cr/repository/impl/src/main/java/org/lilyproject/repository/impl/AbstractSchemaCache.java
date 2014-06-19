@@ -15,25 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.collect.Sets;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
@@ -57,6 +38,25 @@ import org.lilyproject.util.Logs;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.PreDestroy;
 
 
 public abstract class AbstractSchemaCache implements SchemaCache {
@@ -233,12 +233,12 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         return recordTypes.getRecordTypes();
     }
 
-    public RecordType getRecordType(QName name) throws InterruptedException {
-        return recordTypes.getRecordType(name);
+    public RecordType getRecordType(QName name, Long version) throws InterruptedException {
+        return recordTypes.getRecordType(name, version);
     }
 
-    public RecordType getRecordType(SchemaId id) {
-        return recordTypes.getRecordType(id);
+    public RecordType getRecordType(SchemaId id, Long version) {
+        return recordTypes.getRecordType(id, version);
     }
 
     public FieldType getFieldType(QName name) throws InterruptedException, TypeException {

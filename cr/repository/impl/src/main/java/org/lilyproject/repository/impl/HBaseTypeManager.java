@@ -15,19 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.UUID;
-
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Get;
@@ -71,17 +58,32 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.UUID;
+import javax.annotation.PreDestroy;
+
 public class HBaseTypeManager extends AbstractTypeManager implements TypeManager {
 
-    private static final Long CONCURRENT_TIMEOUT = 5000L; // The concurrent timeout should be large enough to allow for type caches to be refreshed an a clock skew between the servers
+    private static final Long CONCURRENT_TIMEOUT = 5000L;
+    // The concurrent timeout should be large enough to allow for type caches to be refreshed an a clock skew between the servers
 
     public static final byte EXISTS_FLAG = (byte) 0;
     public static final byte DELETE_FLAG = (byte) 1;
-    public static final byte[] DELETE_MARKER = new byte[] { DELETE_FLAG };
+    public static final byte[] DELETE_MARKER = new byte[]{DELETE_FLAG};
 
     private HTableInterface typeTable;
 
-    public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration, ZooKeeperItf zooKeeper, HBaseTableFactory hbaseTableFactory)
+    public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration, ZooKeeperItf zooKeeper,
+            HBaseTableFactory hbaseTableFactory)
             throws IOException, InterruptedException, KeeperException, RepositoryException {
         super(zooKeeper);
         schemaCache = new LocalSchemaCache(zooKeeper, this);
@@ -137,7 +139,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             checkConcurrency(recordType.getName(), nameBytes, now);
 
             // FIXME: is this a reliable check? Cache might be out of date in case changes happen on other nodes?
-            if (getRecordTypeFromCache(recordType.getName()) != null) {
+            if (getRecordTypeFromCache(recordType.getName(), recordType.getVersion()) != null) {
                 clearConcurrency(nameBytes, now);
                 throw new RecordTypeExistsException(recordType);
             }
@@ -189,7 +191,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         SchemaId id;
         if (recordType.getId() == null) {
             // Map the name to id
-            RecordType existingType = getRecordTypeFromCache(recordType.getName());
+            RecordType existingType = getRecordTypeFromCache(recordType.getName(), recordType.getVersion());
             if (existingType == null) {
                 throw new RecordTypeNotFoundException(recordType.getName(), null);
             } else {
@@ -328,7 +330,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 throw new IllegalArgumentException("No id or name specified in supplied record type.");
             }
 
-            boolean exists = getRecordTypeFromCache(recordType.getName()) != null;
+            boolean exists = getRecordTypeFromCache(recordType.getName(), recordType.getVersion()) != null;
 
             int attempts;
             for (attempts = 0; attempts < 3; attempts++) {
@@ -354,7 +356,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
     }
 
-    private boolean updateName(Put put, RecordType recordType, RecordType latestRecordType) throws TypeException, RepositoryException, InterruptedException {
+    private boolean updateName(Put put, RecordType recordType, RecordType latestRecordType)
+            throws TypeException, RepositoryException, InterruptedException {
         if (!recordType.getName().equals(latestRecordType.getName())) {
             try {
                 getRecordTypeByName(recordType.getName(), null);
@@ -369,8 +372,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return false;
     }
 
-    @Override
-    protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RecordTypeNotFoundException,
+    private RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RecordTypeNotFoundException,
             TypeException {
         ArgumentValidator.notNull(id, "recordTypeId");
         Get get = new Get(id.getBytes());
@@ -769,11 +771,11 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
      * Checks if a name for a field type or record type is not being used by some other create or update operation 'at the same time'.
      * This is to avoid that concurrent updates would result in the same name being used for two different types.
      *
-     *  <p>A timestamp 'now' is put in a row with nameBytes as key. As long as this timestamp is present and the timeout (concurrentTimeout)
-     *  has not expired, no other create or update operation can happen with the same name for the type.
+     * <p>A timestamp 'now' is put in a row with nameBytes as key. As long as this timestamp is present and the timeout (concurrentTimeout)
+     * has not expired, no other create or update operation can happen with the same name for the type.
      *
-     *  <p>When the create or update operation has finished {@link #clearConcurrency(byte[], long)} should be called to clear the timestamp
-     *  and to allow new updates.
+     * <p>When the create or update operation has finished {@link #clearConcurrency(byte[], long)} should be called to clear the timestamp
+     * and to allow new updates.
      */
     private void checkConcurrency(QName name, byte[] nameBytes, long now) throws IOException, ConcurrentUpdateTypeException {
         // Get the timestamp of when the last update happened for the field name
@@ -799,7 +801,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         // Try to put our own timestamp with a check and put to make sure we're the only one doing this
         Put put = new Put(nameBytes);
         put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now));
-        if (!getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, originalTimestampBytes, put)) {
+        if (!getTypeTable()
+                .checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, originalTimestampBytes, put)) {
             throw new ConcurrentUpdateTypeException(name.toString());
         }
     }
@@ -816,14 +819,16 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, null);
         try {
             // Using check and put to avoid clearing a timestamp that was not ours.
-            getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now), put);
+            getTypeTable()
+                    .checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now), put);
         } catch (IOException e) {
             // Ignore, too late to clear the timestamp
         }
     }
 
 
-    private FieldType getFieldTypeByIdWithoutCache(SchemaId id) throws FieldTypeNotFoundException, TypeException, RepositoryException, InterruptedException  {
+    private FieldType getFieldTypeByIdWithoutCache(SchemaId id)
+            throws FieldTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(id, "id");
         Result result;
         Get get = new Get(id.getBytes());
@@ -965,13 +970,13 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
         TypeBucket typeBucket = new TypeBucket(bucketId);
         ResultScanner scanner = null;
-            byte[] rowPrefix = AbstractSchemaCache.decodeHexAndNextHex(bucketId);
-            scan.setStartRow(new byte[] { rowPrefix[0] });
-            if (!bucketId.equals("ff")) // In case of ff, just scan until
-                // the end
-            {
-                scan.setStopRow(new byte[]{ rowPrefix[1] });
-            }
+        byte[] rowPrefix = AbstractSchemaCache.decodeHexAndNextHex(bucketId);
+        scan.setStartRow(new byte[]{rowPrefix[0]});
+        if (!bucketId.equals("ff")) // In case of ff, just scan until
+        // the end
+        {
+            scan.setStopRow(new byte[]{rowPrefix[1]});
+        }
         try {
             scanner = getTypeTable().getScanner(scan);
         } catch (IOException e) {

@@ -15,12 +15,6 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -46,11 +40,18 @@ import org.lilyproject.repository.impl.AbstractSchemaCache;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+
 public class SchemaCacheTest {
 
     private static final RepositorySetup repoSetup = new RepositorySetup();
 
     private List<TypeManager> typeManagersToClose = new ArrayList<TypeManager>();
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
@@ -188,7 +189,7 @@ public class SchemaCacheTest {
     }
 
     // This test is introduced to do some profiling
-//     @Test
+    @Test
     public void testManyTypes() throws Exception {
         String namespace = "testManyTypesSameCache";
         TypeManager typeManager = repoSetup.getTypeManager();
@@ -202,7 +203,7 @@ public class SchemaCacheTest {
         long total = 0;
         int iterations = 10;
         int nrOfTypes = 100; // Set to a low number to reduce automated test
-                             // time
+        // time
         for (int i = 0; i < iterations; i++) {
             long before = System.currentTimeMillis();
             for (int j = 0; j < nrOfTypes; j++) {
@@ -244,7 +245,7 @@ public class SchemaCacheTest {
         QName ftName = new QName("testRenameFieldType", "f");
         FieldType fieldType = typeManager.fieldTypeBuilder().name(ftName).create();
         for (int i = 0; i < 100; i++) {
-            QName newFtName = new QName("testRenameFieldType", "f"+i);
+            QName newFtName = new QName("testRenameFieldType", "f" + i);
             fieldType.setName(newFtName);
             fieldType = typeManager.updateFieldType(fieldType);
             typeManager.getFieldTypeByName(newFtName);
@@ -324,7 +325,7 @@ public class SchemaCacheTest {
         byte[] decodeHexAndNextHex = AbstractSchemaCache.decodeHexAndNextHex(AbstractSchemaCache.encodeHex(rowPrefix));
         random.nextBytes(rowPrefix);
         Scan scan = new Scan(rowPrefix);
-        scan.setStopRow(new byte[] { decodeHexAndNextHex[1] });
+        scan.setStopRow(new byte[]{decodeHexAndNextHex[1]});
         scan.addColumn(CF, C1);
         scan.addColumn(CF, C2);
         scan.addColumn(CF, C3);
@@ -355,7 +356,7 @@ public class SchemaCacheTest {
                     throw new RuntimeException();
                 }
             }
-            System.out.println("Scanner " + name + ", count="+count+": " + (System.currentTimeMillis() - before));
+            System.out.println("Scanner " + name + ", count=" + count + ": " + (System.currentTimeMillis() - before));
         }
     }
 }

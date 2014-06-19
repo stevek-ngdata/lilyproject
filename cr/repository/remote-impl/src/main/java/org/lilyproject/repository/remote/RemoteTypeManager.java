@@ -15,12 +15,6 @@
  */
 package org.lilyproject.repository.remote;
 
-import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.lang.reflect.UndeclaredThrowableException;
-import java.net.InetSocketAddress;
-import java.util.List;
-
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
@@ -38,7 +32,6 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeBucket;
 import org.lilyproject.repository.api.TypeException;
@@ -49,6 +42,12 @@ import org.lilyproject.repository.impl.SchemaCache;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import java.io.IOException;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.net.InetSocketAddress;
+import java.util.List;
+import javax.annotation.PreDestroy;
 
 // ATTENTION: when adding new methods, do not forget to add handling for UndeclaredThrowableException! This is
 //            necessary because, at the time of this writing, Avro did not include IOException in its generated
@@ -61,13 +60,13 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     private Transceiver client;
 
     public RemoteTypeManager(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator,
-                             ZooKeeperItf zooKeeper, SchemaCache schemaCache)
+            ZooKeeperItf zooKeeper, SchemaCache schemaCache)
             throws IOException {
         this(address, converter, idGenerator, zooKeeper, schemaCache, false);
     }
 
     public RemoteTypeManager(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator,
-                             ZooKeeperItf zooKeeper, SchemaCache schemaCache, boolean keepAlive)
+            ZooKeeperItf zooKeeper, SchemaCache schemaCache, boolean keepAlive)
             throws IOException {
         super(zooKeeper);
         super.schemaCache = schemaCache;
@@ -119,28 +118,6 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
                     converter.convert(lilyProxy.createOrUpdateRecordType(converter.convert(recordType), refreshSubtypes), this);
             updateRecordTypeCache(newRecordType.clone());
             return newRecordType;
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroGenericException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw handleAvroRemoteException(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredTypeThrowable(e);
-        }
-    }
-
-    @Override
-    protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version)
-            throws RepositoryException, InterruptedException {
-        try {
-            long avroVersion;
-            if (version == null) {
-                avroVersion = -1;
-            } else {
-                avroVersion = version;
-            }
-            return converter.convert(lilyProxy.getRecordTypeById(converter.convert(id), avroVersion), this);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {

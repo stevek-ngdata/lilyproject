@@ -15,18 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
 import org.lilyproject.repository.api.FieldType;
@@ -64,6 +52,18 @@ import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 public abstract class AbstractTypeManager implements TypeManager {
     protected Log log;
 
@@ -85,6 +85,7 @@ public abstract class AbstractTypeManager implements TypeManager {
 
     @Override
     abstract public List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException;
+
     @Override
     abstract public List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
 
@@ -106,25 +107,19 @@ public abstract class AbstractTypeManager implements TypeManager {
         return schemaCache.getFieldTypes();
     }
 
-    protected RecordType getRecordTypeFromCache(QName name) throws InterruptedException {
-        return schemaCache.getRecordType(name);
+    protected RecordType getRecordTypeFromCache(QName name, Long version) throws InterruptedException {
+        return schemaCache.getRecordType(name, version);
     }
 
-    protected RecordType getRecordTypeFromCache(SchemaId id) {
-        return schemaCache.getRecordType(id);
+    protected RecordType getRecordTypeFromCache(SchemaId id, Long version) {
+        return schemaCache.getRecordType(id, version);
     }
 
     @Override
-    public RecordType getRecordTypeById(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
+    public RecordType getRecordTypeById(SchemaId id, Long version)
+            throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(id, "id");
-        RecordType recordType = getRecordTypeFromCache(id);
-        if (recordType == null) {
-            throw new RecordTypeNotFoundException(id, version);
-        }
-        // The cache only keeps the latest (known) RecordType
-        if (version != null && !version.equals(recordType.getVersion())) {
-            recordType = getRecordTypeByIdWithoutCache(id, version);
-        }
+        RecordType recordType = getRecordTypeFromCache(id, version);
         if (recordType == null) {
             throw new RecordTypeNotFoundException(id, version);
         }
@@ -132,16 +127,10 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
 
     @Override
-    public RecordType getRecordTypeByName(QName name, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
+    public RecordType getRecordTypeByName(QName name, Long version)
+            throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(name, "name");
-        RecordType recordType = getRecordTypeFromCache(name);
-        if (recordType == null) {
-            throw new RecordTypeNotFoundException(name, version);
-        }
-        // The cache only keeps the latest (known) RecordType
-        if (version != null && !version.equals(recordType.getVersion())) {
-            recordType = getRecordTypeByIdWithoutCache(recordType.getId(), version);
-        }
+        RecordType recordType = getRecordTypeFromCache(name, version);
         if (recordType == null) {
             throw new RecordTypeNotFoundException(name, version);
         }
@@ -179,21 +168,22 @@ public abstract class AbstractTypeManager implements TypeManager {
 
         return names;
     }
-    
+
     @Override
-    public Collection<FieldTypeEntry> getFieldTypesForRecordType(RecordType recordType, boolean includeSupertypes) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
+    public Collection<FieldTypeEntry> getFieldTypesForRecordType(RecordType recordType, boolean includeSupertypes)
+            throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         if (!includeSupertypes) {
             return recordType.getFieldTypeEntries();
         } else {
             // Pairs of record type id and version
             Map<Pair<SchemaId, Long>, RecordType> recordSupertypeMap = Maps.newHashMap();
             collectRecordSupertypes(Pair.create(recordType.getId(), recordType.getVersion()), recordSupertypeMap);
-            
+
             // We use a map of SchemaId to FieldTypeEntry so that we can let mandatory field type entries
             // for the same field type override non-mandatory versions
-            Map<SchemaId,FieldTypeEntry> fieldTypeMap = Maps.newHashMap();
-            
-            for (Pair<SchemaId,Long> recordSuperTypePair : recordSupertypeMap.keySet()) {
+            Map<SchemaId, FieldTypeEntry> fieldTypeMap = Maps.newHashMap();
+
+            for (Pair<SchemaId, Long> recordSuperTypePair : recordSupertypeMap.keySet()) {
                 RecordType superRecordType = recordSupertypeMap.get(recordSuperTypePair);
                 for (FieldTypeEntry fieldTypeEntry : superRecordType.getFieldTypeEntries()) {
                     SchemaId fieldTypeId = fieldTypeEntry.getFieldTypeId();
@@ -210,10 +200,11 @@ public abstract class AbstractTypeManager implements TypeManager {
             return fieldTypeMap.values();
         }
     }
-    
 
-    private void collectRecordSupertypes(Pair<SchemaId, Long> recordTypeAndVersion, Map<Pair<SchemaId, Long>, RecordType> recordSuperTypes)
-                throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
+
+    private void collectRecordSupertypes(Pair<SchemaId, Long> recordTypeAndVersion,
+            Map<Pair<SchemaId, Long>, RecordType> recordSuperTypes)
+            throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         if (recordSuperTypes.containsKey(recordTypeAndVersion)) {
             return;
         }
@@ -222,7 +213,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         for (Entry<SchemaId, Long> entry : recordType.getSupertypes().entrySet()) {
             collectRecordSupertypes(Pair.create(entry.getKey(), entry.getValue()), recordSuperTypes);
         }
-        
+
     }
 
     @Override
@@ -306,8 +297,6 @@ public abstract class AbstractTypeManager implements TypeManager {
             return schemaId.toString();
         }
     }
-
-    abstract protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException;
 
     @Override
     public FieldType getFieldTypeById(SchemaId id) throws TypeException, InterruptedException {

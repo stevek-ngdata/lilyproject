@@ -15,6 +15,13 @@
  */
 package org.lilyproject.repository.impl;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeBucket;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,14 +30,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.SchemaId;
-import org.lilyproject.repository.api.TypeBucket;
 
 public class RecordTypesCache {
     private Log log = LogFactory.getLog(getClass());
@@ -52,7 +53,10 @@ public class RecordTypesCache {
     // lead to an inconsistent state (two types could get the same name).
     private volatile int count = 0;
 
-    private Map<QName, RecordType> nameCache;
+    /**
+     * name -> record type version -> record type
+     */
+    private Map<QName, Map<Long, RecordType>> nameCache;
 
     /**
      * Normally a record type points to the record types from which it extends, i.e. to their parent type.
@@ -60,16 +64,20 @@ public class RecordTypesCache {
      */
     private Map<SchemaId, Set<SchemaId>> childRecordTypes;
 
-    private Map<String, Map<SchemaId, RecordType>> buckets;
+    /**
+     * bucket -> record type id -> record type version -> record type
+     */
+    private Map<String, Map<SchemaId, Map<Long, RecordType>>> buckets;
 
-    private ConcurrentHashMap<String, Map<SchemaId, RecordType>> localUpdateBuckets = new ConcurrentHashMap<String, Map<SchemaId, RecordType>>();
+    private ConcurrentHashMap<String, Map<SchemaId, Map<Long, RecordType>>> localUpdateBuckets =
+            new ConcurrentHashMap<String, Map<SchemaId, Map<Long, RecordType>>>();
 
     public RecordTypesCache() {
-        nameCache = new HashMap<QName, RecordType>();
-        buckets = new ConcurrentHashMap<String, Map<SchemaId, RecordType>>();
+        nameCache = new HashMap<QName, Map<Long, RecordType>>();
+        buckets = new ConcurrentHashMap<String, Map<SchemaId, Map<Long, RecordType>>>();
     }
 
-    private Map<QName, RecordType> getNameCache() throws InterruptedException {
+    private Map<QName, Map<Long, RecordType>> getNameCache() throws InterruptedException {
         // First check if the name cache is out of date
         if (nameCacheOutOfDate) {
             synchronized (monitor) {
@@ -79,10 +87,15 @@ public class RecordTypesCache {
                 }
                 if (nameCacheOutOfDate) {
                     // Re-initialize the nameCache
-                    Map<QName, RecordType> newNameCache = new HashMap<QName, RecordType>();
-                    for (Map<SchemaId, RecordType> bucket : buckets.values()) {
-                        for (RecordType recordType : bucket.values()) {
-                            newNameCache.put(recordType.getName(), recordType);
+                    Map<QName, Map<Long, RecordType>> newNameCache = new HashMap<QName, Map<Long, RecordType>>();
+                    for (Map<SchemaId, Map<Long, RecordType>> bucket : buckets.values()) {
+                        for (Map<Long, RecordType> recordTypesByVersion : bucket.values()) {
+                            for (RecordType recordType : recordTypesByVersion.values()) {
+                                if (!newNameCache.containsKey(recordType.getName())) {
+                                    newNameCache.put(recordType.getName(), new HashMap<Long, RecordType>());
+                                }
+                                newNameCache.get(recordType.getName()).put(recordType.getVersion(), recordType);
+                            }
                         }
                     }
                     nameCache = newNameCache;
@@ -109,15 +122,17 @@ public class RecordTypesCache {
                             Set<SchemaId> set = super.get(key);
                             if (set == null) {
                                 set = new HashSet<SchemaId>();
-                                super.put((SchemaId)key, set);
+                                super.put((SchemaId) key, set);
                             }
                             return set;
                         }
                     };
-                    for (Map<SchemaId, RecordType> bucket : buckets.values()) {
-                        for (RecordType recordType : bucket.values()) {
-                            for (SchemaId parent : recordType.getSupertypes().keySet()) {
-                                newChildRecordTypes.get(parent).add(recordType.getId());
+                    for (Map<SchemaId, Map<Long, RecordType>> bucket : buckets.values()) {
+                        for (Map<Long, RecordType> recordTypeByVersion : bucket.values()) {
+                            // TODO: we only look at the last record type here, not sure why
+                            RecordType lastRecordType = getRecordTypeWithVersion(recordTypeByVersion, null);
+                            for (SchemaId parent : lastRecordType.getSupertypes().keySet()) {
+                                newChildRecordTypes.get(parent).add(lastRecordType.getId());
                             }
                         }
                     }
@@ -154,9 +169,6 @@ public class RecordTypesCache {
 
     /**
      * Return the monitor of a bucket and create it if it does not exist yet.
-     *
-     * @param bucketId
-     * @return
      */
     private Object getBucketMonitor(String bucketId) {
         Object bucketMonitor = bucketMonitors.get(bucketId);
@@ -180,27 +192,23 @@ public class RecordTypesCache {
     /**
      * Return all record types in the cache. To avoid inconsistencies between
      * buckets, we get the nameCache first.
-     *
-     * @return
-     * @throws InterruptedException
      */
     public Collection<RecordType> getRecordTypes() throws InterruptedException {
         List<RecordType> recordTypes = new ArrayList<RecordType>();
-        for (RecordType recordType : getNameCache().values()) {
-            recordTypes.add(recordType.clone());
+        for (Map<Long, RecordType> recordTypesByVersion : getNameCache().values()) {
+            for (RecordType recordType : recordTypesByVersion.values()) {
+                recordTypes.add(recordType.clone());
+            }
         }
         return recordTypes;
     }
 
     /**
      * Return the record type based on its name
-     *
-     * @param name
-     * @return
-     * @throws InterruptedException
      */
-    public RecordType getRecordType(QName name) throws InterruptedException {
-        return getNameCache().get(name);
+    public RecordType getRecordType(QName name, Long version) throws InterruptedException {
+        Map<Long, RecordType> recordTypesByVersion = getNameCache().get(name);
+        return getRecordTypeWithVersion(recordTypesByVersion, version);
     }
 
     public Set<SchemaId> findDirectSubTypes(SchemaId recordTypeId) throws InterruptedException {
@@ -210,24 +218,28 @@ public class RecordTypesCache {
 
     /**
      * Get the record type based on its id
-     *
-     * @param id
-     * @return
      */
-    public RecordType getRecordType(SchemaId id) {
+    public RecordType getRecordType(SchemaId id, Long version) {
         String bucketId = AbstractSchemaCache.encodeHex(id.getBytes());
-        Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
+        Map<SchemaId, Map<Long, RecordType>> bucket = buckets.get(bucketId);
         if (bucket == null) {
             return null;
         }
-        return bucket.get(id);
+        Map<Long, RecordType> recordTypesByVersion = bucket.get(id);
+        return getRecordTypeWithVersion(recordTypesByVersion, version);
+    }
+
+    private RecordType getRecordTypeWithVersion(Map<Long, RecordType> recordTypesByVersion, Long version) {
+        if (recordTypesByVersion == null)
+            return null;
+        else if (version != null)
+            return recordTypesByVersion.get(version);
+        else
+            return recordTypesByVersion.get(new TreeSet<Long>(recordTypesByVersion.keySet()).last());
     }
 
     /**
      * Refreshes the whole cache to contain the given list of record types.
-     *
-     * @param recordTypes
-     * @throws InterruptedException
      */
     public void refreshRecordTypes(List<RecordType> recordTypes) throws InterruptedException {
         // Since we will update all buckets, we take the lock on the monitor for
@@ -248,12 +260,12 @@ public class RecordTypesCache {
                 // update,
                 // or the refresh for this update will follow.
                 if (!removeFromLocalUpdateBucket(recordType, bucketId)) {
-                    Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
+                    Map<SchemaId, Map<Long, RecordType>> bucket = buckets.get(bucketId);
                     if (bucket == null) {
-                        bucket = new ConcurrentHashMap<SchemaId, RecordType>();
+                        bucket = new ConcurrentHashMap<SchemaId, Map<Long, RecordType>>();
                         buckets.put(bucketId, bucket);
                     }
-                    bucket.put(recordType.getId(), recordType);
+                    putRecordTypeInBucket(bucket, recordType);
                 }
             }
         }
@@ -261,8 +273,6 @@ public class RecordTypesCache {
 
     /**
      * Refresh one bucket with the record types contained in the TypeBucket
-     *
-     * @param typeBucket
      */
     public void refreshRecordTypeBucket(TypeBucket typeBucket) {
         String bucketId = typeBucket.getBucketId();
@@ -272,19 +282,19 @@ public class RecordTypesCache {
         // Get a lock on the bucket to be updated
         synchronized (getBucketMonitor(bucketId)) {
             List<RecordType> recordTypes = typeBucket.getRecordTypes();
-            Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
+            Map<SchemaId, Map<Long, RecordType>> bucket = buckets.get(bucketId);
             // One would expect that an existing bucket need to be cleared
             // first.
             // But since record types cannot be deleted we will just overwrite
             // them.
             if (bucket == null) {
-                bucket = new ConcurrentHashMap<SchemaId, RecordType>(Math.min(recordTypes.size(), 8), .75f, 1);
+                bucket = new ConcurrentHashMap<SchemaId, Map<Long, RecordType>>(Math.min(recordTypes.size(), 8), .75f, 1);
                 buckets.put(bucketId, bucket);
             }
             // Fill the bucket with the new record types
             for (RecordType recordType : recordTypes) {
                 if (!removeFromLocalUpdateBucket(recordType, bucketId)) {
-                    bucket.put(recordType.getId(), recordType);
+                    putRecordTypeInBucket(bucket, recordType);
                 }
             }
         }
@@ -292,10 +302,15 @@ public class RecordTypesCache {
         decCount();
     }
 
+    private void putRecordTypeInBucket(Map<SchemaId, Map<Long, RecordType>> bucket, RecordType recordType) {
+        if (!bucket.containsKey(recordType.getId())) {
+            bucket.put(recordType.getId(), new HashMap<Long, RecordType>());
+        }
+        bucket.get(recordType.getId()).put(recordType.getVersion(), recordType);
+    }
+
     /**
      * Update the cache to contain the new recordType
-     *
-     * @param recordType
      */
     public void update(RecordType recordType) {
         // Clone the RecordType to avoid changes to it while it is in the cache
@@ -306,13 +321,13 @@ public class RecordTypesCache {
         incCount();
         // Get a lock on the bucket to be updated
         synchronized (getBucketMonitor(bucketId)) {
-            Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
+            Map<SchemaId, Map<Long, RecordType>> bucket = buckets.get(bucketId);
             // If the bucket does not exist yet, create it
             if (bucket == null) {
-                bucket = new ConcurrentHashMap<SchemaId, RecordType>(8, .75f, 1);
+                bucket = new ConcurrentHashMap<SchemaId, Map<Long, RecordType>>(8, .75f, 1);
                 buckets.put(bucketId, bucket);
             }
-            bucket.put(id, rtToCache);
+            putRecordTypeInBucket(bucket, rtToCache);
             // Mark that this recordType is updated locally
             // and that the next refresh can be ignored
             // since this refresh can contain an old recordType
@@ -328,27 +343,29 @@ public class RecordTypesCache {
     // This avoids that a locally updated record type will be
     // overwritten by old data by a cache refresh.
     private void addToLocalUpdateBucket(RecordType recordType, String bucketId) {
-        Map<SchemaId, RecordType> localUpdateBucket = localUpdateBuckets.get(bucketId);
+        Map<SchemaId, Map<Long, RecordType>> localUpdateBucket = localUpdateBuckets.get(bucketId);
         if (localUpdateBucket == null) {
-            localUpdateBucket = new HashMap<SchemaId, RecordType>();
+            localUpdateBucket = new HashMap<SchemaId, Map<Long, RecordType>>();
             localUpdateBuckets.put(bucketId, localUpdateBucket);
         }
-        localUpdateBucket.put(recordType.getId(), recordType);
+        putRecordTypeInBucket(localUpdateBucket, recordType);
     }
 
     // Check if the record type is present in the local update bucket.
     // If so, return true and remove it, in which case the refresh
     // should skip it to avoid replacing the record type with old data.
     private boolean removeFromLocalUpdateBucket(RecordType recordType, String bucketId) {
-        Map<SchemaId, RecordType> localUpdateBucket = localUpdateBuckets.get(bucketId);
+        Map<SchemaId, Map<Long, RecordType>> localUpdateBucket = localUpdateBuckets.get(bucketId);
         if (localUpdateBucket == null) {
             return false;
         }
-        RecordType localRt = localUpdateBucket.remove(recordType.getId());
-        if (localRt == null) {
+        Map<Long, RecordType> recordTypesByVersion = localUpdateBucket.get(recordType.getId());
+        if (recordTypesByVersion == null) {
             return false;
         }
-        return localRt.getVersion() > recordType.getVersion();
+
+        RecordType localRt = recordTypesByVersion.remove(recordType.getVersion());
+        return localRt != null;
     }
 
     public void clear() {
@@ -358,7 +375,7 @@ public class RecordTypesCache {
             bucket.clear();
         }
 
-        for (Map<SchemaId, RecordType> bucket : localUpdateBuckets.values()) {
+        for (Map<SchemaId, Map<Long, RecordType>> bucket : localUpdateBuckets.values()) {
             bucket.clear();
         }
     }
