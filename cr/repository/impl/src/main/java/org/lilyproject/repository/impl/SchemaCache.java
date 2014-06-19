@@ -15,11 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
@@ -30,6 +25,11 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeException;
 import org.lilyproject.repository.api.TypeManager;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public interface SchemaCache {
 
@@ -91,14 +91,14 @@ public interface SchemaCache {
      * @return the RecordType or null if not found
      * @throws InterruptedException
      */
-    RecordType getRecordType(QName name) throws InterruptedException;
+    RecordType getRecordType(QName name, Long version) throws InterruptedException;
 
     /**
      * Returns the record type with the given id from the cache.
      *
      * @return the RecordType or null if not found
      */
-    RecordType getRecordType(SchemaId id);
+    RecordType getRecordType(SchemaId id, Long version);
 
     /**
      * Returns the field type with the given name from the cache.

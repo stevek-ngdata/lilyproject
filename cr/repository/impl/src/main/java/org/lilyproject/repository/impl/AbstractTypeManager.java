@@ -15,18 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
 import org.lilyproject.repository.api.FieldType;
@@ -63,6 +51,18 @@ import org.lilyproject.repository.impl.valuetype.UriValueType;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public abstract class AbstractTypeManager implements TypeManager {
     protected Log log;
@@ -106,25 +106,18 @@ public abstract class AbstractTypeManager implements TypeManager {
         return schemaCache.getFieldTypes();
     }
 
-    protected RecordType getRecordTypeFromCache(QName name) throws InterruptedException {
-        return schemaCache.getRecordType(name);
+    protected RecordType getRecordTypeFromCache(QName name, Long version) throws InterruptedException {
+        return schemaCache.getRecordType(name, version);
     }
 
-    protected RecordType getRecordTypeFromCache(SchemaId id) {
-        return schemaCache.getRecordType(id);
+    protected RecordType getRecordTypeFromCache(SchemaId id, Long version) {
+        return schemaCache.getRecordType(id, version);
     }
 
     @Override
     public RecordType getRecordTypeById(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(id, "id");
-        RecordType recordType = getRecordTypeFromCache(id);
-        if (recordType == null) {
-            throw new RecordTypeNotFoundException(id, version);
-        }
-        // The cache only keeps the latest (known) RecordType
-        if (version != null && !version.equals(recordType.getVersion())) {
-            recordType = getRecordTypeByIdWithoutCache(id, version);
-        }
+        RecordType recordType = getRecordTypeFromCache(id, version);
         if (recordType == null) {
             throw new RecordTypeNotFoundException(id, version);
         }
@@ -134,14 +127,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     @Override
     public RecordType getRecordTypeByName(QName name, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(name, "name");
-        RecordType recordType = getRecordTypeFromCache(name);
-        if (recordType == null) {
-            throw new RecordTypeNotFoundException(name, version);
-        }
-        // The cache only keeps the latest (known) RecordType
-        if (version != null && !version.equals(recordType.getVersion())) {
-            recordType = getRecordTypeByIdWithoutCache(recordType.getId(), version);
-        }
+        RecordType recordType = getRecordTypeFromCache(name, version);
         if (recordType == null) {
             throw new RecordTypeNotFoundException(name, version);
         }
@@ -306,8 +292,6 @@ public abstract class AbstractTypeManager implements TypeManager {
             return schemaId.toString();
         }
     }
-
-    abstract protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException;
 
     @Override
     public FieldType getFieldTypeById(SchemaId id) throws TypeException, InterruptedException {
