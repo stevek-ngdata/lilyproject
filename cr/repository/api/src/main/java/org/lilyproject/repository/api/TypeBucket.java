@@ -16,6 +16,7 @@
 package org.lilyproject.repository.api;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class TypeBucket {
@@ -47,4 +48,9 @@ public class TypeBucket {
     public void add(RecordType recordType) {
         recordTypes.add(recordType);
     }
+
+    public void addAll(Collection<RecordType> recordType) {
+        recordTypes.addAll(recordType);
+    }
+
 }

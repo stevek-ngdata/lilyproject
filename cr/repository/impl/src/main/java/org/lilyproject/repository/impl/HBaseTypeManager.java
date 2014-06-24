@@ -15,8 +15,10 @@
  */
 package org.lilyproject.repository.impl;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
@@ -175,7 +177,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
     private Long putSupertypeOnRecordType(Long recordTypeVersion, Put put, SchemaId supertypeId, Long supertypeVersion)
             throws TypeException {
-        Long newSupertypeVersion = getRecordTypeByIdWithoutCache(supertypeId, supertypeVersion).getVersion();
+        // when specifying a version, this returns only a single result
+        RecordType recordType = getRecordTypeByIdWithoutCache(supertypeId, supertypeVersion).get(0);
+        Long newSupertypeVersion = recordType.getVersion();
         put.add(TypeCf.SUPERTYPE.bytes, supertypeId.getBytes(), recordTypeVersion, Bytes.toBytes(newSupertypeVersion));
         return newSupertypeVersion;
     }
@@ -226,7 +230,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             }
 
             // Prepare the update
-            RecordType latestRecordType = getRecordTypeByIdWithoutCache(id, null);
+            RecordType latestRecordType = getLatestRecordTypeByIdWithoutCache(id);
             // If no name was given, continue to use the name that was already on the record type
             if (name == null) {
                 newRecordType.setName(latestRecordType.getName());
@@ -372,7 +376,13 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return false;
     }
 
-    private RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RecordTypeNotFoundException,
+    private RecordType getLatestRecordTypeByIdWithoutCache(SchemaId id) throws RecordTypeNotFoundException,
+            TypeException {
+        List<RecordType> allVersions = getRecordTypeByIdWithoutCache(id, null);
+        return allVersions.get(allVersions.size() - 1);
+    }
+
+    private List<RecordType> getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RecordTypeNotFoundException,
             TypeException {
         ArgumentValidator.notNull(id, "recordTypeId");
         Get get = new Get(id.getBytes());
@@ -394,23 +404,33 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return extractRecordType(id, version, result);
     }
 
-    private RecordType extractRecordType(SchemaId id, Long version, Result result) throws RecordTypeNotFoundException {
+    private List<RecordType> extractRecordType(SchemaId id, Long version, Result result) throws RecordTypeNotFoundException {
         NavigableMap<byte[], byte[]> nonVersionableColumnFamily = result.getFamilyMap(TypeCf.DATA.bytes);
-        QName name;
-        name = decodeName(nonVersionableColumnFamily.get(TypeColumn.RECORDTYPE_NAME.bytes));
-        RecordType recordType = newRecordType(id, name);
-        Long currentVersion = Bytes.toLong(result.getValue(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes));
+        QName name = decodeName(nonVersionableColumnFamily.get(TypeColumn.RECORDTYPE_NAME.bytes));
+        List<KeyValue> existingVersions = result.getColumn(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes);
+        Long existingMaxVersion = Bytes.toLong(result.getValue(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes));
+
         if (version != null) {
-            if (currentVersion < version) {
+            if (existingMaxVersion < version) {
                 throw new RecordTypeNotFoundException(id, version);
             }
+            RecordType recordType = newRecordType(id, name);
             recordType.setVersion(version);
+            extractFieldTypeEntries(result, version, recordType);
+            extractSupertypes(result, version, recordType);
+            return Lists.newArrayList(recordType);
         } else {
-            recordType.setVersion(currentVersion);
+            List<RecordType> recordTypes = Lists.newArrayList();
+            for (KeyValue existingVersion : existingVersions) {
+                long oneOfTheExistingVersions = Bytes.toLong(existingVersion.getValue());
+                RecordType recordType = newRecordType(id, name);
+                recordType.setVersion(oneOfTheExistingVersions);
+                extractFieldTypeEntries(result, oneOfTheExistingVersions, recordType);
+                extractSupertypes(result, oneOfTheExistingVersions, recordType);
+                recordTypes.add(recordType);
+            }
+            return recordTypes;
         }
-        extractFieldTypeEntries(result, version, recordType);
-        extractSupertypes(result, version, recordType);
-        return recordType;
     }
 
     private boolean updateFieldTypeEntries(Put put, Long newRecordTypeVersion, RecordType recordType,
@@ -895,7 +915,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             throw new TypeException("Exception occurred while retrieving record types without cache ", e);
         }
         for (Result result : scanner) {
-            recordTypes.add(extractRecordType(new SchemaIdImpl(result.getRow()), null, result));
+            recordTypes.addAll(extractRecordType(new SchemaIdImpl(result.getRow()), null, result));
         }
         Closer.close(scanner);
 
@@ -921,6 +941,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         scan.addColumn(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes);
         scan.addFamily(TypeCf.FIELDTYPE_ENTRY.bytes);
         scan.addFamily(TypeCf.SUPERTYPE.bytes);
+        scan.setMaxVersions(); // we want all available versions
 
         try {
             scanner = getTypeTable().getScanner(scan);
@@ -944,7 +965,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) != null) {
                 fieldTypes.add(extractFieldType(new SchemaIdImpl(scanResult.getRow()), scanResult));
             } else if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes) != null) {
-                recordTypes.add(extractRecordType(new SchemaIdImpl(scanResult.getRow()), null, scanResult));
+                recordTypes.addAll(extractRecordType(new SchemaIdImpl(scanResult.getRow()), null, scanResult));
             }
         }
         return new Pair<List<FieldType>, List<RecordType>>(fieldTypes, recordTypes);
@@ -999,7 +1020,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) != null) {
                 typeBucket.add(extractFieldType(new SchemaIdImpl(scanResult.getRow()), scanResult));
             } else if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes) != null) {
-                typeBucket.add(extractRecordType(new SchemaIdImpl(scanResult.getRow()), null, scanResult));
+                typeBucket.addAll(extractRecordType(new SchemaIdImpl(scanResult.getRow()), null, scanResult));
             }
         }
         return typeBucket;
