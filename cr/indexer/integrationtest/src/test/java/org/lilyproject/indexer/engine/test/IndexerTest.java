@@ -233,10 +233,14 @@ public class IndexerTest {
     private static int idxChangeCnt = 0;
 
     public static void changeIndexUpdater(String confName) throws Exception {
-        changeIndexUpdater(confName, Table.RECORD.name);
+        changeIndexUpdater(confName, Table.RECORD.name, true);
     }
 
     public static void changeIndexUpdater(String confName, String indexTableName) throws Exception {
+        changeIndexUpdater(confName, indexTableName, true);
+    }
+
+    public static void changeIndexUpdater(String confName, String indexTableName, boolean enableDerefMap) throws Exception {
         String indexNamePrefix = "test_";
         String prevIndexName = indexNamePrefix + idxChangeCnt;
         idxChangeCnt++;
@@ -263,6 +267,7 @@ public class IndexerTest {
         connectionParams.put(LResultToSolrMapper.ZOOKEEPER_KEY, "localhost:2181");
         connectionParams.put(LResultToSolrMapper.REPO_KEY, REPO_NAME);
         connectionParams.put(LResultToSolrMapper.TABLE_KEY, indexTableName);
+        connectionParams.put(LResultToSolrMapper.ENABLE_DEREFMAP_KEY, Boolean.toString(enableDerefMap));
         IndexerDefinition indexDef = new IndexerDefinitionBuilder().name(indexName)
                 .connectionType("solr")
                 .connectionParams(connectionParams)
@@ -926,6 +931,42 @@ public class IndexerTest {
         commitIndex();
         verifyResultCount("nv_deref1:derefsinglepear", 0);
         verifyResultCount("nv_deref1:derefsingleapple", 1);
+
+        assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
+
+    }
+
+    @Test
+    public void testDisableDerefmap() throws Exception {
+        changeIndexUpdater("indexerconf1.xml", Table.RECORD.name, false);
+
+        messageVerifier.init();
+
+        log.debug("Begin test disabled deref");
+        Record record1 = defaultTable.newRecord();
+        record1.setRecordType(nvRecordType1.getName());
+        record1.setField(nvfield1.getName(), "noderefSnickers");
+        record1.setField(nvTag.getName(), 0L);
+        expectEvent(CREATE, Table.RECORD.name, record1.getId(), nvfield1.getId(), nvTag.getId());
+        record1 = defaultTable.create(record1);
+
+        Record record2 = defaultTable.newRecord();
+        record2.setRecordType(nvRecordType1.getName());
+        record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
+        record2.setField(nvTag.getName(), 0L);
+        expectEvent(CREATE, Table.RECORD.name, record2.getId(), nvLinkField1.getId(), nvTag.getId());
+        record2 = defaultTable.create(record2);
+
+        commitIndex();
+        verifyResultCount("nv_deref1:noderefSnickers", 1);
+
+        record1.setField(nvfield1.getName(), "noderefTwix");
+        expectEvent(UPDATE, Table.RECORD.name, record1.getId(), nvfield1.getId());
+        defaultTable.update(record1);
+
+        commitIndex();
+        verifyResultCount("nv_deref1:noderefTwix", 0);
+        verifyResultCount("nv_deref1:noderefSnickers", 1);
 
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
 

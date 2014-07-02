@@ -98,6 +98,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
     private DerefMap derefMap;
     private LilyEventPublisherManager eventPublisherManager;
     private String subscriptionId;
+    private boolean enableDerefMap = true;
 
     public LilyResultToSolrMapper(String indexName, LilyIndexerConf lilyIndexerConf, RepositoryManager repositoryManager, ZooKeeperItf zooKeeperItf) {
         setIndexName(indexName);
@@ -112,6 +113,7 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
         try {
             String repoParam = Optional.fromNullable(params.get(LResultToSolrMapper.REPO_KEY)).or(RepoAndTableUtil.DEFAULT_REPOSITORY);
             setRepositoryName(repoParam);
+            enableDerefMap = Boolean.parseBoolean(Optional.fromNullable(params.get(LResultToSolrMapper.ENABLE_DEREFMAP_KEY)).or("true"));
             init();
 
         } catch (Exception e) {
@@ -126,7 +128,8 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
 
         valueEvaluator = new ValueEvaluator(lilyIndexerConf);
         recordDecoder = new RecordDecoder(repository.getTypeManager(), repository.getIdGenerator(), repository.getRecordFactory());
-        if (lilyIndexerConf.containsDerefExpressions()) {
+
+        if (lilyIndexerConf.containsDerefExpressions() && enableDerefMap) {
             HBaseTableFactory tableFactory = new HBaseTableFactoryImpl(LilyClient.getHBaseConfiguration(zooKeeperItf));
             eventPublisherManager = new LilyEventPublisherManager(tableFactory);
             derefMap = DerefMapHbaseImpl.create(repository.getRepositoryName(), indexName,

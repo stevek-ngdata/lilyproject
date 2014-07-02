@@ -8,6 +8,7 @@ public interface LResultToSolrMapper extends ResultToSolrMapper {
     static final String ZOOKEEPER_KEY = "lily.zk"; // required
     static final String REPO_KEY = "lily.repository"; // defaults to 'default'
     static final String TABLE_KEY = "lily.table"; // defaults to 'record'
+    static final String ENABLE_DEREFMAP_KEY = "lily.enable-derefmap"; // defaults to 'true'
 
     LRepository getRepository();
 }
