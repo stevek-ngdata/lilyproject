@@ -15,11 +15,27 @@
  */
 package org.lilyproject.solrtestfw;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.CloudSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.test.TestHomeUtil;
+import org.lilyproject.util.xml.DocumentHelper;
+import org.lilyproject.util.xml.XPathUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -30,23 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.impl.CloudSolrServer;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.test.TestHomeUtil;
-import org.lilyproject.util.xml.DocumentHelper;
-import org.lilyproject.util.xml.XPathUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 public class SolrProxy {
     private Mode mode;
@@ -176,7 +176,7 @@ public class SolrProxy {
         solrServers = null;
     }
 
-    private void initSolrServers(SolrDefinition solrDef) throws MalformedURLException {
+    private void initSolrServers(SolrDefinition solrDef) throws Exception {
         solrServers.clear();
         for (SolrDefinition.CoreDefinition core : solrDef.getCores()) {
             SolrServer solrServer = null;
@@ -187,6 +187,32 @@ public class SolrProxy {
                 solrServer = new HttpSolrServer(getUri(core.getName()), httpClient);
             }
             solrServers.put(core.getName(), solrServer);
+        }
+
+        waitUntilReady(solrServers);
+    }
+
+    private void waitUntilReady(Map<String, SolrServer> solrServers) throws InterruptedException, SolrServerException {
+        // There seems to be a race condition in the initialization of Solr which means that we can not be sure whether
+        // solr is really started at this point. Lets query it until it no longer says that it is not yet initialized.
+        int maxRetries = 10;
+        for (String s : solrServers.keySet()) {
+            System.out.println("testing connection to " + s);
+            SolrServer solrServer = solrServers.get(s);
+            int numAttempts = 0;
+            while (true) {
+                try {
+                    solrServer.query(new SolrQuery("*:*"));
+                    System.out.println(String.format("Solr server %s initialized", s));
+                    break;
+                } catch (SolrServerException e) {
+                    if (++numAttempts == maxRetries) {
+                        throw e;
+                    }
+                    System.out.println(String.format("Solr server %s not yet initialized, retrying...", s));
+                    Thread.sleep(500);
+                }
+            }
         }
     }
 

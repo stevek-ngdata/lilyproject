@@ -15,11 +15,6 @@
  */
 package org.lilyproject.solrtestfw;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-
 import org.apache.commons.io.FileUtils;
 import org.lilyproject.util.MavenUtil;
 import org.lilyproject.util.test.TestHomeUtil;
@@ -27,6 +22,11 @@ import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 public class SolrTestingUtility {
     private int solrPort = 8983;
