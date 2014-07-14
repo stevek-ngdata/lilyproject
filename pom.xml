@@ -42,7 +42,7 @@
     <!-- Align jetty versions -->
     <version.jetty>6.1.26.cloudera.2</version.jetty>
 
-    <version.sep>1.1.1-SNAPSHOT</version.sep>
+    <version.sep>1.1.1</version.sep>
 
     <!-- Tells maven plugins what file encoding to use -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
