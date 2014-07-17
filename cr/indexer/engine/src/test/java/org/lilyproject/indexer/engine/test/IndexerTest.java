@@ -23,17 +23,6 @@ import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
 import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
 import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -120,6 +109,17 @@ import org.lilyproject.util.repo.PrematureRepositoryManager;
 import org.lilyproject.util.repo.PrematureRepositoryManagerImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class IndexerTest {
 
@@ -349,7 +349,6 @@ public class IndexerTest {
         ValueType dateValueType = typeManager.getValueType("DATE");
 
         ValueType intHierValueType = typeManager.getValueType("PATH<INTEGER>");
-
 
         //
         // Version tag fields
@@ -3087,6 +3086,55 @@ public class IndexerTest {
                 return true; // to make visit continue
             }
         });
+    }
+
+    @Test
+    public void excludeFilterOnNotIndexedField() throws Exception {
+        ValueType booleanValueType = typeManager.getValueType("BOOLEAN");
+        ValueType stringValueType = typeManager.getValueType("STRING");
+
+        QName booleanField1Name = new QName(NS, "nv_e_booleanfield1");
+        FieldType nvBooleanField1 = typeManager.newFieldType(booleanValueType, booleanField1Name, Scope.NON_VERSIONED);
+        nvBooleanField1 = typeManager.createFieldType(nvBooleanField1);
+        QName fieldName = new QName(NS2, "v_e_field1");
+        FieldType field = typeManager.newFieldType(stringValueType, fieldName, Scope.VERSIONED);
+        field = typeManager.createFieldType(field);
+
+        RecordType rt = typeManager.newRecordType(new QName(NS, "v_e_rt1"));
+        rt.addFieldTypeEntry(nvBooleanField1.getId(), false);
+        rt.addFieldTypeEntry(field.getId(), false);
+        rt = typeManager.createRecordType(rt);
+
+        changeIndexUpdater("indexerconf_exclude.xml");
+
+        String fieldValueT1 = "Pancakes";
+        String fieldValueT2 = "Waffles";
+
+        log.debug("Begin test E001");
+        Record record1 = defaultTable.newRecord(idGenerator.newRecordId());
+        record1.setRecordType(rt.getName(), 1L);
+        record1.setField(fieldName, fieldValueT1);
+        record1.setField(booleanField1Name, false);
+        record1 = defaultTable.createOrUpdate(record1);
+        commitIndex();
+
+        verifyResultCount("v_e_string:" + fieldValueT1, 1);
+        verifyResultCount("v_e_string:" + fieldValueT2, 0);
+
+        record1.setField(fieldName, fieldValueT2);
+        record1.setField(booleanField1Name, true);
+        record1 = defaultTable.createOrUpdate(record1);
+        commitIndex();
+
+        verifyResultCount("v_e_string:" + fieldValueT1, 0);
+        verifyResultCount("v_e_string:" + fieldValueT2, 0);
+
+        record1.setField(booleanField1Name, false);
+        record1 = defaultTable.createOrUpdate(record1);
+        commitIndex();
+
+        verifyResultCount("v_e_string:" + fieldValueT1, 0);
+        verifyResultCount("v_e_string:" + fieldValueT2, 1);
     }
 
     private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {

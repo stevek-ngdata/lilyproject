@@ -115,7 +115,7 @@
     https://issues.apache.org/jira/browse/SOLR-3432
     -->
     <field name="_version_" type="long" indexed="true" stored="true"/>
-    
+
     <field name="lily.key" type="string" indexed="true" stored="true" required="true"/>
     <field name="lily.id" type="string" indexed="true" stored="true" required="true"/>
     <field name="lily.table" type="string" indexed="true" stored="true" required="true"/>
@@ -178,7 +178,7 @@
     <dynamicField name="*_literal_mv" type="string" indexed="true" stored="true" multiValued="true"/>
     <dynamicField name="*_long" type="long" indexed="true" stored="true"/>
     <dynamicField name="*_date" type="date" indexed="true" stored="true"/>
-    
+
     <!-- fields used to test <match> -->
     <field name="match1" type="string" indexed="true" stored="true" required="false"/>
     <field name="match2" type="string" indexed="true" stored="true" required="false"/>
@@ -196,7 +196,7 @@
     <field name="nvmatch6" type="string" indexed="true" stored="true" required="false"/>
     <field name="nvmatch7" type="string" indexed="true" stored="true" required="false"/>
     <field name="nvmatch8" type="string" indexed="true" stored="true" required="false"/>
-    
+
     <!-- fields used to test <forEach> -->
     <field name="linked_product" type="string" indexed="true" stored="true" required="false"/>
   </fields>

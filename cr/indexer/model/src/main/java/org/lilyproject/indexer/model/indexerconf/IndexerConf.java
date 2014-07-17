@@ -15,11 +15,6 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.google.common.base.Predicate;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
@@ -28,6 +23,11 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VTaggedRecord;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 // TODO for safety should consider making some of the returned lists immutable
 
@@ -141,6 +141,12 @@ public class IndexerConf {
                     return true;
                 }
             }
+        }
+
+        // check record filter (maybe the field is used only to filter but not actually indexed)
+        for (FieldType changedField : changedFields) {
+            if (recordFilter.getFieldDependencies().contains(changedField.getName()))
+                return true;
         }
 
         return false;
