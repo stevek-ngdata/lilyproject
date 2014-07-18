@@ -19,17 +19,18 @@
 <wiring>
   <modules>
     <artifact id="pluginregistry" groupId="org.lilyproject" artifactId="lily-pluginregistry-impl"
-              version="2.4.4">
+              version="2.4.5-SNAPSHOT">
     </artifact>
 
     <artifact id="servletregistry" groupId="org.lilyproject" artifactId="lily-servletregistry-module"
-              version="2.4.4">
+              version="2.4.5-SNAPSHOT">
     </artifact>
 
-    <artifact id="general" groupId="org.lilyproject" artifactId="lily-general-module" version="2.4.4">
+    <artifact id="general" groupId="org.lilyproject" artifactId="lily-general-module" version="2.4.5-SNAPSHOT">
     </artifact>
 
-    <artifact id="indexer-integration" groupId="org.lilyproject" artifactId="lily-indexer-integration-module" version="2.4.4">
+    <artifact id="indexer-integration" groupId="org.lilyproject" artifactId="lily-indexer-integration-module"
+              version="2.4.5-SNAPSHOT">
     </artifact>
 
     <!-- lily.plugin.dir:
@@ -42,29 +43,29 @@
     -->
     <directory id="plugin" basePath="${lily.plugin.dir}" path="load-before-repository"/>
 
-    <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="2.4.4">
+    <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="2.4.5-SNAPSHOT">
     </artifact>
 
-    <artifact id="indexer" groupId="org.lilyproject" artifactId="lily-indexer-module" version="2.4.4">
+    <artifact id="indexer" groupId="org.lilyproject" artifactId="lily-indexer-module" version="2.4.5-SNAPSHOT">
     </artifact>
 
-    <artifact id="avro" groupId="org.lilyproject" artifactId="lily-rpc-module" version="2.4.4">
+    <artifact id="avro" groupId="org.lilyproject" artifactId="lily-rpc-module" version="2.4.5-SNAPSHOT">
     </artifact>
 
-    <artifact id="rest" groupId="org.lilyproject" artifactId="lily-rest-module" version="2.4.4">
+    <artifact id="rest" groupId="org.lilyproject" artifactId="lily-rest-module" version="2.4.5-SNAPSHOT">
     </artifact>
 
-    <artifact id="webui" groupId="org.lilyproject" artifactId="lily-webui-module" version="2.4.4">
+    <artifact id="webui" groupId="org.lilyproject" artifactId="lily-webui-module" version="2.4.5-SNAPSHOT">
     </artifact>
 
     <directory id="plugin" basePath="${lily.plugin.dir}" path="load-at-end"/>
 
     <artifact id="repository-master" groupId="org.lilyproject" artifactId="lily-repository-master-module"
-              version="2.4.4">
+              version="2.4.5-SNAPSHOT">
     </artifact>
 
     <artifact id="jetty" groupId="org.lilyproject" artifactId="lily-jetty-module"
-              version="2.4.4">
+              version="2.4.5-SNAPSHOT">
     </artifact>
 
   </modules>
