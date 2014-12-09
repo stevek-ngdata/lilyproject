@@ -42,7 +42,8 @@ public class LilyHBaseSchema {
 
     static {
         typeTableDescriptor = new HTableDescriptor(Table.TYPE.bytes);
-        typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.DATA.bytes));
+        typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.DATA.bytes, HConstants.ALL_VERSIONS,
+                "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
         typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.FIELDTYPE_ENTRY.bytes, HConstants.ALL_VERSIONS,
                 "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
         typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.SUPERTYPE.bytes, HConstants.ALL_VERSIONS, "none",
