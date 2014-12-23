@@ -57,7 +57,7 @@
   <groupId>org.lilyproject</groupId>
   <artifactId>lily</artifactId>
   <packaging>pom</packaging>
-  <version>2.4.6-SNAPSHOT</version>
+  <version>2.4.5-SNAPSHOT</version>
   <name>Lily</name>
 
   <url>http://www.lilyproject.org/</url>
