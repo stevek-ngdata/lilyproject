@@ -91,7 +91,7 @@
           <plugin>
             <groupId>org.lilyproject</groupId>
             <artifactId>lily-runtime-plugin</artifactId>
-            <version>2.4.5-SNAPSHOT</version>
+            <version>2.4.6-SNAPSHOT</version>
             <configuration>
               <confDirectory>${basedir}/../cr/process/server/conf</confDirectory>
               <artifacts>
