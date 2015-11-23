@@ -15,21 +15,6 @@
  */
 package org.lilyproject.lilyservertestfw.launcher;
 
-import javax.management.ObjectName;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.lang.management.ManagementFactory;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-
 import com.google.common.collect.Lists;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -48,6 +33,21 @@ import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+
+import javax.management.ObjectName;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
 public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private Option enableHadoopOption;
@@ -338,7 +338,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             System.out.println("Clearing HBase tables");
             CleanupUtil cleanupUtil = new CleanupUtil(hadoopService.getConf(), "localhost:2181");
             cleanupUtil.cleanTables();
-            HConnectionManager.deleteConnection(hadoopService.getConf(), true);
+            HConnectionManager.deleteConnection(hadoopService.getConf());
 
             // Clear Lily ZooKeeper state
             System.out.println("Clearing Lily's ZooKeeper state");

@@ -15,24 +15,6 @@
  */
 package org.lilyproject.hadooptestfw;
 
-import javax.management.ObjectName;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.lang.management.ManagementFactory;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,6 +32,13 @@ import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
+
+import javax.management.ObjectName;
+import java.io.*;
+import java.lang.management.ManagementFactory;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
 
 /**
  * Provides access to HBase, either by starting an embedded HBase or by connecting to a running HBase.
@@ -406,7 +395,7 @@ public class HBaseProxy {
         // Make sure there actually is something within the hlog, otherwise it won't roll
         // This assumes the record table exits (doing the same with the .META. tables gives an exception
         // "Failed openScanner" at KeyComparator.compareWithoutRow in connect mode)
-        HTable table = new HTable(conf, "-ROOT-");
+        HTable table = new HTable(conf,"record"); //   (conf, "-ROOT-");
         Delete delete = new Delete(Bytes.toBytes("i-am-quite-sure-this-row-does-not-exist-ha-ha-ha"));
         table.delete(delete);
 
@@ -424,14 +413,15 @@ public class HBaseProxy {
         ObjectName replicationSources = new ObjectName("hadoop:service=Replication,name=ReplicationSource for *");
         Set<ObjectName> mbeans = jmxLiaison.queryNames(replicationSources);
         long tryUntil = System.currentTimeMillis() + timeout;
+
         nextMBean: for (ObjectName mbean : mbeans) {
             int logQSize = Integer.MAX_VALUE;
             while (logQSize > 0 && System.currentTimeMillis() < tryUntil) {
                 logQSize = (Integer)jmxLiaison.getAttribute(mbean, "sizeOfLogQueue");
                 // logQSize == 0 means there is one active hlog that is polled by replication
                 // and none that are queued for later processing
-                // System.out.println("hlog q size is " + logQSize + " for " + mbean.toString() + " max wait left is " +
-                //     (tryUntil - System.currentTimeMillis()));
+                 System.out.println("hlog q size is " + logQSize + " for " + mbean.toString() + " max wait left is " +
+                     (tryUntil - System.currentTimeMillis()));
                 if (logQSize == 0) {
                     continue nextMBean;
                 } else {

@@ -15,10 +15,6 @@
  */
 package org.lilyproject.lilyservertestfw.test;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
 import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
 import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
@@ -36,15 +32,12 @@ import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.solrtestfw.SolrDefinition;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class LilyProxyTest {
@@ -95,7 +88,9 @@ public class LilyProxyTest {
 
         // Wait for messages to be processed
         Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepEventsProcessed(10000L));
-
+        Thread.sleep(10000);
+        lilyProxy.getSolrProxy().commit();
+        lilyProxy.getSolrProxy().reload(SolrDefinition.DEFAULT_CORE_NAME);
         // Query Solr
         List<RecordId> recordIds = querySolr("name1");
 

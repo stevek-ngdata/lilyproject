@@ -15,18 +15,13 @@
  */
 package org.lilyproject.client.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
+
+import java.util.*;
 
 public class HBaseConnections {
     private List<Configuration> configurations = new ArrayList<Configuration>();
@@ -73,7 +68,7 @@ public class HBaseConnections {
         return result;
     }
 
-    public synchronized void close() {
+    public synchronized void close() throws Exception {
         for (Configuration conf : configurations) {
             forceClose(conf);
         }
@@ -87,7 +82,7 @@ public class HBaseConnections {
      *
      * @param conf hbase configuration
      */
-    private void forceClose(Configuration conf) {
+    private void forceClose(Configuration conf) throws Exception{
         final HConnection connection;
         try {
             connection = HConnectionManager.getConnection(conf);

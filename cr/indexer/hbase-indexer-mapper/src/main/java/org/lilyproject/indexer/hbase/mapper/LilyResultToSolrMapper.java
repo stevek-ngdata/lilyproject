@@ -1,24 +1,10 @@
 package org.lilyproject.indexer.hbase.mapper;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.ngdata.hbaseindexer.Configurable;
 import com.ngdata.hbaseindexer.parse.SolrUpdateWriter;
 import org.apache.commons.logging.Log;
@@ -38,30 +24,9 @@ import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.SolrDocumentBuilder;
 import org.lilyproject.indexer.engine.ValueEvaluator;
 import org.lilyproject.indexer.model.api.LResultToSolrMapper;
-import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateResolver;
-import org.lilyproject.indexer.model.indexerconf.DynamicIndexField;
-import org.lilyproject.indexer.model.indexerconf.IndexCase;
-import org.lilyproject.indexer.model.indexerconf.IndexField;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
-import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
-import org.lilyproject.indexer.model.indexerconf.MappingNode;
+import org.lilyproject.indexer.model.indexerconf.*;
 import org.lilyproject.indexer.model.util.IndexRecordFilterUtil;
-import org.lilyproject.repository.api.AbsoluteRecordId;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.IdRecord;
-import org.lilyproject.repository.api.LRepository;
-import org.lilyproject.repository.api.LTable;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.SchemaId;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.ValueType;
-import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RecordDecoder;
 import org.lilyproject.repository.impl.id.AbsoluteRecordIdImpl;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
@@ -77,9 +42,10 @@ import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
+import java.io.IOException;
+import java.util.*;
+
+import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable {
 
@@ -227,6 +193,8 @@ public class LilyResultToSolrMapper implements LResultToSolrMapper,Configurable 
 
             String tableName = event.getTableName();
             LTable table = repository.getTable(tableName != null ? tableName : LilyHBaseSchema.Table.RECORD.name);
+
+            RecordEvent.Type checkType = event.getType();
 
             if (event.getType().equals(INDEX)) {
                 if (log.isDebugEnabled()) {

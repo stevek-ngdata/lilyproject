@@ -15,35 +15,17 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
-import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
-import org.lilyproject.repository.api.BlobException;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.repository.api.TableManager;
-import org.lilyproject.repository.api.SchemaId;
-import org.lilyproject.repository.api.TypeException;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.hbase.ContainsValueComparator;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.Logs;
@@ -57,6 +39,9 @@ import org.lilyproject.util.zookeeper.LeaderElection;
 import org.lilyproject.util.zookeeper.LeaderElectionCallback;
 import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 public class BlobIncubatorMonitor {
     private Log log = LogFactory.getLog(getClass());
@@ -282,7 +267,7 @@ public class BlobIncubatorMonitor {
             get.addColumn(RecordCf.DATA.bytes, fieldType.getQualifier());
             byte[] valueToCompare = Bytes.toBytes(valueType.getNestingLevel());
             valueToCompare = Bytes.add(valueToCompare, blobKey);
-            WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
+            ByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
             Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL, valueComparator);
             get.setFilter(filter);
 

@@ -15,19 +15,49 @@
  */
 package org.lilyproject.indexer.event;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class LinkIndexUpdaterEditFilterTest {
 
     private LinkIndexUpdaterEditFilter editFilter;
+
+    private static final long SUBSCRIPTION_TIMESTAMP = 100000;
+
+    private static final byte[] TABLE_NAME = Bytes.toBytes("test_table");
+    private static final byte[] encodedRegionName = Bytes.toBytes("1028785192");
+    private static final List<UUID> clusterUUIDs = new ArrayList<UUID>();
+
+
+    private HLog.Entry createHlogEntry(byte[] tableName, KeyValue... keyValues) {
+        return createHlogEntry(tableName, SUBSCRIPTION_TIMESTAMP + 1, keyValues);
+    }
+
+    private HLog.Entry createHlogEntry(byte[] tableName, long writeTime, KeyValue... keyValues) {
+        HLog.Entry entry = mock(HLog.Entry.class, Mockito.RETURNS_DEEP_STUBS);
+        when(entry.getEdit().getKeyValues()).thenReturn(Lists.newArrayList(keyValues));
+        when(entry.getKey().getTablename()).thenReturn(TableName.valueOf(tableName));
+        when(entry.getKey().getWriteTime()).thenReturn(writeTime);
+        when(entry.getKey().getEncodedRegionName()).thenReturn(encodedRegionName);
+        when(entry.getKey().getClusterIds()).thenReturn(clusterUUIDs);
+        return entry;
+    }
 
     @Before
     public void setUp() {
@@ -36,23 +66,20 @@ public class LinkIndexUpdaterEditFilterTest {
 
     @Test
     public void testApply_NoPayload() {
-        WALEdit walEdit = new WALEdit();
-        walEdit.add(new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.OCC.bytes, Bytes.toBytes(123)));
+        HLog.Entry hLogEntry = createHlogEntry(TABLE_NAME, new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.OCC.bytes, Bytes.toBytes(123)));
 
-        editFilter.apply(walEdit);
+        editFilter.apply(hLogEntry);
 
-        assertEquals(0, walEdit.getKeyValues().size());
+        assertEquals(0, hLogEntry.getEdit().getKeyValues().size());
     }
 
     @Test
     public void testApply_WithPayload() {
+        HLog.Entry hLogEntry = createHlogEntry(TABLE_NAME, new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, Bytes.toBytes("payload")));
 
-        WALEdit walEdit = new WALEdit();
-        walEdit.add(new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes, Bytes.toBytes("payload")));
+        editFilter.apply(hLogEntry);
 
-        editFilter.apply(walEdit);
-
-        assertEquals(1, walEdit.getKeyValues().size());
+        assertEquals(1, hLogEntry.getEdit().getKeyValues().size());
     }
 
 }

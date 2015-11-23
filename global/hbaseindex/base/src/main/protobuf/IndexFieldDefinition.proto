@@ -1,0 +1,13 @@
+option java_package = "org.lilyproject.hbaseindex";
+option java_outer_classname = "IndexFieldDefinitionProto";
+option java_generate_equals_and_hash = true;
+option optimize_for = SPEED;
+
+message IndexFieldDefinition {
+    required string name = 1;
+    enum Order {
+        ASCENDING = 0;
+        DESCENDING = 1;
+    }
+    required Order order = 2;
+}

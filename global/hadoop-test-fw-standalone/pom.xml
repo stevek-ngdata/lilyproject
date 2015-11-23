@@ -46,8 +46,7 @@
     <!-- Dependencies we need to repeat here because otherwise their scope is lost -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase</artifactId>
-      <classifier>tests</classifier>
+      <artifactId>hbase-testing-util</artifactId>
       <scope>runtime</scope>
     </dependency>
 

@@ -1,0 +1,18 @@
+option java_package = "org.lilyproject.repository.impl.hbase";
+option java_outer_classname = "LilyFieldSingleColumnValueFilterProto";
+option java_generate_equals_and_hash = true;
+option optimize_for = SPEED;
+
+import "HBase.proto";
+import "Comparator.proto";
+
+message LilyFieldSingleColumnValueFilter {
+    required bytes columnFamily = 1;
+    required bytes columnQualifier = 2;
+    required CompareType compareOp = 3;
+    required Comparator comparator = 4;
+    optional bool foundColumn = 5;
+    optional bool matchedColumn = 6;
+    optional bool filterIfMissing = 7;
+    optional bool latestVersionOnly = 8;
+}

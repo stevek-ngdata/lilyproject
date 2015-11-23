@@ -1,16 +1,5 @@
 package org.lilyproject.indexer.batchbuild.test;
 
-import static com.google.common.collect.ImmutableMap.of;
-import static org.junit.Assert.assertEquals;
-import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.CORE1;
-import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.CORE2;
-import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.MINS15;
-import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.PRIMARY_INDEX;
-import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.SECUNDARY_INDEX;
-import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.fieldtype;
-import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.linkField;
-import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.rectype;
-
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -24,6 +13,10 @@ import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.LRepository;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.RecordId;
+
+import static com.google.common.collect.ImmutableMap.of;
+import static org.junit.Assert.assertEquals;
+import static org.lilyproject.indexer.batchbuild.test.IndexerIntegrationTestUtil.*;
 
 
 
@@ -58,6 +51,10 @@ public class MultiRepositoryIntegrationTest {
         createRecord(util.primaryRepo, "testId", "name1");
         createRecord(util.secundaryRepo, "testId", "name2");
         waitForSepAndCommitSolr();
+        lilyProxy.getSolrProxy().reload(CORE1);
+        Thread.sleep(10000);
+        lilyProxy.getSolrProxy().reload(CORE2);
+        Thread.sleep(10000);
         assertEquals("One document per repository", 1, countDocsInRepo(CORE1));
         assertEquals("One document per repository", 1, countDocsInRepo(CORE2));
         verifyFieldValue(getAllDocs(CORE1), "USER.testId", "name1");
@@ -71,6 +68,10 @@ public class MultiRepositoryIntegrationTest {
         lilyProxy.getLilyServerProxy().batchBuildIndex(PRIMARY_INDEX, MINS15);
         lilyProxy.getLilyServerProxy().batchBuildIndex(SECUNDARY_INDEX, MINS15);
         lilyProxy.getSolrProxy().commit();
+        lilyProxy.getSolrProxy().reload(CORE1);
+        Thread.sleep(10000);
+        lilyProxy.getSolrProxy().reload(CORE2);
+        Thread.sleep(10000);
         assertEquals("One document per repository", 1, countDocsInRepo(CORE1));
         assertEquals("One document per repository", 1, countDocsInRepo(CORE2));
         verifyFieldValue(getAllDocs(CORE1), "USER.testId", "name1");
@@ -83,6 +84,10 @@ public class MultiRepositoryIntegrationTest {
         linkToOtherRecord(util.primaryRepo);
         linkToOtherRecord(util.secundaryRepo);
         waitForSepAndCommitSolr();
+        lilyProxy.getSolrProxy().reload(CORE1);
+        Thread.sleep(10000);
+        lilyProxy.getSolrProxy().reload(CORE2);
+        Thread.sleep(10000);
         SolrDocumentList primaryDocs = getAllDocs(CORE1);
         assertEquals(2, primaryDocs.getNumFound());
         verifyDeref(primaryDocs, "USER.testId", "name3");
@@ -142,5 +147,6 @@ public class MultiRepositoryIntegrationTest {
     private void waitForSepAndCommitSolr() throws Exception {
         lilyProxy.getHBaseProxy().waitOnSepIdle(300000);
         lilyProxy.getSolrProxy().commit();
+        Thread.sleep(20000);
     }
 }

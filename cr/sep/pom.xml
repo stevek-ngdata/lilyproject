@@ -43,6 +43,16 @@
       <artifactId>hbase-sep-impl</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.ngdata</groupId>
+      <artifactId>hbase-sep-impl-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-minicluster</artifactId>
+      <version>${version.hadoop.mr1}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-hbase-util</artifactId>
     </dependency>

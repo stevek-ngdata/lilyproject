@@ -104,4 +104,15 @@
 
   </dependencies>
 
+  <build>
+    <plugins>
+      <!-- Generate protobuf sources -->
+      <plugin>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-maven-plugins</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+
 </project>

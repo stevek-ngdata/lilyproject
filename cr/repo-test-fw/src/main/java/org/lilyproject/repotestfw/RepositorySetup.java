@@ -15,18 +15,6 @@
  */
 package org.lilyproject.repotestfw;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import org.lilyproject.repository.model.api.RepositoryDefinition;
-import org.lilyproject.util.hbase.RepoAndTableUtil;
-
-import org.lilyproject.repository.master.RepositoryMaster;
-
 import com.ngdata.sep.EventListener;
 import com.ngdata.sep.SepModel;
 import com.ngdata.sep.impl.SepConsumer;
@@ -41,32 +29,14 @@ import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.AvroLilyImpl;
 import org.lilyproject.avro.LilySpecificResponder;
 import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.api.BlobStoreAccessFactory;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.RecordFactory;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.TableManager;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.impl.AbstractSchemaCache;
-import org.lilyproject.repository.impl.BlobManagerImpl;
-import org.lilyproject.repository.impl.BlobStoreAccessConfig;
-import org.lilyproject.repository.impl.DFSBlobStoreAccess;
-import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
-import org.lilyproject.repository.impl.HBaseRepository;
-import org.lilyproject.repository.impl.HBaseRepositoryManager;
-import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.repository.impl.InlineBlobStoreAccess;
-import org.lilyproject.repository.impl.RecordFactoryImpl;
-import org.lilyproject.repository.impl.TableManagerImpl;
-import org.lilyproject.repository.impl.CoreRepositoryMasterHook;
-import org.lilyproject.repository.impl.SchemaCache;
-import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
-import org.lilyproject.repository.impl.RepoTableKey;
+import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.*;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+import org.lilyproject.repository.master.RepositoryMaster;
+import org.lilyproject.repository.master.RepositoryMasterHook;
+import org.lilyproject.repository.model.api.RepositoryDefinition;
+import org.lilyproject.repository.model.api.RepositoryModel;
+import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.repository.remote.AvroLilyTransceiver;
 import org.lilyproject.repository.remote.RemoteRepositoryManager;
 import org.lilyproject.repository.remote.RemoteTypeManager;
@@ -74,16 +44,21 @@ import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.sep.LilyEventPublisherManager;
 import org.lilyproject.sep.LilyPayloadExtractor;
 import org.lilyproject.sep.ZooKeeperItfAdapter;
-import org.lilyproject.repository.master.RepositoryMasterHook;
-import org.lilyproject.repository.model.api.RepositoryModel;
-import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -263,6 +238,7 @@ public class RepositorySetup {
      */
     public void waitForSepProcessing() throws Exception {
         long timeout = 60000L;
+        Thread.sleep(3000);
         boolean success = hbaseProxy.waitOnReplication(timeout);
         if (!success) {
             throw new Exception("Events were not processed within a timeout of " + timeout + "ms");

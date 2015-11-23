@@ -15,29 +15,29 @@
  */
 package org.lilyproject.repository.impl.hbase;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
-import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
+import com.google.protobuf.HBaseZeroCopyByteString;
+import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
+import com.google.protobuf.InvalidProtocolBufferException;
 
-public class ContainsValueComparator extends WritableByteArrayComparable {
+public class ContainsValueComparator extends ByteArrayComparable {
     private byte[] nestingLevelAndValue;
     private int offset;
 
     /**
      * Nullary constructor, for Writable
      */
-    public ContainsValueComparator() {
+    /*public ContainsValueComparator() {
         super();
-    }
+    }*/
 
     /**
      * Constructor.
      *
      */
     public ContainsValueComparator(byte[] nestingLevelAndValue) {
+        super(nestingLevelAndValue);
         this.nestingLevelAndValue = nestingLevelAndValue;
     }
 
@@ -46,7 +46,7 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
         return nestingLevelAndValue;
     }
 
-    @Override
+   /* @Override
     public void readFields(DataInput in) throws IOException {
         nestingLevelAndValue = Bytes.readByteArray(in);
     }
@@ -54,7 +54,7 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
     @Override
     public void write(DataOutput out) throws IOException {
         Bytes.writeByteArray(out, nestingLevelAndValue);
-    }
+    } */
 
     @Override
     /**
@@ -111,7 +111,7 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
     private int compareBlob(byte[] ourStoreKey, byte[] theirValue) {
         offset++; // Skip the encoding byte. Currently there is only one encoding version so we can ignore it.
         int blobValueLength = readVInt(theirValue); // Length of the blob value
-        int compareTo = Bytes.compareTo(ourStoreKey, 0, ourStoreKey.length, theirValue, offset , blobValueLength);
+        int compareTo = Bytes.compareTo(ourStoreKey, 0, ourStoreKey.length, theirValue, offset, blobValueLength);
         offset += blobValueLength;
         return compareTo;
     }
@@ -146,4 +146,27 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
          }
          return i;
      }
+
+    private ContainsValueComparatorProto.ContainsValueComparator convert() {
+        ContainsValueComparatorProto.ContainsValueComparator.Builder builder =
+                ContainsValueComparatorProto.ContainsValueComparator.newBuilder();
+
+        builder.setNestingLevelAndValue(HBaseZeroCopyByteString.wrap(this.nestingLevelAndValue));
+
+        return builder.build();
+    }
+
+    public byte[] toByteArray() { return convert().toByteArray(); }
+
+    public static ContainsValueComparator parseFrom(final byte[] pbBytes) throws DeserializationException {
+        ContainsValueComparatorProto.ContainsValueComparator proto;
+        try {
+            proto = ContainsValueComparatorProto.ContainsValueComparator.parseFrom(pbBytes);
+        } catch (InvalidProtocolBufferException e) {
+            throw new DeserializationException(e);
+        }
+
+
+        return new ContainsValueComparator(proto.getNestingLevelAndValue().toByteArray());
+    }
 }

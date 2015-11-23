@@ -15,20 +15,21 @@
  */
 package org.lilyproject.repository.impl.hbase;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedMap;
-
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.impl.hbase.LilyRecordVariantFilterProto.keyValue;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.util.ArgumentValidator;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * Actual implementation of an HBase filter to filter out variant lily records. This returns all records which have
@@ -96,7 +97,41 @@ public class LilyRecordVariantFilter extends FilterBase {
         });
     }
 
+    private LilyRecordVariantFilterProto.LilyRecordVariantFilter convert() {
+        LilyRecordVariantFilterProto.LilyRecordVariantFilter.Builder builder = LilyRecordVariantFilterProto.LilyRecordVariantFilter.newBuilder();
+        ArrayList<LilyRecordVariantFilterProto.keyValue> variantList = new ArrayList<LilyRecordVariantFilterProto.keyValue>();
+        for (Map.Entry<String,String> variantProperty : variantProperties.entrySet()) {
+            keyValue.Builder myKeyValue = keyValue.newBuilder();
+            myKeyValue.setKey(variantProperty.getKey());
+            myKeyValue.setValue(variantProperty.getValue() != null ? variantProperty.getValue() : "\u0000");
+            variantList.add(myKeyValue.build());
+        }
+        builder.addAllVariantMap(variantList);
+        return builder.build();
+    }
 
+    public byte[] toByteArray() { return convert().toByteArray(); }
+
+    public static LilyRecordVariantFilter parseFrom(final byte[] pbBytes) throws DeserializationException {
+        LilyRecordVariantFilterProto.LilyRecordVariantFilter proto;
+        try {
+            proto = LilyRecordVariantFilterProto.LilyRecordVariantFilter.parseFrom(pbBytes);
+        } catch (InvalidProtocolBufferException e) {
+            throw new DeserializationException(e);
+        }
+
+        ArrayList<LilyRecordVariantFilterProto.keyValue> variantList = new ArrayList<LilyRecordVariantFilterProto.keyValue>(proto.getVariantMapList());
+        Map<String,String> variantMap = new HashMap<String, String>();
+        for (LilyRecordVariantFilterProto.keyValue keyValue : variantList ) {
+            final String key = keyValue.getKey();
+            final String value = keyValue.getValue();
+            variantMap.put(key,value.equals("\u0000") ? null : value);
+
+        }
+
+        return new LilyRecordVariantFilter(variantMap);
+    }
+/*
     public void write(DataOutput out) throws IOException {
         out.writeInt(variantProperties.size());
         for (Map.Entry<String, String> variantProperty : variantProperties.entrySet()) {
@@ -114,5 +149,6 @@ public class LilyRecordVariantFilter extends FilterBase {
             variantProperties.put(key, value.equals("\u0000") ? null : value);
         }
     }
+*/
 }
 

@@ -1,30 +1,16 @@
 // Do not apply Lily license
 package org.lilyproject.util.hbase.metrics;
 
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.AttributeNotFoundException;
-import javax.management.DynamicMBean;
-import javax.management.InvalidAttributeValueException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanException;
-import javax.management.MBeanInfo;
-import javax.management.MBeanOperationInfo;
-import javax.management.ReflectionException;
+import org.apache.hadoop.metrics.MetricsUtil;
+import org.apache.hadoop.metrics.util.*;
+
+import javax.management.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.hbase.metrics.MetricsRate;
-import org.apache.hadoop.metrics.MetricsUtil;
-import org.apache.hadoop.metrics.util.MetricsBase;
-import org.apache.hadoop.metrics.util.MetricsIntValue;
-import org.apache.hadoop.metrics.util.MetricsLongValue;
-import org.apache.hadoop.metrics.util.MetricsRegistry;
-import org.apache.hadoop.metrics.util.MetricsTimeVaryingInt;
-import org.apache.hadoop.metrics.util.MetricsTimeVaryingLong;
-import org.apache.hadoop.metrics.util.MetricsTimeVaryingRate;
+//import org.apache.hadoop.hbase.metrics.MetricsRate;
 
 /**
  * This class was copied from Hadoop and extended to support some new types of metrics.
@@ -90,10 +76,10 @@ public abstract class MetricsDynamicMBeanBase implements DynamicMBean {
       } else if ( MetricsNonTimeRate.class.isInstance(o)) {
           attributesInfo.add(new MBeanAttributeInfo(o.getName(), "java.lang.Float", o.getDescription(),
                   true, false, false));
-      } else if ( MetricsRate.class.isInstance(o)) {
+      } else /*if ( MetricsRate.class.isInstance(o)) {
           attributesInfo.add(new MBeanAttributeInfo(o.getName(), "java.lang.Float", o.getDescription(),
                   true, false, false));
-      } else {
+      } else*/ {
         MetricsUtil.LOG.error("unknown metrics type: " + o.getClass().getName());
       }
 
@@ -150,10 +136,10 @@ public abstract class MetricsDynamicMBeanBase implements DynamicMBean {
     } else if (o instanceof MetricsNonTimeRate) {
         MetricsNonTimeRate metric = (MetricsNonTimeRate)o;
         return metric.getPreviousIntervalValue();
-    } else if (o instanceof MetricsRate) {
+    } /*else if (o instanceof MetricsRate) {
         MetricsRate metric = (MetricsRate)o;
         return metric.getPreviousIntervalValue();
-    } else {
+    } */else {
         MetricsUtil.LOG.error("unknown metrics type: " + o.getClass().getName());
         throw new AttributeNotFoundException();
     }

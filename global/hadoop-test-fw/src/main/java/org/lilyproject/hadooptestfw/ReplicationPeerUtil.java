@@ -15,8 +15,6 @@
  */
 package org.lilyproject.hadooptestfw;
 
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -68,9 +66,9 @@ public class ReplicationPeerUtil implements ReplicationPeerUtilMBean {
         }
 
         try {
-            MBeanServerConnection connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
-            ObjectName replicationSourceMBean = new ObjectName("hadoop:service=Replication,name=ReplicationSource for " + peerId);
-            connection.unregisterMBean(replicationSourceMBean);
+//            MBeanServerConnection connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
+//            ObjectName replicationSourceMBean = new ObjectName("hadoop:service=Replication,name=ReplicationSource for " + peerId);
+//            connection.unregisterMBean(replicationSourceMBean);
         } catch (Exception e) {
             throw new RuntimeException("Error removing replication source mean for " + peerId, e);
         }

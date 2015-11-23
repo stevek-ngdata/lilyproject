@@ -15,12 +15,12 @@
  */
 package org.lilyproject.server.modules.general;
 
-import javax.annotation.PreDestroy;
-
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.lilyproject.util.hbase.LocalHTable;
+
+import javax.annotation.PreDestroy;
 
 public class HBaseConnectionDisposer {
     private Configuration conf;
@@ -38,7 +38,7 @@ public class HBaseConnectionDisposer {
             LocalHTable.closeAllPools();
 
             // FIXME : is this still needed?
-            HConnectionManager.deleteConnection(conf, true);
+            HConnectionManager.deleteConnection(conf);
         } catch (Throwable t) {
             LogFactory.getLog(getClass()).error("Problem cleaning up HBase connections", t);
         }

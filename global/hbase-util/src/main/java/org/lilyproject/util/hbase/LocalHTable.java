@@ -15,46 +15,25 @@
  */
 package org.lilyproject.util.hbase;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.HTableInterfaceFactory;
-import org.apache.hadoop.hbase.client.HTablePool;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.RowLock;
-import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
-import org.apache.hadoop.hbase.ipc.CoprocessorProtocol;
+import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.concurrent.WaitPolicy;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.concurrent.*;
+
+//import org.apache.hadoop.hbase.client.RowLock;
+//import org.apache.hadoop.hbase.ipc.CoprocessorProtocol;
 
 /**
  * This is a threadsafe solution for the non-threadsafe HTable.
@@ -398,7 +377,7 @@ public class LocalHTable implements HTableInterface {
         // Not allowed, since pooled.
     }
 
-    @Override
+    /*@Override
     public RowLock lockRow(final byte[] row) throws IOException {
         return runNoIE(new TableRunnable<RowLock>() {
             @Override
@@ -417,7 +396,7 @@ public class LocalHTable implements HTableInterface {
                 return null;
             }
         });
-    }
+    }*/
 
     @Override
     public void batch(final List<? extends Row> actions, final Object[] results) throws IOException, InterruptedException {
@@ -460,7 +439,7 @@ public class LocalHTable implements HTableInterface {
         });
     }
 
-    @Override
+    /*@Override
     public <T extends CoprocessorProtocol> T coprocessorProxy(final Class<T> protocol, final byte[] row) {
         return runNoExc(new TableRunnable<T>() {
             @Override
@@ -490,7 +469,7 @@ public class LocalHTable implements HTableInterface {
         } finally {
             table.close();
         }
-    }
+    }*/
 
     @Override
     public void mutateRow(final RowMutations rm) throws IOException {
@@ -531,6 +510,154 @@ public class LocalHTable implements HTableInterface {
     @Override
     public void setWriteBufferSize(long writeBufferSize) throws IOException {
         throw new UnsupportedOperationException("setWriteBufferSize is not supported on LocalHTables");
+    }
+
+    //added for HBase .98
+
+    @Override
+    public CoprocessorRpcChannel coprocessorService(byte[] row) {
+        HTableInterface table = pool.getTable(tableNameString);
+        try {
+            return table.coprocessorService(row);
+        } finally {
+            try {
+                table.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    @Override
+    public <T extends com.google.protobuf.Service,R> Map<byte[],R> coprocessorService(Class<T> service, byte[] startKey, byte[] endKey, Batch.Call<T,R> callable)
+            throws Throwable {
+        HTableInterface table = pool.getTable(tableNameString);
+        try {
+            return table.coprocessorService(service, startKey, endKey, callable);
+        } finally {
+            try {
+                table.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public <T extends com.google.protobuf.Service,R> void coprocessorService(Class<T> service, byte[] startKey, byte[] endKey, Batch.Call<T,R> callable,
+                                                                             Batch.Callback<R> callback)
+            throws Throwable {
+        HTableInterface table = pool.getTable(tableNameString);
+        try {
+            table.coprocessorService(service, startKey, endKey, callable);
+        } finally {
+            try {
+                table.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public <R extends com.google.protobuf.Message> Map<byte[],R> batchCoprocessorService(com.google.protobuf.Descriptors.MethodDescriptor methodDescriptor,
+                                                                                         com.google.protobuf.Message request, byte[] startKey, byte[] endKey, R responsePrototype)
+            throws com.google.protobuf.ServiceException,
+            Throwable {
+        HTableInterface table = pool.getTable(tableNameString);
+        try {
+            return table.batchCoprocessorService(methodDescriptor, request, startKey, endKey, responsePrototype);
+        } finally {
+            try {
+                table.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public <R extends com.google.protobuf.Message> void batchCoprocessorService(com.google.protobuf.Descriptors.MethodDescriptor methodDescriptor,
+                                                                                com.google.protobuf.Message request,
+                                                                                byte[] startKey, byte[] endKey, R responsePrototype, Batch.Callback<R> callback)
+            throws Throwable {
+        HTableInterface table = pool.getTable(tableNameString);
+        try {
+            table.batchCoprocessorService(methodDescriptor, request, startKey, endKey, responsePrototype);
+        } finally {
+            try {
+                table.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public <R> Object[] batchCallback(List<? extends Row> actions,
+                                      Batch.Callback<R> callback)
+            throws IOException,
+            InterruptedException {
+        HTableInterface table = pool.getTable(tableNameString);
+        try {
+            return table.batchCallback(actions, callback);
+        } finally {
+            try {
+                table.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public <R> void batchCallback(List<? extends Row> actions,
+                                  Object[] results,
+                                  Batch.Callback<R> callback)
+            throws IOException,
+            InterruptedException {
+        HTableInterface table = pool.getTable(tableNameString);
+        try {
+            table.batchCallback(actions, callback);
+        } finally {
+            try {
+                table.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public TableName getName() {
+        HTableInterface table = pool.getTable(tableNameString);
+        return table.getName();
+    }
+
+    @Override
+    public void setAutoFlushTo(boolean autoFlush) {
+        throw new UnsupportedOperationException("setAutoFlushTo is not supported on LocalHTables");
+    }
+
+    @Override
+    public Boolean[] exists(final List<Get> get) throws IOException {
+        return runNoIE(new TableRunnable<Boolean[]>() {
+            @Override
+            public Boolean[] run(HTableInterface table) throws IOException, InterruptedException {
+                return table.exists(get);
+            }
+        });
+    }
+
+    public long incrementColumnValue(final byte[] row, final byte[] family, final byte[] qualifier, final long amount, final Durability durability)
+            throws IOException {
+        return runNoIE(new TableRunnable<Long>() {
+            @Override
+            public Long run(HTableInterface table) throws IOException {
+                return table.incrementColumnValue(row, family, qualifier, amount, durability);
+            }
+        });
     }
 
     private <T> T run(TableRunnable<T> runnable) throws IOException, InterruptedException {

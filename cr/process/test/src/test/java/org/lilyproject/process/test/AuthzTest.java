@@ -3,6 +3,7 @@ package org.lilyproject.process.test;
 import com.google.common.collect.Sets;
 import com.ngdata.lily.security.hbase.client.AuthorizationContext;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.OperationWithAttributes;
 import org.apache.hadoop.hbase.client.Put;
@@ -10,7 +11,7 @@ import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
+import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.junit.Test;
 import org.lilyproject.lilyservertestfw.LilyProxy;
@@ -92,15 +93,15 @@ public class AuthzTest {
         }
 
         @Override
-        public void prePut(ObserverContext<RegionCoprocessorEnvironment> e, Put put, WALEdit edit, boolean writeToWAL)
+        public void prePut(ObserverContext<RegionCoprocessorEnvironment> e, Put put, WALEdit edit, Durability durability)
                 throws IOException {
             extractAuthzCtx(put);
         }
 
         @Override
-        public boolean preCheckAndPut(ObserverContext<RegionCoprocessorEnvironment> e, byte[] row, byte[] family,
-                byte[] qualifier, CompareFilter.CompareOp compareOp, WritableByteArrayComparable comparator, Put put,
-                boolean result) throws IOException {
+        public boolean preCheckAndPut(ObserverContext<RegionCoprocessorEnvironment> e, byte[] row,byte[] family, byte[] qualifier,
+                                      CompareFilter.CompareOp compareOp, ByteArrayComparable comparator, Put put, boolean result)
+                throws IOException {
             extractAuthzCtx(put);
             return result;
         }

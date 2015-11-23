@@ -1,0 +1,13 @@
+option java_package = "org.lilyproject.repository.impl.hbase";
+option java_outer_classname = "LilyRecordVariantFilterProto";
+option java_generate_equals_and_hash = true;
+option optimize_for = SPEED;
+
+message keyValue {
+    required string key = 1;
+    required string value = 2;
+}
+
+message LilyRecordVariantFilter {
+    repeated keyValue variantMap = 1;
+}

@@ -38,14 +38,21 @@
     <version.log4j>1.2.16</version.log4j>
     <version.slf4j>1.6.1</version.slf4j>
     <version.jaxrs>1.1.1</version.jaxrs>
+    <version.guava>11.0.2</version.guava>
+    <version.protobuf>2.5.0</version.protobuf>
+    <version.kafka>0.8.1.1</version.kafka>
+    <version.metrics>3.0.2</version.metrics>
+    <version.giraph>1.1.0-cdh5.1.2+2-lily</version.giraph>
+
 
     <version.avro>1.7.4_813</version.avro>
 
     <!-- Align jetty versions -->
     <version.jetty>6.1.26.cloudera.2</version.jetty>
 
+    <!-- <version.hbase-indexer>1.5${version.cdh}</version.hbase-indexer> -->
     <version.hbase-indexer>1.5</version.hbase-indexer>
-    <version.hbase-indexer.sep>1.5-hbase0.98</version.hbase-indexer.sep>
+    <version.hbase-indexer.sep>${version.hbase-indexer}-hbase0.98</version.hbase-indexer.sep>
 
     <!-- Tells maven plugins what file encoding to use -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -185,6 +192,11 @@
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
         <version>1.6</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>${version.protobuf}</version>
       </dependency>
       <dependency>
         <groupId>commons-jxpath</groupId>
@@ -695,12 +707,40 @@
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+          </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hbase</groupId>
+        <artifactId>hbase-server</artifactId>
+        <version>${version.hbase}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hbase</groupId>
+        <artifactId>hbase-common</artifactId>
+        <version>${version.hbase}</version>
       </dependency>
       <dependency>
         <groupId>com.ngdata</groupId>
         <artifactId>hbase-sep-impl-common</artifactId>
         <version>${version.hbase-indexer}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.apache.hbase</groupId>
+              <artifactId>hbase-testing-util</artifactId>
+            </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.ngdata</groupId>
@@ -802,8 +842,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase</artifactId>
-        <classifier>tests</classifier>
+        <artifactId>hbase-testing-util</artifactId>
         <version>${version.hbase}</version>
         <scope>test</scope>
         <exclusions>
@@ -1044,6 +1083,10 @@
           <exclusion>
             <groupId>edu.ucar</groupId>
             <artifactId>netcdf</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1307,6 +1350,31 @@
           <configuration>
             <includeTypes>jar</includeTypes>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-maven-plugins</artifactId>
+          <executions>
+            <execution>
+              <id>compile-protoc</id>
+              <phase>generate-sources</phase>
+              <goals>
+                <goal>protoc</goal>
+              </goals>
+              <configuration>
+                <protocVersion>${version.protobuf}</protocVersion>
+                <imports>
+                  <param>${project.basedir}/src/main/protobuf</param>
+                </imports>
+                <source>
+                  <directory>${project.basedir}/src/main/protobuf</directory>
+                  <includes>
+                    <include>*.proto</include>
+                  </includes>
+                </source>
+              </configuration>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>

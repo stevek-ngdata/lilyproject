@@ -15,13 +15,14 @@
  */
 package org.lilyproject.indexer.event;
 
-import java.util.List;
-
 import com.ngdata.sep.WALEditFilter;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+
+import java.util.List;
 
 /**
  * Edit filter for the {@code LinkIndexUpdater}.
@@ -29,7 +30,8 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 public class LinkIndexUpdaterEditFilter implements WALEditFilter {
 
     @Override
-    public void apply(WALEdit walEdit) {
+    public void apply(HLog.Entry hLogEntry) {
+        WALEdit walEdit = hLogEntry.getEdit();
         List<KeyValue> keyValues = walEdit.getKeyValues();
         for (int i = keyValues.size() - 1; i >= 0; i--) {
             KeyValue kv = keyValues.get(i);

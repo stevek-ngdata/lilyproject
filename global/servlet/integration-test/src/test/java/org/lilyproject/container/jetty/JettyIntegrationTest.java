@@ -1,13 +1,5 @@
 package org.lilyproject.container.jetty;
 
-import static java.lang.System.setProperty;
-import static java.util.Arrays.asList;
-import static org.fest.assertions.Assertions.assertThat;
-import static org.fest.assertions.MapAssert.entry;
-
-import java.io.File;
-import java.io.IOException;
-
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.io.FileUtils;
@@ -20,6 +12,14 @@ import org.lilyproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.servletregistry.api.ServletRegistry;
 import org.lilyproject.util.test.TestHomeUtil;
 import org.springframework.core.io.ClassPathResource;
+
+import java.io.File;
+import java.io.IOException;
+
+import static java.lang.System.setProperty;
+import static java.util.Arrays.asList;
+import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.assertions.MapAssert.entry;
 
 
 public class JettyIntegrationTest {
@@ -120,7 +120,8 @@ public class JettyIntegrationTest {
         Client client = new Client();
         ClientResponse response = client.resource("http://localhost:12060/repository/schema/recordType")
                 .header("X-NGDATA-TEST", "example-data").get(ClientResponse.class);
-        JSONObject object =  response.getEntity(JSONObject.class);
+        String json = response.getEntity(String.class);
+        JSONObject object =  new JSONObject(json); //response.getEntity(JSONObject.class);
 
         assertThat(object).isNotNull();
         assertThat(object.keys()).contains("results");
@@ -130,7 +131,8 @@ public class JettyIntegrationTest {
     @Test
     public void testHttpsIsReady() throws Exception {
         Client client = new Client();
-        JSONObject object = client.resource("https://localhost:12443/repository/schema/recordType").get(JSONObject.class);
+        String json = client.resource("https://localhost:12443/repository/schema/recordType").get(String.class);
+        JSONObject object = new JSONObject(json); //client.resource("https://localhost:12443/repository/schema/recordType").get(JSONObject.class);
         assertThat(object).isNotNull();
         assertThat(object.keys()).contains("results");
     }

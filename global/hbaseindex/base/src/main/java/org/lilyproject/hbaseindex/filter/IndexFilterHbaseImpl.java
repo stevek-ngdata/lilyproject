@@ -15,17 +15,20 @@
  */
 package org.lilyproject.hbaseindex.filter;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.List;
-
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.gotometrics.orderly.StructIterator;
 import com.gotometrics.orderly.StructRowKey;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.lilyproject.hbaseindex.IndexDefinition;
 import org.lilyproject.hbaseindex.IndexFieldDefinition;
+import org.lilyproject.hbaseindex.IndexFilterHbaseImplProto;
+
+import java.io.*;
+import java.util.List;
 
 /**
  * Actual implementation of {@link IndexFilter} as an HBase filter.
@@ -43,12 +46,36 @@ public class IndexFilterHbaseImpl extends FilterBase {
         this.indexDefinition = indexDefinition;
     }
 
+    public IndexFilterHbaseImpl(byte[] indexFilterByteArray, byte[] indexDefinitionByteArray) {
+        ByteArrayInputStream indexFilterByteArrayStream = new ByteArrayInputStream(indexFilterByteArray);
+        DataInputStream indexFilterDataInputStream = new DataInputStream(indexFilterByteArrayStream);
+
+        try {
+            final String indexFilterClassName = indexFilterDataInputStream.readUTF();
+            this.indexFilter = (IndexFilter) tryInstantiateClass(indexFilterClassName);
+            this.indexFilter.readFields(indexFilterDataInputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        ByteArrayInputStream indexDefitionByteArrayStream = new ByteArrayInputStream(indexDefinitionByteArray);
+        DataInputStream indexDefinitionDataInputStream = new DataInputStream(indexDefitionByteArrayStream);
+        try {
+            final String indexDefinitionClassName = indexDefinitionDataInputStream.readUTF();
+            this.indexDefinition = (IndexDefinition) tryInstantiateClass(indexDefinitionClassName);
+            this.indexDefinition.readFields(indexDefinitionDataInputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public IndexFilterHbaseImpl() {
         // for hbase readFields
     }
 
     @Override
-    public ReturnCode filterKeyValue(KeyValue keyValue) {
+    public ReturnCode filterKeyValue(Cell ignore) {
+        KeyValue keyValue = (KeyValue) ignore;
         // for all data qualifiers that we are interested in
         for (byte[] dataQualifier : indexFilter.getFilteredDataQualifiers()) {
             // check if the key value is about one of those data qualifiers
@@ -93,24 +120,42 @@ public class IndexFilterHbaseImpl extends FilterBase {
         return false; // nothing was  skipped
     }
 
-    @Override
-    public void write(DataOutput out) throws IOException {
-        out.writeUTF(indexDefinition.getClass().getName());
-        indexDefinition.write(out);
+   private IndexFilterHbaseImplProto.IndexFilterHbaseImpl convert() throws IOException {
+        IndexFilterHbaseImplProto.IndexFilterHbaseImpl.Builder builder =
+                IndexFilterHbaseImplProto.IndexFilterHbaseImpl.newBuilder();
+        if (this.indexFilter != null) {
+            ByteArrayOutputStream indexFilterByteArray = new ByteArrayOutputStream();
+            DataOutput indexFilterDataOutput = new DataOutputStream(indexFilterByteArray);
+            indexFilterDataOutput.writeUTF(this.indexFilter.getClass().getName());
+            this.indexFilter.write(indexFilterDataOutput);
+            builder.setIndexFilter(ByteString.copyFrom(indexFilterByteArray.toByteArray()));
+        }
+        if (this.indexDefinition != null) {
+            ByteArrayOutputStream indexDefinitionByteArray = new ByteArrayOutputStream();
+            DataOutput indexDefinitionDataOutput = new DataOutputStream(indexDefinitionByteArray);
+            indexDefinitionDataOutput.writeUTF(this.indexDefinition.getClass().getName());
+            this.indexDefinition.write(indexDefinitionDataOutput);
+            builder.setIndexDefinition(ByteString.copyFrom(indexDefinitionByteArray.toByteArray()));
+        }
 
-        out.writeUTF(indexFilter.getClass().getName());
-        indexFilter.write(out);
+        return builder.build();
     }
 
-    @Override
-    public void readFields(DataInput in) throws IOException {
-        final String indexDefinitionClassName = in.readUTF();
-        indexDefinition = (IndexDefinition) tryInstantiateClass(indexDefinitionClassName);
-        indexDefinition.readFields(in);
+    public byte[] toByteArray() throws IOException { return convert().toByteArray(); }
 
-        final String indexFilterClassName = in.readUTF();
-        indexFilter = (IndexFilter) tryInstantiateClass(indexFilterClassName);
-        indexFilter.readFields(in);
+    public static IndexFilterHbaseImpl parseFrom(final byte[] pbBytes) throws DeserializationException {
+        IndexFilterHbaseImplProto.IndexFilterHbaseImpl proto;
+        try {
+            proto = IndexFilterHbaseImplProto.IndexFilterHbaseImpl.parseFrom(pbBytes);
+        } catch (InvalidProtocolBufferException e) {
+            throw new DeserializationException(e);
+        }
+
+        byte[] indexFilter = proto.getIndexFilter().toByteArray();
+        byte[] indexDefinition = proto.getIndexDefinition().toByteArray();
+        IndexFilterHbaseImpl newIndexFilterHbaseImpl = new IndexFilterHbaseImpl(indexFilter,indexDefinition);
+
+        return newIndexFilterHbaseImpl;
     }
 
     private Object tryInstantiateClass(String className) throws IOException {

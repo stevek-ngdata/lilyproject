@@ -15,26 +15,6 @@
  */
 package org.lilyproject.indexer.engine.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
-import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -44,12 +24,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.ngdata.hbaseindexer.HBaseIndexerConfiguration;
 import com.ngdata.hbaseindexer.SolrConnectionParams;
-import com.ngdata.hbaseindexer.model.api.IndexerDefinition;
-import com.ngdata.hbaseindexer.model.api.IndexerDefinitionBuilder;
-import com.ngdata.hbaseindexer.model.api.IndexerModelEvent;
-import com.ngdata.hbaseindexer.model.api.IndexerModelEventType;
-import com.ngdata.hbaseindexer.model.api.IndexerModelListener;
-import com.ngdata.hbaseindexer.model.api.WriteableIndexerModel;
+import com.ngdata.hbaseindexer.model.api.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -62,49 +37,15 @@ import org.apache.solr.common.SolrDocument;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.hbase.mapper.LilyIndexerComponentFactory;
 import org.lilyproject.indexer.model.api.LResultToSolrMapper;
-import org.lilyproject.indexer.model.indexerconf.DerefValue;
-import org.lilyproject.indexer.model.indexerconf.Follow;
-import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
-import org.lilyproject.indexer.model.indexerconf.IndexField;
-import org.lilyproject.indexer.model.indexerconf.IndexFields;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
-import org.lilyproject.indexer.model.indexerconf.LilyIndexerConf;
-import org.lilyproject.indexer.model.indexerconf.LilyIndexerConfBuilder;
-import org.lilyproject.indexer.model.indexerconf.MappingNode;
-import org.lilyproject.indexer.model.indexerconf.VariantFollow;
+import org.lilyproject.indexer.model.indexerconf.*;
 import org.lilyproject.indexer.model.util.IndexInfo;
 import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.HierarchyPath;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.IdRecord;
-import org.lilyproject.repository.api.LRepository;
-import org.lilyproject.repository.api.LTable;
-import org.lilyproject.repository.api.Link;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordBuilder;
-import org.lilyproject.repository.api.RecordFactory;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.SchemaId;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TableManager;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.spi.BaseRepositoryDecorator;
 import org.lilyproject.sep.LilyEventListener;
 import org.lilyproject.sep.LilySepEvent;
@@ -112,6 +53,15 @@ import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema.Table;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+
+import static org.junit.Assert.*;
+import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 public class IndexerTest {
 
@@ -174,6 +124,9 @@ public class IndexerTest {
     private final Map<String, Integer> matchResultCounts = Maps.newHashMap();
 
     private final static TestListener listener = new TestListener();
+
+    private static String currentIndex;
+
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -281,6 +234,7 @@ public class IndexerTest {
 
         waitForIndexesInfoUpdate(1);
         lilyProxy.getHBaseProxy().waitOnReplicationPeerReady("Indexer_" + indexName);
+        currentIndex = indexName;
     }
 
     private static void cleanupIndex(String indexName) throws Exception {
@@ -3128,11 +3082,23 @@ public class IndexerTest {
 
     private void commitIndex() throws Exception {
         // wait for all events that exist at this point in time to be processed
+        //Thread.sleep(60000);
+
+        System.out.println("Starting commit");
         if (!lilyProxy.getHBaseProxy().waitOnSepIdle(20000)) {
             log.warn("Waiting for idle sep timed out");
         }
+
+        lilyProxy.getHBaseProxy().waitOnReplication(60000L);
+
+
+        //Thread.sleep(60000);
         log.info("Committing index");
         lilyProxy.getSolrProxy().commit();
+        Thread.sleep(10000);
+        lilyProxy.getSolrProxy().reload("core0");
+        Thread.sleep(10000);
+        System.out.println("ending commit");
     }
 
     private QueryResponse getQueryResponse(String query) throws SolrServerException, InterruptedException {

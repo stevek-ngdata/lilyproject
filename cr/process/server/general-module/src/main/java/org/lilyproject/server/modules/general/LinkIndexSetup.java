@@ -15,10 +15,6 @@
  */
 package org.lilyproject.server.modules.general;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.io.IOException;
-
 import com.ngdata.sep.SepModel;
 import com.ngdata.sep.impl.SepConsumer;
 import org.apache.hadoop.conf.Configuration;
@@ -34,6 +30,11 @@ import org.lilyproject.sep.ZooKeeperItfAdapter;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.io.IOException;
+
 
 public class LinkIndexSetup {
     private final SepModel sepModel;

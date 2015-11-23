@@ -1,0 +1,8 @@
+option java_package = "org.lilyproject.hbaseindex";
+option java_outer_classname = "SchemaIdProto";
+option java_generate_equals_and_hash = true;
+option optimize_for = SPEED;
+
+message SchemaId {
+    required bytes id = 1;
+}

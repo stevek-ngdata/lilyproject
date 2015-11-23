@@ -15,28 +15,17 @@
  */
 package org.lilyproject.util.repo.test;
 
+import com.ngdata.sep.EventListener;
+import com.ngdata.sep.SepEvent;
+import org.junit.*;
+import org.lilyproject.repository.api.*;
+import org.lilyproject.repotestfw.RepositorySetup;
+import org.lilyproject.util.repo.RecordEvent;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.ngdata.sep.EventListener;
-import com.ngdata.sep.SepEvent;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.util.repo.RecordEvent;
 
 public class RecordEventTest {
     private static final String NS = "org.lilyproject.util.repo.test";
@@ -76,7 +65,7 @@ public class RecordEventTest {
     public void tearDown() throws Exception {
         repoSetup.stopSepEventSlave();
         repoSetup.getSepModel().removeSubscription(subscriptionId);
-        repoSetup.getHBaseProxy().waitOnReplicationPeerStopped(subscriptionId);
+        //repoSetup.getHBaseProxy().waitOnReplicationPeerStopped(subscriptionId);
     }
 
     @Test
@@ -96,6 +85,7 @@ public class RecordEventTest {
         repoSetup.waitForSepProcessing();
 
         Assert.assertTrue(record.getAttributes().isEmpty());
+        Thread.sleep(5000);
         Assert.assertEquals(1, messageVerifier.getMessageCount());
 
         // test update
@@ -107,6 +97,7 @@ public class RecordEventTest {
 
         repoSetup.waitForSepProcessing();
 
+        Thread.sleep(5000);
         Assert.assertEquals(2, messageVerifier.getMessageCount());
 
         // test read : attr empty
@@ -122,6 +113,7 @@ public class RecordEventTest {
 
         repoSetup.waitForSepProcessing();
 
+        Thread.sleep(5000);
         Assert.assertEquals(3, messageVerifier.getMessageCount());
     }
 

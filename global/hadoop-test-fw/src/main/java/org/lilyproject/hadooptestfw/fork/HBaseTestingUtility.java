@@ -63,23 +63,11 @@ import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.Abortable;
-import org.apache.hadoop.hbase.DistributedHBaseCluster;
-import org.apache.hadoop.hbase.EmptyWatcher;
-import org.apache.hadoop.hbase.HBaseCluster;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HRegionLocation;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.MasterNotRunningException;
-import org.apache.hadoop.hbase.MiniHBaseCluster;
-import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableExistsException;
-import org.apache.hadoop.hbase.TableNotEnabledException;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.*;
+//import org.apache.hadoop.hbase.DistributedHBaseCluster;
+//import org.apache.hadoop.hbase.EmptyWatcher;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.catalog.MetaEditor;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -92,8 +80,8 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.fs.HFileSystem;
 import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
 import org.apache.hadoop.hbase.io.hfile.ChecksumUtil;
-import org.apache.hadoop.hbase.io.hfile.Compression;
-import org.apache.hadoop.hbase.io.hfile.Compression.Algorithm;
+import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.hadoop.hbase.io.hfile.HFile;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.master.ServerManager;
@@ -114,6 +102,7 @@ import org.apache.hadoop.hbase.util.Writables;
 import org.apache.hadoop.hbase.zookeeper.ZKAssign;
 import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
+import org.apache.hadoop.hbase.zookeeper.EmptyWatcher;
 import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
@@ -124,6 +113,7 @@ import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooKeeper;
 import org.lilyproject.hadooptestfw.HBaseTestingUtilityFactory;
+import org.apache.hadoop.hbase.regionserver.BloomType;
 
 //Lily change: comment out import in order to use our own fork
 //import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -227,7 +217,7 @@ public class HBaseTestingUtility {
         List<Object[]> configurations = new ArrayList<Object[]>();
         for (Compression.Algorithm comprAlgo :
                 HBaseTestingUtility.COMPRESSION_ALGORITHMS) {
-            for (StoreFile.BloomType bloomType : StoreFile.BloomType.values()) {
+            for (BloomType bloomType : BloomType.values()) {
                 configurations.add(new Object[]{comprAlgo, bloomType});
             }
         }
@@ -873,7 +863,8 @@ public class HBaseTestingUtility {
      * Flushes all caches in the mini hbase cluster
      */
     public void flush(byte[] tableName) throws IOException {
-        getMiniHBaseCluster().flushcache(tableName);
+        TableName hTableName = TableName.valueOf(tableName);
+        getMiniHBaseCluster().flushcache(hTableName);
     }
 
     /**
@@ -887,7 +878,8 @@ public class HBaseTestingUtility {
      * Compact all of a table's reagion in the mini hbase cluster
      */
     public void compact(byte[] tableName, boolean major) throws IOException {
-        getMiniHBaseCluster().compact(tableName, major);
+        TableName hTableName = TableName.valueOf(tableName);
+        getMiniHBaseCluster().compact(hTableName, major);
     }
 
 
@@ -1302,12 +1294,9 @@ public class HBaseTestingUtility {
         int count = 0;
         for (int i = 0; i < startKeys.length; i++) {
             int j = (i + 1) % startKeys.length;
-            HRegionInfo hri = new HRegionInfo(table.getTableName(),
+            HRegionInfo hri = new HRegionInfo(table.getName(),
                     startKeys[i], startKeys[j]);
-            Put put = new Put(hri.getRegionName());
-            put.add(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER,
-                    Writables.getBytes(hri));
-            meta.put(put);
+            MetaEditor.addRegionToMeta(meta, hri);
             LOG.info("createMultiRegions: inserted " + hri.toString());
             newRegions.add(hri);
             count++;
@@ -1358,12 +1347,9 @@ public class HBaseTestingUtility {
         // add custom ones
         for (int i = 0; i < startKeys.length; i++) {
             int j = (i + 1) % startKeys.length;
-            HRegionInfo hri = new HRegionInfo(htd.getName(), startKeys[i],
+            HRegionInfo hri = new HRegionInfo(htd.getTableName(), startKeys[i],
                     startKeys[j]);
-            Put put = new Put(hri.getRegionName());
-            put.add(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER,
-                    Writables.getBytes(hri));
-            meta.put(put);
+            MetaEditor.addRegionToMeta(meta, hri);
             LOG.info("createMultiRegionsInMeta: inserted " + hri.toString());
             newRegions.add(hri);
         }
@@ -1399,18 +1385,18 @@ public class HBaseTestingUtility {
      */
     public List<byte[]> getMetaTableRows(byte[] tableName) throws IOException {
         // TODO: Redo using MetaReader.
-        HTable t = new HTable(new Configuration(this.conf), HConstants.META_TABLE_NAME);
+        HTable t = new HTable(new Configuration(this.conf), TableName.META_TABLE_NAME);
         List<byte[]> rows = new ArrayList<byte[]>();
         ResultScanner s = t.getScanner(new Scan());
         for (Result result : s) {
-            byte[] val = result.getValue(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER);
-            if (val == null) {
+            HRegionInfo info = HRegionInfo.getHRegionInfo(result);
+            if (info == null) {
                 LOG.error("No region info for row " + Bytes.toString(result.getRow()));
                 // TODO figure out what to do for this new hosed case.
                 continue;
             }
-            HRegionInfo info = Writables.getHRegionInfo(val);
-            if (Bytes.compareTo(info.getTableName(), tableName) == 0) {
+
+            if (info.getTable().equals(tableName)) {
                 LOG.info("getMetaTableRows: row -> " +
                         Bytes.toStringBinary(result.getRow()) + info);
                 rows.add(result.getRow());
@@ -1782,7 +1768,7 @@ public class HBaseTestingUtility {
         long startWait = System.currentTimeMillis();
         while (!getHBaseAdmin().isTableAvailable(table)) {
             assertTrue("Timed out waiting for table to become available " +
-                    Bytes.toStringBinary(table),
+                            Bytes.toStringBinary(table),
                     System.currentTimeMillis() - startWait < timeoutMillis);
             Thread.sleep(200);
         }
@@ -1794,7 +1780,7 @@ public class HBaseTestingUtility {
         while (!getHBaseAdmin().isTableAvailable(table) &&
                 !getHBaseAdmin().isTableEnabled(table)) {
             assertTrue("Timed out waiting for table to become available and enabled " +
-                    Bytes.toStringBinary(table),
+                            Bytes.toStringBinary(table),
                     System.currentTimeMillis() - startWait < timeoutMillis);
             Thread.sleep(200);
         }
@@ -1943,19 +1929,21 @@ public class HBaseTestingUtility {
      * Do a small get/scan against one store. This is required because store
      * has no actual methods of querying itself, and relies on StoreScanner.
      */
-    public static List<KeyValue> getFromStoreFile(Store store,
-                                                  Get get) throws IOException {
-        MultiVersionConsistencyControl.resetThreadReadPoint();
+    public static List<Cell> getFromStoreFile(Store store,
+                                              Get get) throws IOException {
         Scan scan = new Scan(get);
         InternalScanner scanner = (InternalScanner) store.getScanner(scan,
-                scan.getFamilyMap().get(store.getFamily().getName()));
+                scan.getFamilyMap().get(store.getFamily().getName()),
+                // originally MultiVersionConsistencyControl.resetThreadReadPoint() was called to set
+                // readpoint 0.
+                0);
 
-        List<KeyValue> result = new ArrayList<KeyValue>();
+        List<Cell> result = new ArrayList<Cell>();
         scanner.next(result);
         if (!result.isEmpty()) {
             // verify that we are on the row we want:
-            KeyValue kv = result.get(0);
-            if (!Bytes.equals(kv.getRow(), get.getRow())) {
+            Cell kv = result.get(0);
+            if (!CellUtil.matchingRow(kv, get.getRow())) {
                 result.clear();
             }
         }
@@ -1967,9 +1955,9 @@ public class HBaseTestingUtility {
      * Do a small get/scan against one store. This is required because store
      * has no actual methods of querying itself, and relies on StoreScanner.
      */
-    public static List<KeyValue> getFromStoreFile(Store store,
-                                                  byte[] row,
-                                                  NavigableSet<byte[]> columns
+    public static List<Cell> getFromStoreFile(Store store,
+                                              byte[] row,
+                                              NavigableSet<byte[]> columns
     ) throws IOException {
         Get get = new Get(row);
         Map<byte[], NavigableSet<byte[]>> s = get.getFamilyMap();
@@ -2102,7 +2090,7 @@ public class HBaseTestingUtility {
                 Bytes.toBytes(String.format(keyFormat, splitEndKey)),
                 numRegions);
         if (hbaseCluster != null) {
-            getMiniHBaseCluster().flushcache(HConstants.META_TABLE_NAME);
+            getMiniHBaseCluster().flushcache(TableName.META_TABLE_NAME);
         }
 
         for (int iFlush = 0; iFlush < numFlushes; ++iFlush) {
@@ -2139,7 +2127,7 @@ public class HBaseTestingUtility {
             LOG.info("Initiating flush #" + iFlush + " for table " + tableName);
             table.flushCommits();
             if (hbaseCluster != null) {
-                getMiniHBaseCluster().flushcache(tableNameBytes);
+                getMiniHBaseCluster().flushcache(table.getName());
             }
         }
 
@@ -2257,7 +2245,7 @@ public class HBaseTestingUtility {
         HTableDescriptor htd = new HTableDescriptor(tableName);
         htd.addFamily(hcd);
         HRegionInfo info =
-                new HRegionInfo(Bytes.toBytes(tableName), null, null, false);
+                new HRegionInfo(TableName.valueOf(tableName), null, null, false);
         HRegion region =
                 HRegion.createHRegion(info, getDataTestDir(), getConfiguration(), htd);
         return region;
@@ -2280,7 +2268,7 @@ public class HBaseTestingUtility {
         long familyId = 0;
         for (Compression.Algorithm compressionType : getSupportedCompressionAlgorithms()) {
             for (DataBlockEncoding encodingType : DataBlockEncoding.values()) {
-                for (StoreFile.BloomType bloomType : StoreFile.BloomType.values()) {
+                for (BloomType bloomType : BloomType.values()) {
                     String name = String.format("%s-cf-!@#&-%d!@#", prefix, familyId);
                     HColumnDescriptor htd = new HColumnDescriptor(name);
                     htd.setCompressionType(compressionType);

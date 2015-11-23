@@ -2,21 +2,10 @@ package com.ngdata.lily.security.hbase.client;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.OperationWithAttributes;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.RowLock;
-import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
-import org.apache.hadoop.hbase.ipc.CoprocessorProtocol;
+import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import javax.annotation.Nullable;
@@ -238,7 +227,7 @@ public class AuthEnabledHTable implements HTableInterface {
     public void close() throws IOException {
         delegate.close();
     }
-
+ /*
     @Override
     public RowLock lockRow(byte[] row) throws IOException {
         throw new RuntimeException(ERROR_MSG);
@@ -265,7 +254,7 @@ public class AuthEnabledHTable implements HTableInterface {
             Batch.Call<T, R> callable, Batch.Callback<R> callback) throws IOException, Throwable {
         delegate.coprocessorExec(protocol, startKey, endKey, callable, callback);
     }
-
+   */
     @Override
     public void setAutoFlush(boolean autoFlush) {
         delegate.setAutoFlush(autoFlush);
@@ -286,4 +275,79 @@ public class AuthEnabledHTable implements HTableInterface {
         delegate.setWriteBufferSize(writeBufferSize);
     }
 
+    //added for HBase .98
+
+    @Override
+    public CoprocessorRpcChannel coprocessorService(byte[] row) {
+        return delegate.coprocessorService(row);
+    }
+
+    @Override
+    public <T extends com.google.protobuf.Service,R> Map<byte[],R> coprocessorService(Class<T> service, byte[] startKey, byte[] endKey, Batch.Call<T,R> callable)
+            throws Throwable {
+        return delegate.coprocessorService(service,startKey,endKey,callable);
+
+    }
+
+    @Override
+    public <T extends com.google.protobuf.Service,R> void coprocessorService(Class<T> service, byte[] startKey, byte[] endKey, Batch.Call<T,R> callable,
+                                                                             Batch.Callback<R> callback)
+            throws Throwable {
+        delegate.coprocessorService(service,startKey,endKey,callable,callback);
+    }
+
+    @Override
+    public <R extends com.google.protobuf.Message> Map<byte[],R> batchCoprocessorService(com.google.protobuf.Descriptors.MethodDescriptor methodDescriptor,
+                                                                                         com.google.protobuf.Message request, byte[] startKey, byte[] endKey, R responsePrototype)
+            throws com.google.protobuf.ServiceException,
+            Throwable {
+        return delegate.batchCoprocessorService(methodDescriptor,request,startKey,endKey,responsePrototype);
+    }
+
+    @Override
+    public <R extends com.google.protobuf.Message> void batchCoprocessorService(com.google.protobuf.Descriptors.MethodDescriptor methodDescriptor,
+                                                                                com.google.protobuf.Message request,
+                                                                                byte[] startKey, byte[] endKey, R responsePrototype, Batch.Callback<R> callback)
+            throws Throwable {
+        delegate.batchCoprocessorService(methodDescriptor,request,startKey,endKey,responsePrototype,callback);
+    }
+
+    @Override
+    public <R> Object[] batchCallback(List<? extends Row> actions,
+                               Batch.Callback<R> callback)
+            throws IOException,
+            InterruptedException {
+        return delegate.batchCallback(actions,callback);
+    }
+
+    @Override
+    public <R> void batchCallback(List<? extends Row> actions,
+                                  Object[] results,
+                                  Batch.Callback<R> callback)
+            throws IOException,
+            InterruptedException {
+        delegate.batchCallback(actions,results,callback);
+    }
+
+    @Override
+    public TableName getName() {
+        return delegate.getName();
+    }
+
+    @Override
+    public void setAutoFlushTo(boolean autoFlush) {
+        delegate.setAutoFlushTo(autoFlush);
+    }
+
+    @Override
+    public Boolean[] exists(List<Get> get) throws IOException {
+        addAuthInfo(get);
+        return delegate.exists(get);
+    }
+
+    public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, Durability durability)
+            throws IOException {
+        return delegate.incrementColumnValue(row, family, qualifier, amount, durability);
+
+    }
 }

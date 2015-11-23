@@ -15,9 +15,6 @@
  */
 package org.lilyproject.mapreduce.test;
 
-import java.io.File;
-import java.io.IOException;
-
 import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -33,19 +30,12 @@ import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.mapreduce.testjobs.Test1Mapper;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.LRepository;
-import org.lilyproject.repository.api.LTable;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RepositoryManager;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.model.api.RepositoryDefinition;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.model.impl.RepositoryModelImpl;
 import org.lilyproject.util.test.TestHomeUtil;
+
+import java.io.File;
+import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -74,7 +64,7 @@ public class MapReduceTest {
                 hbaseAdmin.disableTable("record");
                 hbaseAdmin.deleteTable("record");
             }
-            HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration(), true);
+            HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration());
         }
 
         // Temp dir where we will create conf dir
@@ -120,7 +110,7 @@ public class MapReduceTest {
                 hbaseAdmin.disableTable("record");
                 hbaseAdmin.deleteTable("record");
             }
-            HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration(), true);
+            HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration());
         }
     }
 

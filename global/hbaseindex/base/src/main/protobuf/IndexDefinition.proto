@@ -1,0 +1,15 @@
+option java_package = "org.lilyproject.hbaseindex";
+option java_outer_classname = "IndexDefinitionProto";
+option java_generate_equals_and_hash = true;
+option optimize_for = SPEED;
+
+import "IndexFieldDefinition.proto";
+
+message IndexFieldDefinitionList {
+    repeated IndexFieldDefinition field = 1;
+}
+
+message IndexDefinition {
+    required string name = 1;
+    required IndexFieldDefinitionList fields = 2;
+}

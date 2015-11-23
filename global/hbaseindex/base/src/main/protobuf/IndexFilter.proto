@@ -1,0 +1,19 @@
+option java_package = "org.lilyproject.hbaseindex";
+option java_outer_classname = "IndexFilterProto";
+option java_generate_equals_and_hash = true;
+option optimize_for = SPEED;
+
+import "SchemaId.proto";
+
+message FilteredDataQualifiers {
+    repeated bytes qualifier = 1;
+}
+
+message Fields {
+    repeated string field = 1;
+}
+
+message IndexFilter {
+    required FilteredDataQualifiers filteredDataQualifiers = 1;
+    required Fields fields = 2;
+}

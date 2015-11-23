@@ -15,17 +15,17 @@
  */
 package org.lilyproject.server.modules.general;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
-import org.apache.hadoop.hbase.io.hfile.Compression;
-import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.lilyproject.runtime.conf.Conf;
 import org.lilyproject.util.hbase.ColumnFamilyConfig;
 import org.lilyproject.util.hbase.TableConfig;
 import org.lilyproject.util.hbase.TableConfigEntry;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class TableConfigBuilder {
     private TableConfigBuilder() {
@@ -78,7 +78,7 @@ public class TableConfigBuilder {
 
         String bloomFilter = conf.getChild("bloomFilter").getValue(null);
         if (bloomFilter != null) {
-            family.setBoomFilter(StoreFile.BloomType.valueOf(bloomFilter.toUpperCase()));
+            family.setBoomFilter(BloomType.valueOf(bloomFilter.toUpperCase()));
         }
 
         Integer blockSize = conf.getChild("blockSize").getValueAsInteger(null);

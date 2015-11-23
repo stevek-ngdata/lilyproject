@@ -15,10 +15,6 @@
  */
 package org.lilyproject.repository.bulk.mapreduce;
 
-import java.io.File;
-import java.net.URI;
-import java.util.UUID;
-
 import com.google.common.base.Charsets;
 import org.apache.commons.cli.CommandLine;
 import org.apache.hadoop.conf.Configuration;
@@ -30,13 +26,16 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
-import org.apache.hadoop.hbase.regionserver.metrics.SchemaMetrics;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.lilyproject.repository.bulk.AbstractBulkImportCliTool;
 import org.python.google.common.io.Files;
+
+import java.io.File;
+import java.net.URI;
+import java.util.UUID;
 
 /**
  * MapReduce-based import tool that makes use of Jython-based text line mapping.
@@ -121,7 +120,8 @@ public class BulkImportTool extends AbstractBulkImportCliTool implements Tool {
         if (status != 0) {
             System.exit(status);
         }
-        SchemaMetrics.configureGlobally(conf);
+        //SPK - Do I really want to comment this out?
+        //SchemaMetrics.configureGlobally(conf);
         status = ToolRunner.run(new LoadIncrementalHFiles(conf),
                 new String[]{conf.get(HFILE_PATH), conf.get(LilyJythonMapper.TABLE_NAME)});
         FileSystem.get(conf).delete(new Path(new URI(conf.get(HFILE_PATH))), true);

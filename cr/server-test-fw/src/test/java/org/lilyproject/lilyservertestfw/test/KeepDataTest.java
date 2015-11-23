@@ -15,9 +15,6 @@
  */
 package org.lilyproject.lilyservertestfw.test;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -32,19 +29,11 @@ import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.FieldTypeExistsException;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.solrtestfw.SolrDefinition;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This test has as goal to test that data is kept when a data dir is given and the clear flag is put to false.
@@ -133,7 +122,9 @@ public class KeepDataTest {
 
         // Wait for messages to be processed
         Assert.assertTrue("Processing events took too long", lilyProxy.getHBaseProxy().waitOnSepIdle(60000L));
+        Thread.sleep(10000);
         lilyProxy.getSolrProxy().commit();
+        lilyProxy.getSolrProxy().reload(SolrDefinition.DEFAULT_CORE_NAME);
 
         // Query Solr and assert all previously created records are indexed
         List<RecordId> recordIds = querySolr("name1");

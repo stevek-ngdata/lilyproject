@@ -15,14 +15,6 @@
  */
 package org.lilyproject.mapreduce;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.lilyproject.util.hbase.RepoAndTableUtil;
-
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
@@ -39,18 +31,20 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.repository.api.LRepository;
-import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.RepositoryTable;
-import org.lilyproject.repository.api.TableManager;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.util.exception.ExceptionUtil;
+import org.lilyproject.util.hbase.RepoAndTableUtil;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A MapReduce InputFormat for Lily based on Lily scanners.
@@ -143,7 +137,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
         } finally {
             Closer.close(zk);
             if (hbaseConf != null) {
-                HConnectionManager.deleteConnection(hbaseConf, true);
+                HConnectionManager.deleteConnection(hbaseConf);
             }
             Closer.close(lilyClient);
         }
@@ -198,8 +192,7 @@ public abstract class AbstractLilyScanInputFormat<KEYIN, VALUEIN> extends InputF
             if ( !includeRegionInSplit(keys.getFirst()[i], keys.getSecond()[i])) {
                 continue;
             }
-            String regionLocation = table.getRegionLocation(keys.getFirst()[i]).
-                    getServerAddress().getHostname();
+            String regionLocation = table.getRegionLocation(keys.getFirst()[i]).getHostname();
             // determine if the given start an stop key fall into the region
             if ((startRow.length == 0 || keys.getSecond()[i].length == 0 ||
                     Bytes.compareTo(startRow, keys.getSecond()[i]) < 0) &&

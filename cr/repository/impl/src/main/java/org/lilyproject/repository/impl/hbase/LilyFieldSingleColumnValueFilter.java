@@ -31,29 +31,40 @@
  */
 package org.lilyproject.repository.impl.hbase;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.ArrayList;
-
 import com.google.common.base.Preconditions;
+import com.google.protobuf.HBaseZeroCopyByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.KeyValueUtil;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.FilterBase;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.ByteArrayComparable;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.ParseFilter;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.SubstringComparator;
-import org.apache.hadoop.hbase.filter.ValueFilter;
-import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
-import org.apache.hadoop.hbase.io.HbaseObjectWritable;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.DynamicClassLoader;
 import org.lilyproject.repository.impl.FieldFlags;
+import org.lilyproject.repository.impl.hbase.HBaseProtos.CompareType;
+
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+
 
 /**
  * This filter is used to filter cells based on value. It takes a {@link CompareFilter.CompareOp}
@@ -88,7 +99,7 @@ public class LilyFieldSingleColumnValueFilter extends FilterBase {
   protected byte [] columnFamily;
   protected byte [] columnQualifier;
   private CompareFilter.CompareOp compareOp;
-  private WritableByteArrayComparable comparator;
+  private ByteArrayComparable comparator;
   private boolean foundColumn = false;
   private boolean matchedColumn = false;
   private boolean filterIfMissing = false;
@@ -133,13 +144,26 @@ public class LilyFieldSingleColumnValueFilter extends FilterBase {
    * @param compareOp operator
    * @param comparator Comparator to use.
    */
-  public LilyFieldSingleColumnValueFilter(final byte [] family, final byte [] qualifier,
-      final CompareFilter.CompareOp compareOp, final WritableByteArrayComparable comparator) {
+
+  public LilyFieldSingleColumnValueFilter(byte[] family, byte[] qualifier,
+                                          CompareFilter.CompareOp compareOp, ByteArrayComparable comparator) {
     this.columnFamily = family;
     this.columnQualifier = qualifier;
     this.compareOp = compareOp;
     this.comparator = comparator;
   }
+
+    protected LilyFieldSingleColumnValueFilter(byte[] family, byte[] qualifier, CompareFilter.CompareOp compareOp,
+                                      ByteArrayComparable comparator, boolean foundColumn, boolean matchedColumn,
+                                      boolean filterIfMissing, boolean latestVersionOnly)
+    {
+        this(family,qualifier,compareOp,comparator);
+        this.foundColumn = foundColumn;
+        this.matchedColumn = matchedColumn;
+        this.filterIfMissing = filterIfMissing;
+        this.latestVersionOnly = latestVersionOnly;
+
+    }
 
   /**
    * @return operator
@@ -151,7 +175,7 @@ public class LilyFieldSingleColumnValueFilter extends FilterBase {
   /**
    * @return the comparator
    */
-  public WritableByteArrayComparable getComparator() {
+  public ByteArrayComparable getComparator() {
     return comparator;
   }
 
@@ -169,8 +193,10 @@ public class LilyFieldSingleColumnValueFilter extends FilterBase {
     return columnQualifier;
   }
 
-  public ReturnCode filterKeyValue(KeyValue keyValue) {
-    // System.out.println("REMOVE KEY=" + keyValue.toString() + ", value=" + Bytes.toString(keyValue.getValue()));
+
+  public ReturnCode filterKeyValue(Cell c) {
+    KeyValue keyValue = KeyValueUtil.ensureKeyValue(c);
+    //System.out.println("REMOVE KEY=" + keyValue.toString() + ", value=" + Bytes.toString(keyValue.getValue()));
     if (this.matchedColumn) {
       // We already found and matched the single column, all keys now pass
       return ReturnCode.INCLUDE;
@@ -294,13 +320,22 @@ public class LilyFieldSingleColumnValueFilter extends FilterBase {
     this.latestVersionOnly = latestVersionOnly;
   }
 
+  public void setFoundColumn(boolean foundColumn) {
+        this.latestVersionOnly = foundColumn;
+    }
+
+  public void setMatchedColumn(boolean matchedColumn) {
+        this.latestVersionOnly = matchedColumn;
+    }
+
   public static Filter createFilterFromArguments(ArrayList<byte []> filterArguments) {
-    Preconditions.checkArgument(filterArguments.size() == 4 || filterArguments.size() == 6,
-            "Expected 4 or 6 but got: %s", filterArguments.size());
+    Preconditions.checkArgument(filterArguments.size() == 4 ||
+                    filterArguments.size() == 6 || filterArguments.size() == 8,
+            "Expected 4 or 6 or 8 but got: %s", filterArguments.size());
     byte [] family = ParseFilter.removeQuotesFromByteArray(filterArguments.get(0));
     byte [] qualifier = ParseFilter.removeQuotesFromByteArray(filterArguments.get(1));
     CompareFilter.CompareOp compareOp = ParseFilter.createCompareOp(filterArguments.get(2));
-    WritableByteArrayComparable comparator = ParseFilter.createComparator(
+    ByteArrayComparable comparator = ParseFilter.createComparator(
       ParseFilter.removeQuotesFromByteArray(filterArguments.get(3)));
 
     if (comparator instanceof RegexStringComparator ||
@@ -312,19 +347,26 @@ public class LilyFieldSingleColumnValueFilter extends FilterBase {
       }
     }
 
-    SingleColumnValueFilter filter = new SingleColumnValueFilter(family, qualifier,
+      LilyFieldSingleColumnValueFilter filter = new LilyFieldSingleColumnValueFilter(family, qualifier,
                                                                  compareOp, comparator);
 
-    if (filterArguments.size() == 6) {
+    if (filterArguments.size() >= 6) {
       boolean filterIfMissing = ParseFilter.convertByteArrayToBoolean(filterArguments.get(4));
       boolean latestVersionOnly = ParseFilter.convertByteArrayToBoolean(filterArguments.get(5));
       filter.setFilterIfMissing(filterIfMissing);
       filter.setLatestVersionOnly(latestVersionOnly);
+      if (filterArguments.size() == 8) {
+        boolean foundColumn = ParseFilter.convertByteArrayToBoolean(filterArguments.get(6));
+        boolean matchedColumn = ParseFilter.convertByteArrayToBoolean(filterArguments.get(7));
+        filter.setFoundColumn(foundColumn);
+        filter.setMatchedColumn(matchedColumn);
+      }
     }
+
     return filter;
   }
 
-  public void readFields(final DataInput in) throws IOException {
+  /*public void readFields(final DataInput in) throws IOException {
     this.columnFamily = Bytes.readByteArray(in);
     if(this.columnFamily.length == 0) {
       this.columnFamily = null;
@@ -335,7 +377,7 @@ public class LilyFieldSingleColumnValueFilter extends FilterBase {
     }
     this.compareOp = CompareFilter.CompareOp.valueOf(in.readUTF());
     this.comparator =
-      (WritableByteArrayComparable) HbaseObjectWritable.readObject(in, null);
+      (ByteArrayComparable) HbaseObjectWritable.readObject(in, null);
     this.foundColumn = in.readBoolean();
     this.matchedColumn = in.readBoolean();
     this.filterIfMissing = in.readBoolean();
@@ -347,12 +389,103 @@ public class LilyFieldSingleColumnValueFilter extends FilterBase {
     Bytes.writeByteArray(out, this.columnQualifier);
     out.writeUTF(compareOp.name());
     HbaseObjectWritable.writeObject(out, comparator,
-        WritableByteArrayComparable.class, null);
+        ByteArrayComparable.class, null);
     out.writeBoolean(foundColumn);
     out.writeBoolean(matchedColumn);
     out.writeBoolean(filterIfMissing);
     out.writeBoolean(latestVersionOnly);
-  }
+  }*/
+
+    private static ComparatorProtos.Comparator toComparator(ByteArrayComparable comparator) {
+        ComparatorProtos.Comparator.Builder builder = ComparatorProtos.Comparator.newBuilder();
+        builder.setName(comparator.getClass().getName());
+        builder.setSerializedComparator(HBaseZeroCopyByteString.wrap(comparator.toByteArray()));
+        return builder.build();
+    }
+
+    private LilyFieldSingleColumnValueFilterProto.LilyFieldSingleColumnValueFilter convert() {
+        LilyFieldSingleColumnValueFilterProto.LilyFieldSingleColumnValueFilter.Builder builder =
+                LilyFieldSingleColumnValueFilterProto.LilyFieldSingleColumnValueFilter.newBuilder();
+        if (this.columnFamily != null) {
+            builder.setColumnFamily(HBaseZeroCopyByteString.wrap(this.columnFamily));
+        }
+        if (this.columnQualifier != null) {
+            builder.setColumnQualifier(HBaseZeroCopyByteString.wrap(this.columnQualifier));
+        }
+        HBaseProtos.CompareType compareOp = CompareType.valueOf(this.compareOp.name());
+        builder.setCompareOp(compareOp);
+        builder.setComparator(toComparator(this.comparator));
+        //builder.setFoundColumn(this.foundColumn);
+        //builder.setMatchedColumn(this.matchedColumn);
+        builder.setFilterIfMissing(this.filterIfMissing);
+        builder.setLatestVersionOnly(this.latestVersionOnly);
+
+        return builder.build();
+    }
+
+    public byte[] toByteArray() { return convert().toByteArray(); }
+
+    private final static ClassLoader CLASS_LOADER;
+
+    private final static Map<String, Class<?>>
+            PRIMITIVES = new HashMap<String, Class<?>>();
+
+    static {
+        ClassLoader parent = LilyFieldSingleColumnValueFilter.class.getClassLoader();
+        Configuration conf = HBaseConfiguration.create();
+        CLASS_LOADER = new DynamicClassLoader(conf, parent);
+
+        PRIMITIVES.put(Boolean.TYPE.getName(), Boolean.TYPE);
+        PRIMITIVES.put(Byte.TYPE.getName(), Byte.TYPE);
+        PRIMITIVES.put(Character.TYPE.getName(), Character.TYPE);
+        PRIMITIVES.put(Short.TYPE.getName(), Short.TYPE);
+        PRIMITIVES.put(Integer.TYPE.getName(), Integer.TYPE);
+        PRIMITIVES.put(Long.TYPE.getName(), Long.TYPE);
+        PRIMITIVES.put(Float.TYPE.getName(), Float.TYPE);
+        PRIMITIVES.put(Double.TYPE.getName(), Double.TYPE);
+        PRIMITIVES.put(Void.TYPE.getName(), Void.TYPE);
+    }
+
+    private static ByteArrayComparable toComparator(ComparatorProtos.Comparator proto)
+            throws IOException {
+        String type = proto.getName();
+        String funcName = "parseFrom";
+        byte [] value = proto.getSerializedComparator().toByteArray();
+        try {
+            Class<? extends ByteArrayComparable> c =
+                    (Class<? extends ByteArrayComparable>)Class.forName(type, true, CLASS_LOADER);
+            Method parseFrom = c.getMethod(funcName, byte[].class);
+            if (parseFrom == null) {
+                throw new IOException("Unable to locate function: " + funcName + " in type: " + type);
+            }
+            return (ByteArrayComparable)parseFrom.invoke(null, value);
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    public static LilyFieldSingleColumnValueFilter parseFrom(final byte[] pbBytes) throws DeserializationException {
+        LilyFieldSingleColumnValueFilterProto.LilyFieldSingleColumnValueFilter proto;
+        try {
+            proto = LilyFieldSingleColumnValueFilterProto.LilyFieldSingleColumnValueFilter.parseFrom(pbBytes);
+        } catch (InvalidProtocolBufferException e) {
+            throw new DeserializationException(e);
+        }
+
+        final CompareOp compareOp =
+                CompareOp.valueOf(proto.getCompareOp().name());
+        final ByteArrayComparable comparator;
+        try {
+            comparator = toComparator(proto.getComparator());
+        } catch (IOException ioe) {
+            throw new DeserializationException(ioe);
+        }
+
+        return new LilyFieldSingleColumnValueFilter(proto.hasColumnFamily() ? proto.getColumnFamily().toByteArray() : null,
+                proto.hasColumnQualifier() ? proto.getColumnQualifier().toByteArray() : null,
+                compareOp, comparator, proto.getFoundColumn(), proto.getMatchedColumn(),
+                proto.getFilterIfMissing(), proto.getLatestVersionOnly());
+    }
 
   @Override
   public String toString() {

@@ -15,13 +15,13 @@
  */
 package org.lilyproject.util.hbase;
 
-import org.apache.hadoop.hbase.io.hfile.Compression;
-import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.regionserver.BloomType;
 
 public class ColumnFamilyConfig {
     private Compression.Algorithm compression;
     private Integer blockSize;
-    private StoreFile.BloomType boomFilter;
+    private BloomType boomFilter;
 
     public Compression.Algorithm getCompression() {
         return compression;
@@ -39,11 +39,11 @@ public class ColumnFamilyConfig {
         this.blockSize = blockSize;
     }
 
-    public StoreFile.BloomType getBoomFilter() {
+    public BloomType getBoomFilter() {
         return boomFilter;
     }
 
-    public void setBoomFilter(StoreFile.BloomType boomFilter) {
+    public void setBoomFilter(BloomType boomFilter) {
         this.boomFilter = boomFilter;
     }
 }

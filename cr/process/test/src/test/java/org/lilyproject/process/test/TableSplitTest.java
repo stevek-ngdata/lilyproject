@@ -15,20 +15,12 @@
  */
 package org.lilyproject.process.test;
 
-import java.io.File;
-import java.util.List;
-
 import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HConnectionManager;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -36,15 +28,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.Link;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.util.test.TestHomeUtil;
+
+import java.io.File;
+import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
@@ -80,7 +68,7 @@ public class TableSplitTest {
                     hbaseAdmin.deleteTable(tableName);
                 }
             }
-            HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration(), true);
+            HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration());
         }
 
         // Temp dir where we will create conf dir
@@ -128,7 +116,7 @@ public class TableSplitTest {
                     hbaseAdmin.deleteTable(tableName);
                 }
             }
-            HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration(), true);
+            HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration());
         }
     }
 
@@ -200,7 +188,9 @@ public class TableSplitTest {
         //
         for (String tableName : TABLE_NAMES) {
             HTable table = new HTable(lilyProxy.getHBaseProxy().getConf(), tableName);
-            for (HRegionInfo regionInfo : table.getRegionsInfo().keySet()) {
+            HConnection connection = HConnectionManager.getConnection(lilyProxy.getHBaseProxy().getConf());
+            HBaseAdmin admin = new HBaseAdmin(connection);
+            for (HRegionInfo regionInfo : admin.getTableRegions(tableName.getBytes())) {
                 Scan scan = new Scan();
                 scan.setStartRow(regionInfo.getStartKey());
                 scan.setStopRow(regionInfo.getEndKey());

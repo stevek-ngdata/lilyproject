@@ -15,73 +15,17 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.Set;
-
 import com.ngdata.lily.security.hbase.client.HBaseAuthzUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.PrefixFilter;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
-import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.BlobException;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobReference;
-import org.lilyproject.repository.api.ConcurrentRecordUpdateException;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.FieldTypeEntry;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.FieldTypes;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.IdentityRecordStack;
-import org.lilyproject.repository.api.InvalidRecordException;
-import org.lilyproject.repository.api.Metadata;
-import org.lilyproject.repository.api.MetadataBuilder;
-import org.lilyproject.repository.api.MutationCondition;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordBuilder;
-import org.lilyproject.repository.api.RecordException;
-import org.lilyproject.repository.api.RecordExistsException;
-import org.lilyproject.repository.api.RecordFactory;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.TableManager;
-import org.lilyproject.repository.api.ResponseStatus;
-import org.lilyproject.repository.api.SchemaId;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeException;
-import org.lilyproject.repository.api.ValueType;
-import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.impl.hbase.ContainsValueComparator;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
@@ -95,6 +39,10 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.Type;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
 
 import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_ID_QUALIFIERS;
 import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_VERSION_QUALIFIERS;
@@ -1326,7 +1274,7 @@ public class HBaseRepository extends BaseRepository {
 
             // Note, if a encoding of the BlobValueType is added, this might have to change.
             valueToCompare = Bytes.add(valueToCompare, blobReference.getBlob().getValue());
-            WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
+            ByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
             Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL,
                     valueComparator);
             get.setFilter(filter);

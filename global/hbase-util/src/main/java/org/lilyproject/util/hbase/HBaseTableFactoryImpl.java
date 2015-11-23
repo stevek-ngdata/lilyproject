@@ -15,10 +15,6 @@
  */
 package org.lilyproject.util.hbase;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -28,9 +24,13 @@ import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.io.hfile.Compression;
-import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.apache.hadoop.hbase.util.Bytes;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 public class HBaseTableFactoryImpl implements HBaseTableFactory {
     private Log log = LogFactory.getLog(getClass());
@@ -143,7 +143,7 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
             }
 
             // bloom filter
-            StoreFile.BloomType bloomFilter = cfConf.getBoomFilter() != null ?
+            BloomType bloomFilter = cfConf.getBoomFilter() != null ?
                     cfConf.getBoomFilter() : defaultCfConfig.getBoomFilter();
             if (bloomFilter != null) {
                 column.setBloomFilterType(bloomFilter);

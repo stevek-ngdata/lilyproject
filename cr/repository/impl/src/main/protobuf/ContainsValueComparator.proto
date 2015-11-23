@@ -1,0 +1,8 @@
+option java_package = "org.lilyproject.repository.impl.hbase";
+option java_outer_classname = "ContainsValueComparatorProto";
+option java_generate_equals_and_hash = true;
+option optimize_for = SPEED;
+
+message ContainsValueComparator {
+    required bytes nestingLevelAndValue = 1;
+}

@@ -15,13 +15,11 @@
  */
 package org.lilyproject.indexer.event;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.ngdata.sep.WALEditFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
@@ -29,6 +27,9 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Filter for SEP events that removes all KeyValues from WALEdits that are not applicable to the configured index
@@ -57,7 +58,8 @@ class IndexerEditFilter implements WALEditFilter {
     }
 
     @Override
-    public void apply(WALEdit walEdit) {
+    public void apply(HLog.Entry hLogEntry) {
+        WALEdit walEdit = hLogEntry.getEdit();
         List<KeyValue> keyValues = walEdit.getKeyValues();
         for (int i = keyValues.size() - 1; i >= 0; i--) {
             if (!isValidKeyValue(keyValues.get(i))) {

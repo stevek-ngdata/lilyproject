@@ -16,8 +16,10 @@
 package org.lilyproject.indexer.event;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,10 +27,26 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.IndexRecordFilterData;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class IndexerEditFilterTest {
+
+    private static final long SUBSCRIPTION_TIMESTAMP = 100000;
+
+    private static final byte[] TABLE_NAME = Bytes.toBytes("test_table");
+    private static final byte[] DATA_COLFAM = Bytes.toBytes("data");
+    private static final byte[] PAYLOAD_QUALIFIER = Bytes.toBytes("pl");
+    private static final byte[] encodedRegionName = Bytes.toBytes("1028785192");
+    private static final UUID clusterUUID = UUID.randomUUID();
+    private static final List<UUID> clusterUUIDs = new ArrayList<UUID>();
 
     private static final String INDEX_NAME = "IndexName";
 
@@ -39,15 +57,29 @@ public class IndexerEditFilterTest {
         editFilter = new IndexerEditFilter(INDEX_NAME);
     }
 
+    private HLog.Entry createHlogEntry(byte[] tableName, KeyValue... keyValues) {
+        return createHlogEntry(tableName, SUBSCRIPTION_TIMESTAMP + 1, keyValues);
+    }
+
+    private HLog.Entry createHlogEntry(byte[] tableName, long writeTime, KeyValue... keyValues) {
+        HLog.Entry entry = mock(HLog.Entry.class, Mockito.RETURNS_DEEP_STUBS);
+        when(entry.getEdit().getKeyValues()).thenReturn(Lists.newArrayList(keyValues));
+        when(entry.getKey().getTablename()).thenReturn(TableName.valueOf(tableName));
+        when(entry.getKey().getWriteTime()).thenReturn(writeTime);
+        when(entry.getKey().getEncodedRegionName()).thenReturn(encodedRegionName);
+        when(entry.getKey().getClusterIds()).thenReturn(clusterUUIDs);
+        return entry;
+    }
+
     @Test
     public void testApply_NoPayload() {
-        WALEdit walEdit = new WALEdit();
-        walEdit.add(new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, Bytes.toBytes("not payload"),
+
+        HLog.Entry hLogEntry = createHlogEntry(TABLE_NAME, new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, Bytes.toBytes("not payload"),
                 Bytes.toBytes("value")));
 
-        editFilter.apply(walEdit);
+        editFilter.apply(hLogEntry);
 
-        assertEquals(0, walEdit.size());
+        assertEquals(0, hLogEntry.getEdit().getKeyValues().size());
     }
 
     @Test
@@ -57,13 +89,12 @@ public class IndexerEditFilterTest {
         filterData.setSubscriptionInclusions(ImmutableSet.of("SomeOtherIndexName"));
         recordEvent.setIndexRecordFilterData(filterData);
 
-        WALEdit walEdit = new WALEdit();
-        walEdit.add(new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes,
+        HLog.Entry hLogEntry = createHlogEntry(TABLE_NAME,new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes,
                 recordEvent.toJsonBytes()));
 
-        editFilter.apply(walEdit);
+        editFilter.apply(hLogEntry);
 
-        assertEquals(0, walEdit.size());
+        assertEquals(0, hLogEntry.getEdit().getKeyValues().size());
     }
 
     @Test
@@ -73,13 +104,12 @@ public class IndexerEditFilterTest {
         filterData.setSubscriptionInclusions(ImmutableSet.of(INDEX_NAME));
         recordEvent.setIndexRecordFilterData(filterData);
 
-        WALEdit walEdit = new WALEdit();
-        walEdit.add(new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes,
+        HLog.Entry hLogEntry = createHlogEntry(TABLE_NAME,new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes,
                 recordEvent.toJsonBytes()));
 
-        editFilter.apply(walEdit);
+        editFilter.apply(hLogEntry);
 
-        assertEquals(1, walEdit.size());
+        assertEquals(1, hLogEntry.getEdit().getKeyValues().size());
     }
 
     @Test
@@ -90,26 +120,26 @@ public class IndexerEditFilterTest {
         recordEvent.setIndexRecordFilterData(filterData);
         recordEvent.getAttributes().put(IndexerEditFilter.NO_INDEX_FLAG, "false");
 
-        WALEdit walEdit = new WALEdit();
-        walEdit.add(new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes,
+        HLog.Entry hLogEntry = createHlogEntry(TABLE_NAME,new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes,
                 recordEvent.toJsonBytes()));
 
-        editFilter.apply(walEdit);
 
-        assertEquals(0, walEdit.size());
+
+        editFilter.apply(hLogEntry);
+
+        assertEquals(0, hLogEntry.getEdit().getKeyValues().size());
     }
 
     @Test
     public void testApply_NonJsonPayload() {
 
-        WALEdit walEdit = new WALEdit();
-        walEdit.add(new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes,
+        HLog.Entry hLogEntry = createHlogEntry(TABLE_NAME,new KeyValue(Bytes.toBytes("row"), RecordCf.DATA.bytes, RecordColumn.PAYLOAD.bytes,
                 Bytes.toBytes("non-json payload")));
 
-        editFilter.apply(walEdit);
+        editFilter.apply(hLogEntry);
 
         // If we can't parse the RecordEvent, we don't want to have the IndexUpdater dealing with it either
-        assertEquals(0, walEdit.size());
+        assertEquals(0, hLogEntry.getEdit().getKeyValues().size());
     }
 
 }
