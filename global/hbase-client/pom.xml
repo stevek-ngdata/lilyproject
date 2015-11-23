@@ -199,6 +199,10 @@
           <groupId>org.apache.directory.server</groupId>
           <artifactId>apacheds-kerberos-codec</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.apache.curator</groupId>
+          <artifactId>curator-framework</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -381,6 +385,18 @@
           <groupId>oro</groupId>
           <artifactId>oro</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>com.google.code.gson</groupId>
+          <artifactId>gson</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.curator</groupId>
+          <artifactId>curator-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.curator</groupId>
+          <artifactId>curator-recipes</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -557,6 +573,7 @@
         </exclusion>
       </exclusions>
     </dependency>
+
   </dependencies>
 
   <build>

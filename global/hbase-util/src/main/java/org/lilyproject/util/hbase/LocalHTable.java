@@ -22,6 +22,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
@@ -585,6 +586,20 @@ public class LocalHTable implements HTableInterface {
         HTableInterface table = pool.getTable(tableNameString);
         try {
             table.batchCoprocessorService(methodDescriptor, request, startKey, endKey, responsePrototype);
+        } finally {
+            try {
+                table.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public boolean checkAndMutate(byte[] bytes, byte[] bytes1, byte[] bytes2, CompareFilter.CompareOp compareOp, byte[] bytes3, RowMutations rowMutations) throws IOException {
+        HTableInterface table = pool.getTable(tableNameString);
+        try {
+            return table.checkAndMutate(bytes,bytes1,bytes2,compareOp,bytes3,rowMutations);
         } finally {
             try {
                 table.close();

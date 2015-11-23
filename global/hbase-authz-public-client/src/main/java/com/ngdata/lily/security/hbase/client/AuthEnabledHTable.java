@@ -5,6 +5,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -310,6 +311,11 @@ public class AuthEnabledHTable implements HTableInterface {
                                                                                 byte[] startKey, byte[] endKey, R responsePrototype, Batch.Callback<R> callback)
             throws Throwable {
         delegate.batchCoprocessorService(methodDescriptor,request,startKey,endKey,responsePrototype,callback);
+    }
+
+    @Override
+    public boolean checkAndMutate(byte[] bytes, byte[] bytes1, byte[] bytes2, CompareFilter.CompareOp compareOp, byte[] bytes3, RowMutations rowMutations) throws IOException {
+        return delegate.checkAndMutate(bytes,bytes1,bytes2,compareOp,bytes3,rowMutations);
     }
 
     @Override
