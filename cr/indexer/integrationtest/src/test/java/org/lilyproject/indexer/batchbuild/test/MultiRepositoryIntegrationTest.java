@@ -52,9 +52,9 @@ public class MultiRepositoryIntegrationTest {
         createRecord(util.secundaryRepo, "testId", "name2");
         waitForSepAndCommitSolr();
         lilyProxy.getSolrProxy().reload(CORE1);
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
         lilyProxy.getSolrProxy().reload(CORE2);
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
         assertEquals("One document per repository", 1, countDocsInRepo(CORE1));
         assertEquals("One document per repository", 1, countDocsInRepo(CORE2));
         verifyFieldValue(getAllDocs(CORE1), "USER.testId", "name1");
@@ -69,9 +69,9 @@ public class MultiRepositoryIntegrationTest {
         lilyProxy.getLilyServerProxy().batchBuildIndex(SECUNDARY_INDEX, MINS15);
         lilyProxy.getSolrProxy().commit();
         lilyProxy.getSolrProxy().reload(CORE1);
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
         lilyProxy.getSolrProxy().reload(CORE2);
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
         assertEquals("One document per repository", 1, countDocsInRepo(CORE1));
         assertEquals("One document per repository", 1, countDocsInRepo(CORE2));
         verifyFieldValue(getAllDocs(CORE1), "USER.testId", "name1");
@@ -85,9 +85,9 @@ public class MultiRepositoryIntegrationTest {
         linkToOtherRecord(util.secundaryRepo);
         waitForSepAndCommitSolr();
         lilyProxy.getSolrProxy().reload(CORE1);
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
         lilyProxy.getSolrProxy().reload(CORE2);
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
         SolrDocumentList primaryDocs = getAllDocs(CORE1);
         assertEquals(2, primaryDocs.getNumFound());
         verifyDeref(primaryDocs, "USER.testId", "name3");
@@ -147,6 +147,6 @@ public class MultiRepositoryIntegrationTest {
     private void waitForSepAndCommitSolr() throws Exception {
         lilyProxy.getHBaseProxy().waitOnSepIdle(300000);
         lilyProxy.getSolrProxy().commit();
-        Thread.sleep(20000);
+        //Thread.sleep(20000);
     }
 }

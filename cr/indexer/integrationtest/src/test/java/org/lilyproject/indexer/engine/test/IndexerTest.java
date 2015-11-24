@@ -3095,9 +3095,9 @@ public class IndexerTest {
         //Thread.sleep(60000);
         log.info("Committing index");
         lilyProxy.getSolrProxy().commit();
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
         lilyProxy.getSolrProxy().reload("core0");
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
         System.out.println("ending commit");
     }
 

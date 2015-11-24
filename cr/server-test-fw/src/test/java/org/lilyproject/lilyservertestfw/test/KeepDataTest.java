@@ -122,7 +122,7 @@ public class KeepDataTest {
 
         // Wait for messages to be processed
         Assert.assertTrue("Processing events took too long", lilyProxy.getHBaseProxy().waitOnSepIdle(60000L));
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
         lilyProxy.getSolrProxy().commit();
         lilyProxy.getSolrProxy().reload(SolrDefinition.DEFAULT_CORE_NAME);
 

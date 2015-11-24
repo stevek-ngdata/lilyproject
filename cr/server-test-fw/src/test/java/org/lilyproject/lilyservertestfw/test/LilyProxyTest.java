@@ -88,7 +88,7 @@ public class LilyProxyTest {
 
         // Wait for messages to be processed
         Assert.assertTrue("Processing messages took too long", lilyProxy.waitSepEventsProcessed(10000L));
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
         lilyProxy.getSolrProxy().commit();
         lilyProxy.getSolrProxy().reload(SolrDefinition.DEFAULT_CORE_NAME);
         // Query Solr

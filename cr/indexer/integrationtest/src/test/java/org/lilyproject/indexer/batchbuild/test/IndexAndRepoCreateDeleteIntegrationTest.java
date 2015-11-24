@@ -99,7 +99,7 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
             deleteIndex("testBobbyTables");
 
             testUtil.createIndex("testBobbyTables", "dummyCORE", secondNewRepo);
-            Thread.sleep(60000);
+            //Thread.sleep(60000);
 
             lilyProxy.getHBaseProxy().waitOnSepIdle(10000L);
 
@@ -144,7 +144,7 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
         long start = System.currentTimeMillis();
         Set<String> leftOvers = checkTableExistence(hBaseAdmin, tableNames);
         while (leftOvers.size() > 0) {
-            Thread.sleep(1000);
+            //Thread.sleep(1000);
             if (System.currentTimeMillis() - start > 1000 * 30)
                 throw new AssertionError("Waited too long for tables to get deleted: " + leftOvers);
             leftOvers = checkTableExistence(hBaseAdmin, tableNames);
