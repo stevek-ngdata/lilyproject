@@ -99,7 +99,7 @@ public class IndexAndRepoCreateDeleteIntegrationTest {
             deleteIndex("testBobbyTables");
 
             testUtil.createIndex("testBobbyTables", "dummyCORE", secondNewRepo);
-            //Thread.sleep(60000);
+            Thread.sleep(60000);
 
             lilyProxy.getHBaseProxy().waitOnSepIdle(10000L);
 
