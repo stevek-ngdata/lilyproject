@@ -414,7 +414,7 @@ public class HBaseProxy {
         ObjectName replicationSources = new ObjectName("hadoop:service=Replication,name=ReplicationSource for *");
         Set<ObjectName> mbeans = jmxLiaison.queryNames(replicationSources); */
         MBeanServerConnection connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
-        ObjectName replicationSources = new ObjectName("hadoop:service=Replication,name=ReplicationSourceInfo for *");
+        ObjectName replicationSources = new ObjectName("hadoop:service=Replication,name=ReplicationSource for *");
         Set<ObjectName> mbeans = connection.queryNames(replicationSources, null);
 
         long tryUntil = System.currentTimeMillis() + timeout;
