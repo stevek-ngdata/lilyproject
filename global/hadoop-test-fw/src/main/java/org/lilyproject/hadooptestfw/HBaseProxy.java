@@ -33,6 +33,7 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.jmx.JmxLiaison;
 import org.lilyproject.util.test.TestHomeUtil;
 
+import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -408,16 +409,21 @@ public class HBaseProxy {
         table.close();
 
         // Using JMX, query the size of the queue of hlogs to be processed for each replication source
-        JmxLiaison jmxLiaison = new JmxLiaison();
+        /*JmxLiaison jmxLiaison = new JmxLiaison();
         jmxLiaison.connect(mode == Mode.EMBED);
         ObjectName replicationSources = new ObjectName("hadoop:service=Replication,name=ReplicationSource for *");
-        Set<ObjectName> mbeans = jmxLiaison.queryNames(replicationSources);
+        Set<ObjectName> mbeans = jmxLiaison.queryNames(replicationSources); */
+        MBeanServerConnection connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
+        ObjectName replicationSources = new ObjectName("hadoop:service=Replication,name=ReplicationSourceInfo for *");
+        Set<ObjectName> mbeans = connection.queryNames(replicationSources, null);
+
         long tryUntil = System.currentTimeMillis() + timeout;
 
         nextMBean: for (ObjectName mbean : mbeans) {
             int logQSize = Integer.MAX_VALUE;
             while (logQSize > 0 && System.currentTimeMillis() < tryUntil) {
-                logQSize = (Integer)jmxLiaison.getAttribute(mbean, "sizeOfLogQueue");
+                //logQSize = (Integer)jmxLiaison.getAttribute(mbean, "sizeOfLogQueue");
+                logQSize = ((Number)connection.getAttribute(mbean, "sizeOfLogQueue")).intValue();
                 // logQSize == 0 means there is one active hlog that is polled by replication
                 // and none that are queued for later processing
                  System.out.println("hlog q size is " + logQSize + " for " + mbean.toString() + " max wait left is " +
