@@ -414,7 +414,7 @@ public class HBaseProxy {
         ObjectName replicationSources = new ObjectName("hadoop:service=Replication,name=ReplicationSource for *");
         Set<ObjectName> mbeans = jmxLiaison.queryNames(replicationSources); */
         MBeanServerConnection connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
-        ObjectName replicationSources = new ObjectName("hadoop:service=Replication,name=ReplicationSource for *");
+        ObjectName replicationSources = new ObjectName("Hadoop:service=HBase,name=RegionServer,sub=Replication"); //new ObjectName("hadoop:service=Replication,name=ReplicationSource for *");
         Set<ObjectName> mbeans = connection.queryNames(replicationSources, null);
 
         long tryUntil = System.currentTimeMillis() + timeout;
@@ -423,7 +423,7 @@ public class HBaseProxy {
             int logQSize = Integer.MAX_VALUE;
             while (logQSize > 0 && System.currentTimeMillis() < tryUntil) {
                 //logQSize = (Integer)jmxLiaison.getAttribute(mbean, "sizeOfLogQueue");
-                logQSize = ((Number)connection.getAttribute(mbean, "sizeOfLogQueue")).intValue();
+                logQSize = ((Number)connection.getAttribute(mbean, "source.sizeOfLogQueue")).intValue();
                 // logQSize == 0 means there is one active hlog that is polled by replication
                 // and none that are queued for later processing
                  System.out.println("hlog q size is " + logQSize + " for " + mbean.toString() + " max wait left is " +
