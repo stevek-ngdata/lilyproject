@@ -66,13 +66,13 @@ public class ReplicationPeerUtil implements ReplicationPeerUtilMBean {
             System.out.println("done");
         }
 
-        try {
+        /* try {
             //MBeanServerConnection connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
             //ObjectName replicationSourceMBean = new ObjectName("hadoop:service=Replication,name=ReplicationSource for " + peerId);
             //connection.unregisterMBean(replicationSourceMBean);
         } catch (Exception e) {
             throw new RuntimeException("Error removing replication source mean for " + peerId, e);
-        }
+        }  */
     }
 
     private static boolean threadExists(String namepart) {
