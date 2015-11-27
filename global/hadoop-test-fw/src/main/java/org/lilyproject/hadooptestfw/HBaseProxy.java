@@ -426,8 +426,8 @@ public class HBaseProxy {
                 logQSize = ((Number)connection.getAttribute(mbean, "source.sizeOfLogQueue")).intValue();
                 // logQSize == 0 means there is one active hlog that is polled by replication
                 // and none that are queued for later processing
-                 //System.out.println("hlog q size is " + logQSize + " for " + mbean.toString() + " max wait left is " +
-                 //    (tryUntil - System.currentTimeMillis()));
+                 System.out.println("hlog q size is " + logQSize + " for " + mbean.toString() + " max wait left is " +
+                     (tryUntil - System.currentTimeMillis()));
                 if (logQSize == 0) {
                     continue nextMBean;
                 } else {
