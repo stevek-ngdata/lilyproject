@@ -980,7 +980,7 @@ public class IndexerTest {
         record2 = defaultTable.create(record2);
 
         commitIndex();
-        Thread.sleep(300000);
+        //Thread.sleep(300000);
         verifyResultCount("nv_deref1:derefmultipear", 1);
 
         record1.setField(nvfield1.getName(), "derefmulti_apple");
@@ -988,7 +988,7 @@ public class IndexerTest {
         alternateTable.update(record1);
 
         commitIndex();
-        Thread.sleep(300000);
+        //Thread.sleep(300000);
         verifyResultCount("nv_deref1:derefmultipear", 0);
         verifyResultCount("nv_deref1:derefmultiapple", 1);
 
