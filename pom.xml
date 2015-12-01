@@ -129,7 +129,7 @@
     <module>tools/lily-runtime-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
     <module>tools/genscript-plugin</module>
-    <!-- <module>tools/doc-tools</module> -->
+    <module>tools/doc-tools</module>
     <module>tools/licensecheck</module>
     <module>tools/record-row-visualizer</module>
     <module>tools/print-host</module>
