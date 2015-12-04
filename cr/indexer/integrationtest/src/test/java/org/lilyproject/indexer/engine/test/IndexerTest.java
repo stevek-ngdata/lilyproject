@@ -960,7 +960,7 @@ public class IndexerTest {
     @Test
     public void testDereferencing_MultipleTables() throws Exception {
         // create an indexer for each table
-        changeIndexUpdater("indexerconf1.xml", "(record|alternate)");
+        changeIndexUpdater("indexerconf1.xml", "regex:(record|alternate)");
 
         messageVerifier.init();
 
