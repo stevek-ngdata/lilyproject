@@ -960,7 +960,7 @@ public class IndexerTest {
     @Test
     public void testDereferencing_MultipleTables() throws Exception {
         // create an indexer for each table
-        changeIndexUpdater("indexerconf1.xml", "regex:(record|alternate)");
+        changeIndexUpdater("indexerconf1.xml", "(record|alternate)");
 
         messageVerifier.init();
 
@@ -3091,7 +3091,7 @@ public class IndexerTest {
             log.warn("Waiting for idle sep timed out");
         }
 
-        lilyProxy.getHBaseProxy().waitOnReplication(60000L);
+        //lilyProxy.getHBaseProxy().waitOnReplication(60000L);
 
 
         //Thread.sleep(60000);
