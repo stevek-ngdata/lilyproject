@@ -962,7 +962,7 @@ public class IndexerTest {
     @Test
     public void testDereferencing_MultipleTables() throws Exception {
         // create an indexer for each table
-        changeIndexUpdater("indexerconf_multipletables.xml", "skip");
+        changeIndexUpdater("indexerconf1.xml", "(record|alternate)");
 
         messageVerifier.init();
 

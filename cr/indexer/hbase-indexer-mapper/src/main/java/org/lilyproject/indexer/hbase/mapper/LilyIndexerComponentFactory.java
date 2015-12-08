@@ -130,9 +130,9 @@ public class LilyIndexerComponentFactory implements IndexerComponentFactory {
             String tableParam = Optional.fromNullable(params.get(LResultToSolrMapper.TABLE_KEY)).or(LilyHBaseSchema.Table.RECORD.name);
             String tableName;
             if (repoParam.equals("default")) {
-                tableName = tableParam;
+                tableName = "regex:" + tableParam;
             } else {
-                tableName = repoParam.concat("__").concat(tableParam);
+                tableName = "regex:" + repoParam.concat("__").concat(tableParam);
             }
             builder.table(tableName);
 
