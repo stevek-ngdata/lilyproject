@@ -50,10 +50,10 @@
     <!-- Align jetty versions -->
     <version.jetty>6.1.26.cloudera.2</version.jetty>
 
-    <!--<version.hbase-indexer>1.5${version.cdh}</version.hbase-indexer>-->
-    <version.hbase-indexer>1.5</version.hbase-indexer>
-    <!--<version.hbase-indexer.sep>1.5-hbase0.98${version.cdh}</version.hbase-indexer.sep>-->
-    <version.hbase-indexer.sep>1.5-hbase0.98</version.hbase-indexer.sep>
+    <version.hbase-indexer>1.5${version.cdh}</version.hbase-indexer>
+    <!--<version.hbase-indexer>1.5</version.hbase-indexer>-->
+    <version.hbase-indexer.sep>1.5-hbase0.98${version.cdh}</version.hbase-indexer.sep>
+    <!--<version.hbase-indexer.sep>1.5-hbase0.98</version.hbase-indexer.sep>-->
 
     <!-- Tells maven plugins what file encoding to use -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

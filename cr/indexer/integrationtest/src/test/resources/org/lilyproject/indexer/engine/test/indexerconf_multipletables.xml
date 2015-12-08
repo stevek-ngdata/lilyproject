@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<!--
+/*
+ * Copyright 2013 NGDATA nv
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<indexer xmlns:ns="org.lilyproject.indexer.test" xmlns:ns2="org.lilyproject.indexer.test.2" table="regex:(record|alternate)">
+
+  <records>
+    <record matchNamespace="ns" matchName="NVRecordType1" matchVariant="*" vtags="live,nonversioned"/>
+    <record matchNamespace="ns2" matchName="VRecordType1" matchVariant="*" vtags="live,preview,latest,nonversioned"/>
+    <record matchNamespace="ns2" matchName="LastRecordType" matchVariant="*" vtags="last"/>
+  </records>
+
+  <formatters default="default">
+    <formatter name="default" class="org.lilyproject.indexer.model.indexerconf.DefaultFormatter"/>
+    <formatter name="year" class="org.lilyproject.indexer.engine.test.DateYearFormatter"/>
+    <formatter name="firstValue" class="org.lilyproject.indexer.model.indexerconf.FirstValueFormatter"/>
+  </formatters>
+
+  <fields>
+
+    <!--
+       | These fields are about non-versioned things (nv_ prefix)
+       -->
+
+    <field name="nv_field1" value="ns:nv_field1"/>
+
+    <field name="nv_deref1" value="ns:nv_linkfield1=>ns:nv_field1"/>
+
+    <field name="nv_deref2" value="-lang,-branch=>ns:nv_field1"/>
+
+    <field name="nv_deref3" value="master=>ns:nv_field1"/>
+
+    <field name="nv_deref4" value="-branch=>ns:nv_field1"/>
+
+    <field name="nv_deref5" value="+branch=>ns:nv_field1"/>
+
+    <field name="nv_deref6" value="+branch,+lang=>ns:nv_field1"/>
+
+    <field name="nv_deref7" value="+branch=dev=>ns:nv_field1"/>
+
+    <field name="nv_deref8" value="+branch=release=>ns:nv_field1"/>
+
+    <!--
+       | These fields are about versioned things (v_ prefix)
+       -->
+
+    <field name="v_field1" value="ns2:v_field1"/>
+
+    <field name="v_deref1" value="ns2:v_linkfield1=>ns2:v_field1"/>
+
+    <field name="v_deref2" value="-lang,-branch=>ns2:v_field1"/>
+
+    <field name="v_deref3" value="master=>ns2:v_field1"/>
+
+    <field name="v_deref4" value="-branch=>ns2:v_field1"/>
+
+    <field name="v_deref5" value="+branch=>ns2:v_field1"/>
+
+    <!--
+       | Mixed versioned & non-versioned usage.
+       -->
+
+    <field name="nv_v_deref" value="ns:nv_linkfield2=>ns2:v_field1"/>
+
+    <field name="nv_v_nv_deref" value="ns:nv_linkfield2=>ns2:v_linkfield1=>ns:nv_field1"/>
+
+    <!--
+       | Multi-value fields
+       -->
+
+    <field name="v_string_mv" value="ns2:v_string_mv_field"/>
+
+    <!--
+       | Non-string value types
+       -->
+
+    <field name="v_long" value="ns2:v_long_field"/>
+
+    <field name="v_date" value="ns2:v_date_field"/>
+
+    <field name="v_datetime" value="ns2:v_datetime_field"/>
+
+    <!--
+       | Blobs.
+       -->
+
+    <field name="v_blob" value="ns2:v_blob_field" extractContent="true"/>
+
+    <field name="v_blob" value="ns2:v_blob_mv_hier_field" extractContent="true"/>
+
+    <field name="v_blob" value="ns2:v_blob_nested_field" extractContent="true"/>
+
+    <!--
+       | Formatters
+       -->
+
+    <field name="year" value="ns2:v_datetime_field" formatter="year"/>
+
+    <field name="firstValue" value="ns2:v_string_mv_field" formatter="firstValue"/>
+
+    <field name="inthierarchy" value="ns2:v_int_hier_field"/>
+  </fields>
+
+</indexer>

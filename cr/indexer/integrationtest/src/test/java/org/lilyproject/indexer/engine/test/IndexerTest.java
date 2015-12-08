@@ -215,7 +215,9 @@ public class IndexerTest {
         connectionParams.put(SolrConnectionParams.COLLECTION, "core0");
         connectionParams.put(LResultToSolrMapper.ZOOKEEPER_KEY, "localhost:2181");
         connectionParams.put(LResultToSolrMapper.REPO_KEY, REPO_NAME);
-        connectionParams.put(LResultToSolrMapper.TABLE_KEY, indexTableName);
+        if (!indexTableName.equals("skip")) {
+            connectionParams.put(LResultToSolrMapper.TABLE_KEY, indexTableName);
+        }
         IndexerDefinition indexDef = new IndexerDefinitionBuilder().name(indexName)
                 .connectionType("solr")
                 .connectionParams(connectionParams)
@@ -960,7 +962,7 @@ public class IndexerTest {
     @Test
     public void testDereferencing_MultipleTables() throws Exception {
         // create an indexer for each table
-        changeIndexUpdater("indexerconf1.xml", "(record|alternate)");
+        changeIndexUpdater("indexerconf_multipletables.xml", "skip");
 
         messageVerifier.init();
 
